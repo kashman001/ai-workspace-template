@@ -24,9 +24,10 @@ sources behind them:
 | Karpathy skills | `github.com/ForrestChang/andrej-karpathy-skills` | Coding-principles examples |
 | graphify | `graphify.net` · `uv tool install graphifyy` | Per-repo knowledge graph |
 
-These reference repos are typically cloned outside the workspace (e.g.
-`~/Developer/references/`) and their skill folders symlinked into your agent
-skills directory — see `../docs/recommended-tooling.md`.
+The skill repos are managed via the **agent-context** system: cloned under
+`~/Developer/references/` and symlinked into `~/.config/agent-context/skills`
+(which `~/.claude/skills` points to), linked with `agent-context-sync`. See
+`../docs/recommended-tooling.md` → "Skill management — the agent-context system".
 
 ## Project references
 

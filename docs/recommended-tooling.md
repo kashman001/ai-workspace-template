@@ -27,6 +27,41 @@ matches how you work.
 
 ---
 
+## Skill management — the agent-context system
+
+The skill sets (tools 3–4, and graphify's skill) are managed through
+**agent-context**: one canonical home at `~/.config/agent-context/` that every
+agent and project reads via symlinks, so editing once propagates everywhere.
+Its `README.md` is the authority; the essentials:
+
+- **Canonical dir** `~/.config/agent-context/` holds `global.md` (always-on
+  principles + skills index) and `skills/` (one dir/symlink per skill).
+- **Home symlinks** make it reach each agent:
+  `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md` → `global.md`;
+  `~/.claude/skills` → `~/.config/agent-context/skills`.
+- **Reference repos** are cloned under `~/Developer/references/` and their
+  skill folders are *symlinked* (not copied) into `skills/`, so a `git pull`
+  updates every project at once.
+- **Two helpers on `PATH`** (`~/.local/bin/`):
+  - `init-project-ai-infra [--full]` — wires a project: writes `CONTEXT.md`
+    from the template and symlinks `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` → it
+    (`--full` also scaffolds `docs/adr/` + `docs/agents/`).
+  - `agent-context-sync` — pulls the reference repos, links any new upstream
+    skills, and flags broken symlinks.
+- **Overridable** via `AGENT_CONTEXT_DIR` and `AGENT_REFERENCES_DIR`.
+
+> **Prerequisite.** The commands below assume the agent-context system is
+> already bootstrapped on the machine — see `~/.config/agent-context/README.md`.
+>
+> **Note for template-cloned workspaces:** a workspace created from this
+> template already ships `CONTEXT.md` + the `CLAUDE.md`/`AGENTS.md`/`GEMINI.md`
+> symlinks, so you don't need `init-project-ai-infra` to wire them — the global
+> skills reach it automatically through the home symlinks above. (The four
+> principles also live in `global.md`; this template copies them into
+> `CONTEXT.md` too so the workspace is self-contained even without agent-context.)
+
+---
+
 ## 1. Claude Code status line
 
 A two-line status bar rendered by [ccstatusline](https://www.npmjs.com/package/ccstatusline):
@@ -105,18 +140,24 @@ A suite of repeatable engineering workflows from
 | `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
 
-**Install (global):** clone the repo and symlink the skills you want into your
-agent skills directory (skills are grouped under
-`skills/{engineering,productivity,misc}/`):
+**Install (global, via agent-context):** clone the repo into the references
+dir, then let `agent-context-sync` link the skills (it offers each new one):
 
 ```sh
 git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
-ln -s ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.claude/skills/tdd
-# …repeat for diagnose, triage, to-issues, to-prd, grill-with-docs, handoff, zoom-out, …
+agent-context-sync          # pulls reference repos, links new skills, flags broken links
 ```
 
-> Cloning into a `references/` dir and symlinking (rather than copying) means
-> `git pull` in the clone updates every skill at once.
+To link a single skill by hand (skills are bucketed under
+`skills/{engineering,productivity,misc}/`, but link them *flat* — Claude Code
+doesn't recurse):
+
+```sh
+ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.config/agent-context/skills/tdd
+```
+
+> Permanently skip an upstream skill by adding its name to
+> `~/.config/agent-context/skills/.syncignore`.
 
 **Per-repo setup (required before `to-issues` / `to-prd` / `triage` /
 `improve-codebase-architecture` work):** run the `setup-matt-pocock-skills`
@@ -145,15 +186,19 @@ The optional `karpathy-examples` skill adds side-by-side ❌/✅ worked examples
 to calibrate borderline judgement calls (is this over-engineered? is this diff
 surgical?). It comes from the
 [`ForrestChang/andrej-karpathy-skills`](https://github.com/ForrestChang/andrej-karpathy-skills)
-repo (the "karpathy-claude-md" reference):
+repo (the "karpathy-claude-md" reference). Clone it into the references dir —
+agent-context already carries an authored `karpathy-examples/SKILL.md` whose
+`EXAMPLES.md` symlinks into this clone:
 
 ```sh
 git clone https://github.com/ForrestChang/andrej-karpathy-skills.git ~/Developer/references/karpathy-claude-md
 ```
 
-Its `CLAUDE.md` is the source of the four principles already in `CONTEXT.md`;
-the skill's `EXAMPLES.md` tracks this clone. It's a calibration reference —
-don't paste the examples into project code.
+This repo's `CLAUDE.md` is the source of the four principles — hand-distilled
+into `global.md` and copied into this template's `CONTEXT.md`. (Because that
+distillation isn't a symlink, `agent-context-sync` only *reminds* you to review
+`global.md` when the upstream principles change.) The examples are a
+calibration reference — don't paste them into project code.
 
 ---
 
