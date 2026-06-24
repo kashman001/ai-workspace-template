@@ -53,6 +53,16 @@ when to invoke it. skills/ is currently empty — add skills as next steps. -->
 
 _None yet._
 
+### Commands (Claude Code)
+
+- **`/checkpoint [next-focus]`** (`.claude/commands/checkpoint.md`) — wrap up a
+  chunk of work at a session boundary: reconcile the backlog/issue tracker +
+  project memory + reference docs, write a hand-off doc (via the `handoff`
+  skill), confirm clean branch state, and emit a post-`/compact` catch-up
+  prompt. Depends on the `handoff` skill and `superpowers:brainstorming` (see
+  `docs/recommended-tooling.md`). Claude Code reads `.claude/commands/`; other
+  runtimes can follow the same steps manually.
+
 ## Service Access
 
 External services are documented in `docs/service-access.md`. MCP setup is
