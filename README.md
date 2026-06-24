@@ -21,6 +21,8 @@ Gemini.
 **Working in a scaffolded workspace?** Start here →
 [`CONTEXT.md`](CONTEXT.md)
 
-**Improving the template itself?** Open issues and their status live in
-[`template-workspace-backlog.html`](template-workspace-backlog.html) — see
-"Maintaining this backlog" in that file for the update convention.
+**Improving the template itself?** Review findings and their status live in the
+backlog —
+[rendered](https://kashman001.github.io/ai-workspace-template/template-workspace-backlog.html)
+· source [`docs/template-workspace-backlog.html`](docs/template-workspace-backlog.html).
+See "Maintaining this backlog" in that file for the update convention.

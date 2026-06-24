@@ -64,6 +64,17 @@ plugin, Matt Pocock engineering skills, Karpathy principles, graphify) is
 documented in `docs/recommended-tooling.md` — global/per-user setup plus the
 per-repo steps for Matt Pocock config and graphify graphs. All optional.
 
+## Template Backlog
+
+> Only relevant while working **on this template repo itself** — delete this
+> section when you adapt the workspace for a real project.
+
+`docs/template-workspace-backlog.html` is the living backlog of review findings
+and improvements for this template. **Agents: when you fix, change, or discover
+an issue in the template, update that file** — flip the item's status to
+Resolved with a `Fixed:` note, or append a new finding. Its "Maintaining this
+backlog" section defines the ID/status/scorecard convention.
+
 ## Agent Coding Principles
 
 Behavioral guidance that reduces common AI coding mistakes:
