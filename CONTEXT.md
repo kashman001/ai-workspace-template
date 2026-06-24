@@ -48,20 +48,16 @@ the relevant work directory.
 
 ## Workspace Skills
 
-<!-- TODO: List each skill under skills/ with a one-line description and
-when to invoke it. skills/ is currently empty — add skills as next steps. -->
+Vendor-neutral skills live under `skills/<name>/SKILL.md` — any runtime can read
+them (Codex/Gemini/OpenCode via this file; Claude Code also gets slash-command
+shortcuts under `.claude/commands/`).
 
-_None yet._
-
-### Commands (Claude Code)
-
-- **`/checkpoint [next-focus]`** (`.claude/commands/checkpoint.md`) — wrap up a
-  chunk of work at a session boundary: reconcile the backlog/issue tracker +
-  project memory + reference docs, write a hand-off doc (via the `handoff`
-  skill), confirm clean branch state, and emit a post-`/compact` catch-up
-  prompt. Depends on the `handoff` skill and `superpowers:brainstorming` (see
-  `docs/recommended-tooling.md`). Claude Code reads `.claude/commands/`; other
-  runtimes can follow the same steps manually.
+- **checkpoint** (`skills/checkpoint/SKILL.md`) — session-boundary wrap-up:
+  reconcile the backlog/issue tracker + project memory + reference docs, write a
+  hand-off doc (via the `handoff` skill), confirm clean branch state, and emit a
+  catch-up prompt for the next (post-compaction) session. Claude Code shortcut:
+  **`/checkpoint [next-focus]`**. Depends on the `handoff` skill and
+  `superpowers:brainstorming` (see `docs/recommended-tooling.md`).
 
 ## Service Access
 
