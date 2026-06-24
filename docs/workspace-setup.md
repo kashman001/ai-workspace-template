@@ -35,6 +35,10 @@ Authoritative list: `docs/workspace-structure.md` → "User-Level Files
 | MCP wrapper scripts (if used) | `~/.mcp-scripts/` | Launch scripts referenced by MCP config | run the script |
 | Service credentials | OS keychain (`security …`), `~/.pgpass`, `~/.aws/`, … | Tokens/passwords for external services | per-service verify cmd in `docs/service-access.md` |
 
+Optional agent toolchain (status line, superpowers plugin, Matt Pocock
+skills, graphify) is set up at this global layer too — see
+`docs/recommended-tooling.md` for install steps and the per-repo bits.
+
 Notes:
 - **Credentials never leave the keychain.** `docs/service-access.md` lists
   the retrieve/verify command per service; `.env` holds only non-secret

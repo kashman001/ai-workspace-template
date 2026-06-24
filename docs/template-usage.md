@@ -63,6 +63,10 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
 - **Scripts** — `scripts/setup.sh`, `check-workspace-structure.sh`, and
   `check-service-access.sh` are executable stubs. Implement them when the
   workspace stabilizes.
+- **Agent toolchain** — optional global tools (Claude Code status line,
+  superpowers plugin, Matt Pocock engineering skills, Karpathy principles,
+  graphify) are documented in `docs/recommended-tooling.md`, including the
+  per-repo setup for graphify graphs and Matt Pocock config.
 
 ## 5. Reference
 

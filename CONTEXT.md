@@ -57,6 +57,13 @@ External services are documented in `docs/service-access.md`. MCP setup is
 documented in `docs/mcp-setup.md`. Credentials live in the OS keychain —
 never in tracked files or `.env`.
 
+## Recommended Tooling
+
+The external agent toolchain this workflow assumes (status line, superpowers
+plugin, Matt Pocock engineering skills, Karpathy principles, graphify) is
+documented in `docs/recommended-tooling.md` — global/per-user setup plus the
+per-repo steps for Matt Pocock config and graphify graphs. All optional.
+
 ## Agent Coding Principles
 
 Behavioral guidance that reduces common AI coding mistakes:
