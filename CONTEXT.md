@@ -37,6 +37,8 @@ generate them once a codebase has structure.
 
 See `docs/workspace-structure.md` for the authoritative map of how this
 workspace is organized (directories, entrypoints, conventions).
+Hard-won operational gotchas (build/CI/shell traps) are recorded in
+`docs/operational-knowledge.md` — read it before debugging those.
 
 ## Work Directory Convention
 
