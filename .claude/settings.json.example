@@ -1,0 +1,13 @@
+{
+  "_comment": "Starter Claude Code permission allowlist. Copy to .claude/settings.local.json (gitignored) and tailor. Permissions are a personal trust decision — keep the .local file out of git. See docs/workspace-structure.md -> '.claude/ — Claude Code (Project-Level)'.",
+  "permissions": {
+    "allow": [
+      "Bash(gh auth status)",
+      "WebSearch"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "github"
+  ]
+}

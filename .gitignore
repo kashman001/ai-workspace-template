@@ -1,0 +1,32 @@
+# Cloned product repos (registry symlink kept)
+repos/*
+!repos/README.md
+
+# Cloned external references
+references/*
+!references/README.md
+
+# Environment and credentials
+.env
+.service-access.local.json
+
+# User-specific agent / IDE config (the .example templates stay tracked)
+.vscode/mcp.json
+.claude/settings.json
+.claude/settings.local.json
+.mcp.json
+
+# Scratch
+temp/
+tmp/
+
+# graphify knowledge-graph output (regenerated locally)
+graphify-out/
+
+# OS cruft
+.DS_Store
+
+# Stack-specific — include only the entries that apply to your workspace
+# .venv/           # Python virtualenv
+# node_modules/    # Node deps
+# .idea/           # JetBrains IDE files

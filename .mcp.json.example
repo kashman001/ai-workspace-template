@@ -1,0 +1,12 @@
+{
+  "_comment": "File: .mcp.json.example — GitHub MCP server template. Copy to .mcp.json (gitignored) for runtimes that read a project-level .mcp.json (e.g. Claude Code). Default is the Docker-free hosted remote server; ensure GITHUB_PERSONAL_ACCESS_TOKEN is exported before launch, e.g. via 'export GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token)' (see docs/mcp-setup.md). A local Docker alternative and per-runtime notes for Codex/Gemini/OpenCode are in docs/mcp-setup.md. See docs/workspace-structure.md -> 'IDE and Agent Configuration'.",
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
