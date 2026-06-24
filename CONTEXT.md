@@ -57,6 +57,14 @@ External services are documented in `docs/service-access.md`. MCP setup is
 documented in `docs/mcp-setup.md`. Credentials live in the OS keychain —
 never in tracked files or `.env`.
 
+## First-run Setup
+
+Agents bringing this workspace up on a machine: run the `scripts/check-*.sh`
+checks, then follow the matching runbook in `docs/runbooks/` for whatever's
+missing — `check-dependencies.sh` → `docs/runbooks/dependencies.md`,
+`check-service-access.sh` → `docs/runbooks/authentication.md`. The checks are
+verify-only; the runbooks are the sanctioned setup steps (per OS).
+
 ## Recommended Tooling
 
 The external agent toolchain this workflow assumes (status line, superpowers

@@ -232,19 +232,22 @@ rm -rf .git &amp;&amp; git init</code></pre>
 
   <div class="step"><div class="num">2</div><div class="body">
     <h3>Bootstrap the local files</h3>
-    <p>Run the setup script — it creates <code>.env</code>, the agent symlinks, <code>repos/README.md</code>,
-    and the per-user config copies (idempotent). Add <code>--clone-repos</code> for a multi-repo workspace.</p>
+    <p>Run the setup script — it runs a dependency preflight, then creates <code>.env</code>, the agent symlinks,
+    <code>repos/README.md</code>, and the per-user config copies (idempotent). Add <code>--clone-repos</code> for
+    a multi-repo workspace. Missing tools? Follow <a href="runbooks/dependencies.md">runbooks/dependencies.md</a>.</p>
     <pre><code>./scripts/setup.sh                 # creates .env, symlinks, repos/README.md
 ./scripts/check-workspace-structure.sh   # verify symlinks resolve, dirs present</code></pre>
   </div></div>
 
   <div class="step"><div class="num">3</div><div class="body">
     <h3>Wire up agents &amp; MCP</h3>
-    <p>Copy the per-user config templates (all gitignored) and export the GitHub MCP token.
-    Full per-runtime detail lives in <code>docs/mcp-setup.md</code>.</p>
+    <p>Copy the per-user config templates (all gitignored), then authenticate. Run the check, then follow
+    <a href="runbooks/authentication.md">runbooks/authentication.md</a> for anything missing; per-runtime MCP
+    detail is in <code>docs/mcp-setup.md</code>.</p>
     <pre><code>cp .env.example .env
 cp .mcp.json.example .mcp.json
 cp .claude/settings.json.example .claude/settings.local.json
+./scripts/check-service-access.sh                  # reports gaps + fix commands
 export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
   </div></div>
 
@@ -440,7 +443,8 @@ claude mcp list                                   # local:  GitHub MCP visible
   <a href="template-usage.md">template-usage.md</a> ·
   <a href="recommended-tooling.md">recommended-tooling.md</a> ·
   <a href="mcp-setup.md">mcp-setup.md</a> ·
-  <a href="service-access.md">service-access.md</a><br>
+  <a href="service-access.md">service-access.md</a> ·
+  <a href="runbooks/README.md">runbooks/</a><br>
   Template maintainers: <a href="template-workspace-backlog.html">template-workspace-backlog.html</a>
   (review findings + how to keep them updated)
 </div></footer>

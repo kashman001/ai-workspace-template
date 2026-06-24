@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">12</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">14</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">2</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,11 +84,12 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 12 review findings have been <span class="good">resolved</span> and both design decisions settled
-    (2026-06-24). The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
-    the template now behaves on a clean machine as the docs describe, carries a LICENSE, ships VS Code config, and
-    documents a no-agent-context fallback. Each item below records what changed. New issues get appended here per the
-    <a href="#maintaining">maintenance convention</a>.</p>
+    <p>All 14 findings (12 from the initial review + M6/M7 added during follow-up) are
+    <span class="good">resolved</span>, and both design decisions settled (2026-06-24). The two High items —
+    non-functional bootstrap scripts and a non-portable Gemini hook — are fixed; the template now behaves on a clean
+    machine as the docs describe, carries a LICENSE, ships VS Code config, checks dependencies, has an auth phase with
+    agent runbooks, and documents a no-agent-context fallback. Each item below records what changed. New issues get
+    appended here per the <a href="#maintaining">maintenance convention</a>.</p>
   </div>
 
   <!-- ========================= MAINTAINING ========================= -->
@@ -183,6 +184,29 @@
       <code>kashman001.github.io/ai-workspace-template/setup-guide.html</code> first, with the source path secondary.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M6</span> No dependency-check phase
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/ · runbooks/</span></h3>
+    <p><span class="k">Evidence</span> — nothing verified <code>git</code>/<code>node</code>/<code>uv</code>/<code>python3</code>/<code>docker</code>;
+      the only tool check anywhere was <code>command -v gh</code> in <code>check-service-access.sh</code>.</p>
+    <p><span class="fix">Fixed:</span> added <code>scripts/check-dependencies.sh</code> (per-OS; required <code>git</code>
+      vs recommended tools; non-zero only on a hard miss), wired it as a preflight in <code>setup.sh</code>, and wrote
+      the agent runbook <code>docs/runbooks/dependencies.md</code> (install commands for macOS/Linux/Windows). Surfaced
+      in the setup guide and <code>workspace-setup.md</code>.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M7</span> No authentication phase (only docs + a partial verify)
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/ · runbooks/</span></h3>
+    <p><span class="k">Evidence</span> — auth was documented but nothing checked/guided it end to end; setup didn't
+      surface fix commands.</p>
+    <p><span class="fix">Fixed (verify + instruct + agent runbook):</span> strengthened
+      <code>check-service-access.sh</code> to print exact per-OS fix commands and point to the runbook; added
+      <code>docs/runbooks/authentication.md</code> for an AI agent to follow (login is flagged interactive →
+      confirm with the user; no secret ever stored in the repo). Kept the keychain-outside-the-workspace philosophy
+      — no interactive login baked into a script.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
 
@@ -260,6 +284,7 @@
       <tr><td>2026-06-24</td><td>Initial critical review: 2 High, 5 Medium, 5 Low, 2 Decisions, 6 Strengths.</td></tr>
       <tr><td>2026-06-24</td><td>Resolved all 12 findings; settled D1 (keep) and D2 (recommend <code>--full</code>). Added LICENSE, <code>.vscode/</code>, functional scripts, fallback docs, and this maintenance convention.</td></tr>
       <tr><td>2026-06-24</td><td>Moved to <code>docs/</code> so it renders on GitHub Pages; referenced from <code>CONTEXT.md</code>, <code>README.md</code>, and the setup guide for agent discoverability.</td></tr>
+      <tr><td>2026-06-24</td><td>Added &amp; resolved M6 (dependency-check phase) and M7 (auth phase: verify+instruct + agent runbooks under <code>docs/runbooks/</code>).</td></tr>
     </tbody>
   </table>
 

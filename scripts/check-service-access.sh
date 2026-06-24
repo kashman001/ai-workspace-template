@@ -1,28 +1,49 @@
 #!/usr/bin/env bash
 # File: scripts/check-service-access.sh
-# Purpose: Preflight that required service credentials are reachable; (re)generate .service-access.local.json.
-#          Extend the per-service checks as you add services to docs/service-access.md.
+# Purpose: Preflight that required service credentials are reachable; (re)generate
+#          .service-access.local.json. Verify + INSTRUCT only — it never logs you in
+#          or stores secrets. When something's missing it prints exact fix commands;
+#          an AI agent or human then follows docs/runbooks/authentication.md.
 # See: docs/workspace-structure.md → "Service Access Pattern"
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "Service access preflight"
+case "$(uname -s)" in
+  Darwin) OS=macOS ;; Linux) OS=Linux ;; MINGW*|MSYS*|CYGWIN*) OS=Windows ;; *) OS=unknown ;;
+esac
+echo "Service access preflight (OS: $OS)"
 status="ok"
 
-# --- GitHub (gh CLI + MCP token) ---
+# --- GitHub: gh CLI present + authenticated ---
 if command -v gh >/dev/null 2>&1; then
-  if gh auth status >/dev/null 2>&1; then echo "  ✓ gh authenticated"
-  else echo "  ✗ gh not authenticated — run: gh auth login" >&2; status="degraded"; fi
+  if gh auth status >/dev/null 2>&1; then
+    echo "  ✓ gh authenticated"
+  else
+    echo "  ✗ gh not authenticated" >&2
+    echo "    fix: gh auth login" >&2
+    status="degraded"
+  fi
 else
-  echo "  ! gh CLI not found (optional, but needed for the GitHub token source)"; status="degraded"
+  echo "  ✗ gh CLI not found" >&2
+  case "$OS" in
+    macOS)   echo "    fix: brew install gh && gh auth login" >&2 ;;
+    Linux)   echo "    fix: see https://github.com/cli/cli#installation, then gh auth login" >&2 ;;
+    Windows) echo "    fix: winget install GitHub.cli  (then gh auth login)" >&2 ;;
+    *)       echo "    fix: install gh, then gh auth login" >&2 ;;
+  esac
+  status="degraded"
 fi
 
+# --- MCP token exported into the environment ---
 if [ -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
   echo "  ✓ GITHUB_PERSONAL_ACCESS_TOKEN exported (length ${#GITHUB_PERSONAL_ACCESS_TOKEN})"
 else
-  echo "  ! GITHUB_PERSONAL_ACCESS_TOKEN not set — export: GITHUB_PERSONAL_ACCESS_TOKEN=\$(gh auth token)"
+  echo "  ✗ GITHUB_PERSONAL_ACCESS_TOKEN not set" >&2
+  echo "    fix (this shell):  export GITHUB_PERSONAL_ACCESS_TOKEN=\"\$(gh auth token)\"" >&2
+  echo "    fix (persist):     echo 'export GITHUB_PERSONAL_ACCESS_TOKEN=\"\$(gh auth token)\"' >> ~/.zshrc" >&2
+  status="degraded"
 fi
 
 # --- cache (gitignored) so agents don't re-discover the commands ---
@@ -37,4 +58,7 @@ cat > .service-access.local.json <<'JSON'
 }
 JSON
 echo "  wrote .service-access.local.json"
+
 echo "Status: $status"
+[ "$status" = "ok" ] || echo "Some services need setup — follow docs/runbooks/authentication.md" >&2
+exit 0

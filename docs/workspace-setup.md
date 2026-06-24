@@ -39,6 +39,10 @@ Optional agent toolchain (status line, superpowers plugin, Matt Pocock
 skills, graphify) is set up at this global layer too — see
 `docs/recommended-tooling.md` for install steps and the per-repo bits.
 
+To install/verify these machine tools, run `scripts/check-dependencies.sh` and
+follow `docs/runbooks/dependencies.md`; for service auth, run
+`scripts/check-service-access.sh` and follow `docs/runbooks/authentication.md`.
+
 Notes:
 - **Credentials never leave the keychain.** `docs/service-access.md` lists
   the retrieve/verify command per service; `.env` holds only non-secret
@@ -58,19 +62,24 @@ In". Tracked files arrive with the clone; you create the local/secret ones.
 # 1. Clone
 git clone <clone-url> <workspace-dir> && cd <workspace-dir>
 
-# 2. Bootstrap: creates .env, the entrypoint symlinks, repos/README.md,
-#    and (with --clone-repos) clones product repos from the registry.
+# 2. Dependencies — check, then install anything missing per the runbook.
+./scripts/check-dependencies.sh                   # → docs/runbooks/dependencies.md
+
+# 3. Bootstrap: dep preflight + entrypoint symlinks + repos/README.md + the
+#    per-user config copies (.env, .mcp.json, .claude/settings.local.json).
 ./scripts/setup.sh            # add --clone-repos for a multi-repo workspace
 
-# 3. Per-user config copies (all gitignored — tailor to your machine):
-cp .env.example .env                              # set non-secret identifiers
-cp .mcp.json.example .mcp.json                    # Claude Code project MCP
-cp .claude/settings.json.example .claude/settings.local.json   # CC permissions
+# 4. Authentication — check, then follow the runbook for anything missing.
+./scripts/check-service-access.sh                 # → docs/runbooks/authentication.md
 
-# 4. Preflight credentials and verify structure
-./scripts/check-service-access.sh
+# 5. Verify structure
 ./scripts/check-workspace-structure.sh
 ```
+
+Each `check-*.sh` reports what's missing; an AI agent (or you) then follows the
+matching **runbook** in `docs/runbooks/` to fix it for this OS — see
+`docs/runbooks/README.md`. The checks are verify-only; they never log you in or
+install anything.
 
 What each local file is for:
 

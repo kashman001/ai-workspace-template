@@ -20,6 +20,11 @@ done
 log(){ printf '  %s\n' "$*"; }
 echo "Bootstrapping workspace at $ROOT"
 
+# 0. Dependency preflight (informational; does not abort setup)
+if [ -x scripts/check-dependencies.sh ]; then
+  scripts/check-dependencies.sh || log "some dependencies missing — see docs/runbooks/dependencies.md"
+fi
+
 # 1. Agent entrypoint symlinks → CONTEXT.md
 #    Idempotent; also repairs symlinks flattened to files by Windows/copy-based "Use this template" flows.
 for f in CLAUDE.md AGENTS.md GEMINI.md; do
@@ -58,4 +63,6 @@ else
   log "skipping repo clones (pass --clone-repos to enable)"
 fi
 
-echo "Done. Next: fill in CONTEXT.md, then run scripts/check-workspace-structure.sh"
+echo "Done. Next:"
+echo "  - authenticate / export the MCP token: scripts/check-service-access.sh (then docs/runbooks/authentication.md)"
+echo "  - fill in CONTEXT.md, then run scripts/check-workspace-structure.sh"
