@@ -19,9 +19,14 @@ sources behind them:
 | Reference | Source | Used for |
 |---|---|---|
 | ccstatusline | npm `ccstatusline` | Claude Code status line |
-| superpowers + plugins | `anthropics/claude-plugins-official` (Claude Code marketplace) | Process & engineering skills |
+| superpowers + plugins | `anthropics/claude-plugins-official` (Claude Code marketplace) | Process skills |
+| Matt Pocock skills | `github.com/mattpocock/skills` | Engineering skills (tdd, triage, to-issues, …) |
+| Karpathy skills | `github.com/ForrestChang/andrej-karpathy-skills` | Coding-principles examples |
 | graphify | `graphify.net` · `uv tool install graphifyy` | Per-repo knowledge graph |
-| Karpathy CLAUDE.md | upstream `karpathy-claude-md` repo | Coding-principles examples |
+
+These reference repos are typically cloned outside the workspace (e.g.
+`~/Developer/references/`) and their skill folders symlinked into your agent
+skills directory — see `../docs/recommended-tooling.md`.
 
 ## Project references
 

@@ -91,7 +91,8 @@ Verify: `claude plugin list` (or `/plugin` in a session), then restart.
 
 ## 3. Matt Pocock engineering skills
 
-A suite of repeatable engineering workflows (live under `~/.claude/skills/`):
+A suite of repeatable engineering workflows from
+[`github.com/mattpocock/skills`](https://github.com/mattpocock/skills):
 
 | Skill | Use when |
 |---|---|
@@ -103,6 +104,19 @@ A suite of repeatable engineering workflows (live under `~/.claude/skills/`):
 | `to-prd` / `to-issues` | Turn discussion into a PRD / tracked issues |
 | `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
+
+**Install (global):** clone the repo and symlink the skills you want into your
+agent skills directory (skills are grouped under
+`skills/{engineering,productivity,misc}/`):
+
+```sh
+git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
+ln -s ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.claude/skills/tdd
+# …repeat for diagnose, triage, to-issues, to-prd, grill-with-docs, handoff, zoom-out, …
+```
+
+> Cloning into a `references/` dir and symlinking (rather than copying) means
+> `git pull` in the clone updates every skill at once.
 
 **Per-repo setup (required before `to-issues` / `to-prd` / `triage` /
 `improve-codebase-architecture` work):** run the `setup-matt-pocock-skills`
@@ -127,11 +141,19 @@ already copied verbatim into [`../CONTEXT.md`](../CONTEXT.md) under "Agent
 Coding Principles", so every agent session in a workspace cloned from this
 template starts with them.
 
-The optional `karpathy-examples` skill (under `~/.claude/skills/`) adds
-side-by-side ❌/✅ worked examples to calibrate borderline judgement calls
-(is this over-engineered? is this diff surgical?). Its `EXAMPLES.md` tracks
-the upstream `karpathy-claude-md` reference repo. It's a calibration
-reference — don't paste the examples into project code.
+The optional `karpathy-examples` skill adds side-by-side ❌/✅ worked examples
+to calibrate borderline judgement calls (is this over-engineered? is this diff
+surgical?). It comes from the
+[`ForrestChang/andrej-karpathy-skills`](https://github.com/ForrestChang/andrej-karpathy-skills)
+repo (the "karpathy-claude-md" reference):
+
+```sh
+git clone https://github.com/ForrestChang/andrej-karpathy-skills.git ~/Developer/references/karpathy-claude-md
+```
+
+Its `CLAUDE.md` is the source of the four principles already in `CONTEXT.md`;
+the skill's `EXAMPLES.md` tracks this clone. It's a calibration reference —
+don't paste the examples into project code.
 
 ---
 
