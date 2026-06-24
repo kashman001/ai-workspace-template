@@ -59,8 +59,11 @@ claude mcp list
 ```
 
 ### OpenCode — pre-staged
-Configured in `opencode.json` (`mcp.github`, `type: local`). `{env:...}`
-substitution works for local servers. Verify after installing OpenCode:
+OpenCode reads **two** files in this workspace, by design:
+- `opencode.json` (repo root) — the GitHub MCP server (`mcp.github`, `type: local`).
+- `.opencode/opencode.json` — the plugin list (the graphify plugin).
+
+`{env:...}` substitution works for local servers. Verify after installing OpenCode:
 ```bash
 opencode mcp list
 ```
@@ -92,8 +95,9 @@ Add to `~/.gemini/settings.json` under `mcpServers`:
 ```
 <!-- TODO: verify against your Gemini CLI version -->
 
-### Warp (this app)
-Not auto-configured. Add via Warp Settings → AI → MCP servers using the same
-Docker command (or the remote URL).
+### Other runtimes
+Any runtime not listed above can use the same server: point it at the hosted
+remote URL (`https://api.githubcopilot.com/mcp/` with the bearer header) or the
+local Docker command. Consult the runtime's own MCP docs for where its config lives.
 
 > After configuring a runtime, restart it and confirm the GitHub tools appear.

@@ -52,13 +52,32 @@ Its `README.md` is the authority; the essentials:
 
 > **Prerequisite.** The commands below assume the agent-context system is
 > already bootstrapped on the machine — see `~/.config/agent-context/README.md`.
+> Don't have it? Use the **fallback** below instead.
 >
 > **Note for template-cloned workspaces:** a workspace created from this
 > template already ships `CONTEXT.md` + the `CLAUDE.md`/`AGENTS.md`/`GEMINI.md`
-> symlinks, so you don't need `init-project-ai-infra` to wire them — the global
-> skills reach it automatically through the home symlinks above. (The four
+> symlinks, so `init-project-ai-infra` won't need to create them. It's still
+> worth running **`init-project-ai-infra --full`** in the workspace to scaffold
+> `docs/adr/` and `docs/agents/` (which the Matt Pocock skills expect) — it's
+> idempotent and never overwrites your existing `CONTEXT.md`. (The four
 > principles also live in `global.md`; this template copies them into
 > `CONTEXT.md` too so the workspace is self-contained even without agent-context.)
+
+### Without agent-context (fallback)
+
+If you don't run the agent-context system, you can still use any of these
+skills directly — clone the repo and symlink the skill folders straight into
+Claude Code's skills dir:
+
+```sh
+mkdir -p ~/.claude/skills
+git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
+ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.claude/skills/tdd
+# …repeat per skill; or copy the folders if you'd rather not symlink.
+```
+
+The per-skill descriptions still drive Claude Code triggering; you just lose
+the centralized `global.md` + `agent-context-sync` convenience.
 
 ---
 

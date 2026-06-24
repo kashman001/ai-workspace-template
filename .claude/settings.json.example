@@ -6,7 +6,6 @@
       "WebSearch"
     ]
   },
-  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "github"
   ]

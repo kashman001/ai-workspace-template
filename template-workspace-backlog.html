@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-workspace-template — Critical Review &amp; Backlog</title>
+<style>
+  :root{
+    --bg:#0f1222;--panel:#171a2e;--panel-2:#1d2138;--ink:#e7e9f3;--muted:#a3a8c3;
+    --line:#2b3052;--accent:#7c83ff;--accent-2:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#f87171;
+    --radius:14px;--maxw:1000px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0c0f1d,#0f1222 240px);color:var(--ink);
+    font-family:var(--sans);line-height:1.6;font-size:15.5px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header.hero{padding:56px 0 24px;border-bottom:1px solid var(--line)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent-2);border:1px solid var(--line);padding:5px 11px;border-radius:999px;background:var(--panel)}
+  h1{font-size:38px;line-height:1.1;margin:16px 0 8px;letter-spacing:-.02em}
+  h2{font-size:23px;margin:44px 0 12px;letter-spacing:-.01em}
+  .lede{font-size:18px;color:var(--muted);max-width:74ch}
+  .meta{color:var(--muted);font-size:13.5px;font-family:var(--mono);margin-top:10px}
+  .scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:26px 0}
+  .sc{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .sc .num{font-size:30px;font-weight:800;line-height:1}
+  .sc .lab{color:var(--muted);font-size:12.5px;margin-top:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+  .sc.red .num{color:var(--red)}.sc.amber .num{color:var(--amber)}.sc.blue .num{color:var(--accent-2)}.sc.green .num{color:var(--green)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin:18px 0}
+  .find{background:var(--panel);border:1px solid var(--line);border-left-width:4px;border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0}
+  .find.high{border-left-color:var(--red)}
+  .find.med{border-left-color:var(--amber)}
+  .find.low{border-left-color:var(--accent-2)}
+  .find.dec{border-left-color:var(--accent)}
+  .find.resolved{opacity:.96}
+  .find h3{margin:0 0 6px;font-size:17px;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+  .id{font-family:var(--mono);color:var(--muted);font-size:13px}
+  .sev{font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:6px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+  .sev.high{color:var(--red);border-color:#5a2020;background:#241010}
+  .sev.med{color:var(--amber);border-color:#5a4a1e;background:#241d0c}
+  .sev.low{color:var(--accent-2);border-color:#194a52;background:#0c2025}
+  .sev.dec{color:var(--accent);border-color:#2f2f6b;background:#13132b}
+  .status{font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:6px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+  .status.resolved{color:var(--green);border-color:#1f5a3f;background:#0c2418}
+  .status.open{color:var(--amber);border-color:#5a4a1e;background:#241d0c}
+  .status.decided{color:var(--accent-2);border-color:#194a52;background:#0c2025}
+  .status.wontfix{color:var(--muted)}
+  .area{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:auto}
+  .find p{margin:7px 0}
+  .find .k{color:var(--muted);font-weight:600;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+  .fix{color:var(--green);font-weight:600;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+  code{font-family:var(--mono);font-size:.9em;background:#20243f;padding:1px 6px;border-radius:6px;color:#cfd4ff}
+  ul.tight{margin:8px 0;padding-left:20px}ul.tight li{margin:4px 0}
+  ol.steps{margin:8px 0;padding-left:22px}ol.steps li{margin:6px 0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel-2)}
+  .good{color:var(--green)}
+  footer{border-top:1px solid var(--line);margin-top:50px;padding:24px 0 60px;color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="badge">Critical Review &amp; Living Backlog</span>
+  <h1>ai-workspace-template — Review &amp; Backlog</h1>
+  <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
+  backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
+  (see <a href="#maintaining">Maintaining this backlog</a>).</p>
+  <p class="meta">Reviewed 2026-06-24 · Last updated 2026-06-24 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+</div></header>
+
+<main class="wrap">
+
+  <div class="scorecards">
+    <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">12</div><div class="lab">Resolved</div></div>
+    <div class="sc blue"><div class="num">2</div><div class="lab">Decided</div></div>
+    <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
+    <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
+  </div>
+
+  <div class="panel">
+    <p class="k">Status</p>
+    <p>All 12 review findings have been <span class="good">resolved</span> and both design decisions settled
+    (2026-06-24). The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
+    the template now behaves on a clean machine as the docs describe, carries a LICENSE, ships VS Code config, and
+    documents a no-agent-context fallback. Each item below records what changed. New issues get appended here per the
+    <a href="#maintaining">maintenance convention</a>.</p>
+  </div>
+
+  <!-- ========================= MAINTAINING ========================= -->
+  <h2 id="maintaining">Maintaining this backlog</h2>
+  <div class="panel">
+    <p>Treat this file as a lightweight issue tracker for the template itself. The rules:</p>
+    <ol class="steps">
+      <li><strong>IDs are stable and severity-scoped.</strong> <code>H</code>igh, <code>M</code>edium,
+        <code>L</code>ow, <code>D</code>ecision + a number (e.g. <code>M6</code>). Never renumber or reuse an ID —
+        once assigned it's permanent, even after the item is resolved.</li>
+      <li><strong>Every finding carries a status badge:</strong>
+        <span class="status open">Open</span> ·
+        <span class="status resolved">Resolved</span> ·
+        <span class="status decided">Decided</span> ·
+        <span class="status wontfix">Won't fix</span>.</li>
+      <li><strong>When you fix an item:</strong> flip its badge to <span class="status resolved">Resolved</span>,
+        add a <span class="fix">Fixed:</span> line describing the change (and the commit/PR if handy), and add
+        <code>class="resolved"</code> to its <code>&lt;div class="find …"&gt;</code>.</li>
+      <li><strong>When you find a new issue:</strong> append a new finding card under the right severity heading with
+        the next free ID, status <span class="status open">Open</span>, and the
+        <span class="k">Evidence</span> / <span class="k">Impact</span> / <span class="k">Fix</span> lines.</li>
+      <li><strong>Update the scorecard counts and the "Last updated" date</strong> in the header on every change.</li>
+      <li><strong>Commit convention:</strong> reference the ID, e.g. <code>git commit -m "Fix M6: …"</code>, so the
+        git log and this file stay in sync.</li>
+      <li><strong>Re-review trigger:</strong> after any structural change to the template (new config file, new doc,
+        new agent runtime), do a fresh evidence pass and append what it surfaces.</li>
+    </ol>
+    <p class="meta">Tip: the matching skill for turning these into real tracked issues is <code>to-issues</code>
+    (see docs/recommended-tooling.md) if you'd rather move them to GitHub Issues.</p>
+  </div>
+
+  <!-- ========================= HIGH ========================= -->
+  <h2>High</h2>
+
+  <div class="find high resolved">
+    <h3><span class="id">H1</span> Bootstrap scripts were <code>exit 1</code> stubs while the Quick Start told you to run them
+      <span class="sev high">High</span><span class="status resolved">Resolved</span><span class="area">scripts/</span></h3>
+    <p><span class="k">Evidence</span> — the three <code>scripts/*.sh</code> only echoed a TODO and exited 1, yet
+      <code>setup-guide.html</code> Step 2 and <code>workspace-setup.md</code> instructed running them.</p>
+    <p><span class="fix">Fixed:</span> implemented real, idempotent <code>setup.sh</code> (symlinks, <code>.env</code>/
+      <code>.mcp.json</code>/<code>.claude/settings.local.json</code> copies, <code>--clone-repos</code> that parses the
+      registry), <code>check-workspace-structure.sh</code> (dirs/symlinks/exec/gitignore checks, non-zero on failure),
+      and <code>check-service-access.sh</code> (gh + token preflight, writes the cache). Guide/setup wording updated.</p>
+  </div>
+
+  <div class="find high resolved">
+    <h3><span class="id">H2</span> Gemini graphify hook called <code>python</code> (not <code>python3</code>)
+      <span class="sev high">High</span><span class="status resolved">Resolved</span><span class="area">.gemini/settings.json</span></h3>
+    <p><span class="k">Evidence</span> — the <code>BeforeTool</code> hook ran <code>python -c "…"</code>, which fails on
+      python3-only machines, erroring on every Gemini file read/list.</p>
+    <p><span class="fix">Fixed:</span> rewrote the hook as a pure POSIX-shell one-liner (<code>if [ -f graphify-out/graph.json ]; then printf …</code>)
+      that emits the allow/context JSON with no Python dependency at all.</p>
+  </div>
+
+  <!-- ========================= MEDIUM ========================= -->
+  <h2>Medium</h2>
+
+  <div class="find med resolved">
+    <h3><span class="id">M1</span> Public template depended on the author's personal agent-context tooling
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">recommended-tooling.md</span></h3>
+    <p><span class="fix">Fixed:</span> added a clearly-labelled <em>"Without agent-context (fallback)"</em> section —
+      plain <code>git clone</code> + <code>ln -sfn</code> into <code>~/.claude/skills</code> — so anyone can use the
+      skills without the private <code>init-project-ai-infra</code>/<code>agent-context-sync</code> setup.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M2</span> <code>.vscode/</code> / <code>&lt;Project&gt;.code-workspace</code> listed as shipped but absent
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">workspace-structure.md</span></h3>
+    <p><span class="fix">Fixed:</span> shipped <code>.vscode/settings.json</code> and <code>.vscode/mcp.json.example</code>
+      (so those table rows are now accurate) and annotated the <code>.code-workspace</code> row as "VS Code only —
+      create per project; not shipped."</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M3</span> <code>mcp-setup.md</code> carried a machine-specific "Warp (this app)" section
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs/mcp-setup.md</span></h3>
+    <p><span class="fix">Fixed:</span> replaced it with a generic "Other runtimes" section pointing at the remote URL /
+      Docker command.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M4</span> No <code>LICENSE</code> on a public, reuse-oriented template
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">root</span></h3>
+    <p><span class="fix">Fixed:</span> added an MIT <code>LICENSE</code> (matches the karpathy-examples upstream),
+      so "Use this template" reuse is unambiguous.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M5</span> README pointed at raw <code>docs/setup-guide.html</code>, not the rendered Pages URL
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">README.md</span></h3>
+    <p><span class="fix">Fixed:</span> README now links the live
+      <code>kashman001.github.io/ai-workspace-template/setup-guide.html</code> first, with the source path secondary.</p>
+  </div>
+
+  <!-- ========================= LOW ========================= -->
+  <h2>Low</h2>
+
+  <div class="find low resolved">
+    <h3><span class="id">L1</span> Two OpenCode config files (root + <code>.opencode/</code>)
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">mcp-setup.md</span></h3>
+    <p><span class="fix">Fixed:</span> documented the intended split (root <code>opencode.json</code> = MCP server;
+      <code>.opencode/opencode.json</code> = plugin list) in the OpenCode section of <code>mcp-setup.md</code>.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L2</span> Committed symlinks may not survive every checkout / Windows
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">workspace-setup.md</span></h3>
+    <p><span class="fix">Fixed:</span> the new idempotent <code>setup.sh</code> repairs flattened symlinks; documented
+      the Windows <code>core.symlinks</code> note and the "delete + re-run setup.sh" recovery.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L3</span> <code>.claude/settings.json.example</code> redundancy
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">.claude/settings.json.example</span></h3>
+    <p><span class="fix">Fixed:</span> dropped <code>enableAllProjectMcpServers</code>, keeping the explicit
+      <code>enabledMcpjsonServers: ["github"]</code>.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L4</span> <code>system-design.md</code> / <code>operational-knowledge.md</code> were bare TODO stubs
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/</span></h3>
+    <p><span class="fix">Fixed:</span> added a "what good content looks like" prompt to each so a fill-in agent has a target.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L5</span> <code>SPEC.md</code> single-repo assumption
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">SPEC.md</span></h3>
+    <p><span class="fix">Fixed (verified):</span> confirmed the multi-repo path in <code>CONTEXT.md</code> only references
+      SPEC conditionally ("if there's a product spec"), so deleting <code>SPEC.md</code> leaves no dangling reference.</p>
+  </div>
+
+  <!-- ========================= DECISIONS ========================= -->
+  <h2>Decisions</h2>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D1</span> Four coding principles duplicated: <code>CONTEXT.md</code> vs <code>global.md</code>
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">CONTEXT.md</span></h3>
+    <p><span class="fix">Decided:</span> <strong>keep</strong> the principles in <code>CONTEXT.md</code>. A public
+      template can't assume the agent-context <code>global.md</code> exists, so self-containment wins over DRY. The
+      intentional duplication is documented in <code>recommended-tooling.md</code>.</p>
+  </div>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D2</span> <code>init-project-ai-infra</code> redundancy for template-cloned workspaces
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">recommended-tooling.md</span></h3>
+    <p><span class="fix">Decided:</span> still recommend running <code>init-project-ai-infra --full</code> — not to
+      create the symlinks (the template ships those) but to scaffold <code>docs/adr/</code> + <code>docs/agents/</code>
+      that the Matt Pocock skills expect; it's idempotent and won't clobber existing files. Docs updated.</p>
+  </div>
+
+  <!-- ========================= STRENGTHS ========================= -->
+  <h2 class="good">Strengths (keep these)</h2>
+  <div class="panel">
+    <ul class="tight">
+      <li><span class="good">✓</span> <strong>Secrets discipline</strong> — no tokens tracked; credentials stay in the keychain. <code>.gitignore</code> verified correct.</li>
+      <li><span class="good">✓</span> <strong>Single-source agent entrypoints</strong> — one <code>CONTEXT.md</code>, three symlinks (mode <code>120000</code> on the remote).</li>
+      <li><span class="good">✓</span> <strong>Layered, cross-linked docs</strong> — structure / setup / usage / tooling, one authoritative table each.</li>
+      <li><span class="good">✓</span> <strong>All internal links resolve.</strong></li>
+      <li><span class="good">✓</span> <strong>Rendered onboarding</strong> — HTML guide + GitHub Pages (with <code>.nojekyll</code>).</li>
+      <li><span class="good">✓</span> <strong>Accurate toolchain docs</strong> — real agent-context system + correct upstream repos.</li>
+    </ul>
+  </div>
+
+  <!-- ========================= CHANGE LOG ========================= -->
+  <h2>Change log</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>2026-06-24</td><td>Initial critical review: 2 High, 5 Medium, 5 Low, 2 Decisions, 6 Strengths.</td></tr>
+      <tr><td>2026-06-24</td><td>Resolved all 12 findings; settled D1 (keep) and D2 (recommend <code>--full</code>). Added LICENSE, <code>.vscode/</code>, functional scripts, fallback docs, and this maintenance convention.</td></tr>
+    </tbody>
+  </table>
+
+</main>
+
+<footer><div class="wrap">
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-06-24.
+  Source of truth for template-improvement work — keep it current.
+</div></footer>
+</body>
+</html>

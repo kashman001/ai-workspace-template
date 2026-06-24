@@ -718,7 +718,7 @@ agent conversation history.
 | Path | Checked in? | Why |
 |---|---|---|
 | `CONTEXT.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` | Yes | Agent entrypoints (the last three are symlinks → `CONTEXT.md`) |
-| `<Project>.code-workspace` | Yes | Shared VS Code workspace definition |
+| `<Project>.code-workspace` | Yes | Shared VS Code workspace definition (VS Code only — create per project if used; not shipped in the template) |
 | `docs/`, `skills/`, `prompt-library/` | Yes | Shared documentation and skills |
 | `work/` | Yes | Project work and persisted state |
 | `references/README.md` | Yes | Registry of external repos |

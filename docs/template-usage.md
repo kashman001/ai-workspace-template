@@ -60,9 +60,9 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
   don't use it, delete those and the `.opencode/opencode.json` plugin entry.
 - **Skills** — `skills/` ships empty. Add reusable agent workflows as needed
   and list them in `CONTEXT.md` → "Workspace Skills".
-- **Scripts** — `scripts/setup.sh`, `check-workspace-structure.sh`, and
-  `check-service-access.sh` are executable stubs. Implement them when the
-  workspace stabilizes.
+- **Scripts** — `scripts/setup.sh` (symlinks, config copies, `--clone-repos`),
+  `check-workspace-structure.sh`, and `check-service-access.sh` are functional
+  out of the box; extend them as the workspace grows.
 - **Agent toolchain** — optional global tools (Claude Code status line,
   superpowers plugin, Matt Pocock engineering skills, Karpathy principles,
   graphify) are documented in `docs/recommended-tooling.md`, including the

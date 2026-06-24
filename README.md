@@ -13,9 +13,14 @@ skills, and active work, shared across Claude Code, Codex, OpenCode, and
 Gemini.
 
 **Using this template?** Start with the visual setup guide —
-[`docs/setup-guide.html`](docs/setup-guide.html) (open in a browser; diagrams +
-step-by-step for humans and AI agents). Prefer Markdown?
+**[kashman001.github.io/ai-workspace-template/setup-guide.html](https://kashman001.github.io/ai-workspace-template/setup-guide.html)**
+(rendered; diagrams + step-by-step for humans and AI agents). Source:
+[`docs/setup-guide.html`](docs/setup-guide.html). Prefer Markdown?
 [`docs/template-usage.md`](docs/template-usage.md).
 
 **Working in a scaffolded workspace?** Start here →
 [`CONTEXT.md`](CONTEXT.md)
+
+**Improving the template itself?** Open issues and their status live in
+[`template-workspace-backlog.html`](template-workspace-backlog.html) — see
+"Maintaining this backlog" in that file for the update convention.

@@ -1,0 +1,15 @@
+// Shared VS Code settings (checked in). User-specific MCP config lives in
+// .vscode/mcp.json (gitignored) — copy it from .vscode/mcp.json.example.
+// See: docs/workspace-structure.md → "IDE and Agent Configuration"
+{
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/.DS_Store": true
+  },
+  "search.exclude": {
+    "**/repos": true,
+    "**/references": true,
+    "**/graphify-out": true
+  }
+}

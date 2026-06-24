@@ -232,8 +232,8 @@ rm -rf .git &amp;&amp; git init</code></pre>
 
   <div class="step"><div class="num">2</div><div class="body">
     <h3>Bootstrap the local files</h3>
-    <p>Run the setup script (or do the manual equivalents — it ships as an executable stub).
-    Add <code>--clone-repos</code> for a multi-repo workspace.</p>
+    <p>Run the setup script — it creates <code>.env</code>, the agent symlinks, <code>repos/README.md</code>,
+    and the per-user config copies (idempotent). Add <code>--clone-repos</code> for a multi-repo workspace.</p>
     <pre><code>./scripts/setup.sh                 # creates .env, symlinks, repos/README.md
 ./scripts/check-workspace-structure.sh   # verify symlinks resolve, dirs present</code></pre>
   </div></div>
