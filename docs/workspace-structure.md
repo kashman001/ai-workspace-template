@@ -439,25 +439,31 @@ docs/
 │
 └── repo-context/               # Per-repo architecture and navigation docs
     ├── README.md               #   Index of covered repos
+    ├── _templates/             #   Skeletons copied into each repo folder
     └── <repo>/                 #   One folder per covered repo
         ├── code-structure.md   #   Factual navigation ("where is it?")
-        └── design.md           #   Architecture and design ("how does it fit?")
+        ├── design.md           #   Architecture and design ("how does it fit?")
+        └── api.md              #   Public surface (service / library / CLI)
 ```
 
 ### Why Per-Repo Context Docs?
 
 When agents work inside a repo, they need orientation faster than
-"read every file." Two short docs per repo answer the two most common
-questions:
+"read every file." Three short docs per repo answer the common questions:
 
 - **`code-structure.md`** — a factual map: where modules live, what each
   directory does, how to find specific functionality.
 - **`design.md`** — architecture and component boundaries: how the pieces
   fit together, what's a separate process vs. a library, why.
+- **`api.md`** — the repo's public surface (service endpoints, library
+  exports, or CLI commands — whichever applies).
 
-Generate these once with a prompt contract (see `prompt-library/`) and
-refresh when the repo changes significantly. They are workspace artifacts,
-not committed back to the product repos.
+Generate them with the **`onboard-repo`** workflow (`/onboard-repo <repo-name>`,
+backed by `scripts/onboard-repo.sh` and the skeletons in
+`docs/repo-context/_templates/`); each doc carries a provenance block (date +
+source commit) and `scripts/check-repo-context.sh` flags when the code has moved
+past it. Refresh with `scripts/onboard-repo.sh <repo> --refresh`. They are
+workspace artifacts, not committed back to the product repos.
 
 ---
 
@@ -474,7 +480,7 @@ folder with at least a `SKILL.md` describing:
 
 ```
 skills/
-├── repo-context-docs/          # Generate/refresh repo context documents
+├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── handoff/                    # Session handoff for agent/human continuity
 ├── diagnose/                   # Systematic 6-phase debugging methodology
 ├── tdd/                        # Test-driven development discipline
@@ -490,7 +496,7 @@ Skills" section with a one-line description so agents can discover them.
 ### Generic vs. Domain-Specific Skills
 
 - **Generic** (`handoff`, `diagnose`, `tdd`, `grill`, `context-analysis`,
-  `repo-context-docs`) — useful in any project.
+  `onboard-repo`) — useful in any project.
 - **Domain-specific** — workflows particular to your problem domain
   (testing methodology, bug triage pipeline, deployment runbooks). These
   carry the project's institutional knowledge.

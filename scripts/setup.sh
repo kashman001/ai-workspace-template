@@ -66,3 +66,4 @@ fi
 echo "Done. Next:"
 echo "  - authenticate / export the MCP token: scripts/check-service-access.sh (then docs/runbooks/authentication.md)"
 echo "  - fill in CONTEXT.md, then run scripts/check-workspace-structure.sh"
+echo "  - onboard a repo: /onboard-repo <repo-name>  (freshness later: scripts/check-repo-context.sh)"
