@@ -61,6 +61,10 @@ Responsibilities (each idempotent — safe to re-run):
 - **Stamp the doc templates** — create `docs/repo-context/<repo-name>/` and copy
   the three templates (`code-structure.md`, `design.md`, `api.md`) from
   `docs/repo-context/_templates/` if not already present (never clobber existing).
+  Fill each doc's **provenance block** with today's date and the repo's `HEAD` SHA.
+- **`--refresh` flag** — re-stamp the provenance block (date + current `HEAD`) and
+  re-run `graphify update .`; leaves doc *content* for the skill/agent to re-derive.
+  This is the regeneration entry point referenced by the provenance header.
 - **Signal graphify availability via a `Status:` stdout line** (e.g.
   `Status: graphify=live` or `Status: graphify=fallback`) and **always `exit 0`**
   unless a required precondition (missing `repo-name` arg) fails. This matches
@@ -165,8 +169,9 @@ to point at `_templates/` instead of `prompt-library/` (don't leave both).
 
 This dir does not exist yet; the plan creates it with three skeleton files (the
 script copies them verbatim into each new repo folder). Each is a markdown skeleton
-with a leading HTML-comment header (matching the template's existing doc style) and
-`<placeholder>`/`TODO` sections the agent fills:
+with a leading HTML-comment header (matching the template's existing doc style),
+a **provenance block** (see Drift management), and `<placeholder>`/`TODO` sections
+the agent fills:
 
 - **`code-structure.md`** — sections: *Directory map*, *Modules & responsibilities*,
   *Entrypoints*, *Key flows*, plus a footer note "graphify is the live source;
@@ -183,6 +188,48 @@ is gitignored and machine-local, so a live-only index leaves a fresh clone (or a
 machine without graphify built) with no structural reference, and `design.md`/
 `api.md` would cite a source that isn't always present. The committed doc is
 durable and shows drift in PR diffs; graphify adds speed, not the source of record.
+
+## Drift management (committed docs vs. live code)
+
+The three docs are static prose and **will drift** from the code. We do not try to
+eliminate drift (CI auto-regeneration is explicitly rejected — noisy diffs, and it
+can't regenerate the "why" in `design.md`). Instead we make drift **detectable** and
+regeneration **cheap**. Crucially, the three docs have *different* drift profiles, so
+the layering — not a uniform sync — is the real mitigation:
+
+- `code-structure.md` drifts most but matters least to keep synced — **graphify is
+  the live source for that content**; an agent queries the graph (fresh) and only
+  falls back to this committed doc when graphify isn't built.
+- `design.md` (the "why") can't be regenerated from the AST and drifts slowest;
+  rationale ages gracefully. Keep graphify-derivable facts *out* of it so it only
+  drifts when intent changes.
+- `api.md` is the dangerous one (a wrong contract actively misleads) — so it gets
+  the most scrutiny in the human-review gate.
+
+Mechanisms (v1):
+
+1. **Provenance block** — every one of the three docs carries a header:
+   `Generated: <YYYY-MM-DD> · Source commit: <sha> · Refresh: /onboard-repo <repo> --refresh`.
+   The script stamps `<sha>` = the repo's `HEAD` at generation time. This turns
+   *silent* drift into *detectable* drift: any reader/agent compares the recorded
+   SHA to current `HEAD`.
+2. **Freshness check** — `scripts/check-repo-context.sh` (warn-only, `exit 0`,
+   `Status:` line per the suite convention): for each covered repo, if
+   `git log <recorded-sha>..HEAD -- <repo-path>` is non-empty, report
+   `Status: <repo>=stale` and suggest `--refresh`. Wired into the existing check
+   suite (and mentioned in the dependencies runbook). Never blocks.
+3. **`--refresh` mode** — `onboard-repo.sh <repo> --refresh` (and the skill's
+   refresh path): re-run `graphify update .` (AST-only, no API cost), re-derive the
+   docs, re-stamp the provenance block. Ties into the rule already in `CONTEXT.md`
+   ("after modifying code, run `graphify update .`").
+4. **Agent guidance** — `CONTEXT.md` already says query graphify first; reinforce
+   that the committed docs are a *snapshot + rationale*, and an agent that sees a
+   stale provenance SHA should prefer graphify (live) for structure and treat
+   `design.md` as intent-of-record.
+
+**Explicitly out of scope (YAGNI):** CI/git-hook auto-regeneration or a pre-commit
+gate that fails on drift. The warn-only freshness check is the nudge; enforcement is
+left to the human-review gate.
 
 ## Data flow
 
@@ -234,6 +281,8 @@ No new indexing system — reuse what exists:
 - `docs/repos-registry.md` — the four new fields **and** the "Covered by context
   docs" wording for the 3-doc trio.
 - `docs/template-workspace-backlog.html` — a change-log row for the feature.
+- `scripts/check-repo-context.sh` — **new** warn-only freshness check (see Drift
+  management); reference it from the dependencies runbook / check suite.
 
 ## Verification
 
@@ -248,3 +297,6 @@ No new indexing system — reuse what exists:
 - **Extend `scripts/check-workspace-structure.sh`** to assert `_templates/` and its
   three skeletons exist (today it has no knowledge of `repo-context/` contents, so
   "still passes" would be vacuous) — then confirm it passes.
+- Each generated doc carries a provenance block with a real date + SHA; running
+  `check-repo-context.sh` after a code change under the repo path reports
+  `Status: <repo>=stale` and `exit 0`s.
