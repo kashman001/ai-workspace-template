@@ -14,6 +14,23 @@ status="ok"
 found=0
 echo "Repo-context freshness:"
 
+# Resolve a repo's working path: prefer its registry "Location" (so repos onboarded
+# in place at an external/local path are tracked too), else the conventional
+# repos/<name> or workspace root. Returns a path that exists, or "" if none does.
+resolve_repo_path() {
+  local name="$1" loc=""
+  if [ -f docs/repos-registry.md ]; then
+    loc="$(awk -v repo="$name" '
+      $0 ~ "^##[[:space:]]+" repo "([[:space:]]|\\(|$)" {inSec=1; next}
+      inSec && /^##[[:space:]]/ {inSec=0}
+      inSec && /^- \*\*Location\*\*:/ {print; exit}
+    ' docs/repos-registry.md | grep -oE '`[^`]+`' | head -1 | tr -d '`')"
+  fi
+  if [ -n "$loc" ] && [ -d "$loc" ]; then printf '%s' "$loc"; return; fi
+  if [ -d "repos/$name" ]; then printf '%s' "repos/$name"; return; fi
+  [ -d . ] && printf '%s' "."
+}
+
 for d in docs/repo-context/*/; do
   [ -d "$d" ] || continue
   name="$(basename "$d")"
@@ -23,7 +40,7 @@ for d in docs/repo-context/*/; do
   found=1
 
   rec="$(grep -m1 -oE 'Source commit: [0-9a-f]+' "$doc" | awk '{print $3}')"
-  if [ -d "repos/$name" ]; then path="repos/$name"; else path="."; fi
+  path="$(resolve_repo_path "$name")"
 
   if [ -z "$rec" ]; then
     echo "  ? $name: no recorded source commit — run /onboard-repo $name --refresh"
