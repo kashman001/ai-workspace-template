@@ -41,7 +41,8 @@ graphify_status="fallback"
 # Rewrite the "> Generated: ..." provenance line in a doc (fresh copy or --refresh).
 set_provenance() {
   local prov="> Generated: $TODAY | Source commit: $SHA | Refresh: \`/onboard-repo $REPO --refresh\`"
-  sed -i.bak -E "s@^> Generated:.*@$prov@" "$1" && rm -f "$1.bak"
+  local esc=${prov//&/\\&}
+  sed -i.bak -E "s@^> Generated:.*@$esc@" "$1" && rm -f "$1.bak"
 }
 
 add_registry_entry() {
@@ -109,8 +110,12 @@ else
     if [ -f "$CTX_DIR/$f" ]; then
       echo "  docs: $CTX_DIR/$f exists — skipping (not clobbered)"
     else
-      cp "docs/repo-context/_templates/$f" "$CTX_DIR/$f"
-      sed -i.bak "s@<repo>@$REPO@g" "$CTX_DIR/$f" && rm -f "$CTX_DIR/$f.bak"
+      if ! cp "docs/repo-context/_templates/$f" "$CTX_DIR/$f"; then
+        echo "  ✗ missing template docs/repo-context/_templates/$f" >&2
+        exit 1
+      fi
+      repo_esc=${REPO//&/\\&}
+      sed -i.bak "s@<repo>@$repo_esc@g" "$CTX_DIR/$f" && rm -f "$CTX_DIR/$f.bak"
       set_provenance "$CTX_DIR/$f"
       echo "  docs: created $CTX_DIR/$f"
     fi
