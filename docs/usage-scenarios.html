@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Workspace Template — Usage Scenarios &amp; Lifecycle</title>
+<!--
+  File: docs/usage-scenarios.html
+  Purpose: End-to-end usage scenarios for this workspace — from pulling the
+           template, through onboarding an existing repo OR starting a new
+           project, to building features alongside AI agents — plus a lifecycle
+           state diagram. Hand-authored (not pandoc); reuses the setup-guide
+           visual identity. Edit the HTML directly.
+  See: docs/setup-guide.html (visual identity), docs/workspace-structure.md,
+       docs/template-usage.md, CONTEXT.md
+-->
+<style>
+  :root{
+    --bg:#0f1222; --panel:#171a2e; --panel-2:#1d2138; --ink:#e7e9f3; --muted:#a3a8c3;
+    --line:#2b3052; --accent:#7c83ff; --accent-2:#22d3ee; --green:#34d399; --amber:#fbbf24;
+    --code:#0b0e1a; --radius:14px; --maxw:980px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:linear-gradient(180deg,#0c0f1d,#0f1222 240px);color:var(--ink);
+    font-family:var(--sans);line-height:1.6;font-size:16px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  header.hero{padding:64px 0 28px;border-bottom:1px solid var(--line)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent-2);border:1px solid var(--line);
+    padding:5px 11px;border-radius:999px;background:var(--panel)}
+  h1{font-size:42px;line-height:1.1;margin:18px 0 10px;letter-spacing:-.02em}
+  h2{font-size:26px;margin:46px 0 14px;letter-spacing:-.01em;scroll-margin-top:20px}
+  h3{font-size:18px;margin:26px 0 8px}
+  .lede{font-size:19px;color:var(--muted);max-width:72ch}
+  .grid-toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:26px 0 6px}
+  .toc-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;display:block}
+  .toc-card:hover{border-color:var(--accent);text-decoration:none}
+  .toc-card .n{font-family:var(--mono);color:var(--accent-2);font-size:12px}
+  .toc-card .t{display:block;color:var(--ink);font-weight:600;margin-top:3px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;margin:18px 0}
+  .fig{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;margin:20px 0;overflow-x:auto}
+  .fig svg{display:block;margin:0 auto;max-width:100%;height:auto}
+  .figcap{color:var(--muted);font-size:13.5px;text-align:center;margin-top:10px;font-family:var(--mono)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;color:#d7dcff}
+  code{font-family:var(--mono);font-size:.92em;background:#20243f;padding:1px 6px;border-radius:6px;color:#cfd4ff}
+  pre code{background:none;padding:0;color:inherit}
+  .scenario{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;margin:22px 0}
+  .scenario h3{margin-top:0;display:flex;align-items:center;gap:12px;font-size:20px}
+  .snum{flex:0 0 auto;height:34px;min-width:34px;padding:0 9px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),#5b62e0);color:#fff;font-weight:700;font-family:var(--mono);font-size:14px}
+  .who{color:var(--muted);font-size:14px;margin:2px 0 12px}
+  .who b{color:var(--accent-2);font-weight:600}
+  ol.steps{margin:10px 0;padding-left:20px}
+  ol.steps li{margin:7px 0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600}
+  td code{white-space:nowrap}
+  .callout{border-left:4px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:20px 0}
+  .callout.ai{border-left-color:var(--accent-2)}
+  .callout h3{margin-top:0}
+  .tag{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line)}
+  .tag.a{color:var(--accent-2);border-color:#194a52;background:#0c2025}
+  .tag.b{color:var(--amber);border-color:#5a4a1e;background:#241d0c}
+  .branch-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+  @media (max-width:680px){.branch-row{grid-template-columns:1fr}}
+  footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 60px;color:var(--muted);font-size:14px}
+  ul.tight{margin:8px 0;padding-left:22px}
+  ul.tight li{margin:4px 0}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .pill{font-family:var(--mono);font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px;color:var(--muted)}
+  hr{border:none;border-top:1px solid var(--line);margin:40px 0}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="badge">AI Workspace Template</span>
+  <h1>Usage scenarios &amp; lifecycle</h1>
+  <p class="lede">How a real workflow flows through this workspace — from pulling down the
+  template, to either onboarding an existing repo or starting a brand-new project, to
+  building features slice-by-slice alongside AI agents and checkpointing between sessions.</p>
+  <div class="pill-row">
+    <span class="pill">pull template</span><span class="pill">onboard repo</span>
+    <span class="pill">new project</span><span class="pill">feature loop</span>
+    <span class="pill">checkpoint / hand-off</span>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+  <div class="grid-toc">
+    <a class="toc-card" href="#read"><span class="n">00</span><span class="t">How to read this</span></a>
+    <a class="toc-card" href="#lifecycle"><span class="n">01</span><span class="t">Lifecycle at a glance</span></a>
+    <a class="toc-card" href="#s1"><span class="n">02</span><span class="t">Pull &amp; bootstrap</span></a>
+    <a class="toc-card" href="#s2"><span class="n">03</span><span class="t">Branch A — onboard a repo</span></a>
+    <a class="toc-card" href="#s3"><span class="n">04</span><span class="t">Branch B — new project</span></a>
+    <a class="toc-card" href="#s4"><span class="n">05</span><span class="t">Feature loop with agents</span></a>
+    <a class="toc-card" href="#s5"><span class="n">06</span><span class="t">Checkpoint &amp; resume</span></a>
+    <a class="toc-card" href="#s6"><span class="n">07</span><span class="t">Finish a branch</span></a>
+    <a class="toc-card" href="#states"><span class="n">08</span><span class="t">State reference</span></a>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="read">00 · How to read this</h2>
+  <p>The workspace is a <strong>coordination layer</strong> — one shared context for Claude&nbsp;Code,
+  Codex, OpenCode, and Gemini — not product code itself. The journey below has a fixed spine and one
+  fork:</p>
+  <ul class="tight">
+    <li><b>Pull &amp; bootstrap</b> the template into your own workspace (every project does this once).</li>
+    <li>Then the fork: <span class="tag a">Branch&nbsp;A</span> pull in an <b>existing</b> repo, or
+        <span class="tag b">Branch&nbsp;B</span> start a <b>new</b> project from scratch.</li>
+    <li><b>Build features</b> in a repeatable loop with AI agents, persisting state to <code>work/</code>.</li>
+    <li><b>Checkpoint</b> at session boundaries so the next (post-compaction) session resumes cleanly.</li>
+  </ul>
+  <p>Each scenario names the human action, the agent role, and the concrete artifacts touched. Throughout,
+  the rule is the same: <em>disk is the source of truth</em> — durable state lives in files under
+  <code>docs/</code> and <code>work/</code>, never only in an agent's conversation memory.</p>
+
+  <!-- ============================================= -->
+  <h2 id="lifecycle">01 · Lifecycle at a glance</h2>
+  <p>The whole journey as a state machine. The single fork (existing repo vs. new project) re-converges
+  into one development loop; checkpointing cycles you back into that loop across sessions.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 920 760" role="img" aria-label="Workspace lifecycle state diagram">
+      <style>
+        .st{fill:#1d2138;stroke:#2b3052;stroke-width:1.5}
+        .st.a{stroke:#22d3ee}
+        .st.b{stroke:#fbbf24}
+        .st.loop{fill:#13243a;stroke:#7c83ff;stroke-width:2}
+        .st.done{stroke:#34d399}
+        .stt{font:600 14px var(--sans,sans-serif);fill:#e7e9f3;text-anchor:middle}
+        .sts{font:11.5px var(--mono,monospace);fill:#a3a8c3;text-anchor:middle}
+        .lab{font:11.5px var(--mono,monospace);fill:#22d3ee}
+        .lab.c{text-anchor:middle}
+        .start{fill:#34d399}
+        .dia{fill:#241d0c;stroke:#fbbf24;stroke-width:1.5}
+        .diat{font:600 12.5px var(--sans,sans-serif);fill:#fbbf24;text-anchor:middle}
+      </style>
+      <defs>
+        <marker id="ah" markerWidth="10" markerHeight="10" refX="7.5" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#7c83ff"/>
+        </marker>
+      </defs>
+
+      <!-- start dot -->
+      <circle class="start" cx="460" cy="26" r="7"/>
+
+      <!-- S0 Template -->
+      <rect class="st" x="350" y="52" width="220" height="58" rx="13"/>
+      <text class="stt" x="460" y="78">Template on GitHub</text>
+      <text class="sts" x="460" y="96">ai-workspace-template</text>
+      <line x1="460" y1="33" x2="460" y2="52" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+
+      <!-- S1 Bootstrapped -->
+      <rect class="st" x="350" y="156" width="220" height="62" rx="13"/>
+      <text class="stt" x="460" y="182">Workspace bootstrapped</text>
+      <text class="sts" x="460" y="200">setup.sh · agents wired · CONTEXT.md filled</text>
+      <line x1="460" y1="110" x2="460" y2="156" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <text class="lab c" x="460" y="138" text-anchor="middle">Use this template → clone → setup.sh</text>
+
+      <!-- Decision diamond -->
+      <polygon class="dia" points="460,250 575,300 460,350 345,300"/>
+      <text class="diat" x="460" y="296">existing code</text>
+      <text class="diat" x="460" y="313">or new?</text>
+      <line x1="460" y1="218" x2="460" y2="250" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+
+      <!-- S2a Repo onboarded (left, Branch A) -->
+      <rect class="st a" x="60" y="392" width="250" height="66" rx="13"/>
+      <text class="stt" x="185" y="418">Existing repo onboarded</text>
+      <text class="sts" x="185" y="436">repos/ · /onboard-repo · repo-context docs</text>
+      <line x1="345" y1="300" x2="225" y2="392" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <text class="lab" x="86" y="360">existing → clone into repos/</text>
+
+      <!-- S2b New project scaffolded (right, Branch B) -->
+      <rect class="st b" x="610" y="392" width="250" height="66" rx="13"/>
+      <text class="stt" x="735" y="418">New project scaffolded</text>
+      <text class="sts" x="735" y="436">SPEC.md · code at root or new repo</text>
+      <line x1="575" y1="300" x2="695" y2="392" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <text class="lab" x="600" y="360" text-anchor="end">new → SPEC.md + scaffold</text>
+
+      <!-- S3 Active dev loop (center) -->
+      <rect class="st loop" x="330" y="510" width="260" height="74" rx="14"/>
+      <text class="stt" x="460" y="540">Active development loop</text>
+      <text class="sts" x="460" y="558">brainstorm → plan → TDD → review</text>
+      <text class="sts" x="460" y="574">persist to work/ · graphify update</text>
+      <!-- A & B converge into loop -->
+      <line x1="225" y1="458" x2="370" y2="514" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <line x1="695" y1="458" x2="550" y2="514" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <!-- self-loop (iterate) -->
+      <path d="M590,524 C660,512 660,582 590,570" fill="none" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <text class="lab" x="612" y="503">iterate next slice</text>
+
+      <!-- S4 Checkpoint -->
+      <rect class="st" x="330" y="636" width="260" height="62" rx="13"/>
+      <text class="stt" x="460" y="662">Checkpoint / hand-off</text>
+      <text class="sts" x="460" y="680">/checkpoint → work/ hand-off doc</text>
+      <line x1="460" y1="584" x2="460" y2="636" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <text class="lab c" x="382" y="616" text-anchor="middle">/checkpoint</text>
+      <!-- resume back to loop -->
+      <path d="M330,655 C220,640 230,540 330,545" fill="none" stroke="#7c83ff" stroke-width="2"
+            stroke-dasharray="5 4" marker-end="url(#ah)"/>
+      <text class="lab" x="150" y="600">resume next session</text>
+
+      <!-- S5 Branch merged (right of loop) -->
+      <rect class="st done" x="640" y="636" width="220" height="62" rx="13"/>
+      <text class="stt" x="750" y="662">Branch merged</text>
+      <text class="sts" x="750" y="680">tests pass → PR → main</text>
+      <line x1="590" y1="556" x2="640" y2="650" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah)"/>
+      <text class="lab" x="600" y="612">done → PR</text>
+      <!-- back to loop for next feature -->
+      <path d="M750,636 C760,604 660,556 590,548" fill="none" stroke="#7c83ff" stroke-width="2"
+            stroke-dasharray="5 4" marker-end="url(#ah)"/>
+      <text class="lab" x="700" y="600" text-anchor="end">next feature</text>
+    </svg>
+    <div class="figcap">Figure 1 — Workspace lifecycle. Solid = forward; dashed = return into the loop.</div>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="s1">02 · Scenario 1 — Pull the template &amp; bootstrap</h2>
+  <div class="scenario">
+    <h3><span class="snum">S1</span>Fresh clone → working workspace</h3>
+    <p class="who"><b>Human</b> drives setup · <b>Agent</b> (optional) fills placeholders from the
+      <code>Agent Bootstrap Instructions</code> in <code>docs/workspace-structure.md</code></p>
+    <ol class="steps">
+      <li>Click <strong>“Use this template”</strong> on GitHub (or clone and reset history), then enter the
+        new directory.</li>
+      <li>Run the bootstrap script — it creates <code>.env</code>, the agent-entrypoint symlinks, and
+        <code>repos/README.md</code>:
+        <pre><code>git clone https://github.com/&lt;you&gt;/ai-workspace-template.git &lt;project&gt;-workspace
+cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
+./scripts/setup.sh</code></pre></li>
+      <li>Fill the <code>&lt;…&gt;</code> placeholders — <code>CONTEXT.md</code> first (the front door),
+        then <code>README.md</code>, <code>SPEC.md</code>, <code>docs/repos-registry.md</code>. Find what's
+        left with <code>grep -rIn -e '&lt;[a-z-]\+&gt;' -e 'TODO' -e 'Fill in:' .</code></li>
+      <li>Wire agents &amp; MCP: copy <code>.claude/settings.json.example</code> →
+        <code>.claude/settings.local.json</code>, <code>.mcp.json.example</code> → <code>.mcp.json</code>,
+        and export the GitHub token (<code>docs/mcp-setup.md</code>).</li>
+      <li>Verify with the <code>scripts/check-*.sh</code> checks; fix anything they flag using the matching
+        runbook in <code>docs/runbooks/</code>.</li>
+    </ol>
+    <p><strong>Exit state:</strong> <em>Workspace bootstrapped</em> — every agent reads the same
+      <code>CONTEXT.md</code>; you now decide the fork below.</p>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="s2">03 · Scenario 2 — Branch A: pull in an existing repo</h2>
+  <div class="scenario">
+    <h3><span class="snum">S2</span><span class="tag a">Branch A</span>&nbsp; Onboard an existing product repo</h3>
+    <p class="who"><b>Human</b> clones the repo · <b>Agent</b> runs the <code>onboard-repo</code> skill to
+      index it and derive context docs</p>
+    <ol class="steps">
+      <li>Clone the product repo under <code>repos/</code> (multi-repo) — it's gitignored, so it stays out of
+        the workspace's own history.</li>
+      <li>Onboard it so agents understand it without re-reading the whole tree each time:
+        <pre><code>/onboard-repo &lt;repo-name&gt;        # Claude Code shortcut
+# or: scripts/onboard-repo.sh &lt;repo-name&gt;</code></pre>
+        This records identity/auth in <code>docs/repos-registry.md</code>, builds a graphify code index
+        (manual-scan fallback if graphify is absent), and writes
+        <code>code-structure.md</code> / <code>design.md</code> / <code>api.md</code> under
+        <code>docs/repo-context/&lt;repo&gt;/</code>.</li>
+      <li>Skim the generated <code>docs/repo-context/&lt;repo&gt;/</code> docs and correct anything the scan got
+        wrong — these become the agent's map of the codebase.</li>
+      <li>Keep it fresh: <code>scripts/check-repo-context.sh</code> flags drift;
+        <code>scripts/onboard-repo.sh &lt;repo&gt; --refresh</code> regenerates.</li>
+    </ol>
+    <p><strong>Exit state:</strong> <em>Existing repo onboarded</em> — registry + per-repo context docs +
+      (optionally) a graphify graph. Re-run for each additional repo. → joins the development loop.</p>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="s3">04 · Scenario 3 — Branch B: start a new project</h2>
+  <div class="scenario">
+    <h3><span class="snum">S3</span><span class="tag b">Branch B</span>&nbsp; Scaffold a brand-new project</h3>
+    <p class="who"><b>Human</b> sets product intent · <b>Agent</b> brainstorms scope and scaffolds the first
+      slice</p>
+    <ol class="steps">
+      <li>Decide the shape: a <strong>single-repo</strong> workspace (product code lives at the workspace root,
+        <code>repos/</code> stays empty) or a new repo cloned under <code>repos/</code>.</li>
+      <li>Write product intent into <code>SPEC.md</code> and the one-paragraph purpose in
+        <code>CONTEXT.md</code> → <em>Workspace Purpose</em>.</li>
+      <li>Pressure-test the idea before coding — invoke the <code>brainstorming</code> skill, then
+        <code>grill-with-docs</code> to align terminology against the project's <em>Language</em> section.</li>
+      <li>Turn the agreed plan into tracked work with <code>to-prd</code> (a PRD) and <code>to-issues</code>
+        (tracer-bullet vertical slices).</li>
+      <li>Scaffold the first runnable slice — the smallest end-to-end path that proves the architecture.</li>
+    </ol>
+    <p><strong>Exit state:</strong> <em>New project scaffolded</em> — spec, language, and a first slice of
+      issues exist. → joins the development loop.</p>
+  </div>
+
+  <div class="callout">
+    <h3>The fork re-converges</h3>
+    <p>Branch A and Branch B differ only in <em>how the code arrives</em>. Both land in the same place: a
+      workspace where agents have a reliable map of the code (repo-context docs or a fresh SPEC) and a queue
+      of vertical slices to build. Everything after this point is identical.</p>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="s4">05 · Scenario 4 — The feature loop with AI agents</h2>
+  <p>The core working rhythm: one vertical slice at a time, red-green-refactor, with agents driving each
+  phase and durable state written to <code>work/&lt;username&gt;_&lt;project&gt;/</code>.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 900 260" role="img" aria-label="Feature development inner loop">
+      <style>
+        .nb{fill:#1d2138;stroke:#2b3052;stroke-width:1.5}
+        .nb.t{fill:#13243a;stroke:#7c83ff;stroke-width:2}
+        .nt{font:600 13px var(--sans,sans-serif);fill:#e7e9f3;text-anchor:middle}
+        .ns{font:10.5px var(--mono,monospace);fill:#22d3ee;text-anchor:middle}
+        .rl{font:11px var(--mono,monospace);fill:#a3a8c3;text-anchor:middle}
+      </style>
+      <defs>
+        <marker id="ah2" markerWidth="10" markerHeight="10" refX="7.5" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#7c83ff"/>
+        </marker>
+      </defs>
+      <!-- 5 nodes -->
+      <rect class="nb" x="14"  y="60" width="150" height="64" rx="12"/>
+      <text class="nt" x="89" y="88">Brainstorm</text><text class="ns" x="89" y="106">grill-with-docs</text>
+      <rect class="nb" x="190" y="60" width="150" height="64" rx="12"/>
+      <text class="nt" x="265" y="88">Plan slice</text><text class="ns" x="265" y="106">to-prd · to-issues</text>
+      <rect class="nb t" x="366" y="60" width="160" height="64" rx="12"/>
+      <text class="nt" x="446" y="84">Build (TDD)</text><text class="ns" x="446" y="102">red → green → refactor</text>
+      <rect class="nb" x="552" y="60" width="150" height="64" rx="12"/>
+      <text class="nt" x="627" y="88">Review</text><text class="ns" x="627" y="106">request-code-review</text>
+      <rect class="nb" x="728" y="60" width="158" height="64" rx="12"/>
+      <text class="nt" x="807" y="88">Sync graph</text><text class="ns" x="807" y="106">graphify update .</text>
+      <!-- forward arrows -->
+      <line x1="164" y1="92" x2="190" y2="92" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah2)"/>
+      <line x1="340" y1="92" x2="366" y2="92" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah2)"/>
+      <line x1="526" y1="92" x2="552" y2="92" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah2)"/>
+      <line x1="702" y1="92" x2="728" y2="92" stroke="#7c83ff" stroke-width="2" marker-end="url(#ah2)"/>
+      <!-- return loop -->
+      <path d="M807,124 C807,190 200,190 89,124" fill="none" stroke="#7c83ff" stroke-width="2"
+            stroke-dasharray="5 4" marker-end="url(#ah2)"/>
+      <text class="rl" x="448" y="184">next vertical slice — persist progress to work/</text>
+    </svg>
+    <div class="figcap">Figure 2 — One slice through the loop. Repeat until the feature is done.</div>
+  </div>
+
+  <div class="scenario">
+    <h3><span class="snum">S4</span>Build one slice with agents</h3>
+    <p class="who"><b>Human</b> sets the goal &amp; reviews · <b>Agent</b> runs the loop: brainstorm → TDD →
+      self-review</p>
+    <ol class="steps">
+      <li>Pick the next issue/slice. Restate it as a <em>verifiable</em> goal (“write a failing test for X,
+        then make it pass”) — strong success criteria let the agent work independently.</li>
+      <li><strong>Red:</strong> agent writes a failing test that reproduces the requirement
+        (<code>test-driven-development</code> skill).</li>
+      <li><strong>Green:</strong> minimum code to pass — no speculative features, surgical changes only.</li>
+      <li><strong>Refactor</strong> with tests green; then <code>requesting-code-review</code> before merge.</li>
+      <li>After modifying code, run <code>graphify update .</code> to keep the knowledge graph current
+        (AST-only, no API cost).</li>
+      <li>Persist anything that must survive context compaction to <code>work/&lt;username&gt;_&lt;project&gt;/</code>
+        — not to conversation memory.</li>
+    </ol>
+    <p><strong>Loop:</strong> repeat per slice. When the feature's tests all pass → finish the branch
+      (Scenario 6). At a session boundary → checkpoint (Scenario 5).</p>
+  </div>
+
+  <div class="callout ai">
+    <h3>Context discipline keeps long sessions healthy</h3>
+    <p>Disk is the source of truth — re-read files before asserting facts; demand-load rather than pre-load;
+      use targeted <code>Grep</code>/ranged reads; treat sub-agent summaries as hints to verify. These rules
+      (in <code>CONTEXT.md</code> → <em>Agent Context Discipline</em>) are what let the loop run for hours
+      without drifting.</p>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="s5">06 · Scenario 5 — Checkpoint &amp; resume across sessions</h2>
+  <div class="scenario">
+    <h3><span class="snum">S5</span>Wrap a chunk, hand off, pick up clean</h3>
+    <p class="who"><b>Human</b> calls the checkpoint · <b>Agent</b> reconciles state and writes the hand-off</p>
+    <ol class="steps">
+      <li>At a natural boundary (or before compacting context) invoke <code>/checkpoint [next-focus]</code>.</li>
+      <li>The skill reconciles the <strong>backlog / issue tracker</strong>, <strong>project memory</strong>
+        (+ <code>MEMORY.md</code> pointers), and <strong>reference docs</strong> — bringing each in line with
+        what actually shipped.</li>
+      <li>It writes a secret-free <strong>hand-off doc</strong> (via the <code>handoff</code> skill) under
+        <code>work/&lt;username&gt;_&lt;project&gt;/</code>, referencing specs/plans by path rather than duplicating
+        them.</li>
+      <li>It confirms a clean branch state and emits a <strong>catch-up prompt</strong> for the next session —
+        naming the hand-off doc path so the post-compaction agent knows where to start.</li>
+      <li>Next session: paste the catch-up prompt → the agent reads the hand-off doc from <code>work/</code>
+        and resumes the development loop.</li>
+    </ol>
+    <p><strong>Exit state:</strong> back into the <em>Active development loop</em> with no lost context.</p>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="s6">07 · Scenario 6 — Finish a branch</h2>
+  <div class="scenario">
+    <h3><span class="snum">S6</span>Feature complete → merge → next</h3>
+    <p class="who"><b>Human</b> approves the merge · <b>Agent</b> verifies completion before claiming done</p>
+    <ol class="steps">
+      <li>All slice tests pass and the feature meets its success criteria — verify by running the commands,
+        not by assertion (<code>verification-before-completion</code>).</li>
+      <li>Use <code>finishing-a-development-branch</code> to choose the integration path (merge, PR, or
+        cleanup).</li>
+      <li>Open the PR against <code>main</code>; address review; merge.</li>
+      <li>Run <code>graphify update .</code> on the merged state, then return to the loop for the next feature.</li>
+    </ol>
+    <p><strong>Exit state:</strong> <em>Branch merged</em> → loop back to the next slice, or checkpoint and
+      stop for the session.</p>
+  </div>
+
+  <!-- ============================================= -->
+  <h2 id="states">08 · State reference</h2>
+  <p>Each lifecycle state, what enters it, and the durable artifacts it produces.</p>
+  <table>
+    <thead>
+      <tr><th>State</th><th>Entered by</th><th>Durable artifacts</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Template on GitHub</strong></td>
+        <td>Starting point — the published template repo</td>
+        <td><code>ai-workspace-template</code> (placeholders &amp; stubs)</td>
+      </tr>
+      <tr>
+        <td><strong>Workspace bootstrapped</strong></td>
+        <td>Clone + <code>scripts/setup.sh</code> + fill placeholders + wire agents/MCP</td>
+        <td><code>CONTEXT.md</code>, entrypoint symlinks, <code>.env</code>, <code>.mcp.json</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag a">A</span> <strong>Existing repo onboarded</strong></td>
+        <td>Clone into <code>repos/</code> + <code>/onboard-repo</code></td>
+        <td><code>docs/repos-registry.md</code>, <code>docs/repo-context/&lt;repo&gt;/</code>, graphify graph</td>
+      </tr>
+      <tr>
+        <td><span class="tag b">B</span> <strong>New project scaffolded</strong></td>
+        <td>Set <code>SPEC.md</code>, brainstorm, <code>to-prd</code> / <code>to-issues</code></td>
+        <td><code>SPEC.md</code>, PRD, issue queue, first slice</td>
+      </tr>
+      <tr>
+        <td><strong>Active development loop</strong></td>
+        <td>A or B converge here; TDD per slice</td>
+        <td>Code + tests, <code>work/&lt;user&gt;_&lt;project&gt;/</code> state, updated graph</td>
+      </tr>
+      <tr>
+        <td><strong>Checkpoint / hand-off</strong></td>
+        <td><code>/checkpoint</code> at a session boundary</td>
+        <td>Hand-off doc in <code>work/</code>, reconciled backlog/memory/docs, catch-up prompt</td>
+      </tr>
+      <tr>
+        <td><strong>Branch merged</strong></td>
+        <td>Tests pass → PR → merge to <code>main</code></td>
+        <td>Merged code, closed issues; loops back for the next feature</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr>
+  <p>See also: <a href="setup-guide.html">Setup guide</a> ·
+  <a href="workspace-structure.html">Workspace structure</a> ·
+  <a href="https://github.com/kashman001/ai-workspace-template/blob/main/CONTEXT.md">CONTEXT.md</a> ·
+  <a href="template-usage.md">template-usage.md</a>.</p>
+
+  <footer>
+    <p>ai-workspace-template — usage scenarios &amp; lifecycle. Hand-authored HTML; edit directly
+    (no pandoc build step). Reuses the visual identity of <code>docs/setup-guide.html</code>.</p>
+  </footer>
+
+</main>
+</body>
+</html>

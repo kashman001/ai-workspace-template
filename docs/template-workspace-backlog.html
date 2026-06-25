@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">18</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">19</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">2</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,10 +84,10 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 18 findings are <span class="good">resolved</span>, and both design decisions settled. The initial
+    <p>All 19 findings are <span class="good">resolved</span>, and both design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
-    in the same pass. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
+    in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
     the template now behaves on a clean machine as the docs describe, carries a LICENSE, ships VS Code config, checks
     dependencies, has an auth phase with agent runbooks, and documents a no-agent-context fallback. Each item below
     records what changed. New issues get appended here per the <a href="#maintaining">maintenance convention</a>.</p>
@@ -285,6 +285,20 @@
       (the script already prints an install hint when it is missing).</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L9</span> <code>usage-scenarios.html</code> footer linked <code>../CONTEXT.md</code>, broken on GitHub Pages
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/usage-scenarios.html</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review of the new usage-scenarios doc: <code>.nojekyll</code> lives in
+      <code>docs/</code>, so Pages serves the site rooted at <code>docs/</code>; a <code>../CONTEXT.md</code> link escapes the
+      site root and 404s when published. Sibling docs never use <code>../</code> — they link <code>docs/</code> siblings
+      relatively and out-of-<code>docs/</code> files via absolute GitHub blob URLs (e.g. <code>workspace-structure.html</code>).</p>
+    <p><span class="fix">Fixed:</span> repointed the CONTEXT.md link to its absolute
+      <code>github.com/.../blob/main/CONTEXT.md</code> URL (the other three footer links are <code>docs/</code> siblings, so
+      relative is correct). Also corrected a zero-impact latent typo in the same file — two SVG labels read
+      <code>class="lab.c lab"</code> (now <code>class="lab c"</code>); they rendered correctly only via an inline
+      <code>text-anchor</code> fallback. Verified both diagrams render cleanly via headless Chrome.</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -332,6 +346,8 @@
       <tr><td>2026-06-25</td><td>Fix: exercised the graphify <em>live</em> onboard path (built a real graph; <code>query</code>/<code>path</code>/<code>explain</code> verified, onboard flips to <code>graphify=live</code>). Surfaced a sibling bug — <code>onboard-repo.sh</code>'s default/<code>--refresh</code> path resolution ignored the registry <code>Location</code> (the refresh hint is pathless), so refreshing an externally-onboarded repo stamped the workspace's commit into provenance and reported <code>fallback</code> despite a live graph. Now reuses the same <code>Location</code>-first <code>resolve_repo_path()</code>.</td></tr>
       <tr><td>2026-06-25</td><td>Feature: published the authoritative workspace guide (<code>docs/workspace-structure.md</code>) as a styled, self-contained <code>docs/workspace-structure.html</code> served via Pages, so humans can read it without raw Markdown. Added a reproducible generator <code>scripts/build-guide-html.sh</code> (pandoc; reuses <code>setup-guide.html</code>'s visual identity, the doc's own Contents becomes in-page nav) — generated not hand-maintained, so it can't drift from the source. Linked from the README.</td></tr>
       <tr><td>2026-06-25</td><td>Re-review: fresh evidence pass over the post-review additions (the <code>onboard-repo</code> workflow + the HTML guide) per the maintenance convention. Surfaced and fixed four findings in one pass — M8 (drift guard: the guide builder embeds a source hash, <code>check-workspace-structure.sh</code> warns when the published HTML is stale), L6 (temp-file leak + non-portable <code>mktemp -t</code> in <code>build-guide-html.sh</code>), L7 (duplicated <code>resolve_repo_path()</code> extracted to <code>scripts/lib/repo-paths.sh</code>), L8 (documented the <code>pandoc</code> prerequisite). Scorecard now 0/18/2/0/6; metadata refreshed.</td></tr>
+      <tr><td>2026-06-25</td><td>Feature: added <code>docs/usage-scenarios.html</code> — end-to-end usage scenarios (pull template → onboard an existing repo or start a new project → build features with AI agents → checkpoint between sessions) plus a lifecycle state diagram and a feature-loop diagram. Hand-authored HTML reusing <code>setup-guide.html</code>'s visual identity with self-contained inline SVG (no pandoc/CDN dependency). Linked from the README alongside the other rendered guides.</td></tr>
+      <tr><td>2026-06-25</td><td>Re-review: fresh evidence pass over the new <code>usage-scenarios.html</code> per the maintenance convention — verified every command/path/skill against the repo and rendered both SVG diagrams via headless Chrome to check for collisions. Surfaced and fixed <strong>L9</strong> (footer <code>../CONTEXT.md</code> link breaks on Pages, which serves from <code>docs/</code>; repointed to the absolute blob URL) plus a zero-impact SVG class typo. Scorecard now 0/19/2/0/6.</td></tr>
     </tbody>
   </table>
 

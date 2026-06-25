@@ -18,6 +18,13 @@ Gemini.
 [`docs/setup-guide.html`](docs/setup-guide.html). Prefer Markdown?
 [`docs/template-usage.md`](docs/template-usage.md).
 
+**Want to see how a project flows through the workspace?** The usage scenarios —
+pull the template → onboard an existing repo or start a new project → build
+features with AI agents → checkpoint between sessions — with a lifecycle state
+diagram —
+**[kashman001.github.io/ai-workspace-template/usage-scenarios.html](https://kashman001.github.io/ai-workspace-template/usage-scenarios.html)**
+· source [`docs/usage-scenarios.html`](docs/usage-scenarios.html).
+
 **Want the full workspace guide?** Every directory, convention, and the
 step-by-step agent bootstrap, rendered for easy reading —
 **[kashman001.github.io/ai-workspace-template/workspace-structure.html](https://kashman001.github.io/ai-workspace-template/workspace-structure.html)**
