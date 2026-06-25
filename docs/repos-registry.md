@@ -17,12 +17,15 @@ discoverable from inside `repos/`.
 
 ## <repo-name> (primary)
 
-- **Host**: <GitHub / GitLab / Bitbucket>
-- **Clone URL**: `<ssh-or-https-clone-url>`
+- **Host**: <GitHub / GitLab / Bitbucket / local>
+- **Clone URL**: `<ssh-or-https-clone-url>` (n/a for local)
 - **Default branch**: `main`
 - **Visibility**: <public / private>
 - **Purpose**: <one line>
+- **Auth method**: <gh CLI / SSH key X / PAT in keychain> — see `docs/runbooks/authentication.md`
+- **Language / stack**: <languages + frameworks>
+- **Build / test / run**: `<build>` / `<test>` / `<run>`
 - **Network**: <none special / VPN required / SSH key X>
-- **Location**: `repos/<repo-name>/` (or "workspace root" for single-repo)
-- **Covered by context docs**: not yet (see `docs/repo-context/`)
+- **Location**: `repos/<repo-name>/` (or "workspace root" for single-repo; a local path for a non-hosted repo)
+- **Covered by context docs**: not yet — once onboarded, `docs/repo-context/<repo-name>/` holds `code-structure.md`, `design.md`, `api.md`
 - **Tier**: <primary | optional>
