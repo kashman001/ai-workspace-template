@@ -95,6 +95,23 @@ Add to `~/.gemini/settings.json` under `mcpServers`:
 ```
 <!-- TODO: verify against your Gemini CLI version -->
 
+### graphify — code knowledge graph (optional)
+
+The `graphify-mcp` stdio server (from `uv tool install graphifyy`) serves a repo's
+`graphify-out/graph.json` as MCP query tools. It's pre-staged in `.mcp.json.example`
+and `.vscode/mcp.json.example` under their respective server keys
+(`mcpServers` vs `servers`), so MCP-capable runtimes (Claude Code, VS Code) pick it
+up once you copy the example to the live file.
+
+- **Single-repo:** default args (`[]`) serve `graphify-out/graph.json` in the cwd.
+- **Multi-repo:** set `"args": ["repos/<name>/graphify-out/graph.json"]` per repo.
+- **Codex / Gemini / OpenCode:** not pre-wired — add the same `graphify-mcp` stdio
+  command to that runtime's MCP config if desired; otherwise the existing graphify
+  hooks (`.gemini/settings.json`, `.opencode/`) already provide the query nudge.
+
+The graph must be built first (`/graphify` or the graphify CLI); see
+`docs/recommended-tooling.md` → graphify.
+
 ### Other runtimes
 Any runtime not listed above can use the same server: point it at the hosted
 remote URL (`https://api.githubcopilot.com/mcp/` with the bearer header) or the

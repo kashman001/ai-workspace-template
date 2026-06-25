@@ -276,6 +276,14 @@ graphify path "AuthModule" "Database"
 graphify explain "SessionStore"
 ```
 
+**Query it from an MCP-capable agent (optional):** the package ships a
+`graphify-mcp` stdio server that exposes the graph as MCP tools. This template
+pre-wires it in `.mcp.json.example` and `.vscode/mcp.json.example` (see
+`docs/mcp-setup.md`); the `onboard-repo` workflow copies `.mcp.json` for you.
+For a multi-repo workspace, point the server at a specific graph via
+`"args": ["repos/<name>/graphify-out/graph.json"]`. The Gemini/OpenCode hooks
+remain the query path for those runtimes.
+
 `graphify-out/` is already in this template's `.gitignore` — the graph is
 regenerated locally per machine, never committed.
 
