@@ -29,6 +29,12 @@ for s in scripts/*.sh; do
   [ -x "$s" ] && ok "executable $s" || bad "not executable $s (chmod +x)"
 done
 
+# repo-context doc templates present (onboard-repo depends on these)
+for f in code-structure.md design.md api.md; do
+  [ -f "docs/repo-context/_templates/$f" ] && ok "template _templates/$f" \
+    || bad "missing template docs/repo-context/_templates/$f"
+done
+
 # .gitignore must keep repos/README.md visible to git
 if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   if git check-ignore -q repos/README.md; then bad "repos/README.md is gitignored (should be tracked)"
