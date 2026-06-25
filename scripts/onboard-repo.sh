@@ -60,7 +60,7 @@ add_registry_entry() {
 - **Default branch**: \`main\`
 - **Visibility**: <public / private>
 - **Purpose**: <one line>
-- **Auth method**: <gh CLI / SSH key X / PAT in keychain> — see docs/runbooks/authentication.md
+- **Auth method**: <gh CLI / SSH key X / PAT in keychain> — see \`docs/runbooks/authentication.md\`
 - **Language / stack**: <languages + frameworks>
 - **Build / test / run**: \`<build>\` / \`<test>\` / \`<run>\`
 - **Network**: <none special / VPN required / SSH key X>
