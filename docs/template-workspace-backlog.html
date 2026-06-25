@@ -287,6 +287,7 @@
       <tr><td>2026-06-24</td><td>Added &amp; resolved M6 (dependency-check phase) and M7 (auth phase: verify+instruct + agent runbooks under <code>docs/runbooks/</code>).</td></tr>
       <tr><td>2026-06-24</td><td>Feature: added the <code>checkpoint</code> skill (<code>skills/checkpoint/SKILL.md</code> + <code>.claude/commands/checkpoint.md</code>), generalized from the Quran_Hifz_Tracker <code>/checkpoint</code> command and wired cross-agent via <code>CONTEXT.md</code>.</td></tr>
       <tr><td>2026-06-25</td><td>Feature: added the <code>onboard-repo</code> workflow (<code>skills/onboard-repo/SKILL.md</code> + <code>/onboard-repo</code> + <code>scripts/onboard-repo.sh</code>) — registry identity/auth fields, graphify MCP wiring (<code>graphify-mcp</code>) with manual-scan fallback, and provenance-stamped <code>code-structure.md</code>/<code>design.md</code>/<code>api.md</code> under <code>docs/repo-context/&lt;repo&gt;/</code>, plus <code>check-repo-context.sh</code> freshness check.</td></tr>
+      <tr><td>2026-06-25</td><td>Fix: dogfooded <code>/onboard-repo</code> end-to-end against a sibling repo; <code>check-repo-context.sh</code> now resolves a repo's path from its registry <code>Location</code> (was only <code>repos/&lt;name&gt;</code> or root), so a repo onboarded in place at an external/local path is tracked instead of falsely reported stale.</td></tr>
     </tbody>
   </table>
 
