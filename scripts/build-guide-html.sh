@@ -25,9 +25,13 @@ if [ ! -f "$SRC" ]; then
   exit 1
 fi
 
-HEADER="$(mktemp -t wsguide-header).html"
-BANNER="$(mktemp -t wsguide-banner).html"
+HEADER="$(mktemp "${TMPDIR:-/tmp}/wsguide-header.XXXXXX")"
+BANNER="$(mktemp "${TMPDIR:-/tmp}/wsguide-banner.XXXXXX")"
 trap 'rm -f "$HEADER" "$BANNER"' EXIT
+
+# Hash of the Markdown source, embedded in the HTML <head> below so
+# check-workspace-structure.sh can flag when the guide needs regenerating.
+SRC_SHA="$( { shasum "$SRC" 2>/dev/null || sha1sum "$SRC"; } | awk '{print $1}')"
 
 # Visual identity reused from docs/setup-guide.html (same palette + typography),
 # adapted for a long-form document: prose, tables, code blocks, and the doc's
@@ -82,6 +86,7 @@ cat > "$HEADER" <<'CSS'
   .src-banner a{color:var(--accent-2)}
 </style>
 CSS
+printf '<!-- source-md-sha1: %s -->\n' "$SRC_SHA" >> "$HEADER"
 
 cat > "$BANNER" <<'HTML'
 <div class="src-banner">

@@ -9,8 +9,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 fail=0
-ok(){  printf '  \033[32m✓\033[0m %s\n' "$*"; }
-bad(){ printf '  \033[31m✗\033[0m %s\n' "$*" >&2; fail=1; }
+ok(){   printf '  \033[32m✓\033[0m %s\n' "$*"; }
+bad(){  printf '  \033[31m✗\033[0m %s\n' "$*" >&2; fail=1; }
+warn(){ printf '  \033[33m!\033[0m %s\n' "$*" >&2; }
 
 echo "Checking workspace structure at $ROOT"
 
@@ -34,6 +35,15 @@ for f in code-structure.md design.md api.md; do
   [ -f "docs/repo-context/_templates/$f" ] && ok "template _templates/$f" \
     || bad "missing template docs/repo-context/_templates/$f"
 done
+
+# Generated guide HTML in sync with its Markdown source (regenerate if drifted).
+# Soft warning — the structure is valid, the published HTML just needs rebuilding.
+if [ -f docs/workspace-structure.html ]; then
+  rec="$(grep -m1 -oE 'source-md-sha1: [0-9a-f]+' docs/workspace-structure.html | awk '{print $2}')"
+  cur="$( { shasum docs/workspace-structure.md 2>/dev/null || sha1sum docs/workspace-structure.md; } | awk '{print $1}')"
+  if [ -n "$rec" ] && [ "$rec" = "$cur" ]; then ok "guide HTML in sync with workspace-structure.md"
+  else warn "docs/workspace-structure.html is stale — run scripts/build-guide-html.sh"; fi
+fi
 
 # .gitignore must keep repos/README.md visible to git
 if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then

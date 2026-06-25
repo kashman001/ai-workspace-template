@@ -28,23 +28,10 @@ case "${2:-}" in
   *)         REPO_PATH="$2" ;;
 esac
 
-# Resolve a repo's working path when none was passed explicitly: prefer its registry
-# "Location" (so a repo onboarded in place at an external/local path is found — e.g. on
-# --refresh, whose hint is pathless), else the conventional repos/<repo> or workspace
-# root. Mirrors resolve_repo_path() in check-repo-context.sh — keep them in sync.
-resolve_repo_path() {
-  local name="$1" loc=""
-  if [ -f docs/repos-registry.md ]; then
-    loc="$(awk -v repo="$name" '
-      $0 ~ "^##[[:space:]]+" repo "([[:space:]]|\\(|$)" {inSec=1; next}
-      inSec && /^##[[:space:]]/ {inSec=0}
-      inSec && /^- \*\*Location\*\*:/ {print; exit}
-    ' docs/repos-registry.md | grep -oE '`[^`]+`' | head -1 | tr -d '`')"
-  fi
-  if [ -n "$loc" ] && [ -d "$loc" ]; then printf '%s' "$loc"; return; fi
-  if [ -d "repos/$name" ]; then printf '%s' "repos/$name"; return; fi
-  printf '%s' "."
-}
+# resolve_repo_path() — shared with check-repo-context.sh (see scripts/lib/repo-paths.sh).
+# When no path is passed explicitly (including --refresh, whose hint is pathless), prefer
+# the registry "Location" so a repo onboarded in place at an external/local path is found.
+. "$ROOT/scripts/lib/repo-paths.sh"
 
 # Default repo path: registry Location, else repos/<repo> (multi-repo), else workspace root.
 if [ -z "$REPO_PATH" ]; then

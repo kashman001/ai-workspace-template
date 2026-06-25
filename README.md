@@ -22,7 +22,8 @@ Gemini.
 step-by-step agent bootstrap, rendered for easy reading —
 **[kashman001.github.io/ai-workspace-template/workspace-structure.html](https://kashman001.github.io/ai-workspace-template/workspace-structure.html)**
 · source [`docs/workspace-structure.md`](docs/workspace-structure.md) (regenerate
-the HTML with [`scripts/build-guide-html.sh`](scripts/build-guide-html.sh)).
+the HTML with [`scripts/build-guide-html.sh`](scripts/build-guide-html.sh), which needs
+[`pandoc`](https://pandoc.org)).
 
 **Working in a scaffolded workspace?** Start here →
 [`CONTEXT.md`](CONTEXT.md)

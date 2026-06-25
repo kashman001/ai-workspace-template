@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · Last updated 2026-06-24 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-06-25 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">14</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">18</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">2</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,12 +84,13 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 14 findings (12 from the initial review + M6/M7 added during follow-up) are
-    <span class="good">resolved</span>, and both design decisions settled (2026-06-24). The two High items —
-    non-functional bootstrap scripts and a non-portable Gemini hook — are fixed; the template now behaves on a clean
-    machine as the docs describe, carries a LICENSE, ships VS Code config, checks dependencies, has an auth phase with
-    agent runbooks, and documents a no-agent-context fallback. Each item below records what changed. New issues get
-    appended here per the <a href="#maintaining">maintenance convention</a>.</p>
+    <p>All 18 findings are <span class="good">resolved</span>, and both design decisions settled. The initial
+    2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
+    <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
+    in the same pass. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
+    the template now behaves on a clean machine as the docs describe, carries a LICENSE, ships VS Code config, checks
+    dependencies, has an auth phase with agent runbooks, and documents a no-agent-context fallback. Each item below
+    records what changed. New issues get appended here per the <a href="#maintaining">maintenance convention</a>.</p>
   </div>
 
   <!-- ========================= MAINTAINING ========================= -->
@@ -207,6 +208,17 @@
       — no interactive login baked into a script.</p>
   </div>
 
+  <div class="find medium resolved">
+    <h3><span class="id">M8</span> Published <code>workspace-structure.html</code> could silently drift from its Markdown source
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/ · docs/</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review of the new HTML-guide feature: editing
+      <code>docs/workspace-structure.md</code> without re-running <code>build-guide-html.sh</code> ships a stale
+      published guide, and nothing detected the mismatch.</p>
+    <p><span class="fix">Fixed:</span> <code>build-guide-html.sh</code> now embeds a <code>source-md-sha1</code> of the
+      Markdown in the HTML head, and <code>check-workspace-structure.sh</code> compares it to the current source,
+      warning (soft) to regenerate when they differ.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
 
@@ -242,6 +254,35 @@
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">SPEC.md</span></h3>
     <p><span class="fix">Fixed (verified):</span> confirmed the multi-repo path in <code>CONTEXT.md</code> only references
       SPEC conditionally ("if there's a product spec"), so deleting <code>SPEC.md</code> leaves no dangling reference.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L6</span> <code>build-guide-html.sh</code> leaked temp files and used a non-portable <code>mktemp -t</code>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/build-guide-html.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review: <code>"$(mktemp -t x).html"</code> orphaned the bare mktemp
+      file (the trap removed only the <code>.html</code> path), leaking two temp files per run; <code>mktemp -t</code> is
+      also not GNU-portable.</p>
+    <p><span class="fix">Fixed:</span> switched to <code>mktemp "$TMPDIR/wsguide-*.XXXXXX"</code> — one file each, cleaned
+      by the trap, portable across BSD/GNU.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L7</span> <code>resolve_repo_path()</code> duplicated across two scripts and already drifted
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review: <code>onboard-repo.sh</code> and
+      <code>check-repo-context.sh</code> each carried a copy of <code>resolve_repo_path()</code> under a "keep in sync"
+      comment, yet the two had already diverged on their final line.</p>
+    <p><span class="fix">Fixed:</span> extracted the single definition to <code>scripts/lib/repo-paths.sh</code>, sourced by
+      both; verified external-Location resolution is unchanged (path + provenance + <code>graphify=live</code>).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L8</span> <code>pandoc</code> dependency for the guide build was undocumented
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">README.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review: regenerating the guide needs <code>pandoc</code>, mentioned
+      only inside <code>build-guide-html.sh</code>.</p>
+    <p><span class="fix">Fixed:</span> noted the <code>pandoc</code> prerequisite at the README link to the generator
+      (the script already prints an install hint when it is missing).</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
@@ -290,6 +331,7 @@
       <tr><td>2026-06-25</td><td>Fix: dogfooded <code>/onboard-repo</code> end-to-end against a sibling repo; <code>check-repo-context.sh</code> now resolves a repo's path from its registry <code>Location</code> (was only <code>repos/&lt;name&gt;</code> or root), so a repo onboarded in place at an external/local path is tracked instead of falsely reported stale.</td></tr>
       <tr><td>2026-06-25</td><td>Fix: exercised the graphify <em>live</em> onboard path (built a real graph; <code>query</code>/<code>path</code>/<code>explain</code> verified, onboard flips to <code>graphify=live</code>). Surfaced a sibling bug — <code>onboard-repo.sh</code>'s default/<code>--refresh</code> path resolution ignored the registry <code>Location</code> (the refresh hint is pathless), so refreshing an externally-onboarded repo stamped the workspace's commit into provenance and reported <code>fallback</code> despite a live graph. Now reuses the same <code>Location</code>-first <code>resolve_repo_path()</code>.</td></tr>
       <tr><td>2026-06-25</td><td>Feature: published the authoritative workspace guide (<code>docs/workspace-structure.md</code>) as a styled, self-contained <code>docs/workspace-structure.html</code> served via Pages, so humans can read it without raw Markdown. Added a reproducible generator <code>scripts/build-guide-html.sh</code> (pandoc; reuses <code>setup-guide.html</code>'s visual identity, the doc's own Contents becomes in-page nav) — generated not hand-maintained, so it can't drift from the source. Linked from the README.</td></tr>
+      <tr><td>2026-06-25</td><td>Re-review: fresh evidence pass over the post-review additions (the <code>onboard-repo</code> workflow + the HTML guide) per the maintenance convention. Surfaced and fixed four findings in one pass — M8 (drift guard: the guide builder embeds a source hash, <code>check-workspace-structure.sh</code> warns when the published HTML is stale), L6 (temp-file leak + non-portable <code>mktemp -t</code> in <code>build-guide-html.sh</code>), L7 (duplicated <code>resolve_repo_path()</code> extracted to <code>scripts/lib/repo-paths.sh</code>), L8 (documented the <code>pandoc</code> prerequisite). Scorecard now 0/18/2/0/6; metadata refreshed.</td></tr>
     </tbody>
   </table>
 
