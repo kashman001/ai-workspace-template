@@ -30,8 +30,9 @@ point to it (e.g. SPEC.md). -->
 ## Covered Repos
 
 Per-repo context docs live under `docs/repo-context/` — see
-`docs/repo-context/README.md` for the index. None are documented yet;
-generate them once a codebase has structure.
+`docs/repo-context/README.md` for the index. Onboard a repo with
+`/onboard-repo <repo-name>` to generate its `code-structure.md`, `design.md`,
+and `api.md`. None are documented yet.
 
 ## Workspace Structure
 
@@ -58,6 +59,13 @@ shortcuts under `.claude/commands/`).
   catch-up prompt for the next (post-compaction) session. Claude Code shortcut:
   **`/checkpoint [next-focus]`**. Depends on the `handoff` skill and
   `superpowers:brainstorming` (see `docs/recommended-tooling.md`).
+
+- **onboard-repo** (`skills/onboard-repo/SKILL.md`) — bring a repo into the
+  workspace: record its identity/auth in `docs/repos-registry.md`, build/wire a
+  graphify code index (manual-scan fallback), and derive committed
+  `code-structure.md` / `design.md` / `api.md` under `docs/repo-context/<repo>/`.
+  Claude Code shortcut: **`/onboard-repo <repo-name> [repo-path]`**. Freshness:
+  `scripts/check-repo-context.sh`; refresh: `scripts/onboard-repo.sh <repo> --refresh`.
 
 ## Service Access
 
