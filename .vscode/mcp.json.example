@@ -9,6 +9,13 @@
       "headers": {
         "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
+    },
+    // graphify serves graphify-out/graph.json over stdio. Multi-repo: set
+    // "args": ["repos/<name>/graphify-out/graph.json"] to pick a specific graph.
+    "graphify": {
+      "type": "stdio",
+      "command": "graphify-mcp",
+      "args": []
     }
   }
 }
