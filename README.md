@@ -18,6 +18,12 @@ Gemini.
 [`docs/setup-guide.html`](docs/setup-guide.html). Prefer Markdown?
 [`docs/template-usage.md`](docs/template-usage.md).
 
+**Want the full workspace guide?** Every directory, convention, and the
+step-by-step agent bootstrap, rendered for easy reading —
+**[kashman001.github.io/ai-workspace-template/workspace-structure.html](https://kashman001.github.io/ai-workspace-template/workspace-structure.html)**
+· source [`docs/workspace-structure.md`](docs/workspace-structure.md) (regenerate
+the HTML with [`scripts/build-guide-html.sh`](scripts/build-guide-html.sh)).
+
 **Working in a scaffolded workspace?** Start here →
 [`CONTEXT.md`](CONTEXT.md)
 

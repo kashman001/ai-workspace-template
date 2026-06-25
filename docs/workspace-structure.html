@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Dev-AI Workspace Structure — ai-workspace-template
+guide</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <style>
+    :root{
+      --bg:#0f1222; --panel:#171a2e; --panel-2:#1d2138; --ink:#e7e9f3; --muted:#a3a8c3;
+      --line:#2b3052; --accent:#7c83ff; --accent-2:#22d3ee; --green:#34d399; --amber:#fbbf24;
+      --code:#0b0e1a; --radius:14px; --maxw:980px;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+      --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0 auto;max-width:var(--maxw);padding:0 22px 90px;
+      background:linear-gradient(180deg,#0c0f1d,#0f1222 260px);color:var(--ink);
+      font-family:var(--sans);line-height:1.65;font-size:16px}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    h1{font-size:38px;line-height:1.12;letter-spacing:-.02em;margin:48px 0 14px}
+    h1:first-of-type{margin-top:40px}
+    h2{font-size:25px;margin:46px 0 12px;letter-spacing:-.01em;scroll-margin-top:18px;
+      padding-bottom:7px;border-bottom:1px solid var(--line)}
+    h3{font-size:18px;margin:28px 0 8px}
+    h4{font-size:15px;margin:20px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    p{max-width:76ch}
+    ul,ol{padding-left:24px;max-width:76ch}
+    li{margin:5px 0}
+    strong{color:#fff}
+    pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+      overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;color:#d7dcff}
+    code{font-family:var(--mono);font-size:.92em;background:#20243f;padding:1px 6px;border-radius:6px;color:#cfd4ff}
+    pre code{background:none;padding:0;color:inherit;font-size:13.5px}
+    table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14.5px}
+    th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+    th{background:var(--panel-2);font-weight:600}
+    td code,th code{white-space:nowrap}
+    blockquote{border-left:4px solid var(--accent);background:var(--panel);
+      border-radius:0 12px 12px 0;padding:10px 18px;margin:18px 0;color:var(--ink)}
+    blockquote p{margin:6px 0}
+    hr{border:none;border-top:1px solid var(--line);margin:42px 0}
+    /* The Markdown's own "## Contents" list — render as a navigable card. */
+    #contents + ul{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+      list-style:none;padding:16px 22px;margin:14px 0 10px;column-gap:32px}
+    #contents + ul li{margin:5px 0}
+    #contents + ul a{color:var(--muted)}
+    #contents + ul a:hover{color:var(--accent)}
+    .src-banner{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;
+      padding:11px 15px;margin:26px 0 6px;line-height:1.5}
+    .src-banner a{color:var(--accent-2)}
+  </style>
+</head>
+<body>
+<div class="src-banner">
+  Rendered workspace guide · generated from <code>docs/workspace-structure.md</code> by
+  <code>scripts/build-guide-html.sh</code> — do not hand-edit; edit the Markdown and regenerate.
+  · <a href="https://github.com/kashman001/ai-workspace-template/blob/main/docs/workspace-structure.md">Markdown source</a>
+  · <a href="setup-guide.html">Setup guide</a>
+</div>
+<h1 id="dev-ai-workspace-structure-generic-template">Dev-AI Workspace
+Structure (Generic Template)</h1>
+<p>This document describes a reusable pattern for organizing a
+<strong>multi-repo development workspace</strong> that is shared between
+humans and AI coding agents (Claude Code, Codex, Copilot, Gemini,
+etc.).</p>
+<p>The workspace is <strong>not a product repo</strong> — it is a
+coordination layer that ties together multiple product repos, shared
+documentation, reusable agent skills, project work, and prompt
+templates. Use this as a starting template when you need to bring
+several related repos under a single agent-aware roof.</p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#why-a-workspace">Why a Workspace?</a></li>
+<li><a href="#design-principles">Design Principles</a></li>
+<li><a href="#top-level-layout">Top-Level Layout</a></li>
+<li><a href="#agent-entrypoints">Agent Entrypoints</a></li>
+<li><a href="#ide-and-agent-configuration">IDE and Agent
+Configuration</a></li>
+<li><a href="#docs--workspace-documentation"><code>docs/</code> —
+Workspace Documentation</a></li>
+<li><a href="#skills--agent-skills"><code>skills/</code> — Agent
+Skills</a></li>
+<li><a href="#work--active-project-work"><code>work/</code> — Active
+Project Work</a></li>
+<li><a
+href="#prompt-library--prompt-contracts"><code>prompt-library/</code> —
+Prompt Contracts</a></li>
+<li><a href="#references--external-references"><code>references/</code>
+— External References</a></li>
+<li><a href="#repos--product-repositories"><code>repos/</code> — Product
+Repositories</a></li>
+<li><a
+href="#scripts--bootstrap-and-utility-scripts"><code>scripts/</code> —
+Bootstrap and Utility Scripts</a></li>
+<li><a href="#environment-parameterization">Environment
+Parameterization</a></li>
+<li><a href="#service-access-pattern">Service Access Pattern</a></li>
+<li><a href="#gitignored-vs-checked-in">Gitignored vs. Checked
+In</a></li>
+<li><a href="#recommended-contextmd-sections">Recommended
+<code>CONTEXT.md</code> Sections</a></li>
+<li><a href="#bootstrapping-your-own-workspace">Bootstrapping Your Own
+Workspace</a></li>
+<li><a href="#agent-bootstrap-instructions">Agent Bootstrap
+Instructions</a></li>
+</ul>
+<hr />
+<h2 id="agent-bootstrap-instructions">Agent Bootstrap Instructions</h2>
+<p><strong>If you are an AI agent reading this file, follow these steps
+to scaffold a new workspace from scratch.</strong> A human invoked you
+with something like "set up a dev-ai workspace for project X using this
+template." Treat the rest of this document as the <em>specification</em>
+for what you are building.</p>
+<h3 id="preconditions-to-confirm-with-the-user">Preconditions to confirm
+with the user</h3>
+<p>Before creating any files, ask the user for:</p>
+<ol type="1">
+<li><strong>Workspace name</strong> — typically
+<code>&lt;project&gt;-dev-ai-workspace</code>.</li>
+<li><strong>Workspace location</strong> — absolute path on disk where
+the workspace directory should be created.</li>
+<li><strong>Product repos</strong> — name, clone URL, host, default
+branch, and one-line purpose for each. Mark each as
+<strong>primary</strong> (auto-cloned) or
+<strong>optional</strong>.</li>
+<li><strong>Editor(s) and agent runtime(s)</strong> in use — VS Code,
+JetBrains, Neovim; Claude Code, Codex, Copilot, Gemini. Determines which
+IDE/agent config files to scaffold.</li>
+<li><strong>External services</strong> the workspace will integrate with
+(Jira, Confluence, GitHub, Postgres, cloud CLIs, etc.). Determines
+<code>.env</code> variables and <code>service-access.md</code>
+entries.</li>
+<li><strong>Whether to clone repos now</strong> or only scaffold the
+registry.</li>
+</ol>
+<p>If any answer is unclear, stop and ask — do not guess. Do not invent
+repo names or clone URLs.</p>
+<h3 id="execution-rules">Execution rules</h3>
+<ul>
+<li><strong>Create empty, instruction-bearing stub files</strong> for
+everything listed in the structure below. Each stub must contain a short
+header comment explaining what the file is for, what to fill in, and a
+link back to the section of this template that describes it (e.g.,
+<code>See docs/workspace-structure.md → "skills/ — Agent Skills"</code>).</li>
+<li><strong><code>CONTEXT.md</code> is <em>not</em> a bare
+stub.</strong> Populate it with a working starting skeleton:
+<ol type="1">
+<li>Workspace name and one-paragraph purpose (from preconditions).</li>
+<li>A "Repository layout" pointer: <code>repos/</code> for clones,
+<code>docs/repos-registry.md</code> for the canonical registry.</li>
+<li>A "Workspace structure" pointer to
+<code>docs/workspace-structure.md</code>.</li>
+<li>An empty "Workspace Skills" section with a TODO note.</li>
+<li>The two sections from <a
+href="#recommended-contextmd-sections">Recommended
+<code>CONTEXT.md</code> Sections</a>, copied verbatim ("Agent Coding
+Principles" and "Agent Context Discipline"). This ensures day-1 agents
+in the new workspace have real behavioral guidance instead of an empty
+file.</li>
+</ol></li>
+<li><strong>Do not fabricate content</strong> for repo context docs or
+skills beyond the stub header. Those require human input or a separate
+generation pass.</li>
+<li><strong>Copy this template's contents verbatim</strong> to
+<code>&lt;workspace-root&gt;/docs/workspace-structure.md</code>. Do not
+paraphrase or trim. The destination file (named
+<code>workspace-structure.md</code>, <em>not</em>
+<code>workspace-structure-template.md</code>) becomes the authoritative
+map for the new workspace; the original template can be discarded by the
+user.</li>
+<li><strong>Use symlinks</strong> for agent entrypoints
+(<code>CLAUDE.md</code>, <code>AGENTS.md</code> →
+<code>CONTEXT.md</code>). Verify each symlink resolves after
+creation.</li>
+<li><strong>Make <code>scripts/setup.sh</code> and
+<code>scripts/check-workspace-structure.sh</code> executable</strong>
+(<code>chmod +x</code>).</li>
+<li><strong><code>skills/</code> starts empty.</strong> This bootstrap
+does <em>not</em> install any generic skills (<code>handoff</code>,
+<code>diagnose</code>, etc.). Mention in the final summary that the user
+should add skills as separate next steps.</li>
+<li><strong><code>.env.example</code> gets seeded placeholders.</strong>
+For each service named in preconditions, add a commented placeholder
+line (e.g., <code># DB_HOST=</code>, <code># AWS_PROFILE=</code>,
+<code># ATLASSIAN_USER=</code>). Do not invent variables for services
+the user didn't name.</li>
+<li><strong>Do not commit anything.</strong> Initialize the git repo
+(<code>git init</code>) and leave staging to the user.</li>
+<li><strong>Print a summary</strong> at the end listing every file
+created, every symlink established, and the next manual steps the user
+must take (add skills, fill in repo context docs, set up MCP, clone
+repos if deferred, etc.).</li>
+</ul>
+<h3 id="files-and-directories-to-create">Files and directories to
+create</h3>
+<p>Create the following tree. Files marked <strong>(stub)</strong>
+should be created with the header comment described above; files marked
+<strong>(template copy)</strong> are copied from this template's
+content; files marked <strong>(symlink)</strong> are symlinks;
+directories are created with a <code>.gitkeep</code> if otherwise
+empty.</p>
+<pre><code>&lt;workspace-root&gt;/
+├── CONTEXT.md                              (populated — see &quot;Execution rules&quot;)
+├── CLAUDE.md                               (symlink → CONTEXT.md)
+├── AGENTS.md                               (symlink → CONTEXT.md)
+├── .gitignore                              (working file — see content below)
+├── .env.example                            (stub with seeded service placeholders)
+├── README.md                               (stub — one-line pitch + pointer to CONTEXT.md)
+│
+├── docs/
+│   ├── workspace-structure.md              (template copy — this file)
+│   ├── workspace-setup.md                  (stub)
+│   ├── repos-registry.md                   (stub — pre-populate with repos from preconditions)
+│   ├── system-design.md                    (stub)
+│   ├── operational-knowledge.md            (stub)
+│   ├── service-access.md                   (stub — one section per service from preconditions)
+│   ├── mcp-setup.md                        (stub, only if MCP is in use)
+│   └── repo-context/
+│       ├── README.md                       (stub — index of covered repos)
+│       └── &lt;repo&gt;/                         (one folder per covered repo)
+│           ├── code-structure.md           (stub)
+│           └── design.md                   (stub)
+│
+├── skills/
+│   └── .gitkeep                            (skills are added later by the user)
+│
+├── work/
+│   └── .gitkeep
+│
+├── prompt-library/
+│   └── .gitkeep
+│
+├── references/
+│   └── README.md                           (stub — registry of external repos; keeps dir tracked)
+│
+├── repos/
+│   └── README.md                           (symlink → ../docs/repos-registry.md)
+│
+└── scripts/
+    ├── setup.sh                            (stub, executable)
+    ├── check-workspace-structure.sh        (stub, executable)
+    └── check-service-access.sh             (stub, executable; only if services exist)</code></pre>
+<p>Add editor/agent-specific scaffolding <strong>only</strong> for tools
+the user named in preconditions:</p>
+<pre><code>.vscode/
+├── settings.json                           (stub — shared IDE settings)
+├── mcp.json.example                        (stub — MCP server template)
+└── (mcp.json is user-specific, do NOT create)
+
+.claude/
+└── (settings.json is user-specific, do NOT create; mention in README)
+
+&lt;Project&gt;.code-workspace                    (stub — multi-root workspace, only if VS Code)</code></pre>
+<h3 id="stub-header-template">Stub header template</h3>
+<p>Every stub file must begin with a comment block in the file's native
+comment syntax. Example for Markdown:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!--</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">File: &lt;path-from-workspace-root&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">Purpose: &lt;one-line description&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">Fill in: &lt;what the human or a follow-up agent should put here&gt;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">See: docs/workspace-structure.md → &quot;&lt;section name&gt;&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">--&gt;</span></span></code></pre></div>
+<p>For shell scripts:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># File: scripts/setup.sh</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Purpose: Bootstrap the workspace (create .env, symlinks, optional repo clones).</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fill in: implementation. Must support --clone-repos flag.</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># See: docs/workspace-structure.md → &quot;scripts/ — Bootstrap and Utility Scripts&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;TODO: implement workspace setup&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span> 1</span></code></pre></div>
+<p>For <code>.gitignore</code>, write a working file (not a stub) with
+at minimum:</p>
+<pre class="gitignore"><code># Cloned product repos (registry symlink kept)
+repos/*
+!repos/README.md
+
+# Cloned external references
+references/*
+!references/README.md
+
+# Environment and credentials
+.env
+.service-access.local.json
+
+# User-specific agent / IDE config
+.vscode/mcp.json
+.claude/settings.json
+
+# Scratch
+temp/
+tmp/
+
+# OS cruft
+.DS_Store
+
+# Stack-specific — include only the entries that apply to your workspace
+# .venv/           # Python virtualenv
+# node_modules/    # Node deps
+# .idea/           # JetBrains IDE files</code></pre>
+<h3 id="post-scaffold-verification">Post-scaffold verification</h3>
+<p>After creating everything, run these checks and report results:</p>
+<ol type="1">
+<li>Every symlink resolves (<code>readlink</code> each one; the targets
+exist).</li>
+<li>Every script in <code>scripts/</code> is executable
+(<code>test -x</code>).</li>
+<li><code>git status</code> shows every scaffolded file as untracked,
+<code>repos/README.md</code> appears tracked (it's a symlink to a
+tracked target), and no scaffolded file is unexpectedly ignored. Confirm
+with <code>git check-ignore -v &lt;path&gt;</code> for any file you're
+unsure about.</li>
+<li>The <code>.gitignore</code> correctly excludes <code>repos/*</code>
+while keeping <code>repos/README.md</code> visible to git
+(<code>git check-ignore -v repos/README.md</code> returns nothing).</li>
+</ol>
+<p>If any check fails, fix it before declaring the bootstrap
+complete.</p>
+<hr />
+<h2 id="why-a-workspace">Why a Workspace?</h2>
+<p>When a project spans multiple repos, agents and humans repeatedly
+waste effort:</p>
+<ul>
+<li>Re-discovering where things live each session.</li>
+<li>Re-deriving system architecture from scratch.</li>
+<li>Losing context when conversations get compacted.</li>
+<li>Stepping on each other's machine-specific config.</li>
+<li>Re-prompting the same skills/workflows in every session.</li>
+</ul>
+<p>A workspace solves this by giving every agent (and every human) a
+single known place to find context, skills, and active work — without
+polluting the underlying product repos.</p>
+<h2 id="design-principles">Design Principles</h2>
+<ol type="1">
+<li><strong>Repos are separate.</strong> Product code lives under
+<code>repos/</code>, each with its own git history. The workspace repo
+never commits product source.</li>
+<li><strong>Docs live at the workspace level.</strong> Architecture
+docs, repo navigation files, operational knowledge, and setup guides are
+workspace artifacts — not embedded in individual repos.</li>
+<li><strong>Skills are reusable.</strong> Agent skills under
+<code>skills/</code> are shared instructions that any agent runtime can
+discover via <code>CLAUDE.md</code>, <code>AGENTS.md</code>, or
+equivalent.</li>
+<li><strong>Work is tracked in files.</strong> Active project state,
+runbooks, bug registries, and session handoffs live under
+<code>work/</code> so agents and humans can resume without
+re-discovering context.</li>
+<li><strong>Environment is parameterized.</strong> Machine-specific
+paths, credentials, and infra identifiers are set via environment
+variables, not hardcoded into tracked files.</li>
+<li><strong>Agent-vendor neutral.</strong> Anything checked in must work
+for any agent runtime. Tool-specific config (Claude memory, Codex
+config) lives in user-level locations outside the workspace.</li>
+</ol>
+<hr />
+<h2 id="top-level-layout">Top-Level Layout</h2>
+<pre><code>&lt;your-project&gt;-dev-ai-workspace/
+├── CONTEXT.md                  # Master workspace context (agent instructions,
+│                               #   repo index, skills, conventions, constraints)
+├── CLAUDE.md -&gt; CONTEXT.md     # Symlink — Claude Code entrypoint
+├── AGENTS.md -&gt; CONTEXT.md     # Symlink — Codex / generic agent entrypoint
+├── README.md                   # Workspace one-pager — short pitch + pointer to CONTEXT.md
+├── .gitignore                  # See &quot;Gitignored vs. Checked In&quot; + Agent Bootstrap section
+├── &lt;Project&gt;.code-workspace    # VS Code multi-root workspace definition (if using VS Code)
+│
+├── docs/                       # Workspace-level documentation
+├── prompt-library/             # Prompt contracts for repeated outputs
+├── references/                 # External/third-party repos (cloned, gitignored)
+├── repos/                      # Product repositories (cloned separately, gitignored)
+├── scripts/                    # Workspace bootstrap and utility scripts
+├── skills/                     # Agent skill definitions (reusable instructions)
+├── work/                       # Active project work (in-flight initiatives)
+│
+├── .claude/                    # Claude Code local state (gitignored)
+├── .vscode/                    # VS Code settings and MCP config
+│   ├── settings.json           #   Shared IDE settings (checked in)
+│   ├── mcp.json.example        #   MCP server config template (checked in)
+│   └── mcp.json                #   MCP server config (gitignored, user-specific)
+├── .env.example                # Template for required env vars (checked in)
+├── .env                        # Local env vars (gitignored)
+└── temp/, tmp/                 # Scratch files (gitignored, created as needed)</code></pre>
+<p>The root <code>README.md</code> is a one-pager for new humans landing
+in the workspace: a one-line description of what the workspace
+coordinates, plus a "Start here →" pointer to <code>CONTEXT.md</code>.
+Keep it under 20 lines; agents read <code>CONTEXT.md</code>, not
+<code>README.md</code>.</p>
+<p>Optional, depending on stack and tooling:</p>
+<ul>
+<li><code>.venv/</code> — Python virtual environment (gitignored) if any
+tooling is Python.</li>
+<li><code>node_modules/</code> — Node deps (gitignored) if any tooling
+is JS/TS.</li>
+<li><code>.idea/</code> — JetBrains IDE files (gitignored) if anyone
+uses IntelliJ/PyCharm.</li>
+<li><code>&lt;Project&gt;.code-workspace</code> — VS Code multi-root
+workspace file. Substitute the equivalent for your editor (JetBrains
+<code>.idea/.iml</code> modules, Neovim project file, etc.), or skip if
+your team uses single-repo editor windows.</li>
+</ul>
+<hr />
+<h2 id="agent-entrypoints">Agent Entrypoints</h2>
+<p>Every supported agent runtime has its own conventional discovery
+file. To avoid forking content, use <strong>one master file with
+symlinks</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+<th>How discovered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CONTEXT.md</code></td>
+<td>Master context — repo index, skills, conventions, constraints</td>
+<td>Directly</td>
+</tr>
+<tr>
+<td><code>CLAUDE.md</code></td>
+<td>Symlink → <code>CONTEXT.md</code></td>
+<td>Claude Code reads <code>CLAUDE.md</code> automatically</td>
+</tr>
+<tr>
+<td><code>AGENTS.md</code></td>
+<td>Symlink → <code>CONTEXT.md</code></td>
+<td>Codex and most other agents read <code>AGENTS.md</code></td>
+</tr>
+</tbody>
+</table>
+<p>When a new agent runtime appears with a different discovery file,
+<strong>add a symlink</strong> — don't fork the content.</p>
+<h3 id="what-contextmd-should-contain">What <code>CONTEXT.md</code>
+Should Contain</h3>
+<p>Treat <code>CONTEXT.md</code> as the front door for any new agent
+session. Keep it concise (it loads into every conversation) and link out
+for detail:</p>
+<ul>
+<li><strong>Workspace purpose</strong> — one-paragraph description of
+what this workspace coordinates.</li>
+<li><strong>Repository layout</strong> — pointer to <code>repos/</code>
+and <code>docs/repos-registry.md</code>.</li>
+<li><strong>Covered repos list</strong> — which repos have context docs
+under <code>docs/repo-context/</code>.</li>
+<li><strong>Workspace skills index</strong> — one-line description of
+each skill in <code>skills/</code> and when to invoke it.</li>
+<li><strong>Work directory convention</strong> — naming pattern (e.g.,
+<code>work/&lt;username&gt;_&lt;project-name&gt;/</code>).</li>
+<li><strong>Operational constraints</strong> — distilled rules that
+prevent silent failures (shell portability, DB quirks, tool
+gotchas).</li>
+<li><strong>Agent coding principles</strong> — behavioral guidance
+(simplicity, surgical changes, ask before assuming).</li>
+<li><strong>Agent context discipline</strong> — rules for managing the
+LLM context window (disk is source of truth, demand-load, persist
+intermediate state).</li>
+<li><strong>Service access</strong> — pointer to credential
+framework.</li>
+</ul>
+<hr />
+<h2 id="ide-and-agent-configuration">IDE and Agent Configuration</h2>
+<p>The examples below use VS Code and Claude Code. Substitute the
+equivalents for your editor and agent runtime — the <em>pattern</em>
+(shared settings checked in, user-specific config gitignored, templates
+for new users) applies regardless of the specific tool.</p>
+<h3 id="vscode--vs-code"><code>.vscode/</code> — VS Code</h3>
+<pre><code>.vscode/
+├── settings.json               # Shared IDE settings (checked in)
+├── mcp.json.example            # MCP server config template (checked in)
+└── mcp.json                    # MCP server config (gitignored, user-specific)</code></pre>
+<ul>
+<li><strong><code>settings.json</code></strong> (checked in) —
+language/IDE settings that everyone benefits from (formatters, language
+server config, etc.).</li>
+<li><strong><code>mcp.json</code></strong> (gitignored) — MCP server
+definitions for tools like Jira, Confluence, GitHub, etc. Points to
+user-local wrapper scripts.</li>
+<li><strong><code>mcp.json.example</code></strong> (checked in) —
+template so new users can copy and customize.</li>
+<li><strong><code>&lt;Project&gt;.code-workspace</code></strong>
+(checked in) — VS Code multi-root workspace file. Registers each product
+repo as a workspace root for IntelliSense, search, and debugging.</li>
+</ul>
+<h3 id="claude--claude-code-project-level"><code>.claude/</code> —
+Claude Code (Project-Level)</h3>
+<pre><code>.claude/
+└── settings.json               # Bash and MCP tool permission allowlist</code></pre>
+<p>User-specific permission allowlist controlling which Bash commands
+and MCP tools Claude Code can run without prompting. Gitignored —
+permissions are a personal trust decision. Provide a starter template
+(<code>settings.json.example</code>) for new users.</p>
+<h3 id="user-level-files-outside-the-workspace">User-Level Files
+(Outside the Workspace)</h3>
+<p>These live under the user's home directory and are never checked
+in:</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Tool</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.claude.json</code></td>
+<td>Claude Code</td>
+<td>Global settings and project registry</td>
+</tr>
+<tr>
+<td><code>~/.claude/projects/&lt;id&gt;/memory/</code></td>
+<td>Claude Code</td>
+<td>Persistent per-project memory</td>
+</tr>
+<tr>
+<td><code>~/.codex/config.toml</code></td>
+<td>Codex</td>
+<td>Global config including MCP server registrations</td>
+</tr>
+<tr>
+<td><code>~/.mcp-scripts/</code></td>
+<td>Codex / Claude</td>
+<td>Wrapper scripts that launch MCP servers</td>
+</tr>
+<tr>
+<td><code>~/.pgpass</code>, <code>~/.aws/</code>, etc.</td>
+<td>Various (Postgres, AWS CLI, …)</td>
+<td>Credential files for external services — examples only; use whatever
+your stack needs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important:</strong> persist <em>project state</em>
+(decisions, design notes, in-flight work) in <code>work/</code>, not in
+agent-specific memory stores. Memory stores are fine for personal
+preferences ("I'm a data scientist") but not for shared project
+context.</p>
+<hr />
+<h2 id="docs--workspace-documentation"><code>docs/</code> — Workspace
+Documentation</h2>
+<pre><code>docs/
+├── workspace-structure.md      # This file — the workspace organization map
+├── workspace-setup.md          # How to recreate this workspace from scratch
+├── repos-registry.md           # Product repo registry (symlinked from repos/README.md)
+├── system-design.md            # Multi-repo system architecture overview
+├── operational-knowledge.md    # Distilled rules that prevent silent failures
+├── service-access.md           # Credential framework: vault backends, verify commands
+├── mcp-setup.md                # MCP server configuration guide
+│
+└── repo-context/               # Per-repo architecture and navigation docs
+    ├── README.md               #   Index of covered repos
+    ├── _templates/             #   Skeletons copied into each repo folder
+    └── &lt;repo&gt;/                 #   One folder per covered repo
+        ├── code-structure.md   #   Factual navigation (&quot;where is it?&quot;)
+        ├── design.md           #   Architecture and design (&quot;how does it fit?&quot;)
+        └── api.md              #   Public surface (service / library / CLI)</code></pre>
+<h3 id="why-per-repo-context-docs">Why Per-Repo Context Docs?</h3>
+<p>When agents work inside a repo, they need orientation faster than
+"read every file." Three short docs per repo answer the common
+questions:</p>
+<ul>
+<li><strong><code>code-structure.md</code></strong> — a factual map:
+where modules live, what each directory does, how to find specific
+functionality.</li>
+<li><strong><code>design.md</code></strong> — architecture and component
+boundaries: how the pieces fit together, what's a separate process vs. a
+library, why.</li>
+<li><strong><code>api.md</code></strong> — the repo's public surface
+(service endpoints, library exports, or CLI commands — whichever
+applies).</li>
+</ul>
+<p>Generate them with the <strong><code>onboard-repo</code></strong>
+workflow (<code>/onboard-repo &lt;repo-name&gt;</code>, backed by
+<code>scripts/onboard-repo.sh</code> and the skeletons in
+<code>docs/repo-context/_templates/</code>); each doc carries a
+provenance block (date + source commit) and
+<code>scripts/check-repo-context.sh</code> flags when the code has moved
+past it. Refresh with
+<code>scripts/onboard-repo.sh &lt;repo&gt; --refresh</code>. They are
+workspace artifacts, not committed back to the product repos.</p>
+<hr />
+<h2 id="skills--agent-skills"><code>skills/</code> — Agent Skills</h2>
+<p>Reusable workflow definitions any agent runtime can read. Each skill
+is a folder with at least a <code>SKILL.md</code> describing:</p>
+<ul>
+<li><strong>When to use</strong> the skill (trigger conditions,
+examples).</li>
+<li><strong>Inputs and prerequisites.</strong></li>
+<li><strong>Step-by-step workflow.</strong></li>
+<li><strong>Outputs and where they land</strong> (typically a
+<code>work/&lt;project&gt;/</code> folder).</li>
+<li><strong>State and resumption</strong> — where intermediate state is
+persisted.</li>
+</ul>
+<pre><code>skills/
+├── onboard-repo/               # Onboard a repo: registry + index + context docs
+├── handoff/                    # Session handoff for agent/human continuity
+├── diagnose/                   # Systematic 6-phase debugging methodology
+├── tdd/                        # Test-driven development discipline
+├── grill/                      # Stress-test plans through structured questioning
+├── context-analysis/           # Audit and optimize the LLM context window
+└── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
+<p>Skills are agent-vendor-neutral — write them in plain Markdown with
+no runtime-specific syntax. List each skill in the
+<code>CONTEXT.md</code> "Workspace Skills" section with a one-line
+description so agents can discover them.</p>
+<h3 id="generic-vs-domain-specific-skills">Generic vs. Domain-Specific
+Skills</h3>
+<ul>
+<li><strong>Generic</strong> (<code>handoff</code>,
+<code>diagnose</code>, <code>tdd</code>, <code>grill</code>,
+<code>context-analysis</code>, <code>onboard-repo</code>) — useful in
+any project.</li>
+<li><strong>Domain-specific</strong> — workflows particular to your
+problem domain (testing methodology, bug triage pipeline, deployment
+runbooks). These carry the project's institutional knowledge.</li>
+</ul>
+<hr />
+<h2 id="work--active-project-work"><code>work/</code> — Active Project
+Work</h2>
+<pre><code>work/
+├── &lt;username&gt;_&lt;project-name&gt;/  # Per-developer project folders
+│   ├── README.md               #   Project intent and current state
+│   └── &lt;project-specific files&gt;
+│
+└── &lt;shared-project&gt;/           # Shared cross-developer initiatives</code></pre>
+<p><strong>Naming convention:</strong> default to
+<code>work/&lt;username&gt;_&lt;project-name&gt;/</code> to avoid
+collisions in shared workspaces. Underscores separate username from
+project; hyphens separate words within the project name.</p>
+<p><strong>Content boundary:</strong> work directories are scoped to the
+project and owned by the relevant skill. <code>CONTEXT.md</code> may
+<em>name</em> a work directory as a location pointer but must not list
+its internal files. File-level structure belongs in the skill's
+<code>SKILL.md</code>.</p>
+<p><strong>Why this matters for agents:</strong> work directories are
+where intermediate state survives context compaction. After producing or
+consuming any state that future sessions need, persist it to a file in
+the relevant work directory.</p>
+<hr />
+<h2 id="prompt-library--prompt-contracts"><code>prompt-library/</code> —
+Prompt Contracts</h2>
+<p>Reusable prompt templates that define the output contract for
+repeated generation tasks (e.g., per-repo context docs).</p>
+<pre><code>prompt-library/
+└── &lt;output-type&gt;/
+    ├── README.md               # Guidance for producing this output
+    └── base.prompt.md          # The base prompt contract</code></pre>
+<p>Skills reference these contracts so the output format stays
+consistent across generations and agents.</p>
+<hr />
+<h2 id="references--external-references"><code>references/</code> —
+External References</h2>
+<pre><code>references/
+├── README.md                   # Registry of external repos (checked in)
+└── &lt;cloned-repo&gt;/              # Gitignored</code></pre>
+<p>A registry of third-party repos (research code, reference
+implementations, training material) that the team finds useful. The
+registry is checked in; the clones are gitignored.</p>
+<hr />
+<h2 id="repos--product-repositories"><code>repos/</code> — Product
+Repositories</h2>
+<p>Each product repo is cloned here as a separate git repository. The
+<code>repos/</code> folder itself is gitignored except for a single
+<code>README.md</code> symlink to <code>docs/repos-registry.md</code>.
+This requires an explicit exception in <code>.gitignore</code>:</p>
+<pre class="gitignore"><code>repos/*
+!repos/README.md</code></pre>
+<p>Use <code>repos/*</code> (the contents) rather than
+<code>repos/</code> (the directory). The directory-form negation is
+unreliable across git versions; the contents-form negation always
+works.</p>
+<h3 id="repo-registry-pattern">Repo Registry Pattern</h3>
+<p>Keep one canonical registry at <code>docs/repos-registry.md</code>
+listing:</p>
+<ul>
+<li>Repo name and host (GitHub, GitLab, Bitbucket, etc.)</li>
+<li>Clone URL (SSH preferred)</li>
+<li>Default branch</li>
+<li>One-line purpose</li>
+<li>Network requirements (VPN, SSH key, etc.)</li>
+<li>Whether covered by context docs</li>
+</ul>
+<p><code>scripts/setup.sh</code> symlinks <code>repos/README.md</code> →
+<code>docs/repos-registry.md</code> so the registry is discoverable from
+inside <code>repos/</code>.</p>
+<h3 id="primary-vs-optional-repos">Primary vs. Optional Repos</h3>
+<p>Split repos into two tiers:</p>
+<ul>
+<li><strong>Primary</strong> — required for the workspace to be useful,
+cloned by <code>setup.sh --clone-repos</code>.</li>
+<li><strong>Optional</strong> — listed in the registry, cloned only when
+a developer needs them.</li>
+</ul>
+<h3 id="handling-mixed-hosts-and-restricted-network-repos">Handling
+Mixed Hosts and Restricted-Network Repos</h3>
+<p>Real projects often have repos on different hosts, or one repo behind
+a VPN or corporate firewall. Two patterns work well:</p>
+<ol type="1">
+<li><strong>Document network requirements in the registry.</strong> Add
+a <code>Network</code> column noting "VPN required", "SSH key X", or
+"GitHub PAT scope Y". <code>setup.sh</code> can skip restricted repos by
+default and emit instructions.</li>
+<li><strong>Use a mirror when one exists.</strong> If a VPN-only repo is
+mirrored to a reachable host (e.g., a GitLab repo mirrored to
+Bitbucket/GitHub), list both in the registry under distinct local
+directory names (<code>repos/foo/</code>,
+<code>repos/foo_mirror/</code>) so developers can pick whichever matches
+their network access. Note in the registry which is canonical.</li>
+</ol>
+<hr />
+<h2 id="scripts--bootstrap-and-utility-scripts"><code>scripts/</code> —
+Bootstrap and Utility Scripts</h2>
+<pre><code>scripts/
+├── setup.sh                       # Workspace bootstrap (env, symlinks, optional cloning)
+├── check-workspace-structure.sh   # Structural validation against this doc
+├── check-service-access.sh        # Credential/service access preflight checker
+└── tests/                         # Automated workspace validation suite
+    ├── validate-workspace.sh      #   Test runner
+    ├── test-helpers.sh            #   Shared pass/fail/skip utilities
+    ├── test-workspace-integrity.sh
+    ├── test-content-consistency.sh
+    ├── test-parameterization.sh
+    └── test-cross-platform.sh</code></pre>
+<p><strong>Required scripts</strong> (start with these):</p>
+<ul>
+<li><code>setup.sh</code> — creates <code>.env</code> from
+<code>.env.example</code>, creates required symlinks
+(<code>CLAUDE.md</code>, <code>AGENTS.md</code>,
+<code>repos/README.md</code>), optionally clones repos.</li>
+<li><code>check-workspace-structure.sh</code> — validates that
+documented directories exist, symlinks resolve, and the registry matches
+the on-disk repos.</li>
+</ul>
+<p><strong>Recommended scripts</strong> (add as the workspace
+matures):</p>
+<ul>
+<li><code>check-service-access.sh</code> — verifies all required
+credentials are reachable (database, cloud CLI, Atlassian, etc.).</li>
+<li>A test suite under <code>scripts/tests/</code> for catching
+parameterization regressions (no hardcoded secrets, no machine-specific
+paths in tracked files, etc.).</li>
+</ul>
+<hr />
+<h2 id="environment-parameterization">Environment Parameterization</h2>
+<p>A <code>.env</code> file at the workspace root holds machine-specific
+values. It is <strong>gitignored</strong>; a tracked
+<code>.env.example</code> template lists every required variable with
+placeholder values.</p>
+<h3 id="what-goes-in-env">What Goes in <code>.env</code></h3>
+<ul>
+<li>Tool paths (especially for keg-only Homebrew packages, JDK versions,
+etc.)</li>
+<li>Database hosts, ports, and DB names</li>
+<li>Cloud identifiers (account IDs, subscription GUIDs, project
+IDs)</li>
+<li>Credential file locations (e.g., <code>PGPASSFILE</code>)</li>
+</ul>
+<h3 id="what-does-not-go-in-env">What Does <em>Not</em> Go in
+<code>.env</code></h3>
+<ul>
+<li><strong>Credentials themselves</strong> — passwords, API keys,
+tokens. These belong in the OS keychain / vault, retrieved on demand by
+scripts.</li>
+</ul>
+<h3 id="what-tracked-files-may-contain">What Tracked Files May
+Contain</h3>
+<ul>
+<li><strong>Infrastructure identifiers</strong> — account IDs, resource
+group names, DB usernames. Safe to include in tracked docs and runbooks;
+they are useless without credentials and provide operational
+context.</li>
+<li><strong>Never:</strong> passwords, API keys, tokens, connection
+strings with embedded passwords.</li>
+</ul>
+<p>Enforce this with a parameterization test in
+<code>scripts/tests/</code>.</p>
+<hr />
+<h2 id="service-access-pattern">Service Access Pattern</h2>
+<p>When the workspace integrates with external services (Atlassian,
+cloud providers, internal databases), use a <strong>vault-backed
+credential framework</strong>:</p>
+<ol type="1">
+<li>Credentials live in the OS keychain or equivalent vault (macOS
+Keychain, Linux <code>secret-tool</code>/<code>pass</code>, Windows
+Credential Manager).</li>
+<li>A registry file (<code>docs/service-access.md</code>) documents each
+service with:
+<ul>
+<li>Vault key name</li>
+<li>Username/account</li>
+<li>Retrieve command (e.g.,
+<code>security find-generic-password ...</code>)</li>
+<li>Verify command (a low-impact API call to confirm access)</li>
+</ul></li>
+<li>A local cache file (<code>.service-access.local.json</code>,
+gitignored) records the resolved retrieve commands so agents don't
+re-discover them.</li>
+<li><code>scripts/check-service-access.sh</code> performs preflight
+checks and regenerates the cache.</li>
+</ol>
+<h3 id="minimum-registry-entry-shape">Minimum Registry Entry Shape</h3>
+<p>A <code>docs/service-access.md</code> entry should give an agent or
+human everything needed to authenticate and verify access without
+guessing:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">### Atlassian (Jira / Confluence)</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Vault key**: <span class="in">`atlassian-api-token`</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Username**: <span class="in">`you@example.com`</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Retrieve cmd** (macOS): <span class="in">`security find-generic-password -s atlassian-api-token -w`</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Verify cmd**: <span class="in">`curl -su &quot;$USER:$TOKEN&quot; https://your-org.atlassian.net/rest/api/3/myself`</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Used by**: MCP <span class="in">`atlassian-*`</span> servers; <span class="in">`scripts/file-bug.sh`</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Rotation**: every 90 days; rotate at id.atlassian.com → Account → Security</span></code></pre></div>
+<p>This keeps credentials out of <code>.env</code>, out of tracked
+files, and out of agent conversation history.</p>
+<hr />
+<h2 id="gitignored-vs-checked-in">Gitignored vs. Checked In</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Checked in?</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CONTEXT.md</code>, <code>CLAUDE.md</code>,
+<code>AGENTS.md</code>, <code>GEMINI.md</code></td>
+<td>Yes</td>
+<td>Agent entrypoints (the last three are symlinks →
+<code>CONTEXT.md</code>)</td>
+</tr>
+<tr>
+<td><code>&lt;Project&gt;.code-workspace</code></td>
+<td>Yes</td>
+<td>Shared VS Code workspace definition (VS Code only — create per
+project if used; not shipped in the template)</td>
+</tr>
+<tr>
+<td><code>docs/</code>, <code>skills/</code>,
+<code>prompt-library/</code></td>
+<td>Yes</td>
+<td>Shared documentation and skills</td>
+</tr>
+<tr>
+<td><code>work/</code></td>
+<td>Yes</td>
+<td>Project work and persisted state</td>
+</tr>
+<tr>
+<td><code>references/README.md</code></td>
+<td>Yes</td>
+<td>Registry of external repos</td>
+</tr>
+<tr>
+<td><code>repos/README.md</code></td>
+<td>Yes (symlink)</td>
+<td>Registry of product repos</td>
+</tr>
+<tr>
+<td><code>scripts/</code></td>
+<td>Yes</td>
+<td>Bootstrap and utility scripts</td>
+</tr>
+<tr>
+<td><code>.vscode/settings.json</code></td>
+<td>Yes</td>
+<td>Shared IDE settings</td>
+</tr>
+<tr>
+<td><code>opencode.json</code>, <code>.opencode/</code></td>
+<td>Yes</td>
+<td>Shared OpenCode config and plugins</td>
+</tr>
+<tr>
+<td><code>.gemini/settings.json</code></td>
+<td>Yes</td>
+<td>Shared Gemini CLI config (e.g. hooks)</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td>Yes</td>
+<td>Template for required env vars</td>
+</tr>
+<tr>
+<td><code>.mcp.json.example</code></td>
+<td>Yes</td>
+<td>Template for project-level MCP config</td>
+</tr>
+<tr>
+<td><code>.vscode/mcp.json.example</code></td>
+<td>Yes</td>
+<td>Template for VS Code MCP config</td>
+</tr>
+<tr>
+<td><code>.claude/settings.json.example</code></td>
+<td>Yes</td>
+<td>Template for the Claude Code permission allowlist</td>
+</tr>
+<tr>
+<td><code>.mcp.json</code></td>
+<td><strong>No</strong></td>
+<td>User-specific project MCP config (copied from
+<code>.mcp.json.example</code>)</td>
+</tr>
+<tr>
+<td><code>.vscode/mcp.json</code></td>
+<td><strong>No</strong></td>
+<td>User-specific MCP paths</td>
+</tr>
+<tr>
+<td><code>.claude/settings.json</code>,
+<code>.claude/settings.local.json</code></td>
+<td><strong>No</strong></td>
+<td>User-specific permission allowlist</td>
+</tr>
+<tr>
+<td><code>repos/</code> (except <code>README.md</code>)</td>
+<td><strong>No</strong></td>
+<td>Separate git repos, cloned on setup</td>
+</tr>
+<tr>
+<td><code>references/*/</code></td>
+<td><strong>No</strong></td>
+<td>Cloned external repos</td>
+</tr>
+<tr>
+<td><code>graphify-out/</code></td>
+<td><strong>No</strong></td>
+<td>Locally regenerated knowledge-graph output</td>
+</tr>
+<tr>
+<td><code>.venv/</code>, <code>.idea/</code>, <code>temp/</code>,
+<code>tmp/</code>, <code>.DS_Store</code></td>
+<td><strong>No</strong></td>
+<td>Local-only</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td><strong>No</strong></td>
+<td>Environment values</td>
+</tr>
+<tr>
+<td><code>.service-access.local.json</code></td>
+<td><strong>No</strong></td>
+<td>Machine-specific credential cache</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="recommended-contextmd-sections">Recommended
+<code>CONTEXT.md</code> Sections</h2>
+<p>The sections below are not part of the workspace <em>structure</em>,
+but they are behavioral guidance that every workspace benefits from.
+Copy them verbatim (or tailor them) into your <code>CONTEXT.md</code> so
+every agent session starts with the same expectations.</p>
+<h3 id="agent-coding-principles">Agent Coding Principles</h3>
+<p>Behavioral guidance that reduces common AI coding mistakes:</p>
+<ol type="1">
+<li><strong>Think before coding.</strong> State assumptions; ask when
+uncertain; surface tradeoffs instead of silently picking.</li>
+<li><strong>Simplicity first.</strong> Minimum code that solves the
+problem. No speculative features, no abstractions for single-use
+code.</li>
+<li><strong>Surgical changes.</strong> Touch only what's required. Don't
+refactor adjacent code or "improve" formatting outside the task
+scope.</li>
+<li><strong>Goal-driven execution.</strong> Define verifiable success
+criteria; loop until verified.</li>
+</ol>
+<h3 id="agent-context-discipline">Agent Context Discipline</h3>
+<p>Rules for keeping the LLM context window healthy across long
+sessions:</p>
+<ol type="1">
+<li><strong>Disk is the source of truth.</strong> Always re-read files
+before asserting facts about them; conversation memory may be
+compacted.</li>
+<li><strong>Demand-load, don't pre-load.</strong> Skills list reads for
+orientation but load files only when the workflow reaches a step that
+needs them.</li>
+<li><strong>Use targeted reads.</strong> <code>Grep</code> for specific
+lines or <code>Read</code> with <code>offset</code>/<code>limit</code>
+rather than full file reads when checking a single fact.</li>
+<li><strong>Persist intermediate state to disk.</strong> Anything that
+must survive compaction belongs in a file under <code>work/</code>, not
+in conversation memory.</li>
+<li><strong>Persist project state in <code>work/</code>, not
+agent-specific stores.</strong> Memory systems are for personal
+preferences, not shared project context.</li>
+<li><strong>Sub-agent summaries are hints, not facts.</strong> Verify on
+disk.</li>
+</ol>
+<hr />
+<h2 id="bootstrapping-your-own-workspace">Bootstrapping Your Own
+Workspace</h2>
+<p>The authoritative bootstrap procedure is the <a
+href="#agent-bootstrap-instructions">Agent Bootstrap Instructions</a>
+section above. Whether you delegate to an AI agent or perform the steps
+manually, follow that section — it lists every file and symlink to
+create, the stub header format, and the post-scaffold verification
+checks.</p>
+<p>After the initial scaffold, iterate by:</p>
+<ul>
+<li>Generating per-repo context docs (<code>code-structure.md</code> +
+<code>design.md</code>) for each covered repo using a prompt contract
+under <code>prompt-library/</code>.</li>
+<li>Adding domain-specific skills under <code>skills/</code> as
+workflows stabilize.</li>
+<li>Adding <code>docs/service-access.md</code> entries as you integrate
+new external services.</li>
+<li>Refreshing repo context docs when repos change significantly.</li>
+</ul>
+</body>
+</html>
