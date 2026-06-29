@@ -348,13 +348,14 @@
       <tr><td>2026-06-25</td><td>Re-review: fresh evidence pass over the post-review additions (the <code>onboard-repo</code> workflow + the HTML guide) per the maintenance convention. Surfaced and fixed four findings in one pass — M8 (drift guard: the guide builder embeds a source hash, <code>check-workspace-structure.sh</code> warns when the published HTML is stale), L6 (temp-file leak + non-portable <code>mktemp -t</code> in <code>build-guide-html.sh</code>), L7 (duplicated <code>resolve_repo_path()</code> extracted to <code>scripts/lib/repo-paths.sh</code>), L8 (documented the <code>pandoc</code> prerequisite). Scorecard now 0/18/2/0/6; metadata refreshed.</td></tr>
       <tr><td>2026-06-25</td><td>Feature: added <code>docs/usage-scenarios.html</code> — end-to-end usage scenarios (pull template → onboard an existing repo or start a new project → build features with AI agents → checkpoint between sessions) plus a lifecycle state diagram and a feature-loop diagram. Hand-authored HTML reusing <code>setup-guide.html</code>'s visual identity with self-contained inline SVG (no pandoc/CDN dependency). Linked from the README alongside the other rendered guides.</td></tr>
       <tr><td>2026-06-25</td><td>Re-review: fresh evidence pass over the new <code>usage-scenarios.html</code> per the maintenance convention — verified every command/path/skill against the repo and rendered both SVG diagrams via headless Chrome to check for collisions. Surfaced and fixed <strong>L9</strong> (footer <code>../CONTEXT.md</code> link breaks on Pages, which serves from <code>docs/</code>; repointed to the absolute blob URL) plus a zero-impact SVG class typo. Scorecard now 0/19/2/0/6.</td></tr>
+      <tr><td>2026-06-28</td><td>Feature: vendored the <code>rlm</code> (Recursive Language Model) skill agent-agnostically (<code>skills/rlm/SKILL.md</code> + <code>scripts/rlm_repl.py</code>/<code>rlm_audit_runtime.py</code> + <code>.claude/commands/rlm.md</code>), sourced from <a href="https://github.com/brainqub3/claude_code_rlm">brainqub3/claude_code_rlm</a> (MIT, <code>LICENSE</code> preserved). Runtime-neutral instructions in the shared <code>skills/</code> dir; the one coupling — leaf sub-LM is a nested <code>claude -p</code> — is documented and env-overridable. Re-pointed upstream's <code>.claude/skills/rlm/</code> invocation paths to <code>skills/rlm/</code>, gitignored the REPL scratch (<code>.claude/rlm_state/</code>, <code>.claude/rlm_runs/</code>), and registered it in <code>CONTEXT.md</code> + <code>docs/template-usage.md</code>. Smoke-tested <code>init</code>/<code>exec</code> end-to-end.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-06-24.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-06-28.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>

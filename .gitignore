@@ -20,6 +20,10 @@ references/*
 temp/
 tmp/
 
+# rlm skill runtime scratch (REPL state + audit replay packages)
+.claude/rlm_state/
+.claude/rlm_runs/
+
 # graphify knowledge-graph output (regenerated locally)
 graphify-out/
 

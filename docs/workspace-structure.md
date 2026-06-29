@@ -480,14 +480,14 @@ folder with at least a `SKILL.md` describing:
 
 ```
 skills/
+├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
-├── handoff/                    # Session handoff for agent/human continuity
-├── diagnose/                   # Systematic 6-phase debugging methodology
-├── tdd/                        # Test-driven development discipline
-├── grill/                      # Stress-test plans through structured questioning
-├── context-analysis/           # Audit and optimize the LLM context window
+├── rlm/                        # Recursive Language Model loop for huge contexts
 └── <your-domain-skills>/       # Project-specific workflows
 ```
+
+The template ships with `checkpoint`, `onboard-repo`, and `rlm`; add your own
+alongside them.
 
 Skills are agent-vendor-neutral — write them in plain Markdown with no
 runtime-specific syntax. List each skill in the `CONTEXT.md` "Workspace
@@ -495,8 +495,7 @@ Skills" section with a one-line description so agents can discover them.
 
 ### Generic vs. Domain-Specific Skills
 
-- **Generic** (`handoff`, `diagnose`, `tdd`, `grill`, `context-analysis`,
-  `onboard-repo`) — useful in any project.
+- **Generic** (`checkpoint`, `onboard-repo`, `rlm`) — useful in any project.
 - **Domain-specific** — workflows particular to your problem domain
   (testing methodology, bug triage pipeline, deployment runbooks). These
   carry the project's institutional knowledge.

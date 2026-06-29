@@ -67,6 +67,15 @@ shortcuts under `.claude/commands/`).
   Claude Code shortcut: **`/onboard-repo <repo-name> [repo-path]`**. Freshness:
   `scripts/check-repo-context.sh`; refresh: `scripts/onboard-repo.sh <repo> --refresh`.
 
+- **rlm** (`skills/rlm/SKILL.md`) — Recursive Language Model loop for answering a
+  query over a context too large to read into chat: loads it as a variable in a
+  persistent Python REPL (`skills/rlm/scripts/rlm_repl.py`) and probes/chunks/
+  sub-queries a cheap leaf LLM over slices, then aggregates. Use for counting,
+  classifying every item, multi-hop lookup, or whole-corpus summarisation when "the
+  answer depends on almost every line". Claude Code shortcut:
+  **`/rlm context=<path> query=<question>`**. Leaf sub-LM is a nested `claude -p`
+  (vendored from github.com/brainqub3/claude_code_rlm, MIT).
+
 ## Service Access
 
 External services are documented in `docs/service-access.md`. MCP setup is

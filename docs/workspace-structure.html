@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: a7e28fcc4d1bcf9112baf9f99d0630718155a6fa -->
+  <!-- source-md-sha1: 345f84eed51bd4aa43892144cbdbf769194536c7 -->
 </head>
 <body>
 <div class="src-banner">
@@ -837,13 +837,13 @@ examples).</li>
 persisted.</li>
 </ul>
 <pre><code>skills/
+├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
-├── handoff/                    # Session handoff for agent/human continuity
-├── diagnose/                   # Systematic 6-phase debugging methodology
-├── tdd/                        # Test-driven development discipline
-├── grill/                      # Stress-test plans through structured questioning
-├── context-analysis/           # Audit and optimize the LLM context window
+├── rlm/                        # Recursive Language Model loop for huge contexts
 └── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
+<p>The template ships with <code>checkpoint</code>,
+<code>onboard-repo</code>, and <code>rlm</code>; add your own alongside
+them.</p>
 <p>Skills are agent-vendor-neutral — write them in plain Markdown with
 no runtime-specific syntax. List each skill in the
 <code>CONTEXT.md</code> "Workspace Skills" section with a one-line
@@ -851,10 +851,9 @@ description so agents can discover them.</p>
 <h3 id="generic-vs-domain-specific-skills">Generic vs. Domain-Specific
 Skills</h3>
 <ul>
-<li><strong>Generic</strong> (<code>handoff</code>,
-<code>diagnose</code>, <code>tdd</code>, <code>grill</code>,
-<code>context-analysis</code>, <code>onboard-repo</code>) — useful in
-any project.</li>
+<li><strong>Generic</strong> (<code>checkpoint</code>,
+<code>onboard-repo</code>, <code>rlm</code>) — useful in any
+project.</li>
 <li><strong>Domain-specific</strong> — workflows particular to your
 problem domain (testing methodology, bug triage pipeline, deployment
 runbooks). These carry the project's institutional knowledge.</li>
