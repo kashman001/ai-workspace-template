@@ -80,7 +80,7 @@
   <div class="pill-row">
     <span class="pill">Claude Code</span><span class="pill">Codex</span>
     <span class="pill">OpenCode</span><span class="pill">Gemini</span>
-    <span class="pill">GitHub MCP</span><span class="pill">graphify</span>
+    <span class="pill">GitHub MCP</span><span class="pill">YouTube MCP</span><span class="pill">graphify</span>
   </div>
 </div></header>
 
@@ -243,7 +243,8 @@ rm -rf .git &amp;&amp; git init</code></pre>
     <h3>Wire up agents &amp; MCP</h3>
     <p>Copy the per-user config templates (all gitignored), then authenticate. Run the check, then follow
     <a href="runbooks/authentication.md">runbooks/authentication.md</a> for anything missing; per-runtime MCP
-    detail is in <code>docs/mcp-setup.md</code>.</p>
+    detail is in <code>docs/mcp-setup.md</code>. The YouTube transcript MCP server is workspace-local and
+    credential-free; install <code>yt-dlp</code> if you use it.</p>
     <pre><code>cp .env.example .env
 cp .mcp.json.example .mcp.json
 cp .claude/settings.json.example .claude/settings.local.json
@@ -266,8 +267,9 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
 
   <div class="step"><div class="num">5</div><div class="body">
     <h3>Start building</h3>
-    <p>Decide on the optional bits: <strong>graphify</strong> is wired by default
-    (<code>.gemini/settings.json</code>, <code>.opencode/plugins/graphify.js</code>) — delete it if unused.
+    <p>Decide on the optional bits: <strong>graphify</strong> and the <strong>YouTube transcript MCP</strong>
+    are wired by default; graphify adds <code>.gemini/settings.json</code> / <code>.opencode/plugins/graphify.js</code>,
+    while YouTube uses <code>scripts/mcp/youtube-transcript.sh</code> and <code>yt-dlp</code>. Delete either if unused.
     Add reusable workflows under <code>skills/</code> and list them in <code>CONTEXT.md</code>.</p>
   </div></div>
 
@@ -370,7 +372,7 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
       <text class="ii" x="40" y="204">Karpathy principles</text>
       <text class="dd" x="40" y="220">4 principles already in CONTEXT.md · karpathy-examples</text>
       <text class="ii" x="40" y="246">graphify CLI</text>
-      <text class="dd" x="40" y="262">uv tool install graphifyy · graphify install --platform …</text>
+      <text class="dd" x="40" y="262">uv tool install graphifyy · yt-dlp for YouTube MCP</text>
 
       <rect x="510" y="20" width="290" height="260" rx="14" fill="#0c2025" stroke="#194a52"/>
       <text class="hh" x="655" y="46" fill="#22d3ee">PER-REPO step</text>
@@ -398,6 +400,10 @@ claude plugin install superpowers@claude-plugins-official
 uv tool install graphifyy
 /graphify                             # build the graph for THIS repo → graphify-out/
 graphify update .                     # refresh after code changes
+
+# YouTube transcript MCP
+yt-dlp --version                      # install via brew / apt / winget if missing
+scripts/mcp/youtube-transcript.sh     # workspace-local stdio server
 
 # skill repos — managed via agent-context (clone, then link with agent-context-sync)
 git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
@@ -431,6 +437,7 @@ agent-context-sync                    # links new skills into ~/.config/agent-co
     <pre><code>gh auth status                                    # global: GitHub auth
 echo "${GITHUB_PERSONAL_ACCESS_TOKEN:+token set}" # global: MCP token exported
 claude mcp list                                   # local:  GitHub MCP visible
+scripts/mcp/youtube-transcript.sh                 # local:  starts YouTube MCP
 ./scripts/check-workspace-structure.sh            # local:  symlinks + dirs OK</code></pre>
   </div>
 

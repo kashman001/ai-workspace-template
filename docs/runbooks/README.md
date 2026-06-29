@@ -14,7 +14,7 @@ missing, then the agent follows the matching runbook to fix it on this OS.
 
 | Runbook | Drives | Paired check |
 |---|---|---|
-| [`dependencies.md`](dependencies.md) | Install required/recommended tools (git, gh, node, uv, python3, docker, graphify) | `scripts/check-dependencies.sh` |
+| [`dependencies.md`](dependencies.md) | Install required/recommended tools (git, gh, node, uv, python3, yt-dlp, docker, graphify) | `scripts/check-dependencies.sh` |
 | [`authentication.md`](authentication.md) | Authenticate to services + export the MCP token | `scripts/check-service-access.sh` |
 
 ## How an agent should use these

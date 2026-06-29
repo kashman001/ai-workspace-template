@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 345f84eed51bd4aa43892144cbdbf769194536c7 -->
+  <!-- source-md-sha1: 1d30904b101b4f4140d279268a57fd84e2db7137 -->
 </head>
 <body>
 <div class="src-banner">
@@ -717,8 +717,9 @@ for new users) applies regardless of the specific tool.</p>
 language/IDE settings that everyone benefits from (formatters, language
 server config, etc.).</li>
 <li><strong><code>mcp.json</code></strong> (gitignored) — MCP server
-definitions for tools like Jira, Confluence, GitHub, etc. Points to
-user-local wrapper scripts.</li>
+definitions for tools like Jira, Confluence, GitHub, YouTube
+transcripts, etc. Points to user-local or workspace-local wrapper
+scripts.</li>
 <li><strong><code>mcp.json.example</code></strong> (checked in) —
 template so new users can copy and customize.</li>
 <li><strong><code>&lt;Project&gt;.code-workspace</code></strong>
@@ -764,7 +765,7 @@ in:</p>
 <tr>
 <td><code>~/.mcp-scripts/</code></td>
 <td>Codex / Claude</td>
-<td>Wrapper scripts that launch MCP servers</td>
+<td>User-local wrapper scripts that launch MCP servers</td>
 </tr>
 <tr>
 <td><code>~/.pgpass</code>, <code>~/.aws/</code>, etc.</td>
@@ -956,8 +957,15 @@ their network access. Note in the registry which is canonical.</li>
 Bootstrap and Utility Scripts</h2>
 <pre><code>scripts/
 ├── setup.sh                       # Workspace bootstrap (env, symlinks, optional cloning)
+├── check-dependencies.sh          # Required/recommended tool preflight
 ├── check-workspace-structure.sh   # Structural validation against this doc
 ├── check-service-access.sh        # Credential/service access preflight checker
+├── check-repo-context.sh          # Warn-only repo context freshness check
+├── onboard-repo.sh                # Mechanical half of repo onboarding
+├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
+├── mcp/                           # Workspace-local MCP servers
+│   ├── youtube-transcript.sh      #   YouTube MCP launcher
+│   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
 └── tests/                         # Automated workspace validation suite
     ├── validate-workspace.sh      #   Test runner
     ├── test-helpers.sh            #   Shared pass/fail/skip utilities
@@ -971,6 +979,9 @@ Bootstrap and Utility Scripts</h2>
 <code>.env.example</code>, creates required symlinks
 (<code>CLAUDE.md</code>, <code>AGENTS.md</code>,
 <code>repos/README.md</code>), optionally clones repos.</li>
+<li><code>check-dependencies.sh</code> — verifies core tools and warns
+about optional tools such as <code>yt-dlp</code> for the YouTube MCP
+server.</li>
 <li><code>check-workspace-structure.sh</code> — validates that
 documented directories exist, symlinks resolve, and the registry matches
 the on-disk repos.</li>
@@ -980,6 +991,10 @@ matures):</p>
 <ul>
 <li><code>check-service-access.sh</code> — verifies all required
 credentials are reachable (database, cloud CLI, Atlassian, etc.).</li>
+<li><code>scripts/mcp/</code> — checked-in, credential-free local MCP
+servers or launchers that are safe to share across runtimes. The
+template ships a YouTube transcript server backed by
+<code>yt-dlp</code>.</li>
 <li>A test suite under <code>scripts/tests/</code> for catching
 parameterization regressions (no hardcoded secrets, no machine-specific
 paths in tracked files, etc.).</li>

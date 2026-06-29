@@ -387,7 +387,8 @@ regardless of the specific tool.
 - **`settings.json`** (checked in) — language/IDE settings that everyone
   benefits from (formatters, language server config, etc.).
 - **`mcp.json`** (gitignored) — MCP server definitions for tools like Jira,
-  Confluence, GitHub, etc. Points to user-local wrapper scripts.
+  Confluence, GitHub, YouTube transcripts, etc. Points to user-local or
+  workspace-local wrapper scripts.
 - **`mcp.json.example`** (checked in) — template so new users can copy and
   customize.
 - **`<Project>.code-workspace`** (checked in) — VS Code multi-root
@@ -415,7 +416,7 @@ These live under the user's home directory and are never checked in:
 | `~/.claude.json` | Claude Code | Global settings and project registry |
 | `~/.claude/projects/<id>/memory/` | Claude Code | Persistent per-project memory |
 | `~/.codex/config.toml` | Codex | Global config including MCP server registrations |
-| `~/.mcp-scripts/` | Codex / Claude | Wrapper scripts that launch MCP servers |
+| `~/.mcp-scripts/` | Codex / Claude | User-local wrapper scripts that launch MCP servers |
 | `~/.pgpass`, `~/.aws/`, etc. | Various (Postgres, AWS CLI, …) | Credential files for external services — examples only; use whatever your stack needs |
 
 **Important:** persist *project state* (decisions, design notes, in-flight
@@ -620,8 +621,15 @@ or corporate firewall. Two patterns work well:
 ```
 scripts/
 ├── setup.sh                       # Workspace bootstrap (env, symlinks, optional cloning)
+├── check-dependencies.sh          # Required/recommended tool preflight
 ├── check-workspace-structure.sh   # Structural validation against this doc
 ├── check-service-access.sh        # Credential/service access preflight checker
+├── check-repo-context.sh          # Warn-only repo context freshness check
+├── onboard-repo.sh                # Mechanical half of repo onboarding
+├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
+├── mcp/                           # Workspace-local MCP servers
+│   ├── youtube-transcript.sh      #   YouTube MCP launcher
+│   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
 └── tests/                         # Automated workspace validation suite
     ├── validate-workspace.sh      #   Test runner
     ├── test-helpers.sh            #   Shared pass/fail/skip utilities
@@ -636,6 +644,8 @@ scripts/
 - `setup.sh` — creates `.env` from `.env.example`, creates required
   symlinks (`CLAUDE.md`, `AGENTS.md`, `repos/README.md`), optionally clones
   repos.
+- `check-dependencies.sh` — verifies core tools and warns about optional
+  tools such as `yt-dlp` for the YouTube MCP server.
 - `check-workspace-structure.sh` — validates that documented directories
   exist, symlinks resolve, and the registry matches the on-disk repos.
 
@@ -643,6 +653,9 @@ scripts/
 
 - `check-service-access.sh` — verifies all required credentials are
   reachable (database, cloud CLI, Atlassian, etc.).
+- `scripts/mcp/` — checked-in, credential-free local MCP servers or launchers
+  that are safe to share across runtimes. The template ships a YouTube
+  transcript server backed by `yt-dlp`.
 - A test suite under `scripts/tests/` for catching parameterization
   regressions (no hardcoded secrets, no machine-specific paths in tracked
   files, etc.).

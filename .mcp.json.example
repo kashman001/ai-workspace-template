@@ -1,5 +1,5 @@
 {
-  "_comment": "File: .mcp.json.example — GitHub MCP server template. Copy to .mcp.json (gitignored) for runtimes that read a project-level .mcp.json (e.g. Claude Code). Default is the Docker-free hosted remote server; ensure GITHUB_PERSONAL_ACCESS_TOKEN is exported before launch, e.g. via 'export GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token)' (see docs/mcp-setup.md). A local Docker alternative and per-runtime notes for Codex/Gemini/OpenCode are in docs/mcp-setup.md. See docs/workspace-structure.md -> 'IDE and Agent Configuration'. graphify serves graphify-out/graph.json over stdio; for a multi-repo workspace point it at a specific graph via args, e.g. \"args\": [\"repos/<name>/graphify-out/graph.json\"].",
+  "_comment": "File: .mcp.json.example — MCP server template. Copy to .mcp.json (gitignored) for runtimes that read a project-level .mcp.json (e.g. Claude Code). GitHub uses the Docker-free hosted remote server; ensure GITHUB_PERSONAL_ACCESS_TOKEN is exported before launch, e.g. via 'export GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token)' (see docs/mcp-setup.md). youtube-transcript is a workspace-local stdio server backed by scripts/mcp/youtube-transcript.sh and yt-dlp; it uses no credentials. graphify serves graphify-out/graph.json over stdio; for a multi-repo workspace point it at a specific graph via args, e.g. \"args\": [\"repos/<name>/graphify-out/graph.json\"].",
   "mcpServers": {
     "github": {
       "type": "http",
@@ -11,6 +11,11 @@
     "graphify": {
       "type": "stdio",
       "command": "graphify-mcp",
+      "args": []
+    },
+    "youtube-transcript": {
+      "type": "stdio",
+      "command": "./scripts/mcp/youtube-transcript.sh",
       "args": []
     }
   }

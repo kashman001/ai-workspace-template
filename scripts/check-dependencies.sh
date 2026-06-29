@@ -38,6 +38,7 @@ rec gh      "GitHub auth + MCP token source (gh auth token)"
 rec node    "Claude Code status line (npx ccstatusline)"
 rec uv      "graphify install (uv tool install graphifyy)"
 rec python3 "graphify runtime / general tooling"
+rec yt-dlp  "workspace-local YouTube transcript MCP server"
 rec docker  "local GitHub MCP server option (vs. hosted)"
 rec graphify "per-repo knowledge graph (optional)"
 

@@ -7,9 +7,14 @@ See: docs/workspace-structure.md → "IDE and Agent Configuration"
 
 # MCP Setup
 
-This workspace uses the **GitHub MCP server**. Its personal access token is
-read from the `GITHUB_PERSONAL_ACCESS_TOKEN` environment variable, sourced
-from `gh auth token` (see `docs/service-access.md`) — never hardcode it.
+This workspace pre-stages three MCP server patterns:
+
+- **GitHub MCP** — authenticated, hosted by default, token read from
+  `GITHUB_PERSONAL_ACCESS_TOKEN` sourced from `gh auth token`
+  (see `docs/service-access.md`).
+- **YouTube transcript MCP** — workspace-local stdio server backed by
+  `scripts/mcp/youtube-transcript.sh`, Python 3, and `yt-dlp`; no credentials.
+- **graphify MCP** — optional stdio server for querying a generated code graph.
 
 A checked-in template lives at `.mcp.json.example`. Copy it to `.mcp.json`
 (gitignored) for runtimes that read a project-level `.mcp.json`.
@@ -27,7 +32,8 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"
 
 ## Server type
 
-We default to the **hosted remote server** (`https://api.githubcopilot.com/mcp/`):
+For GitHub, we default to the **hosted remote server**
+(`https://api.githubcopilot.com/mcp/`):
 no Docker dependency, and the token is sent as an `Authorization: Bearer`
 header expanded from the environment at launch. This is what `.mcp.json` /
 `.mcp.json.example` configure.
@@ -48,19 +54,46 @@ running:
 }
 ```
 
+## YouTube transcript server
+
+The YouTube server is checked into the workspace:
+
+- Launcher: `scripts/mcp/youtube-transcript.sh`
+- Implementation: `scripts/mcp/youtube_transcript_mcp.py`
+- Tools: `youtube_get_video_info`, `youtube_get_transcript`
+- Dependency: `yt-dlp` on `PATH`
+
+It does not use workspace credentials. It shells out to `yt-dlp` to retrieve
+public metadata and captions when YouTube makes them available. It is
+best-effort: videos without captions, blocked videos, age or region
+restrictions, and YouTube rate limits can prevent transcript access.
+
+Manual smoke test:
+
+```bash
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+  | scripts/mcp/youtube-transcript.sh
+```
+
 ## Per-runtime configuration
 
 ### Claude Code — configured
 Reads the project-level `.mcp.json` (created here, gitignored). Uses the
-remote server with `type: "http"`, expanding `${GITHUB_PERSONAL_ACCESS_TOKEN}`
-into the `Authorization` header from the environment at launch. Verify:
+remote GitHub server with `type: "http"`, expanding
+`${GITHUB_PERSONAL_ACCESS_TOKEN}` into the `Authorization` header from the
+environment at launch. The example also pre-wires `youtube-transcript` and
+`graphify` as stdio servers. Verify:
 ```bash
 claude mcp list
 ```
 
 ### OpenCode — pre-staged
 OpenCode reads **two** files in this workspace, by design:
-- `opencode.json` (repo root) — the GitHub MCP server (`mcp.github`, `type: local`).
+- `opencode.json` (repo root) — MCP servers (`mcp.github`,
+  `mcp.youtube-transcript`).
 - `.opencode/opencode.json` — the plugin list (the graphify plugin).
 
 `{env:...}` substitution works for local servers. Verify after installing OpenCode:
@@ -77,6 +110,10 @@ Add to `~/.codex/config.toml`:
 command = "docker"
 args = ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"]
 env = { GITHUB_PERSONAL_ACCESS_TOKEN = "${GITHUB_PERSONAL_ACCESS_TOKEN}" }
+
+[mcp_servers.youtube-transcript]
+command = "/absolute/path/to/workspace/scripts/mcp/youtube-transcript.sh"
+args = []
 ```
 <!-- TODO: verify against your Codex version's MCP schema -->
 
@@ -89,6 +126,10 @@ Add to `~/.gemini/settings.json` under `mcpServers`:
       "command": "docker",
       "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "$GITHUB_PERSONAL_ACCESS_TOKEN" }
+    },
+    "youtube-transcript": {
+      "command": "/absolute/path/to/workspace/scripts/mcp/youtube-transcript.sh",
+      "args": []
     }
   }
 }
@@ -113,8 +154,16 @@ The graph must be built first (`/graphify` or the graphify CLI); see
 `docs/recommended-tooling.md` → graphify.
 
 ### Other runtimes
-Any runtime not listed above can use the same server: point it at the hosted
-remote URL (`https://api.githubcopilot.com/mcp/` with the bearer header) or the
-local Docker command. Consult the runtime's own MCP docs for where its config lives.
+Any runtime not listed above can use the same servers:
 
-> After configuring a runtime, restart it and confirm the GitHub tools appear.
+- GitHub: point it at the hosted remote URL
+  (`https://api.githubcopilot.com/mcp/` with the bearer header) or the local
+  Docker command.
+- YouTube: add a stdio server command pointing at
+  `/absolute/path/to/workspace/scripts/mcp/youtube-transcript.sh`.
+- graphify: add the `graphify-mcp` stdio command if you want live code-graph
+  queries.
+
+Consult the runtime's own MCP docs for where its config lives.
+
+> After configuring a runtime, restart it and confirm the expected tools appear.
