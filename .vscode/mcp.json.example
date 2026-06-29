@@ -1,6 +1,6 @@
 // Template for VS Code MCP config. Copy to .vscode/mcp.json (gitignored).
-// Uses the hosted GitHub MCP server; export GITHUB_PERSONAL_ACCESS_TOKEN before
-// launching (e.g. GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token)). See docs/mcp-setup.md.
+// Uses hosted GitHub MCP, optional graphify, and the workspace-local
+// youtube-transcript server. See docs/mcp-setup.md.
 {
   "servers": {
     "github": {
@@ -16,6 +16,10 @@
       "type": "stdio",
       "command": "graphify-mcp",
       "args": []
+    },
+    "youtube-transcript": {
+      "type": "stdio",
+      "command": "${WORKSPACE_ROOT}/scripts/mcp/youtube-transcript.sh"
     }
   }
 }

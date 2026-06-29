@@ -22,5 +22,12 @@ Windows Credential Manager) and are retrieved on demand. Never commit tokens.
 - **Used by**: GitHub MCP server (see `docs/mcp-setup.md`); the `gh` CLI
 - **Rotation**: managed via `gh auth` / PAT settings
 
+### YouTube transcript MCP
+
+- **Credentials**: none
+- **Verify cmd**: `yt-dlp --version`
+- **Used by**: workspace-local `youtube-transcript` MCP server (see `docs/mcp-setup.md`)
+- **Notes**: retrieves only public metadata/captions that YouTube exposes; availability depends on the video and YouTube access rules.
+
 <!-- Add one section per additional service (cloud CLI, database, Atlassian, …).
 See docs/workspace-structure.md → "Service Access Pattern" for the entry shape. -->

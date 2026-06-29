@@ -247,7 +247,8 @@ cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
         left with <code>grep -rIn -e '&lt;[a-z-]\+&gt;' -e 'TODO' -e 'Fill in:' .</code></li>
       <li>Wire agents &amp; MCP: copy <code>.claude/settings.json.example</code> →
         <code>.claude/settings.local.json</code>, <code>.mcp.json.example</code> → <code>.mcp.json</code>,
-        and export the GitHub token (<code>docs/mcp-setup.md</code>).</li>
+        export the GitHub token, and install <code>yt-dlp</code> if you want the workspace-local
+        YouTube transcript server (<code>docs/mcp-setup.md</code>).</li>
       <li>Verify with the <code>scripts/check-*.sh</code> checks; fix anything they flag using the matching
         runbook in <code>docs/runbooks/</code>.</li>
     </ol>
