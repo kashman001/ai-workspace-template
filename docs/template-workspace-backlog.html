@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-06-29 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-07-06 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">19</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">20</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">2</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,7 +84,7 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 19 findings are <span class="good">resolved</span>, and both design decisions settled. The initial
+    <p>All 20 findings are <span class="good">resolved</span>, and both design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -299,6 +299,22 @@
       <code>text-anchor</code> fallback. Verified both diagrams render cleanly via headless Chrome.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L10</span> Principle 1 didn't ask the agent to surface unknowns/assumptions <em>before</em> answering
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — <em>"Think before coding"</em> told the agent to state assumptions but not to
+      <em>proactively</em> say what it would need to know and which assumptions it would otherwise make silently before
+      responding — the ask-first behaviour from the XDA piece <em>"I added one line to my Claude prompts, and the
+      improvement was immediate"</em> (<code>Before you answer, tell me what you need to know to answer well, and point
+      out any assumptions you'd otherwise make</code>).</p>
+    <p><span class="fix">Fixed:</span> folded that behaviour into principle 1 (phrased as a standing agent directive, not
+      the article's user-voiced one-off) in both copies — <code>CONTEXT.md</code> and its
+      <code>docs/workspace-structure.md</code> mirror — with a trivial-change escape hatch so it adds no ceremony to
+      typo/one-liner requests. The wording now differs slightly from the agent-context <code>global.md</code> source;
+      that divergence is sanctioned by <strong>D1</strong> (<code>CONTEXT.md</code> is intentionally self-contained —
+      self-containment over DRY).</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -350,13 +366,14 @@
       <tr><td>2026-06-25</td><td>Re-review: fresh evidence pass over the new <code>usage-scenarios.html</code> per the maintenance convention — verified every command/path/skill against the repo and rendered both SVG diagrams via headless Chrome to check for collisions. Surfaced and fixed <strong>L9</strong> (footer <code>../CONTEXT.md</code> link breaks on Pages, which serves from <code>docs/</code>; repointed to the absolute blob URL) plus a zero-impact SVG class typo. Scorecard now 0/19/2/0/6.</td></tr>
       <tr><td>2026-06-28</td><td>Feature: vendored the <code>rlm</code> (Recursive Language Model) skill agent-agnostically (<code>skills/rlm/SKILL.md</code> + <code>scripts/rlm_repl.py</code>/<code>rlm_audit_runtime.py</code> + <code>.claude/commands/rlm.md</code>), sourced from <a href="https://github.com/brainqub3/claude_code_rlm">brainqub3/claude_code_rlm</a> (MIT, <code>LICENSE</code> preserved). Runtime-neutral instructions in the shared <code>skills/</code> dir; the one coupling — leaf sub-LM is a nested <code>claude -p</code> — is documented and env-overridable. Re-pointed upstream's <code>.claude/skills/rlm/</code> invocation paths to <code>skills/rlm/</code>, gitignored the REPL scratch (<code>.claude/rlm_state/</code>, <code>.claude/rlm_runs/</code>), and registered it in <code>CONTEXT.md</code> + <code>docs/template-usage.md</code>. Smoke-tested <code>init</code>/<code>exec</code> end-to-end.</td></tr>
       <tr><td>2026-06-29</td><td>Feature: exported the workspace-local YouTube transcript MCP server into the template (<code>scripts/mcp/youtube-transcript.sh</code> + <code>scripts/mcp/youtube_transcript_mcp.py</code>), pre-wired it in <code>.mcp.json.example</code>, <code>.vscode/mcp.json.example</code>, and <code>opencode.json</code>, and documented the credential-free <code>yt-dlp</code>-backed setup across MCP, dependency, setup, service-access, workspace-structure, setup-guide, and usage-scenario docs.</td></tr>
+      <tr><td>2026-07-06</td><td>Resolved <strong>L10</strong>: folded the ask-first directive from the XDA piece <em>"I added one line to my Claude prompts…"</em> into principle 1 (state what you'd need to know and name silent assumptions before answering; trivial-change escape hatch), in both the <code>CONTEXT.md</code> and <code>docs/workspace-structure.md</code> copies. Wording now diverges slightly from <code>global.md</code> — sanctioned by D1. Scorecard now 0/20/2/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-06-29.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-07-06.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>
