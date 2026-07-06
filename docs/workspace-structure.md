@@ -772,8 +772,10 @@ the same expectations.
 
 Behavioral guidance that reduces common AI coding mistakes:
 
-1. **Think before coding.** State assumptions; ask when uncertain; surface
-   tradeoffs instead of silently picking.
+1. **Think before coding.** Before answering, say what you'd need to know to
+   answer well and name any assumptions you'd otherwise make silently; ask when
+   uncertain; surface tradeoffs instead of quietly picking. For trivial changes
+   (a typo, an obvious one-liner), use judgement rather than full ceremony.
 2. **Simplicity first.** Minimum code that solves the problem. No
    speculative features, no abstractions for single-use code.
 3. **Surgical changes.** Touch only what's required. Don't refactor

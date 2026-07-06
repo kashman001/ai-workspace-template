@@ -197,9 +197,10 @@ skill once in the repo. It interviews you and scaffolds:
 
 The four always-on behavioural principles — **Think before coding**,
 **Simplicity first**, **Surgical changes**, **Goal-driven execution** — are
-already copied verbatim into [`../CONTEXT.md`](../CONTEXT.md) under "Agent
-Coding Principles", so every agent session in a workspace cloned from this
-template starts with them.
+already adapted into [`../CONTEXT.md`](../CONTEXT.md) under "Agent
+Coding Principles" (the wording is tuned for this template and may diverge
+slightly from `global.md`), so every agent session in a workspace cloned from
+this template starts with them.
 
 The optional `karpathy-examples` skill adds side-by-side ❌/✅ worked examples
 to calibrate borderline judgement calls (is this over-engineered? is this diff
