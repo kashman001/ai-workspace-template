@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 5bf7b875de3594a187af34fe49664145e4e32535 -->
+  <!-- source-md-sha1: f419b9e823b4413a6086c3758f7746ef89258e22 -->
 </head>
 <body>
 <div class="src-banner">
@@ -839,12 +839,17 @@ persisted.</li>
 </ul>
 <pre><code>skills/
 ├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
+├── decision-log/               # Capture the why (commit trailer → note → ADR)
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── rlm/                        # Recursive Language Model loop for huge contexts
 └── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
 <p>The template ships with <code>checkpoint</code>,
-<code>onboard-repo</code>, and <code>rlm</code>; add your own alongside
-them.</p>
+<code>decision-log</code>, <code>onboard-repo</code>, and
+<code>rlm</code>; add your own alongside them. <code>decision-log</code>
+captures decision provenance — the <em>why</em> code can't record — as
+ephemeral notes under <code>work/&lt;project&gt;/decisions.md</code>,
+promoted to committed ADRs under <code>docs/adr/</code> for
+lasting-weight decisions.</p>
 <p>Skills are agent-vendor-neutral — write them in plain Markdown with
 no runtime-specific syntax. List each skill in the
 <code>CONTEXT.md</code> "Workspace Skills" section with a one-line
@@ -853,8 +858,8 @@ description so agents can discover them.</p>
 Skills</h3>
 <ul>
 <li><strong>Generic</strong> (<code>checkpoint</code>,
-<code>onboard-repo</code>, <code>rlm</code>) — useful in any
-project.</li>
+<code>decision-log</code>, <code>onboard-repo</code>, <code>rlm</code>)
+— useful in any project.</li>
 <li><strong>Domain-specific</strong> — workflows particular to your
 problem domain (testing methodology, bug triage pipeline, deployment
 runbooks). These carry the project's institutional knowledge.</li>

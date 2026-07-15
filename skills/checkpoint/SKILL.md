@@ -39,6 +39,11 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      memory and add durable, non-obvious learnings (gotchas, decisions, preferences); update
      `MEMORY.md` pointers.
    - the matching **reference docs** under `docs/` if a feature shipped or changed.
+   - **decision notes** — scan `work/<username>_<project-name>/decisions.md` for entries
+     flagged `Promote?: yes` (or a `maybe` whose condition now holds). For each, follow the
+     `decision-log` skill's promotion steps (draft an ADR under `docs/adr/`, fill its
+     Provenance block, flip the note to `done → ADR-NNNN`). This is where the session's
+     ephemeral *why* becomes a durable, committed record — do it before context compacts.
 
 2. **Write a hand-off doc** for the next chunk: invoke the `handoff` skill (secret-free, with
    a suggested-skills section). Persist it under `work/<username>_<project-name>/` (the
