@@ -270,7 +270,12 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
     <p>Decide on the optional bits: <strong>graphify</strong> and the <strong>YouTube transcript MCP</strong>
     are wired by default; graphify adds <code>.gemini/settings.json</code> / <code>.opencode/plugins/graphify.js</code>,
     while YouTube uses <code>scripts/mcp/youtube-transcript.sh</code> and <code>yt-dlp</code>. Delete either if unused.
-    Add reusable workflows under <code>skills/</code> and list them in <code>CONTEXT.md</code>.</p>
+    Add reusable workflows under <code>skills/</code> and list them in <code>CONTEXT.md</code>.
+    The template ships four: <code>checkpoint</code> (session wrap-up), <code>onboard-repo</code>
+    (bring a repo in), <code>rlm</code> (query huge contexts), and <code>decision-log</code> —
+    capture the <em>why</em> behind a decision (<code>/decision</code>) as an ephemeral note in
+    <code>work/&lt;proj&gt;/decisions.md</code>, promoted to a committed ADR under <code>docs/adr/</code>
+    for lasting-weight calls. See the <strong>Decision Records</strong> section of <code>CONTEXT.md</code>.</p>
   </div></div>
 
   <p style="margin-top:18px">Deeper reference: <a href="template-usage.md">docs/template-usage.md</a> ·
