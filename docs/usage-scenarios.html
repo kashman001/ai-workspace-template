@@ -367,6 +367,10 @@ cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
         (AST-only, no API cost).</li>
       <li>Persist anything that must survive context compaction to <code>work/&lt;username&gt;_&lt;project&gt;/</code>
         — not to conversation memory.</li>
+      <li>When you pick one approach over a real alternative, capture the <em>why</em>
+        (<code>decision-log</code> skill / <code>/decision</code>): a one-line <code>Decision:</code> commit
+        trailer, and a note in <code>work/&lt;user&gt;_&lt;project&gt;/decisions.md</code> — code records
+        <em>what</em>, not <em>how it got there</em>. Lasting-weight calls get promoted to an ADR at checkpoint.</li>
     </ol>
     <p><strong>Loop:</strong> repeat per slice. When the feature's tests all pass → finish the branch
       (Scenario 6). At a session boundary → checkpoint (Scenario 5).</p>
@@ -389,7 +393,10 @@ cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
       <li>At a natural boundary (or before compacting context) invoke <code>/checkpoint [next-focus]</code>.</li>
       <li>The skill reconciles the <strong>backlog / issue tracker</strong>, <strong>project memory</strong>
         (+ <code>MEMORY.md</code> pointers), and <strong>reference docs</strong> — bringing each in line with
-        what actually shipped.</li>
+        what actually shipped. It also scans <code>work/&lt;user&gt;_&lt;project&gt;/decisions.md</code> for
+        notes flagged <code>Promote?: yes</code> and promotes them to committed <strong>ADRs</strong> under
+        <code>docs/adr/</code> (the <code>decision-log</code> scheme) — ephemeral <em>why</em> becoming durable
+        record before context compacts.</li>
       <li>It writes a secret-free <strong>hand-off doc</strong> (via the <code>handoff</code> skill) under
         <code>work/&lt;username&gt;_&lt;project&gt;/</code>, referencing specs/plans by path rather than duplicating
         them.</li>
