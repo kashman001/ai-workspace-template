@@ -482,13 +482,16 @@ folder with at least a `SKILL.md` describing:
 ```
 skills/
 ├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
+├── decision-log/               # Capture the why (commit trailer → note → ADR)
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── rlm/                        # Recursive Language Model loop for huge contexts
 └── <your-domain-skills>/       # Project-specific workflows
 ```
 
-The template ships with `checkpoint`, `onboard-repo`, and `rlm`; add your own
-alongside them.
+The template ships with `checkpoint`, `decision-log`, `onboard-repo`, and `rlm`;
+add your own alongside them. `decision-log` captures decision provenance — the
+*why* code can't record — as ephemeral notes under `work/<project>/decisions.md`,
+promoted to committed ADRs under `docs/adr/` for lasting-weight decisions.
 
 Skills are agent-vendor-neutral — write them in plain Markdown with no
 runtime-specific syntax. List each skill in the `CONTEXT.md` "Workspace
@@ -496,7 +499,7 @@ Skills" section with a one-line description so agents can discover them.
 
 ### Generic vs. Domain-Specific Skills
 
-- **Generic** (`checkpoint`, `onboard-repo`, `rlm`) — useful in any project.
+- **Generic** (`checkpoint`, `decision-log`, `onboard-repo`, `rlm`) — useful in any project.
 - **Domain-specific** — workflows particular to your problem domain
   (testing methodology, bug triage pipeline, deployment runbooks). These
   carry the project's institutional knowledge.

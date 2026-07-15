@@ -47,6 +47,21 @@ Active project work lives under `work/<username>_<project-name>/`. Persist
 any intermediate state that must survive context compaction to a file in
 the relevant work directory.
 
+## Decision Records
+
+Capture the **why** behind decisions — code records *what* exists, not *how it
+got there*; intent is unrecoverable after the fact unless written down as you
+decide. Three tiers by permanence, captured cheap and promoted upward:
+
+- **Tier 1 — commit trailer** (always): a one-line `Decision:` reason in the commit body.
+- **Tier 2 — decision note** (for any choice with a rejected alternative): appended to
+  `work/<username>_<project-name>/decisions.md`. Ephemeral, per-project, cheap — the wide net.
+- **Tier 3 — ADR** (only for lasting-weight decisions): a committed record under `docs/adr/`,
+  **promoted** from a Tier-2 note (on demand, or at `checkpoint`). See `docs/adr/README.md`.
+
+Driven by the **decision-log** skill (`skills/decision-log/SKILL.md`); Claude Code shortcut
+**`/decision <what + why + rejected alternative>`** (or `/decision promote <note>`).
+
 ## Workspace Skills
 
 Vendor-neutral skills live under `skills/<name>/SKILL.md` — any runtime can read
@@ -75,6 +90,14 @@ shortcuts under `.claude/commands/`).
   answer depends on almost every line". Claude Code shortcut:
   **`/rlm context=<path> query=<question>`**. Leaf sub-LM is a nested `claude -p`
   (vendored from github.com/brainqub3/claude_code_rlm, MIT).
+
+- **decision-log** (`skills/decision-log/SKILL.md`) — capture the *why* behind a
+  decision so it survives context compaction: a three-tier scheme (commit trailer →
+  ephemeral note in `work/<proj>/decisions.md` → promoted ADR under `docs/adr/`).
+  Most reasoning is captured cheaply in `work/`; only lasting-weight decisions get
+  promoted to committed ADRs (on demand or at `checkpoint`). ADRs + commit trailers
+  become graphify nodes. Claude Code shortcut: **`/decision <what + why + rejected>`**
+  (or `/decision promote <note>`). See the **Decision Records** section above.
 
 ## Service Access
 
@@ -157,7 +180,9 @@ Rules (apply once `graphify-out/graph.json` exists):
 - Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or
   when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current
-  (AST-only, no API cost).
+  (AST-only, no API cost). Committed ADRs (`docs/adr/`) and commit `Refs:`/`Decision:`
+  trailers are decision-provenance inputs — with them the graph can answer *why*
+  (`code → commit → ADR → alternatives-rejected`), not just *what*.
 
 If you don't use graphify, delete this section, `.gemini/settings.json`,
 `.opencode/plugins/graphify.js`, and the `.opencode/opencode.json` plugin
