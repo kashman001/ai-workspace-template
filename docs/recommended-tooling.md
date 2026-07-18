@@ -21,7 +21,7 @@ matches how you work.
 |---|---|---|
 | Claude Code status line | Two-line status bar (model · context% · cost · clock · git branch) | Global |
 | superpowers plugin | Process skills: brainstorming, TDD, systematic debugging, plan execution, code review | Global |
-| Matt Pocock engineering skills | `tdd`, `grill-with-docs`, `diagnose`, `to-prd`, `to-issues`, `triage`, `improve-codebase-architecture`, `handoff`, `zoom-out` | Global skills + **per-repo** config |
+| Matt Pocock engineering skills | `tdd`, `grill-with-docs`, `domain-modeling`, `codebase-design`, `implement`, `code-review`, `diagnosing-bugs`, `to-spec`/`to-tickets`, `triage`, `improve-codebase-architecture`, `handoff`, `teach` | Global skills + **per-repo** config |
 | Karpathy coding principles | The four always-on principles + `karpathy-examples` calibration skill | Global (principles already in `CONTEXT.md`) |
 | graphify | Codebase → queryable knowledge graph (`graphify-out/`) | Global CLI + **per-repo** graph |
 
@@ -151,13 +151,23 @@ A suite of repeatable engineering workflows from
 | Skill | Use when |
 |---|---|
 | `grill-with-docs` / `grill-me` | Stress-test a plan before building |
-| `tdd` | Red-green-refactor a feature or bugfix |
-| `diagnose` | Reproduce → minimise → fix a hard bug |
-| `zoom-out` | Understand unfamiliar code in system context |
+| `domain-modeling` | Build/sharpen the domain model — challenge terms, update `CONTEXT.md` + `docs/adr/` inline |
+| `codebase-design` | Design deep modules — small interfaces, clean seams, testable through the interface |
+| `tdd` | Red-green-refactor a feature or bugfix, one vertical slice at a time |
+| `implement` | Build from a spec/tickets — drives `tdd` at agreed seams, closes with `code-review` |
+| `code-review` | Two-axis review of the diff (Standards + Spec) as parallel sub-agents |
+| `diagnosing-bugs` | Reproduce → minimise → fix a hard bug or perf regression |
+| `resolving-merge-conflicts` | Work an in-progress merge/rebase conflict hunk-by-hunk by intent (never `--abort`) |
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
-| `to-prd` / `to-issues` | Turn discussion into a PRD / tracked issues |
+| `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
 | `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
+| `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
+
+> `domain-modeling` and `grill-with-docs` both write to `CONTEXT.md` and
+> `docs/adr/`, so they pair directly with this workspace's **decision-log**
+> scheme (see `CONTEXT.md` → *Decision Records*): grill/model a decision, then
+> promote the durable ones to an ADR.
 
 **Install (global, via agent-context):** clone the repo into the references
 dir, then let `agent-context-sync` link the skills (it offers each new one):
@@ -178,7 +188,7 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > Permanently skip an upstream skill by adding its name to
 > `~/.config/agent-context/skills/.syncignore`.
 
-**Per-repo setup (required before `to-issues` / `to-prd` / `triage` /
+**Per-repo setup (required before `to-tickets` / `to-spec` / `triage` /
 `improve-codebase-architecture` work):** run the `setup-matt-pocock-skills`
 skill once in the repo. It interviews you and scaffolds:
 
