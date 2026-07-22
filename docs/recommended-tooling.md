@@ -249,10 +249,11 @@ tools that return a scoped subgraph instead of raw grep output.
 This template **already ships the wiring** so agents prefer the graph once it
 exists:
 - `.gemini/settings.json` — a `BeforeTool` hook that nudges Gemini toward `graphify query`
+  (the file's `telemetry` block belongs to the context-budget system, not graphify)
 - `.opencode/plugins/graphify.js` + `.opencode/opencode.json` — the OpenCode plugin
 - `CONTEXT.md` → "graphify" section — the usage rules for all agents
 
-(If you don't use graphify, delete those three — see the note at the bottom of `CONTEXT.md`.)
+(If you don't use graphify, remove those graphify pieces — see the note at the bottom of `CONTEXT.md` for exactly what to delete.)
 
 **Setup (global, once per machine):**
 

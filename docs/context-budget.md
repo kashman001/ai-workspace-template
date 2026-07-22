@@ -73,7 +73,7 @@ fine given the WARN→STOP margin.
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` | last `last_token_usage.total_tokens`; prefers rollouts whose head mentions this cwd | exact (verified 2026-07-22, origin workspace) |
 | Copilot VS Code | `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-22, origin workspace) |
 | Copilot CLI | `~/.copilot/history-session-state/` or `~/.copilot/sessions/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | **unverified** — refine on first real CLI session |
-| Gemini CLI | `~/.gemini/tmp/<hash>/logs.json` | no token counts in logs → bytes÷4 | estimate (exact needs Gemini local telemetry — follow-up) |
+| Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4 | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
 
 Non-macOS: the Copilot VS Code storage root differs (Linux `~/.config/Code/…`,
 Windows `%APPDATA%/Code/…`); BSD `stat -f` already falls back to GNU `stat -c`;
@@ -116,8 +116,18 @@ data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
 
 ## Known limitations
 
-- Copilot CLI adapter is a best-effort probe until verified against real files;
-  Gemini CLI is estimate-only until local telemetry is enabled.
+- Copilot CLI adapter is a best-effort probe until verified against real files
+  (Copilot CLI isn't installed on the origin machine).
+- Gemini CLI: the tracked `.gemini/settings.json` enables local-file telemetry
+  (`target: local`, no data leaves the machine, `logPrompts: false`), and the
+  adapter reads the last response's input-token attribute from
+  `.gemini/telemetry.log` (`input_token_count` legacy / `gen_ai.usage.input_tokens`
+  semconv) as an exact count. Wiring verified live (a run in this workspace
+  produced the log); the parser is fixture-verified for both spellings but not
+  yet against a real *successful* Gemini response (blocked on Gemini auth on the
+  origin machine); sessions outside this workspace still fall back to the
+  bytes÷4 estimate. The log accumulates across sessions in the workspace,
+  so under concurrent Gemini sessions the last entry may belong to the other one.
 - Auto-detection (`--runtime auto`) prefers env-var evidence (Claude/Codex) then
   newest artifact — with several runtimes active, `register` or pass `--runtime`.
 - The hook checks at most once per minute — a single huge tool result can

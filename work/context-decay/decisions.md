@@ -34,3 +34,10 @@
 **Rejected:** deleting the registry file during session-rollover — fixes only rollover-initiated sessions, not `/clear` or plain new sessions; mtime-comparing registry artifact vs newest discovery — heuristic, and `register` has no legitimate use for a stale binding anyway.
 **Blast radius:** `scripts/context-budget.sh` (one guard in `resolve_session`), backlog entry M9.
 **Promote?:** no
+
+## 2026-07-22 — Gemini exact counts via workspace-local telemetry
+**Chose:** telemetry block in the *tracked workspace* `.gemini/settings.json` (`target: local`, `logPrompts: false`, outfile `.gemini/telemetry.log`, gitignored); adapter parses the last response's input tokens, accepting both `input_token_count` (documented api_response event) and `gen_ai.usage.input_tokens` (OTel semconv — the 0.46 log observed live uses `gen_ai.*` names); when the telemetry log has no response yet, estimate from the chat log, never from the telemetry file's size.
+**Because:** workspace-level settings ship with the template so every clone gets exact Gemini counts with zero per-user setup; local-file target sends nothing off-machine; a real (auth-failed) run proved the wiring activates and revealed the semconv attribute names.
+**Rejected:** user-level `~/.gemini/settings.json` — per-machine setup the template can't ship; parsing the cumulative `gemini_cli.token.usage` metric — measures lifetime total, not live context; bytes÷4 of the telemetry log as fallback — its size reflects telemetry volume, not context (observed: 223KB from one failed call).
+**Blast radius:** `.gemini/settings.json`, `.gitignore`, `scripts/context-budget.sh` (gemini discover/measure), `docs/context-budget.md`, `CONTEXT.md` + `docs/recommended-tooling.md` (graphify-deletion guidance now preserves the file), `docs/workspace-structure.md`.
+**Promote?:** no
