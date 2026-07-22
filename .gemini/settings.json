@@ -1,4 +1,11 @@
 {
+  "telemetry": {
+    "enabled": true,
+    "target": "local",
+    "otlpEndpoint": "",
+    "outfile": ".gemini/telemetry.log",
+    "logPrompts": false
+  },
   "hooks": {
     "BeforeTool": [
       {

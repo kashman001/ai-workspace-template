@@ -753,7 +753,7 @@ agent conversation history.
 | `scripts/` | Yes | Bootstrap and utility scripts |
 | `.vscode/settings.json` | Yes | Shared IDE settings |
 | `opencode.json`, `.opencode/` | Yes | Shared OpenCode config and plugins |
-| `.gemini/settings.json` | Yes | Shared Gemini CLI config (e.g. hooks) |
+| `.gemini/settings.json` | Yes | Shared Gemini CLI config (graphify hook + context-budget telemetry) |
 | `.env.example` | Yes | Template for required env vars |
 | `context-budget.env` | Yes | Non-secret context-budget thresholds (a count is never a credential) |
 | `.mcp.json.example` | Yes | Template for project-level MCP config |

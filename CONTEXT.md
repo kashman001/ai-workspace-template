@@ -209,6 +209,7 @@ Rules (apply once `graphify-out/graph.json` exists):
   trailers are decision-provenance inputs — with them the graph can answer *why*
   (`code → commit → ADR → alternatives-rejected`), not just *what*.
 
-If you don't use graphify, delete this section, `.gemini/settings.json`,
-`.opencode/plugins/graphify.js`, and the `.opencode/opencode.json` plugin
-entry.
+If you don't use graphify, delete this section, the `hooks` block in
+`.gemini/settings.json` (keep the file — its `telemetry` block feeds the
+context-budget system), `.opencode/plugins/graphify.js`, and the
+`.opencode/opencode.json` plugin entry.

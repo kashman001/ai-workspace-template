@@ -84,6 +84,10 @@ copilot_cli_discover() {
 }
 
 gemini_discover() {
+  # Workspace telemetry log first (exact counts; wired in .gemini/settings.json),
+  # else the global chat log (estimate-only).
+  local t="$WORKSPACE_ROOT/.gemini/telemetry.log"
+  [ -s "$t" ] && { echo "$t"; return 0; }
   local base="$HOME/.gemini/tmp"
   [ -d "$base" ] || return 1
   find "$base" -name 'logs.json' 2>/dev/null | xargs ls -t 2>/dev/null | head -1
@@ -129,7 +133,22 @@ copilot_cli_measure() {
   [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
 }
 
-gemini_measure() { estimate_from_size "$1"; }
+gemini_measure() {
+  local f="$1" tokens
+  case "$f" in *telemetry.log)
+    # OTLP file export: last response's input tokens = live context. Two attribute
+    # spellings: legacy api_response `input_token_count`, OTel semconv
+    # `gen_ai.usage.input_tokens` (0.46 logs use gen_ai.* names).
+    tokens=$(grep -o '"\(input_token_count\|gen_ai\.usage\.input_tokens\)": *[0-9]*' "$f" 2>/dev/null \
+      | tail -1 | grep -o '[0-9]*$')
+    [ -n "$tokens" ] && { echo "$tokens exact"; return 0; }
+    # No completed response yet — the telemetry log's size says nothing about
+    # context; estimate from the newest chat log instead.
+    f=$(find "$HOME/.gemini/tmp" -name 'logs.json' 2>/dev/null | xargs ls -t 2>/dev/null | head -1)
+    [ -n "$f" ] || return 1 ;;
+  esac
+  estimate_from_size "$f"
+}
 
 detect_runtime() {
   if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ]; then echo "claude"; return; fi

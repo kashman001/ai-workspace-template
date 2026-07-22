@@ -19,6 +19,9 @@ references/*
 # Context-budget runtime state (session registrations, hook throttle stamps)
 .context-budget/
 
+# Gemini CLI local telemetry (token counts for context-budget; grows per session)
+.gemini/telemetry.log
+
 # Scratch
 temp/
 tmp/
