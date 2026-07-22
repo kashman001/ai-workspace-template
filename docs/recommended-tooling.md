@@ -151,8 +151,10 @@ A suite of repeatable engineering workflows from
 | Skill | Use when |
 |---|---|
 | `grill-with-docs` / `grill-me` | Stress-test a plan before building |
+| `research` | Investigate a question against high-trust primary sources → cited Markdown (background agent) |
 | `domain-modeling` | Build/sharpen the domain model — challenge terms, update `CONTEXT.md` + `docs/adr/` inline |
 | `codebase-design` | Design deep modules — small interfaces, clean seams, testable through the interface |
+| `prototype` | Throwaway prototype to answer a design question — runnable terminal logic or toggleable UI variants |
 | `tdd` | Red-green-refactor a feature or bugfix, one vertical slice at a time |
 | `implement` | Build from a spec/tickets — drives `tdd` at agreed seams, closes with `code-review` |
 | `code-review` | Two-axis review of the diff (Standards + Spec) as parallel sub-agents |
@@ -160,9 +162,15 @@ A suite of repeatable engineering workflows from
 | `resolving-merge-conflicts` | Work an in-progress merge/rebase conflict hunk-by-hunk by intent (never `--abort`) |
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
 | `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
+| `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time |
 | `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
 | `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
+| `writing-great-skills` | Reference vocabulary/principles for writing and editing skills well |
+
+> `grill-me` / `grill-with-docs` are built on the model-invoked `grilling`
+> engine; `ask-matt` is a router — describe your situation and it points you at
+> the skill that fits. Both come with the same clone.
 
 > `domain-modeling` and `grill-with-docs` both write to `CONTEXT.md` and
 > `docs/adr/`, so they pair directly with this workspace's **decision-log**

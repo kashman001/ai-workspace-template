@@ -91,7 +91,7 @@ names or clone URLs.
 - **Make `scripts/setup.sh` and `scripts/check-workspace-structure.sh`
   executable** (`chmod +x`).
 - **`skills/` starts empty.** This bootstrap does *not* install any
-  generic skills (`handoff`, `diagnose`, etc.). Mention in the final
+  generic skills (`handoff`, `diagnosing-bugs`, etc.). Mention in the final
   summary that the user should add skills as separate next steps.
 - **`.env.example` gets seeded placeholders.** For each service named in
   preconditions, add a commented placeholder line (e.g., `# DB_HOST=`,

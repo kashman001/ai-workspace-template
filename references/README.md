@@ -20,7 +20,7 @@ sources behind them:
 |---|---|---|
 | ccstatusline | npm `ccstatusline` | Claude Code status line |
 | superpowers + plugins | `anthropics/claude-plugins-official` (Claude Code marketplace) | Process skills |
-| Matt Pocock skills | `github.com/mattpocock/skills` | Engineering skills (tdd, triage, to-issues, …) |
+| Matt Pocock skills | `github.com/mattpocock/skills` | Engineering skills (tdd, triage, to-tickets, …) |
 | Karpathy skills | `github.com/ForrestChang/andrej-karpathy-skills` | Coding-principles examples |
 | graphify | `graphify.net` · `uv tool install graphifyy` | Per-repo knowledge graph |
 
