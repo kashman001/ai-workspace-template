@@ -43,7 +43,7 @@ Hard-won operational gotchas (build/CI/shell traps) are recorded in
 
 ## Work Directory Convention
 
-Active project work lives under `work/<username>_<project-name>/`. Persist
+Active project work lives under `work/<project-name>/`. Persist
 any intermediate state that must survive context compaction to a file in
 the relevant work directory.
 
@@ -55,7 +55,7 @@ decide. Three tiers by permanence, captured cheap and promoted upward:
 
 - **Tier 1 — commit trailer** (always): a one-line `Decision:` reason in the commit body.
 - **Tier 2 — decision note** (for any choice with a rejected alternative): appended to
-  `work/<username>_<project-name>/decisions.md`. Ephemeral, per-project, cheap — the wide net.
+  `work/<project-name>/decisions.md`. Ephemeral, per-project, cheap — the wide net.
 - **Tier 3 — ADR** (only for lasting-weight decisions): a committed record under `docs/adr/`,
   **promoted** from a Tier-2 note (on demand, or at `checkpoint`). See `docs/adr/README.md`.
 

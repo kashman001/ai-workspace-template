@@ -52,7 +52,7 @@ Default policy — deliberately light, so it doesn't die of ceremony:
 
 ## Capture a decision (Tier 2 — the common case)
 
-Append to `work/<username>_<project-name>/decisions.md` (create it if absent), newest last:
+Append to `work/<project-name>/decisions.md` (create it if absent), newest last:
 
 ```markdown
 ## YYYY-MM-DD — <what the decision is about>
@@ -104,7 +104,7 @@ plain code can't answer. Keep it fresh with `graphify update .` after adding an 
 
 ## Outputs
 
-- A Tier-2 note appended to `work/<username>_<project-name>/decisions.md` (the common case).
+- A Tier-2 note appended to `work/<project-name>/decisions.md` (the common case).
 - Commit trailers on the implementing commit.
 - On promotion: a new `docs/adr/NNNN-*.md` + updated `docs/adr/README.md` index, and a
   refreshed graph if graphify is live.

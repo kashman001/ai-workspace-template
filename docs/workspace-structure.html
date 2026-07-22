@@ -689,7 +689,7 @@ under <code>docs/repo-context/</code>.</li>
 <li><strong>Workspace skills index</strong> — one-line description of
 each skill in <code>skills/</code> and when to invoke it.</li>
 <li><strong>Work directory convention</strong> — naming pattern (e.g.,
-<code>work/&lt;username&gt;_&lt;project-name&gt;/</code>).</li>
+<code>work/&lt;project-name&gt;/</code>).</li>
 <li><strong>Operational constraints</strong> — distilled rules that
 prevent silent failures (shell portability, DB quirks, tool
 gotchas).</li>
@@ -868,15 +868,12 @@ runbooks). These carry the project's institutional knowledge.</li>
 <h2 id="work--active-project-work"><code>work/</code> — Active Project
 Work</h2>
 <pre><code>work/
-├── &lt;username&gt;_&lt;project-name&gt;/  # Per-developer project folders
+├── &lt;project-name&gt;/             # One folder per project
 │   ├── README.md               #   Project intent and current state
-│   └── &lt;project-specific files&gt;
-│
-└── &lt;shared-project&gt;/           # Shared cross-developer initiatives</code></pre>
-<p><strong>Naming convention:</strong> default to
-<code>work/&lt;username&gt;_&lt;project-name&gt;/</code> to avoid
-collisions in shared workspaces. Underscores separate username from
-project; hyphens separate words within the project name.</p>
+│   └── &lt;project-specific files&gt;</code></pre>
+<p><strong>Naming convention:</strong>
+<code>work/&lt;project-name&gt;/</code>, with hyphens separating words
+within the project name.</p>
 <p><strong>Content boundary:</strong> work directories are scoped to the
 project and owned by the relevant skill. <code>CONTEXT.md</code> may
 <em>name</em> a work directory as a location pointer but must not list

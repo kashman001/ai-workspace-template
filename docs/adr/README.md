@@ -6,7 +6,7 @@ is there; an ADR captures *how it got there* so a future agent (or human) doesn'
 have to reverse-engineer intent from `git blame`.
 
 This is **Tier 3** of the workspace's decision-capture scheme. Most reasoning is
-captured cheaply in `work/<username>_<project-name>/decisions.md` (Tier 2); only the
+captured cheaply in `work/<project-name>/decisions.md` (Tier 2); only the
 decisions worth keeping get **promoted** here. See `skills/decision-log/SKILL.md` for
 the full three-tier scheme and the capture/promote workflow.
 
