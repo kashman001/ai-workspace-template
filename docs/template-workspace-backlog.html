@@ -77,14 +77,14 @@
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">20</div><div class="lab">Resolved</div></div>
-    <div class="sc blue"><div class="num">3</div><div class="lab">Decided</div></div>
+    <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
   </div>
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 20 findings are <span class="good">resolved</span>, and all three design decisions settled. The initial
+    <p>All 20 findings are <span class="good">resolved</span>, and all four design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -334,6 +334,20 @@
       that the Matt Pocock skills expect; it's idempotent and won't clobber existing files. Docs updated.
       <em>Update 2026-07-14:</em> the template now also ships <code>docs/adr/</code> itself (with the
       <code>decision-log</code> skill), so <code>--full</code> is only needed for <code>docs/agents/</code>.</p>
+  </div>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D4</span> Ship the context-budget &amp; session-rollover system as a template feature
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">scripts/ · skills/ · docs/ · CONTEXT.md</span></h3>
+    <p><span class="fix">Decided:</span> ported the Context Budget &amp; Session Rollover spec
+      (<code>work/context-decay/context-decay-spec.md</code>) into the template as a first-class feature:
+      <code>scripts/context-budget.sh</code> (exact per-runtime context measurement, exit 0/1/2),
+      <code>scripts/hooks/context-budget-claude-hook.sh</code> + wiring in
+      <code>.claude/settings.json.example</code>, <code>context-budget.env</code> thresholds,
+      <code>skills/session-rollover/</code> (+ <code>/session-rollover</code> command), measured-checkpoint
+      clauses in <code>onboard-repo</code>/<code>rlm</code>, a standing "Context Budget" section in
+      <code>CONTEXT.md</code>, and <code>docs/context-budget.md</code>. Verified live: the hook fired a real
+      WARN in the implementing session. Adaptation decisions in <code>work/context-decay/decisions.md</code>.</p>
   </div>
 
   <div class="find dec resolved">

@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 450f3e4210c90133d9abff28fb52af19d2b4dc7f -->
+  <!-- source-md-sha1: 131334820b293f116d4de5b377c4f4462cd69b66 -->
 </head>
 <body>
 <div class="src-banner">
@@ -622,6 +622,8 @@ config) lives in user-level locations outside the workspace.</li>
 │   └── mcp.json                #   MCP server config (gitignored, user-specific)
 ├── .env.example                # Template for required env vars (checked in)
 ├── .env                        # Local env vars (gitignored)
+├── context-budget.env          # Context-budget thresholds (checked in, non-secret)
+├── .context-budget/            # Context-budget runtime state (gitignored)
 └── temp/, tmp/                 # Scratch files (gitignored, created as needed)</code></pre>
 <p>The root <code>README.md</code> is a one-pager for new humans landing
 in the workspace: a one-line description of what the workspace
@@ -733,7 +735,11 @@ Claude Code (Project-Level)</h3>
 <p>User-specific permission allowlist controlling which Bash commands
 and MCP tools Claude Code can run without prompting. Gitignored —
 permissions are a personal trust decision. Provide a starter template
-(<code>settings.json.example</code>) for new users.</p>
+(<code>settings.json.example</code>) for new users. The template's
+example also carries the <code>hooks</code> block wiring the
+context-budget WARN/STOP hook (<code>docs/context-budget.md</code>) —
+copy it into your <code>settings.json</code> to get in-band context
+warnings.</p>
 <h3 id="user-level-files-outside-the-workspace">User-Level Files
 (Outside the Workspace)</h3>
 <p>These live under the user's home directory and are never checked
@@ -791,6 +797,7 @@ Documentation</h2>
 ├── operational-knowledge.md    # Distilled rules that prevent silent failures
 ├── service-access.md           # Credential framework: vault backends, verify commands
 ├── mcp-setup.md                # MCP server configuration guide
+├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover
 │
 └── repo-context/               # Per-repo architecture and navigation docs
     ├── README.md               #   Index of covered repos
@@ -842,14 +849,15 @@ persisted.</li>
 ├── decision-log/               # Capture the why (commit trailer → note → ADR)
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── rlm/                        # Recursive Language Model loop for huge contexts
+├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
 └── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
 <p>The template ships with <code>checkpoint</code>,
-<code>decision-log</code>, <code>onboard-repo</code>, and
-<code>rlm</code>; add your own alongside them. <code>decision-log</code>
-captures decision provenance — the <em>why</em> code can't record — as
-ephemeral notes under <code>work/&lt;project&gt;/decisions.md</code>,
-promoted to committed ADRs under <code>docs/adr/</code> for
-lasting-weight decisions.</p>
+<code>decision-log</code>, <code>onboard-repo</code>, <code>rlm</code>,
+and <code>session-rollover</code>; add your own alongside them.
+<code>decision-log</code> captures decision provenance — the
+<em>why</em> code can't record — as ephemeral notes under
+<code>work/&lt;project&gt;/decisions.md</code>, promoted to committed
+ADRs under <code>docs/adr/</code> for lasting-weight decisions.</p>
 <p>Skills are agent-vendor-neutral — write them in plain Markdown with
 no runtime-specific syntax. List each skill in the
 <code>CONTEXT.md</code> "Workspace Skills" section with a one-line
@@ -965,6 +973,9 @@ Bootstrap and Utility Scripts</h2>
 ├── check-repo-context.sh          # Warn-only repo context freshness check
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
+├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── hooks/                         # Agent-runtime hook scripts
+│   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
 ├── mcp/                           # Workspace-local MCP servers
 │   ├── youtube-transcript.sh      #   YouTube MCP launcher
 │   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
@@ -1145,6 +1156,12 @@ project if used; not shipped in the template)</td>
 <td>Template for required env vars</td>
 </tr>
 <tr>
+<td><code>context-budget.env</code></td>
+<td>Yes</td>
+<td>Non-secret context-budget thresholds (a count is never a
+credential)</td>
+</tr>
+<tr>
 <td><code>.mcp.json.example</code></td>
 <td>Yes</td>
 <td>Template for project-level MCP config</td>
@@ -1201,6 +1218,12 @@ project if used; not shipped in the template)</td>
 <td><code>.env</code></td>
 <td><strong>No</strong></td>
 <td>Environment values</td>
+</tr>
+<tr>
+<td><code>.context-budget/</code></td>
+<td><strong>No</strong></td>
+<td>Context-budget runtime state (session registrations, hook
+stamps)</td>
 </tr>
 <tr>
 <td><code>.service-access.local.json</code></td>

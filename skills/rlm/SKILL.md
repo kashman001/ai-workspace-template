@@ -236,6 +236,14 @@ The replay checkpoint is separate from the live REPL state and does not mutate
 
 ## Guardrails — these are where RLMs win or lose
 
+- **Measured checkpoint (mandatory, at each loop-phase boundary — after probe, after
+  each decompose/sub-query batch, before aggregate):** run
+  `scripts/context-budget.sh record --label "rlm: <phase> done"` and act on the exit
+  code: `1` (WARN) — finish the current phase's bookkeeping, then run
+  `skills/session-rollover/SKILL.md` (the REPL state file persists across sessions);
+  `2` (STOP) — flush state and hand off immediately. Never start a new batch in
+  WARN/STOP state.
+
 - **Never read the whole context into the conversation.** No Read tool on the
   context file, no `print(content)`. Work through the REPL and sub-LM calls. If you
   catch yourself wanting the full text in chat, chunk it and `llm_query` it instead.

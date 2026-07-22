@@ -91,6 +91,14 @@ shortcuts under `.claude/commands/`).
   **`/rlm context=<path> query=<question>`**. Leaf sub-LM is a nested `claude -p`
   (vendored from github.com/brainqub3/claude_code_rlm, MIT).
 
+- **session-rollover** (`skills/session-rollover/SKILL.md`) — roll work over to a
+  fresh session via a deliberate, pruned handoff when the context budget hits
+  WARN/STOP (hook message or `scripts/context-budget.sh` exit code), instead of
+  letting automatic compaction decide what survives. Reflect → flush → backward
+  `handoff.md` + forward `next-session.md` (with a "Do NOT reload" section) →
+  paste-ready bootstrap prompt. Claude Code shortcut: **`/session-rollover [reason]`**.
+  See `docs/context-budget.md` and the **Context Budget** section below.
+
 - **decision-log** (`skills/decision-log/SKILL.md`) — capture the *why* behind a
   decision so it survives context compaction: a three-tier scheme (commit trailer →
   ephemeral note in `work/<proj>/decisions.md` → promoted ADR under `docs/adr/`).
@@ -162,6 +170,23 @@ Rules for keeping the LLM context window healthy across long sessions:
 5. **Persist project state in `work/`, not agent-specific stores.** Memory
    systems are for personal preferences, not shared project context.
 6. **Sub-agent summaries are hints, not facts.** Verify on disk.
+
+## Context Budget — Measure, Don't Guess
+
+LLM quality degrades past ~150K context tokens (the "dumb zone") regardless of
+advertised window size. You **cannot introspect your own usage** — the numbers
+live in the API envelope, on disk; never estimate them. Thresholds are in
+`context-budget.env` (checked in; raise in one place as models improve).
+
+- At session start: `scripts/context-budget.sh register`.
+- At every work-unit boundary: `scripts/context-budget.sh record --label "<what just finished>"`.
+- Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then run
+  the `session-rollover` skill; `2` (STOP, ≥150K) — finish only the current
+  atomic step and roll over immediately. Claude Code sessions also get an
+  in-band hook message at these thresholds.
+
+Full reference: `docs/context-budget.md`; rollover workflow:
+`skills/session-rollover/SKILL.md`.
 
 ## graphify
 
