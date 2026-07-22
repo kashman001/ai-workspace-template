@@ -1,2 +1,4 @@
 {"ts":"2026-07-22T23:04:21Z","runtime":"claude","session":"796d0e8a-f1b0-4d92-9432-f4dc11be5402.jsonl","tokens":111633,"method":"exact","threshold":150000,"status":"OK","label":"context-decay: implementation verification"}
 {"ts":"2026-07-22T23:07:21Z","runtime":"claude","session":"796d0e8a-f1b0-4d92-9432-f4dc11be5402.jsonl","tokens":138492,"method":"exact","threshold":150000,"status":"WARN","label":"context-decay: implementation complete"}
+{"ts":"2026-07-22T23:09:02Z","runtime":"claude","session":"796d0e8a-f1b0-4d92-9432-f4dc11be5402.jsonl","tokens":143156,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: hook WARN during context-decay implementation"}
+{"ts":"2026-07-22T23:09:32Z","runtime":"claude","session":"796d0e8a-f1b0-4d92-9432-f4dc11be5402.jsonl","tokens":144380,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay"}
