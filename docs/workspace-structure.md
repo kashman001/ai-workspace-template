@@ -311,6 +311,8 @@ the underlying product repos.
 │   └── mcp.json                #   MCP server config (gitignored, user-specific)
 ├── .env.example                # Template for required env vars (checked in)
 ├── .env                        # Local env vars (gitignored)
+├── context-budget.env          # Context-budget thresholds (checked in, non-secret)
+├── .context-budget/            # Context-budget runtime state (gitignored)
 └── temp/, tmp/                 # Scratch files (gitignored, created as needed)
 ```
 
@@ -405,7 +407,9 @@ regardless of the specific tool.
 User-specific permission allowlist controlling which Bash commands and MCP
 tools Claude Code can run without prompting. Gitignored — permissions are a
 personal trust decision. Provide a starter template (`settings.json.example`)
-for new users.
+for new users. The template's example also carries the `hooks` block wiring
+the context-budget WARN/STOP hook (`docs/context-budget.md`) — copy it into
+your `settings.json` to get in-band context warnings.
 
 ### User-Level Files (Outside the Workspace)
 
@@ -437,6 +441,7 @@ docs/
 ├── operational-knowledge.md    # Distilled rules that prevent silent failures
 ├── service-access.md           # Credential framework: vault backends, verify commands
 ├── mcp-setup.md                # MCP server configuration guide
+├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover
 │
 └── repo-context/               # Per-repo architecture and navigation docs
     ├── README.md               #   Index of covered repos
@@ -485,11 +490,12 @@ skills/
 ├── decision-log/               # Capture the why (commit trailer → note → ADR)
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── rlm/                        # Recursive Language Model loop for huge contexts
+├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
 └── <your-domain-skills>/       # Project-specific workflows
 ```
 
-The template ships with `checkpoint`, `decision-log`, `onboard-repo`, and `rlm`;
-add your own alongside them. `decision-log` captures decision provenance — the
+The template ships with `checkpoint`, `decision-log`, `onboard-repo`, `rlm`, and
+`session-rollover`; add your own alongside them. `decision-log` captures decision provenance — the
 *why* code can't record — as ephemeral notes under `work/<project>/decisions.md`,
 promoted to committed ADRs under `docs/adr/` for lasting-weight decisions.
 
@@ -627,6 +633,9 @@ scripts/
 ├── check-repo-context.sh          # Warn-only repo context freshness check
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
+├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── hooks/                         # Agent-runtime hook scripts
+│   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
 ├── mcp/                           # Workspace-local MCP servers
 │   ├── youtube-transcript.sh      #   YouTube MCP launcher
 │   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
@@ -746,6 +755,7 @@ agent conversation history.
 | `opencode.json`, `.opencode/` | Yes | Shared OpenCode config and plugins |
 | `.gemini/settings.json` | Yes | Shared Gemini CLI config (e.g. hooks) |
 | `.env.example` | Yes | Template for required env vars |
+| `context-budget.env` | Yes | Non-secret context-budget thresholds (a count is never a credential) |
 | `.mcp.json.example` | Yes | Template for project-level MCP config |
 | `.vscode/mcp.json.example` | Yes | Template for VS Code MCP config |
 | `.claude/settings.json.example` | Yes | Template for the Claude Code permission allowlist |
@@ -757,6 +767,7 @@ agent conversation history.
 | `graphify-out/` | **No** | Locally regenerated knowledge-graph output |
 | `.venv/`, `.idea/`, `temp/`, `tmp/`, `.DS_Store` | **No** | Local-only |
 | `.env` | **No** | Environment values |
+| `.context-budget/` | **No** | Context-budget runtime state (session registrations, hook stamps) |
 | `.service-access.local.json` | **No** | Machine-specific credential cache |
 
 ---

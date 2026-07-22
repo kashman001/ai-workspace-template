@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Budget &amp; Session Rollover — Design</title>
+<style>
+  :root{
+    --bg:#faf9f7; --panel:#ffffff; --panel-2:#f1efeb; --ink:#1f2430; --muted:#6b7280;
+    --line:#e3e0d9; --accent:#0f6f5c; --warn:#a15c07; --stop:#a12a2a; --code:#f1efeb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161b; --panel:#1b1e25; --panel-2:#232730; --ink:#e8e6e1; --muted:#9aa0ab;
+      --line:#2e333d; --accent:#4fd1b2; --warn:#e3a34c; --stop:#e06c6c; --code:#232730;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+  header{border-bottom:1px solid var(--line);padding:40px 0 28px;background:var(--panel)}
+  h1{font-size:28px;margin:0 0 8px} h2{font-size:21px;margin:44px 0 12px}
+  h3{font-size:16px;margin:0 0 6px}
+  .lede{color:var(--muted);max-width:70ch}
+  .meta{color:var(--muted);font-size:13.5px}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;
+    font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:var(--code);padding:14px;border-radius:8px;overflow-x:auto}
+  pre code{background:none;padding:0}
+  table{border-collapse:collapse;width:100%;font-size:14.5px}
+  .tblwrap{overflow-x:auto}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel-2)}
+  .layers{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+  .layer{border:1px solid var(--line);border-left:4px solid var(--accent);
+    background:var(--panel);border-radius:8px;padding:14px 16px}
+  .layer .k{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+  .cells{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .cell{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;
+    padding:6px 10px;font-size:13.5px}
+  .arrow{text-align:center;color:var(--muted);font-size:18px;line-height:1}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:14px 16px}
+  .card .id{display:inline-block;background:var(--accent);color:var(--bg);border-radius:5px;
+    padding:1px 7px;font-size:12.5px;font-weight:700;margin-right:6px}
+  .card p{margin:6px 0;font-size:14.5px}
+  .k{font-weight:600}
+  .warn{color:var(--warn);font-weight:600} .stop{color:var(--stop);font-weight:600}
+  .ok{color:var(--accent);font-weight:600}
+  ol li,ul li{margin:4px 0}
+  footer{border-top:1px solid var(--line);margin-top:56px;padding:22px 0 60px;
+    color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Context Budget &amp; Session Rollover</h1>
+  <p class="lede">Measure any agent session's live context usage exactly from disk, warn
+  before the ~150K-token "dumb zone", and roll work over to a fresh session via a
+  deliberate, pruned handoff — instead of uncontrolled automatic compaction.</p>
+  <p class="meta">ai-workspace-template · implemented 2026-07-22 · spec:
+  <code>work/context-decay/context-decay-spec.md</code> · reference:
+  <code>docs/context-budget.md</code></p>
+</div></header>
+
+<main class="wrap">
+
+<h2>Problem &amp; goals</h2>
+<p>LLM quality degrades past ~150K context tokens regardless of advertised window size,
+and agents cannot see their own usage — the numbers live in the API response envelope,
+persisted only in the runtime's on-disk session artifacts. Left alone, sessions drift
+into the dumb zone and then auto-compact, discarding context by heuristic. Goals:</p>
+<ul>
+  <li><span class="k">Measure</span> — exact, reproducible token counts from disk for
+    Claude Code, Codex, Copilot (VS Code + CLI), and Gemini CLI.</li>
+  <li><span class="k">Warn</span> — reach the developer and, where possible, the agent
+    itself, mid-task, before the threshold.</li>
+  <li><span class="k">Roll over</span> — a deliberate handoff that decides what the next
+    session loads (and what it must <em>not</em> reload).</li>
+  <li><span class="k">Neutral</span> — bash + jq + Markdown skills; vendor-specific code
+    confined to thin adapters and wiring.</li>
+</ul>
+
+<h2>Architecture — three layers</h2>
+<div class="layers">
+  <div class="layer">
+    <div class="k">Layer 1 — Measurement</div>
+    <h3><code>scripts/context-budget.sh</code></h3>
+    <div class="cells">
+      <div class="cell">claude adapter (jsonl usage rows)</div>
+      <div class="cell">codex adapter (last_token_usage)</div>
+      <div class="cell">copilot-vscode adapter (promptTokens)</div>
+      <div class="cell">copilot-cli adapter (probe)</div>
+      <div class="cell">gemini adapter (bytes÷4)</div>
+      <div class="cell">→ fixed contract: status line + exit 0/1/2 + ledger</div>
+    </div>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="layer">
+    <div class="k">Layer 2 — Triggering (overlapping, no single mechanism covers all runtimes)</div>
+    <div class="cells">
+      <div class="cell">Claude Code PostToolUse hook (in-band, mid-turn)</div>
+      <div class="cell">mandatory checkpoints in long-running skills</div>
+      <div class="cell"><code>watch</code> poller + OS notification</div>
+      <div class="cell">standing instruction in <code>CONTEXT.md</code></div>
+    </div>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="layer">
+    <div class="k">Layer 3 — Rollover</div>
+    <h3><code>skills/session-rollover/SKILL.md</code></h3>
+    <div class="cells">
+      <div class="cell">reflect (learnings → disk)</div>
+      <div class="cell">flush (disk fully current)</div>
+      <div class="cell">handoff.md (backward)</div>
+      <div class="cell">next-session.md (forward, pruned)</div>
+      <div class="cell">bootstrap prompt</div>
+    </div>
+  </div>
+</div>
+
+<h2>Design decisions</h2>
+<div class="cards">
+  <div class="card"><span class="id">D1</span><span class="k">Measure from disk, never ask the model.</span>
+    <p><span class="k">Why:</span> usage lives in the API envelope the model never sees;
+    self-estimates are bad and optimistic.</p>
+    <p><span class="k">Consequence:</span> the agent's role is inverted — it <em>invokes</em>
+    measurement at checkpoints, it is never the source of the number.</p></div>
+  <div class="card"><span class="id">D2</span><span class="k">Per-runtime adapters behind a fixed contract.</span>
+    <p><span class="k">Why:</span> session formats are undocumented internals; drift is expected.</p>
+    <p><span class="k">Consequence:</span> a format change breaks one discover/measure pair,
+    never the skills, docs, or hook.</p></div>
+  <div class="card"><span class="id">D3</span><span class="k">Absolute threshold, not %-of-window.</span>
+    <p><span class="k">Why:</span> a 936K Copilot window doesn't move the dumb zone.</p>
+    <p><span class="k">Consequence:</span> one checked-in env pair (<code>context-budget.env</code>),
+    raised in one place; STOP must stay below the runtime's auto-compact trigger.</p></div>
+  <div class="card"><span class="id">D4</span><span class="k">Estimate fallback, never "unsupported".</span>
+    <p><span class="k">Why:</span> a hard failure silently disables the safety net where it's
+    needed most.</p>
+    <p><span class="k">Consequence:</span> bytes÷4 with <code>method=estimate</code>; ±25% is
+    fine given the WARN→STOP margin.</p></div>
+  <div class="card"><span class="id">D5</span><span class="k">Explicit <code>register</code> over newest-mtime discovery.</span>
+    <p><span class="k">Why:</span> concurrent sessions make heuristics ambiguous.</p>
+    <p><span class="k">Consequence:</span> precedence is <code>--transcript</code> &gt;
+    registration &gt; discovery; the hook gets the exact path on stdin and bypasses both.</p></div>
+  <div class="card"><span class="id">D6</span><span class="k">Hook speaks only on escalation, throttled, fails open.</span>
+    <p><span class="k">Why:</span> warnings consume the budget they protect; repetition trains
+    agents to ignore them; a broken hook must never block work.</p>
+    <p><span class="k">Consequence:</span> one WARN + one STOP per session, ≥60s between
+    checks, any error → exit 0.</p></div>
+  <div class="card"><span class="id">D7</span><span class="k">Rollover is a Markdown skill reusing <code>handoff</code>.</span>
+    <p><span class="k">Why:</span> vendor-neutral, and the workspace already has a handoff
+    convention (see the <code>checkpoint</code> skill).</p>
+    <p><span class="k">Consequence:</span> backward <code>handoff.md</code> split from forward,
+    deliberately pruned <code>next-session.md</code> with a "Do NOT reload" section;
+    specialized workflow state files stay authoritative.</p></div>
+  <div class="card"><span class="id">D8</span><span class="k">Layered triggering.</span>
+    <p><span class="k">Why:</span> only Claude Code has an in-band hook; other runtimes need
+    other paths to the agent or the human.</p>
+    <p><span class="k">Consequence:</span> hook + skill checkpoints + watcher + standing
+    <code>CONTEXT.md</code> instruction overlap deliberately.</p></div>
+  <div class="card"><span class="id">D9</span><span class="k">Append-only JSON ledger.</span>
+    <p><span class="k">Why:</span> every measurement is also a data point about token growth
+    per workflow phase.</p>
+    <p><span class="k">Consequence:</span> the safety net doubles as research data
+    (<code>work/context-decay/context-ledger.jsonl</code>).</p></div>
+</div>
+
+<h2>Design → code map</h2>
+<div class="tblwrap"><table>
+  <tr><th>Decision</th><th>File</th><th>Where</th></tr>
+  <tr><td>D1, D2</td><td><code>scripts/context-budget.sh</code></td>
+    <td><code>*_discover()</code> / <code>*_measure()</code> per runtime; consumers see only
+    <code>emit_check()</code>'s line and exit code</td></tr>
+  <tr><td>D3</td><td><code>context-budget.env</code> + <code>context-budget.sh</code></td>
+    <td><code>THRESHOLD</code>/<code>WARN</code> sourcing at the top</td></tr>
+  <tr><td>D4</td><td><code>scripts/context-budget.sh</code></td>
+    <td><code>estimate_from_size()</code>, the <code>|| estimate_from_size</code> tails</td></tr>
+  <tr><td>D5</td><td><code>scripts/context-budget.sh</code></td>
+    <td><code>cmd_register()</code>, <code>resolve_session()</code> precedence</td></tr>
+  <tr><td>D6</td><td><code>scripts/hooks/context-budget-claude-hook.sh</code></td>
+    <td>stamp throttle, <code>rank()</code> escalation gate, <code>exit 0</code> on all error paths</td></tr>
+  <tr><td>D7</td><td><code>skills/session-rollover/SKILL.md</code></td>
+    <td>steps 4–6; guardrail "specialized state files win"</td></tr>
+  <tr><td>D8</td><td><code>.claude/settings.json(.example)</code>, <code>skills/onboard-repo</code> +
+    <code>skills/rlm</code>, <code>cmd_watch()</code>, <code>CONTEXT.md</code></td>
+    <td>hook wiring; measured-checkpoint clauses; watcher; standing section</td></tr>
+  <tr><td>D9</td><td><code>scripts/context-budget.sh</code></td><td><code>cmd_record()</code></td></tr>
+</table></div>
+
+<h2>Measurement sources</h2>
+<div class="tblwrap"><table>
+  <tr><th>Runtime</th><th>Artifact</th><th>Signal</th><th>Fidelity</th></tr>
+  <tr><td>Claude Code</td><td><code>~/.claude/projects/&lt;cwd-slug&gt;/&lt;session&gt;.jsonl</code>
+    (slug = cwd with <code>/</code> and <code>.</code> → <code>-</code>)</td>
+    <td>last main-chain <code>message.usage</code>: input + cache-read + cache-creation;
+    sidechain rows excluded (sub-agents have their own windows)</td>
+    <td class="ok">exact — verified 2026-07-22, this workspace</td></tr>
+  <tr><td>Codex</td><td><code>~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl</code></td>
+    <td>last <code>last_token_usage.total_tokens</code>; prefer rollouts whose head contains this cwd</td>
+    <td class="ok">exact — verified in origin workspace</td></tr>
+  <tr><td>Copilot VS Code</td><td><code>…/workspaceStorage/&lt;hash&gt;/chatSessions/</code>
+    (<code>&lt;app&gt;</code> = Code, Code - Insiders, VSCodium)</td>
+    <td>last <code>"promptTokens":N</code> via flat <code>grep -o</code> — multi-MB single-line
+    records; jq times out</td>
+    <td class="ok">exact — verified in origin workspace</td></tr>
+  <tr><td>Copilot CLI</td><td><code>~/.copilot/history-session-state/</code>,
+    <code>~/.copilot/sessions/</code></td>
+    <td>probe <code>promptTokens</code>/<code>input_tokens</code>/<code>inputTokens</code>, else estimate</td>
+    <td class="warn">unverified — refine on first real session</td></tr>
+  <tr><td>Gemini CLI</td><td><code>~/.gemini/tmp/&lt;hash&gt;/logs.json</code></td>
+    <td>no token counts in logs → bytes÷4</td>
+    <td class="warn">estimate — exact needs local telemetry</td></tr>
+</table></div>
+
+<h2>Runtime flow (Claude Code, the fully-wired case)</h2>
+<ol>
+  <li>Session starts; the agent runs <code>scripts/context-budget.sh register</code>
+    (per the <code>CONTEXT.md</code> standing instruction) — pins the transcript in
+    <code>.context-budget/session-claude.json</code>.</li>
+  <li>Work proceeds. At each unit boundary the agent runs
+    <code>record --label "…"</code>, appending to the ledger and reading the exit code.</li>
+  <li>Independently, every tool call fires the PostToolUse hook; at most once per
+    minute it measures the transcript it was handed on stdin.</li>
+  <li>Usage crosses 120K → the hook prints
+    <span class="warn">CONTEXT BUDGET WARN</span> to stderr with exit 2, which Claude
+    Code feeds back to the agent mid-turn. Once only.</li>
+  <li>The agent finishes the current unit and runs the
+    <code>session-rollover</code> skill: record → reflect → flush →
+    <code>handoff.md</code> → <code>next-session.md</code> → bootstrap prompt → record.</li>
+  <li>The user starts a fresh session and pastes the bootstrap prompt; the new session
+    reads <code>next-session.md</code>, runs <code>register</code>, and continues —
+    at a fraction of the token load, past nothing it needed to keep.</li>
+  <li>Had usage instead crossed 150K, the hook's
+    <span class="stop">CONTEXT BUDGET STOP</span> allows finishing only the current
+    atomic step. 150K &lt; Claude Code's ~200K auto-compact, so rollover always gets
+    its chance first.</li>
+</ol>
+
+<h2>Limitations</h2>
+<ul>
+  <li>Copilot CLI adapter unverified; Gemini CLI estimate-only (telemetry follow-up).</li>
+  <li>Hook granularity: one check per minute — a single huge tool result can overshoot
+    between checks.</li>
+  <li><code>--runtime auto</code> with several concurrent runtimes needs
+    <code>register</code> or an explicit <code>--runtime</code>.</li>
+  <li>Non-macOS: Copilot storage roots differ; <code>watch</code> notifications need
+    <code>notify-send</code> instead of <code>osascript</code>.</li>
+</ul>
+
+<h2>Provenance</h2>
+<p>Ported 2026-07-22 from the origin implementation (insight-dev-ai workspace, built and
+verified 2026-07-22 — the hook fired its first live warning during its own build session).
+Adapted for this workspace: thresholds in <code>context-budget.env</code> (this template has
+no root env file convention); hook wiring in gitignored <code>.claude/settings.json</code>
+with the block shipped in <code>.claude/settings.json.example</code>; rollover skill written
+in this workspace's skill format reusing the <code>handoff</code> skill; measured-checkpoint
+clauses added to <code>onboard-repo</code> and <code>rlm</code>. Verified here against the
+implementing session itself (exact measurement, exit codes, register/record, all six hook
+behaviors). Adaptation decisions: <code>work/context-decay/decisions.md</code>.</p>
+
+</main>
+<footer><div class="wrap">Self-contained design doc — no external assets. Companion
+reference: <code>docs/context-budget.md</code>.</div></footer>
+</body>
+</html>

@@ -1,5 +1,18 @@
 {
-  "_comment": "Starter Claude Code permission allowlist. Copy to .claude/settings.local.json (gitignored) and tailor. Permissions are a personal trust decision — keep the .local file out of git. See docs/workspace-structure.md -> '.claude/ — Claude Code (Project-Level)'.",
+  "_comment": "Starter Claude Code config. Copy to .claude/settings.json (gitignored) and tailor; permissions may instead go in .claude/settings.local.json. Permissions are a personal trust decision — keep both files out of git. The hooks block wires the context-budget WARN/STOP hook (see docs/context-budget.md). See docs/workspace-structure.md -> '.claude/ — Claude Code (Project-Level)'.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/context-budget-claude-hook.sh"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(gh auth status)",

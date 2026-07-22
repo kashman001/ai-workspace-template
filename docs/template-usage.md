@@ -59,12 +59,14 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
 - **graphify** — wired by default (`.gemini/settings.json`,
   `.opencode/plugins/graphify.js`, the `CONTEXT.md` graphify section). If you
   don't use it, delete those and the `.opencode/opencode.json` plugin entry.
-- **Skills** — `skills/` ships with four reusable workflows: **checkpoint**
+- **Skills** — `skills/` ships with five reusable workflows: **checkpoint**
   (session-boundary wrap-up), **onboard-repo** (bring a repo into the workspace),
   **rlm** (Recursive Language Model loop for querying contexts too large to
-  read into chat), and **decision-log** (capture the *why* behind a decision as a
+  read into chat), **decision-log** (capture the *why* behind a decision as a
   commit trailer + an ephemeral note in `work/<proj>/decisions.md`, promoted to a
-  committed ADR under `docs/adr/` for lasting-weight calls). Add your own as needed
+  committed ADR under `docs/adr/` for lasting-weight calls), and
+  **session-rollover** (deliberate pruned handoff to a fresh session when the
+  context budget hits WARN/STOP — see `docs/context-budget.md`). Add your own as needed
   and list each in `CONTEXT.md` → "Workspace Skills". Drop any you don't want (e.g.
   `rlm`'s leaf sub-LM is a nested `claude -p`, so it's most useful with Claude Code).
 - **Scripts** — `scripts/setup.sh` (symlinks, config copies, `--clone-repos`),

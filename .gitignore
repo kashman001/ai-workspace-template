@@ -16,6 +16,9 @@ references/*
 .claude/settings.local.json
 .mcp.json
 
+# Context-budget runtime state (session registrations, hook throttle stamps)
+.context-budget/
+
 # Scratch
 temp/
 tmp/

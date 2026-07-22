@@ -58,6 +58,12 @@ Do these in order, concisely (reference artifacts by path — don't duplicate co
 To refresh later: `scripts/onboard-repo.sh <repo-name> --refresh` (re-stamps provenance +
 runs `graphify update .`), then re-derive any docs whose content has drifted.
 
+**Measured checkpoint (mandatory, after each step above and between repos):** run
+`scripts/context-budget.sh record --label "onboard-repo: <repo> step <n> done"` and act on
+the exit code: `1` (WARN) — finish the current step's bookkeeping, then run
+`skills/session-rollover/SKILL.md`; `2` (STOP) — flush state and hand off immediately.
+Never start onboarding another repo in WARN/STOP state.
+
 ## Outputs
 - A completed `docs/repos-registry.md` entry (identity + auth + stack + commands).
 - A graphify graph (live query path) or a documented fallback.
