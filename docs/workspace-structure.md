@@ -357,7 +357,7 @@ concise (it loads into every conversation) and link out for detail:
 - **Workspace skills index** — one-line description of each skill in
   `skills/` and when to invoke it.
 - **Work directory convention** — naming pattern (e.g.,
-  `work/<username>_<project-name>/`).
+  `work/<project-name>/`).
 - **Operational constraints** — distilled rules that prevent silent failures
   (shell portability, DB quirks, tool gotchas).
 - **Agent coding principles** — behavioral guidance (simplicity, surgical
@@ -510,16 +510,13 @@ Skills" section with a one-line description so agents can discover them.
 
 ```
 work/
-├── <username>_<project-name>/  # Per-developer project folders
+├── <project-name>/             # One folder per project
 │   ├── README.md               #   Project intent and current state
 │   └── <project-specific files>
-│
-└── <shared-project>/           # Shared cross-developer initiatives
 ```
 
-**Naming convention:** default to `work/<username>_<project-name>/` to avoid
-collisions in shared workspaces. Underscores separate username from
-project; hyphens separate words within the project name.
+**Naming convention:** `work/<project-name>/`, with hyphens separating
+words within the project name.
 
 **Content boundary:** work directories are scoped to the project and owned
 by the relevant skill. `CONTEXT.md` may *name* a work directory as a

@@ -69,7 +69,7 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-07-14 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-07-22 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
@@ -77,14 +77,14 @@
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">20</div><div class="lab">Resolved</div></div>
-    <div class="sc blue"><div class="num">2</div><div class="lab">Decided</div></div>
+    <div class="sc blue"><div class="num">3</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
   </div>
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 20 findings are <span class="good">resolved</span>, and both design decisions settled. The initial
+    <p>All 20 findings are <span class="good">resolved</span>, and all three design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -334,6 +334,17 @@
       that the Matt Pocock skills expect; it's idempotent and won't clobber existing files. Docs updated.
       <em>Update 2026-07-14:</em> the template now also ships <code>docs/adr/</code> itself (with the
       <code>decision-log</code> skill), so <code>--full</code> is only needed for <code>docs/agents/</code>.</p>
+  </div>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D3</span> Work-directory naming: drop the <code>&lt;username&gt;_</code> prefix
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">work/ · docs · skills</span></h3>
+    <p><span class="fix">Decided:</span> work directories are now <code>work/&lt;project-name&gt;/</code> instead of
+      <code>work/&lt;username&gt;_&lt;project-name&gt;/</code>. The prefix existed to avoid collisions in shared
+      workspaces, but added noise for the common single-user case. Updated <code>CONTEXT.md</code>, the
+      <code>decision-log</code>/<code>checkpoint</code> skills, <code>/decision</code> command,
+      <code>workspace-structure</code>/<code>usage-scenarios</code>/<code>setup-guide</code> docs (md + html), and the
+      ADR template/README/ADR-0001.</p>
   </div>
 
   <!-- ========================= STRENGTHS ========================= -->

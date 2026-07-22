@@ -7,7 +7,7 @@ Decision to log: **$ARGUMENTS**
 
 Execute the **decision-log** skill defined in `skills/decision-log/SKILL.md`.
 
-- Default: append a **Tier-2 note** to `work/<username>_<project-name>/decisions.md` in the
+- Default: append a **Tier-2 note** to `work/<project-name>/decisions.md` in the
   skill's format (Chose / Because / Rejected / Blast radius / Promote?). Get the date from
   `date +%F`. If the decision has no real rejected alternative, say so — it may not need a note.
 - If the argument starts with `promote`: run the skill's **promotion** steps — copy

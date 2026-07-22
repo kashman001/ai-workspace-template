@@ -39,14 +39,14 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      memory and add durable, non-obvious learnings (gotchas, decisions, preferences); update
      `MEMORY.md` pointers.
    - the matching **reference docs** under `docs/` if a feature shipped or changed.
-   - **decision notes** — scan `work/<username>_<project-name>/decisions.md` for entries
+   - **decision notes** — scan `work/<project-name>/decisions.md` for entries
      flagged `Promote?: yes` (or a `maybe` whose condition now holds). For each, follow the
      `decision-log` skill's promotion steps (draft an ADR under `docs/adr/`, fill its
      Provenance block, flip the note to `done → ADR-NNNN`). This is where the session's
      ephemeral *why* becomes a durable, committed record — do it before context compacts.
 
 2. **Write a hand-off doc** for the next chunk: invoke the `handoff` skill (secret-free, with
-   a suggested-skills section). Persist it under `work/<username>_<project-name>/` (the
+   a suggested-skills section). Persist it under `work/<project-name>/` (the
    workspace convention) or the skill's default location. Frame it around the next focus, or —
    if none given — the next item in the backlog's active sequence. Reference the
    spec/plan/runbook by path.
@@ -61,7 +61,7 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
 
 ## Outputs
 - Reconciled backlog/issue tracker, project memory (+ `MEMORY.md`), and reference docs.
-- A hand-off doc under `work/<username>_<project-name>/` (or the `handoff` skill's default).
+- A hand-off doc under `work/<project-name>/` (or the `handoff` skill's default).
 - A catch-up prompt the user pastes into the next session.
 
 End by telling the user to compact/clear context, then paste the catch-up prompt to continue.

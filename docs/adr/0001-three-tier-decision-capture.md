@@ -21,7 +21,7 @@ Capture the *why* in three tiers by permanence, capturing cheap and promoting th
 
 - **Tier 1 — commit trailer** (always): a one-line `Decision:` reason in the commit body.
 - **Tier 2 — decision note** (for any choice with a rejected alternative): appended to
-  `work/<username>_<project-name>/decisions.md`. Ephemeral, per-project — the wide net.
+  `work/<project-name>/decisions.md`. Ephemeral, per-project — the wide net.
 - **Tier 3 — ADR** (only for lasting-weight decisions): a committed record under `docs/adr/`,
   **promoted** from a Tier-2 note on demand or at `checkpoint`.
 

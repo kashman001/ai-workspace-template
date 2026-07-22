@@ -31,7 +31,7 @@ Include the ones you're not happy about; those are the most valuable to record.
 
 <!-- The edges that make this a context-graph node. Fill what applies; delete the rest. -->
 
-- Promoted from: `work/<username>_<project-name>/decisions.md#<anchor>`
+- Promoted from: `work/<project-name>/decisions.md#<anchor>`
 - Commits: <sha>, <sha>
 - Supersedes: ADR-NNNN <!-- and set that ADR's Status to "superseded by ADR-NNNN" -->
 - Refs: <issue / PR / design-doc links>

@@ -312,7 +312,7 @@ cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
   <!-- ============================================= -->
   <h2 id="s4">05 · Scenario 4 — The feature loop with AI agents</h2>
   <p>The core working rhythm: one vertical slice at a time, red-green-refactor, with agents driving each
-  phase and durable state written to <code>work/&lt;username&gt;_&lt;project&gt;/</code>.</p>
+  phase and durable state written to <code>work/&lt;project&gt;/</code>.</p>
 
   <div class="fig">
     <svg viewBox="0 0 900 260" role="img" aria-label="Feature development inner loop">
@@ -365,7 +365,7 @@ cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
       <li><strong>Refactor</strong> with tests green; then <code>requesting-code-review</code> before merge.</li>
       <li>After modifying code, run <code>graphify update .</code> to keep the knowledge graph current
         (AST-only, no API cost).</li>
-      <li>Persist anything that must survive context compaction to <code>work/&lt;username&gt;_&lt;project&gt;/</code>
+      <li>Persist anything that must survive context compaction to <code>work/&lt;project&gt;/</code>
         — not to conversation memory.</li>
       <li>When you pick one approach over a real alternative, capture the <em>why</em>
         (<code>decision-log</code> skill / <code>/decision</code>): a one-line <code>Decision:</code> commit
@@ -398,7 +398,7 @@ cd &lt;project&gt;-workspace &amp;&amp; rm -rf .git &amp;&amp; git init
         <code>docs/adr/</code> (the <code>decision-log</code> scheme) — ephemeral <em>why</em> becoming durable
         record before context compacts.</li>
       <li>It writes a secret-free <strong>hand-off doc</strong> (via the <code>handoff</code> skill) under
-        <code>work/&lt;username&gt;_&lt;project&gt;/</code>, referencing specs/plans by path rather than duplicating
+        <code>work/&lt;project&gt;/</code>, referencing specs/plans by path rather than duplicating
         them.</li>
       <li>It confirms a clean branch state and emits a <strong>catch-up prompt</strong> for the next session —
         naming the hand-off doc path so the post-compaction agent knows where to start.</li>
