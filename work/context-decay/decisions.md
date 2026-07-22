@@ -27,3 +27,10 @@
 **Rejected:** adding it to every skill — ceremony without long-running risk.
 **Blast radius:** `skills/onboard-repo/SKILL.md`, `skills/rlm/SKILL.md`.
 **Promote?:** no
+
+## 2026-07-22 — M9 fix: `register` bypasses the session registry
+**Chose:** `resolve_session()` skips the registry lookup only when the command is `register`, forcing fresh discovery; `check`/`record`/`watch` still trust the registry.
+**Because:** `register`'s purpose is to (re)bind the current session; trusting the previous binding made every post-first session measure the prior session's transcript (observed live: false WARN at 146,794 tokens in a fresh session).
+**Rejected:** deleting the registry file during session-rollover — fixes only rollover-initiated sessions, not `/clear` or plain new sessions; mtime-comparing registry artifact vs newest discovery — heuristic, and `register` has no legitimate use for a stale binding anyway.
+**Blast radius:** `scripts/context-budget.sh` (one guard in `resolve_session`), backlog entry M9.
+**Promote?:** no

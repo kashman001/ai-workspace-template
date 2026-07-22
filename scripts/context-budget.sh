@@ -164,7 +164,8 @@ resolve_session() {
     RUNTIME=$(detect_runtime)
     [ -n "$RUNTIME" ] || die "could not detect runtime; pass --runtime"
   fi
-  if [ -z "$ARTIFACT" ]; then
+  # register must always re-discover; the registry is what it's there to (re)write.
+  if [ -z "$ARTIFACT" ] && [ "$COMMAND" != "register" ]; then
     local reg="$STATE_DIR/session-$RUNTIME.json"
     if [ -f "$reg" ]; then
       ARTIFACT=$(jq -r '.artifact // empty' "$reg" 2>/dev/null)

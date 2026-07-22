@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">20</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">21</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,7 +84,7 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 20 findings are <span class="good">resolved</span>, and all four design decisions settled. The initial
+    <p>All 21 findings are <span class="good">resolved</span>, and all four design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -217,6 +217,21 @@
     <p><span class="fix">Fixed:</span> <code>build-guide-html.sh</code> now embeds a <code>source-md-sha1</code> of the
       Markdown in the HTML head, and <code>check-workspace-structure.sh</code> compares it to the current source,
       warning (soft) to regenerate when they differ.</p>
+  </div>
+
+  <div class="find medium resolved">
+    <h3><span class="id">M9</span> <code>context-budget.sh register</code> reused the previous session's artifact instead of re-discovering
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-07-22, first fresh session after the D4 build: <code>register</code> at
+      session start reported <code>tokens=146794 status=WARN</code> — the <em>previous</em> session's transcript.
+      <code>resolve_session()</code> consulted the saved registry (<code>.context-budget/session-claude.json</code>)
+      before discovery, so <code>register</code> — whose whole purpose is to bind the current session — inherited the
+      prior binding and never re-discovered. Every session after the first would measure the wrong transcript until it
+      happened to overtake the stale one in mtime.</p>
+    <p><span class="fix">Fixed:</span> <code>resolve_session()</code> now skips the registry lookup when the command is
+      <code>register</code>, forcing fresh discovery; <code>check</code>/<code>record</code>/<code>watch</code> still
+      trust the registry. Verified live: re-running <code>register</code> in the same session bound the correct
+      artifact (<code>tokens=50856 status=OK</code>) and a follow-up <code>check</code> read it back.</p>
   </div>
 
   <!-- ========================= LOW ========================= -->
@@ -395,13 +410,14 @@
       <tr><td>2026-06-29</td><td>Feature: exported the workspace-local YouTube transcript MCP server into the template (<code>scripts/mcp/youtube-transcript.sh</code> + <code>scripts/mcp/youtube_transcript_mcp.py</code>), pre-wired it in <code>.mcp.json.example</code>, <code>.vscode/mcp.json.example</code>, and <code>opencode.json</code>, and documented the credential-free <code>yt-dlp</code>-backed setup across MCP, dependency, setup, service-access, workspace-structure, setup-guide, and usage-scenario docs.</td></tr>
       <tr><td>2026-07-06</td><td>Resolved <strong>L10</strong>: folded the ask-first directive from the XDA piece <em>"I added one line to my Claude prompts…"</em> into principle 1 (state what you'd need to know and name silent assumptions before answering; trivial-change escape hatch), in both the <code>CONTEXT.md</code> and <code>docs/workspace-structure.md</code> copies. Wording now diverges slightly from <code>global.md</code> — sanctioned by D1. Scorecard now 0/20/2/0/6.</td></tr>
       <tr><td>2026-07-14</td><td>Feature: added the <code>decision-log</code> skill (<code>skills/decision-log/SKILL.md</code> + <code>/decision</code>) — a three-tier <em>decision-provenance</em> scheme that captures the <em>why</em> code can't: Tier-1 commit trailers (always), Tier-2 ephemeral notes in <code>work/&lt;proj&gt;/decisions.md</code> (wide net), promoted to Tier-3 committed ADRs under a newly-shipped <code>docs/adr/</code> (<code>README.md</code> + <code>0000-template.md</code>) only for lasting-weight decisions. Promotion wired into the <code>checkpoint</code> skill (scan notes for <code>Promote?: yes</code>); ADRs + trailers registered as graphify provenance inputs so <code>graphify query "why…"</code> can walk <code>code → commit → ADR → alternatives-rejected</code>. Registered in <code>CONTEXT.md</code> (new <em>Decision Records</em> section + skills entry); narrowed <strong>D2</strong> (template now ships <code>docs/adr/</code> itself, not just via <code>init --full</code>).</td></tr>
+      <tr><td>2026-07-22</td><td>Fix <strong>M9</strong>: first live use of the D4 context-budget system in a fresh session caught <code>register</code> trusting the stale session registry instead of re-discovering — bound the previous session's transcript and reported a false WARN. <code>resolve_session()</code> now forces fresh discovery for <code>register</code> only. Scorecard now 0/21/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-07-06.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-07-22.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>
