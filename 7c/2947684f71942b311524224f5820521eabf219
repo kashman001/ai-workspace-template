@@ -1,0 +1,21 @@
+docs/context-budget.md
+  s_5c39e2784cc30d::t_0468d6969f68a6 85
+scripts/context-budget.sh
+  s_5c39e2784cc30d::t_f48d4c1f5f584a 68-78,86-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "7c2947684f71942b311524224f5820521eabf219",
+  "prompts": {},
+  "sessions": {
+    "s_5c39e2784cc30d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1cdd385d-80ad-4e6a-87a1-29578fe661d7",
+        "model": "claude-opus-4.8"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
