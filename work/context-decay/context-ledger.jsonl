@@ -14,3 +14,4 @@
 {"ts":"2026-07-23T13:10:47Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":139777,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay session 3"}
 {"ts":"2026-07-23T13:16:28Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":76067,"method":"exact","threshold":150000,"status":"OK","label":"context-decay: L13 registration lifecycle landed"}
 {"ts":"2026-07-23T13:20:50Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":80292,"method":"exact","threshold":150000,"status":"OK","label":"checkpoint: L13 session wrapped"}
+{"ts":"2026-07-23T17:38:57Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":120748,"method":"exact","threshold":150000,"status":"WARN","label":"context-decay: L11 remainder landed (codex+copilot-cli pins)"}
