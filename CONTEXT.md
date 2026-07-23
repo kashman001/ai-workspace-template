@@ -47,6 +47,15 @@ Active project work lives under `work/<project-name>/`. Persist
 any intermediate state that must survive context compaction to a file in
 the relevant work directory.
 
+Each work directory follows a standard backbone: a durable `README.md`, a
+forward **launcher** (`next-session.md` — what to do next, REPLACED each
+rollover) and an append-only **ledger** (`handoff.md` — what happened, newest
+block on top, archived to `handoff-archive.md` when it grows). The launcher/
+ledger split is the main defense against context-token accretion across
+sessions. Full roles + write discipline: `docs/work-directory-conventions.md`.
+Scaffold a new one with `skills/create-work-item/SKILL.md` (Claude Code:
+**`/create-work-item <name>`**).
+
 ## Decision Records
 
 Capture the **why** behind decisions — code records *what* exists, not *how it
@@ -106,6 +115,13 @@ shortcuts under `.claude/commands/`).
   promoted to committed ADRs (on demand or at `checkpoint`). ADRs + commit trailers
   become graphify nodes. Claude Code shortcut: **`/decision <what + why + rejected>`**
   (or `/decision promote <note>`). See the **Decision Records** section above.
+
+- **create-work-item** (`skills/create-work-item/SKILL.md`) — scaffold a new
+  `work/<project>/` directory that follows the work-directory conventions
+  (durable `README.md` + forward launcher `next-session.md` + append-only ledger
+  `handoff.md`). Use when starting multi-session work; not for one-shot tasks.
+  Claude Code shortcut: **`/create-work-item <name>`**. Convention:
+  `docs/work-directory-conventions.md`.
 
 ## Service Access
 

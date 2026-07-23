@@ -524,6 +524,11 @@ work/
 **Naming convention:** `work/<project-name>/`, with hyphens separating
 words within the project name.
 
+**Standard backbone:** each work directory has a durable `README.md`, a forward
+launcher (`next-session.md`) and an append-only ledger (`handoff.md`), per
+`docs/work-directory-conventions.md`. Scaffold one with
+`skills/create-work-item/SKILL.md`.
+
 **Content boundary:** work directories are scoped to the project and owned
 by the relevant skill. `CONTEXT.md` may *name* a work directory as a
 location pointer but must not list its internal files. File-level structure
