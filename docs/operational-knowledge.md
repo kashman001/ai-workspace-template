@@ -32,3 +32,19 @@ cause, and the rule that avoids it. Add to this as you hit new ones.
   retrigger: `gh api -X POST repos/<owner>/<repo>/pages/builds`, and re-check
   with a bounded waiter (see above). `.nojekyll` is already in `docs/` so files
   serve as-is — a failure is the pipeline, not Jekyll.
+
+## Gemini CLI on this machine — auth is the blocker, not the wiring
+
+(2026-07-23) Findings from trying to run `gemini` headlessly for the
+context-budget telemetry verification:
+
+- **`oauth-personal` (Login with Google) is dead** on gemini-cli 0.46: login
+  succeeds, then `IneligibleTierError: This client is no longer supported for
+  Gemini Code Assist for individuals` (Google says migrate to Antigravity).
+  Don't retry this path; a `GEMINI_API_KEY` (AI Studio) is the practical route.
+- **Vertex via ADC 403s**: `GOOGLE_GENAI_USE_VERTEXAI=true` with the default
+  gcloud project (`quran-hifdh-tracker-497421`) fails — Vertex API not
+  enabled/permitted. Don't enable cloud APIs just for this.
+- Headless runs in an untrusted dir need `GEMINI_CLI_TRUST_WORKSPACE=true`.
+- First-ever run asks `Opening authentication page… [Y/n]` on stdin — a
+  backgrounded/`!` command hangs there. Pre-feed it: `printf 'Y\n' | gemini -p …`.

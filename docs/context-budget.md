@@ -124,9 +124,10 @@ data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
   `.gemini/telemetry.log` (`input_token_count` legacy / `gen_ai.usage.input_tokens`
   semconv) as an exact count. Wiring verified live (a run in this workspace
   produced the log); the parser is fixture-verified for both spellings but not
-  yet against a real *successful* Gemini response (blocked on Gemini auth on the
-  origin machine); sessions outside this workspace still fall back to the
-  bytes÷4 estimate. The log accumulates across sessions in the workspace,
+  yet against a real *successful* Gemini response — blocked on auth on the
+  origin machine (personal-OAuth tier discontinued for gemini-cli; needs a
+  `GEMINI_API_KEY`, see `docs/operational-knowledge.md`); sessions outside this
+  workspace still fall back to the bytes÷4 estimate. The log accumulates across sessions in the workspace,
   so under concurrent Gemini sessions the last entry may belong to the other one.
 - Auto-detection (`--runtime auto`) prefers env-var evidence (Claude/Codex) then
   newest artifact — with several runtimes active, `register` or pass `--runtime`.
