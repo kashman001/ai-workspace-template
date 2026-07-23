@@ -57,6 +57,13 @@ codex_discover() {
   local base f
   base="$HOME/.codex/sessions"
   [ -d "$base" ] || return 1
+  # CODEX_THREAD_ID is exported to every shell Codex spawns and equals the UUID
+  # suffix of this session's own rollout filename; newest-mtime alone races with
+  # a concurrent session in the same workspace.
+  if [ -n "${CODEX_THREAD_ID:-}" ]; then
+    f="$(find "$base" -name "rollout-*-${CODEX_THREAD_ID}.jsonl" 2>/dev/null | head -1)"
+    [ -n "$f" ] && [ -f "$f" ] && { echo "$f"; return 0; }
+  fi
   while IFS= read -r f; do
     if head -c 8192 "$f" 2>/dev/null | grep -qF "$(pwd)"; then echo "$f"; return 0; fi
   done < <(find "$base" -name 'rollout-*.jsonl' -mtime -7 2>/dev/null | xargs ls -t 2>/dev/null)
@@ -94,8 +101,18 @@ copilot_vscode_discover() {
 }
 
 copilot_cli_discover() {
-  local d
-  for d in "$HOME/.copilot/history-session-state" "$HOME/.copilot/sessions"; do
+  # Best-effort/unverified against a live install: paths + env var are sourced
+  # from the CLI changelog, not probed. COPILOT_AGENT_SESSION_ID (CLI >=1.0.29)
+  # is exported to shell commands and names this session's session-state dir;
+  # newest-mtime alone races a concurrent session.
+  local root d
+  root="${COPILOT_HOME:-$HOME/.copilot}"
+  if [ -n "${COPILOT_AGENT_SESSION_ID:-}" ]; then
+    local t="$root/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl"
+    [ -f "$t" ] && { echo "$t"; return 0; }
+  fi
+  # Current format (session-state/) then legacy (history-session-state/).
+  for d in "$root/session-state" "$root/history-session-state"; do
     [ -d "$d" ] || continue
     find "$d" -type f \( -name '*.json' -o -name '*.jsonl' \) 2>/dev/null | xargs ls -t 2>/dev/null | head -1 && return 0
   done

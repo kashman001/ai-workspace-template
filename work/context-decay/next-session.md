@@ -8,8 +8,9 @@ from the dumb zone. All spec §12 follow-ups are done or externally blocked.
 discovery binding stale/foreign sessions; everything non-gated landed the
 same day, and L13 (developer-quickstart lifecycle note + Claude Code
 `SessionStart` registration hook in `.claude/settings.json.example`) landed
-later that day. **The project is dormant** — reopen only when a gate clears
-or the ledger warrants a fresh analysis pass.
+later that day. The L11 remainder landed 2026-07-23 (codex pin live-verified;
+copilot-cli pin research-sourced). **The project is dormant** — reopen only
+when a gate clears or the ledger warrants a fresh analysis pass.
 
 ## Read these, in order
 
@@ -41,12 +42,13 @@ items are externally gated:
    `GEMINI_CLI_TRUST_WORKSPACE=true gemini -p "hi"` and confirm
    `scripts/context-budget.sh check --runtime gemini` says `method=exact`.
    Also live-verifies the M12 reset-at-register fix (fixture-verified only).
-2. **Copilot CLI adapter verification** — needs Copilot CLI installed
-   (`~/.copilot` currently has only `ide/`). While there: `env | grep -i copilot`
-   for a session-pin var (L11).
-3. **L11 remainder — codex session-pin check**: in a live Codex session,
-   `env | grep CODEX` for a session/rollout id; pin like M10/M11 if found.
-4. **Next ledger analysis** — after ~20 entries or the first
+2. **Copilot CLI adapter live verification** — needs Copilot CLI installed
+   (`~/.copilot` currently has only `ide/`). The pin + path fix landed from
+   changelog research; remaining checks are narrower: confirm
+   `$COPILOT_AGENT_SESSION_ID` reaches agent-spawned subshells and equals the
+   `session-state/<uuid>/` dir name, and check whether `events.jsonl` token
+   metrics are written live mid-session or only at session end.
+3. **Next ledger analysis** — after ~20 entries or the first
    `method=estimate` rows (currently 13 entries, all claude/exact).
 
 ## State snapshot
