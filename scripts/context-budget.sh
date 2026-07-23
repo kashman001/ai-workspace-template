@@ -65,10 +65,17 @@ codex_discover() {
 }
 
 copilot_vscode_discover() {
-  # Copilot terminal sessions export the live session log's path; newest-mtime
-  # alone can pin a stale sibling session whose log happened to flush later.
-  local t="${VSCODE_TARGET_SESSION_LOG:-}"
-  [ -n "$t" ] && [ -f "$t" ] && { echo "$t"; return 0; }
+  # Copilot terminal sessions export VSCODE_TARGET_SESSION_LOG. On some builds it
+  # is the token .jsonl itself; on others (Copilot 0.58+/VS Code 1.130) it is a
+  # debug-logs dir whose basename is the session id — and the chatSessions token
+  # file is named after that same id. Either way we pin the live session
+  # deterministically instead of racing on newest-mtime, which pins a stale
+  # sibling session whose log happened to flush later (the silent-freeze bug).
+  local t="${VSCODE_TARGET_SESSION_LOG:-}" sid=""
+  if [ -n "$t" ]; then
+    [ -f "$t" ] && { echo "$t"; return 0; }
+    sid="$(basename "$t")"; sid="${sid%.jsonl}"
+  fi
   local root ws d
   for root in "Code" "Code - Insiders" "VSCodium"; do
     ws="$HOME/Library/Application Support/$root/User/workspaceStorage"
@@ -76,6 +83,9 @@ copilot_vscode_discover() {
     for d in "$ws"/*/; do
       [ -f "$d/workspace.json" ] || continue
       if grep -qF "$(pwd)" "$d/workspace.json" 2>/dev/null; then
+        # Deterministic: the session-id-named token file wins over newest-mtime.
+        [ -n "$sid" ] && [ -f "$d""chatSessions/$sid.jsonl" ] \
+          && { echo "$d""chatSessions/$sid.jsonl"; return 0; }
         newest_of "$d"chatSessions/*.jsonl "$d"chatSessions/*.json && return 0
       fi
     done
