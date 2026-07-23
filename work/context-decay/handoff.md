@@ -1,44 +1,44 @@
-# Handoff — session-pinning fixes (2026-07-23, session 3)
+# Handoff — L13 registration lifecycle (2026-07-23, session 4)
 
-Backward-looking record of the session-pinning session (session 3 of this
-project; session 2's handoff is in git history at `f18b830^..f18b830`).
-Forward plan: `next-session.md`.
+Backward-looking record of the L13 session (session 4 of this project;
+session 3's session-pinning handoff is in git history at `4ac6f49^`).
+Forward plan: `next-session.md` — **the project is now dormant**.
 
 ## What shipped (all committed & pushed)
 
-- `03c19d3` — **Fix M10+M11**: session discovery pinned to runtime-exported
-  ids over newest-mtime. M10 (reported live from a downstream copilot-vscode
-  session: false STOP from a stale sibling log) — `copilot_vscode_discover`
-  prefers `$VSCODE_TARGET_SESSION_LOG`. M11 — `claude_discover` pins
-  `$CLAUDE_CODE_SESSION_ID.jsonl`; differential-verified (stale transcript
-  touched newest in the same shell call: unpinned register binds it, pinned
-  binds the live session).
-- `f1eb1b1` — **Fix M12+L12, L11 part**: `register --runtime gemini`
-  truncates the shared workspace telemetry log after binding it (fixture
-  lifecycle-verified: stale 140K WARN → 0 after register → appended response
-  reads exact); `gemini_measure` reports `0 estimate` when no logs exist;
-  codex any-project fallback removed (fails rather than bind another
-  project's rollout); single-session-per-runtime limitation documented.
-- Backlog: M10, M11, M12, L12 resolved; L11 open (machine-gated remainder);
-  **L13 opened at rollover** — registration lifecycle is agent-documented
-  only; fix queued as the next session's first task.
+- `4ac6f49` — **Fix L13**: session-lifecycle paragraph in the developer
+  quickstart of `docs/context-budget.md` (registration is the agent's job,
+  automatic-by-instruction via `CONTEXT.md`, only inside the workspace tree;
+  unregistered sessions fall back to newest-mtime discovery) + a
+  `SessionStart` hook in `.claude/settings.json.example` running
+  `register --runtime claude --transcript <path from hook payload>`.
+  Backlog: L13 Resolved, scorecard 1/26/4/0/6 (only L11's machine-gated
+  remainder open). `next-session.md` rewritten for dormancy.
+- `33767d3` — chore: ledger entry.
 
-## Decisions (captured in commit trailers + backlog cards)
+## Decisions (in the commit trailer + L13 card)
 
-- Authoritative session-id pin where the runtime exports one; mtime only as
-  fallback (rejected: mtime-only — lazy flushes / concurrent sessions lie).
-- Gemini: truncate-at-register over OTLP session-id filtering (CLI exports
-  no session id to match against).
+- Hook reads `transcript_path` from the SessionStart stdin payload
+  (documented hook contract) rather than trusting `CLAUDE_CODE_SESSION_ID`
+  to be exported to hook processes; fails open (`|| true`, discovery
+  fallback on empty payload) so it can never block a session.
 
 ## Gotchas worth remembering
 
-- Claude transcripts re-flush every turn: mtime differential tests must
-  touch-and-measure in a single shell call or the live session instantly
-  regains newest mtime.
-- `check` reads the registry pin (M9 fix); only `register` re-discovers —
-  test discovery changes via `register`, not `check`.
+- `SessionStart` hook **stdout is injected into the session context** — the
+  register status line doubles as the agent's session-start awareness. Keep
+  hook stdout terse for that reason.
+- Verified the hook by piping a simulated payload into the command extracted
+  from the example JSON via `jq` — reusable pattern for testing hook blocks
+  without a live session restart.
+
+## Gate status (checked this session — none cleared)
+
+- Copilot CLI: still not installed (`~/.copilot` has only `ide/`).
+- `GEMINI_API_KEY`: still unset (user-provided, AI Studio).
+- Codex session-pin env check: needs a live Codex session.
+- Ledger at 14 entries, all claude/exact (analysis pass at ~20).
 
 ## Session telemetry
 
-Registered at 41.6K, WARN hook fired at ~126K mid-turn (live demo of layer
-1), rollover started at 133K. Ledger now 13 entries, all claude/exact.
+Registered at 41.6K, 76K at the L13 record, ~80K at checkpoint. No WARN.
