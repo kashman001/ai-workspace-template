@@ -46,6 +46,10 @@ claude_discover() {
   slug="$(pwd | tr '/.' '--')"
   proj="$HOME/.claude/projects/$slug"
   [ -d "$proj" ] || return 1
+  # Transcript basename = the exported session id; newest-mtime alone races
+  # with a concurrent session in the same workspace.
+  local t="$proj/${CLAUDE_CODE_SESSION_ID:-}.jsonl"
+  [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && [ -f "$t" ] && { echo "$t"; return 0; }
   newest_of "$proj"/*.jsonl
 }
 
@@ -60,6 +64,10 @@ codex_discover() {
 }
 
 copilot_vscode_discover() {
+  # Copilot terminal sessions export the live session log's path; newest-mtime
+  # alone can pin a stale sibling session whose log happened to flush later.
+  local t="${VSCODE_TARGET_SESSION_LOG:-}"
+  [ -n "$t" ] && [ -f "$t" ] && { echo "$t"; return 0; }
   local root ws d
   for root in "Code" "Code - Insiders" "VSCodium"; do
     ws="$HOME/Library/Application Support/$root/User/workspaceStorage"
