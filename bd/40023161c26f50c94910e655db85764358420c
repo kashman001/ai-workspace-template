@@ -1,0 +1,32 @@
+docs/work-directory-conventions.md
+  s_c1ef861edd2bce::t_b817e4960d38d0 1-139
+.claude/commands/create-work-item.md
+  s_c1ef861edd2bce::t_af33583a7583f2 1-13,15
+  s_c1ef861edd2bce::t_6a8349931800a2 14
+CONTEXT.md
+  s_c1ef861edd2bce::t_e2e66c1e05658c 50-57,119-124
+  s_c1ef861edd2bce::t_e21895e103906d 58
+  s_c1ef861edd2bce::t_b7df4fa4d24eb3 125
+skills/create-work-item/SKILL.md
+  s_c1ef861edd2bce::t_1296ea85e37f1b 1-126
+docs/workspace-structure.md
+  s_c1ef861edd2bce::t_e2e66c1e05658c 527-531
+docs/workspace-structure.html
+  s_c1ef861edd2bce::t_bf031275507308 291,885-890
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "bd40023161c26f50c94910e655db85764358420c",
+  "prompts": {},
+  "sessions": {
+    "s_c1ef861edd2bce": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "20b7a155-6022-4151-bc94-0260c1d33851",
+        "model": "claude-opus-4.8"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
