@@ -10,3 +10,5 @@
 {"ts":"2026-07-23T12:13:44Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":67685,"method":"exact","threshold":150000,"status":"OK","label":"Fix M10: copilot-vscode discover honors VSCODE_TARGET_SESSION_LOG"}
 {"ts":"2026-07-23T12:20:59Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":96009,"method":"exact","threshold":150000,"status":"OK","label":"Fix M11 claude session pin; plan M12/L11/L12"}
 {"ts":"2026-07-23T12:27:46Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":116837,"method":"exact","threshold":150000,"status":"OK","label":"Land M12 + L11 codex fallback + L12 doc"}
+{"ts":"2026-07-23T13:09:34Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":133038,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN ~126K after session-pinning fixes"}
+{"ts":"2026-07-23T13:10:47Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":139777,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay session 3"}
