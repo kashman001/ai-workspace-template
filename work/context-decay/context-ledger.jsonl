@@ -12,3 +12,4 @@
 {"ts":"2026-07-23T12:27:46Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":116837,"method":"exact","threshold":150000,"status":"OK","label":"Land M12 + L11 codex fallback + L12 doc"}
 {"ts":"2026-07-23T13:09:34Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":133038,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN ~126K after session-pinning fixes"}
 {"ts":"2026-07-23T13:10:47Z","runtime":"claude","session":"6c638c37-d211-4a1e-94ef-6220480f742e.jsonl","tokens":139777,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay session 3"}
+{"ts":"2026-07-23T13:16:28Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":76067,"method":"exact","threshold":150000,"status":"OK","label":"context-decay: L13 registration lifecycle landed"}
