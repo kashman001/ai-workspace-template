@@ -6,6 +6,22 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-07-23 (session 4b: post-rollover continuation — convention migration + ledger analysis pass 2)
+
+Session 4 continued past its rollover (user-driven) and hit **STOP at
+153.5K** — the live instance of ledger-analysis finding #5. Work done in
+the continuation, all committed & pushed through `fe5072a`:
+
+- `2ed1eec` — pulled `bd40023` (launcher/ledger work-directory convention +
+  `create-work-item` skill) and migrated `work/context-decay/` to it
+  (README added, purpose headers, this ledger rebuilt newest-on-top).
+- `fe5072a` — **ledger analysis pass 2** (`ledger-analysis.md`): pass-1
+  numbers confirmed; new findings — subagent fan-out kept a ~208K unit to
+  +40K orchestrator growth; post-rollover continuation is the leak. Next
+  pass at ~40 entries or first estimate/non-claude rows.
+
+State: `main` clean, pushed. Next: dormant — gates in `next-session.md`.
+
 # Session Handoff — 2026-07-23 (session 4: L13 + L11 remainder)
 
 Backlog is 0 open / 27 resolved; the project is dormant.

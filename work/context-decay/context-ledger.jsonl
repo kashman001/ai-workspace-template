@@ -18,3 +18,4 @@
 {"ts":"2026-07-23T17:39:36Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":125498,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN 120.7K after L11-remainder unit"}
 {"ts":"2026-07-23T17:40:10Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":128421,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay session 4"}
 {"ts":"2026-07-23T19:56:17Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":153458,"method":"exact","threshold":150000,"status":"STOP","label":"context-decay: ledger analysis pass 2"}
+{"ts":"2026-07-23T19:56:42Z","runtime":"claude","session":"7f7f9f78-1b1f-41ca-87e4-a8ee4cd56380.jsonl","tokens":154110,"method":"exact","threshold":150000,"status":"STOP","label":"rollover complete: session 4b (STOP 153.5K)"}
