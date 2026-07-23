@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">2</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">25</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -84,9 +84,10 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>25 of 26 findings are <span class="good">resolved</span>; one is open — <strong>L11</strong>, whose remaining
-    work (session-pin env-var checks for Codex and Copilot CLI) is machine-gated on live sessions of those runtimes —
-    and all four design decisions settled. The initial
+    <p>25 of 27 findings are <span class="good">resolved</span>; two are open — <strong>L11</strong>, whose remaining
+    work (session-pin env-var checks for Codex and Copilot CLI) is machine-gated on live sessions of those runtimes,
+    and <strong>L13</strong> (developer-facing registration lifecycle doc, queued next session) — and all four design
+    decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -412,6 +413,21 @@
       become a real workflow.</p>
   </div>
 
+  <div class="find low">
+    <h3><span class="id">L13</span> Session registration is documented for agents only — no developer-facing lifecycle doc, no mechanical trigger
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/context-budget.md · .claude/settings.json.example</span></h3>
+    <p><span class="k">Evidence</span> — the developer quickstart in <code>docs/context-budget.md</code> shows
+      <code>check</code>/<code>watch</code> but never says sessions are registered at start; <code>register</code>
+      appears only in the agent quickstart and <code>CONTEXT.md</code> standing instruction. Registration is
+      by-instruction, not by-mechanism: no <code>SessionStart</code> hook exists, so an agent that ignores its context
+      file never registers.</p>
+    <p><span class="k">Impact</span> — a developer reading only their quickstart can't tell whether registration is
+      automatic or their job; an instruction-ignoring agent silently depends on discovery fallbacks.</p>
+    <p><span class="k">Fix</span> (planned) — one-paragraph session-lifecycle note in the developer quickstart
+      (who registers, when, what's automatic vs by-instruction); optionally add a Claude Code <code>SessionStart</code>
+      hook to <code>.claude/settings.json.example</code> to make registration mechanical for that runtime.</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -497,6 +513,7 @@
       <tr><td>2026-07-23</td><td>Fix <strong>M10</strong>: a live copilot-vscode session (downstream workspace) caught <code>copilot_vscode_discover()</code> pinning a stale sibling session's log by mtime and reporting a false STOP — the discover now prefers <code>$VSCODE_TARGET_SESSION_LOG</code> (the live log's path, exported by Copilot terminal sessions), falling back to the newest-mtime scan.</td></tr>
       <tr><td>2026-07-23</td><td>Session-pinning review across all adapters (same bug class as M10: newest-mtime as a proxy for "current session"). Fixed <strong>M11</strong> — <code>claude_discover()</code> now pins <code>$CLAUDE_CODE_SESSION_ID.jsonl</code> (differential-verified: with a stale transcript touched newest, unpinned <code>register</code> binds it, pinned binds the live session). Opened <strong>M12</strong> (gemini shared telemetry log serves the previous session's counts to a new session's <code>register</code>), <strong>L11</strong> (codex/copilot-cli mtime races; codex any-project fallback), <strong>L12</strong> (registry keyed per-runtime clobbers under concurrent same-runtime sessions). Scorecard now 3/23/4/0/6.</td></tr>
       <tr><td>2026-07-23</td><td>Landed the three non-gated session-pinning follow-ups. <strong>M12</strong> resolved — <code>register --runtime gemini</code> truncates the shared workspace telemetry log after binding it, and <code>gemini_measure</code> reports <code>0 estimate</code> for a fresh session with no logs at all; lifecycle fixture-verified (stale 140K WARN → 0 after register → appended response reads exact). <strong>L11</strong> partially landed — codex any-project fallback removed (fails over binding another project's rollout; verified against 4 non-matching rollouts); the env-var pin checks stay open, machine-gated. <strong>L12</strong> resolved — single-session-per-runtime-per-workspace documented as an explicit limitation in <code>docs/context-budget.md</code>. Scorecard now 1/25/4/0/6.</td></tr>
+      <tr><td>2026-07-23</td><td>Opened <strong>L13</strong> (surfaced while walking through the register lifecycle): session registration is documented for agents only — the developer quickstart never mentions it, and no <code>SessionStart</code> hook makes it mechanical. Fix queued for the next session. Scorecard now 2/25/4/0/6.</td></tr>
     </tbody>
   </table>
 

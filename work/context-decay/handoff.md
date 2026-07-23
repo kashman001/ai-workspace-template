@@ -1,41 +1,44 @@
-# Handoff — context-decay follow-ups (2026-07-23)
+# Handoff — session-pinning fixes (2026-07-23, session 3)
 
-Backward-looking record of the follow-up session (session 2 of this project;
-the build session's handoff is in git history at `d6827c8`). Forward plan:
-`next-session.md`.
+Backward-looking record of the session-pinning session (session 3 of this
+project; session 2's handoff is in git history at `f18b830^..f18b830`).
+Forward plan: `next-session.md`.
 
 ## What shipped (all committed & pushed)
 
-- `2cc2828` — **Fix M9**: `register` trusted the stale session registry and
-  bound the previous session's transcript (observed live as a false WARN at
-  146.8K in a fresh session). `resolve_session()` now forces fresh discovery
-  for `register` only. Backlog finding M9 + decision note added.
-- `b278c5f` — **Gemini exact counts via workspace telemetry**: tracked
-  `.gemini/settings.json` gains a local-file telemetry block; the gemini
-  adapter prefers workspace `.gemini/telemetry.log` (gitignored) and parses the
-  last response's input tokens, both `input_token_count` and OTel
-  `gen_ai.usage.input_tokens` spellings; falls back to chat-log estimate, never
-  telemetry-file size. Docs/CONTEXT/graphify-deletion guidance updated.
-- `58c441e` — **First ledger analysis** (`ledger-analysis.md`) + next-session
-  refresh.
-- (uncommitted at rollover, committed with it) Gemini auth gotchas →
-  `docs/operational-knowledge.md`; sharpened blocker wording in
-  `docs/context-budget.md`.
+- `03c19d3` — **Fix M10+M11**: session discovery pinned to runtime-exported
+  ids over newest-mtime. M10 (reported live from a downstream copilot-vscode
+  session: false STOP from a stale sibling log) — `copilot_vscode_discover`
+  prefers `$VSCODE_TARGET_SESSION_LOG`. M11 — `claude_discover` pins
+  `$CLAUDE_CODE_SESSION_ID.jsonl`; differential-verified (stale transcript
+  touched newest in the same shell call: unpinned register binds it, pinned
+  binds the live session).
+- `f1eb1b1` — **Fix M12+L12, L11 part**: `register --runtime gemini`
+  truncates the shared workspace telemetry log after binding it (fixture
+  lifecycle-verified: stale 140K WARN → 0 after register → appended response
+  reads exact); `gemini_measure` reports `0 estimate` when no logs exist;
+  codex any-project fallback removed (fails rather than bind another
+  project's rollout); single-session-per-runtime limitation documented.
+- Backlog: M10, M11, M12, L12 resolved; L11 open (machine-gated remainder);
+  **L13 opened at rollover** — registration lifecycle is agent-documented
+  only; fix queued as the next session's first task.
 
-## Verification status
+## Decisions (captured in commit trailers + backlog cards)
 
-- M9 fix: verified live (correct re-bind + `check` read-back).
-- Gemini telemetry wiring: **proven live** — a real run wrote a 223KB OTLP log
-  from the tracked settings. Parser: fixture-verified for both attribute
-  spellings (exact WARN/OK exit codes). **Not verified**: a real successful
-  response — every auth path on this machine failed (personal OAuth tier
-  discontinued → `IneligibleTierError`; Vertex ADC 403; no `GEMINI_API_KEY`).
-  Details in `docs/operational-knowledge.md`.
-- Copilot CLI adapter: still unverified — CLI not installed on this machine.
+- Authoritative session-id pin where the runtime exports one; mtime only as
+  fallback (rejected: mtime-only — lazy flushes / concurrent sessions lie).
+- Gemini: truncate-at-register over OTLP session-id filtering (CLI exports
+  no session id to match against).
 
-## State at handoff
+## Gotchas worth remembering
 
-`main` clean and pushed. Ledger at 9 entries (all claude/exact). Session
-rolled over on a real hook WARN at 123.9K — the system's second live save.
-No running processes. `~/.gemini/settings.json` (my oauth attempt) was removed;
-`.gemini/telemetry.log` remains locally (gitignored, harmless).
+- Claude transcripts re-flush every turn: mtime differential tests must
+  touch-and-measure in a single shell call or the live session instantly
+  regains newest mtime.
+- `check` reads the registry pin (M9 fix); only `register` re-discovers —
+  test discovery changes via `register`, not `check`.
+
+## Session telemetry
+
+Registered at 41.6K, WARN hook fired at ~126K mid-turn (live demo of layer
+1), rollover started at 133K. Ledger now 13 entries, all claude/exact.
