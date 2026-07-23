@@ -48,3 +48,28 @@ context-budget telemetry verification:
 - Headless runs in an untrusted dir need `GEMINI_CLI_TRUST_WORKSPACE=true`.
 - First-ever run asks `Opening authentication page… [Y/n]` on stdin — a
   backgrounded/`!` command hangs there. Pre-feed it: `printf 'Y\n' | gemini -p …`.
+
+## Diff Review Workflow
+
+Open a commit (or commit range) for review as a directory diff with
+`scripts/diff-review.sh`. It wraps `git difftool --dir-diff` with the flags
+that keep symlinked files from rendering as "missing" in Beyond Compare:
+
+```bash
+scripts/diff-review.sh -r repos/<repo> <sha>             # one commit in Beyond Compare
+scripts/diff-review.sh -r repos/<repo> <tip> <first>~1   # a multi-commit range
+scripts/diff-review.sh -t vscode -r repos/<repo> <sha>   # VS Code per-file fallback
+```
+
+Two flags are load-bearing; the script always applies them:
+
+- **`--no-symlinks`**: when a compared commit equals the working tree, git
+  populates that side with symlinks; Beyond Compare doesn't follow them, so
+  files render as missing / panes misalign. The flag forces real file copies.
+- **Blocking launcher (macOS)**: `bcompare` returns immediately and git deletes
+  its temp dirs before Beyond Compare reads them (empty panes); the blocking
+  `bcomp` launcher avoids this. The script auto-detects the blocking binary.
+
+Select the tool with `-t`: `bc` (Beyond Compare, default), `code` (VS Code +
+Compare Folders extension tree), or `vscode` (VS Code built-in per-file diff).
+The script fast-fails on a bad SHA before opening any GUI.
