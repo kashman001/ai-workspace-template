@@ -1,0 +1,28 @@
+scripts/diff-review.sh
+  s_0aa229e7718176::t_ae6d0793de8364 25-37
+  s_0aa229e7718176::t_e03dc5f22cef83 22-24
+  s_0aa229e7718176::t_fc4fbc7c74d1d5 38-40
+  s_0aa229e7718176::t_ff5b9f7b9ec86d 1-21,41-128
+docs/operational-knowledge.md
+  s_0aa229e7718176::t_4332755a7d775a 51-75
+docs/workspace-structure.md
+  s_0aa229e7718176::t_8cc888f8ac0502 642,671-674
+docs/workspace-structure.html
+  s_0aa229e7718176::t_f25dc62febb8c0 291,983,1014-1018
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "f3928e64b1f5f1bf6e4826c2c18ba2536e8e618e",
+  "prompts": {},
+  "sessions": {
+    "s_0aa229e7718176": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "00224d30-8fce-47a8-8bdb-84ee50073450",
+        "model": "claude-opus-4.8"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
