@@ -4,3 +4,5 @@
 {"ts":"2026-07-22T23:09:32Z","runtime":"claude","session":"796d0e8a-f1b0-4d92-9432-f4dc11be5402.jsonl","tokens":144380,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay"}
 {"ts":"2026-07-22T23:13:15Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":72862,"method":"exact","threshold":150000,"status":"OK","label":"M9 register-stale-registry fix"}
 {"ts":"2026-07-22T23:18:49Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":111813,"method":"exact","threshold":150000,"status":"OK","label":"gemini telemetry follow-up shipped"}
+{"ts":"2026-07-22T23:19:47Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":117353,"method":"exact","threshold":150000,"status":"OK","label":"context-decay follow-ups complete (ledger analysis, docs, push)"}
+{"ts":"2026-07-23T12:02:56Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":130669,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN 123.9K; gemini live verification blocked (oauth tier dead)"}

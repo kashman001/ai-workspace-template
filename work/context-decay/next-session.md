@@ -2,53 +2,48 @@
 
 ## Mission
 
-The system is shipped and in live use; the 2026-07-22 follow-up session worked
-through spec §12. Remaining work is small and mostly blocked on external state.
+The context-budget system is shipped, in live use, and has saved two sessions
+from the dumb zone. All spec §12 follow-ups are done or externally blocked.
+This project is **dormant** — only reopen it when a blocker clears or the
+ledger warrants a fresh analysis pass.
 
 ## Read these, in order
 
 1. This file.
-2. `ledger-analysis.md` — first ledger findings (session baseline ~50K, ~20–40K
-   per work unit, 2–3 units per session).
-3. `handoff.md` + `docs/context-budget.md` — only if you need build history or
-   command/adapter details.
+2. `handoff.md` — what the 2026-07-23 follow-up session shipped.
+3. `ledger-analysis.md` — session baseline ~50K, ~20–40K per work unit,
+   2–3 units per session.
 
 ## Do NOT reload
 
-- `context-decay-spec.md` — fully implemented, §12 follow-ups now also done or
-  blocked (statuses below); re-reading tempts re-implementation.
-- `design.html` — reference for humans; duplicated in docs/context-budget.md.
-- The M9 / Gemini-telemetry diffs — done, committed (`2cc2828`, `b278c5f`).
+- `context-decay-spec.md` — fully implemented incl. §12; re-reading tempts
+  re-implementation.
+- `design.html` — human reference; duplicated in `docs/context-budget.md`.
+- **Gemini auth on this machine** — settled dead ends (personal OAuth tier
+  discontinued, Vertex ADC 403): see `docs/operational-knowledge.md`. Do not
+  retry those paths.
+- The M9 / telemetry / analysis diffs — committed (`2cc2828`, `b278c5f`,
+  `58c441e`) and pushed.
 
-## Follow-up statuses (was spec §12)
+## Open items (all externally gated)
 
-- **M9 fixed:** `register` trusted the stale session registry and bound the
-  previous session's transcript (false WARN in a fresh session). Now `register`
-  always re-discovers; `check`/`record`/`watch` still trust the registry.
-- **Gemini telemetry: shipped, one verification pending.** Tracked
-  `.gemini/settings.json` enables local-file telemetry; the adapter parses the
-  last response's input tokens (both `input_token_count` and
-  `gen_ai.usage.input_tokens`). Wiring proven live; parser fixture-verified.
-  **Blocked:** confirming against a real successful Gemini response needs
-  Gemini auth on this machine (interactive `gemini` login or `GEMINI_API_KEY`;
-  ADC/Vertex 403'd on project quran-hifdh-tracker-497421 — don't enable cloud
-  APIs for this). One `gemini -p "hi"` in this workspace after auth, then
-  `scripts/context-budget.sh check --runtime gemini` should say `method=exact`.
-- **Copilot CLI adapter: blocked** — Copilot CLI isn't installed on this
-  machine (`~/.copilot` has only `ide/`). Verify if/when it appears.
-- **Ledger analysis: first pass done** (`ledger-analysis.md`). Re-run after
-  ~20 entries or the first `method=estimate` rows.
+1. **Gemini live-response verification** — needs the user to provide a
+   `GEMINI_API_KEY` (AI Studio). Then, in this workspace:
+   `GEMINI_CLI_TRUST_WORKSPACE=true gemini -p "hi"` and confirm
+   `scripts/context-budget.sh check --runtime gemini` says `method=exact`.
+2. **Copilot CLI adapter verification** — needs Copilot CLI installed
+   (`~/.copilot` currently has only `ide/`).
+3. **Next ledger analysis** — after ~20 entries or the first
+   `method=estimate` rows (currently 9 entries, all claude/exact).
 
 ## State snapshot
 
-- Branch `main`, clean; commits `2cc2828` (M9) and `b278c5f` (Gemini telemetry).
-- Ledger: 6 entries, all claude/exact.
-- `.gemini/telemetry.log` exists locally (gitignored) from the auth-failed
-  verification run — harmless; delete freely.
+Branch `main`, clean, pushed. No running processes. `.gemini/telemetry.log`
+exists locally (gitignored) — delete freely.
 
 ## First actions
 
 1. `scripts/context-budget.sh register`
-2. If the user has set up Gemini auth: run the pending live verification above.
-3. Otherwise: nothing open in this project — follow the Context Budget section
-   in `CONTEXT.md` like any other session.
+2. If a gate above has cleared, run that item; otherwise this project has
+   nothing open — proceed with whatever the user brings, following the
+   Context Budget section in `CONTEXT.md`.
