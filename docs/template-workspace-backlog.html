@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">23</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">25</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,9 +84,9 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>23 of 26 findings are <span class="good">resolved</span>; three are open — <strong>M12</strong>, <strong>L11</strong>,
-    <strong>L12</strong>, planned follow-ups from the 2026-07-23 session-pinning review (same bug class as M10) — and all
-    four design decisions settled. The initial
+    <p>25 of 26 findings are <span class="good">resolved</span>; one is open — <strong>L11</strong>, whose remaining
+    work (session-pin env-var checks for Codex and Copilot CLI) is machine-gated on live sessions of those runtimes —
+    and all four design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -265,9 +265,9 @@
       transcript touched newest, unpinned <code>register</code> binds the stale file, pinned binds the live session.</p>
   </div>
 
-  <div class="find med">
+  <div class="find med resolved">
     <h3><span class="id">M12</span> Gemini shared telemetry log serves the previous session's counts at register
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
     <p><span class="k">Evidence</span> — <code>gemini_measure()</code> reads the last <code>input_token_count</code>
       from the workspace-scoped, append-only <code>.gemini/telemetry.log</code>, which is shared by every Gemini
       session in the workspace. A new session's <code>register</code>, before its first response, reads the
@@ -275,11 +275,14 @@
       at all. Concurrent sessions also interleave, attributing whichever response landed last.</p>
     <p><span class="k">Impact</span> — same failure the M10 incident showed: a fresh session can be told to roll over
       immediately.</p>
-    <p><span class="k">Fix</span> (planned) — rotate the telemetry log at <code>register --runtime gemini</code>
-      (truncate, or archive aside), safe under the workspace's single-session-per-runtime assumption (L12); measures
-      then only ever see the current session's responses. Rejected alternative: filtering OTLP records by session id —
-      Gemini CLI exports no session-id env var to match against. Verification is gated with the existing
-      Gemini-auth item (needs a live keyed session).</p>
+    <p><span class="fix">Fixed:</span> <code>register --runtime gemini</code> now truncates the workspace telemetry
+      log after binding it, safe under the single-session-per-runtime assumption (L12); measures then only ever see
+      the current session's responses. When neither responses nor a chat log exist yet, <code>gemini_measure</code>
+      reports <code>0 estimate</code> (fresh session, empty context) instead of failing. Lifecycle-verified with
+      fixtures: stale 140K count read as <code>WARN</code> pre-fix → <code>register</code> truncates and reports
+      <code>tokens=0</code> → appended response read back <code>exact</code>. Rejected alternative: filtering OTLP
+      records by session id — Gemini CLI exports no session-id env var to match against. Live-session verification
+      rides the existing Gemini-auth gated item.</p>
   </div>
 
   <!-- ========================= LOW ========================= -->
@@ -386,25 +389,27 @@
       fallback takes the newest rollout <em>anywhere</em> when the cwd grep misses — silently binding a different
       project's session. <code>copilot_cli_discover()</code> is a bare newest-file scan (adapter still unverified,
       CLI not installed).</p>
-    <p><span class="k">Fix</span> (planned) — in a live Codex session, check <code>env | grep CODEX</code> for a
-      session/rollout identifier and pin like M10/M11 if one exists; drop or demote the any-project codex fallback
-      (prefer failing with "no session artifact" over measuring another project). Same env-var check for Copilot CLI
-      once installed (existing gated item). Both verifications are machine-gated; the fallback demotion is not and can
-      land with the next codex-touching change.</p>
+    <p><span class="fix">Landed 2026-07-23:</span> the any-project codex fallback is removed —
+      <code>codex_discover()</code> now fails ("no session artifact") rather than bind another project's rollout;
+      verified on a machine with 4 non-matching rollouts (pre-fix would have bound the newest). </p>
+    <p><span class="k">Fix</span> (remaining, machine-gated) — in a live Codex session, check
+      <code>env | grep CODEX</code> for a session/rollout identifier and pin like M10/M11 if one exists; same env-var
+      check for Copilot CLI once installed (existing gated item).</p>
   </div>
 
-  <div class="find low">
+  <div class="find low resolved">
     <h3><span class="id">L12</span> Session registry is keyed per-runtime — concurrent same-runtime sessions clobber each other
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh · docs/context-budget.md</span></h3>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · docs/context-budget.md</span></h3>
     <p><span class="k">Evidence</span> — <code>register</code> writes <code>.context-budget/session-&lt;runtime&gt;.json</code>;
       two concurrent sessions of the same runtime in one workspace overwrite each other's artifact pin, so
       <code>check</code>/<code>record</code>/<code>watch</code> in one session can measure the other's transcript even
       after M10/M11-style discovery pins.</p>
-    <p><span class="k">Fix</span> (planned) — document single-session-per-runtime-per-workspace as an explicit
-      limitation in <code>docs/context-budget.md</code> (the M12 rotate-at-register fix leans on the same assumption).
-      Rejected alternative: keying the registry by session id — the in-band hook and ad-hoc <code>check</code> calls
-      would then need the session id to find their registry entry, complexity the single-session reality doesn't
-      justify. Revisit only if concurrent same-runtime sessions become a real workflow.</p>
+    <p><span class="fix">Fixed:</span> documented single-session-per-runtime-per-workspace as an explicit limitation
+      in <code>docs/context-budget.md</code> (the M12 reset-at-register fix leans on the same assumption; concurrent
+      same-runtime sessions belong in separate workspace clones). Rejected alternative: keying the registry by session
+      id — the in-band hook and ad-hoc <code>check</code> calls would then need the session id to find their registry
+      entry, complexity the single-session reality doesn't justify. Revisit only if concurrent same-runtime sessions
+      become a real workflow.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
@@ -491,6 +496,7 @@
       <tr><td>2026-07-22</td><td>Feature (D4 follow-up): enabled <strong>Gemini CLI local telemetry</strong> for exact context counts — tracked <code>.gemini/settings.json</code> gains a <code>telemetry</code> block (<code>target: local</code>, <code>logPrompts: false</code>, outfile <code>.gemini/telemetry.log</code>, gitignored); the gemini adapter in <code>context-budget.sh</code> prefers the workspace telemetry log and parses the last response's input tokens (both <code>input_token_count</code> and OTel <code>gen_ai.usage.input_tokens</code> spellings), estimating from the chat log — never the telemetry file — when no response exists yet. Wiring proven live (a real run wrote the log); parser fixture-verified for both spellings; a successful-response verification is blocked on Gemini auth. Copilot CLI follow-up recorded as blocked: the CLI isn't installed on the origin machine.</td></tr>
       <tr><td>2026-07-23</td><td>Fix <strong>M10</strong>: a live copilot-vscode session (downstream workspace) caught <code>copilot_vscode_discover()</code> pinning a stale sibling session's log by mtime and reporting a false STOP — the discover now prefers <code>$VSCODE_TARGET_SESSION_LOG</code> (the live log's path, exported by Copilot terminal sessions), falling back to the newest-mtime scan.</td></tr>
       <tr><td>2026-07-23</td><td>Session-pinning review across all adapters (same bug class as M10: newest-mtime as a proxy for "current session"). Fixed <strong>M11</strong> — <code>claude_discover()</code> now pins <code>$CLAUDE_CODE_SESSION_ID.jsonl</code> (differential-verified: with a stale transcript touched newest, unpinned <code>register</code> binds it, pinned binds the live session). Opened <strong>M12</strong> (gemini shared telemetry log serves the previous session's counts to a new session's <code>register</code>), <strong>L11</strong> (codex/copilot-cli mtime races; codex any-project fallback), <strong>L12</strong> (registry keyed per-runtime clobbers under concurrent same-runtime sessions). Scorecard now 3/23/4/0/6.</td></tr>
+      <tr><td>2026-07-23</td><td>Landed the three non-gated session-pinning follow-ups. <strong>M12</strong> resolved — <code>register --runtime gemini</code> truncates the shared workspace telemetry log after binding it, and <code>gemini_measure</code> reports <code>0 estimate</code> for a fresh session with no logs at all; lifecycle fixture-verified (stale 140K WARN → 0 after register → appended response reads exact). <strong>L11</strong> partially landed — codex any-project fallback removed (fails over binding another project's rollout; verified against 4 non-matching rollouts); the env-var pin checks stay open, machine-gated. <strong>L12</strong> resolved — single-session-per-runtime-per-workspace documented as an explicit limitation in <code>docs/context-budget.md</code>. Scorecard now 1/25/4/0/6.</td></tr>
     </tbody>
   </table>
 

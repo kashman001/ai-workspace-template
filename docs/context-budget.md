@@ -73,11 +73,20 @@ fine given the WARN→STOP margin.
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` | last `last_token_usage.total_tokens`; prefers rollouts whose head mentions this cwd | exact (verified 2026-07-22, origin workspace) |
 | Copilot VS Code | `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export the live log's path), else newest of `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — mtime alone can pin a stale sibling session whose log flushed later | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-22, origin workspace) |
 | Copilot CLI | `~/.copilot/history-session-state/` or `~/.copilot/sessions/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | **unverified** — refine on first real CLI session |
-| Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4 | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
+| Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4. The telemetry log is shared append-only across sessions, so `register` resets it — a new session never reads the previous session's counts | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
 
 Non-macOS: the Copilot VS Code storage root differs (Linux `~/.config/Code/…`,
 Windows `%APPDATA%/Code/…`); BSD `stat -f` already falls back to GNU `stat -c`;
 replace the `osascript` notification in `watch` with `notify-send` or equivalent.
+
+**Limitation — one session per runtime per workspace.** The registry
+(`.context-budget/session-<runtime>.json`) is keyed by runtime, and the gemini
+telemetry reset at `register` assumes the workspace log belongs to a single
+live session. Two concurrent sessions of the same runtime in one workspace
+clobber each other's registration (measures then bind whichever registered
+last) and, for gemini, interleave the shared telemetry log. Run concurrent
+sessions of the same runtime from separate workspace clones. Different
+runtimes coexist fine — their registrations are separate files.
 
 ## How warnings reach the agent (layered, D8)
 

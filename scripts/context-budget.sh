@@ -60,7 +60,8 @@ codex_discover() {
   while IFS= read -r f; do
     if head -c 8192 "$f" 2>/dev/null | grep -qF "$(pwd)"; then echo "$f"; return 0; fi
   done < <(find "$base" -name 'rollout-*.jsonl' -mtime -7 2>/dev/null | xargs ls -t 2>/dev/null)
-  find "$base" -name 'rollout-*.jsonl' 2>/dev/null | xargs ls -t 2>/dev/null | head -1
+  # No cwd-matching rollout: fail rather than bind another project's session.
+  return 1
 }
 
 copilot_vscode_discover() {
@@ -153,7 +154,8 @@ gemini_measure() {
     # No completed response yet — the telemetry log's size says nothing about
     # context; estimate from the newest chat log instead.
     f=$(find "$HOME/.gemini/tmp" -name 'logs.json' 2>/dev/null | xargs ls -t 2>/dev/null | head -1)
-    [ -n "$f" ] || return 1 ;;
+    # Fresh session with no responses and no chat log: context is empty.
+    [ -n "$f" ] || { echo "0 estimate"; return 0; } ;;
   esac
   estimate_from_size "$f"
 }
@@ -221,6 +223,12 @@ emit_check() {
 
 cmd_register() {
   resolve_session
+  # Session boundary: the workspace telemetry log is shared append-only across
+  # gemini sessions — reset it so a new session never reads the previous
+  # session's counts (single-session-per-runtime assumption, see docs).
+  if [ "$RUNTIME" = "gemini" ] && [ "$ARTIFACT" = "$WORKSPACE_ROOT/.gemini/telemetry.log" ]; then
+    : > "$ARTIFACT"
+  fi
   mkdir -p "$STATE_DIR"
   jq -n --arg rt "$RUNTIME" --arg af "$ARTIFACT" --arg ts "$(date -u +%FT%TZ)" \
     '{runtime:$rt, artifact:$af, registered_at:$ts}' > "$STATE_DIR/session-$RUNTIME.json"
