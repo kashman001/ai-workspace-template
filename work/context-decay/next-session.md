@@ -1,3 +1,8 @@
+> **This file is the LAUNCHER (catch-up prompt).** Forward-only, and REPLACED
+> at each rollover: it holds what to do next, still-binding constraints, and
+> pointers — never session history. Past-tense provenance lives in `handoff.md`
+> (the append-only ledger). Convention: docs/work-directory-conventions.md.
+
 # Next Session — context-decay
 
 ## Mission
@@ -15,7 +20,7 @@ when a gate clears or the ledger warrants a fresh analysis pass.
 ## Read these, in order
 
 1. This file.
-2. `handoff.md` — what the 2026-07-23 session-pinning session shipped.
+2. The TOP block of `handoff.md` (the ledger) — what the last session shipped.
 
 ## Do NOT reload
 
