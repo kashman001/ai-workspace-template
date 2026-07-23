@@ -53,9 +53,9 @@ items are externally gated:
    `$COPILOT_AGENT_SESSION_ID` reaches agent-spawned subshells and equals the
    `session-state/<uuid>/` dir name, and check whether `events.jsonl` token
    metrics are written live mid-session or only at session end.
-3. **Next ledger analysis** — after ~20 entries or the first
-   `method=estimate` rows (currently 18 entries, all claude/exact — this
-   gate is nearly due).
+3. **Next ledger analysis** — pass 2 done 2026-07-23 (19 entries; see
+   `ledger-analysis.md`). Re-run after ~40 entries, the first
+   `method=estimate` rows, or the first non-claude rows.
 
 ## State snapshot
 
