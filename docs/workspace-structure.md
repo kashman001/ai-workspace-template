@@ -639,6 +639,7 @@ scripts/
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
 ├── hooks/                         # Agent-runtime hook scripts
 │   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
 ├── mcp/                           # Workspace-local MCP servers
@@ -667,6 +668,10 @@ scripts/
 
 - `check-service-access.sh` — verifies all required credentials are
   reachable (database, cloud CLI, Atlassian, etc.).
+- `diff-review.sh` — open a commit or range as a directory diff for review;
+  wraps `git difftool` with the symlink-safe `--no-symlinks` flag and the
+  blocking `bcomp` launcher. See `docs/operational-knowledge.md` → "Diff
+  Review Workflow".
 - `scripts/mcp/` — checked-in, credential-free local MCP servers or launchers
   that are safe to share across runtimes. The template ships a YouTube
   transcript server backed by `yt-dlp`.

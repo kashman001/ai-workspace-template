@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 360f172c67cac547493ce2a6a8bc6095bf89b0a8 -->
+  <!-- source-md-sha1: 2e292640d2d0608aab1c85e8fef1f726e089d4cb -->
 </head>
 <body>
 <div class="src-banner">
@@ -980,6 +980,7 @@ Bootstrap and Utility Scripts</h2>
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
 ├── hooks/                         # Agent-runtime hook scripts
 │   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
 ├── mcp/                           # Workspace-local MCP servers
@@ -1010,6 +1011,11 @@ matures):</p>
 <ul>
 <li><code>check-service-access.sh</code> — verifies all required
 credentials are reachable (database, cloud CLI, Atlassian, etc.).</li>
+<li><code>diff-review.sh</code> — open a commit or range as a directory
+diff for review; wraps <code>git difftool</code> with the symlink-safe
+<code>--no-symlinks</code> flag and the blocking <code>bcomp</code>
+launcher. See <code>docs/operational-knowledge.md</code> → "Diff Review
+Workflow".</li>
 <li><code>scripts/mcp/</code> — checked-in, credential-free local MCP
 servers or launchers that are safe to share across runtimes. The
 template ships a YouTube transcript server backed by
