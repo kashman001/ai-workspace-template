@@ -6,3 +6,4 @@
 {"ts":"2026-07-22T23:18:49Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":111813,"method":"exact","threshold":150000,"status":"OK","label":"gemini telemetry follow-up shipped"}
 {"ts":"2026-07-22T23:19:47Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":117353,"method":"exact","threshold":150000,"status":"OK","label":"context-decay follow-ups complete (ledger analysis, docs, push)"}
 {"ts":"2026-07-23T12:02:56Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":130669,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN 123.9K; gemini live verification blocked (oauth tier dead)"}
+{"ts":"2026-07-23T12:03:51Z","runtime":"claude","session":"f87f7778-661e-4219-821d-5b58f7b8ea76.jsonl","tokens":136944,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: context-decay follow-ups"}
