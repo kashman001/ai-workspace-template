@@ -6,16 +6,15 @@ The context-budget system is shipped, in live use, and has saved two sessions
 from the dumb zone. All spec §12 follow-ups are done or externally blocked.
 2026-07-23: the session-pinning review (backlog M10–M12, L11, L12) fixed
 discovery binding stale/foreign sessions; everything non-gated landed the
-same day. **One queued task remains (L13, below); after it lands the project
-is dormant** — reopen only when a gate clears or the ledger warrants a fresh
-analysis pass.
+same day, and L13 (developer-quickstart lifecycle note + Claude Code
+`SessionStart` registration hook in `.claude/settings.json.example`) landed
+later that day. **The project is dormant** — reopen only when a gate clears
+or the ledger warrants a fresh analysis pass.
 
 ## Read these, in order
 
 1. This file.
 2. `handoff.md` — what the 2026-07-23 session-pinning session shipped.
-3. Only if doing L13: the L13 card in `docs/template-workspace-backlog.html`
-   and the two Quickstart sections of `docs/context-budget.md`.
 
 ## Do NOT reload
 
@@ -34,20 +33,8 @@ analysis pass.
 
 ## Open items
 
-Backlog IDs refer to `docs/template-workspace-backlog.html`.
-
-Queued (not gated — do first):
-
-0. **L13 — developer-facing registration lifecycle**: add a short
-   session-lifecycle note to the *developer* quickstart in
-   `docs/context-budget.md` (register is agent-documented only; clarify
-   what's automatic-by-instruction vs manual, inside vs outside the
-   workspace tree). Optionally wire a Claude Code `SessionStart` hook in
-   `.claude/settings.json.example` to make registration mechanical for that
-   runtime (verify the hook event exists in current Claude Code first).
-   See the L13 card for evidence/impact.
-
-Externally gated:
+Backlog IDs refer to `docs/template-workspace-backlog.html`. All remaining
+items are externally gated:
 
 1. **Gemini live-response verification** — needs the user to provide a
    `GEMINI_API_KEY` (AI Studio). Then, in this workspace:
@@ -71,9 +58,6 @@ was deleted during M12 fixture testing (gitignored; Gemini recreates it, and
 ## First actions
 
 1. `scripts/context-budget.sh register`
-2. Land **L13** (queued item 0 above): developer-quickstart lifecycle note
-   + optional `SessionStart` hook; flip the L13 card to Resolved, commit,
-   push.
-3. Then: if a gate has cleared, run that item; otherwise the project is
-   dormant — proceed with whatever the user brings, following the Context
-   Budget section in `CONTEXT.md`.
+2. If a gate has cleared, run that item; otherwise the project is dormant —
+   proceed with whatever the user brings, following the Context Budget
+   section in `CONTEXT.md`.
