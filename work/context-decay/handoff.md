@@ -1,44 +1,46 @@
-# Handoff — L13 registration lifecycle (2026-07-23, session 4)
+# Handoff — L13 + L11 remainder (2026-07-23, session 4)
 
-Backward-looking record of the L13 session (session 4 of this project;
-session 3's session-pinning handoff is in git history at `4ac6f49^`).
-Forward plan: `next-session.md` — **the project is now dormant**.
+Backward-looking record of session 4 (session 3's session-pinning handoff is
+in git history at `4ac6f49^`). Forward plan: `next-session.md` — **the
+project is dormant**; backlog is 0 open / 27 resolved.
 
-## What shipped (all committed & pushed)
+## What shipped (all committed & pushed, through `a138c6e`)
 
-- `4ac6f49` — **Fix L13**: session-lifecycle paragraph in the developer
-  quickstart of `docs/context-budget.md` (registration is the agent's job,
-  automatic-by-instruction via `CONTEXT.md`, only inside the workspace tree;
-  unregistered sessions fall back to newest-mtime discovery) + a
-  `SessionStart` hook in `.claude/settings.json.example` running
-  `register --runtime claude --transcript <path from hook payload>`.
-  Backlog: L13 Resolved, scorecard 1/26/4/0/6 (only L11's machine-gated
-  remainder open). `next-session.md` rewritten for dormancy.
-- `33767d3` — chore: ledger entry.
+- `4ac6f49` — **Fix L13**: developer-quickstart session-lifecycle note in
+  `docs/context-budget.md` + `SessionStart` registration hook in
+  `.claude/settings.json.example` (reads `transcript_path` from the hook
+  stdin payload; fails open). Also copied into the user's live gitignored
+  `.claude/settings.json` — future Claude sessions here register
+  mechanically.
+- `7c29476` (pulled from origin, authored downstream) — copilot-vscode
+  discovery maps `$VSCODE_TARGET_SESSION_LOG` (a `debug-logs/<id>` dir on
+  current builds) to `chatSessions/<id>.jsonl`. `df12f76` reconciled the
+  backlog (M10 follow-up row) since the delivering session skipped it.
+- `83dcb0a` — **Fix L11 remainder** (subagent-driven: 2 sonnet research
+  agents + 1 opus implementer): `codex_discover()` pins
+  `rollout-*-$CODEX_THREAD_ID.jsonl` — var live-probed via a real
+  `codex exec` session on this machine and confirmed in openai/codex source;
+  `copilot_cli_discover()` pins
+  `${COPILOT_HOME:-~/.copilot}/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl`
+  (CLI ≥1.0.29 changelog) and drops the nonexistent `sessions/` path.
+  Research with citations: `work/context-decay/research/*.md`.
 
-## Decisions (in the commit trailer + L13 card)
+## Decisions (commit trailers + backlog cards)
 
-- Hook reads `transcript_path` from the SessionStart stdin payload
-  (documented hook contract) rather than trusting `CLAUDE_CODE_SESSION_ID`
-  to be exported to hook processes; fails open (`|| true`, discovery
-  fallback on empty payload) so it can never block a session.
+- Pin runtime-exported ids, mtime only as fallback — settled M10/M11
+  reasoning extended to the last two adapters.
+- Copilot CLI adapter stays **unverified**: its pin is changelog-sourced,
+  not live-probed (CLI not installed here).
 
 ## Gotchas worth remembering
 
-- `SessionStart` hook **stdout is injected into the session context** — the
-  register status line doubles as the agent's session-start awareness. Keep
-  hook stdout terse for that reason.
-- Verified the hook by piping a simulated payload into the command extracted
-  from the example JSON via `jq` — reusable pattern for testing hook blocks
-  without a live session restart.
-
-## Gate status (checked this session — none cleared)
-
-- Copilot CLI: still not installed (`~/.copilot` has only `ide/`).
-- `GEMINI_API_KEY`: still unset (user-provided, AI Studio).
-- Codex session-pin env check: needs a live Codex session.
-- Ledger at 14 entries, all claude/exact (analysis pass at ~20).
+- `SessionStart` hook stdout is injected into session context — keep it terse.
+- `codex exec` probing works for "what env does runtime X export to its
+  shells" questions — it cleared a gate previously assumed machine-blocked.
+- Copilot CLI's real state dir is `session-state/` (since 0.0.342), not
+  `history-session-state/` (legacy) or `sessions/` (never existed).
 
 ## Session telemetry
 
-Registered at 41.6K, 76K at the L13 record, ~80K at checkpoint. No WARN.
+Registered 41.6K → WARN fired at 120.7K on the L11-remainder record →
+rollover at ~125K. Ledger now 18 entries (analysis gate at ~20 is close).

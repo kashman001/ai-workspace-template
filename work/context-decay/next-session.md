@@ -49,13 +49,17 @@ items are externally gated:
    `session-state/<uuid>/` dir name, and check whether `events.jsonl` token
    metrics are written live mid-session or only at session end.
 3. **Next ledger analysis** — after ~20 entries or the first
-   `method=estimate` rows (currently 13 entries, all claude/exact).
+   `method=estimate` rows (currently 18 entries, all claude/exact — this
+   gate is nearly due).
 
 ## State snapshot
 
 Branch `main`, clean, pushed. No running processes. `.gemini/telemetry.log`
 was deleted during M12 fixture testing (gitignored; Gemini recreates it, and
 `register --runtime gemini` now truncates it at every session boundary).
+The live gitignored `.claude/settings.json` now carries the `SessionStart`
+registration hook — Claude Code sessions in this workspace auto-register
+(step 1 below still can't hurt).
 
 ## First actions
 
