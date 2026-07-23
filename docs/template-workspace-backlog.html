@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-07-22 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-07-23 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">21</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">23</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,7 +84,9 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 21 findings are <span class="good">resolved</span>, and all four design decisions settled. The initial
+    <p>23 of 26 findings are <span class="good">resolved</span>; three are open — <strong>M12</strong>, <strong>L11</strong>,
+    <strong>L12</strong>, planned follow-ups from the 2026-07-23 session-pinning review (same bug class as M10) — and all
+    four design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
@@ -234,6 +236,52 @@
       artifact (<code>tokens=50856 status=OK</code>) and a follow-up <code>check</code> read it back.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M10</span> Copilot VS Code discovery pins a stale sibling session by mtime, ignoring <code>VSCODE_TARGET_SESSION_LOG</code>
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-07-23, live copilot-vscode session on a workspace built from this
+      template: <code>register</code> reported a false <code>STOP</code>. <code>copilot_vscode_discover()</code> picks
+      the newest-modified <code>chatSessions/*.jsonl</code>; at register time the current session's log wasn't flushed
+      yet, so it grabbed a stale rollover session's 1.4&nbsp;MB log instead. The Copilot terminal exports
+      <code>VSCODE_TARGET_SESSION_LOG</code> — the live session log's path — which the script ignored. Nearly
+      triggered a needless rollover; the session was actually at 25% (<code>tokens=38388 status=OK</code>).</p>
+    <p><span class="fix">Fixed:</span> <code>copilot_vscode_discover()</code> now uses
+      <code>$VSCODE_TARGET_SESSION_LOG</code> when set and the file exists, falling back to the newest-mtime scan
+      otherwise (var unset, or pointing at a not-yet-created log). Verified all three branches: pinned discovery
+      returns the exact artifact and token count; unset and dangling-path cases preserve the old behavior. Adapter
+      table in <code>docs/context-budget.md</code> updated.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M11</span> <code>claude_discover</code> races concurrent same-workspace sessions (newest-mtime proxy)
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-07-23 review of all adapters after M10: <code>claude_discover()</code>
+      takes the newest-modified <code>*.jsonl</code> in the project dir. Claude Code flushes per-turn so the live
+      session usually wins, but two concurrent sessions in one workspace race, and the transcript basename is exactly
+      the session id Claude Code already exports as <code>$CLAUDE_CODE_SESSION_ID</code> (verified live) — the
+      heuristic was never necessary.</p>
+    <p><span class="fix">Fixed:</span> pin <code>&lt;proj&gt;/$CLAUDE_CODE_SESSION_ID.jsonl</code> when the var is set
+      and the file exists; newest-mtime fallback otherwise. Differential-verified in one shell call: with a stale
+      transcript touched newest, unpinned <code>register</code> binds the stale file, pinned binds the live session.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M12</span> Gemini shared telemetry log serves the previous session's counts at register
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>gemini_measure()</code> reads the last <code>input_token_count</code>
+      from the workspace-scoped, append-only <code>.gemini/telemetry.log</code>, which is shared by every Gemini
+      session in the workspace. A new session's <code>register</code>, before its first response, reads the
+      <em>previous</em> session's final (potentially near-threshold) count — a false WARN/STOP needing no concurrency
+      at all. Concurrent sessions also interleave, attributing whichever response landed last.</p>
+    <p><span class="k">Impact</span> — same failure the M10 incident showed: a fresh session can be told to roll over
+      immediately.</p>
+    <p><span class="k">Fix</span> (planned) — rotate the telemetry log at <code>register --runtime gemini</code>
+      (truncate, or archive aside), safe under the workspace's single-session-per-runtime assumption (L12); measures
+      then only ever see the current session's responses. Rejected alternative: filtering OTLP records by session id —
+      Gemini CLI exports no session-id env var to match against. Verification is gated with the existing
+      Gemini-auth item (needs a live keyed session).</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
 
@@ -330,6 +378,35 @@
       self-containment over DRY).</p>
   </div>
 
+  <div class="find low">
+    <h3><span class="id">L11</span> Codex &amp; Copilot CLI discovery share the newest-mtime race; codex fallback can bind another project
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>codex_discover()</code> picks the newest rollout whose head mentions the
+      cwd (per-turn flushing makes single-session use safe; concurrent same-cwd sessions race), and its last-resort
+      fallback takes the newest rollout <em>anywhere</em> when the cwd grep misses — silently binding a different
+      project's session. <code>copilot_cli_discover()</code> is a bare newest-file scan (adapter still unverified,
+      CLI not installed).</p>
+    <p><span class="k">Fix</span> (planned) — in a live Codex session, check <code>env | grep CODEX</code> for a
+      session/rollout identifier and pin like M10/M11 if one exists; drop or demote the any-project codex fallback
+      (prefer failing with "no session artifact" over measuring another project). Same env-var check for Copilot CLI
+      once installed (existing gated item). Both verifications are machine-gated; the fallback demotion is not and can
+      land with the next codex-touching change.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L12</span> Session registry is keyed per-runtime — concurrent same-runtime sessions clobber each other
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh · docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>register</code> writes <code>.context-budget/session-&lt;runtime&gt;.json</code>;
+      two concurrent sessions of the same runtime in one workspace overwrite each other's artifact pin, so
+      <code>check</code>/<code>record</code>/<code>watch</code> in one session can measure the other's transcript even
+      after M10/M11-style discovery pins.</p>
+    <p><span class="k">Fix</span> (planned) — document single-session-per-runtime-per-workspace as an explicit
+      limitation in <code>docs/context-budget.md</code> (the M12 rotate-at-register fix leans on the same assumption).
+      Rejected alternative: keying the registry by session id — the in-band hook and ad-hoc <code>check</code> calls
+      would then need the session id to find their registry entry, complexity the single-session reality doesn't
+      justify. Revisit only if concurrent same-runtime sessions become a real workflow.</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -412,13 +489,15 @@
       <tr><td>2026-07-14</td><td>Feature: added the <code>decision-log</code> skill (<code>skills/decision-log/SKILL.md</code> + <code>/decision</code>) — a three-tier <em>decision-provenance</em> scheme that captures the <em>why</em> code can't: Tier-1 commit trailers (always), Tier-2 ephemeral notes in <code>work/&lt;proj&gt;/decisions.md</code> (wide net), promoted to Tier-3 committed ADRs under a newly-shipped <code>docs/adr/</code> (<code>README.md</code> + <code>0000-template.md</code>) only for lasting-weight decisions. Promotion wired into the <code>checkpoint</code> skill (scan notes for <code>Promote?: yes</code>); ADRs + trailers registered as graphify provenance inputs so <code>graphify query "why…"</code> can walk <code>code → commit → ADR → alternatives-rejected</code>. Registered in <code>CONTEXT.md</code> (new <em>Decision Records</em> section + skills entry); narrowed <strong>D2</strong> (template now ships <code>docs/adr/</code> itself, not just via <code>init --full</code>).</td></tr>
       <tr><td>2026-07-22</td><td>Fix <strong>M9</strong>: first live use of the D4 context-budget system in a fresh session caught <code>register</code> trusting the stale session registry instead of re-discovering — bound the previous session's transcript and reported a false WARN. <code>resolve_session()</code> now forces fresh discovery for <code>register</code> only. Scorecard now 0/21/4/0/6.</td></tr>
       <tr><td>2026-07-22</td><td>Feature (D4 follow-up): enabled <strong>Gemini CLI local telemetry</strong> for exact context counts — tracked <code>.gemini/settings.json</code> gains a <code>telemetry</code> block (<code>target: local</code>, <code>logPrompts: false</code>, outfile <code>.gemini/telemetry.log</code>, gitignored); the gemini adapter in <code>context-budget.sh</code> prefers the workspace telemetry log and parses the last response's input tokens (both <code>input_token_count</code> and OTel <code>gen_ai.usage.input_tokens</code> spellings), estimating from the chat log — never the telemetry file — when no response exists yet. Wiring proven live (a real run wrote the log); parser fixture-verified for both spellings; a successful-response verification is blocked on Gemini auth. Copilot CLI follow-up recorded as blocked: the CLI isn't installed on the origin machine.</td></tr>
+      <tr><td>2026-07-23</td><td>Fix <strong>M10</strong>: a live copilot-vscode session (downstream workspace) caught <code>copilot_vscode_discover()</code> pinning a stale sibling session's log by mtime and reporting a false STOP — the discover now prefers <code>$VSCODE_TARGET_SESSION_LOG</code> (the live log's path, exported by Copilot terminal sessions), falling back to the newest-mtime scan.</td></tr>
+      <tr><td>2026-07-23</td><td>Session-pinning review across all adapters (same bug class as M10: newest-mtime as a proxy for "current session"). Fixed <strong>M11</strong> — <code>claude_discover()</code> now pins <code>$CLAUDE_CODE_SESSION_ID.jsonl</code> (differential-verified: with a stale transcript touched newest, unpinned <code>register</code> binds it, pinned binds the live session). Opened <strong>M12</strong> (gemini shared telemetry log serves the previous session's counts to a new session's <code>register</code>), <strong>L11</strong> (codex/copilot-cli mtime races; codex any-project fallback), <strong>L12</strong> (registry keyed per-runtime clobbers under concurrent same-runtime sessions). Scorecard now 3/23/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-07-22.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-07-23.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>
