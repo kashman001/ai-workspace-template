@@ -26,6 +26,17 @@ When an agent tells you it got a WARN/STOP: let it finish the current unit, have
 it run the `session-rollover` skill, then start a fresh session with the
 bootstrap prompt it emits. Don't push new work into a STOP'd session.
 
+**Session lifecycle:** registering a session (`register`, below) is the
+*agent's* job, not yours. It's automatic-by-instruction, not by mechanism — the
+standing "Context Budget" section in `CONTEXT.md` tells every agent to register
+at session start, which only works for sessions started inside the workspace
+tree (where the agent loads that file) by an agent that follows it. Claude Code
+is the exception: the `SessionStart` hook shipped in
+`.claude/settings.json.example` runs `register` mechanically at every session
+start/resume. Unregistered sessions still measure — `check` falls back to
+newest-mtime discovery — but only registration pins the exact artifact, which
+is what keeps concurrent sessions from reading each other's counts.
+
 ## Quickstart — agent
 
 - **Session start:** `scripts/context-budget.sh register` — pins your session
@@ -111,6 +122,11 @@ No single mechanism covers every runtime, so four layers overlap:
 artifact, because newest-mtime discovery is ambiguous under concurrent sessions.
 Precedence in every command: explicit `--transcript` > registration > discovery.
 The Claude Code hook receives the exact transcript path on stdin, bypassing both.
+For Claude Code, registration is also mechanical: a `SessionStart` hook in
+`.claude/settings.json.example` runs `register` with the transcript path from
+the hook payload at every session start/resume, so even an agent that ignores
+`CONTEXT.md` gets pinned (and sees the status line — `SessionStart` hook stdout
+is added to the session context).
 
 ## Ledger
 
