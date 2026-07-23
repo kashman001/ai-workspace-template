@@ -153,7 +153,10 @@ per-repo steps for Matt Pocock config and graphify graphs. All optional.
 and improvements for this template. **Agents: when you fix, change, or discover
 an issue in the template, update that file** — flip the item's status to
 Resolved with a `Fixed:` note, or append a new finding. Its "Maintaining this
-backlog" section defines the ID/status/scorecard convention.
+backlog" section defines the ID/status/scorecard convention. This applies to
+work **pushed from other sessions or clones** too: the delivering commit should
+carry the backlog update; when pulling a template change that arrived without
+one, add the missing row/card as part of incorporating it.
 
 ## Agent Coding Principles
 

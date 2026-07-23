@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc amber"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">27</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">28</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -84,7 +84,7 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>All 27 findings are <span class="good">resolved</span> (copilot-cli live verification remains outstanding on the
+    <p>All 28 findings are <span class="good">resolved</span> (copilot-cli live verification remains outstanding on the
     origin machine — the adapter is landed from changelog research but stays marked unverified until a real install),
     and all four design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
@@ -115,6 +115,9 @@
         the next free ID, status <span class="status open">Open</span>, and the
         <span class="k">Evidence</span> / <span class="k">Impact</span> / <span class="k">Fix</span> lines.</li>
       <li><strong>Update the scorecard counts and the "Last updated" date</strong> in the header on every change.</li>
+      <li><strong>Deliveries from other sessions/clones follow the same rules.</strong> A template change pushed from
+        a downstream session must carry its backlog update in the same push; the session that pulls a change lacking
+        one adds the missing row/card as part of incorporating it (see <code>L14</code>).</li>
       <li><strong>Commit convention:</strong> reference the ID, e.g. <code>git commit -m "Fix M6: …"</code>, so the
         git log and this file stay in sync.</li>
       <li><strong>Re-review trigger:</strong> after any structural change to the template (new config file, new doc,
@@ -443,6 +446,23 @@
       (pins the exact transcript, exits 0) and fails open on an empty payload.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L14</span> Template changes delivered from downstream sessions bypass the backlog convention
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · this file</span></h3>
+    <p><span class="k">Evidence</span> — three same-day deliveries pushed from downstream sessions
+      (<code>7c29476</code> copilot-vscode pin follow-up, <code>bd40023</code> launcher/ledger convention,
+      <code>f3928e6</code> <code>diff-review.sh</code>) each landed with no backlog row or card update; each had to be
+      reconciled after the fact by the pulling session (<code>df12f76</code>, <code>2ed1eec</code>,
+      <code>eeb0a78</code>).</p>
+    <p><span class="k">Impact</span> — the backlog silently drifts from repo reality whenever work arrives from
+      outside this workspace, undermining its "source of truth for template-improvement work" claim; reconciliation
+      depends on the pulling session noticing the gap.</p>
+    <p><span class="fix">Fixed:</span> the convention now covers deliveries explicitly, on both ends — a new rule in
+      the "Maintaining this backlog" list (delivering commit carries its backlog update; the pulling session adds any
+      missing row as part of incorporation) and a matching sentence in the Template Backlog section of
+      <code>CONTEXT.md</code>, which downstream template-repo sessions load.</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -534,6 +554,7 @@
       <tr><td>2026-07-23</td><td>Resolved the <strong>L11</strong> remainder — the machine-gated session-pin env-var checks. Codex now pins <code>rollout-*-$CODEX_THREAD_ID.jsonl</code>, live-verified on the origin machine (env var probed inside a real <code>codex exec</code> session equals the rollout UUID and <code>payload.id</code>, injection confirmed in <code>openai/codex</code> source; differential-verified against a stale rollout touched newest). Copilot CLI now pins <code>session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl</code> under <code>${COPILOT_HOME:-~/.copilot}</code> and scans the correct <code>session-state/</code> path (dropped the unattested <code>sessions/</code> path, kept legacy <code>history-session-state/</code>) — research-sourced from the CLI changelog and fixture-verified, but live verification still pends an install so the adapter stays unverified. Scorecard now 0/27/4/0/6.</td></tr>
       <tr><td>2026-07-23</td><td>Feature (<code>bd40023</code>, delivered from a downstream session and pulled into the template): formalized the work-directory <em>launcher/ledger</em> convention — forward <code>next-session.md</code> (REPLACED each rollover) + append-only <code>handoff.md</code> (newest block on top, archived to <code>handoff-archive.md</code>) + required <code>README.md</code> — in new <code>docs/work-directory-conventions.md</code>, with a <code>create-work-item</code> skill (<code>/create-work-item</code>) and wiring in <code>CONTEXT.md</code>/<code>workspace-structure</code>. On pull, <code>work/context-decay/</code> was migrated to the convention: README added, purpose headers stamped on both backbone files, and the ledger rebuilt with the two most recent session blocks (session 3's recovered from git history). No scorecard change.</td></tr>
       <tr><td>2026-07-23</td><td>Feature (<code>f3928e6</code>, delivered from a downstream session and pulled into the template): <code>scripts/diff-review.sh</code> — symlink-safe commit/range directory-diff review. Always passes <code>--no-symlinks --no-prompt</code> (git's dir-diff temp trees use symlinks for the working-tree side, which Beyond Compare renders as missing files) and prefers the blocking <code>bcomp</code> launcher on macOS (the non-blocking one races git's temp-dir cleanup → empty panes); VS Code Compare Folders / per-file fallbacks via <code>-t</code>. Documented in <code>docs/operational-knowledge.md</code> ("Diff Review Workflow") and <code>workspace-structure</code>. On pull: syntax + <code>--help</code> verified, doc references resolve. No scorecard change.</td></tr>
+      <tr><td>2026-07-23</td><td>Opened + resolved <strong>L14</strong>: three downstream-delivered template changes in one day (<code>7c29476</code>, <code>bd40023</code>, <code>f3928e6</code>) all skipped the backlog convention and needed after-the-fact reconciliation by the pulling session. The convention now covers both ends explicitly (new "Maintaining" rule + <code>CONTEXT.md</code> Template Backlog sentence). Also slimmed the user's global agent context: the manual Beyond Compare persistent-dirs recipe replaced with a pointer to <code>scripts/diff-review.sh</code>. Scorecard now 0/28/4/0/6.</td></tr>
     </tbody>
   </table>
 
