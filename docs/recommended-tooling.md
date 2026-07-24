@@ -167,6 +167,8 @@ A suite of repeatable engineering workflows from
 | `handoff` | Compact a session into a pickup doc |
 | `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
 | `writing-great-skills` | Reference vocabulary/principles for writing and editing skills well |
+| `git-guardrails-claude-code` | Block dangerous git commands (`push`, `reset --hard`, `clean`, `branch -D`, …) via hooks — **Claude Code-only** (writes Claude Code hook config) |
+| `setup-pre-commit` | Set up Husky pre-commit hooks (lint-staged/Prettier, typecheck, tests) in the current repo |
 
 > `grill-me` / `grill-with-docs` are built on the model-invoked `grilling`
 > engine; `ask-matt` is a router — describe your situation and it points you at
@@ -195,6 +197,25 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 
 > Permanently skip an upstream skill by adding its name to
 > `~/.config/agent-context/skills/.syncignore`.
+
+> **"Skill not found" on another machine?** Upstream adds skills over time
+> (`implement`, `wayfinder`, `teach`, `ask-matt` all arrived after launch). A
+> machine whose reference clone predates a skill — or where a new upstream
+> skill was never linked — won't have it. Run `agent-context-sync` (pulls the
+> clone and offers any new skills), or `git pull` the clone and add the symlink
+> by hand as above. Mind the buckets when linking manually: e.g. `teach` lives
+> under `skills/productivity/`, not `engineering/`.
+
+> **Claude Code-only alternative — the upstream plugin.** The repo also ships
+> as a native Claude Code plugin (`claude plugin marketplace add mattpocock/skills`,
+> then `claude plugin install mattpocock-skills@mattpocock`): a read-only bundle
+> that auto-updates with no clone to maintain. Only use it if you work
+> exclusively in Claude Code *and* don't run the agent-context system — other
+> runtimes (Codex, Gemini, OpenCode) can't read Claude Code plugins, and
+> combining the plugin with the symlink install gives Claude Code two copies of
+> every skill (duplicate/ambiguous triggering). With agent-context,
+> `agent-context-sync` already updates every runtime at once, so the plugin
+> adds nothing there.
 
 **Per-repo setup (required before `to-tickets` / `to-spec` / `triage` /
 `improve-codebase-architecture` work):** run the `setup-matt-pocock-skills`
