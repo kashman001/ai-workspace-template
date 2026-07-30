@@ -73,6 +73,8 @@ the latest. Either pattern is acceptable; pick one per project and be consistent
 | `decisions.md` / `docs/adr/*` | Optional | Decision records, per `skills/decision-log/SKILL.md`. |
 | `STATUS.md` | Optional | Shareable program/status snapshot (per-area state, blockers). Distinct from the launcher: STATUS is for humans reviewing progress; the launcher is for an agent resuming work. |
 | `glossary.md` | Optional | Project-scoped terms/acronyms. |
+| `map.md` + `issues/NN-<slug>.md` | Optional | Wayfinder map + decision tickets for the effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations" (governing skill: `skills/wayfinder/SKILL.md`). |
+| `spec.md` | Optional | The effort's spec/PRD, per `docs/agents/issue-tracker.md`. |
 
 Keep everything else (state trackers, registries, run logs, specs) named for
 what it is; the governing skill owns the full file-level detail.

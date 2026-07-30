@@ -162,7 +162,7 @@ A suite of repeatable engineering workflows from
 | `resolving-merge-conflicts` | Work an in-progress merge/rebase conflict hunk-by-hunk by intent (never `--abort`) |
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
 | `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
-| `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time |
+| `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time — **also vendored in this repo** (see below) |
 | `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
 | `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
@@ -188,8 +188,8 @@ agent-context-sync          # pulls reference repos, links new skills, flags bro
 ```
 
 To link a single skill by hand (skills are bucketed under
-`skills/{engineering,productivity,misc}/`, but link them *flat* — Claude Code
-doesn't recurse):
+`skills/{engineering,productivity,misc,in-progress}/`, but link them *flat* —
+Claude Code doesn't recurse):
 
 ```sh
 ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.config/agent-context/skills/tdd
@@ -205,6 +205,30 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > clone and offers any new skills), or `git pull` the clone and add the symlink
 > by hand as above. Mind the buckets when linking manually: e.g. `teach` lives
 > under `skills/productivity/`, not `engineering/`.
+
+> **`wayfinder` is vendored into this repo** at `skills/wayfinder/` (pinned
+> upstream commit in its provenance comment) so Copilot users and template
+> downloaders get it with zero global setup, with this workspace's tracker
+> wiring in `docs/agents/issue-tracker.md`. On a machine that *also* has the
+> global symlink install, Claude Code sees both copies — the project
+> `/wayfinder` command and the global skill. They're the same content; prefer
+> the project command here so the workspace tracker conventions load. The
+> other skills stay global-only.
+
+> **Newer upstream skills worth watching** (all under `skills/in-progress/`
+> upstream — expect churn; link via `agent-context-sync` if wanted):
+> - `to-questionnaire` — turn a decision you can't answer into a questionnaire
+>   for someone else. Pairs with wayfinder's HITL decision tickets. Recommended.
+> - `wizard` — generate an interactive bash wizard for a manual procedure
+>   (service signup, one-off migration). Pairs with `docs/runbooks/`. Recommended.
+> - `batch-grill-me` — grilling variant asking every frontier question at once,
+>   round by round. Nice-to-have.
+> - `claude-handoff` — hands a conversation to a fresh background agent. **Not**
+>   recommended in this workspace: it competes with the `session-rollover` /
+>   `handoff` conventions here.
+> - `loop-me`, `setup-ts-deep-modules`, `writing-*` (and misc
+>   `migrate-to-shoehorn`, `scaffold-exercises`) — TypeScript-course/writing
+>   specific; skip unless that's your domain.
 
 > **Claude Code-only alternative — the upstream plugin.** The repo also ships
 > as a native Claude Code plugin (`claude plugin marketplace add mattpocock/skills`,
