@@ -216,7 +216,9 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > other skills stay global-only.
 
 > **Newer upstream skills worth watching** (all under `skills/in-progress/`
-> upstream — expect churn; link via `agent-context-sync` if wanted):
+> upstream — expect churn; note `agent-context-sync` scans only the
+> `engineering`/`productivity`/`misc` buckets, so link these manually with
+> `ln -sfn` as above if wanted):
 > - `to-questionnaire` — turn a decision you can't answer into a questionnaire
 >   for someone else. Pairs with wayfinder's HITL decision tickets. Recommended.
 > - `wizard` — generate an interactive bash wizard for a manual procedure
