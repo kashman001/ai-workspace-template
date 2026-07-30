@@ -123,6 +123,18 @@ shortcuts under `.claude/commands/`).
   Claude Code shortcut: **`/create-work-item <name>`**. Convention:
   `docs/work-directory-conventions.md`.
 
+- **wayfinder** (`skills/wayfinder/SKILL.md`, vendored from
+  [mattpocock/skills](https://github.com/mattpocock/skills)) — plan a chunk of
+  work too big for one session as a **map of decision tickets**, resolved one
+  per session until the way to the destination is clear. User-invoked only.
+  In this workspace maps live under `work/<effort>/` (`map.md` +
+  `issues/NN-<slug>.md`) per `docs/agents/issue-tracker.md` → "Wayfinding
+  operations"; resolved tickets are Tier-2 decisions (see **Decision Records**).
+  Claude Code shortcut: **`/wayfinder [map path or ticket]`**. Full experience
+  needs the global Matt Pocock skill set (`grilling`, `research`, `prototype`,
+  `domain-modeling` — `docs/recommended-tooling.md` §3); without it those
+  ticket types degrade to plain conversation.
+
 ## Service Access
 
 External services are documented in `docs/service-access.md`. MCP setup is

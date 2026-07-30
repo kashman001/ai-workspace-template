@@ -443,6 +443,9 @@ docs/
 ├── mcp-setup.md                # MCP server configuration guide
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover
 │
+├── agents/                     # Per-repo config the engineering skills consume
+│   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
+│
 └── repo-context/               # Per-repo architecture and navigation docs
     ├── README.md               #   Index of covered repos
     ├── _templates/             #   Skeletons copied into each repo folder
@@ -487,15 +490,19 @@ folder with at least a `SKILL.md` describing:
 ```
 skills/
 ├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
+├── create-work-item/           # Scaffold a work/<project>/ dir (README + launcher + ledger)
 ├── decision-log/               # Capture the why (commit trailer → note → ADR)
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── rlm/                        # Recursive Language Model loop for huge contexts
 ├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
+├── wayfinder/                  # Map-of-decision-tickets planning (vendored from mattpocock/skills)
 └── <your-domain-skills>/       # Project-specific workflows
 ```
 
-The template ships with `checkpoint`, `decision-log`, `onboard-repo`, `rlm`, and
-`session-rollover`; add your own alongside them. `decision-log` captures decision provenance — the
+The template ships with `checkpoint`, `create-work-item`, `decision-log`,
+`onboard-repo`, `rlm`, `session-rollover`, and `wayfinder` (vendored from
+[mattpocock/skills](https://github.com/mattpocock/skills) — see its `SKILL.md`
+provenance comment for the refresh procedure); add your own alongside them. `decision-log` captures decision provenance — the
 *why* code can't record — as ephemeral notes under `work/<project>/decisions.md`,
 promoted to committed ADRs under `docs/adr/` for lasting-weight decisions.
 
