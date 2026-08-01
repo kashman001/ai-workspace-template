@@ -41,3 +41,4 @@ ADR" is the scheme that dies in a month — don't.
 <!-- - [ADR-NNNN: <title>](NNNN-slug.md) — accepted YYYY-MM-DD -->
 
 - [ADR-0001: Capture decision provenance in three tiers, promoting notes to ADRs](0001-three-tier-decision-capture.md) — accepted 2026-07-14
+- [ADR-0002: Load tools lean-by-default — CLI-first, MCP split into core and opt-in fragments](0002-lean-by-default-tool-loading.md) — accepted 2026-08-01
