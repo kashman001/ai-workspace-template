@@ -80,7 +80,7 @@
   <div class="pill-row">
     <span class="pill">Claude Code</span><span class="pill">Codex</span>
     <span class="pill">OpenCode</span><span class="pill">Gemini</span>
-    <span class="pill">GitHub MCP</span><span class="pill">YouTube MCP</span><span class="pill">graphify</span>
+    <span class="pill">graphify MCP (core)</span><span class="pill">MCP fragments: GitHub · YouTube (opt-in)</span>
   </div>
 </div></header>
 
@@ -267,9 +267,10 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
 
   <div class="step"><div class="num">5</div><div class="body">
     <h3>Start building</h3>
-    <p>Decide on the optional bits: <strong>graphify</strong> and the <strong>YouTube transcript MCP</strong>
-    are wired by default; graphify adds <code>.gemini/settings.json</code> / <code>.opencode/plugins/graphify.js</code>,
-    while YouTube uses <code>scripts/mcp/youtube-transcript.sh</code> and <code>yt-dlp</code>. Delete either if unused.
+    <p>Decide on the optional bits: <strong>graphify</strong> is the core MCP server (wired by default;
+    it also adds <code>.gemini/settings.json</code> / <code>.opencode/plugins/graphify.js</code>).
+    <strong>GitHub</strong> and <strong>YouTube transcript</strong> MCP are opt-in fragments under
+    <code>mcp-fragments/</code>, loaded per session — see <code>docs/mcp-setup.md</code>. Delete what you don't use.
     Add reusable workflows under <code>skills/</code> and list them in <code>CONTEXT.md</code>.
     The template ships four: <code>checkpoint</code> (session wrap-up), <code>onboard-repo</code>
     (bring a repo in), <code>rlm</code> (query huge contexts), and <code>decision-log</code> —
@@ -441,8 +442,8 @@ agent-context-sync                    # links new skills into ~/.config/agent-co
     <h3>Verify before you call it done</h3>
     <pre><code>gh auth status                                    # global: GitHub auth
 echo "${GITHUB_PERSONAL_ACCESS_TOKEN:+token set}" # global: MCP token exported
-claude mcp list                                   # local:  GitHub MCP visible
-scripts/mcp/youtube-transcript.sh                 # local:  starts YouTube MCP
+claude mcp list                                   # local:  core MCP (graphify) visible
+scripts/mcp/youtube-transcript.sh                 # local:  starts YouTube MCP (opt-in fragment)
 ./scripts/check-workspace-structure.sh            # local:  symlinks + dirs OK</code></pre>
   </div>
 

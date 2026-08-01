@@ -1,0 +1,10 @@
+{
+  "_comment": "Opt-in MCP fragment: workspace-local YouTube transcript server (scripts/mcp/youtube-transcript.sh, needs yt-dlp; no credentials). Load only for sessions doing transcript work. Claude Code: claude --mcp-config mcp-fragments/youtube-transcript.json (or merge into .mcp.json). See docs/mcp-setup.md and mcp-fragments/README.md.",
+  "mcpServers": {
+    "youtube-transcript": {
+      "type": "stdio",
+      "command": "./scripts/mcp/youtube-transcript.sh",
+      "args": []
+    }
+  }
+}

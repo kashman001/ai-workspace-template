@@ -49,10 +49,11 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
 - Copy `.claude/settings.json.example` → `.claude/settings.local.json` and
   tailor permissions (gitignored).
 - Copy `.mcp.json.example` → `.mcp.json` for Claude Code (gitignored).
-- GitHub MCP, the workspace-local YouTube transcript MCP server, graphify MCP,
-  and per-runtime notes (Claude/Codex/Gemini/OpenCode) are in
-  `docs/mcp-setup.md`. Export the GitHub token before launching an agent:
-  `export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"`.
+- The copy wires the **core** server set only (graphify). GitHub and YouTube
+  transcript MCP are opt-in fragments under `mcp-fragments/`, loaded per
+  session; per-runtime notes (Claude/Codex/Gemini/OpenCode) are in
+  `docs/mcp-setup.md`. When loading the GitHub fragment, export the token
+  first: `export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"`.
 
 ## 4. Decide on the optional bits
 

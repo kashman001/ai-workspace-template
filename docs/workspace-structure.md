@@ -304,7 +304,9 @@ the underlying product repos.
 ├── skills/                     # Agent skill definitions (reusable instructions)
 ├── work/                       # Active project work (in-flight initiatives)
 │
-├── .claude/                    # Claude Code local state (gitignored)
+├── mcp-fragments/              # Opt-in MCP server configs, loaded per session (checked in)
+│
+├── .claude/                    # Claude Code project config (commands/, agents/, skills/ checked in; settings gitignored)
 ├── .vscode/                    # VS Code settings and MCP config
 │   ├── settings.json           #   Shared IDE settings (checked in)
 │   ├── mcp.json.example        #   MCP server config template (checked in)
@@ -401,7 +403,9 @@ regardless of the specific tool.
 
 ```
 .claude/
-└── settings.json               # Bash and MCP tool permission allowlist
+├── agents/                     # Subagent profiles with scoped toolsets (checked in)
+├── commands/                   # Slash-command shortcuts for workspace skills (checked in)
+└── settings.json               # Bash and MCP tool permission allowlist (gitignored)
 ```
 
 User-specific permission allowlist controlling which Bash commands and MCP
@@ -410,6 +414,12 @@ personal trust decision. Provide a starter template (`settings.json.example`)
 for new users. The template's example also carries the `hooks` block wiring
 the context-budget WARN/STOP hook (`docs/context-budget.md`) — copy it into
 your `settings.json` to get in-band context warnings.
+
+**`agents/`** (checked in) holds subagent profiles — narrow-toolset children a
+lean parent session delegates to (e.g. `repo-navigator`: read-only navigation
+via the graphify graph). Part of the lean-loading model in `CONTEXT.md` →
+"Tool & Context Loading"; the opt-in server side of that model lives in
+`mcp-fragments/` (see `docs/mcp-setup.md` → "Core vs. fragments").
 
 ### User-Level Files (Outside the Workspace)
 
@@ -776,6 +786,8 @@ agent conversation history.
 | `.mcp.json.example` | Yes | Template for project-level MCP config |
 | `.vscode/mcp.json.example` | Yes | Template for VS Code MCP config |
 | `.claude/settings.json.example` | Yes | Template for the Claude Code permission allowlist |
+| `.claude/agents/`, `.claude/commands/` | Yes | Subagent profiles and slash-command shortcuts |
+| `mcp-fragments/` | Yes | Opt-in MCP server configs (no secrets; loaded per session) |
 | `.mcp.json` | **No** | User-specific project MCP config (copied from `.mcp.json.example`) |
 | `.vscode/mcp.json` | **No** | User-specific MCP paths |
 | `.claude/settings.json`, `.claude/settings.local.json` | **No** | User-specific permission allowlist |
