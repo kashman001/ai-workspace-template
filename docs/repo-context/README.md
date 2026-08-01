@@ -17,4 +17,23 @@ then fill the three docs following `skills/onboard-repo/SKILL.md`. The skeletons
 a provenance block (generation date + source commit); `scripts/check-repo-context.sh`
 flags when a repo's code has moved past that commit.
 
+## These docs vs. the graphify graph
+
+Both describe a repo, but they are different kinds of artifact — keep them in
+their own homes:
+
+- **This directory is the library**: committed, human-reviewed distillation
+  (navigation, architecture, API surface). It survives machine changes, diffs
+  cleanly, and exists precisely because the graph may not be present on a
+  given machine.
+- **The graphify graph is the index at the back of the book it indexes**:
+  machine-generated, regenerated locally per machine, never committed. It
+  lives at the root of the repo it describes (root `graphify-out/` for a
+  single-repo workspace; `repos/<name>/graphify-out/` for multi-repo, kept out
+  of a cloned repo's git via its `.git/info/exclude`) — that placement is what
+  makes `graphify update .` and the live/fallback check in
+  `scripts/onboard-repo.sh` work. Do **not** move it under `docs/`.
+
+## Covered repos
+
 > None yet.

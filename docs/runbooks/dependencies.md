@@ -24,7 +24,7 @@ Act only on items the check reports as missing. Re-run after each install.
 | `git` | **required** | clone, symlinks, registry |
 | `gh` | recommended | GitHub auth + MCP token (`gh auth token`) |
 | `node` / `npx` | recommended | Claude Code status line (`ccstatusline`) |
-| `uv` | recommended | graphify install (`uv tool install graphifyy`) |
+| `uv` | recommended | graphify install (`uv tool install "graphifyy[mcp]"`) |
 | `python3` | recommended | graphify runtime / general tooling |
 | `yt-dlp` | recommended | workspace-local YouTube transcript MCP server |
 | `docker` | optional | local GitHub MCP server (vs. the hosted one) |
@@ -38,7 +38,7 @@ Detect OS via `uname -s` (`Darwin`=macOS, `Linux`=Linux, `MINGW*/MSYS*`=Windows 
 ```bash
 brew install git gh node uv yt-dlp
 # docker: brew install --cask docker   (then launch Docker.app once)
-# graphify: uv tool install graphifyy
+# graphify: uv tool install "graphifyy[mcp]"
 ```
 
 ### Linux (Debian/Ubuntu — adapt for dnf/pacman)
@@ -49,14 +49,14 @@ sudo apt-get update && sudo apt-get install -y git
 # uv:    curl -LsSf https://astral.sh/uv/install.sh | sh
 # yt-dlp: sudo apt-get install -y yt-dlp  (or: python3 -m pip install --user yt-dlp)
 # docker: https://docs.docker.com/engine/install/
-# graphify: uv tool install graphifyy
+# graphify: uv tool install "graphifyy[mcp]"
 ```
 
 ### Windows (winget; run in PowerShell, then use Git Bash for the scripts)
 ```powershell
 winget install Git.Git GitHub.cli OpenJS.NodeJS astral-sh.uv yt-dlp.yt-dlp
 # docker: winget install Docker.DockerDesktop
-# graphify: uv tool install graphifyy
+# graphify: uv tool install "graphifyy[mcp]"
 ```
 > The `scripts/*.sh` are bash — run them under **Git Bash** or WSL on Windows.
 
