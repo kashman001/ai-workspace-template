@@ -138,7 +138,7 @@ Add to `~/.gemini/settings.json` under `mcpServers`:
 
 ### graphify — code knowledge graph (optional)
 
-The `graphify-mcp` stdio server (from `uv tool install graphifyy`) serves a repo's
+The `graphify-mcp` stdio server (from `uv tool install "graphifyy[mcp]"`) serves a repo's
 `graphify-out/graph.json` as MCP query tools. It's pre-staged in `.mcp.json.example`
 and `.vscode/mcp.json.example` under their respective server keys
 (`mcpServers` vs `servers`), so MCP-capable runtimes (Claude Code, VS Code) pick it

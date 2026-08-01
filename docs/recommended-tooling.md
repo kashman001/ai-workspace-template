@@ -305,7 +305,7 @@ exists:
 **Setup (global, once per machine):**
 
 ```sh
-uv tool install graphifyy            # provides the `graphify` and `graphify-mcp` CLIs
+uv tool install "graphifyy[mcp]"            # provides the `graphify` and `graphify-mcp` CLIs
 graphify --version
 ```
 
@@ -352,7 +352,10 @@ For a multi-repo workspace, point the server at a specific graph via
 remain the query path for those runtimes.
 
 `graphify-out/` is already in this template's `.gitignore` — the graph is
-regenerated locally per machine, never committed.
+regenerated locally per machine, never committed. Cloned repos under
+`repos/<name>/` have their own git and don't inherit this `.gitignore`: add
+`graphify-out/` to each repo's `.git/info/exclude` so the graph never dirties
+the product repo's working tree (its tracked `.gitignore` stays untouched).
 
 ---
 

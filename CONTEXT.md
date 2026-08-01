@@ -224,13 +224,23 @@ Full reference: `docs/context-budget.md`; rollover workflow:
 This workspace ships with [graphify](https://graphify.net) wiring (a
 knowledge-graph tool): a Gemini `BeforeTool` hook (`.gemini/settings.json`)
 and an OpenCode plugin (`.opencode/plugins/graphify.js`). They activate only
-once a graph exists at `graphify-out/`.
+once a graph exists at `graphify-out/` relative to the session cwd.
 
-Rules (apply once `graphify-out/graph.json` exists):
-- For codebase questions, first run `graphify query "<question>"`. Use
-  `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"`
-  for focused concepts. These return a scoped subgraph, usually much smaller
-  than GRAPH_REPORT.md or raw grep output.
+**Graph placement — per repo, never committed.** In a single-repo workspace
+(root *is* the product repo) the graph lives at root `graphify-out/` (already
+gitignored). In a **multi-repo** workspace, build each graph *inside its repo*
+at `repos/<name>/graphify-out/` — run `/graphify` (or the CLI) from that repo's
+root, not the workspace root. Cloned repos have their own git and won't inherit
+this workspace's `.gitignore`: add `graphify-out/` to the repo's
+`.git/info/exclude` (keeps the exercise/product repo's working tree clean
+without touching its tracked `.gitignore`). Point the MCP server at the graph
+via `.mcp.json` → `"args": ["repos/<name>/graphify-out/graph.json"]`.
+
+Rules (apply once a `graphify-out/graph.json` exists at the placement above):
+- For codebase questions, first run `graphify query "<question>"` from the
+  repo root. Use `graphify path "<A>" "<B>"` for relationships and
+  `graphify explain "<concept>"` for focused concepts. These return a scoped
+  subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - If `graphify-out/wiki/index.md` exists, use it for broad navigation instead
   of raw source browsing.
 - Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or
