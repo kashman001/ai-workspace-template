@@ -1,0 +1,12 @@
+{
+  "_comment": "Opt-in MCP fragment: hosted GitHub MCP server (~95 tools). Load only for sessions that need structured GitHub tools beyond the gh CLI. Claude Code: claude --mcp-config mcp-fragments/github.json (or merge into .mcp.json). Requires GITHUB_PERSONAL_ACCESS_TOKEN exported, e.g. export GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token). See docs/mcp-setup.md and mcp-fragments/README.md.",
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}

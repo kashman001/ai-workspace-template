@@ -202,6 +202,29 @@ Rules for keeping the LLM context window healthy across long sessions:
    systems are for personal preferences, not shared project context.
 6. **Sub-agent summaries are hints, not facts.** Verify on disk.
 
+## Tool & Context Loading — Lean by Default
+
+Every always-on tool and doc taxes every session; bring capabilities in on
+demand instead. Layered model (full detail: `docs/mcp-setup.md` and
+`mcp-fragments/README.md`):
+
+1. **CLI-first (agent-agnostic).** A capability enters the workspace as a CLI
+   on `PATH` (`gh`, `graphify`, `yt-dlp`) — zero standing context, works in
+   every runtime. MCP is the exception, reserved for where it genuinely beats
+   the CLI.
+2. **Core vs. fragments.** `.mcp.json` carries only the core server set
+   (graphify). Heavier task-specific servers live in `mcp-fragments/` and are
+   loaded per session (`claude --mcp-config mcp-fragments/<name>.json`; other
+   runtimes: see `docs/mcp-setup.md`). OpenCode's `opencode.json` pre-declares
+   them with `"enabled": false` — flip locally to opt in.
+3. **Asymmetric parent/child toolsets (platform accelerators).** A parent
+   session stays lean and delegates: Claude Code subagent profiles under
+   `.claude/agents/` restrict a child to a narrow toolset (e.g.
+   `repo-navigator`); the reverse — a child carrying tools the parent lacks —
+   is a scoped worker: `claude -p "<task>" --mcp-config mcp-fragments/<name>.json`.
+   Claude Code also defers MCP tool schemas automatically (loaded via tool
+   search on first use), so core servers stay cheap there.
+
 ## Context Budget — Measure, Don't Guess
 
 LLM quality degrades past ~150K context tokens (the "dumb zone") regardless of

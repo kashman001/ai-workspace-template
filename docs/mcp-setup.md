@@ -9,15 +9,46 @@ See: docs/workspace-structure.md → "IDE and Agent Configuration"
 
 This workspace pre-stages three MCP server patterns:
 
-- **GitHub MCP** — authenticated, hosted by default, token read from
-  `GITHUB_PERSONAL_ACCESS_TOKEN` sourced from `gh auth token`
+- **graphify MCP** (core — wired by default) — stdio server for querying a
+  generated code graph.
+- **GitHub MCP** (opt-in fragment) — authenticated, hosted by default, token
+  read from `GITHUB_PERSONAL_ACCESS_TOKEN` sourced from `gh auth token`
   (see `docs/service-access.md`).
-- **YouTube transcript MCP** — workspace-local stdio server backed by
-  `scripts/mcp/youtube-transcript.sh`, Python 3, and `yt-dlp`; no credentials.
-- **graphify MCP** — optional stdio server for querying a generated code graph.
+- **YouTube transcript MCP** (opt-in fragment) — workspace-local stdio server
+  backed by `scripts/mcp/youtube-transcript.sh`, Python 3, and `yt-dlp`; no
+  credentials.
 
-A checked-in template lives at `.mcp.json.example`. Copy it to `.mcp.json`
-(gitignored) for runtimes that read a project-level `.mcp.json`.
+## Core vs. fragments — lean by default
+
+Every wired MCP server adds standing tool surface (and context cost) to every
+session, so servers are split by default-need (rationale: `CONTEXT.md` →
+"Tool & Context Loading"):
+
+- **Core** (`.mcp.json`, template at `.mcp.json.example`): only the
+  always-useful, cheap set — currently **graphify** (10 tools). Copy the
+  example to `.mcp.json` (gitignored) for runtimes that read a project-level
+  `.mcp.json`.
+- **Fragments** (`mcp-fragments/*.json`): task-specific servers — **github**
+  (~95 tools) and **youtube-transcript** — loaded per session when the task
+  needs them. Each fragment is a complete `mcpServers` config; loading recipes
+  per runtime are in `mcp-fragments/README.md`. Quick version:
+  - Claude Code: `claude --mcp-config mcp-fragments/github.json` (adds to the
+    session alongside `.mcp.json`); scoped child worker:
+    `claude -p "<task>" --mcp-config mcp-fragments/github.json`.
+  - Durable opt-in: merge the fragment's entry into your local `.mcp.json`.
+  - OpenCode: flip the matching server's `"enabled"` to `true` in
+    `opencode.json` locally.
+- **CLI-first fallback:** the fragments' capabilities are also available with
+  zero context cost via CLIs — `gh` for GitHub, `scripts/mcp/`'s `yt-dlp`
+  wrapper for transcripts. Prefer those unless you need the structured MCP
+  tools.
+
+> **Migrating an existing setup?** If your `.mcp.json` predates the split,
+> remove its `github` and `youtube-transcript` entries (they moved to
+> `mcp-fragments/`), and make sure `enabledMcpjsonServers` in
+> `.claude/settings.local.json` includes `"graphify"`. Likewise avoid
+> installing the GitHub MCP *plugin* — it re-creates the always-on surface
+> this split removes (see `docs/recommended-tooling.md` §2).
 
 ## Export the token
 
@@ -81,11 +112,13 @@ printf '%s\n' \
 ## Per-runtime configuration
 
 ### Claude Code — configured
-Reads the project-level `.mcp.json` (created here, gitignored). Uses the
-remote GitHub server with `type: "http"`, expanding
-`${GITHUB_PERSONAL_ACCESS_TOKEN}` into the `Authorization` header from the
-environment at launch. The example also pre-wires `youtube-transcript` and
-`graphify` as stdio servers. Verify:
+Reads the project-level `.mcp.json` (created here, gitignored), which carries
+the core set (graphify). Load fragments per session with
+`--mcp-config mcp-fragments/<name>.json`; the GitHub fragment uses the remote
+server with `type: "http"`, expanding `${GITHUB_PERSONAL_ACCESS_TOKEN}` into
+the `Authorization` header from the environment at launch. Claude Code defers
+MCP tool schemas (loaded via tool search on first use), so wired servers cost
+little until actually used. Verify:
 ```bash
 claude mcp list
 ```
@@ -93,7 +126,8 @@ claude mcp list
 ### OpenCode — pre-staged
 OpenCode reads **two** files in this workspace, by design:
 - `opencode.json` (repo root) — MCP servers (`mcp.github`,
-  `mcp.youtube-transcript`).
+  `mcp.youtube-transcript`), declared with `"enabled": false` per the lean
+  default — flip a server to `true` locally when a task needs it.
 - `.opencode/opencode.json` — the plugin list (the graphify plugin).
 
 `{env:...}` substitution works for local servers. Verify after installing OpenCode:
@@ -104,7 +138,10 @@ Note: OpenCode does not currently interpolate `{env:...}` inside *remote*
 server `headers`, so the local Docker server is preferred here.
 
 ### Codex
-Add to `~/.codex/config.toml`:
+Opt-in, task-driven: `~/.codex/config.toml` is **global**, so anything
+registered there is always-on for every project on the machine — add a server
+when a stretch of work needs it and remove it after (or rely on the `gh` CLI
+instead). Add to `~/.codex/config.toml`:
 ```toml
 [mcp_servers.github]
 command = "docker"
@@ -118,6 +155,8 @@ args = []
 <!-- TODO: verify against your Codex version's MCP schema -->
 
 ### Gemini CLI
+Opt-in, task-driven: `~/.gemini/settings.json` is **global** (same always-on
+caveat as Codex above) — add per task, remove after, or use the `gh` CLI.
 Add to `~/.gemini/settings.json` under `mcpServers`:
 ```json
 {

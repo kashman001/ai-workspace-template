@@ -1,25 +1,16 @@
 // Template for VS Code MCP config. Copy to .vscode/mcp.json (gitignored).
-// Uses hosted GitHub MCP, optional graphify, and the workspace-local
-// youtube-transcript server. See docs/mcp-setup.md.
+// Core server set only (graphify) — lean by design. Task-specific servers
+// (github, youtube-transcript) live in mcp-fragments/; copy an entry in here
+// (VS Code uses "servers", fragments use "mcpServers" — same server shape)
+// when you need it. See docs/mcp-setup.md.
 {
   "servers": {
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
-    },
-    // graphify serves graphify-out/graph.json over stdio. Multi-repo: set
-    // "args": ["repos/<name>/graphify-out/graph.json"] to pick a specific graph.
+    // graphify serves graphify-out/graph.json over stdio. Multi-repo: point
+    // args at a specific graph, e.g. ["repos/<name>/graphify-out/graph.json"].
     "graphify": {
       "type": "stdio",
       "command": "graphify-mcp",
       "args": []
-    },
-    "youtube-transcript": {
-      "type": "stdio",
-      "command": "${WORKSPACE_ROOT}/scripts/mcp/youtube-transcript.sh"
     }
   }
 }

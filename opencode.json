@@ -15,14 +15,14 @@
       "environment": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
-      "enabled": true
+      "enabled": false
     },
     "youtube-transcript": {
       "type": "local",
       "command": [
         "./scripts/mcp/youtube-transcript.sh"
       ],
-      "enabled": true
+      "enabled": false
     }
   }
 }

@@ -136,7 +136,10 @@ claude plugin install claude-md-management@claude-plugins-official
 claude plugin install skill-creator@claude-plugins-official
 claude plugin install frontend-design@claude-plugins-official
 claude plugin install context7@claude-plugins-official
-claude plugin install github@claude-plugins-official     # hosted GitHub MCP (see docs/mcp-setup.md)
+# GitHub MCP: NOT installed as a plugin by default — a plugin adds ~95 standing
+# tools to every session in every project, defeating the lean-loading model
+# (CONTEXT.md -> "Tool & Context Loading"). Prefer the gh CLI, or load
+# mcp-fragments/github.json per session (see docs/mcp-setup.md).
 ```
 
 Verify: `claude plugin list` (or `/plugin` in a session), then restart.

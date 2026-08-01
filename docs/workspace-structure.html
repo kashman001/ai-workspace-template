@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 2e292640d2d0608aab1c85e8fef1f726e089d4cb -->
+  <!-- source-md-sha1: 0ec173e48050f7468b0b2d315269922d37f30601 -->
 </head>
 <body>
 <div class="src-banner">
@@ -615,7 +615,9 @@ config) lives in user-level locations outside the workspace.</li>
 ├── skills/                     # Agent skill definitions (reusable instructions)
 ├── work/                       # Active project work (in-flight initiatives)
 │
-├── .claude/                    # Claude Code local state (gitignored)
+├── mcp-fragments/              # Opt-in MCP server configs, loaded per session (checked in)
+│
+├── .claude/                    # Claude Code project config (commands/, agents/, skills/ checked in; settings gitignored)
 ├── .vscode/                    # VS Code settings and MCP config
 │   ├── settings.json           #   Shared IDE settings (checked in)
 │   ├── mcp.json.example        #   MCP server config template (checked in)
@@ -731,7 +733,9 @@ repo as a workspace root for IntelliSense, search, and debugging.</li>
 <h3 id="claude--claude-code-project-level"><code>.claude/</code> —
 Claude Code (Project-Level)</h3>
 <pre><code>.claude/
-└── settings.json               # Bash and MCP tool permission allowlist</code></pre>
+├── agents/                     # Subagent profiles with scoped toolsets (checked in)
+├── commands/                   # Slash-command shortcuts for workspace skills (checked in)
+└── settings.json               # Bash and MCP tool permission allowlist (gitignored)</code></pre>
 <p>User-specific permission allowlist controlling which Bash commands
 and MCP tools Claude Code can run without prompting. Gitignored —
 permissions are a personal trust decision. Provide a starter template
@@ -740,6 +744,13 @@ example also carries the <code>hooks</code> block wiring the
 context-budget WARN/STOP hook (<code>docs/context-budget.md</code>) —
 copy it into your <code>settings.json</code> to get in-band context
 warnings.</p>
+<p><strong><code>agents/</code></strong> (checked in) holds subagent
+profiles — narrow-toolset children a lean parent session delegates to
+(e.g. <code>repo-navigator</code>: read-only navigation via the graphify
+graph). Part of the lean-loading model in <code>CONTEXT.md</code> →
+"Tool &amp; Context Loading"; the opt-in server side of that model lives
+in <code>mcp-fragments/</code> (see <code>docs/mcp-setup.md</code> →
+"Core vs. fragments").</p>
 <h3 id="user-level-files-outside-the-workspace">User-Level Files
 (Outside the Workspace)</h3>
 <p>These live under the user's home directory and are never checked
@@ -799,6 +810,9 @@ Documentation</h2>
 ├── mcp-setup.md                # MCP server configuration guide
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover
 │
+├── agents/                     # Per-repo config the engineering skills consume
+│   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
+│
 └── repo-context/               # Per-repo architecture and navigation docs
     ├── README.md               #   Index of covered repos
     ├── _templates/             #   Skeletons copied into each repo folder
@@ -846,18 +860,24 @@ persisted.</li>
 </ul>
 <pre><code>skills/
 ├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
+├── create-work-item/           # Scaffold a work/&lt;project&gt;/ dir (README + launcher + ledger)
 ├── decision-log/               # Capture the why (commit trailer → note → ADR)
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
 ├── rlm/                        # Recursive Language Model loop for huge contexts
 ├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
+├── wayfinder/                  # Map-of-decision-tickets planning (vendored from mattpocock/skills)
 └── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
 <p>The template ships with <code>checkpoint</code>,
-<code>decision-log</code>, <code>onboard-repo</code>, <code>rlm</code>,
-and <code>session-rollover</code>; add your own alongside them.
-<code>decision-log</code> captures decision provenance — the
-<em>why</em> code can't record — as ephemeral notes under
-<code>work/&lt;project&gt;/decisions.md</code>, promoted to committed
-ADRs under <code>docs/adr/</code> for lasting-weight decisions.</p>
+<code>create-work-item</code>, <code>decision-log</code>,
+<code>onboard-repo</code>, <code>rlm</code>,
+<code>session-rollover</code>, and <code>wayfinder</code> (vendored from
+<a href="https://github.com/mattpocock/skills">mattpocock/skills</a> —
+see its <code>SKILL.md</code> provenance comment for the refresh
+procedure); add your own alongside them. <code>decision-log</code>
+captures decision provenance — the <em>why</em> code can't record — as
+ephemeral notes under <code>work/&lt;project&gt;/decisions.md</code>,
+promoted to committed ADRs under <code>docs/adr/</code> for
+lasting-weight decisions.</p>
 <p>Skills are agent-vendor-neutral — write them in plain Markdown with
 no runtime-specific syntax. List each skill in the
 <code>CONTEXT.md</code> "Workspace Skills" section with a one-line
@@ -1188,6 +1208,16 @@ credential)</td>
 <td><code>.claude/settings.json.example</code></td>
 <td>Yes</td>
 <td>Template for the Claude Code permission allowlist</td>
+</tr>
+<tr>
+<td><code>.claude/agents/</code>, <code>.claude/commands/</code></td>
+<td>Yes</td>
+<td>Subagent profiles and slash-command shortcuts</td>
+</tr>
+<tr>
+<td><code>mcp-fragments/</code></td>
+<td>Yes</td>
+<td>Opt-in MCP server configs (no secrets; loaded per session)</td>
 </tr>
 <tr>
 <td><code>.mcp.json</code></td>
