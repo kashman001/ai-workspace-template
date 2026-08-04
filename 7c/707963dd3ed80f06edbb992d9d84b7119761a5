@@ -1,0 +1,22 @@
+docs/adr/README.md
+  s_04fd172e6649a9::t_51f1791c2da006 24-32
+skills/decision-log/SKILL.md
+  s_04fd172e6649a9::t_51f1791c2da006 86-90,113-115
+  s_04fd172e6649a9::t_982f5a1d63cdc2 95-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "7c707963dd3ed80f06edbb992d9d84b7119761a5",
+  "prompts": {},
+  "sessions": {
+    "s_04fd172e6649a9": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "57542956-23f5-4573-ae1a-3086c7c9c974",
+        "model": "claude-opus-4.8"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
