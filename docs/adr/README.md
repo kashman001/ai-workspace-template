@@ -21,6 +21,15 @@ Write an ADR when the decision:
 Otherwise leave it as a Tier-2 note in `work/…/decisions.md`. "Every decision gets an
 ADR" is the scheme that dies in a month — don't.
 
+## Where it lives (scope)
+
+`docs/adr/` is the **workspace-scope** home — the default, and the right place for any
+decision that spans more than one repo or governs the workspace itself (skills,
+conventions, tooling). If this workspace grows product repos under `repos/` and a
+decision is contained entirely within one of them, it may instead live in that repo's
+own `repos/<repo>/docs/adr/`, numbered in its own independent sequence. When unsure,
+keep it here.
+
 ## Conventions
 
 - **Filename:** `NNNN-kebab-slug.md`, zero-padded 4-digit sequence (`0001-…`, `0002-…`).

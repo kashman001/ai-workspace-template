@@ -83,13 +83,17 @@ Refs: ADR-NNNN                            <!-- only if an ADR exists -->
 
 On demand, or when `checkpoint` flags a `Promote?: yes|maybe` note. Steps:
 
-1. `ls docs/adr/` → next free `NNNN` (zero-padded, never reuse a number).
-2. Copy `docs/adr/0000-template.md` → `docs/adr/NNNN-kebab-slug.md`; fill Context /
+1. Pick the home by scope (see `docs/adr/README.md`): cross-repo or workspace
+   decisions → `docs/adr/` (the default); a decision contained in one product repo
+   → that repo's `repos/<repo>/docs/adr/`. `ls <adr-dir>/` → next free `NNNN`
+   (zero-padded, never reuse a number; the two sequences are independent).
+2. Copy `docs/adr/0000-template.md` → `<adr-dir>/NNNN-kebab-slug.md`; fill Context /
    Decision / Alternatives / Consequences from the note (expand, don't just paste).
 3. Fill the **Provenance** block: `Promoted from:` the note anchor, `Commits:` the shas,
    `Supersedes:` any ADR this replaces (and set that ADR's status to
    `superseded by ADR-NNNN`).
-4. Set `Status: accepted` and today's date; add it to the index in `docs/adr/README.md`.
+4. Set `Status: accepted` and today's date; for a workspace-scope ADR, add it to the
+   index in `docs/adr/README.md`.
 5. Flip the note's `Promote?:` to `done → ADR-NNNN` so it isn't re-promoted next checkpoint.
 6. If a graph exists (`graphify-out/graph.json`), run `graphify update .` so the ADR's
    edges enter the graph.
@@ -106,5 +110,6 @@ plain code can't answer. Keep it fresh with `graphify update .` after adding an 
 
 - A Tier-2 note appended to `work/<project-name>/decisions.md` (the common case).
 - Commit trailers on the implementing commit.
-- On promotion: a new `docs/adr/NNNN-*.md` + updated `docs/adr/README.md` index, and a
-  refreshed graph if graphify is live.
+- On promotion: a new `docs/adr/NNNN-*.md` + updated `docs/adr/README.md` index (or a
+  `repos/<repo>/docs/adr/NNNN-*.md` for a repo-contained decision), and a refreshed
+  graph if graphify is live.
