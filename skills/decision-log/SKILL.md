@@ -47,8 +47,10 @@ Default policy — deliberately light, so it doesn't die of ceremony:
 - **Tier 1 — always.** Every non-trivial commit carries a one-line `Decision:` reason.
 - **Tier 2 — for any choice with a rejected alternative.** If there was a real fork,
   append a note. This is the wide net: cheap, append-only, lives beside the work.
-- **Tier 3 — only on promotion.** An ADR is earned, not automatic (see the bar in
-  `docs/adr/README.md`). Most notes never become ADRs, and that's correct.
+- **Tier 3 — only on promotion.** An ADR is earned, not automatic. Promote only when
+  the decision passes the **AND test** — *hard to reverse* AND *surprising* AND *a
+  real trade-off* (from upstream `domain-modeling`; same bar in `docs/adr/README.md`).
+  If any leg is missing, skip. Most notes never become ADRs, and that's correct.
 
 ## Capture a decision (Tier 2 — the common case)
 
@@ -67,6 +69,10 @@ Write it *when you decide*, not in a cleanup pass — the reasoning is freshest 
 in the moment. Keep it to the fork that mattered; skip decisions with no real alternative.
 Never put secrets in it.
 
+Counter-example — *don't* log this: "picked `date-fns` over `dayjs` for a one-off
+formatting helper". Reversible in minutes, either lib would do, no trade-off that
+matters — that's a Tier-1 `Decision:` trailer at most, not a note.
+
 Get the date from the system (`date +%F`) — don't guess it.
 
 ## Record it in the commit (Tier 1)
@@ -81,7 +87,10 @@ Refs: ADR-NNNN                            <!-- only if an ADR exists -->
 
 ## Promote a note to an ADR (Tier 3)
 
-On demand, or when `checkpoint` flags a `Promote?: yes|maybe` note. Steps:
+On demand, or when `checkpoint` flags a `Promote?: yes|maybe` note. Wayfinder maps
+count too: a `work/<effort>/map.md` "Decisions so far" entry is a Tier-2 note and is
+promoted the same way (per `docs/agents/issue-tracker.md` → "Decision-log tie-in").
+Steps:
 
 1. Pick the home by scope (see `docs/adr/README.md`): cross-repo or workspace
    decisions → `docs/adr/` (the default); a decision contained in one product repo
@@ -105,6 +114,14 @@ Once ADRs and commit trailers exist, they become **context-graph nodes**: the AD
 let `graphify query "why does <X> work this way?"` traverse
 `code symbol → commit → ADR → alternatives-rejected` — the "how did it get there" path
 plain code can't answer. Keep it fresh with `graphify update .` after adding an ADR.
+
+## Verification
+
+- Tier-2 note landed: `tail -8 work/<project-name>/decisions.md` shows the new entry
+  with all five fields.
+- Tier-1 trailer landed: `git log -1 --format=%B | grep '^Decision:'` (after the commit).
+- Promotion: the new `docs/adr/NNNN-*.md` exists, the `docs/adr/README.md` index lists
+  it (workspace scope), and the source note reads `Promote?: done → ADR-NNNN`.
 
 ## Outputs
 

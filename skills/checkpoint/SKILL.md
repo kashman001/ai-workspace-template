@@ -19,8 +19,15 @@ from the backlog's active sequence.
   runtime's equivalent).
 - When the user says "checkpoint".
 
+## Which boundary skill? (first yes wins)
+
+1. Context-budget WARN/STOP signal (hook message, or `context-budget.sh` exit code
+   1/2)? → `session-rollover`.
+2. Deliberate end of a work chunk, budget OK? → `checkpoint` (this skill).
+3. Both true? → `session-rollover` — measurement wins; fold this skill's step-1
+   reconciliation into its reflect/flush steps.
+
 ## Prerequisites
-- The `handoff` skill (for the hand-off doc) — see `docs/recommended-tooling.md`.
 - A project memory location and an issue-tracker/backlog convention (per
   `docs/agents/issue-tracker.md` if the Matt Pocock skills were set up).
 
@@ -39,17 +46,23 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      memory and add durable, non-obvious learnings (gotchas, decisions, preferences); update
      `MEMORY.md` pointers.
    - the matching **reference docs** under `docs/` if a feature shipped or changed.
-   - **decision notes** — scan `work/<project-name>/decisions.md` for entries
-     flagged `Promote?: yes` (or a `maybe` whose condition now holds). For each, follow the
-     `decision-log` skill's promotion steps (draft an ADR under `docs/adr/`, fill its
-     Provenance block, flip the note to `done → ADR-NNNN`). This is where the session's
-     ephemeral *why* becomes a durable, committed record — do it before context compacts.
+   - **decision notes** — scan `work/*/decisions.md` for entries flagged `Promote?: yes`
+     (or a `maybe` whose condition now holds), **and** `work/*/map.md` "Decisions so far"
+     entries — a resolved wayfinder ticket is a Tier-2 decision and the map substitutes
+     for `decisions.md` (per `docs/agents/issue-tracker.md` → "Decision-log tie-in").
+     For each, follow the `decision-log` skill's promotion steps (draft an ADR under
+     `docs/adr/`, fill its Provenance block, flip the note to `done → ADR-NNNN`). This is
+     where the session's ephemeral *why* becomes a durable, committed record — do it
+     before context compacts.
 
-2. **Write a hand-off doc** for the next chunk: invoke the `handoff` skill (secret-free, with
-   a suggested-skills section). Persist it under `work/<project-name>/` (the
-   workspace convention) or the skill's default location. Frame it around the next focus, or —
-   if none given — the next item in the backlog's active sequence. Reference the
-   spec/plan/runbook by path.
+2. **Write a hand-off doc** for the next chunk, under `work/<project-name>/` (the
+   workspace convention). The hand-off contract:
+   - reference artifacts by path/URL — never duplicate plans/specs/diffs into the doc;
+   - include a **suggested skills** section for the next session;
+   - redact secrets/PII.
+   If the global `handoff` skill is installed (`docs/recommended-tooling.md`) you may use
+   it to draft the doc; the contract above binds either way. Frame it around the next
+   focus, or — if none given — the next item in the backlog's active sequence.
 
 3. **Confirm repo/branch state** is clean and recorded: current branch, working tree clean,
    merged branches tidied or noted. If the project deploys, record the live deployment versions.
@@ -59,9 +72,18 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
    session to catch up + continue with the right starting skill (often
    `superpowers:brainstorming`). Keep it ~3–5 lines.
 
+## Verification
+
+- Hand-off doc is on disk: `ls work/<project-name>/` shows it.
+- Promotion scan ran to completion: `grep -n 'Promote?: yes\|Promote?: maybe' work/*/decisions.md work/*/map.md`
+  — every hit is either promoted this checkpoint (flipped to `done → ADR-NNNN`) or its
+  `maybe` condition checked and still unmet.
+- Branch state matches step 3's claim: `git status --short` is clean, or the exceptions
+  are named in the hand-off doc.
+
 ## Outputs
 - Reconciled backlog/issue tracker, project memory (+ `MEMORY.md`), and reference docs.
-- A hand-off doc under `work/<project-name>/` (or the `handoff` skill's default).
+- A hand-off doc under `work/<project-name>/`.
 - A catch-up prompt the user pastes into the next session.
 
 End by telling the user to compact/clear context, then paste the catch-up prompt to continue.

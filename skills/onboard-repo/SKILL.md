@@ -1,6 +1,7 @@
 ---
 name: onboard-repo
 description: Use when bringing a repository into the workspace — record its identity and auth in the registry, build/wire a graphify code index (with a manual-scan fallback), and derive committed code-structure / design / api docs under docs/repo-context/<repo>/ so agents and developers can pull repo knowledge on demand. Trigger when adding a repo, or when the user says "onboard this repo".
+disable-model-invocation: true
 ---
 
 # onboard-repo
@@ -25,6 +26,12 @@ single-repo workspace, else `repos/<name>/`).
 - Auth: `docs/runbooks/authentication.md` (verify-only; never log in or store secrets here).
 
 ## Steps
+
+**Measured checkpoint (mandatory, after each step below and between repos):** run
+`scripts/context-budget.sh record --label "onboard-repo: <repo> step <n> done"` and act on
+the exit code: `1` (WARN) — finish the current step's bookkeeping, then run
+`skills/session-rollover/SKILL.md`; `2` (STOP) — flush state and hand off immediately.
+Never start onboarding another repo in WARN/STOP state.
 
 Do these in order, concisely (reference artifacts by path — don't duplicate code):
 
@@ -57,12 +64,6 @@ Do these in order, concisely (reference artifacts by path — don't duplicate co
 
 To refresh later: `scripts/onboard-repo.sh <repo-name> --refresh` (re-stamps provenance +
 runs `graphify update .`), then re-derive any docs whose content has drifted.
-
-**Measured checkpoint (mandatory, after each step above and between repos):** run
-`scripts/context-budget.sh record --label "onboard-repo: <repo> step <n> done"` and act on
-the exit code: `1` (WARN) — finish the current step's bookkeeping, then run
-`skills/session-rollover/SKILL.md`; `2` (STOP) — flush state and hand off immediately.
-Never start onboarding another repo in WARN/STOP state.
 
 ## Outputs
 - A completed `docs/repos-registry.md` entry (identity + auth + stack + commands).
