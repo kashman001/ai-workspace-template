@@ -38,6 +38,24 @@ runtime seeded with it. Two invocation models:
   with `--bg` as session-rollover's closing step; the successor spawns detached
   and the user attaches when ready. Vendor capabilities diverge here.
 
+### Mode refinement (user, 2026-08-05)
+
+The user reframed the two models — **both are agent-driven; the real axis is
+consent, plus how much of the chain is automated**:
+
+1. **Consent-gated relaunch** — at rollover the agent *asks the user's
+   permission*, then starts the new session itself and the work continues.
+   (Supersedes the original "user types the script command" framing — the
+   script is still the mechanism, but the agent drives it.)
+2. **Fully automatic rollover** — on approaching (WARN) *or* passing (STOP)
+   the limit, the agent performs the whole chain unprompted: run
+   `session-rollover` **and** relaunch the successor. Note this automates
+   stage 2 as well, not just stage 3 — the trigger fires the entire
+   trigger→rollover→relaunch pipeline.
+
+Knob mapping consequence: `manual` ≈ consent-gated (ask → launch), `auto` ≈
+fully automatic (no ask). `off` remains today's paste-the-prompt behavior.
+
 ## Verified per-vendor matrix
 
 | Runtime | Detection (stage 1) | Interactive seeded launch | Detached background |
