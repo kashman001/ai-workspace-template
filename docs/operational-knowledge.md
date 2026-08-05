@@ -10,6 +10,20 @@ See: docs/workspace-structure.md → "docs/ — Workspace Documentation"
 Gotchas and rules that prevent silent failures. Each entry: the symptom, the
 cause, and the rule that avoids it. Add to this as you hit new ones.
 
+## context-budget.sh — concurrent sessions clobber the registry (measure the wrong session)
+
+**Symptom:** `record`/`check` report far fewer tokens than the in-band hook
+(e.g. 47K OK vs 128K WARN), citing another session's artifact. **Cause:** the
+registry is one file per *runtime* (`.context-budget/session-claude.json`);
+any concurrent same-runtime session in this workspace (including a
+`claude --bg` agent) overwrites it at register, and non-register commands
+prefer the registry over re-discovery. **Rule:** if another session may have
+registered since yours did, pass your own transcript explicitly
+(`--transcript "$HOME/.claude/projects/<slug>/<session-id>.jsonl"`), or
+re-run `register` (it always re-discovers and `CLAUDE_CODE_SESSION_ID` pins
+your own artifact). Root fix (session-keyed state) is designed in
+`work/automatic-session-rollover/relaunch-analysis.md`.
+
 ## Agent workflow — bound your background poll loops
 
 - **Symptom:** `run_in_background` poll loops never exit and pile up as zombie
