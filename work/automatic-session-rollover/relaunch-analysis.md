@@ -169,6 +169,14 @@ Redesign direction (analysis delivered; not yet user-approved):
    workspace; per-session fallback is estimate-only.
 4. **D8 restated:** new session file with same project + different session-id.
 
+**Live evidence (same day):** the design session itself hit the bug. The
+`claude --bg` demo session clobbered `.context-budget/session-claude.json`;
+the design session's later `record` then measured the dead demo transcript
+(47,750 tokens, OK) while the hook correctly showed the real session at
+~128K WARN (the hook resolves per-session; the registry doesn't). Corrected
+ledger entry recorded with an explicit `--transcript`. Scalar registry
+clobbering is not theoretical.
+
 ## Proposed optionality knobs
 
 Natural home: `context-budget.env` (already the checked-in, non-secret knobs
