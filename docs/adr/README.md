@@ -12,14 +12,18 @@ the full three-tier scheme and the capture/promote workflow.
 
 ## When an ADR (vs. a decision note)
 
-Write an ADR when the decision:
+Write an ADR only when all three legs of the **AND test** hold (adopted from the
+upstream `domain-modeling` skill):
 
-- shapes architecture, a public contract, or a cross-cutting convention, **and**
-- had a real alternative you rejected (if there was no fork, there's no decision), **and**
-- someone would plausibly ask "why is it this way?" in six months.
+- **hard to reverse** — undoing it later is costly: it shapes architecture, a public
+  contract, or a cross-cutting convention, **and**
+- **surprising** — someone would plausibly ask "why is it this way?" in six months;
+  it isn't the obvious default, **and**
+- **a real trade-off** — an alternative was rejected for a reason that still matters
+  (if there was no fork, there's no decision).
 
-Otherwise leave it as a Tier-2 note in `work/…/decisions.md`. "Every decision gets an
-ADR" is the scheme that dies in a month — don't.
+If any leg is missing, leave it as a Tier-2 note in `work/…/decisions.md`. "Every
+decision gets an ADR" is the scheme that dies in a month — don't.
 
 ## Where it lives (scope)
 

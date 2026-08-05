@@ -66,7 +66,7 @@ file with one **child** file per ticket.
 
 A resolved wayfinder ticket **is** a decision with a rejected alternative —
 i.e. a Tier-2 decision note in this workspace's decision-record scheme
-(`CLAUDE.md` → *Decision Records*). The map's Decisions-so-far plays the role
+(`CONTEXT.md` → *Decision Records*). The map's Decisions-so-far plays the role
 of `decisions.md` for the effort; there's no need to duplicate entries between
 them. When a resolution has lasting weight beyond the effort, promote it to an
 ADR with `/decision promote` (or at `checkpoint`).

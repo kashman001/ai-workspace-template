@@ -7,6 +7,7 @@ description: >
   says "create a work item / work directory / project", or before beginning work
   that will span more than one session and needs a launcher + ledger. For
   single-file or one-shot tasks, do not create a work directory.
+disable-model-invocation: true
 ---
 
 ## Purpose
@@ -110,10 +111,14 @@ agent-neutral state on disk.
    <What got done, current state, immediate next step.>
    ```
 
-6. **Optional files** — create only if the project needs them now:
+6. **Optional files** — create only if the project needs them now (full layout:
+   `docs/work-directory-conventions.md`):
    - `STATUS.md` — shareable status snapshot.
    - `glossary.md` — project-scoped terms.
    - `decisions.md` / `docs/adr/*` — per `skills/decision-log/SKILL.md`.
+   - `spec.md` — the effort's spec, if one exists.
+   - `map.md` + `issues/NN-<slug>.md` — for a wayfinder or tracker-backed
+     effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations".
 
 7. **Do not** add the project's internal files to any global workspace file
    (`CONTEXT.md`, `docs/workspace-structure.md`). Those may name the directory as
@@ -121,6 +126,8 @@ agent-neutral state on disk.
 
 ## Verification
 
-- `work/<project>/` contains `README.md`, `next-session.md`, `handoff.md`.
-- The launcher's START HERE names a concrete first action; the ledger has one
-  session block with the purpose header.
+- `ls work/<project>/README.md work/<project>/next-session.md work/<project>/handoff.md`
+  — all three exist.
+- `head -1 work/<project>/handoff.md` prints the `<!--` purpose-header line;
+  `grep -c '^# Session Handoff' work/<project>/handoff.md` returns 1.
+- The launcher's START HERE names a concrete first action (read it back).

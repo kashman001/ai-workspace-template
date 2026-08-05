@@ -21,13 +21,14 @@ allowed-tools:
   - Edit
   - Grep
   - Glob
+disable-model-invocation: true
 ---
 
 # rlm — Recursive Language Model loop
 
 > **Vendored, runtime-neutral skill.** This `SKILL.md` is plain markdown any agent
 > (Claude Code, Codex, Gemini CLI, OpenCode) can read and drive — it lives in this
-> workspace's vendor-neutral `skills/` dir per the convention in `CLAUDE.md`. The one
+> workspace's vendor-neutral `skills/` dir per the convention in `CONTEXT.md`. The one
 > runtime dependency is the **leaf sub-LM**: `scripts/rlm_repl.py` shells out to a
 > nested headless `claude -p` (found via `which claude`) for `llm_query`/`rlm_query`,
 > reusing your existing Claude login (no API key). To run leaves on a different

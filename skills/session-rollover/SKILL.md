@@ -24,10 +24,17 @@ a thin wrapper around this skill).
 
 Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migration).
 
+## Which boundary skill? (first yes wins)
+
+1. Context-budget WARN/STOP signal (hook message, or `context-budget.sh` exit code
+   1/2)? → `session-rollover` (this skill).
+2. Deliberate end of a work chunk, budget OK? → `checkpoint`.
+3. Both true? → `session-rollover` — measurement wins; fold `checkpoint`'s step-1
+   reconciliation (backlog, memory, docs, promotions) into steps 2–3 below.
+
 ## Prerequisites
 
 - `scripts/context-budget.sh` (measurement) — see `docs/context-budget.md`.
-- The `handoff` skill (for the backward-looking doc) — see `docs/recommended-tooling.md`.
 
 ## Steps
 
@@ -46,8 +53,11 @@ Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migrat
    outputs actually exist on disk (summaries are hints, not facts).
 
 4. **Write `work/<project-name>/handoff.md`** — *backward-looking*: what happened,
-   what shipped, where things stand. Invoke the `handoff` skill (secret-free);
-   persist its output here.
+   what shipped, where things stand. The hand-off contract: reference artifacts by
+   path/URL (never duplicate their content); include a **suggested skills** section
+   for the next session; redact secrets/PII. If the global `handoff` skill is
+   installed (`docs/recommended-tooling.md`) you may use it to draft the doc; the
+   contract above binds either way.
 
 5. **Write `work/<project-name>/next-session.md`** — *forward-looking and
    deliberately pruned*:
@@ -77,6 +87,16 @@ Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migrat
 - **No secrets** in any rollover artifact.
 - If no `work/<project-name>/` directory fits the current work, ask the user where
   to persist rather than inventing a location.
+
+## Verification
+
+- The new handoff block is on TOP (newest-first is the ledger contract):
+  `grep -n '^# Session Handoff' work/<project-name>/handoff.md | head -3` — the first
+  hit is this session's block, with today's date.
+- Archive rule applied: if that grep lists more than 2 blocks, the older ones were
+  moved to `handoff-archive.md`.
+- The launcher was REPLACED, not appended: `next-session.md` describes only the next
+  session's mission — no leftover sections from the previous rollover.
 
 ## Outputs
 
