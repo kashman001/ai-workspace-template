@@ -79,10 +79,12 @@ shortcuts under `.claude/commands/`).
 
 - **checkpoint** (`skills/checkpoint/SKILL.md`) — session-boundary wrap-up:
   reconcile the backlog/issue tracker + project memory + reference docs, write a
-  hand-off doc (via the `handoff` skill), confirm clean branch state, and emit a
-  catch-up prompt for the next (post-compaction) session. Claude Code shortcut:
-  **`/checkpoint [next-focus]`**. Depends on the `handoff` skill and
-  `superpowers:brainstorming` (see `docs/recommended-tooling.md`).
+  hand-off doc (contract inlined in the skill), confirm clean branch state, and
+  emit a catch-up prompt for the next (post-compaction) session. Claude Code
+  shortcut: **`/checkpoint [next-focus]`**. On a context-budget WARN/STOP signal,
+  `session-rollover` takes precedence (measurement wins). Optional helpers: the
+  global `handoff` skill and `superpowers:brainstorming`
+  (see `docs/recommended-tooling.md`).
 
 - **onboard-repo** (`skills/onboard-repo/SKILL.md`) — bring a repo into the
   workspace: record its identity/auth in `docs/repos-registry.md`, build/wire a
@@ -134,6 +136,14 @@ shortcuts under `.claude/commands/`).
   needs the global Matt Pocock skill set (`grilling`, `research`, `prototype`,
   `domain-modeling` — `docs/recommended-tooling.md` §3); without it those
   ticket types degrade to plain conversation.
+
+- **writing-for-agents** (`skills/writing-for-agents/SKILL.md`, vendored from
+  [mattpocock/skills](https://github.com/mattpocock/skills)) — style guide for
+  writing any document an agent consumes: skills, `AGENTS.md`/`CLAUDE.md`,
+  docs reached by pointers. Model-invoked when creating or editing skills (no
+  slash command); `SKILL-MECHANICS.md` beside it covers skill frontmatter and
+  invocation choice. Consult it before writing or reworking anything under
+  `skills/`.
 
 ## Service Access
 
