@@ -3,6 +3,32 @@ ARCHIVE of work/template-maintenance/handoff.md — older Session Handoff
 blocks, newest first. See handoff.md for the purpose header + live blocks.
 -->
 
+# Session Handoff — 2026-08-05 (upstream-sync EXECUTED; pushed `823f8c2`)
+
+**Trigger:** work-unit boundary — the sync scoped by the previous session's
+recon is fully executed, committed, and pushed; ~83K tokens (OK).
+
+**What shipped (`823f8c2` on `main`, pushed):**
+- Global symlinks (`~/.config/agent-context/skills/`): broken
+  `writing-great-skills` removed; `writing-for-agents`, `wizard`,
+  `to-questionnaire`, `wait-what` linked from the clone (at `8b36d4f`).
+  Broken-symlink scan clean. `global.md` setup/util list updated to
+  `writing-for-agents` (machine-side, outside the repo).
+- `skills/wayfinder/` refreshed to `8b36d4f`: SKILL.md re-copied, provenance
+  comment re-added with new pin+date; `agents/openai.yaml` verified identical
+  to upstream (no copy needed); diff vs upstream re-verified comment-only.
+- `docs/recommended-tooling.md` §3: three new table rows, rename, "worth
+  watching" note rewritten (graduated skills dropped; `batch-grill-me` →
+  folded into `grilling`; in-progress remainder listed). Top summary table
+  (line ~24) never listed `writing-great-skills` — no change needed there.
+- Backlog: 2026-08-05 changelog row + both last-updated dates.
+
+**Notes for later:** historical mentions of `writing-great-skills` /
+`batch-grill-me` in the backlog changelog, the 2026-07-30 spec, and these
+work-dir files were left as-is (provenance, not live docs).
+
+---
+
 # Session Handoff — 2026-08-05 (upstream-sync recon; STOP before execution)
 
 **Trigger:** context-budget STOP (~158K) fired right after recon completed;
