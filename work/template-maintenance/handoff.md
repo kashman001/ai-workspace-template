@@ -6,6 +6,40 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-05 (upstream-sync recon; STOP before execution)
+
+**Trigger:** context-budget STOP (~158K) fired right after recon completed;
+per convention no integration work was started. **Nothing mutated**: global
+symlinks, vendored `skills/wayfinder/`, and all docs are untouched by this
+session. Only the reference clone was pulled (to `8b36d4f`).
+
+**What this session produced:** a complete recon of upstream
+`mattpocock/skills` changes since our `2ab9580` pin, plus a scoped execution
+plan (tasks #8–#11 in the session task list; full detail re-stated in
+`next-session.md` — read that, not this, for what to do).
+
+**Key facts (verified against the clone at `8b36d4f`):**
+- Newly **released** skills: `wizard` → `engineering/`; `to-questionnaire`,
+  `wait-what` ("that message didn't land — re-pitch it"), and
+  `writing-for-agents` → `productivity/`. `writing-for-agents` is a
+  rename+restructure of `writing-great-skills` (upstream `1fc6573`), which
+  leaves `~/.config/agent-context/skills/writing-great-skills` a **broken
+  symlink**.
+- `batch-grill-me` is gone — folded into `grilling` (upstream `a4b2009`,
+  round-by-round frontier interview).
+- `wayfinder` upstream diff since our pin: cosmetic emphasis-char churn plus
+  one real line — Grilling ticket type is now "Conversation. The default
+  case. Always invoke the /grilling and /domain-modeling skills."
+  `agents/openai.yaml` not yet diff-checked.
+- Upstream `issue-tracker-local.md` changed only trivially (wording);
+  our `docs/agents/issue-tracker.md` adaptation is unaffected.
+- A `deprecated/` bucket exists upstream but holds only a README at HEAD.
+- User's earlier deferral of `wizard`/`to-questionnaire` applied only while
+  they were in-progress; they explicitly asked to integrate formally
+  released skills now.
+
+---
+
 # Session Handoff — 2026-07-30 (wayfinder integration)
 
 **Trigger:** context-budget WARN (~129K tokens) after work completed.
