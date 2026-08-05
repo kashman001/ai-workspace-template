@@ -6,6 +6,41 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-05 (skill-hardening plan EXECUTED; all 8 items shipped)
+
+**Trigger:** mission complete — the full `skill-hardening-plan.md` executed and
+pushed to `main`; work-unit boundary at ~110K tokens (OK).
+
+**What shipped (three commits on `main`; see `git log` for shas):**
+1. Items 1–7 — skill fixes: checkpoint's promotion scan now also sweeps
+   `work/*/map.md` Decisions-so-far (cross-ref in decision-log); onboard-repo's
+   budget cadence moved above its steps; convention pointers unified on
+   `CONTEXT.md` (rlm, issue-tracker.md); create-work-item optional files gained
+   `spec.md`/`map.md`/`issues/`; runnable Verification sections added to
+   checkpoint / create-work-item / session-rollover / decision-log; identical
+   "Which boundary skill?" first-yes-wins block in checkpoint +
+   session-rollover; global-`handoff` prerequisite replaced by an inlined
+   3-rule hand-off contract in both; `disable-model-invocation: true` on
+   create-work-item / onboard-repo / rlm; ADR bar restated as the three-way
+   AND test in decision-log + `docs/adr/README.md` with a "don't log this"
+   counter-example.
+2. Item 8 — vendored `skills/writing-for-agents/` (SKILL.md +
+   SKILL-MECHANICS.md + agents/openai.yaml) at pin `8b36d4f`, provenance
+   comment mirroring wayfinder's; diff vs upstream verified comment-only.
+   Wired: CONTEXT.md bullet (+ checkpoint bullet updated for the arbitration/
+   contract changes), recommended-tooling §3 blockquote now covers both
+   vendored skills.
+3. Item 9 — backlog changelog row for the whole batch; Tier-2 note for the
+   inline-handoff-contract decision appended to `decisions.md`; this ledger/
+   launcher rollover.
+
+**Verification done:** per-item greps from the plan; diff-vs-upstream for the
+vendored skill; `bash -n scripts/*.sh` clean; each edited SKILL.md re-read
+top-to-bottom (one drift caught: checkpoint Outputs still naming the handoff
+skill's default location — fixed).
+
+---
+
 # Session Handoff — 2026-08-05 (skill-comparison analysis → hardening plan; rollover before execution)
 
 **Trigger:** user-requested rollover at ~114K tokens (75%, OK) — execution of
@@ -31,31 +66,5 @@ session-rollover both depend on the global `handoff` skill absent from this
 repo; no verification sections in half the skill set; boundary-skill
 arbitration undefined; invocation-axis (`disable-model-invocation`) unused;
 upstream's ADR three-way AND test is sharper than our "lasting weight".
-
----
-
-# Session Handoff — 2026-08-05 (upstream-sync EXECUTED; pushed `823f8c2`)
-
-**Trigger:** work-unit boundary — the sync scoped by the previous session's
-recon is fully executed, committed, and pushed; ~83K tokens (OK).
-
-**What shipped (`823f8c2` on `main`, pushed):**
-- Global symlinks (`~/.config/agent-context/skills/`): broken
-  `writing-great-skills` removed; `writing-for-agents`, `wizard`,
-  `to-questionnaire`, `wait-what` linked from the clone (at `8b36d4f`).
-  Broken-symlink scan clean. `global.md` setup/util list updated to
-  `writing-for-agents` (machine-side, outside the repo).
-- `skills/wayfinder/` refreshed to `8b36d4f`: SKILL.md re-copied, provenance
-  comment re-added with new pin+date; `agents/openai.yaml` verified identical
-  to upstream (no copy needed); diff vs upstream re-verified comment-only.
-- `docs/recommended-tooling.md` §3: three new table rows, rename, "worth
-  watching" note rewritten (graduated skills dropped; `batch-grill-me` →
-  folded into `grilling`; in-progress remainder listed). Top summary table
-  (line ~24) never listed `writing-great-skills` — no change needed there.
-- Backlog: 2026-08-05 changelog row + both last-updated dates.
-
-**Notes for later:** historical mentions of `writing-great-skills` /
-`batch-grill-me` in the backlog changelog, the 2026-07-30 spec, and these
-work-dir files were left as-is (provenance, not live docs).
 
 ---
