@@ -112,6 +112,63 @@ stayed attachable until stopped. `claude logs` emits raw TUI escape codes;
   STOP. Needs a cadence rule ("record every N exchanges in extended
   discussions") or vendor hooks — feeds open question 3.
 
+### Codification walkthrough (discussed 2026-08-05)
+
+Goal: evaluate every decision point locally (script/hook), reserving the LLM
+for what only it can do. Verdicts:
+
+- **D1 detect** — LOCAL (exists: `context-budget.sh` exit codes). Gap is
+  *when it runs* → watcher/vendor hooks.
+- **D2 safe-to-interrupt** — MOSTLY LOCAL: turn-boundary placement (Stop-style
+  hook = "answer first" enforced structurally) + mechanical git gates
+  (merge/rebase markers). Small mid-refactor residue accepted.
+- **D3 ask-or-go** — LOCAL: pure policy table (`status × ROLLOVER_RELAUNCH`).
+- **D4 handoff content** — **LLM, irreducible.** Only the dying context holds
+  the conversation-only state. Script verifies, never generates.
+- **D5 rollover valid?** — LOCAL: the skill's Verification greps as a hard
+  gate; refuse to relaunch until they pass.
+- **D6 which project/runtime** — LOCAL after redesign (below).
+- **D7 launch** — LOCAL: `launch-next-session.sh`.
+- **D8 successor confirmed** — LOCAL: successor's own register is the
+  heartbeat.
+
+Conductor state machine: MEASURE → SAFE? → POLICY → [LLM writes] → VERIFY →
+RESOLVE → LAUNCH → CONFIRM. The LLM's role collapses to D4 + relaying the
+WARN-time ask.
+
+### Multi-session identity redesign (user challenge, 2026-08-05)
+
+User caught that "global active project" D6 breaks with concurrent sessions,
+and that the current design assumes one session per runtime per workspace.
+Confirmed in `scripts/context-budget.sh`:
+
+- Discovery is already **session-exact** via runtime env vars
+  (`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`) —
+  added precisely because newest-mtime races concurrent sessions.
+- But the registry is **scalar per runtime** (`.context-budget/
+  session-$RUNTIME.json`), and `check`/`record` prefer the registry over
+  re-discovery → under concurrency, session A can measure session B's
+  artifact. A live wrong-measurement bug, not just a D6 flaw.
+- Gemini's exact path (workspace telemetry log, truncated at register) is
+  architecturally single-session-per-workspace.
+
+Redesign direction (analysis delivered; not yet user-approved):
+
+1. **Session-keyed state:** `.context-budget/sessions/<runtime>-<session-id>
+   .json` with `{runtime, artifact, project, registered_at}`; register writes
+   its own file; resolve-self via env-var identity first. D6 becomes "read my
+   own record".
+2. **One *active* session per project, enforced by advisory lock**
+   (`work/<proj>/.active-session`: runtime + session-id + timestamp) rather
+   than making the launcher/ledger backbone multi-writer (REPLACE semantics
+   are single-writer by construction; concurrent rollovers on one work item
+   would silently destroy each other). Dying session releases after the D5
+   gate; successor's register acquires; stale locks (artifact untouched N
+   hours) reclaimable.
+3. **Gemini exception documented:** exact counts remain single-session-per-
+   workspace; per-session fallback is estimate-only.
+4. **D8 restated:** new session file with same project + different session-id.
+
 ## Proposed optionality knobs
 
 Natural home: `context-budget.env` (already the checked-in, non-secret knobs
