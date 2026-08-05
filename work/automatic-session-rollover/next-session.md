@@ -11,36 +11,49 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Objective: settle the design for automating the rollover→relaunch pipeline,
-then implement. Next actions:
+Objective: finish the design discussion, then implement. This is a
+**discussion-first** project — do not start coding until the user closes the
+open design points.
 
-1. `scripts/context-budget.sh register`
-2. Read `relaunch-analysis.md` — the grounding facts (verified vendor matrix,
-   demo results, proposed knobs).
-3. **Discuss with the user** the analysis' four open questions (knob shape,
-   auto-mode consent, detection-reliability scope, runtime scope). The user
-   explicitly asked for a proper discussion before implementation — do not
-   start coding until these are settled.
-4. Once settled: implement `scripts/launch-next-session.sh` + knobs + the
-   session-rollover pointer line; verify (`bash -n`, live flag checks); Tier-2
-   decision notes in `decisions.md`; docs (`docs/workspace-structure.md`
-   scripts list, backlog changelog row); commit with `Decision:` trailer; push.
+1. `scripts/context-budget.sh register` (also fixes the clobbered registry —
+   see constraints).
+2. Read `relaunch-analysis.md` in full — it is the design document; every
+   settled point and open question lives there.
+3. **Re-pose the open question to the user:** their verdict on the
+   multi-session identity redesign (session-keyed state files + per-project
+   advisory lock + gemini exception + D8 restated) — analysis delivered last
+   session, not yet approved. It fixes a live wrong-measurement bug, so it
+   likely becomes implementation item #1.
+4. Then work the remaining open questions with the user: knob home
+   (`context-budget.env` vs new file), detection-reliability scope (cadence
+   rule vs vendor hooks — probably its own ticket), runtime scope
+   (opencode/copilot).
+5. Only after the user closes discussion: plan implementation (conductor
+   state machine, `launch-next-session.sh`, session-keyed registry
+   migration, knobs, skill pointer line).
 
 ## Constraints already decided (do not re-litigate)
 
-- Bootstrap prompt wording is load-bearing — bake it into the script
-  **verbatim**: "Read `work/<project>/next-session.md` and continue from
-  **First actions**." (see `relaunch-analysis.md`).
-- Vendor launch specifics live ONLY in the script (CLI-first rule).
-- Rejected: claude-handoff wholesale; prompt-only background handoff;
-  nohup+yolo background emulation (leaning rejected — confirm with user).
-- `claude --bg` has no `--name` flag; re-verify all flags against `--help`
-  before shipping.
-- Standing push-to-main approval applies (carried over from
-  template-maintenance, same template repo).
+- ADR-0003 (`docs/adr/0003-automate-rollover-relaunch.md`) records the
+  effort's why + rejected alternatives (claude-handoff wholesale, prompt-only
+  handoff, nohup+yolo emulation, vendor commands in skills).
+- Hybrid trigger: WARN asks, STOP automatic; declined WARN arms write-ahead
+  mode; discussion atomic step = answer first, then roll over.
+- Dying agent conducts the rollover itself (conversation-only state).
+- D1–D8: everything local except handoff-content generation (LLM-irreducible).
+- Bootstrap prompt wording baked verbatim; vendor specifics only in scripts;
+  verify every CLI flag against `--help` (no `claude --bg --name`).
+- Registry-clobber gotcha + workaround: `docs/operational-knowledge.md`.
+- Standing push-to-main approval applies.
 
 ## Read these first, in order
 
 1. `work/automatic-session-rollover/README.md`
 2. `work/automatic-session-rollover/handoff.md` (top block)
 3. `work/automatic-session-rollover/relaunch-analysis.md`
+
+## Do NOT reload
+
+- `work/template-maintenance/` — retargeted; nothing pending there.
+- Upstream `claude-handoff` SKILL.md — fully absorbed into ADR-0003.
+- `docs/adr/0001*/0002*` — background only.
