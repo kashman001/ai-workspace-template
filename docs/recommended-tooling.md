@@ -166,10 +166,13 @@ A suite of repeatable engineering workflows from
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
 | `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
 | `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time — **also vendored in this repo** (see below) |
+| `wizard` | Generate an interactive bash wizard walking a human through steps only they can do (credentials, dashboards, one-off migrations) — pairs with `docs/runbooks/` |
+| `to-questionnaire` | Turn a decision you can't fully answer into a questionnaire for someone else — pairs with wayfinder's HITL decision tickets |
+| `wait-what` | Stop — that last message didn't land; re-pitch it |
 | `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
 | `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
-| `writing-great-skills` | Reference vocabulary/principles for writing and editing skills well |
+| `writing-for-agents` | Reference for writing any document an agent consumes — skills, `AGENTS.md`/`CLAUDE.md`, pointed-to docs (formerly `writing-great-skills`) |
 | `git-guardrails-claude-code` | Block dangerous git commands (`push`, `reset --hard`, `clean`, `branch -D`, …) via hooks — **Claude Code-only** (writes Claude Code hook config) |
 | `setup-pre-commit` | Set up Husky pre-commit hooks (lint-staged/Prettier, typecheck, tests) in the current repo |
 
@@ -218,16 +221,14 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > the project command here so the workspace tracker conventions load. The
 > other skills stay global-only.
 
-> **Newer upstream skills worth watching** (all under `skills/in-progress/`
+> **Newer upstream skills worth watching** (under `skills/in-progress/`
 > upstream — expect churn; note `agent-context-sync` scans only the
 > `engineering`/`productivity`/`misc` buckets, so link these manually with
-> `ln -sfn` as above if wanted):
-> - `to-questionnaire` — turn a decision you can't answer into a questionnaire
->   for someone else. Pairs with wayfinder's HITL decision tickets. Recommended.
-> - `wizard` — generate an interactive bash wizard for a manual procedure
->   (service signup, one-off migration). Pairs with `docs/runbooks/`. Recommended.
-> - `batch-grill-me` — grilling variant asking every frontier question at once,
->   round by round. Nice-to-have.
+> `ln -sfn` as above if wanted). Formerly-watched skills have graduated:
+> `wizard`, `to-questionnaire`, `wait-what`, and `writing-for-agents` (renamed
+> from `writing-great-skills`) are now released and in the table above, and
+> `batch-grill-me` was folded into the `grilling` engine (round-by-round
+> frontier interview). Still in progress:
 > - `claude-handoff` — hands a conversation to a fresh background agent. **Not**
 >   recommended in this workspace: it competes with the `session-rollover` /
 >   `handoff` conventions here.
