@@ -56,5 +56,10 @@ Implementation notes:
 ## First actions
 
 1. `scripts/context-budget.sh register`
-2. Implement the script per the Mission notes; verify; wire the skill pointer;
+2. **Resume the paused discussion first** — the previous session ended
+   mid-question: implement interactively here, or demo the concept by
+   launching a `claude --bg` background agent to do it? The user rolled over
+   before answering; ask again (they may also have clarifications on the
+   mission spec).
+3. Then implement per the Mission notes; verify; wire the skill pointer;
    Tier-2 note; commit with `Decision:` trailer; push.
