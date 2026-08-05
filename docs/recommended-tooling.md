@@ -212,14 +212,15 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > by hand as above. Mind the buckets when linking manually: e.g. `teach` lives
 > under `skills/productivity/`, not `engineering/`.
 
-> **`wayfinder` is vendored into this repo** at `skills/wayfinder/` (pinned
-> upstream commit in its provenance comment) so Copilot users and template
-> downloaders get it with zero global setup, with this workspace's tracker
-> wiring in `docs/agents/issue-tracker.md`. On a machine that *also* has the
-> global symlink install, Claude Code sees both copies — the project
-> `/wayfinder` command and the global skill. They're the same content; prefer
-> the project command here so the workspace tracker conventions load. The
-> other skills stay global-only.
+> **Two skills are vendored into this repo** — `wayfinder` at `skills/wayfinder/`
+> (with this workspace's tracker wiring in `docs/agents/issue-tracker.md`) and
+> `writing-for-agents` at `skills/writing-for-agents/` (incl. its
+> `SKILL-MECHANICS.md` reference) — each pinned to an upstream commit in its
+> provenance comment, so Copilot users and template downloaders get them with
+> zero global setup. On a machine that *also* has the global symlink install,
+> Claude Code sees both copies of each — same content; prefer the project copy
+> here (for `wayfinder`, the `/wayfinder` command loads the workspace tracker
+> conventions). The other skills stay global-only.
 
 > **Newer upstream skills worth watching** (under `skills/in-progress/`
 > upstream — expect churn; note `agent-context-sync` scans only the
