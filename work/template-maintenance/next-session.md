@@ -10,7 +10,11 @@ manually copy-pasting the rollover bootstrap prompt, user-approved 2026-08-05.
 Usage: `launch-next-session.sh <project> [--runtime claude|codex|gemini|opencode]
 [--bg]`. It builds the canonical bootstrap prompt ("Read
 `work/<project>/next-session.md` and continue from **First actions**.") and
-launches the chosen runtime seeded with it — interactive by default, background
+launches the chosen runtime seeded with it. The exact wording is load-bearing
+— bake it into the script verbatim: the full path disambiguates (multiple
+work dirs have launchers), and the imperative "continue from" makes the
+session execute rather than summarize-and-wait; user-typed looser phrasings
+underperform, which is part of why the script exists — interactive by default, background
 with `--bg` where the runtime supports it (`claude --bg --name`). Vendor
 specifics live ONLY in this script (CLI-first rule); `session-rollover`'s
 closing step gains one runtime-neutral pointer line to it.
