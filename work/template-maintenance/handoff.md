@@ -6,6 +6,29 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-05 (follow-up: claude-handoff comparison; launch-next-session.sh mission queued; STOP rollover)
+
+**Trigger:** user-requested rollover; budget hit STOP (150K) as it started.
+Same session as the hardening execution below, continued interactively.
+
+**What happened after the hardening close-out:**
+- Compared upstream `claude-handoff` (in-progress bucket, clone `8b36d4f`,
+  18 lines) against `session-rollover` — the comparison the recon note had
+  skipped. Verdict: its three content rules already landed via the inlined
+  hand-off contract (hardening item 5); its prompt-only background-handoff
+  mechanism stays rejected; the one adopted concept is launch acceleration.
+- User approved building `scripts/launch-next-session.sh` (multi-runtime,
+  vendor specifics confined to the script per CLI-first). Full mission spec +
+  verdict + implementation notes queued in `next-session.md`, pushed
+  (`01a851c`) — read that, not this, for what to build.
+- **Open question, paused mid-answer:** how to start the implementing session
+  — a `claude --bg` background demo of the concept vs interactive
+  implementation. The user chose "roll over and continue the discussion".
+  Resume that question before implementing.
+- No code written this segment; only launcher/ledger bookkeeping mutated.
+
+---
+
 # Session Handoff — 2026-08-05 (skill-hardening plan EXECUTED; all 8 items shipped)
 
 **Trigger:** mission complete — the full `skill-hardening-plan.md` executed and
@@ -38,33 +61,5 @@ pushed to `main`; work-unit boundary at ~110K tokens (OK).
 vendored skill; `bash -n scripts/*.sh` clean; each edited SKILL.md re-read
 top-to-bottom (one drift caught: checkpoint Outputs still naming the handoff
 skill's default location — fixed).
-
----
-
-# Session Handoff — 2026-08-05 (skill-comparison analysis → hardening plan; rollover before execution)
-
-**Trigger:** user-requested rollover at ~114K tokens (75%, OK) — execution of
-the approved plan deliberately deferred to a fresh session.
-
-**What happened (same session as the sync execution below):**
-- After the sync, the user asked for a comparison of Matt Pocock's skill
-  library vs this workspace's own skills. Two Explore subagents swept all 35
-  upstream SKILL.md files (clone `8b36d4f`) and all 6 workspace skills +
-  conventions docs; findings synthesized into 7 improvement areas, all
-  **approved by the user**, plus an 8th (vendor `writing-for-agents`).
-- Full execution spec written to `skill-hardening-plan.md` (every needed
-  finding restated there — the comparison agents need not be re-run).
-- Tier-2 note recorded in `decisions.md` (vendor-as-skill vs docs-page).
-- Ledger housekeeping: blocks older than the top two archived to
-  `handoff-archive.md` (first archival for this work dir).
-- **No skill files were modified** — the tree at rollover contains only these
-  work-dir artifacts.
-
-**Notable findings that drove the plan** (detail in the plan file):
-checkpoint's promotion scan misses wayfinder `map.md` decisions; checkpoint +
-session-rollover both depend on the global `handoff` skill absent from this
-repo; no verification sections in half the skill set; boundary-skill
-arbitration undefined; invocation-axis (`disable-model-invocation`) unused;
-upstream's ADR three-way AND test is sharper than our "lasting weight".
 
 ---

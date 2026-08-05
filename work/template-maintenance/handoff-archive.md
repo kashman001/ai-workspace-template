@@ -2,6 +2,33 @@
 ARCHIVE of work/template-maintenance/handoff.md — older Session Handoff
 blocks, newest first. See handoff.md for the purpose header + live blocks.
 -->
+# Session Handoff — 2026-08-05 (skill-comparison analysis → hardening plan; rollover before execution)
+
+**Trigger:** user-requested rollover at ~114K tokens (75%, OK) — execution of
+the approved plan deliberately deferred to a fresh session.
+
+**What happened (same session as the sync execution below):**
+- After the sync, the user asked for a comparison of Matt Pocock's skill
+  library vs this workspace's own skills. Two Explore subagents swept all 35
+  upstream SKILL.md files (clone `8b36d4f`) and all 6 workspace skills +
+  conventions docs; findings synthesized into 7 improvement areas, all
+  **approved by the user**, plus an 8th (vendor `writing-for-agents`).
+- Full execution spec written to `skill-hardening-plan.md` (every needed
+  finding restated there — the comparison agents need not be re-run).
+- Tier-2 note recorded in `decisions.md` (vendor-as-skill vs docs-page).
+- Ledger housekeeping: blocks older than the top two archived to
+  `handoff-archive.md` (first archival for this work dir).
+- **No skill files were modified** — the tree at rollover contains only these
+  work-dir artifacts.
+
+**Notable findings that drove the plan** (detail in the plan file):
+checkpoint's promotion scan misses wayfinder `map.md` decisions; checkpoint +
+session-rollover both depend on the global `handoff` skill absent from this
+repo; no verification sections in half the skill set; boundary-skill
+arbitration undefined; invocation-axis (`disable-model-invocation`) unused;
+upstream's ADR three-way AND test is sharper than our "lasting weight".
+
+---
 
 # Session Handoff — 2026-08-05 (upstream-sync EXECUTED; pushed `823f8c2`)
 
