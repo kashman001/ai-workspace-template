@@ -85,6 +85,33 @@ in the same cwd, read the launcher, produced a correct Mission summary in ~11s,
 stayed attachable until stopped. `claude logs` emits raw TUI escape codes;
 `claude attach` is the practical review path.
 
+### Rollover conduct under the hybrid (discussed 2026-08-05, user-agreed direction)
+
+**Settled: WARN asks, STOP goes automatic.** Mechanics worked out so far:
+
+- **WARN flow:** signal arrives (in-band hook on claude; `record` exit 1
+  elsewhere) → agent finishes the current work unit → asks "roll over now?".
+  On yes, the **dying agent conducts the rollover itself** — mandatory, since
+  the reflect step routes conversation-only state to disk and only the dying
+  context has it. The existing `session-rollover` steps run unchanged; only
+  the final step swaps the paste-me prompt for `launch-next-session.sh
+  <project> --bg` (claude) or printing the ready-to-run command (others).
+- **Declining at WARN arms write-ahead mode** for the ~30K grace window
+  (WARN→STOP): the agent routes discussion state to disk *incrementally*
+  (settled points → decisions/analysis; open threads → launcher) at each
+  natural pause, so the eventual STOP rollover is cheap and nearly lossless.
+- **STOP mid-discussion:** the atomic step of a discussion is the current
+  exchange — answer the user's message first, then append a rolling-over
+  notice and conduct the rollover. The live question goes into the launcher's
+  START HERE verbatim; the successor's first action is to re-pose it, so the
+  discussion continues across the boundary. Accepted cost: unwritten
+  conversational nuance dies with the old session — still better than
+  conducting the discussion from inside the dumb zone.
+- **Detection gap this exposes:** pure discussions have no work-unit
+  boundaries, so non-claude runtimes may never run `record` and never see
+  STOP. Needs a cadence rule ("record every N exchanges in extended
+  discussions") or vendor hooks — feeds open question 3.
+
 ## Proposed optionality knobs
 
 Natural home: `context-budget.env` (already the checked-in, non-secret knobs
