@@ -55,3 +55,4 @@ keep it here.
 
 - [ADR-0001: Capture decision provenance in three tiers, promoting notes to ADRs](0001-three-tier-decision-capture.md) — accepted 2026-07-14
 - [ADR-0002: Load tools lean-by-default — CLI-first, MCP split into core and opt-in fragments](0002-lean-by-default-tool-loading.md) — accepted 2026-08-01
+- [ADR-0003: Automate the rollover→relaunch handoff with a workspace script, not vendor prompt mechanisms](0003-automate-rollover-relaunch.md) — accepted 2026-08-05
