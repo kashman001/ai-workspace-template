@@ -26,12 +26,15 @@ WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
+PARENT_SESSION=""; AGENT_ID=""
 case "${1:-}" in check|register|record|watch|release) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --transcript) ARTIFACT="$2"; shift 2 ;;
     --project) PROJECT="$2"; shift 2 ;;
+    --parent-session) PARENT_SESSION="$2"; shift 2 ;;
+    --agent-id) AGENT_ID="$2"; shift 2 ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -262,6 +265,14 @@ session_id_for() {
     opencode) [ -n "${OPENCODE_SESSION_ID:-}" ] && { echo "$OPENCODE_SESSION_ID"; return 0; } ;;
   esac
   [ -n "$af" ] || return 1
+  session_id_for_artifact_only "$rt" "$af"
+}
+
+session_id_for_artifact_only() {
+  # $1 = runtime, $2 = artifact path. Artifact-derived identity only (used
+  # directly for parent-side child registration, where env identity is the
+  # parent's, not the child's).
+  local rt="$1" af="$2" b
   b="$(basename "$af")"
   case "$rt" in
     claude)         echo "${b%.jsonl}" ;;
@@ -276,6 +287,15 @@ resolve_session() {
   if [ "$RUNTIME" = "auto" ]; then
     RUNTIME=$(detect_runtime)
     [ -n "$RUNTIME" ] || die "could not detect runtime; pass --runtime"
+  fi
+  # Child registration is parent-side: the registering process is the parent,
+  # so the child's identity must come from its artifact, never the env.
+  if [ -n "$PARENT_SESSION" ]; then
+    [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
+      || die "--parent-session requires --transcript <child artifact>"
+    SESSION_ID="$(session_id_for_artifact_only "$RUNTIME" "$ARTIFACT")" \
+      || die "cannot derive child session id from $ARTIFACT"
+    return 0
   fi
   SESSION_ID="$(session_id_for "$RUNTIME" "")" || SESSION_ID=""
   # Resolve-self: only this session's own file is ever trusted — the scalar
@@ -318,6 +338,61 @@ lock_holder_age() {
   [ -n "$af" ] && [ -f "$af" ] || return 1
   mt=$(stat -f%m "$af" 2>/dev/null || stat -c%Y "$af" 2>/dev/null) || return 1
   echo $(( $(date +%s) - mt ))
+}
+
+parent_record_path() {
+  # $1 = parent session id -> its registry record path (any runtime; mixed
+  # fleets register children under a parent from another runtime).
+  local f
+  for f in "$STATE_DIR/sessions/"*.json; do
+    [ -f "$f" ] || continue
+    [ "$(jq -r '.session_id // empty' "$f" 2>/dev/null)" = "$1" ] && { echo "$f"; return 0; }
+  done
+  return 1
+}
+
+parent_chain_holds_lock() {
+  # Transitive validity (research §6): the chain of parent pointers must
+  # terminate at the current project-lock holder. Structural check only;
+  # liveness is enforced by the stale sweep at release time.
+  local sid="$1" holder hops f found
+  holder=$(jq -r '.session_id // empty' \
+    "$WORKSPACE_ROOT/work/$PROJECT/.active-session" 2>/dev/null)
+  [ -n "$holder" ] || return 1
+  hops=0
+  while [ "$hops" -lt 10 ]; do
+    [ "$sid" = "$holder" ] && return 0
+    found=""
+    for f in "$WORKSPACE_ROOT/work/$PROJECT/.agent-locks/"*.json; do
+      [ -f "$f" ] || continue
+      if [ "$(jq -r '.session_id // empty' "$f" 2>/dev/null)" = "$sid" ]; then
+        found=$(jq -r '.parent_session_id // empty' "$f" 2>/dev/null); break
+      fi
+    done
+    [ -n "$found" ] || return 1
+    sid="$found"; hops=$((hops+1))
+  done
+  return 1
+}
+
+acquire_child_lock() {
+  local dir="$WORKSPACE_ROOT/work/$PROJECT"
+  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
+  if ! parent_chain_holds_lock "$PARENT_SESSION"; then
+    ROLE="auxiliary"
+    note "child lock: parent $PARENT_SESSION does not hold work/$PROJECT/.active-session (directly or via a valid chain); NOT granted — continuing as role=auxiliary"
+    return 0
+  fi
+  mkdir -p "$dir/.agent-locks"
+  jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg aid "$AGENT_ID" \
+    --arg psid "$PARENT_SESSION" --arg proj "$PROJECT" --argjson depth "$DEPTH" \
+    --arg ts "$(date -u +%FT%TZ)" \
+    '{runtime:$rt, session_id:$sid, parent_session_id:$psid, depth:$depth,
+      project:$proj, acquired_at:$ts}
+     + (if $aid == "" then {} else {agent_id:$aid} end)' \
+    > "$dir/.agent-locks/$RUNTIME-$SESSION_ID.json"
+  ROLE="child"
+  note "lock: acquired work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json under parent $PARENT_SESSION role=child"
 }
 
 acquire_lock() {
@@ -366,12 +441,25 @@ cmd_register() {
   mkdir -p "$STATE_DIR/sessions"
   rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
   find "$STATE_DIR/sessions" -name '*.json' -mtime +7 -delete 2>/dev/null  # dead sessions
+  DEPTH=0
+  if [ -n "$PARENT_SESSION" ]; then
+    local prec
+    prec=$(parent_record_path "$PARENT_SESSION") \
+      || die "parent session $PARENT_SESSION is not registered"
+    DEPTH=$(( $(jq -r '.depth // 0' "$prec" 2>/dev/null) + 1 ))
+  fi
   ROLE=""
-  [ -n "$PROJECT" ] && acquire_lock                             # sets ROLE
+  if [ -n "$PROJECT" ]; then
+    # Children never contend for the project lock (research §6).
+    if [ -n "$PARENT_SESSION" ]; then acquire_child_lock; else acquire_lock; fi
+  fi
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
     --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \
+    --arg psid "$PARENT_SESSION" --arg aid "$AGENT_ID" --argjson depth "$DEPTH" \
     '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts}
-     + (if $role == "" then {} else {role:$role} end)' \
+     + (if $role == "" then {} else {role:$role} end)
+     + (if $psid == "" then {} else {parent_session_id:$psid, depth:$depth} end)
+     + (if $aid == "" then {} else {agent_id:$aid} end)' \
     > "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
   note "registered $RUNTIME session $SESSION_ID artifact: $ARTIFACT"
   emit_check
@@ -391,17 +479,68 @@ cmd_record() {
   return $rc
 }
 
+sweep_child_locks() {
+  # Sweep stale child locks (holder artifact older than LOCK_STALE, same
+  # liveness rule as the project lock); the survivors — live child locks —
+  # land in LIVE_CHILD_LOCKS, one path per line.
+  local lockdir="$WORKSPACE_ROOT/work/$PROJECT/.agent-locks" f crt csid age
+  LIVE_CHILD_LOCKS=""
+  [ -d "$lockdir" ] || return 0
+  for f in "$lockdir"/*.json; do
+    [ -f "$f" ] || continue
+    crt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
+    csid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
+    if age=$(lock_holder_age "$crt" "$csid") && [ "$age" -lt "$LOCK_STALE" ]; then
+      LIVE_CHILD_LOCKS="$LIVE_CHILD_LOCKS$f
+"
+    else
+      rm -f "$f"; note "release: swept stale child lock ${f##*/}"
+    fi
+  done
+}
+
+live_locks_naming_parent() {
+  # $1 = session id. Live child locks whose parent pointer names it
+  # (basenames, space-joined) — the I4 release-order blockers.
+  local f out=""
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ "$(jq -r '.parent_session_id // empty' "$f" 2>/dev/null)" = "$1" ] \
+      && out="$out ${f##*/}"
+  done <<EOF
+$LIVE_CHILD_LOCKS
+EOF
+  printf '%s' "${out# }"
+}
+
 cmd_release() {
   resolve_session
   if [ -z "$PROJECT" ]; then
     PROJECT=$(jq -r '.project // empty' "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" 2>/dev/null)
     [ -n "$PROJECT" ] || die "release: no --project given and none recorded for this session"
   fi
+  sweep_child_locks
+  # A child releases its own per-child lock, never the project lock — and
+  # only bottom-up: refused while live child locks name it as parent (I4).
+  local own_child_lock="$WORKSPACE_ROOT/work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json"
+  if [ -f "$own_child_lock" ]; then
+    local blockers
+    blockers=$(live_locks_naming_parent "$SESSION_ID")
+    [ -z "$blockers" ] \
+      || die "release: refusing — live child locks under $RUNTIME-$SESSION_ID: $blockers"
+    rm -f "$own_child_lock"
+    note "release: released work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json"
+    return 0
+  fi
   local lock="$WORKSPACE_ROOT/work/$PROJECT/.active-session" hrt hsid
   [ -f "$lock" ] || { note "release: no lock at work/$PROJECT/.active-session"; return 0; }
   hrt=$(jq -r '.runtime // empty' "$lock" 2>/dev/null)
   hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
   if [ "$hrt-$hsid" = "$RUNTIME-$SESSION_ID" ]; then
+    # Release-order guard (I4): every live child lock descends from the
+    # project lock, so any survivor blocks the holder's release.
+    [ -z "$LIVE_CHILD_LOCKS" ] \
+      || die "release: refusing — live child locks in work/$PROJECT/.agent-locks: $(printf '%s' "$LIVE_CHILD_LOCKS" | while IFS= read -r f; do printf '%s ' "${f##*/}"; done)"
     rm -f "$lock"; note "release: released work/$PROJECT/.active-session"
   else
     note "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID); left in place"
