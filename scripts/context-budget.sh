@@ -4,10 +4,11 @@
 #          on-disk transcript and compare it against the workspace "dumb zone"
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
-# Usage:   context-budget.sh check|register|record|watch|release|children
+# Usage:   context-budget.sh check|register|record|watch|release|children|dispatch-contract
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
 #            [--parent-session <sid>] [--agent-id <id>] [--takeover] [--all]
+#            [--report <path>] [--brief <path>] [--gen <n>]
 #            [--interval <secs>] [--quiet]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
@@ -45,7 +46,8 @@ LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
 PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
-case "${1:-}" in check|register|record|watch|release|children) COMMAND="$1"; shift ;; esac
+REPORT_FILE=""; BRIEF_FILE=""; GEN=1
+case "${1:-}" in check|register|record|watch|release|children|dispatch-contract) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -55,6 +57,9 @@ while [ $# -gt 0 ]; do
     --agent-id) AGENT_ID="$2"; shift 2 ;;
     --takeover) TAKEOVER=1; shift ;;
     --all) ALL=1; shift ;;
+    --report) REPORT_FILE="$2"; shift 2 ;;
+    --brief) BRIEF_FILE="$2"; shift 2 ;;
+    --gen) GEN="$2"; shift 2 ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -682,6 +687,39 @@ cmd_watch() {
   done
 }
 
+# R2 dispatch contract (subagent-rollover research §8/§10): the block a parent
+# injects into a long-running child's dispatch prompt. Stateless, ASCII-only
+# (dispatch prompts traverse %q and BSD sed in launch paths), runtime-agnostic
+# — the portable-core tier, load-bearing on disk protocol not hooks.
+cmd_dispatch_contract() {
+  [ -n "$REPORT_FILE" ] || die "dispatch-contract requires --report <path>"
+  case "$GEN" in ''|*[!0-9]*|0) die "--gen must be a positive integer" ;; esac
+  echo "=== Dispatch contract (context-budget R2/R3) ==="
+  echo "You are generation $GEN on this task."
+  [ -n "$BRIEF_FILE" ] && echo "Brief: $BRIEF_FILE"
+  echo "Report file: $REPORT_FILE"
+  if [ "$GEN" -ge 2 ]; then
+    cat <<'EOF'
+- Read the report file before starting: earlier generations' progress and
+  open items are recorded there. Finish the open items first.
+EOF
+  fi
+  cat <<'EOF'
+- At every work-unit boundary, append a progress block to the report file
+  (what finished, what is next, open items). This doubles as your heartbeat.
+- Keep your final return message to at most 15 lines; detail belongs in the
+  report file, not the return.
+- The first line of your return must be one of:
+  DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED
+- ROLLOVER_NEEDED means: context spent, task incomplete, report current as
+  of your last checkpoint, open items listed there. Emit it only when asked
+  to checkpoint or when a WARN/STOP line is pushed into your session -
+  never from self-assessment of your own context usage.
+- If asked to checkpoint: flush state to the report file, then return your
+  status and open items. Do not push on.
+EOF
+}
+
 command -v jq >/dev/null 2>&1 || die "jq is required"
 
 case "$COMMAND" in
@@ -691,4 +729,5 @@ case "$COMMAND" in
   watch) cmd_watch ;;
   release) cmd_release ;;
   children) cmd_children ;;
+  dispatch-contract) cmd_dispatch_contract ;;
 esac
