@@ -585,3 +585,28 @@ scripts as self-contained units — ~12 duplicated lines is the cheaper cost).
 operational-knowledge worktree entry superseded. All six suites green
 (registry 60, attach 22, launcher 81, statusline 16, vendor 37, children 27).
 **Promote?:** done → ADR-0006 (promoted 2026-08-06, session 21).
+
+## 2026-08-06 — Slice 3: R2 dispatch contract as an emitter subcommand, R3 as documented policy (session 21)
+
+**Chose:** a stateless `context-budget.sh dispatch-contract --report <path>
+[--brief <path>] [--gen <n>]` subcommand emitting the R2 contract block
+(checkpoint-at-boundaries, 15-line return cap, five-status vocabulary with
+ROLLOVER_NEEDED-only-on-request, gen>=2 read-report-first clause) for parents
+to inject into child dispatch prompts; R3 (successor dispatch is the only
+rollover verb, resume = continuation that stacks history) stays parent-side
+policy in docs/context-budget.md + a CLAUDE.md dispatch-time pointer.
+**Because:** the contract text is load-bearing (research §8: the disk
+protocol must survive any lost in-band leg) — hand-copied prose drifts per
+dispatch, an emitter is the single source of truth and gives the slice its
+testable surface; R3 is a decision rule the *parent* applies, so it belongs
+in guidance, not in the emitted child prompt.
+**Rejected:** prose-only guidance (drifts, untestable, invisible at dispatch
+time); a full skill file for orchestration (standing context tax, and R4/R6
+mechanics that would justify it are deferred); emitting the R3 rule into the
+child prompt (the child can't act on it — it can't measure itself, D1).
+**Blast radius:** `scripts/context-budget.sh` (new subcommand + 3 flags),
+new suite `scripts/tests/test-dispatch-contract.sh` K1–K7 (24 asserts),
+docs/context-budget.md new section + quickstart line + children cross-ref,
+CONTEXT.md Context Budget bullet. All seven suites green (267 asserts).
+**Promote?:** no — implementation of research §14.3 within ADR-0005's model;
+revisit when R4 (dispatch records/fencing) makes the protocol contractual.

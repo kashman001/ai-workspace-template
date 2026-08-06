@@ -53,6 +53,10 @@ is what keeps concurrent sessions from reading each other's counts.
   trigger policy"). **Exit 2 (STOP):** finish only the current atomic step,
   then run `skills/session-rollover/SKILL.md` — no ask. Never start a new work
   unit in WARN/STOP state.
+- **Dispatching a long-running subagent:** `scripts/context-budget.sh
+  dispatch-contract --report <path> [--brief <path>] [--gen <n>]` — emit the
+  rollover contract into the child's prompt (see "Dispatching long-running
+  children").
 
 ## Why you can't ask the model (D1)
 
@@ -330,6 +334,43 @@ dies loudly):
   can gate on the sweep exactly like its own `check`. Default parent is the
   current session; `--parent-session <sid>` sweeps another *registered*
   session's children.
+
+What to do when the sweep escalates is the next section's R3 rule: roll the
+child (fresh dispatch), don't resume it.
+
+## Dispatching long-running children (`dispatch-contract`, R2/R3)
+
+A child can't measure itself (D1 applies twice over — it has no hook wiring
+and no envelope), and no runtime lets a parent reliably message a running
+child. So child rollover rests on two portable rules, workable in every
+runtime with no child handles at all (research §8/§10/§11):
+
+- **R2 — every long-running child is dispatched under a contract.**
+  `dispatch-contract --report <path> [--brief <path>] [--gen <n>]` emits the
+  block to include in the child's dispatch prompt: checkpoint by appending a
+  progress block to the report file at every work-unit boundary (the report's
+  mtime doubles as the child's heartbeat), cap the final return at 15 lines
+  with detail in the report, first return line from
+  `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED`,
+  and — on a checkpoint request — flush and yield rather than push on.
+  `ROLLOVER_NEEDED` is only ever a *response* (to a checkpoint request, or to
+  a WARN/STOP line pushed by the child's own runtime hooks), never the
+  child's self-assessment. The subcommand is stateless, runtime-agnostic,
+  and ASCII-only (dispatch prompts traverse `%q` and BSD sed in launch
+  paths).
+- **R3 — successor dispatch is the only rollover verb.** Resume is for
+  *continuation* (e.g. SDD fix rounds), and every resume stacks history onto
+  the child's transcript — the research's motivating 141.8K child was a
+  resumed one. Before any resume, sweep (`children`); at WARN/STOP, ask the
+  child to checkpoint, then dispatch a *fresh* child with `--gen N+1` (the
+  contract then opens with "read the report file first; finish its open
+  items"). Child WARN is the parent's decision, no human ask — humans are
+  only consulted at the top level (R7).
+
+Task sizing is the cheapest prevention: scope child tasks so the expected
+peak stays under WARN (the measured median child is ~67K; the tail is what
+the sweep catches). Deferred to a later slice: parent-persisted dispatch
+records and generation fencing (R4), drain mode (R6).
 
 ## Per-runtime adapters
 
