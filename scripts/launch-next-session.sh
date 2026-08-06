@@ -14,19 +14,22 @@
 #          built-in default. ROLLOVER_CONFIRM_SECS (env only, default 120)
 #          bounds the --bg successor-confirmation poll.
 #          work/<project>/.rollover-options (optional, written at rollover):
-#          ROLLOVER_OPT_APPROVAL=default|auto|full, ROLLOVER_OPT_MODEL=<id>,
+#          ROLLOVER_OPT_APPROVAL=default|edits|auto|full, ROLLOVER_OPT_MODEL=<id>,
 #          ROLLOVER_OPT_EXTRA=<raw args> — replayed as per-runtime flags on
 #          the successor launch.
 # Exit:    0 ok / 3 error. Requires jq.
 # Vendor flags verified against live --help 2026-08-05: claude [prompt] + --bg;
 # codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. Approval-mapping
 # flags (OPT_ARGS below) re-verified against live --help 2026-08-06: claude
-# --permission-mode acceptEdits/--dangerously-skip-permissions; codex
-# --ask-for-approval never/--dangerously-bypass-approvals-and-sandbox (NOT
-# --full-auto — that flag does not exist in codex-cli 0.142.4); gemini
-# --approval-mode auto_edit/--yolo; opencode --auto (same flag for both
-# levels); copilot --allow-all-tools/--allow-all. Re-verify before changing
-# (ADR-0003: a nonexistent flag already slipped in once).
+# --permission-mode acceptEdits (edits), --permission-mode auto (auto —
+# classifier-vetted, claude 2.1.223), --dangerously-skip-permissions (full);
+# codex --ask-for-approval never/--dangerously-bypass-approvals-and-sandbox
+# (NOT --full-auto — that flag does not exist in codex-cli 0.142.4); gemini
+# --approval-mode auto_edit/--yolo; opencode --auto (same flag for edits and
+# full); copilot --allow-all-tools/--allow-all. Non-claude runtimes have no
+# classifier equivalent: auto falls back to the edits mapping with a note.
+# Re-verify before changing (ADR-0003: a nonexistent flag already slipped in
+# once).
 
 set -u
 
@@ -120,13 +123,29 @@ if [ -f "$OPTF" ]; then
   . "$OPTF" >/dev/null 2>&1 || true
   case "${ROLLOVER_OPT_APPROVAL:-}" in
     ""|default) : ;;
-    auto)
+    edits)
       case "$RUNTIME" in
         claude) OPT_ARGS+=(--permission-mode acceptEdits) ;;
         codex) OPT_ARGS+=(--ask-for-approval never) ;;
         gemini) OPT_ARGS+=(--approval-mode auto_edit) ;;
         opencode) OPT_ARGS+=(--auto) ;;
         copilot|copilot-cli) OPT_ARGS+=(--allow-all-tools) ;;
+      esac ;;
+    auto)
+      case "$RUNTIME" in
+        claude) OPT_ARGS+=(--permission-mode auto) ;;
+        codex)
+          note "runtime=codex has no classifier mode — falling back to nearest level (edits)"
+          OPT_ARGS+=(--ask-for-approval never) ;;
+        gemini)
+          note "runtime=gemini has no classifier mode — falling back to nearest level (edits)"
+          OPT_ARGS+=(--approval-mode auto_edit) ;;
+        opencode)
+          note "runtime=opencode has no classifier mode — falling back to nearest level (edits)"
+          OPT_ARGS+=(--auto) ;;
+        copilot|copilot-cli)
+          note "runtime=$RUNTIME has no classifier mode — falling back to nearest level (edits)"
+          OPT_ARGS+=(--allow-all-tools) ;;
       esac ;;
     full)
       case "$RUNTIME" in

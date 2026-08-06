@@ -1,6 +1,28 @@
 # 02 — Permission-mode inheritance across rollovers (classifier "auto mode" gap)
 
-Status: open · raised 2026-08-06 (session 14, post-rollover discussion with user)
+Status: resolved 2026-08-06 (session 15) · raised 2026-08-06 (session 14,
+post-rollover discussion with user)
+
+## Resolution (session 15)
+
+User answered the open questions; shipped same day:
+
+- **Spelling:** re-pointed `auto` → classifier tier; renamed the old
+  acceptEdits tier to `edits`. Ladder: `default < edits < auto < full`.
+  Chosen over adding a `classifier` level (claude-centric name in the
+  vendor-neutral vocabulary) and over retiring `auto` loudly (a stderr
+  warning nobody reads mid-chain degrades to manual — the original
+  incident). The silent-change surface was empty: the only existing
+  `.rollover-options` said `full`.
+- **Fallbacks:** non-claude runtimes (no classifier equivalent) map `auto`
+  to their `edits` flags plus a stderr note.
+- **This work item:** `.rollover-options` switched from `full` to `auto`.
+
+`--permission-mode auto` verified against live `claude --help` 2.1.223
+(ADR-0003). Changes: `scripts/launch-next-session.sh` (mapping + header),
+`scripts/tests/test-launch-next-session.sh` (T14 family, 55/55 green),
+`docs/context-budget.md` "Option inheritance", `skills/session-rollover/
+SKILL.md` step 6.
 
 ## Incident
 

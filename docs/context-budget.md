@@ -140,11 +140,16 @@ against `--help` before changing them.
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
 by the dying session at `session-rollover` step 6, only from what it actually
 knows about its own launch — an absent or stale key is left untouched) holds
-three keys: `ROLLOVER_OPT_APPROVAL=default|auto|full` (normalized
-approval/permission level, mapped to each runtime's own flag —
-e.g. `auto` → codex `--ask-for-approval never`, gemini `--approval-mode
-auto_edit`, opencode `--auto`, copilot `--allow-all-tools`; `full` → the
-stronger bypass variant of each), optional `ROLLOVER_OPT_MODEL=<model-id>`
+three keys: `ROLLOVER_OPT_APPROVAL=default|edits|auto|full` (normalized
+approval/permission level, mapped to each runtime's own flag — `edits`
+auto-approves file edits only: claude `--permission-mode acceptEdits`, codex
+`--ask-for-approval never`, gemini `--approval-mode auto_edit`, opencode
+`--auto`, copilot `--allow-all-tools`; `auto` is the most autonomous mode the
+runtime offers *with* a safety net — claude `--permission-mode auto`
+(classifier-vetted: routine actions run unattended, risky ones are blocked);
+runtimes without a classifier equivalent fall back to their `edits` mapping
+with a note; `full` → the stronger bypass variant of each), optional
+`ROLLOVER_OPT_MODEL=<model-id>`
 (passed through as `--model`), and optional `ROLLOVER_OPT_EXTRA=<raw flags>`
 (word-split and appended verbatim — the escape hatch for anything the
 normalized mapping doesn't cover). When the file is absent, or

@@ -90,7 +90,10 @@ unnoticed.
 
 6. **Write `work/<project-name>/.rollover-options`** recording how THIS session
    was launched, so the successor inherits it: `ROLLOVER_OPT_APPROVAL=default|
-   auto|full` (normalized approval/permission mode), optional
+   edits|auto|full` (normalized approval/permission level — `edits` =
+   auto-approve file edits only; `auto` = the runtime's classifier-vetted
+   autonomous mode where one exists, nearest-level fallback elsewhere;
+   `full` = bypass), optional
    `ROLLOVER_OPT_MODEL=<model-id>`, optional `ROLLOVER_OPT_EXTRA=<raw flags for
    this runtime>`. If you don't know your own launch options, leave any
    existing file untouched (it carries the last known values); create or
