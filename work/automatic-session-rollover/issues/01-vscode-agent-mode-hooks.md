@@ -1,7 +1,7 @@
 # 01 — Verify VS Code agent-mode hooks + `copilot_vscode_measure` on a Copilot-licensed machine
 
 Type: task
-Status: open
+Status: open — **UNBLOCKED 2026-08-06** (see update below)
 
 ## Why spun out
 
@@ -26,8 +26,33 @@ scope after smoke tests (session 3)"; ADR-0004.
    plausible but unverified on current builds; compare its output against the
    live session UI the way copilot-cli was verified (73.0k exact match).
 
+## Update 2026-08-06 — blocker lifted; scope grows one item
+
+- **The origin machine now qualifies:** the user confirmed a **Copilot Pro
+  license** active in their VS Code Copilot session on this machine
+  (VS Code 1.132.0 installed). "Needs a Copilot-licensed machine" no longer
+  defers this ticket — schedule it as normal work when wayfinder tickets
+  06–08 are done.
+- **New third item — copilot-vscode seeded relaunch via `code chat`.**
+  VS Code 1.132's CLI ships a `code chat [options] [prompt]` subcommand
+  (`-m ask|edit|agent|<custom>`, defaults to `agent`; `-r` reuse last
+  window; `-a` add file context; stdin via trailing `-`). CLI presence +
+  flag surface verified on this machine 2026-08-06 (`code chat --help`);
+  end-to-end (does the seeded agent session actually start and run?) is
+  unverified — same live-verification pass as items 1–2. If it works,
+  `launch-next-session.sh`'s `copilot-vscode` branch upgrades from
+  note-and-punt ("paste the prompt into VS Code agent mode") to seeded
+  interactive: `CMD=(code chat -r -m agent "$PROMPT")` — same tier as
+  codex/gemini/opencode/copilot-cli. Add a W-test + docs
+  (`docs/context-budget.md` relaunch-knobs section, `relaunch-analysis.md`
+  table row) with the verification.
+- A live copilot-vscode agent-mode session on this work item doubles as the
+  item-2 verification vehicle: its `register`/`check` output line is exactly
+  the `copilot_vscode_measure` evidence needed (compare tokens against the
+  session UI, like copilot-cli's 73.0k match).
+
 ## Done when
 
-- Both checks pass on a Copilot-licensed machine (note VS Code + extension
-  versions in this file), or findings recorded here and the adapter/docs
-  amended to match reality.
+- All three checks pass on a Copilot-licensed machine (note VS Code +
+  extension versions in this file), or findings recorded here and the
+  adapter/docs/launcher amended to match reality.
