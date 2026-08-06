@@ -7,6 +7,39 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 9: plan Tasks 2–6 shipped via subagent-driven development; WARN rollover)
+
+**What shipped (committed on `main`, pushed at rollover):**
+
+- **Task 2 — `6a78138`:** `opencode` runtime in `scripts/context-budget.sh`
+  (sqlite measurement from `message.data` tokens.total, session-column
+  fallback; env-only detect). Suite T9.
+- **Task 3 — `4543645`:** codex `UserPromptSubmit` hook
+  (`scripts/hooks/context-budget-codex-hook.sh` + `.codex/config.toml`). T5.
+  Smoke check needed `-m gpt-5.5` (machine's global codex config pins an
+  unavailable model — see docs/operational-knowledge.md).
+- **Task 4 — `93e9d45`:** gemini `BeforeAgent` hook + `.gemini/settings.json`
+  wiring (graphify BeforeTool + telemetry preserved). T6/T10. Live smoke
+  blocked by missing gemini auth on this machine (pre-documented gotcha);
+  gemini parsed the new config shape cleanly.
+- **Task 5 — `f9579fe`:** opencode `chat.message` plugin + wrapper. T7.
+  Justified 4th file: plugin registered in `.opencode/opencode.json` `plugin`
+  array (plugins do NOT auto-load from `.opencode/plugins/`). Live smoke green.
+- **Task 6 — `9fa16b7`:** copilot CLI `sessionStart`/`agentStop` hooks +
+  `.github/hooks/context-budget.json`. T8. Live smoke green; this workspace
+  added to `~/.copilot/config.json` `trustedFolders` (was absent).
+
+Suite `scripts/tests/test-vendor-budget-hooks.sh`: 37 asserts green.
+Per-task review record + deferred minors: `.superpowers/sdd/2026-08-05-vendor-hook-deployments/progress.md`
+(SDD ledger — final whole-branch review still pending, do after Task 7).
+
+**What did NOT happen:** Task 7 (option inheritance in launch-next-session.sh
++ SKILL.md step) and Task 8 (docs/backlog/decisions + verification gate +
+final review). Two machine gotchas routed to docs/operational-knowledge.md.
+
+**Suggested skills for next session:** `superpowers:subagent-driven-development`
+(SDD ledger above is mid-plan); `session-rollover` at WARN/STOP.
+
 # Session Handoff — 2026-08-05 (session 8: plan execution started — Task 1 shipped; WARN rollover)
 
 **What shipped (committed + pushed on `main`):**
@@ -36,48 +69,4 @@ safe to `git worktree remove --force` + `git branch -d` when convenient.
 
 **Suggested skills for next session:** `superpowers:executing-plans` on the
 plan (Tasks 2–8); `session-rollover` at WARN/STOP.
-
-# Session Handoff — 2026-08-05 (session 7: item #3 planned — vendor hooks + option inheritance; STOP rollover before execution)
-
-**What shipped (committed + pushed from worktree branch
-`worktree-vendor-hook-deployments`):**
-
-- **Item #3 implementation plan, complete and self-contained:**
-  `plans/2026-08-05-vendor-hook-deployments.md` — 8 tasks, all code inlined
-  (no placeholders), TDD steps per task. Covers: shared hook lib extracted
-  from the claude hook (Task 1); **new `opencode` runtime for
-  context-budget.sh** (Task 2 — gap found this session: the script had no
-  opencode branch; sqlite schema live-verified against
-  `~/.local/share/opencode/opencode.db` v1.18.14: `message.session_id` +
-  `json_extract(data,'$.tokens.total')`, session-column fallback); codex
-  `UserPromptSubmit` (Task 3), gemini `BeforeAgent` (Task 4 — envelope pinned
-  from bundled v0.46.0 reference.md: `hookSpecificOutput.additionalContext`,
-  JSON-only stdout), opencode `chat.message` plugin (Task 5), copilot
-  `sessionStart`+`agentStop` STOP-only block (Task 6); **successor option
-  inheritance** (Task 7 — user request mid-session: approval mode + model
-  replay via `work/<proj>/.rollover-options`, mapped per runtime in
-  launch-next-session.sh); docs/backlog/decisions + full verification gate
-  (Task 8).
-- **Ops finding** routed to `docs/operational-knowledge.md`: EnterWorktree
-  re-keys the Claude Code project dir — the live transcript moves, the
-  registry artifact goes stale, and discovery misattributes another session's
-  usage (a predecessor's 148K WARN read as ours; real reading was 45K then).
-  Re-register after entering a worktree.
-
-**What did NOT happen:** no plan task was executed — the session hit STOP
-(171K, measured exact against its own worktree-keyed transcript) right after
-the plan was written. Execution is entirely the successor's.
-
-**User inputs this session (both folded into the plan, Task 7):** the
-successor session must inherit the predecessor's options (approval/auto mode,
-model, etc.), for all vendor agent types.
-
-**Loose ends:** main checkout's `work/context-decay/context-ledger.jsonl` has
-uncommitted rows (this session's record calls ran there); fold into the next
-work commit. Session-5 ledger block moved to `handoff-archive.md` (2-block
-rule).
-
-**Suggested skills for next session:** `superpowers:executing-plans` (or
-subagent-driven-development) on the committed plan; `session-rollover` at
-WARN/STOP.
 
