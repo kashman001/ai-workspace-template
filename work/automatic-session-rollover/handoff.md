@@ -7,6 +7,50 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-05 (session 7: item #3 planned — vendor hooks + option inheritance; STOP rollover before execution)
+
+**What shipped (committed + pushed from worktree branch
+`worktree-vendor-hook-deployments`):**
+
+- **Item #3 implementation plan, complete and self-contained:**
+  `plans/2026-08-05-vendor-hook-deployments.md` — 8 tasks, all code inlined
+  (no placeholders), TDD steps per task. Covers: shared hook lib extracted
+  from the claude hook (Task 1); **new `opencode` runtime for
+  context-budget.sh** (Task 2 — gap found this session: the script had no
+  opencode branch; sqlite schema live-verified against
+  `~/.local/share/opencode/opencode.db` v1.18.14: `message.session_id` +
+  `json_extract(data,'$.tokens.total')`, session-column fallback); codex
+  `UserPromptSubmit` (Task 3), gemini `BeforeAgent` (Task 4 — envelope pinned
+  from bundled v0.46.0 reference.md: `hookSpecificOutput.additionalContext`,
+  JSON-only stdout), opencode `chat.message` plugin (Task 5), copilot
+  `sessionStart`+`agentStop` STOP-only block (Task 6); **successor option
+  inheritance** (Task 7 — user request mid-session: approval mode + model
+  replay via `work/<proj>/.rollover-options`, mapped per runtime in
+  launch-next-session.sh); docs/backlog/decisions + full verification gate
+  (Task 8).
+- **Ops finding** routed to `docs/operational-knowledge.md`: EnterWorktree
+  re-keys the Claude Code project dir — the live transcript moves, the
+  registry artifact goes stale, and discovery misattributes another session's
+  usage (a predecessor's 148K WARN read as ours; real reading was 45K then).
+  Re-register after entering a worktree.
+
+**What did NOT happen:** no plan task was executed — the session hit STOP
+(171K, measured exact against its own worktree-keyed transcript) right after
+the plan was written. Execution is entirely the successor's.
+
+**User inputs this session (both folded into the plan, Task 7):** the
+successor session must inherit the predecessor's options (approval/auto mode,
+model, etc.), for all vendor agent types.
+
+**Loose ends:** main checkout's `work/context-decay/context-ledger.jsonl` has
+uncommitted rows (this session's record calls ran there); fold into the next
+work commit. Session-5 ledger block moved to `handoff-archive.md` (2-block
+rule).
+
+**Suggested skills for next session:** `superpowers:executing-plans` (or
+subagent-driven-development) on the committed plan; `session-rollover` at
+WARN/STOP.
+
 # Session Handoff — 2026-08-05 (session 6: implementation item #2 shipped — launch-next-session.sh; WARN rollover)
 
 **What shipped (all committed + pushed, `b6d245a`, `d468f7c`, `ef42a12`):**
@@ -40,41 +84,3 @@ from the live `.active-session` lock (untracked by design).
 **Suggested skills for next session:** superpowers:writing-plans →
 executing-plans (the pattern items #1 and #2 both used successfully);
 session-rollover at WARN/STOP.
-
-# Session Handoff — 2026-08-05 (session 5: implementation item #1 shipped — session-keyed registry, lock, release, gemini guard; WARN rollover)
-
-**What shipped (all committed + pushed, `15ec961`…`187f926` + rollover commit):**
-
-- **Item #1 complete, M13 closed.** `scripts/context-budget.sh` migrated to the
-  session-keyed registry per ADR-0004: `session_id_for()` (env-first identity,
-  artifact-derived fallback, gemini fixed id `workspace`); resolve-self in
-  `check`/`record` (own session file only, never another's);
-  `.context-budget/sessions/<runtime>-<session-id>.json`; `register --project`
-  acquires `work/<proj>/.active-session` (advisory: live holder warned never
-  stolen; stale >`CONTEXT_LOCK_STALE_SECS` [new knob, 3h] reclaimed); new
-  `release` subcommand (self-only, project defaults from own session record);
-  gemini concurrent-session guard (fresh non-empty telemetry log → skip reset,
-  degrade to chat-log estimate).
-- **Tests:** `scripts/tests/test-context-budget-registry.sh` — 13 asserts, all
-  green; T1 is the live M13 clobber repro (was red against the old scalar
-  registry). Self-contained throwaway workspace in mktemp; fake $HOME.
-- **Docs:** `docs/context-budget.md` (§Multi-session status → implemented;
-  §Session registration rewritten for sessions/ + lock + release; gemini-only
-  limitation para), `skills/session-rollover/SKILL.md` (release call after
-  verification gate), backlog M13 → Resolved, new L16 (phantom test suite in
-  workspace-structure.md, fixed same session), summary line → all 31 resolved.
-- **Plan + decisions:** implementation plan at
-  `plans/2026-08-05-session-keyed-registry.md` (all tasks checked off in
-  execution, file committed with this rollover); three Tier-2 notes appended to
-  `decisions.md` (identity derivation, advisory-not-blocking lock, gemini
-  freshness guard).
-
-**Verification state:** `bash scripts/tests/test-context-budget-registry.sh`
-exits 0; live register/record in this session used the new registry and
-correctly tracked this session's own transcript (dogfood: the WARN that
-triggered this rollover came from it).
-
-**Suggested skills for next session:** `superpowers:writing-plans` then
-`superpowers:executing-plans` (same pattern as this session) for item #2;
-`docs/context-budget.md` §Relaunch knobs is the spec.
-
