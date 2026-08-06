@@ -348,3 +348,21 @@ launcher's non-TTY safety or leave attach half-built inside it.
 (change-log row).
 **Promote?:** no — same shape as the other ADR-0003 companion scripts
 (implementation detail of the already-promoted relaunch/re-attach pipeline).
+
+## 2026-08-06 — Research doc review rendition: standalone in-repo HTML (session 12)
+
+**Decision:** render `subagent-rollover-research.md` for human+agent review as a
+standalone, self-contained HTML file in the work dir
+(`subagent-rollover-research.html`, commit `d93daea`), restructured
+problem → model (with 5 hand-authored inline-SVG diagrams) → existing
+machinery → findings → proposal → evaluation. The markdown note stays the raw
+research record; the HTML is the review front door.
+**Why:** user asked for an HTML doc whose information flow suits review;
+inline SVG + token-based light/dark CSS keeps it dependency-free and
+renderable anywhere (matches the in-repo precedent of
+`docs/template-workspace-backlog.html`).
+**Rejected:** (1) publishing only as a claude.ai Artifact — not in-repo, not
+runtime-agnostic, invisible to downloaders; (2) mermaid diagrams — need
+external JS, which a self-contained in-repo file can't load offline.
+**Blast radius:** one new file in this work dir.
+**Promote?:** no.

@@ -119,3 +119,11 @@ Any `opencode run` appends a `"$schema": "https://opencode.ai/config.json"`
 line to `.opencode/opencode.json`. Harmless but dirties the working tree —
 don't commit it accidentally, and don't be surprised when it reappears after
 each run.
+
+## claude-in-chrome — cannot open file:// URLs
+
+The Chrome extension refuses `file://` navigation ("browser-internal or
+unparseable URL"). To preview a local HTML file in a browser-automation
+session, serve it first: `python3 -m http.server <port> --bind 127.0.0.1`
+from the file's directory, then navigate to `http://127.0.0.1:<port>/…`.
+Kill the server when done (it's a background task otherwise).

@@ -6,56 +6,68 @@
 
 ## Mission
 
-The vendor-hook-deployments plan is COMPLETE (all 9 tasks, final review,
-pushed). A new research phase just concluded: **parent-managed subagent
-rollover** — the full design note is
-`work/automatic-session-rollover/subagent-rollover-research.md` (committed,
-`4fa0cdb`). Nothing from it is implemented yet. The next session's job is
-whatever the user directs — most likely: discuss/refine the research doc, or
-start turning its §14 "Suggested next steps" into implementation slices
-(wayfinder decision tickets or an SDD plan).
+The subagent-rollover research doc now has an HTML review rendition
+(`subagent-rollover-research.html`, structure: problem → model → machinery →
+findings → proposal → evaluation). The user's next directive (given mid-turn,
+NOT started): **enumerate rollover scenarios** — mainline functional flows
+plus corner/edge cases across resilience, recoverability, and performance —
+so the team can (a) keep them in mind while working through the doc and
+(b) use them as the evaluation harness, *before* implementing anything. The
+user also asked: "is there a dimension I missed?" — answer that first.
+
+## Read these, in order
+
+1. `subagent-rollover-research.md` — §13 only (S1–S10 scenarios, I1–I8
+   invariants, P1–P5 fault properties, cost model): the seed the new catalog
+   must extend, not duplicate. Demand-load other sections per §-pointer as
+   needed; the HTML mirrors the same content restructured.
+2. `handoff.md` top block — the session-12 record, including candidate
+   missing dimensions already sketched (concurrency/contention incl. human
+   attach during drain, observability/auditability, cost/token-economy,
+   record schema evolution, opaque-runtime degradation, human-in-the-loop
+   policy edges).
 
 ## First actions
 
-1. `git pull --ff-only` if the checkout lags origin/main.
-2. `scripts/context-budget.sh register --project automatic-session-rollover`.
-3. Read `subagent-rollover-research.md` — TL;DR + §14 first; demand-load the
-   rest per section as the discussion needs it (it's long by design: it
-   carries state machines, invariants, scenario suite, cost model for
-   evaluation).
-
-## Constraints already decided (do not re-litigate)
-
-- Vendor-agnostic layering is mandatory (user directive + project memory):
-  neutral contract, per-runtime adapters, graceful degradation where a
-  runtime exposes no child handles.
-- Child rollover verb = successor dispatch, never resume (evidence: the
-  141.8K resumed implementer; resume retains full history).
-- Parent must not roll over with live children (drain mode) — successors
-  cannot adopt a predecessor's children; enforce via lock release-order.
-- Standing push-to-main approval applies.
+1. `scripts/context-budget.sh register --project automatic-session-rollover`
+   (also `git pull --ff-only` if the checkout lags origin/main).
+2. Answer the user's open question (missed dimensions), agree the dimension
+   set, then build the scenario catalog — likely as a new section of the HTML
+   doc (keep the md note in sync or record where the catalog is
+   authoritative). Mainline + edge/corner cases per dimension, each phrased
+   with pass criteria so it can become an acceptance/fault-injection test.
 
 ## Do NOT reload
 
-- `handoff-archive.md` and handoff blocks before session 11b — superseded.
-- The vendor-hook-deployments plan + SDD artifacts — plan done, workspace
-  deleted; git history is the record.
-- The three research-agent transcripts/scratchpad — their findings are fully
-  captured in the three committed files (`subagent-rollover-research.md`,
-  `-stats.md`, `subagent-vendor-survey.md`).
-- Backlog card **L17** — known follow-up minors from the code plan; separate
-  from this research thread.
+- `handoff-archive.md` and blocks before session 12 — superseded.
+- The vendor-hook-deployments plan + SDD artifacts — done; git history is
+  the record.
+- The research-agent transcripts/scratchpad — findings fully captured in the
+  three committed research files.
+- Backlog card **L17** — separate follow-up thread.
+- The full HTML file — only open the section being edited; it duplicates the
+  md content you already have pointers into.
 
-## State snapshot (at session-11b rollover, 2026-08-06)
+## Constraints already decided (do not re-litigate)
 
-- Branch `main` pushed through `4fa0cdb`; this rollover's commit will follow.
-- Uncommitted at rollover: only `work/context-decay/context-ledger.jsonl`
-  (goes into the rollover commit) + the live `.active-session` lock
-  (untracked by design).
-- No running background agents (all three research agents completed and were
-  harvested). No worktrees. Suites untouched this phase.
-- No `.rollover-options` file — session didn't know its own launch flags
-  (skill: leave absent); successor launches with runtime defaults.
+- Vendor-agnostic layering is mandatory (neutral contract, per-runtime
+  adapters, graceful degradation without child handles).
+- Child rollover verb = successor dispatch, never resume.
+- Parent must not roll over with live children (drain mode; release-order
+  enforcement in the lock system).
+- Scenarios-before-implementation ordering is the user's explicit direction.
+- Standing push-to-main approval applies.
+
+## State snapshot (at session-12 rollover, 2026-08-06)
+
+- Branch `main` pushed through `d93daea` (HTML doc); this rollover's commit
+  follows. Uncommitted at rollover: ledger + handoff/decisions/ops-knowledge
+  appends (go into the rollover commit); `.active-session` lock untracked by
+  design.
+- No running background agents or servers (the localhost:8749 preview server
+  was killed). No worktrees.
+- No `.rollover-options` file — launch flags unknown again (skill: leave
+  absent); successor launches with runtime defaults.
 
 ## At session end
 
