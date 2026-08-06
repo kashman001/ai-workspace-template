@@ -383,3 +383,19 @@ note and renumbers nothing cleanly; (2) HTML-only — not greppable, awkward to
 derive tests from, breaks the "md is raw record" convention.
 **Blast radius:** one new file; one new HTML section (+ §7→8, §8→9 renumber).
 **Promote?:** no.
+
+## 2026-08-06 — Parent kinds modeled as node position, not a type enum (session 13)
+
+**Decision:** the root (main work-item session) vs intermediate (subagent that
+parents) distinction is modeled as **node position** — the parent *role* is
+position-invariant; only the node's own lifecycle differs (delta table in
+research §3 / HTML §2.2). No `parent_type` field in records: position is
+derivable from R4's `depth`/`parent_session_id`.
+**Why:** the uniformity of parenting duties at every depth is what makes I4
+recursive and the model composable; a type enum would suggest two behavioral
+variants of parenting and duplicate information the dispatch record carries.
+**Rejected:** a first-class parent-type field/enum (user's initial suggestion,
+refined in discussion).
+**Blast radius:** doc-only (HTML §2.2, research §3, scenarios S53/S54).
+**Promote?:** no — travels with the research note; revisit if implementation
+ever needs position-specific record fields.
