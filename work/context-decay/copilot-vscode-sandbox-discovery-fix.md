@@ -1,5 +1,14 @@
 # Fix: `copilot_vscode_discover()` fails under sandboxed terminal
 
+> **Status: IMPLEMENTED + VERIFIED (2026-08-06, session 27).** Fast path
+> shipped in `copilot_vscode_discover()`; fake-HOME harness incl.
+> readdir-blocked parent 7/7, all eight `scripts/tests/` suites green
+> (326 asserts), and the Verify section below run live from a sandboxed
+> Copilot agent terminal (user-relayed): correct artifact pinned, no
+> `workspaceStorage/` listing. `method=estimate` mid-first-turn is the
+> designed pre-flush degrade (same file measured `38152 exact` after the
+> turn flushed). Record: issue-01 session-27 update block.
+
 ## Problem
 
 In `scripts/context-budget.sh`, the `copilot_vscode_discover()` function fails

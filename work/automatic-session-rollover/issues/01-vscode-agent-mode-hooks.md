@@ -91,6 +91,33 @@ session (Copilot Pro, Sonnet 5, this machine, relayed by the user):
   (another session/watcher), or the hook contract must deliver the
   artifact path in-band (item 1 territory).
 
+## Update 2026-08-06 (session 27) — sandbox discovery fix implemented
+
+The user-approved fix spec (`work/context-decay/
+copilot-vscode-sandbox-discovery-fix.md`) is implemented in
+`copilot_vscode_discover()`: the workspaceStorage hash is now derived from
+`$VSCODE_TARGET_SESSION_LOG` by parameter expansion and the token file
+probed directly (`workspaceStorage/<hash>/chatSessions/<sid>.jsonl`), no
+`readdir` on `workspaceStorage/` — the glob-and-grep scan remains as the
+fallback for older builds. Verified with a fake-HOME harness including a
+`chmod 311` readdir-blocked parent (sandbox simulation, 7/7 checks) and
+the full `scripts/tests/` suite (326 asserts green).
+
+**In-copilot live verification (2026-08-06, same VS Code instance,
+user-relayed): PASS.** The copilot agent exported
+`VSCODE_TARGET_SESSION_LOG` (value taken from its session context —
+confirmed visible there but not exported to its shell) and ran
+`register`/`check --runtime copilot-vscode` from its sandboxed terminal:
+discovery pinned the correct artifact
+(`workspaceStorage/d939e947…/chatSessions/53e98f5e-….jsonl`, basename =
+session id) with no `workspaceStorage/` listing. It reported
+`method=estimate tokens=530` — not a defect: the check ran mid-first-turn
+before copilot's usage flush (file was ~2.1 KB, size/4 fallback); after
+the turn flushed, the same file carries `promptTokens:38152` and
+`copilot_vscode_measure` returns `38152 exact`. Estimate-until-first-flush
+is the designed degrade. Only optional leg left: comparing tokens against
+a UI-visible meter (none reported so far).
+
 ## Done when
 
 - All three checks pass on a Copilot-licensed machine (note VS Code +

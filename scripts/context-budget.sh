@@ -117,12 +117,28 @@ copilot_vscode_discover() {
   # file is named after that same id. Either way we pin the live session
   # deterministically instead of racing on newest-mtime, which pins a stale
   # sibling session whose log happened to flush later (the silent-freeze bug).
-  local t="${VSCODE_TARGET_SESSION_LOG:-}" sid=""
+  local t="${VSCODE_TARGET_SESSION_LOG:-}" sid="" hash=""
   if [ -n "$t" ]; then
     [ -f "$t" ] && { echo "$t"; return 0; }
     sid="$(basename "$t")"; sid="${sid%.jsonl}"
+    # Fast path: the debug-logs path already embeds the workspaceStorage hash
+    # (.../workspaceStorage/<hash>/GitHub.copilot-chat/debug-logs/<sid>), so the
+    # token file is derivable without listing workspaceStorage/ — sandboxed
+    # terminals block readdir on that parent dir (glob expands empty) even
+    # though direct paths under it stay readable.
+    case "$t" in
+      */workspaceStorage/*/GitHub.copilot-chat/debug-logs/*)
+        hash="${t#*/workspaceStorage/}"; hash="${hash%%/*}"
+        ;;
+    esac
   fi
   local root ws d
+  if [ -n "$hash" ] && [ -n "$sid" ]; then
+    for root in "Code" "Code - Insiders" "VSCodium"; do
+      local f="$HOME/Library/Application Support/$root/User/workspaceStorage/$hash/chatSessions/$sid.jsonl"
+      [ -f "$f" ] && { echo "$f"; return 0; }
+    done
+  fi
   for root in "Code" "Code - Insiders" "VSCodium"; do
     ws="$HOME/Library/Application Support/$root/User/workspaceStorage"
     [ -d "$ws" ] || continue
