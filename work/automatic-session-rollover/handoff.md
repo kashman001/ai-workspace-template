@@ -7,6 +7,36 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-05 (session 8: plan execution started — Task 1 shipped; WARN rollover)
+
+**What shipped (committed + pushed on `main`):**
+
+- **Task 1 of `plans/2026-08-05-vendor-hook-deployments.md` — commit `4a39bf8`:**
+  shared lib `scripts/hooks/context-budget-hook-lib.sh` (throttle /
+  escalation-only / fail-open core, canonical WARN/STOP text);
+  `context-budget-claude-hook.sh` refactored to a thin wrapper sourcing it
+  (byte-identical messages; state files renamed `hook-claude-<sid>.*` — stale
+  old files harmless); new suite `scripts/tests/test-vendor-budget-hooks.sh`,
+  13 asserts green (T1 escalation, T2 throttle, T3 fail-open, T4 claude
+  envelope).
+
+**Session friction (resolved, no action needed):** primary checkout lagged
+origin/main — session 7 had pushed its rollover commit from the worktree
+branch; `git pull --ff-only` fixed it (the launcher's First-action warning
+worked). The live claude hook fired WARN in-band at 121K right after plan
+load — the push channel this whole item builds is demonstrably working.
+
+**What did NOT happen:** Tasks 2–8 untouched (opencode runtime, codex/gemini/
+opencode/copilot deployments, option inheritance, docs gate). Task 1 was
+executed as the final work unit under WARN; rollover began at ~135K.
+
+**Loose ends:** leftover locked worktree
+`.claude/worktrees/vendor-hook-deployments` (branch fully merged into main) —
+safe to `git worktree remove --force` + `git branch -d` when convenient.
+
+**Suggested skills for next session:** `superpowers:executing-plans` on the
+plan (Tasks 2–8); `session-rollover` at WARN/STOP.
+
 # Session Handoff — 2026-08-05 (session 7: item #3 planned — vendor hooks + option inheritance; STOP rollover before execution)
 
 **What shipped (committed + pushed from worktree branch
@@ -51,36 +81,3 @@ rule).
 subagent-driven-development) on the committed plan; `session-rollover` at
 WARN/STOP.
 
-# Session Handoff — 2026-08-05 (session 6: implementation item #2 shipped — launch-next-session.sh; WARN rollover)
-
-**What shipped (all committed + pushed, `b6d245a`, `d468f7c`, `ef42a12`):**
-
-- **Item #2 complete.** `scripts/launch-next-session.sh` per ADR-0003/0004:
-  verbatim bootstrap prompt (single source of truth in the script); runtime
-  resolution --runtime flag > dying session's own registry record (D6,
-  env-first identity mirroring `context-budget.sh session_id_for()`) > newest
-  record for the project > `ROLLOVER_RUNTIME` > claude; 5 runtimes
-  seeded-interactive (`claude` [+`--bg`], `codex` positional, `gemini -i`,
-  `opencode --prompt`, `copilot -i` — all flags re-verified against live
-  `--help` this session); modes off/manual/auto honored (auto+claude implies
-  --bg); --bg claude-only (die otherwise); D8 successor confirmation poll
-  after --bg (`ROLLOVER_CONFIRM_SECS`, default 120s, non-fatal); non-tty
-  manual prints `run: <cmd>` instead of exec'ing a TUI; copilot-vscode
-  degrades to prompt-only.
-- **Tests:** `scripts/tests/test-launch-next-session.sh` — 13 cases /
-  28 asserts, all green (dry-run flag assembly + stub-binary --bg/D8/timeout/
-  non-tty paths). Registry suite still green (13/13).
-- **Docs:** `docs/context-budget.md` §Rollover trigger policy status note
-  flipped to implemented; backlog changelog row appended; four Tier-2 notes
-  in `decisions.md` (tty guard, copilot-vscode degradation, --bg-only D8
-  confirmation, always-print prompt); plan committed at
-  `plans/2026-08-05-launch-next-session.md`; stale `workspace-structure.html`
-  rebuilt.
-
-**Where things stand:** items #1+#2 done; item #3 (four vendor hook
-deployments) not started — next session's mission. Working tree clean apart
-from the live `.active-session` lock (untracked by design).
-
-**Suggested skills for next session:** superpowers:writing-plans →
-executing-plans (the pattern items #1 and #2 both used successfully);
-session-rollover at WARN/STOP.
