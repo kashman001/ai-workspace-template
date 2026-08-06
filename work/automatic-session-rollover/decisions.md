@@ -151,3 +151,37 @@ newest chat log (estimate-only), warn.
 cannot exist yet; freshness is the only signal gemini offers (no session id).
 **Rejected:** always-reset (corrupts the live session's exact counts);
 per-session telemetry filtering (nothing to filter on).
+
+## 2026-08-05 — TTY guard for attached relaunch (item #2)
+**Chose:** `launch-next-session.sh` in manual mode `exec`s the runtime only
+when stdin+stdout are a terminal; otherwise it prints the ready-to-run
+command (`run: …`) and exits 0.
+**Because:** the agent invokes the script from a non-tty tool shell — exec'ing
+a TUI there hangs; relaunch-analysis already prescribed "print the
+ready-to-run command (others)" for that case.
+**Rejected:** always exec (hangs agent shells); refusing to run outside a tty
+(loses the paste-me fallback).
+
+## 2026-08-05 — copilot-vscode degrades to prompt-only (item #2)
+**Chose:** runtime `copilot-vscode` prints the bootstrap prompt with a warning
+and exits 0 — no launch attempted.
+**Because:** VS Code agent mode has no CLI seeded launch; verification is spun
+out (issues/01-vscode-agent-mode-hooks.md); the dying session still needs the
+prompt emitted for the user to paste.
+**Rejected:** hard error (kills the rollover's paste-me fallback).
+
+## 2026-08-05 — D8 successor confirmation only after --bg launches (item #2)
+**Chose:** after a `--bg` launch, poll `.context-budget/sessions/` for a file
+absent before launch with matching project and a different session-id;
+timeout `ROLLOVER_CONFIRM_SECS` (default 120s), non-fatal
+(`successor=unconfirmed` + advice).
+**Because:** attached launches occupy the terminal — nothing to poll from; a
+confirmation timeout must not fail an otherwise-complete rollover.
+**Rejected:** mandatory confirmation on all launch paths.
+
+## 2026-08-05 — Bootstrap prompt block always prints first (item #2)
+**Chose:** every mode (including error-free `off` and dry runs) prints the
+verbatim bootstrap prompt block before any launch logic.
+**Because:** the paste-me fallback must survive any launch failure; the script
+is the single source of the load-bearing wording (ADR-0003).
+**Rejected:** printing it only in `off` mode.

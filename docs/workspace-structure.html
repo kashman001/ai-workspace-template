@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 0ec173e48050f7468b0b2d315269922d37f30601 -->
+  <!-- source-md-sha1: 3a35f34391ec0d01715df8b6874bbf8fd74c4843 -->
 </head>
 <body>
 <div class="src-banner">
@@ -624,7 +624,7 @@ config) lives in user-level locations outside the workspace.</li>
 │   └── mcp.json                #   MCP server config (gitignored, user-specific)
 ├── .env.example                # Template for required env vars (checked in)
 ├── .env                        # Local env vars (gitignored)
-├── context-budget.env          # Context-budget thresholds (checked in, non-secret)
+├── context-budget.env          # Context-budget thresholds + relaunch knobs (checked in, non-secret)
 ├── .context-budget/            # Context-budget runtime state (gitignored)
 └── temp/, tmp/                 # Scratch files (gitignored, created as needed)</code></pre>
 <p>The root <code>README.md</code> is a one-pager for new humans landing
@@ -808,7 +808,7 @@ Documentation</h2>
 ├── operational-knowledge.md    # Distilled rules that prevent silent failures
 ├── service-access.md           # Credential framework: vault backends, verify commands
 ├── mcp-setup.md                # MCP server configuration guide
-├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover
+├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 │
 ├── agents/                     # Per-repo config the engineering skills consume
 │   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
@@ -1000,19 +1000,15 @@ Bootstrap and Utility Scripts</h2>
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt
 ├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
 ├── hooks/                         # Agent-runtime hook scripts
 │   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
 ├── mcp/                           # Workspace-local MCP servers
 │   ├── youtube-transcript.sh      #   YouTube MCP launcher
 │   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
-└── tests/                         # Automated workspace validation suite
-    ├── validate-workspace.sh      #   Test runner
-    ├── test-helpers.sh            #   Shared pass/fail/skip utilities
-    ├── test-workspace-integrity.sh
-    ├── test-content-consistency.sh
-    ├── test-parameterization.sh
-    └── test-cross-platform.sh</code></pre>
+└── tests/                         # Automated workspace tests
+    └── test-context-budget-registry.sh  # Session-keyed registry + lock regression tests (M13)</code></pre>
 <p><strong>Required scripts</strong> (start with these):</p>
 <ul>
 <li><code>setup.sh</code> — creates <code>.env</code> from
@@ -1191,8 +1187,8 @@ telemetry)</td>
 <tr>
 <td><code>context-budget.env</code></td>
 <td>Yes</td>
-<td>Non-secret context-budget thresholds (a count is never a
-credential)</td>
+<td>Non-secret context-budget thresholds + relaunch knobs (a count is
+never a credential)</td>
 </tr>
 <tr>
 <td><code>.mcp.json.example</code></td>
