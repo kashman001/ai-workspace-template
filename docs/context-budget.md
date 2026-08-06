@@ -150,7 +150,12 @@ session #N" and claude successors additionally get `--name "<project> #N"`,
 so session titles (picker, terminal title) read as work item + lineage
 number instead of a guess auto-generated from early session content; N lives
 in machine-local `work/<project>/.session-seq` (incremented per real launch,
-never by `--dry-run`). All five CLI runtimes get seeded-interactive launch
+never by `--dry-run`). `.session-seq` + the bootstrap prompt are the
+**canonical** session-number source (ADR-0007): sessions use their prompt
+number verbatim in ledger titles and worktree names, and the dying session
+syncs the counter to its own number at `session-rollover` step 7 before
+launching — so a hand-pasted (launcher-bypassing) launch that skipped the
+increment self-corrects within one rollover. All five CLI runtimes get seeded-interactive launch
 (`claude`, `codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached
 background (`--bg`) is claude-only. Copilot **VS Code** gets a seeded launch
 too — `code chat -r -m agent "<prompt>"` opens a new agent session in the

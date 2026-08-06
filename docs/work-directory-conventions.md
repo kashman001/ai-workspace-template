@@ -64,6 +64,16 @@ The append-only provenance log. Each session prepends one
 what got done, repo/state at rollover, and the immediate next step. Read only
 the top block; the rest is history.
 
+**Session numbering — one source of truth (ADR-0007):** N is the number from
+your own bootstrap prompt, **verbatim**. The canonical source is machine-local
+`work/<project>/.session-seq` (the launcher derives the prompt number from it);
+ledger block titles and worktree/branch names copy the prompt number — never
+re-derive N from ledger prose. If the ledger disagrees with your prompt number,
+repair the ledger note; seq wins. Drift self-heals at rollover: the dying
+session syncs `.session-seq` to its own number before launching the successor
+(`session-rollover` step 7). If your prompt carries no number (ad-hoc start),
+use `.session-seq` + 1 as your N and the sync write counts you in.
+
 **Archival (prevents unbounded growth):** keep only the two most recent session
 blocks live in `handoff.md`; move older blocks to `handoff-archive.md` (read on
 demand only). The archive uses the same newest-on-top ordering.
