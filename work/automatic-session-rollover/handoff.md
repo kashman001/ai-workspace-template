@@ -7,6 +7,33 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 11: Task 9 shipped + final whole-branch review — PLAN COMPLETE)
+
+**What shipped (committed on `main`, pushed through `75e8cbc`):**
+
+- **Task 9 — `3fafd13` + `6d0f448`:** `scripts/attach-session.sh` (find latest
+  session for a work dir; attach when alive+locked) + `test-attach-session.sh`
+  (19 asserts, bash-3.2 verified), docs front-door update, backlog row,
+  Tier-2 note. Live `--help` verification: no `claude attach` subcommand
+  exists — wired `claude --resume <session_id>`; limitation recorded in
+  script header, docs, and decision note. One fix round (backlog row missing
+  commit hash), then review clean.
+- **Final whole-branch review (`13201b5..6d0f448`, most capable model):** no
+  Criticals. One Important — `skills/session-rollover/SKILL.md:141` still
+  instructed the nonexistent `claude attach` — fixed in `75e8cbc` along with
+  a new open backlog card **L17** bundling the deferred follow-up minors
+  (attach-session unlocked-case wording; space-unsafe `ls -t` loops in
+  attach/launch scripts; unquoted SQL interp in `opencode_measure`; registry
+  suite filename drift in docs). Re-review clean except one **parked** Low:
+  backlog scorecard counts drifted (Open reads 2 vs 1 actual; Resolved 29 vs
+  31 — pre-existing) — ruled cosmetic, folded into L17's scope.
+- Ledger deferred minors all triaged by the final review: T3 lib-sourcing
+  fail-open ruled fine as-is; T7 docs pointer and T8 footer date verified
+  fixed. SDD workspace deleted after completion (git history is the record).
+
+**Plan status: all 9 tasks complete, reviewed, pushed. The
+vendor-hook-deployments plan is DONE.**
+
 # Session Handoff — 2026-08-06 (session 10: plan Tasks 7–8 shipped; user added Task 9 (attach helper); WARN rollover)
 
 **What shipped (committed on `main`, pushed):**
