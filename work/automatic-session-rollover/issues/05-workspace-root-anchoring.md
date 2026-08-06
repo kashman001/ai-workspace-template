@@ -1,8 +1,9 @@
 # 05 — Workspace-root anchoring: coordination state keyed to repository, not checkout
 
-Status: open — adopted by user as next implementation work · raised
-2026-08-06 (session 17 post-rollover discussion with user, after two
-sessions of worktree/rollover friction)
+Status: RESOLVED (session 19, 2026-08-06 — implemented per the codification
+plan; see `plans/workspace-root-anchoring.md` and the session-19 decision
+note) · raised 2026-08-06 (session 17 post-rollover discussion with user,
+after two sessions of worktree/rollover friction)
 
 ## Problem
 

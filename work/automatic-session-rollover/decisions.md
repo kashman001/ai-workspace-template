@@ -554,3 +554,36 @@ filter).
 (Per-child sweep section + quickstart line). All six suites green.
 **Promote?:** no — implementation detail within ADR-0005's model; revisit
 if the hook-wiring slice changes the escalation contract.
+
+## 2026-08-06 — Coordination state keyed to repository identity, not checkout path (session 19)
+
+**What:** issue 05 landed: `WORKSPACE_ROOT` in all five coordination
+scripts (`context-budget.sh`, `launch-next-session.sh`, `attach-session.sh`,
+`statusline-context-budget.sh`, `context-budget-hook-lib.sh`) now resolves
+via `git rev-parse --git-common-dir` → parent of the common `.git`, so every
+worktree of one repository converges on one `.context-budget/`, one lock per
+work item, one ledger, one `.session-seq`. Fallback to the old
+script-relative (statusline: input-dir) resolution when not in a git repo or
+when the git root is not this workspace (marker: the script's own path under
+`scripts/`). Paths normalized with `pwd -P` (macOS `/var` symlink). Plus:
+`launch-next-session.sh` invoked from a worktree now syncs the main
+checkout first (worktree committed+pushed, main clean under `work/<proj>/`,
+`pull --ff-only`; loud die on each) and launches from the main root —
+retiring the "no auto-relaunch from worktrees" ban and the
+register-before-isolate discipline.
+**Why:** every worktree/rollover divergence of sessions 16–17 was workspace
+identity silently equaling checkout identity; keying state to the repository
+(stable across checkouts) removes the class instead of patching symptoms.
+**Rejected:** per-checkout state with sync (recreates the divergence as a
+merge problem); state under `~` keyed by repo-id (less discoverable, breaks
+the disk-state-in-workspace convention — and it IS how vendors do it, with
+Claude Code's cwd-derived transcript slug as the cautionary tale); a shared
+sourced lib for the resolver (test suites and vendor-hook deployment copy
+scripts as self-contained units — ~12 duplicated lines is the cheaper cost).
+**Blast radius:** the five scripts; new tests G1/G2 (registry), W1–W5
+(launcher), T8 (statusline); docs/context-budget.md Worktrees subsection;
+operational-knowledge worktree entry superseded. All six suites green
+(registry 60, attach 22, launcher 81, statusline 16, vendor 37, children 27).
+**Promote?:** YES — candidate ADR amending ADR-0004/0005's implicit
+one-checkout assumption ("coordination state is keyed to the repository,
+never to a checkout").

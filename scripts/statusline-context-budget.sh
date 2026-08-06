@@ -21,6 +21,16 @@ SID=$(printf '%s' "$IN" | jq -r '.session_id // empty' 2>/dev/null)
 ROOT=$(printf '%s' "$IN" | jq -r '.workspace.project_dir // .cwd // empty' 2>/dev/null)
 [ -n "$ROOT" ] || ROOT=$(pwd)
 
+# Workspace identity = repository identity, not checkout path (issue 05): a
+# session isolated into a git worktree reports the worktree as project_dir,
+# but the coordination state lives in the main checkout — resolve through
+# git's common dir. Fallback: the reported dir itself (non-git workspace).
+if common="$(git -C "$ROOT" rev-parse --git-common-dir 2>/dev/null)"; then
+  case "$common" in /*) : ;; *) common="$ROOT/$common" ;; esac
+  repo="$(cd "$common/.." 2>/dev/null && pwd -P)"
+  [ -n "$repo" ] && [ -f "$repo/scripts/statusline-context-budget.sh" ] && ROOT="$repo"
+fi
+
 REC="$ROOT/.context-budget/sessions/claude-$SID.json"
 PROJECT=""
 [ -n "$SID" ] && [ -f "$REC" ] && PROJECT=$(jq -r '.project // empty' "$REC" 2>/dev/null)

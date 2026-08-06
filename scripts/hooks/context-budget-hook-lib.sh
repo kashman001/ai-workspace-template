@@ -10,7 +10,23 @@
 #     prints the canonical WARN/STOP text.
 
 BUDGET_HOOK_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE_ROOT="${WORKSPACE_ROOT:-$(cd "$BUDGET_HOOK_LIB_DIR/../.." && pwd)}"
+# Workspace identity = repository identity, not checkout path (issue 05):
+# resolve through git's common dir so hooks firing inside a worktree still
+# read/write the main checkout's state. The explicit WORKSPACE_ROOT env
+# override wins; fallback is the lib-relative root (non-git workspace).
+budget_hook_resolve_root() {
+  local root common repo
+  root="$(cd "$BUDGET_HOOK_LIB_DIR/../.." && pwd -P)"
+  if common="$(git -C "$root" rev-parse --git-common-dir 2>/dev/null)"; then
+    case "$common" in /*) : ;; *) common="$root/$common" ;; esac
+    repo="$(cd "$common/.." 2>/dev/null && pwd -P)"
+    if [ -n "$repo" ] && [ -f "$repo/scripts/hooks/context-budget-hook-lib.sh" ]; then
+      printf '%s' "$repo"; return
+    fi
+  fi
+  printf '%s' "$root"
+}
+WORKSPACE_ROOT="${WORKSPACE_ROOT:-$(budget_hook_resolve_root)}"
 BUDGET_STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 CHECK_EVERY="${CHECK_EVERY:-60}"
 

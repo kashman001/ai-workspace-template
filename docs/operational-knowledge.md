@@ -130,6 +130,14 @@ Kill the server when done (it's a background task otherwise).
 
 ## Worktree-isolated sessions vs. the main checkout — runtime state diverges
 
+> **Superseded by fix (2026-08-06, session 19, issue 05):** coordination
+> scripts now anchor `WORKSPACE_ROOT` to the repository (`git rev-parse
+> --git-common-dir`), so registry/locks/ledger written from a worktree land
+> in the main checkout, and `launch-next-session.sh` invoked from a worktree
+> syncs the main checkout and launches from it. See
+> `docs/context-budget.md` → "Worktrees". The first bullet below still
+> applies to *tracked* files (scripts, hooks): ship, then pull.
+
 Background/worktree sessions push tracked work to `origin/main` while the
 MAIN checkout stays behind and holds all machine-local runtime state
 (`.context-budget/` registry, `work/*/.active-session` locks, ledger,
@@ -141,4 +149,4 @@ both hit twice (sessions 15 and 16):
   the user pull.
 - Never auto-relaunch a rollover successor from inside a worktree: its
   registry/locks are worktree-local and die with it. Launch the successor
-  from the main checkout after pulling.
+  from the main checkout after pulling. *(Retired by the fix above.)*

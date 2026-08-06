@@ -92,5 +92,26 @@ rm -f "$HOME/.claude/settings.json"
 out=$(sl_input sid-zzz | bash "$SL")
 assert_eq "T7f: no global command + no work item -> previous behavior" "$out" "no work item"
 
+echo "T8: session in a git worktree resolves state from the shared root (issue 05)"
+GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
+trap 'rm -rf "$TMP" "$GW"' EXIT
+mkdir -p "$GW/scripts" "$GW/work/testproj" "$GW/.context-budget/sessions"
+cp "$SRC_ROOT/scripts/statusline-context-budget.sh" "$GW/scripts/"
+git -C "$GW" -c init.defaultBranch=main init -q
+git -C "$GW" -c user.email=t@t -c user.name=t add -A >/dev/null
+git -C "$GW" -c user.email=t@t -c user.name=t commit -qm init
+git -C "$GW" worktree add -q "$GW/wt" -b wt-branch
+jq -n --arg af "$GW/artifact-sid-www.jsonl" \
+  '{runtime:"claude", session_id:"sid-www", artifact:$af, project:"testproj",
+    registered_at:"2026-08-06T00:00:00Z", role:"primary"}' \
+  > "$GW/.context-budget/sessions/claude-sid-www.json"
+jq -n '{runtime:"claude", session_id:"sid-www", project:"testproj"}' \
+  > "$GW/work/testproj/.active-session"
+out=$(jq -n --arg d "$GW/wt" \
+  '{session_id:"sid-www", workspace:{project_dir:$d}, cwd:$d}' \
+  | bash "$GW/wt/scripts/statusline-context-budget.sh")
+assert_contains "T8a: PRIMARY resolved through shared root" "$out" "PRIMARY"
+assert_contains "T8b: project resolved through shared root" "$out" "testproj"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
