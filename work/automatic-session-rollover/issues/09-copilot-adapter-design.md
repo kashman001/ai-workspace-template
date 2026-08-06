@@ -141,3 +141,32 @@ per-role overrides await ticket 08.
 
 **Building it is execution work, out of this map's scope** — recorded as a
 template-backlog row (build unscheduled; schedule with the user).
+
+### [session 26] Verification addendum
+
+Session 26 (launched off a stale checkout — see the handoff ledger)
+independently re-derived this design before discovering session 25's
+resolution, then verified the contested points against the durable evidence
+files (`~/.copilot/session-state/{c356dbd8-…,96cbc930-…}/events.jsonl`):
+
+- **§3 confirmed empirically.** Child (`agentId`-tagged) lines carry ONLY
+  per-message `outputTokens` and one `subagent.completed.totalTokens`; every
+  `inputTokens`/`cacheReadTokens` field in both files sits on the single
+  `session.shutdown` rollup event. So there is no input-side per-request
+  number in events.jsonl — sqlite-first is necessary, not just preferred
+  (an events-grep-first primary, which session 26 had drafted, is refuted).
+- **§3 bonus confirmed real:** the current `copilot_cli_measure` grep can
+  only ever match `session.shutdown.inputTokens` — i.e. nothing exists to
+  match until the session has shut down; mid-session it silently
+  size-estimates. (The 2026-08-05 smoke-test "exact 73.0k" match was
+  plausibly the shutdown rollup of an ended session — 72550 in run 1's file.)
+- **Independent convergence** (raises confidence): context-size-not-
+  totalTokens, R4 records reused unchanged, background/`write_agent` probe
+  gate, never-assume-model/agent-type.
+- **One divergence, adjudicated for session 25's design:** session 26 had
+  argued for NO per-child locks (sync children can't self-register and live
+  inside the parent's blocked turn). Session 25's composite-id locks stand:
+  same code path at zero extra cost, and they matter for background
+  children (if the probe verifies them) and successor-parent audit; the
+  no-locks argument survives only as the observation that sync children
+  never contend.
