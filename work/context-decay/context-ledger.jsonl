@@ -42,3 +42,5 @@
 {"ts":"2026-08-06T00:31:22Z","runtime":"claude","session":"f2612050-6cf0-445b-a146-0792f40d3cb0.jsonl","tokens":120341,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: automatic-session-rollover"}
 {"ts":"2026-08-06T00:41:08Z","runtime":"claude","session":"8e633452-52c4-470d-a7ec-28db31163322.jsonl","tokens":122660,"method":"exact","threshold":150000,"status":"WARN","label":"automatic-session-rollover: documentation phase drafted"}
 {"ts":"2026-08-06T01:13:23Z","runtime":"claude","session":"8e633452-52c4-470d-a7ec-28db31163322.jsonl","tokens":126176,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN 122.7K post-documentation phase, user approved"}
+{"ts":"2026-08-06T01:15:05Z","runtime":"claude","session":"8e633452-52c4-470d-a7ec-28db31163322.jsonl","tokens":137396,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: automatic-session-rollover"}
+{"ts":"2026-08-06T01:32:11Z","runtime":"claude","session":"90710a32-c4c9-4efa-8817-d206d442c729.jsonl","tokens":129233,"method":"exact","threshold":150000,"status":"WARN","label":"item #1 session-keyed registry landed"}

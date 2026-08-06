@@ -117,3 +117,37 @@ per document, and the launcher explicitly capped promotion at one.
 **Blast radius:** `docs/adr/0004-multi-session-rollover-model.md` (new),
 `docs/adr/0003-*.md` (one Refined-by line), `docs/adr/README.md` index.
 **Promote?:** no — it *is* the promotion record.
+
+## 2026-08-05 — Session-id derivation: env-first, artifact-derived fallback (item #1)
+**Chose:** `session_id_for()` resolves identity from the runtime's own env var
+first (`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`,
+`VSCODE_TARGET_SESSION_LOG` basename), else derives the same id from the
+artifact path (transcript basename / rollout UUID suffix / session-state dir).
+Gemini gets the fixed id `workspace`.
+**Because:** the same session must map to the same registry file whether or not
+the env var is present, or one session grows two files and resolve-self breaks.
+Gemini exports no per-session identity — the fixed id *is* the documented
+single-session-per-workspace exception.
+**Rejected:** mtime-heuristic keying (still races — identity is the only
+reliable key); refusing to register without an env var (kills the fallback
+runtimes entirely).
+
+## 2026-08-05 — Advisory lock warns, never blocks measurement (item #1)
+**Chose:** `register --project` finding the lock held by a live session warns
+and skips acquisition but still registers and emits the check; `release` only
+ever removes a lock held by self. Staleness = holder artifact untouched >
+`CONTEXT_LOCK_STALE_SECS` (default 3h, in context-budget.env).
+**Because:** hard-failing register would kill budget tracking for exactly the
+session that most needs measuring; enforcement is the agent honoring the
+warning before single-writer launcher/ledger writes.
+**Rejected:** hard-fail register on held lock; lock-free multi-writer
+launcher/ledger (REPLACE semantics are single-writer by construction).
+
+## 2026-08-05 — Gemini concurrent guard: freshness heuristic on the shared log (item #1)
+**Chose:** at gemini register, a non-empty telemetry log modified <10 min ago
+is treated as another live session's — skip the reset, register against the
+newest chat log (estimate-only), warn.
+**Because:** register is a session-start action, so a fresh own-session log
+cannot exist yet; freshness is the only signal gemini offers (no session id).
+**Rejected:** always-reset (corrupts the live session's exact counts);
+per-session telemetry filtering (nothing to filter on).
