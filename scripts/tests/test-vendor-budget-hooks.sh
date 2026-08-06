@@ -70,4 +70,36 @@ err=$(echo "$payload" | CHECK_EVERY=0 FAKE_STATUS=OK \
 assert_eq "T4c: OK exits 0" "$rc" "0"
 assert_empty "T4d: OK silent" "$err"
 
+echo "T9: opencode runtime measurement (real script, fake sqlite db)"
+if command -v sqlite3 >/dev/null 2>&1; then
+  OTMP="$(mktemp -d)"
+  mkdir -p "$OTMP/scripts" "$OTMP/.context-budget/sessions"
+  cp "$SRC_ROOT/scripts/context-budget.sh" "$OTMP/scripts/"
+  cp "$SRC_ROOT/context-budget.env" "$OTMP/" 2>/dev/null || true
+  DB="$OTMP/opencode.db"
+  sqlite3 "$DB" <<'SQL'
+CREATE TABLE session (id text PRIMARY KEY, directory text, time_updated integer,
+  tokens_input integer DEFAULT 0, tokens_output integer DEFAULT 0,
+  tokens_reasoning integer DEFAULT 0, tokens_cache_read integer DEFAULT 0);
+CREATE TABLE message (id text PRIMARY KEY, session_id text, data text);
+INSERT INTO session VALUES ('ses_test','/tmp',0,128,9,31,12416);
+INSERT INTO message VALUES ('msg_1','ses_test',
+  '{"role":"assistant","tokens":{"total":12584,"input":128,"output":9,"reasoning":31,"cache":{"write":0,"read":12416}}}');
+INSERT INTO message VALUES ('msg_2','ses_other',
+  '{"role":"assistant","tokens":{"total":999999}}');
+SQL
+  out=$(cd "$OTMP" && OPENCODE_SESSION_ID=ses_test \
+        ./scripts/context-budget.sh check --runtime opencode --transcript "$DB" 2>&1); rc=$?
+  assert_contains "T9a: exact token count from message.data" "$out" "tokens=12584"
+  assert_contains "T9b: method exact" "$out" "method=exact"
+  assert_eq "T9c: OK exit code" "$rc" "0"
+  out=$(cd "$OTMP" && OPENCODE_SESSION_ID=ses_missing \
+        ./scripts/context-budget.sh check --runtime opencode --transcript "$DB" 2>&1); rc=$?
+  [ "$rc" -ne 0 ] && [ "$rc" -ne 1 ] && [ "$rc" -ne 2 ] \
+    && ok "T9d: unknown session -> error exit" || bad "T9d: unknown session -> error exit (rc=$rc)"
+  rm -rf "$OTMP"
+else
+  echo "  skip: sqlite3 not available"
+fi
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

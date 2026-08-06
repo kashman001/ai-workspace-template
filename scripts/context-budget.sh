@@ -5,7 +5,7 @@
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
 # Usage:   context-budget.sh check|register|record|watch|release
-#            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|auto]
+#            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
 #            [--interval <secs>] [--quiet]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
@@ -190,9 +190,36 @@ gemini_measure() {
   estimate_from_size "$f"
 }
 
+opencode_discover() {
+  local db="$HOME/.local/share/opencode/opencode.db"
+  [ -f "$db" ] && echo "$db"
+}
+
+opencode_measure() {
+  # $1 = opencode.db (sqlite, verified v1.18.14). Context size = last assistant
+  # message's tokens.total (= input+output+reasoning+cache.read) for the
+  # session in OPENCODE_SESSION_ID (exported by the chat.message plugin);
+  # fallback: newest session for this cwd. No size-estimate fallback — the
+  # shared db spans all sessions, its size says nothing about one context.
+  local db="$1" sid="${OPENCODE_SESSION_ID:-}" tokens
+  command -v sqlite3 >/dev/null 2>&1 || return 1
+  [ -n "$sid" ] || sid=$(sqlite3 "$db" \
+    "select id from session where directory='$PWD' order by time_updated desc limit 1" 2>/dev/null)
+  [ -n "$sid" ] || return 1
+  tokens=$(sqlite3 "$db" "select json_extract(data,'\$.tokens.total') from message
+    where session_id='$sid' and json_extract(data,'\$.tokens.total') is not null
+    order by rowid desc limit 1" 2>/dev/null)
+  if [ -z "$tokens" ]; then
+    tokens=$(sqlite3 "$db" "select tokens_input+tokens_output+tokens_reasoning+tokens_cache_read
+      from session where id='$sid'" 2>/dev/null)
+  fi
+  [ -n "$tokens" ] && echo "$tokens exact" || return 1
+}
+
 detect_runtime() {
   if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ]; then echo "claude"; return; fi
   if [ -n "${CODEX_SANDBOX:-}" ] || [ -n "${CODEX_HOME:-}" ]; then echo "codex"; return; fi
+  if [ -n "${OPENCODE_SESSION_ID:-}" ]; then echo "opencode"; return; fi
   local best_rt="" best_file="" f
   for rt in claude codex copilot-vscode copilot-cli gemini; do
     f=$(discover_for "$rt") || continue
@@ -206,7 +233,7 @@ discover_for() {
   case "$1" in
     claude) claude_discover ;; codex) codex_discover ;;
     copilot-vscode) copilot_vscode_discover ;; copilot-cli) copilot_cli_discover ;;
-    gemini) gemini_discover ;; *) return 1 ;;
+    gemini) gemini_discover ;; opencode) opencode_discover ;; *) return 1 ;;
   esac
 }
 
@@ -214,7 +241,7 @@ measure_for() {
   case "$1" in
     claude) claude_measure "$2" ;; codex) codex_measure "$2" ;;
     copilot-vscode) copilot_vscode_measure "$2" ;; copilot-cli) copilot_cli_measure "$2" ;;
-    gemini) gemini_measure "$2" ;; *) return 1 ;;
+    gemini) gemini_measure "$2" ;; opencode) opencode_measure "$2" ;; *) return 1 ;;
   esac
 }
 
@@ -232,6 +259,7 @@ session_id_for() {
         b="$(basename "$VSCODE_TARGET_SESSION_LOG")"; echo "${b%.jsonl}"; return 0
       fi ;;
     gemini)  echo "workspace"; return 0 ;;  # no per-session identity exists (see docs)
+    opencode) [ -n "${OPENCODE_SESSION_ID:-}" ] && { echo "$OPENCODE_SESSION_ID"; return 0; } ;;
   esac
   [ -n "$af" ] || return 1
   b="$(basename "$af")"
