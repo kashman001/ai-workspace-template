@@ -1,3 +1,46 @@
+# Session Handoff — 2026-08-06 (session 28: issue-01 items 1+3 VERIFIED live; housekeeping done; build hands off)
+
+**What shipped (worktree `session-28-issue-01-vscode`, pushed to `origin/main`):**
+
+- **Issue-01 items 1+3 VERIFIED (`64c3f85`).** The full verified VS Code
+  1.132 agent-hooks contract + a numbered build spec live in
+  `issues/01-vscode-agent-mode-hooks.md` → "Update … (session 28)". Gist:
+  `code chat -r -m agent "<prompt>"` works from an agent shell (item 3);
+  hooks fire from `.github/hooks/*.json` with PascalCase events and
+  snake_case Claude-style payloads carrying `transcript_path` from which
+  the promptTokens chatSessions artifact is derivable (self-measure blocker
+  dissolved); in-band = SessionStart `hookSpecificOutput.additionalContext`
+  (verified) + Stop **exit-2 stderr** block (verified; JSON
+  `decision:block` IGNORED). Method: 3 probe runs relayed via the user's
+  live VS Code, read back from the hook-provided transcripts.
+- **Housekeeping COMPLETE:** all 12 disposable worktrees removed + pruned,
+  their merged `worktree-*` branches deleted; `session-26-pre-reconcile`
+  deleted by the user via `!` (permission classifier blocks
+  `git branch -D` even user-approved — 1st strike, parked).
+- **Build NOT started** — that is session 29's whole mission; spec is in
+  the ticket, nothing lives only in conversation.
+- **Probe files intentionally left in the user's main checkout**
+  (untracked): `scripts/hooks/vscode-hook-probe.sh`,
+  `.github/hooks/vscode-probe.json`, `.vscode-hook-probe.jsonl` — build
+  spec step 3 (hook-process cwd / relative-command verification, probe v4)
+  still needs them. Delete only after the real wiring ships.
+
+**Suggested skills (next session):** none beyond the standard set;
+`superpowers:verification-before-completion` before claiming the build done;
+`session-rollover` at WARN/STOP.
+
+**Learnings:**
+- Copilot's model may refuse hook-injected `additionalContext` as prompt
+  injection while OBEYING the Stop exit-2 forced-turn instruction in the
+  same session (routed: ticket's session-28 block, behavioral caveat).
+- Claude Code's auto-mode classifier blocks `git branch -D` regardless of
+  user approval in chat — hand force-deletes to the user via `!` (1st
+  strike, parked).
+
+**Wrap:** WARN rollover (~124.6K at trigger); findings flushed to the
+ticket BEFORE the rollover decision, so the handoff carries pointers only.
+Session-26 block archived (two-block rule).
+
 # Session Handoff — 2026-08-06 (session 27: sandbox discovery fix shipped + live-verified; ticket 08 RESOLVED — map destination REACHED)
 
 **What shipped (main checkout, pushed to `origin/main`):**

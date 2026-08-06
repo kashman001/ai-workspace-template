@@ -112,6 +112,18 @@ unnoticed.
    (`launch-next-session.sh` builds exactly this prompt, tracks N in
    `work/<project>/.session-seq`, and passes claude `--name "<project> #N"`).
 
+   **First, sync the counter to yourself** (numbering canon, ADR-0007):
+   write the number from your **own** bootstrap prompt to
+   `work/<project>/.session-seq` — `echo <your-number> > work/<project>/.session-seq`
+   — then let the launcher compute the successor as yours + 1 (the emitted
+   prompt's #N above). `.session-seq` + the prompt are the canonical
+   session-number source: ledger block titles and worktree names copy the
+   prompt number verbatim, and on disagreement the ledger note gets repaired,
+   never the counter. This sync is what makes drift self-heal — a session
+   launched from a hand-pasted prompt (launcher bypassed) never incremented
+   the counter, and the write repairs it before the next launch. If your own
+   prompt carried no number, use the counter's value + 1 as your number.
+
    Then honor `ROLLOVER_RELAUNCH` (global `context-budget.env`, overridable
    per work item by a committed `work/<project>/context-budget.env`) via
    `scripts/launch-next-session.sh <project>` — the script owns all vendor
