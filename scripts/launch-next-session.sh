@@ -11,10 +11,20 @@
 # Knobs:   context-budget.env — ROLLOVER_RELAUNCH=off|manual|auto,
 #          ROLLOVER_RUNTIME (fallback only). ROLLOVER_CONFIRM_SECS (env only,
 #          default 120) bounds the --bg successor-confirmation poll.
+#          work/<project>/.rollover-options (optional, written at rollover):
+#          ROLLOVER_OPT_APPROVAL=default|auto|full, ROLLOVER_OPT_MODEL=<id>,
+#          ROLLOVER_OPT_EXTRA=<raw args> — replayed as per-runtime flags on
+#          the successor launch.
 # Exit:    0 ok / 3 error. Requires jq.
 # Vendor flags verified against live --help 2026-08-05: claude [prompt] + --bg;
-# codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. Re-verify before
-# changing (ADR-0003: a nonexistent flag already slipped in once).
+# codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. Approval-mapping
+# flags (OPT_ARGS below) re-verified against live --help 2026-08-06: claude
+# --permission-mode acceptEdits/--dangerously-skip-permissions; codex
+# --ask-for-approval never/--dangerously-bypass-approvals-and-sandbox (NOT
+# --full-auto — that flag does not exist in codex-cli 0.142.4); gemini
+# --approval-mode auto_edit/--yolo; opencode --auto (same flag for both
+# levels); copilot --allow-all-tools/--allow-all. Re-verify before changing
+# (ADR-0003: a nonexistent flag already slipped in once).
 
 set -u
 
@@ -89,6 +99,38 @@ if [ -z "$RUNTIME" ]; then
   note "no session record found; falling back to ROLLOVER_RUNTIME=$RUNTIME"
 fi
 
+# Successor option inheritance: persist-and-replay from the work item
+# (.rollover-options, written at rollover; see docs/context-budget.md).
+OPT_ARGS=()
+OPTF="$WORKSPACE_ROOT/work/$PROJECT/.rollover-options"
+if [ -f "$OPTF" ]; then
+  ROLLOVER_OPT_APPROVAL=""; ROLLOVER_OPT_MODEL=""; ROLLOVER_OPT_EXTRA=""
+  . "$OPTF" >/dev/null 2>&1 || true
+  case "${ROLLOVER_OPT_APPROVAL:-}" in
+    ""|default) : ;;
+    auto)
+      case "$RUNTIME" in
+        claude) OPT_ARGS+=(--permission-mode acceptEdits) ;;
+        codex) OPT_ARGS+=(--ask-for-approval never) ;;
+        gemini) OPT_ARGS+=(--approval-mode auto_edit) ;;
+        opencode) OPT_ARGS+=(--auto) ;;
+        copilot|copilot-cli) OPT_ARGS+=(--allow-all-tools) ;;
+      esac ;;
+    full)
+      case "$RUNTIME" in
+        claude) OPT_ARGS+=(--dangerously-skip-permissions) ;;
+        codex) OPT_ARGS+=(--dangerously-bypass-approvals-and-sandbox) ;;
+        gemini) OPT_ARGS+=(--yolo) ;;
+        opencode) OPT_ARGS+=(--auto) ;;
+        copilot|copilot-cli) OPT_ARGS+=(--allow-all) ;;
+      esac ;;
+    *) note "unknown ROLLOVER_OPT_APPROVAL='$ROLLOVER_OPT_APPROVAL' — ignoring" ;;
+  esac
+  [ -n "${ROLLOVER_OPT_MODEL:-}" ] && OPT_ARGS+=(--model "$ROLLOVER_OPT_MODEL")
+  # shellcheck disable=SC2206 — deliberate word-split escape hatch
+  [ -n "${ROLLOVER_OPT_EXTRA:-}" ] && OPT_ARGS+=($ROLLOVER_OPT_EXTRA)
+fi
+
 # Every mode prints the paste-me prompt first — it must survive launch failure.
 printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n' "$PROMPT"
 
@@ -105,11 +147,12 @@ if [ "$MODE" = "off" ]; then
 fi
 
 case "$RUNTIME" in
-  claude)   CMD=(claude); [ "$BG" -eq 1 ] && CMD+=(--bg); CMD+=("$PROMPT") ;;
-  codex)    CMD=(codex "$PROMPT") ;;
-  gemini)   CMD=(gemini -i "$PROMPT") ;;
-  opencode) CMD=(opencode --prompt "$PROMPT") ;;
-  copilot|copilot-cli) CMD=(copilot -i "$PROMPT") ;;
+  claude)   CMD=(claude); [ "$BG" -eq 1 ] && CMD+=(--bg)
+            CMD+=(${OPT_ARGS[@]+"${OPT_ARGS[@]}"} "$PROMPT") ;;
+  codex)    CMD=(codex ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} "$PROMPT") ;;
+  gemini)   CMD=(gemini ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -i "$PROMPT") ;;
+  opencode) CMD=(opencode ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} --prompt "$PROMPT") ;;
+  copilot|copilot-cli) CMD=(copilot ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -i "$PROMPT") ;;
   copilot-vscode)
     note "copilot-vscode has no CLI seeded launch (see issues/01-vscode-agent-mode-hooks.md) — paste the prompt into VS Code agent mode"
     exit 0 ;;

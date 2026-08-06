@@ -130,5 +130,35 @@ assert_eq           "T13a: exit 0"          "$rc" "0"
 assert_contains     "T13b: run: line"       "$out" "run: gemini -i"
 assert_not_contains "T13c: not executed"    "$out" "GEMINI_EXECUTED"
 
+echo "T14: option inheritance from .rollover-options"
+cat > "$TMP/work/testproj/.rollover-options" <<'EOF'
+ROLLOVER_OPT_APPROVAL=auto
+ROLLOVER_OPT_MODEL=claude-sonnet-5
+EOF
+mk_record claude sid-opt testproj
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-opt "$LNS" testproj --dry-run 2>&1)
+assert_contains "T14a: claude approval flag" "$out" "--permission-mode acceptEdits"
+assert_contains "T14b: claude model flag" "$out" "--model claude-sonnet-5"
+out=$(run_lns "$LNS" testproj --runtime codex --dry-run 2>&1)
+assert_contains "T14c: codex auto maps to --ask-for-approval never" "$out" "--ask-for-approval never"
+out=$(run_lns "$LNS" testproj --runtime gemini --dry-run 2>&1)
+assert_contains "T14d: gemini auto maps to --approval-mode auto_edit" "$out" "--approval-mode auto_edit"
+out=$(run_lns "$LNS" testproj --runtime copilot --dry-run 2>&1)
+assert_contains "T14e: copilot auto maps to --allow-all-tools" "$out" "--allow-all-tools"
+printf 'ROLLOVER_OPT_APPROVAL=full\n' > "$TMP/work/testproj/.rollover-options"
+out=$(run_lns "$LNS" testproj --runtime codex --dry-run 2>&1)
+assert_contains "T14f: codex full maps to bypass flag" "$out" "--dangerously-bypass-approvals-and-sandbox"
+printf 'ROLLOVER_OPT_APPROVAL=bogus\n' > "$TMP/work/testproj/.rollover-options"
+out=$(run_lns "$LNS" testproj --runtime codex --dry-run 2>&1)
+assert_contains "T14g: unknown approval warned" "$out" "unknown ROLLOVER_OPT_APPROVAL"
+assert_not_contains "T14h: unknown approval adds no flags" "$out" "--ask-for-approval never"
+rm -f "$TMP/work/testproj/.rollover-options"
+out=$(run_lns "$LNS" testproj --runtime codex --dry-run 2>&1)
+assert_not_contains "T14i: absent file -> unchanged argv" "$out" "--ask-for-approval never"
+printf 'ROLLOVER_OPT_EXTRA="--add-dir /somewhere"\n' > "$TMP/work/testproj/.rollover-options"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T14j: raw extra args pass through" "$out" "--add-dir /somewhere"
+rm -f "$TMP/work/testproj/.rollover-options"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

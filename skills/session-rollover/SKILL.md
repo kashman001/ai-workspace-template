@@ -81,7 +81,16 @@ unnoticed.
    - **First actions** — step 1 is always `scripts/context-budget.sh register`;
      then the concrete next steps.
 
-6. **Emit the bootstrap prompt** for the user to paste into the fresh session, in a
+6. **Write `work/<project-name>/.rollover-options`** recording how THIS session
+   was launched, so the successor inherits it: `ROLLOVER_OPT_APPROVAL=default|
+   auto|full` (normalized approval/permission mode), optional
+   `ROLLOVER_OPT_MODEL=<model-id>`, optional `ROLLOVER_OPT_EXTRA=<raw flags for
+   this runtime>`. If you don't know your own launch options, leave any
+   existing file untouched (it carries the last known values); create or
+   update it only from knowledge. `scripts/launch-next-session.sh` maps these
+   to each runtime's flags.
+
+7. **Emit the bootstrap prompt** for the user to paste into the fresh session, in a
    fenced block, e.g.:
 
    > Read `work/<project-name>/next-session.md` and continue from **First actions**.
@@ -92,7 +101,7 @@ unnoticed.
    launch specifics. If the script is absent or the knob is `off`, the pasted
    prompt above is the whole handoff.
 
-7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
+8. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 
 ## Guardrails
 
@@ -123,7 +132,7 @@ After verification passes, release the work-item lock so the successor can take 
 
 - Ledger entries bracketing the rollover (`work/context-decay/context-ledger.jsonl`).
 - Learnings routed to their workspace homes; disk fully current.
-- `work/<project-name>/handoff.md` and `next-session.md`.
+- `work/<project-name>/handoff.md`, `next-session.md`, and `.rollover-options`.
 - A paste-ready bootstrap prompt.
 
 End by telling the user: start a fresh session (don't `/compact` — rollover replaces
