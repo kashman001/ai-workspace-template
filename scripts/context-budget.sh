@@ -450,6 +450,31 @@ backstamp_superseded() {
   note "role: ${best##*/} back-stamped superseded_by=$RUNTIME-$SESSION_ID"
 }
 
+sweep_stale_primaries() {
+  # Registry hygiene: sessions that die without release/rollover (or lose the
+  # lock to a stale reclaim) leave role=primary records behind. Once a new
+  # primary holds the lock, stamp any other same-project primary whose
+  # liveness is stale (same rule as the lock) with the takeover stamp; live
+  # ones are left alone — liveness beats bookkeeping.
+  local f rt sid age
+  for f in "$STATE_DIR/sessions/"*.json; do
+    [ -f "$f" ] || continue
+    [ "$f" = "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" ] && continue
+    jq -e --arg proj "$PROJECT" \
+      'select(.project == $proj and .role == "primary")' "$f" >/dev/null 2>&1 \
+      || continue
+    rt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
+    sid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
+    if age=$(lock_holder_age "$rt" "$sid") && [ "$age" -lt "$LOCK_STALE" ]; then
+      continue
+    fi
+    jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
+      '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
+      "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+    note "register: swept stale primary ${f##*/} (stamped superseded_by=$RUNTIME-$SESSION_ID)"
+  done
+}
+
 acquire_lock() {
   local dir="$WORKSPACE_ROOT/work/$PROJECT" lock hrt hsid age
   [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
@@ -520,7 +545,7 @@ cmd_register() {
   if [ -n "$PROJECT" ]; then
     # Children never contend for the project lock (research §6).
     if [ -n "$PARENT_SESSION" ]; then acquire_child_lock; else acquire_lock; fi
-    [ "$ROLE" = "primary" ] && backstamp_superseded
+    [ "$ROLE" = "primary" ] && { backstamp_superseded; sweep_stale_primaries; }
   fi
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
     --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \

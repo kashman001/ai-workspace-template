@@ -212,6 +212,38 @@ assert_eq "T14e: old holder stamped superseded_by" \
   && ok "T14f: superseded_at stamped" || bad "T14f: no superseded_at"
 run_as bbb release --project testproj --quiet >/dev/null
 
+echo "T15: register-time sweep of stale primary records (registry hygiene)"
+mk_transcript prim1 10000; mk_transcript aux1 9000; mk_transcript live1 12000
+mk_transcript prim2 11000; mk_transcript new1 20000; mk_transcript aux2 8000
+run_as prim1 register --project testproj --quiet >/dev/null   # primary; will go stale
+run_as aux1 register --project testproj --quiet >/dev/null    # auxiliary alongside prim1
+rm -f "$LOCK"                                                 # lock lost out-of-band
+run_as live1 register --project testproj --quiet >/dev/null   # primary; stays live
+rm -f "$LOCK"                                                 # lock lost out-of-band again
+mkdir -p "$TMP/work/otherproj"
+run_as prim2 register --project otherproj --quiet >/dev/null  # other project's primary
+rm -f "$TMP/work/otherproj/.active-session"
+touch -t 202601010000 "$PROJ_DIR/prim1.jsonl" "$PROJ_DIR/aux1.jsonl" "$PROJ_DIR/prim2.jsonl"
+out=$(run_as new1 register --project testproj 2>&1)
+assert_contains "T15a: sweep noted loudly" "$out" "swept stale primary"
+assert_eq "T15b: stale primary stamped superseded" \
+  "$(jq -r '.role // "none"' "$SESS/claude-prim1.json")" "superseded"
+assert_eq "T15c: stale primary stamped superseded_by=new primary" \
+  "$(jq -r '.superseded_by // "none"' "$SESS/claude-prim1.json")" "claude-new1"
+[ -n "$(jq -r '.superseded_at // empty' "$SESS/claude-prim1.json")" ] \
+  && ok "T15d: superseded_at stamped" || bad "T15d: no superseded_at"
+assert_eq "T15e: live primary record left alone" \
+  "$(jq -r '.role // "none"' "$SESS/claude-live1.json")" "primary"
+assert_eq "T15f: other project's stale primary left alone" \
+  "$(jq -r '.role // "none"' "$SESS/claude-prim2.json")" "primary"
+assert_eq "T15g: stale auxiliary record left alone" \
+  "$(jq -r '.role // "none"' "$SESS/claude-aux1.json")" "auxiliary"
+touch -t 202601010000 "$PROJ_DIR/live1.jsonl"                 # now a stale primary too
+run_as aux2 register --project testproj --quiet >/dev/null    # auxiliary: must NOT sweep
+assert_eq "T15h: auxiliary registration does not sweep" \
+  "$(jq -r '.role // "none"' "$SESS/claude-live1.json")" "primary"
+run_as new1 release --project testproj --quiet >/dev/null
+
 echo "G1: register from a git worktree lands lock/record in the shared root"
 GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
 trap 'rm -rf "$TMP" "$GW"' EXIT
