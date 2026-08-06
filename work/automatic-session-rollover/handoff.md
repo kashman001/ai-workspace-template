@@ -6,6 +6,43 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-05 (session 5: implementation item #1 shipped — session-keyed registry, lock, release, gemini guard; WARN rollover)
+
+**What shipped (all committed + pushed, `15ec961`…`187f926` + rollover commit):**
+
+- **Item #1 complete, M13 closed.** `scripts/context-budget.sh` migrated to the
+  session-keyed registry per ADR-0004: `session_id_for()` (env-first identity,
+  artifact-derived fallback, gemini fixed id `workspace`); resolve-self in
+  `check`/`record` (own session file only, never another's);
+  `.context-budget/sessions/<runtime>-<session-id>.json`; `register --project`
+  acquires `work/<proj>/.active-session` (advisory: live holder warned never
+  stolen; stale >`CONTEXT_LOCK_STALE_SECS` [new knob, 3h] reclaimed); new
+  `release` subcommand (self-only, project defaults from own session record);
+  gemini concurrent-session guard (fresh non-empty telemetry log → skip reset,
+  degrade to chat-log estimate).
+- **Tests:** `scripts/tests/test-context-budget-registry.sh` — 13 asserts, all
+  green; T1 is the live M13 clobber repro (was red against the old scalar
+  registry). Self-contained throwaway workspace in mktemp; fake $HOME.
+- **Docs:** `docs/context-budget.md` (§Multi-session status → implemented;
+  §Session registration rewritten for sessions/ + lock + release; gemini-only
+  limitation para), `skills/session-rollover/SKILL.md` (release call after
+  verification gate), backlog M13 → Resolved, new L16 (phantom test suite in
+  workspace-structure.md, fixed same session), summary line → all 31 resolved.
+- **Plan + decisions:** implementation plan at
+  `plans/2026-08-05-session-keyed-registry.md` (all tasks checked off in
+  execution, file committed with this rollover); three Tier-2 notes appended to
+  `decisions.md` (identity derivation, advisory-not-blocking lock, gemini
+  freshness guard).
+
+**Verification state:** `bash scripts/tests/test-context-budget-registry.sh`
+exits 0; live register/record in this session used the new registry and
+correctly tracked this session's own transcript (dogfood: the WARN that
+triggered this rollover came from it).
+
+**Suggested skills for next session:** `superpowers:writing-plans` then
+`superpowers:executing-plans` (same pattern as this session) for item #2;
+`docs/context-budget.md` §Relaunch knobs is the spec.
+
 # Session Handoff — 2026-08-05 (session 4: documentation phase shipped in one commit; WARN rollover into implementation phase)
 
 Executed the session-3 launcher's documentation plan verbatim; no design was
@@ -41,36 +78,3 @@ Suggested skills for the next session: `superpowers:writing-plans` or `tdd`
 
 ---
 
-# Session Handoff — 2026-08-05 (session 3: ALL open questions closed; research + smoke tests landed; user-directed rollover into documentation phase)
-
-Design discussion is COMPLETE. Every open question is closed and recorded;
-substance lives in `relaunch-analysis.md` (open-questions section, final
-state), `decisions.md` (three new Tier-2 notes), and the three research docs.
-This block is provenance only.
-
-- Closed with user: #1 multi-session identity redesign approved (operating
-  model: one developer, N concurrent sessions, one per work item); #2 knobs
-  (`context-budget.env`, off/manual/auto, `manual` default); #3 all four hook
-  deployments in scope (smoke tests collapsed the deferral rationale); #4
-  launcher covers all five runtimes seeded-interactive, background claude-only.
-- Research delivered (background agents): `vendor-hooks-research.md` (all
-  four runtimes PUSH-CAPABLE — the "agent discipline only" matrix rows were
-  stale); `smoke-test-opencode.md` (opencode 1.18.14 installed; chat.message
-  injection CONFIRMED live, part shape trap documented; sqlite token store);
-  `smoke-test-copilot.md` (copilot CLI 1.0.78 installed; hooks CONFIRMED
-  live; `copilot -i` seeded-interactive REFUTED the headless-only claim;
-  VS Code agent mode ships hooks since v1.109, Preview, reads our formats —
-  live verification is the one spun-out ticket).
-- Machine state changed: opencode (brew) + copilot CLI (npm) now installed;
-  scratch test dirs under the session scratchpad; a stray `$schema` line
-  opencode auto-added to `.opencode/opencode.json` was reverted.
-- Next phase (user-agreed sequence): documentation first, then
-  implementation. See `next-session.md`.
-
-Suggested skills for the next session: `writing-for-agents` (doc edits),
-`decision-log` (promotions to the ADR-0003 family), `checkpoint` or
-`session-rollover` at the boundary.
-
----
-
-*Older blocks: `handoff-archive.md`.*
