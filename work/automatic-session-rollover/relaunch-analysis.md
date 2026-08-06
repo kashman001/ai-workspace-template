@@ -58,6 +58,12 @@ fully automatic (no ask). `off` remains today's paste-the-prompt behavior.
 
 ## Verified per-vendor matrix
 
+> **Detection column superseded (2026-08-05):** `vendor-hooks-research.md`
+> found codex, gemini, opencode, and copilot ALL ship hook/plugin mechanisms
+> that can push WARN/STOP in-band — the "agent discipline only" entries below
+> are stale. Opencode also gained a seeded-interactive launch
+> (`opencode --prompt`) and a composable background story (serve/attach).
+
 | Runtime | Detection (stage 1) | Interactive seeded launch | Detached background |
 |---|---|---|---|
 | **claude** | Exact (session JSONL) + in-band WARN/STOP hook push | `claude "<prompt>"` | `claude --bg "<prompt>"` — first-class; manage via `claude agents` / `attach` / `logs` / `stop`. **No `--name` flag exists** (earlier notes remembering `--bg --name` were wrong). |
@@ -152,7 +158,17 @@ Confirmed in `scripts/context-budget.sh`:
 - Gemini's exact path (workspace telemetry log, truncated at register) is
   architecturally single-session-per-workspace.
 
-Redesign direction (analysis delivered; not yet user-approved):
+**APPROVED by user 2026-08-05 (session 3)** — implementation item #1. The
+governing operating model (user-stated, same session): **one developer works
+multiple projects/work items concurrently, each with its own running main
+session** in the same workspace, possibly across different runtimes. Every
+design element must hold under N concurrent sessions: measurement is
+per-session (session-keyed registry), work-item ownership is per-project
+(advisory lock = "each work item has one main session"), and relaunch targets
+the dying session's own project (D6 = read my own record). Decision note in
+`decisions.md`.
+
+Redesign direction (as approved):
 
 1. **Session-keyed state:** `.context-budget/sessions/<runtime>-<session-id>
    .json` with `{runtime, artifact, project, registered_at}`; register writes
@@ -205,16 +221,42 @@ background-handoff mechanism — **rejected** (loses disk-as-source-of-truth;
 Claude-only); the one adopted concept is **launch acceleration**. Inlining
 vendor commands in the skill — **rejected** (CLI-first).
 
-## Open questions (the discussion to have)
+## Open questions — state as of 2026-08-05 session 3
 
-1. **Knob shape** — does `off / manual / auto` match the intended "optional
-   based on workspace parameters"? Is `context-budget.env` the right home, or a
-   new `workspace.env`?
-2. **Auto-mode consent** — in `auto` on claude, the dying session launches its
-   own successor. Is the normal Bash permission gate in the dying session
-   enough, or should `auto` require per-rollover user confirmation?
-3. **Detection reliability scope** — codex/gemini rely on agent discipline to
-   run `record`; closing that (e.g. `gemini hooks`, codex equivalents) is
-   arguably a separate work item. In scope here or queued separately?
-4. **Scope of runtimes** — is opencode (uninstalled, untested) worth a
-   best-effort branch, and do copilot-* need a launch story at all?
+1. **Multi-session identity redesign** — **CLOSED: approved as proposed**
+   (see section above; decision note in `decisions.md`).
+2. **Knob shape/home** — **CLOSED (user accepted, session 3):**
+   `context-budget.env`, `off/manual/auto` with `manual` default,
+   workspace-level (no per-project override — the operating model varies
+   *sessions*, not relaunch policy). Consent lives in the trigger policy
+   (WARN asks, STOP goes); no extra per-launch gate in `auto`.
+3. **Detection reliability** — **smoke tests DONE (session 3):
+   `smoke-test-opencode.md` + `smoke-test-copilot.md` — both PUSH-CONFIRMED
+   LIVE** (opencode `chat.message` part-append with the mandatory
+   `id`/`sessionID`/`messageID` shape; copilot `sessionStart`
+   `additionalContext` + `agentStop` block-`reason`). The earlier
+   separate-ticket rationale (needs install + smoke test) has evaporated:
+   working hook/plugin code exists for both. **Revised bucketing — CLOSED
+   (user confirmed, session 3):** ALL FOUR hook deployments (codex, gemini,
+   opencode, copilot CLI) in scope here; the only ticket left is live
+   verification of **VS Code agent-mode** hooks (shipped v1.109, Preview;
+   needs a Copilot-licensed VS Code — this machine has none) and the
+   `copilot_vscode_measure` branch (plausible, unverified). Frictions to
+   honor in implementation: copilot folder-trust gate (repo hooks silently
+   no-op untrusted), additionalContext may be discounted → use `agentStop`
+   reason at STOP; codex hash-based hook trust; gemini JSON-only stdout.
+4. **Runtime scope** — **smoke tests DONE; revised — CLOSED (user
+   confirmed, session 3):** copilot JOINS the launcher — research's headless-only claim
+   REFUTED: `copilot -i "<prompt>"` is a seeded interactive launch
+   (+ `--session-id`, `--resume=<name>`). Opencode branch CONFIRMED
+   (`--prompt` in shipped help; free `opencode/*` provider means zero-auth).
+   All five runtimes get seeded-interactive; detached background remains
+   claude-only (`--bg`); opencode `serve`/`run --attach`/`attach` is a
+   composable near-equivalent, noted as a possible future tier, not v1.
+   Bonus: opencode session/token measurement is one sqlite query
+   (`~/.local/share/opencode/opencode.db`, per-turn `tokens.total`) —
+   upgrades opencode from "not measured" to easiest-to-measure; copilot-cli
+   measurement verified exact against the live UI (73.0k match).
+
+**Agreed sequence (user, session 3):** smoke tests (done) → documentation
+first → then implementation.
