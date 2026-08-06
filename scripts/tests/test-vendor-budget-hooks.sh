@@ -115,4 +115,21 @@ else
   echo "  skip: sqlite3 not available"
 fi
 
+echo "T6: gemini wrapper JSON-only stdout"
+reset_state
+out=$(echo '{"session_id":"s6"}' | CHECK_EVERY=0 FAKE_STATUS=OK "$HOOKS/context-budget-gemini-hook.sh"); rc=$?
+assert_eq "T6a: silent case prints {}" "$out" "{}"
+assert_eq "T6b: exit 0" "$rc" "0"
+reset_state
+out=$(echo '{"session_id":"s6"}' | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-gemini-hook.sh")
+echo "$out" | jq -e . >/dev/null 2>&1 && ok "T6c: stdout is valid JSON" || bad "T6c: stdout is valid JSON"
+assert_contains "T6d: STOP text present" "$(echo "$out" | jq -r '.hookSpecificOutput.additionalContext')" "CONTEXT BUDGET STOP"
+
+echo "T10: repo .gemini/settings.json carries both hooks"
+S="$SRC_ROOT/.gemini/settings.json"
+assert_contains "T10a: graphify BeforeTool preserved" "$(jq -r '.hooks.BeforeTool[0].hooks[0].command' "$S")" "graphify"
+assert_contains "T10b: BeforeAgent budget hook wired" "$(jq -r '.hooks.BeforeAgent[0].hooks[0].command' "$S")" "context-budget-gemini-hook.sh"
+assert_eq "T10c: telemetry block intact" "$(jq -r '.telemetry.enabled' "$S")" "true"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

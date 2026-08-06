@@ -17,6 +17,16 @@
           }
         ]
       }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scripts/hooks/context-budget-gemini-hook.sh"
+          }
+        ]
+      }
     ]
   }
 }
