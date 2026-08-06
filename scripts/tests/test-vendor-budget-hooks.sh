@@ -144,4 +144,27 @@ assert_empty "T7c: OK silent" "$out"
 out=$(CHECK_EVERY=0 FAKE_STATUS=WARN "$HOOKS/context-budget-opencode-hook.sh")
 assert_empty "T7d: missing sessionID -> silent fail-open" "$out"
 
+echo "T8: copilot wrapper — additionalContext at start, block only at STOP"
+reset_state
+mkdir -p "$TMP/copilot-state/s8"; touch "$TMP/copilot-state/s8/events.jsonl"
+start_payload='{"sessionId":"s8","cwd":"/x","source":"resume"}'
+out=$(echo "$start_payload" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      COPILOT_STATE_DIR="$TMP/copilot-state" "$HOOKS/context-budget-copilot-hook.sh" sessionStart)
+assert_contains "T8a: sessionStart WARN -> additionalContext" \
+  "$(echo "$out" | jq -r '.additionalContext')" "CONTEXT BUDGET WARN"
+reset_state
+stop_payload="{\"sessionId\":\"s8\",\"transcriptPath\":\"$TMP/fake-transcript\",\"stopReason\":\"end_turn\",\"stop_hook_active\":false}"
+out=$(echo "$stop_payload" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-copilot-hook.sh" agentStop)
+assert_empty "T8b: agentStop WARN -> silent (block only at STOP)" "$out"
+out=$(echo "$stop_payload" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-copilot-hook.sh" agentStop)
+assert_eq "T8c: agentStop STOP -> block" "$(echo "$out" | jq -r '.decision')" "block"
+assert_contains "T8d: reason carries STOP text" "$(echo "$out" | jq -r '.reason')" "CONTEXT BUDGET STOP"
+active_payload="{\"sessionId\":\"s8\",\"transcriptPath\":\"$TMP/fake-transcript\",\"stopReason\":\"end_turn\",\"stop_hook_active\":true}"
+reset_state
+out=$(echo "$active_payload" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-copilot-hook.sh" agentStop)
+assert_empty "T8e: stop_hook_active -> never re-block" "$out"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "scripts/hooks/context-budget-copilot-hook.sh sessionStart",
+        "timeoutSec": 30
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "scripts/hooks/context-budget-copilot-hook.sh agentStop",
+        "timeoutSec": 30
+      }
+    ]
+  }
+}
