@@ -25,6 +25,7 @@ references/*
 # Durable work/ files (README, next-session.md, handoff.md, decisions.md,
 # committed per-item context-budget.env) stay tracked.
 work/*/.active-session
+work/*/.agent-locks/
 work/*/.rollover-options
 work/*/.session-seq
 
