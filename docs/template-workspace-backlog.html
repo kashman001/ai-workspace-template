@@ -84,9 +84,9 @@
 
   <div class="panel">
     <p class="k">Status</p>
-    <p>29 of 30 findings are <span class="good">resolved</span>; <strong>M13</strong> (scalar registry clobber under
-    concurrent sessions) is open with an approved fix (ADR-0004, session-keyed registry — implementation item #1 of
-    the automatic-session-rollover effort). Copilot-cli measurement was live-verified 2026-08-05 (73.0k exact match),
+    <p>All 31 findings are <span class="good">resolved</span>; <strong>M13</strong> (scalar registry clobber under
+    concurrent sessions) closed 2026-08-05 with the session-keyed registry + per-project advisory lock (ADR-0004,
+    regression-tested). Copilot-cli measurement was live-verified 2026-08-05 (73.0k exact match),
     and all four design decisions settled. The initial
     2026-06-24 review surfaced 12 (+ M6/M7 in follow-up); a 2026-06-25 re-review of the post-review additions — the
     <code>onboard-repo</code> workflow and the published HTML guide — added <strong>M8, L6, L7, L8</strong>, all fixed
@@ -292,9 +292,9 @@
       rides the existing Gemini-auth gated item.</p>
   </div>
 
-  <div class="find med">
+  <div class="find med resolved">
     <h3><span class="id">M13</span> Scalar per-runtime registry lets one session measure another's artifact
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
     <p><span class="k">Evidence</span> — 2026-08-05, fired live during the automatic-session-rollover design session:
       a <code>claude --bg</code> demo session clobbered <code>.context-budget/session-claude.json</code>; the design
       session's later <code>record</code> measured the dead demo transcript (47.7K, OK) while the in-band hook — which
@@ -309,6 +309,12 @@
       <code>work/&lt;proj&gt;/.active-session</code>; gemini's exact path stays single-session-per-workspace.
       Implementation item #1 of <code>work/automatic-session-rollover/</code>; interim workaround is separate clones
       or explicit <code>--transcript</code> (documented in <code>docs/context-budget.md</code>).</p>
+    <p><span class="fix">Fixed:</span> 2026-08-05 — session-keyed registry landed (commits <code>15ec961</code>…):
+      <code>check</code>/<code>record</code> resolve-self via env-var identity and read only their own
+      <code>sessions/&lt;runtime&gt;-&lt;session-id&gt;.json</code>; <code>register --project</code> acquires the
+      per-project advisory lock with stale reclamation, <code>release</code> frees it; gemini gets a
+      concurrent-session guard on the telemetry reset. Regression-tested (M13 clobber repro is test T1) in
+      <code>scripts/tests/context-budget-registry.test.sh</code>.</p>
   </div>
 
   <!-- ========================= LOW ========================= -->
@@ -481,6 +487,20 @@
       the "Maintaining this backlog" list (delivering commit carries its backlog update; the pulling session adds any
       missing row as part of incorporation) and a matching sentence in the Template Backlog section of
       <code>CONTEXT.md</code>, which downstream template-repo sessions load.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L16</span> workspace-structure.md documented a phantom test suite
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-05, while landing the M13 regression tests: the <code>scripts/</code>
+      listing described <code>tests/</code> as an "Automated workspace validation suite" with six named files
+      (<code>validate-workspace.sh</code>, <code>test-helpers.sh</code>, four <code>test-*.sh</code>) — none of which
+      exist anywhere in the repo. The directory itself did not exist until the M13 tests created it.</p>
+    <p><span class="k">Impact</span> — agents trust the structure doc as the authoritative map; a phantom listing sends
+      them hunting for a runner/helpers that were never committed (cost a live session a wasted search).</p>
+    <p><span class="fix">Fixed:</span> same session — listing now shows the one real test file
+      (<code>test-context-budget-registry.sh</code>, named to the documented <code>test-*.sh</code> convention). If the
+      full validation suite ever lands, re-document it then, not before.</p>
   </div>
 
   <div class="find low resolved">

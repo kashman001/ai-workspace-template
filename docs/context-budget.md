@@ -132,9 +132,9 @@ against `--help` before changing them.
 
 ## Multi-session model (session-keyed registry + per-project lock)
 
-> **Status:** approved 2026-08-05 (ADR-0004), implementation item #1. The
-> shipped script still uses the scalar per-runtime registry described under
-> "Session registration" — a live wrong-measurement bug under concurrency.
+> **Status:** implemented 2026-08-05 (session-keyed registry + `register
+> --project` lock + `release`; regression-tested in
+> `scripts/tests/context-budget-registry.test.sh`).
 
 Operating model: one developer runs multiple work items concurrently, each
 with its own main session in the same workspace, possibly across runtimes.
@@ -186,17 +186,14 @@ Non-macOS: the Copilot VS Code storage root differs (Linux `~/.config/Code/…`,
 Windows `%APPDATA%/Code/…`); BSD `stat -f` already falls back to GNU `stat -c`;
 replace the `osascript` notification in `watch` with `notify-send` or equivalent.
 
-**Limitation — one session per runtime per workspace (until the
-session-keyed registry lands).** The shipped registry
-(`.context-budget/session-<runtime>.json`) is keyed by runtime, and the gemini
-telemetry reset at `register` assumes the workspace log belongs to a single
-live session. Two concurrent sessions of the same runtime in one workspace
-clobber each other's registration (measures then bind whichever registered
-last) and, for gemini, interleave the shared telemetry log. Until then, run
-concurrent sessions of the same runtime from separate workspace clones — or
-pass `--transcript` explicitly. Different runtimes coexist fine. The approved
-fix is the session-keyed registry under "Multi-session model" above (gemini's
-exact path stays single-session-per-workspace even after it).
+**Remaining limitation — gemini only.** The session-keyed registry (see
+"Multi-session model" above; shipped 2026-08-05) lets concurrent sessions of
+any runtime coexist in one workspace, each measuring its own artifact. Gemini
+is the exception: its exact counts come from the shared workspace telemetry
+log, which is architecturally single-session-per-workspace. `register` guards
+the boundary — a telemetry log another live session wrote to in the last 10
+minutes is left alone, and the new session degrades to a chat-log bytes÷4
+estimate. Explicit `--transcript` still overrides everything.
 
 ## How warnings reach the agent (layered, D8)
 
@@ -217,10 +214,25 @@ No single mechanism covers every runtime, so four layers overlap:
 
 ## Session registration
 
-`register` writes `.context-budget/session-<runtime>.json` pinning the exact
+`register` writes `.context-budget/sessions/<runtime>-<session-id>.json`
+(`runtime, session_id, artifact, project, registered_at`) pinning the exact
 artifact, because newest-mtime discovery is ambiguous under concurrent sessions.
-Precedence in every command: explicit `--transcript` > registration > discovery.
+The session id comes from the runtime's own env var first
+(`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`,
+`VSCODE_TARGET_SESSION_LOG` basename; gemini has none → fixed id `workspace`),
+else it is derived from the artifact path. `check`/`record` resolve-self: they
+read only their *own* session file — never another session's — and fall back to
+discovery. Precedence in every command: explicit `--transcript` > own session
+file > discovery.
 The Claude Code hook receives the exact transcript path on stdin, bypassing both.
+
+`register --project <work-item>` also acquires the advisory work-item lock
+`work/<proj>/.active-session` (runtime + session-id + timestamp; one *active*
+session per work item). A lock held by a live session is warned about, never
+stolen; a stale one (holder's artifact untouched > `CONTEXT_LOCK_STALE_SECS`,
+default 3h) is reclaimed. `release [--project <proj>]` frees a lock held by
+this session (project defaults to the one recorded at registration) — the
+`session-rollover` skill calls it after the verification gate.
 For Claude Code, registration is also mechanical: a `SessionStart` hook in
 `.claude/settings.json.example` runs `register` with the transcript path from
 the hook payload at every session start/resume, so even an agent that ignores

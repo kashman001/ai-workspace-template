@@ -663,13 +663,8 @@ scripts/
 ├── mcp/                           # Workspace-local MCP servers
 │   ├── youtube-transcript.sh      #   YouTube MCP launcher
 │   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
-└── tests/                         # Automated workspace validation suite
-    ├── validate-workspace.sh      #   Test runner
-    ├── test-helpers.sh            #   Shared pass/fail/skip utilities
-    ├── test-workspace-integrity.sh
-    ├── test-content-consistency.sh
-    ├── test-parameterization.sh
-    └── test-cross-platform.sh
+└── tests/                         # Automated workspace tests
+    └── test-context-budget-registry.sh  # Session-keyed registry + lock regression tests (M13)
 ```
 
 **Required scripts** (start with these):
