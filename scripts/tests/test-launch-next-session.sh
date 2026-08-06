@@ -91,5 +91,44 @@ out=$(env ROLLOVER_RELAUNCH=auto "$LNS" testproj --runtime claude --dry-run 2>&1
 assert_contains "T10a: bg=1"          "$out" "bg=1"
 assert_contains "T10b: --bg in argv"  "$out" "cmd: claude --bg"
 
+echo "T11: --bg launch with stub claude; successor registers -> confirmed"
+rm -f "$SESS"/*.json; mk_record claude sid-old testproj
+cat > "$TMP/bin/claude" <<STUB
+#!/usr/bin/env bash
+# Stub: pretend the successor session booted and registered (D8 heartbeat).
+jq -n '{runtime:"claude", session_id:"sid-new", artifact:"/dev/null",
+        project:"testproj", registered_at:"2026-08-05T00:00:01Z"}' \
+  > "$SESS/claude-sid-new.json"
+STUB
+chmod +x "$TMP/bin/claude"
+out=$(PATH="$TMP/bin:$PATH" ROLLOVER_CONFIRM_SECS=10 \
+  run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --bg 2>&1); rc=$?
+assert_eq       "T11a: exit 0"      "$rc" "0"
+assert_contains "T11b: confirmed"   "$out" "successor=confirmed session=sid-new"
+
+echo "T12: --bg launch, successor never registers -> unconfirmed (non-fatal)"
+rm -f "$SESS"/*.json; mk_record claude sid-old testproj
+cat > "$TMP/bin/claude" <<'STUB'
+#!/usr/bin/env bash
+exit 0
+STUB
+chmod +x "$TMP/bin/claude"
+out=$(PATH="$TMP/bin:$PATH" ROLLOVER_CONFIRM_SECS=3 \
+  run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --bg 2>&1); rc=$?
+assert_eq       "T12a: exit 0 still" "$rc" "0"
+assert_contains "T12b: unconfirmed"  "$out" "successor=unconfirmed"
+
+echo "T13: manual mode without a tty prints the ready-to-run command, execs nothing"
+rm -f "$SESS"/*.json
+cat > "$TMP/bin/gemini" <<'STUB'
+#!/usr/bin/env bash
+echo "GEMINI_EXECUTED"; exit 0
+STUB
+chmod +x "$TMP/bin/gemini"
+out=$(PATH="$TMP/bin:$PATH" run_lns "$LNS" testproj --runtime gemini </dev/null 2>&1); rc=$?
+assert_eq           "T13a: exit 0"          "$rc" "0"
+assert_contains     "T13b: run: line"       "$out" "run: gemini -i"
+assert_not_contains "T13c: not executed"    "$out" "GEMINI_EXECUTED"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
