@@ -132,4 +132,16 @@ assert_contains "T10a: graphify BeforeTool preserved" "$(jq -r '.hooks.BeforeToo
 assert_contains "T10b: BeforeAgent budget hook wired" "$(jq -r '.hooks.BeforeAgent[0].hooks[0].command' "$S")" "context-budget-gemini-hook.sh"
 assert_eq "T10c: telemetry block intact" "$(jq -r '.telemetry.enabled' "$S")" "true"
 
+echo "T7: opencode wrapper plain-text output"
+reset_state
+out=$(CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-opencode-hook.sh" ses_x); rc=$?
+assert_eq "T7a: exit 0" "$rc" "0"
+assert_contains "T7b: WARN text" "$out" "CONTEXT BUDGET WARN: this session is at 125000 tokens"
+reset_state
+out=$(CHECK_EVERY=0 FAKE_STATUS=OK "$HOOKS/context-budget-opencode-hook.sh" ses_x)
+assert_empty "T7c: OK silent" "$out"
+out=$(CHECK_EVERY=0 FAKE_STATUS=WARN "$HOOKS/context-budget-opencode-hook.sh")
+assert_empty "T7d: missing sessionID -> silent fail-open" "$out"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]
