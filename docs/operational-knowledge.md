@@ -104,3 +104,18 @@ Two flags are load-bearing; the script always applies them:
 Select the tool with `-t`: `bc` (Beyond Compare, default), `code` (VS Code +
 Compare Folders extension tree), or `vscode` (VS Code built-in per-file diff).
 The script fast-fails on a bad SHA before opening any GUI.
+
+## Codex CLI on this machine — global config pins an unavailable model
+
+`~/.codex/config.toml` pins `gpt-5.6-terra`, which the account can't use:
+bare `codex exec "..."` fails at model resolution before any repo config or
+hook runs. Override per invocation (`codex exec -m gpt-5.5 "..."`) or fix the
+global file. Found 2026-08-06 during the codex hook smoke check — the repo's
+`.codex/config.toml` hook wiring itself was accepted fine.
+
+## opencode run — rewrites .opencode/opencode.json as a side effect
+
+Any `opencode run` appends a `"$schema": "https://opencode.ai/config.json"`
+line to `.opencode/opencode.json`. Harmless but dirties the working tree —
+don't commit it accidentally, and don't be surprised when it reappears after
+each run.
