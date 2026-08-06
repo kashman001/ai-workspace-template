@@ -24,6 +24,23 @@ re-run `register` (it always re-discovers and `CLAUDE_CODE_SESSION_ID` pins
 your own artifact). Root fix (session-keyed state) is designed in
 `work/automatic-session-rollover/relaunch-analysis.md`.
 
+## Claude Code — EnterWorktree re-keys the session transcript path mid-session
+
+Claude Code stores the live transcript under `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`,
+keyed by the session's cwd. `EnterWorktree` changes the cwd, so the transcript
+**moves** to `…-experiments-ai-workspace-template--claude-worktrees-<name>/`.
+Consequences (observed 2026-08-05, session 7):
+
+- A `context-budget.sh register` done before entering the worktree stores an
+  artifact path that goes stale; resolve-self finds the file missing and falls
+  back to discovery in the *old* project dir — which returns the **newest other
+  session's** artifact (a predecessor's 148K WARN was misattributed to a fresh
+  45K session).
+- Mitigation: after `EnterWorktree`, re-run `register`, or pass `--transcript`
+  with the worktree-keyed path explicitly. Before acting on any surprising
+  WARN/STOP, confirm the artifact is yours: `grep` it for a string unique to
+  the current conversation.
+
 ## Agent workflow — bound your background poll loops
 
 - **Symptom:** `run_in_background` poll loops never exit and pile up as zombie
