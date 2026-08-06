@@ -2,6 +2,55 @@
 ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
+# Session Handoff — 2026-08-06 (session 19: issue 05 COMPLETE — workspace-root anchoring; WARN rollover at ~139K)
+
+**What shipped (committed `a850d7b` in worktree
+`issue-05-workspace-root-anchoring`, pushed to `origin/main` with the
+rollover commit; the successor relaunch itself ff-pulls the main checkout —
+first live use of the mechanized sync):**
+
+- **Workspace-root anchoring (issue 05):** all five coordination scripts
+  (`context-budget.sh`, `launch-next-session.sh`, `attach-session.sh`,
+  `statusline-context-budget.sh`, `hooks/context-budget-hook-lib.sh`) now
+  resolve `WORKSPACE_ROOT` via `git rev-parse --git-common-dir` → every
+  worktree converges on the main checkout's `.context-budget/`, locks,
+  ledger, `.session-seq`. Marker-guarded fallback to script-relative
+  resolution outside git. Design + rejected alternatives:
+  `plans/workspace-root-anchoring.md` + session-19 `decisions.md` note
+  (**promote-candidate: YES** — amends ADR-0004/0005's one-checkout
+  assumption; not yet promoted).
+- **Mechanized worktree launch-sync:** `launch-next-session.sh` invoked from
+  a worktree verifies worktree committed+pushed and main `work/<proj>/`
+  clean, `pull --ff-only`s the main checkout, launches from the main root
+  (loud exit-3 refusals). Retires the "no auto-relaunch from worktrees" ban
+  and register-before-isolate.
+- **Tests:** new G1/G2 (registry), W1–W5 (launcher), T8 (statusline); all
+  six suites green — registry 60, attach 22, launcher 81, statusline 16,
+  vendor 37, children 27 (243 total).
+- **Live verification:** `record` from this worktree wrote to the main
+  checkout's ledger (fix observed working); T13 back-stamp check at register
+  was a correct no-op — session 18 released its lock manually (worktree
+  ban, now retired), so no `superseded` record existed to claim.
+- **Follow-through, all done:** `docs/context-budget.md` "Worktrees"
+  section; operational-knowledge divergence entry marked superseded-by-fix;
+  worktree Bash-guard learning promoted (second strike, sessions 18+19);
+  backlog changelog row; issue 05 marked RESOLVED; plan COMPLETE.
+
+**Suggested skills (next session):** decision-log (`/decision promote`) if
+the user wants the ADR; tdd for the next slice; session-rollover at
+WARN/STOP.
+
+**Learnings:** (parked, first strike)
+- Registry hygiene: `.context-budget/sessions/` accumulates stale
+  `role=primary` records from ended sessions that never released/rolled
+  (three from 2026-08-06 alone); lineage stamps only cover launcher-mediated
+  successions. Cosmetic for now — the lock, not the records, is
+  authoritative.
+
+**Rollover:** WARN at ~126K right after all suites green; follow-through
+finished, committed, rolled. First rollover to use the worktree-invoked
+auto-relaunch path this slice just shipped.
+
 # Session Handoff — 2026-08-06 (session 18: slice 2 COMPLETE — `children` per-child sweep (R1); WARN rollover at ~120K)
 
 **What shipped (committed `d194cc1`, pushed to `origin/main`; work done in

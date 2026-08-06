@@ -6,6 +6,50 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 22: R4 COMPLETE — dispatch records + generation fencing; WARN rollover at ~127K)
+
+**What shipped (committed `1713daa` in worktree
+`session-22-r4-dispatch-records`, pushed to `origin/main`):**
+
+- **R4 — parent-persisted dispatch records + generation fencing:** three new
+  `context-budget.sh` subcommands. `dispatch-open --project <p> --task
+  <slug> --report <path> [--brief/--agent-type/--model/--effort/--agent-id]`
+  appends generation N+1 (status `open`) to the gitignored record
+  `work/<p>/.agent-dispatch/<slug>.json` and emits the R2 contract for that
+  generation in one step; refuses while the previous generation is still
+  open (fencing — at most one live writer per report file); `--gen` is
+  rejected (computed from the record). `dispatch-close --status <five yield
+  statuses|KILLED>` closes the open generation (`--agent-id` merges
+  post-hoc). `dispatch-list` prints `task= gen= status= report=` lines,
+  exit 1 while any generation is open (the rolling parent's drain check).
+  Contract emitter now labels progress blocks `[gen N]`. Design + rejected
+  alternatives: `plans/dispatch-records-r4.md` + session-22 `decisions.md`
+  note (not promoted — within ADR-0005/0006's model; revisit at R6).
+- **Tests:** new suite `scripts/tests/test-dispatch-records.sh` L1–L9
+  (51 asserts); all eight suites green — registry 60, attach 22, launcher
+  81, statusline 16, vendor 37, children 27, dispatch-contract 24,
+  dispatch-records 51 (318 total).
+- **Docs:** `docs/context-budget.md` children section retitled R2–R4 with
+  the record/fencing flow + successor-parent re-dispatch paragraph +
+  quickstart bullet now dispatch-open-first; CONTEXT.md dispatch bullet
+  likewise; `.gitignore` gains `work/*/.agent-dispatch/`; backlog changelog
+  row.
+
+**Slice order (user pick, session 22):** (b) R4 → (c) registry hygiene →
+(a) §14 wayfinder tickets. (b) is done; (c) is next, then (a) — no further
+user pick needed.
+
+**Suggested skills (next session):** tdd for slice (c); wayfinder for
+slice (a); session-rollover at WARN/STOP.
+
+**Learnings:** (parked, carried from sessions 19/21 — slice (c) is the
+retirement)
+- Registry hygiene: stale `role=primary` records accumulate in
+  `.context-budget/sessions/`; cosmetic — lock is authoritative.
+
+**Rollover:** WARN at ~125K right as R4 follow-through finished; committed,
+pushed, rolled. Session-19 block archived (two-block ledger rule).
+
 # Session Handoff — 2026-08-06 (session 21: ADR-0006 promoted + slice 3 COMPLETE — dispatch-contract (R2/R3); WARN rollover at ~129K)
 
 **What shipped (committed `d2ee5dd` + `6fc7cec` in worktree
@@ -51,52 +95,3 @@ session)
 **Rollover:** WARN at ~121.6K right after slice-3 suites green;
 follow-through finished, committed, rolled. Second worktree-invoked
 auto-relaunch.
-
-# Session Handoff — 2026-08-06 (session 19: issue 05 COMPLETE — workspace-root anchoring; WARN rollover at ~139K)
-
-**What shipped (committed `a850d7b` in worktree
-`issue-05-workspace-root-anchoring`, pushed to `origin/main` with the
-rollover commit; the successor relaunch itself ff-pulls the main checkout —
-first live use of the mechanized sync):**
-
-- **Workspace-root anchoring (issue 05):** all five coordination scripts
-  (`context-budget.sh`, `launch-next-session.sh`, `attach-session.sh`,
-  `statusline-context-budget.sh`, `hooks/context-budget-hook-lib.sh`) now
-  resolve `WORKSPACE_ROOT` via `git rev-parse --git-common-dir` → every
-  worktree converges on the main checkout's `.context-budget/`, locks,
-  ledger, `.session-seq`. Marker-guarded fallback to script-relative
-  resolution outside git. Design + rejected alternatives:
-  `plans/workspace-root-anchoring.md` + session-19 `decisions.md` note
-  (**promote-candidate: YES** — amends ADR-0004/0005's one-checkout
-  assumption; not yet promoted).
-- **Mechanized worktree launch-sync:** `launch-next-session.sh` invoked from
-  a worktree verifies worktree committed+pushed and main `work/<proj>/`
-  clean, `pull --ff-only`s the main checkout, launches from the main root
-  (loud exit-3 refusals). Retires the "no auto-relaunch from worktrees" ban
-  and register-before-isolate.
-- **Tests:** new G1/G2 (registry), W1–W5 (launcher), T8 (statusline); all
-  six suites green — registry 60, attach 22, launcher 81, statusline 16,
-  vendor 37, children 27 (243 total).
-- **Live verification:** `record` from this worktree wrote to the main
-  checkout's ledger (fix observed working); T13 back-stamp check at register
-  was a correct no-op — session 18 released its lock manually (worktree
-  ban, now retired), so no `superseded` record existed to claim.
-- **Follow-through, all done:** `docs/context-budget.md` "Worktrees"
-  section; operational-knowledge divergence entry marked superseded-by-fix;
-  worktree Bash-guard learning promoted (second strike, sessions 18+19);
-  backlog changelog row; issue 05 marked RESOLVED; plan COMPLETE.
-
-**Suggested skills (next session):** decision-log (`/decision promote`) if
-the user wants the ADR; tdd for the next slice; session-rollover at
-WARN/STOP.
-
-**Learnings:** (parked, first strike)
-- Registry hygiene: `.context-budget/sessions/` accumulates stale
-  `role=primary` records from ended sessions that never released/rolled
-  (three from 2026-08-06 alone); lineage stamps only cover launcher-mediated
-  successions. Cosmetic for now — the lock, not the records, is
-  authoritative.
-
-**Rollover:** WARN at ~126K right after all suites green; follow-through
-finished, committed, rolled. First rollover to use the worktree-invoked
-auto-relaunch path this slice just shipped.
