@@ -185,6 +185,14 @@ if [ "$DRY" -eq 0 ] && [ -f "$LOCK" ]; then
   if [ -n "$DYING_SID" ] && [ "$hrt-$hsid" = "$drt-$DYING_SID" ]; then
     rm -f "$LOCK"
     note "lock: released work/$PROJECT/.active-session (pre-launch; successor's register re-acquires)"
+    # The dying session's primary role ends here: stamp its registry record
+    # superseded so listings and attach-session.sh never mistake it for a
+    # usable session (the successor's own register becomes the new primary).
+    if [ -n "$REC" ] && [ -f "$REC" ]; then
+      jq --arg ts "$(date -u +%FT%TZ)" '.role="superseded" | .superseded_at=$ts' \
+        "$REC" > "$REC.tmp" && mv "$REC.tmp" "$REC"
+      note "role: $drt-$DYING_SID stamped superseded"
+    fi
   else
     note "lock: held by $hrt-$hsid, not this session — left in place; successor will contend"
   fi

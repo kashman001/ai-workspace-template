@@ -32,6 +32,16 @@ launcher, with the full record in the ledger. Because the bootstrap ritual reads
 **both** files, the launcher never needs to inline history to be self-sufficient
 — it points into the ledger and the state files instead.
 
+**One primary session per work item.** The launcher/ledger REPLACE/APPEND
+semantics assume a single writer. That writer is the **primary** session —
+the holder of the `work/<proj>/.active-session` lock, acquired at engagement
+via `scripts/context-budget.sh register --project <proj>`. Any other session
+registering against the item while the primary is live becomes an
+**auxiliary**: it may read and work, but must not write the launcher/ledger
+or roll the item over. At rollover the predecessor is stamped **superseded**
+and the successor becomes primary. Full model:
+`docs/context-budget.md` → "Session roles".
+
 ### Launcher (`next-session.md`)
 
 The catch-up prompt you paste into a fresh session. Top of file states its
