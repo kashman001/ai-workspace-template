@@ -103,3 +103,17 @@ extension/license) and Preview-status contract may shift.
 `.github/hooks/`, `docs/context-budget.md`, a new ticket for VS Code
 verification.
 **Promote?:** done → ADR-0004
+
+## 2026-08-05 — Promote the session-3 cluster as ONE companion ADR (session 4)
+**Chose:** A single companion ADR-0004 ("multi-session model, trigger policy,
+knobs, runtime scope") in the ADR-0003 family, with all three session-3 notes
+in its Provenance block and a "Refined by" forward link added to ADR-0003.
+**Because:** The three notes describe one coherent behavioral model (how the
+ADR-0003 automation behaves), and accepted ADRs should stay immutable —
+supersede/companion, don't rewrite.
+**Rejected:** amending ADR-0003 in place — substantially rewriting an accepted
+ADR breaks record immutability; four separate ADRs — ceremony without a fork
+per document, and the launcher explicitly capped promotion at one.
+**Blast radius:** `docs/adr/0004-multi-session-rollover-model.md` (new),
+`docs/adr/0003-*.md` (one Refined-by line), `docs/adr/README.md` index.
+**Promote?:** no — it *is* the promotion record.

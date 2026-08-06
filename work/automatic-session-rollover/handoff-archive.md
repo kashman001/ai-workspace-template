@@ -3,6 +3,28 @@ ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
 
+# Session Handoff — 2026-08-05 (session 2: design discussion — hybrid settled, ADR-0003, codification walkthrough, multi-session redesign proposed; WARN rollover)
+
+Same calendar day as session 1, fresh context. All substance lives in
+`relaunch-analysis.md` (written incrementally — effective write-ahead) and
+ADR-0003; this block is provenance only.
+
+- Settled with user: consent axis reframe; hybrid trigger (WARN asks, STOP
+  automatic); dying agent conducts rollover; write-ahead on declined WARN;
+  answer-then-rollover as discussion atomic step; D1–D8 local-vs-LLM verdicts
+  + conductor state machine.
+- ADR-0003 promoted (user-directed) from a Tier-2 note; committed + indexed.
+- User challenged D6 (global active-project state) → multi-session identity
+  redesign proposed (session-keyed state + per-project advisory lock);
+  **awaiting user verdict** — the successor's first question.
+- The registry-clobber bug fired live mid-session (record measured the dead
+  demo session); evidence in the analysis, workaround in
+  docs/operational-knowledge.md.
+- Commits this session: 506a68e, 8e2ac7d, 8eabdb0, 56dc888 + the rollover
+  commit; all pushed to main.
+
+---
+
 # Session Handoff — 2026-08-05 (session 1: project spun out of template-maintenance; demo run; analysis captured)
 
 Spun out of `work/template-maintenance/` mid-discussion: its queued
