@@ -58,6 +58,12 @@ unnoticed.
    decisions with a rejected alternative → `work/<project-name>/decisions.md` (the
    `decision-log` skill); durable reference facts → the matching doc under `docs/`,
    with `repo/path:line` pointers where code-derived.
+   Ideally learnings were routed at incident time (when the failure was hit and fixed),
+   making this step a sweep for what slipped, not the primary capture. For observations
+   not obviously durable, don't force a routing decision now: park each as a one-line
+   entry under `Learnings:` in the handoff block. A parked learning is promoted to a
+   durable home the *second* time it bites (grep `handoff*.md` for a prior strike);
+   single events die in the archive — which is the right fate for them.
 
 3. **Flush — make disk fully current.** Update state/tracker files the session was
    maintaining; run `git status` in every touched repo; commit per convention or
@@ -67,7 +73,8 @@ unnoticed.
 4. **Write `work/<project-name>/handoff.md`** — *backward-looking*: what happened,
    what shipped, where things stand. The hand-off contract: reference artifacts by
    path/URL (never duplicate their content); include a **suggested skills** section
-   for the next session; redact secrets/PII. If the global `handoff` skill is
+   for the next session; an optional `Learnings:` line-list of parked observations
+   (step 2); redact secrets/PII. If the global `handoff` skill is
    installed (`docs/recommended-tooling.md`) you may use it to draft the doc; the
    contract above binds either way.
 

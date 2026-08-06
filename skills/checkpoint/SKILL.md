@@ -44,7 +44,9 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
    - **project memory** (the agent's per-project memory dir, e.g.
      `~/.claude/projects/<project-id>/memory/` for Claude Code) — update the running-arc
      memory and add durable, non-obvious learnings (gotchas, decisions, preferences); update
-     `MEMORY.md` pointers.
+     `MEMORY.md` pointers. A human-driven retrospective ("what failed that we shouldn't
+     repeat?") is best run here or at the *start* of a successor session — fresh context,
+     ledger and git history in hand — never squeezed into a token-starved rollover.
    - the matching **reference docs** under `docs/` if a feature shipped or changed.
    - **decision notes** — scan `work/*/decisions.md` for entries flagged `Promote?: yes`
      (or a `maybe` whose condition now holds), **and** `work/*/map.md` "Decisions so far"
