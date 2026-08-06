@@ -66,5 +66,17 @@ run_as bbb register --project testproj --quiet >/dev/null      # project now in 
 run_as bbb release --quiet >/dev/null                          # no --project: self-derived
 [ ! -f "$LOCK" ] && ok "T4c: release derives project from own session file" || bad "T4c"
 
+echo "T5: gemini register — fresh telemetry log means a concurrent session owns it"
+mkdir -p "$TMP/.gemini" "$HOME/.gemini/tmp/h0"
+printf '{"note":"chat log"}' > "$HOME/.gemini/tmp/h0/logs.json"
+printf '{"gen_ai.usage.input_tokens": 42}\n' > "$TMP/.gemini/telemetry.log"   # fresh + non-empty
+"$CB" register --runtime gemini --quiet >/dev/null 2>&1
+[ -s "$TMP/.gemini/telemetry.log" ] && ok "T5a: fresh telemetry log NOT reset" || bad "T5a: log was reset"
+assert_contains "T5b: registered estimate artifact instead" \
+  "$(jq -r .artifact "$TMP/.context-budget/sessions/gemini-workspace.json")" "logs.json"
+touch -t 202601010000 "$TMP/.gemini/telemetry.log"                            # now stale
+"$CB" register --runtime gemini --quiet >/dev/null 2>&1
+[ ! -s "$TMP/.gemini/telemetry.log" ] && ok "T5c: stale telemetry log reset" || bad "T5c: not reset"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
