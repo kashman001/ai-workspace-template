@@ -179,13 +179,14 @@
     <li><a href="#model">2 · The model</a>
       <ol>
         <li><a href="#model-roles">2.1 Roles &amp; policy</a></li>
-        <li><a href="#model-verbs">2.2 The rollover verb</a></li>
-        <li><a href="#model-protocol">2.3 Protocol: channels &amp; messages</a></li>
-        <li><a href="#model-files">2.4 Files on disk</a></li>
-        <li><a href="#model-locks">2.5 Lock hierarchy</a></li>
-        <li><a href="#model-states">2.6 State machines</a></li>
-        <li><a href="#model-drain">2.7 Drain mode &amp; headroom</a></li>
-        <li><a href="#model-invariants">2.8 Invariants</a></li>
+        <li><a href="#model-positions">2.2 Parent positions: root vs intermediate</a></li>
+        <li><a href="#model-verbs">2.3 The rollover verb</a></li>
+        <li><a href="#model-protocol">2.4 Protocol: channels &amp; messages</a></li>
+        <li><a href="#model-files">2.5 Files on disk</a></li>
+        <li><a href="#model-locks">2.6 Lock hierarchy</a></li>
+        <li><a href="#model-states">2.7 State machines</a></li>
+        <li><a href="#model-drain">2.8 Drain mode &amp; headroom</a></li>
+        <li><a href="#model-invariants">2.9 Invariants</a></li>
       </ol>
     </li>
     <li><a href="#machinery">3 · Machinery already in place</a></li>
@@ -258,7 +259,7 @@ readings matter for design:</p>
   judgment matters most.</li>
   <li><b>Resumption is a context accretor.</b> The 141.8K peak was an implementer
   <em>resumed</em> for a review fix round. Every resume stacks a full round of history onto an
-  already-large context — direct evidence that resume ≠ rollover (<a href="#model-verbs">§2.2</a>).</li>
+  already-large context — direct evidence that resume ≠ rollover (<a href="#model-verbs">§2.3</a>).</li>
 </ul>
 
 <p>Claude Code's SDK auto-compacts a subagent that approaches its window, so children don't
@@ -396,7 +397,38 @@ written into every long-running child's prompt (report path, checkpoint discipli
 <code>ROLLOVER_NEEDED</code> status). Mid-flight hook injection, where it works, is an
 accelerator — never the load-bearing path.</p>
 
-<h3 id="model-verbs"><span class="secno">2.2</span>The rollover verb: successor dispatch, not resume</h3>
+<h3 id="model-positions"><span class="secno">2.2</span>Two parent positions: root vs intermediate</h3>
+
+<p>"Parent" names a <em>role</em>, and two different kinds of node can hold it: the
+<b>root parent</b> — the main work-item session (depth 0, human-attached, top of the lock
+hierarchy) — and an <b>intermediate parent</b> — a subagent that itself dispatches children
+(an L1 orchestrator running L2 workers; depth ≥ 1), which is simultaneously a child of the
+node above it.</p>
+
+<p>The load-bearing claim: <b>the parent role is position-invariant; the node's own lifecycle
+is not.</b> Dispatching, probing, findings rounds, drain, and kill rulings work identically at
+any depth — that is what makes I4 recursive and lets the model compose. Everything that
+differs comes from the node's <em>own</em> position — who manages it, how it rolls over, and
+what authority it holds:</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Dimension</th><th>Root parent (main session)</th><th>Intermediate parent (subagent)</th></tr>
+  <tr><td>Managed by</td><td>The human</td><td>Its own parent — §2.1 applies to it <em>as a child</em></td></tr>
+  <tr><td>Own rollover</td><td><code>session-rollover</code> skill: <code>handoff.md</code> + <code>next-session.md</code> + relaunch knobs</td><td>Successor dispatch by its parent from brief + report (§2.3) — never the skill; must drain its own children first (I4 recursively; S8, S54)</td></tr>
+  <tr><td>Budget measurement</td><td>Registered hooks, exact in-band push</td><td>Parent-side probe of its transcript where the runtime exposes one; contract mode otherwise (§4.2)</td></tr>
+  <tr><td>Human questions</td><td>Asks directly</td><td>BLOCKED escalates upward — only the root talks to a human; questions bubble the chain hop by hop, recorded on disk at each hop (S53)</td></tr>
+  <tr><td>Authority / approvals</td><td>Holds standing approvals</td><td>Only what its dispatch record grants explicitly; never assumed (S45)</td></tr>
+  <tr><td>Lock</td><td>Work-item lock, hierarchy root</td><td>Child lock, valid only transitively through its parent (I2)</td></tr>
+  <tr><td>Crash recovery owner</td><td>Human / successor root via cold reconstruction (S22)</td><td>Its parent, via the ordinary kill/successor machinery — the grandparent never adopts (§4.3)</td></tr>
+</table></div>
+
+<p>Design consequence: <b>no separate "parent type" field is needed</b> — position is already
+derivable from the <code>depth</code>/<code>parent_session_id</code> that R4 puts in every
+dispatch record. What must be explicit is the table above: statements in this doc about a
+parent's <em>own</em> rollover, measurement, or authority silently assumed the root until now;
+for an intermediate parent, substitute this table's right column.</p>
+
+<h3 id="model-verbs"><span class="secno">2.3</span>The rollover verb: successor dispatch, not resume</h3>
 
 <p>Claude Code can resume a subagent by <code>agentId</code>, and a resumed subagent
 <em>retains its full conversation history</em>. That makes resume the analog of
@@ -488,7 +520,7 @@ report file first — a prior agent attempted this; you own it now" preamble + t
 round-4 escalation — the superpowers SDD skill has been field-testing child rollover all
 along, minus the measurement trigger.</p>
 
-<h3 id="model-protocol"><span class="secno">2.3</span>Protocol: channels and messages</h3>
+<h3 id="model-protocol"><span class="secno">2.4</span>Protocol: channels and messages</h3>
 
 <p>The governing constraint is <b>asymmetric reachability</b>: a parent can always
 <em>start</em> a child and always <em>receives its return</em>, but cannot reliably message a
@@ -553,7 +585,7 @@ dispatched only after gen N's lock is cleared (clean yield or kill), and each re
 labeled with its generation. At most one live writer per report file, and the ledger stays
 readable as history ("gen 1 attempted X, gen 2 finished it").</p>
 
-<h3 id="model-files"><span class="secno">2.4</span>Files: what a child rollover needs on disk</h3>
+<h3 id="model-files"><span class="secno">2.5</span>Files: what a child rollover needs on disk</h3>
 
 <p>Main-session rollover writes project-scoped files. Children need the same <em>shape</em> at
 task scope — and SDD already defines most of it:</p>
@@ -577,7 +609,7 @@ Placement: with the plan/task state that owns them (SDD workspace, or
 <code>work/&lt;proj&gt;/agents/</code> for ad-hoc orchestration) — not in
 <code>.context-budget/</code>, which stays a registry, not a store of prompts.</p>
 
-<h3 id="model-locks"><span class="secno">2.5</span>Locking: from a flat lock to a hierarchy</h3>
+<h3 id="model-locks"><span class="secno">2.6</span>Locking: from a flat lock to a hierarchy</h3>
 
 <figure>
   <svg viewBox="0 0 960 356" role="img" aria-label="Lock hierarchy: the parent holds the project lock; per-child lock files carry parent pointers; an L2 lock points at its L1 parent. A child lock is valid only while its parent's lock is valid.">
@@ -629,7 +661,7 @@ mechanical enforcement of "no parent rollover with live children":
 child locks reference it — the lock system guarantees the rule rather than trusting skill
 prose.</p>
 
-<h3 id="model-states"><span class="secno">2.6</span>State machines</h3>
+<h3 id="model-states"><span class="secno">2.7</span>State machines</h3>
 
 <figure>
   <svg viewBox="0 0 960 370" role="img" aria-label="Child lifecycle state machine: QUEUED to RUNNING via dispatch; RUNNING yields DONE to COMPLETE, or is nudged into WRAPPING and ROLLED, or waits, or is killed; ROLLED and KILLED feed a new generation back to QUEUED.">
@@ -691,7 +723,7 @@ prose.</p>
     </g>
   </svg>
   <figcaption><b>Fig. 4 — Child lifecycle.</b> States live in the dispatch record; transitions
-  are the protocol events of §2.3. <code>RUNNING</code> self-loops on <code>CHECKPOINT</code>.
+  are the protocol events of §2.4. <code>RUNNING</code> self-loops on <code>CHECKPOINT</code>.
   Terminal states: <code>COMPLETE</code>, and <code>KILLED</code>-with-no-successor (only by
   explicit parent ruling). The accent rail is the rollover move: both <code>ROLLED</code> and
   <code>KILLED</code> feed a fresh generation back through <code>QUEUED</code>.</figcaption>
@@ -733,7 +765,7 @@ prose.</p>
   crashes don't transition, they stale.</figcaption>
 </figure>
 
-<h3 id="model-drain"><span class="secno">2.7</span>The no-rollover-with-live-children invariant, and drain mode</h3>
+<h3 id="model-drain"><span class="secno">2.8</span>The no-rollover-with-live-children invariant, and drain mode</h3>
 
 <p>A parent must not roll over while it has live children. This is correctness, not
 prudence: successor parents cannot adopt predecessor children (resume is keyed to the parent's
@@ -763,7 +795,7 @@ the child's task, marks its lock abandoned with a ledger ruling, and proceeds. L
 child's uncheckpointed tail beats losing the parent's entire orchestration to
 auto-compaction.</p>
 
-<h3 id="model-invariants"><span class="secno">2.8</span>Invariants</h3>
+<h3 id="model-invariants"><span class="secno">2.9</span>Invariants</h3>
 
 <ul class="rlist">
   <li><span class="rid">I1</span>At most one valid project-lock holder per work item. <em>(existing lock acquire/steal logic)</em></li>
@@ -788,7 +820,7 @@ vendor-hook-deployments plan:</p>
   <tr><td><code>scripts/context-budget.sh</code></td><td><code>register / record / check / release</code>; exact token math from transcript artifacts; project lock with mtime liveness</td><td><code>check --transcript &lt;path&gt;</code> already measures <em>any</em> jsonl — child artifacts need no new math. Registry + lock schema are the extension point (R4/R5)</td></tr>
   <tr><td>Vendor hooks (5 runtimes)</td><td>In-band WARN/STOP push into claude / codex / gemini / opencode / copilot sessions; escalation-only, throttled, fail-open</td><td>The parent-side probe reuses the same signaling rules; claude's child-scoped hooks are the accelerator tier</td></tr>
   <tr><td><code>skills/session-rollover/SKILL.md</code></td><td>Reflect → flush → backward <code>handoff.md</code> + forward <code>next-session.md</code> → bootstrap prompt</td><td>The parent's own rollover; gains the drain step and the fleet inventory (§5.3)</td></tr>
-  <tr><td><code>scripts/launch-next-session.sh</code> + <code>.rollover-options</code></td><td>Successor relaunch with option inheritance</td><td>The child analog is the dispatch record (§2.4)</td></tr>
+  <tr><td><code>scripts/launch-next-session.sh</code> + <code>.rollover-options</code></td><td>Successor relaunch with option inheritance</td><td>The child analog is the dispatch record (§2.5)</td></tr>
   <tr><td><code>scripts/attach-session.sh</code></td><td>Re-attach a human terminal to the live session</td><td>The child analog is resume-by-<code>agent_id</code> — continuation, not rollover</td></tr>
   <tr><td>Work-directory conventions</td><td>Launcher/ledger split: forward <code>next-session.md</code> (replaced) vs append-only <code>handoff.md</code></td><td>Recurs at task scope as brief/report — same shape, smaller radius</td></tr>
   <tr><td>SDD (superpowers)</td><td>Per-task brief + report files, capped returns, round-4 "fresh implementer reads the report" escalation</td><td>Field-tested successor dispatch; the protocol adds only <code>ROLLOVER_NEEDED</code> and the measurement trigger</td></tr>
@@ -877,7 +909,7 @@ subtree.</p>
   <li><span class="rid">R5</span><b>Lock hierarchy:</b> per-child locks with parent pointers,
   transitive validity, release-order enforcement (parent release refuses with live
   children).</li>
-  <li><span class="rid">R6</span><b>Drain mode + child-aware headroom</b> (§2.7), with the
+  <li><span class="rid">R6</span><b>Drain mode + child-aware headroom</b> (§2.8), with the
   kill-and-ledger escape hatch for hung children.</li>
   <li><span class="rid">R7</span><b>Policy relabeling:</b> "WARN asks, STOP goes" becomes, at
   child level, "WARN → parent decides, STOP → parent rolls the child." Humans are only
@@ -937,7 +969,7 @@ parenting-aware rollover skill walks all fourteen.</p>
 
 <p>The design reduces to a checkable model — everything phrased so it can become a test or a
 measurement in the workspace's existing harness style (mktemp fixtures, <code>touch -t</code>
-mtimes, stub CLIs). State machines: §2.6. Invariants: §2.8.</p>
+mtimes, stub CLIs). State machines: §2.7. Invariants: §2.9.</p>
 
 <h3><span class="secno">6.1</span>Functional evaluation — scenario suite</h3>
 
@@ -993,7 +1025,7 @@ data before implementation fixes them.</p>
   <tr><td>Child rollover cost</td><td>child writes handoff (≈1 checkpoint) + successor re-reads brief + report</td><td>The startup read is the price of pruning; the alternative is auto-compaction's unbounded quality loss in the dumb zone</td></tr>
   <tr><td>Resume vs successor</td><td>resume: +full history retained; successor: reset to re-read cost</td><td>The 141.8K resumed child is the measured argument ★; crossover computable from ★ values</td></tr>
   <tr><td>Drain latency</td><td><code>max(remaining runtime of live children)</code>, bounded by nudge response time</td><td>The nudge converts unbounded to ~one child turn; the S3 kill path caps even that at parent-STOP</td></tr>
-  <tr><td>Max safe concurrent children</td><td><code>N ≤ (STOP − current − rollover_reserve) / return_cap</code></td><td>The §2.7 dispatch guard, solved for N; all parameters measurable ★</td></tr>
+  <tr><td>Max safe concurrent children</td><td><code>N ≤ (STOP − current − rollover_reserve) / return_cap</code></td><td>The §2.8 dispatch guard, solved for N; all parameters measurable ★</td></tr>
   <tr><td>Probe cost at scale</td><td>O(children) file stats per parent boundary, throttled by <code>CHECK_EVERY</code></td><td>Filesystem-only; zero tokens unless escalating — same profile as the shipped hooks</td></tr>
 </table></div>
 
@@ -1007,7 +1039,7 @@ observed burn rate ★?</p>
 <p>The full mainline + corner-case scenario suite, enumerated <em>before</em> implementation so
 it can (a) be held in mind while reviewing the design above and (b) become the
 acceptance/fault-injection harness. It extends the seed suite S1–S10 (<a href="#evaluation">§6.1</a>)
-and continues its numbering; invariants I1–I8 are in <a href="#model-invariants">§2.8</a>, fault
+and continues its numbering; invariants I1–I8 are in <a href="#model-invariants">§2.9</a>, fault
 properties P1–P5 in <a href="#evaluation">§6.2</a>. The authoritative, test-derivable source is
 <code>rollover-scenarios.md</code> in the work directory; this section mirrors it. Class column:
 <b>M</b> = mainline flow, <b>E</b> = edge/corner case, <b>★</b> = measurement (pass = number
@@ -1053,6 +1085,7 @@ scope (unchanged from §6.2): disk loss and clock skew beyond mtime granularity.
   <tr><td>S13</td><td>M</td><td>Full queue drains to completion: N tasks, concurrency cap M, one parent rollover mid-queue</td><td>Every task has exactly one COMPLETE generation chain; nothing lost or duplicated across the parent succession; dependency edges honored (S9 superset)</td></tr>
   <tr><td>S14</td><td>M</td><td>Long-running child: many checkpoint cycles, no rollover ever needed</td><td>Report checkpoints monotonic; steady-state probe cost ≈ 0 parent tokens (escalation-only); no spurious nudges</td></tr>
   <tr><td>S15</td><td>E</td><td>Child's <code>YIELD(DONE)</code> crosses the drain broadcast in flight</td><td>DONE wins; no gen 2 dispatched for a finished task; drain child-count decrements correctly</td></tr>
+  <tr><td>S54</td><td>M</td><td>Intermediate parent rolls itself: L1 orchestrator hits its own budget mid-fleet (<a href="#model-positions">§2.2</a>)</td><td>L1 drains its own children first (I4 recursively), then yields <code>ROLLOVER_NEEDED</code>; the root dispatches successor L1, which re-dispatches L2 generations from on-disk records; grandparent never touches L2; loss limited to post-checkpoint tails</td></tr>
 </table></div>
 
 <h3><span class="secno">7.3</span>Resilience <span style="font-weight:normal">(extends S3, S5, S6; exercises P1–P5)</span></h3>
@@ -1120,6 +1153,7 @@ scope (unchanged from §6.2): disk loss and clock skew beyond mtime granularity.
   <tr><td>S44</td><td>E</td><td>Human kills a child process directly</td><td>Indistinguishable from a crash — S3/S5 machinery absorbs it; if intent is declared, the ledger records a human ruling instead of a crash verdict</td></tr>
   <tr><td>S45</td><td>E</td><td>Approval scope across generations: gen N held a standing approval (e.g. push-to-main)</td><td>Approvals carried <em>explicitly</em> in records/handoff; a successor (child or parent) never assumes authority that isn't written down</td></tr>
   <tr><td>S46</td><td>E</td><td>Human takes over a child session and continues it by hand</td><td>Ownership change recorded; parent stops nudging/killing that child; liveness still judged from artifacts only (I7)</td></tr>
+  <tr><td>S53</td><td>E</td><td>Human question raised at depth 2: L2 child yields BLOCKED (<a href="#model-positions">§2.2</a>)</td><td>Question bubbles L2→L1→root with a disk record at each hop; only the root surfaces it to the human; the answer propagates back down; if the root rolls meanwhile, S7/S43 machinery preserves it</td></tr>
 </table></div>
 
 <h3><span class="secno">7.9</span>Observability &amp; auditability</h3>
