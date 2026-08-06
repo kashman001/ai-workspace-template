@@ -4,9 +4,10 @@
 #          on-disk transcript and compare it against the workspace "dumb zone"
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
-# Usage:   context-budget.sh check|register|record|watch
+# Usage:   context-budget.sh check|register|record|watch|release
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|auto]
-#            [--transcript <path>] [--label "<text>"] [--interval <secs>] [--quiet]
+#            [--transcript <path>] [--project <work-item>] [--label "<text>"]
+#            [--interval <secs>] [--quiet]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
 # Design notes: D1–D9 in work/context-decay/design.html + docs/context-budget.md.
@@ -23,12 +24,13 @@ fi
 THRESHOLD="${CONTEXT_DUMB_ZONE_TOKENS:-150000}"
 WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 
-COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; LABEL=""; INTERVAL=30; QUIET=0
-case "${1:-}" in check|register|record|watch) COMMAND="$1"; shift ;; esac
+COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
+case "${1:-}" in check|register|record|watch|release) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --transcript) ARTIFACT="$2"; shift 2 ;;
+    --project) PROJECT="$2"; shift 2 ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -215,14 +217,43 @@ measure_for() {
   esac
 }
 
+session_id_for() {
+  # $1 = runtime, $2 = artifact path or empty. Env-var identity first (exact,
+  # exported by the runtime itself), else derived from the artifact path so the
+  # same session resolves to the same id either way. rc 1 when underivable.
+  local rt="$1" af="${2:-}" b
+  case "$rt" in
+    claude)  [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && { echo "$CLAUDE_CODE_SESSION_ID"; return 0; } ;;
+    codex)   [ -n "${CODEX_THREAD_ID:-}" ] && { echo "$CODEX_THREAD_ID"; return 0; } ;;
+    copilot-cli) [ -n "${COPILOT_AGENT_SESSION_ID:-}" ] && { echo "$COPILOT_AGENT_SESSION_ID"; return 0; } ;;
+    copilot-vscode)
+      if [ -n "${VSCODE_TARGET_SESSION_LOG:-}" ]; then
+        b="$(basename "$VSCODE_TARGET_SESSION_LOG")"; echo "${b%.jsonl}"; return 0
+      fi ;;
+    gemini)  echo "workspace"; return 0 ;;  # no per-session identity exists (see docs)
+  esac
+  [ -n "$af" ] || return 1
+  b="$(basename "$af")"
+  case "$rt" in
+    claude)         echo "${b%.jsonl}" ;;
+    codex)          b="${b%.jsonl}"; echo "${b#rollout-????-??-??T??-??-??-}" ;;
+    copilot-cli)    basename "$(dirname "$af")" ;;
+    copilot-vscode) b="${b%.jsonl}"; echo "${b%.json}" ;;
+    *) return 1 ;;
+  esac
+}
+
 resolve_session() {
   if [ "$RUNTIME" = "auto" ]; then
     RUNTIME=$(detect_runtime)
     [ -n "$RUNTIME" ] || die "could not detect runtime; pass --runtime"
   fi
+  SESSION_ID="$(session_id_for "$RUNTIME" "")" || SESSION_ID=""
+  # Resolve-self: only this session's own file is ever trusted — the scalar
+  # per-runtime registry let session A measure session B's artifact (M13).
   # register must always re-discover; the registry is what it's there to (re)write.
-  if [ -z "$ARTIFACT" ] && [ "$COMMAND" != "register" ]; then
-    local reg="$STATE_DIR/session-$RUNTIME.json"
+  if [ -z "$ARTIFACT" ] && [ "$COMMAND" != "register" ] && [ -n "$SESSION_ID" ]; then
+    local reg="$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
     if [ -f "$reg" ]; then
       ARTIFACT=$(jq -r '.artifact // empty' "$reg" 2>/dev/null)
       [ -f "$ARTIFACT" ] || ARTIFACT=""
@@ -233,6 +264,7 @@ resolve_session() {
     [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
       || die "no session artifact found for runtime=$RUNTIME"
   fi
+  [ -n "$SESSION_ID" ] || SESSION_ID="$(session_id_for "$RUNTIME" "$ARTIFACT")" || SESSION_ID="unknown"
 }
 
 emit_check() {
@@ -256,10 +288,14 @@ cmd_register() {
   if [ "$RUNTIME" = "gemini" ] && [ "$ARTIFACT" = "$WORKSPACE_ROOT/.gemini/telemetry.log" ]; then
     : > "$ARTIFACT"
   fi
-  mkdir -p "$STATE_DIR"
-  jq -n --arg rt "$RUNTIME" --arg af "$ARTIFACT" --arg ts "$(date -u +%FT%TZ)" \
-    '{runtime:$rt, artifact:$af, registered_at:$ts}' > "$STATE_DIR/session-$RUNTIME.json"
-  note "registered $RUNTIME session artifact: $ARTIFACT"
+  mkdir -p "$STATE_DIR/sessions"
+  rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
+  find "$STATE_DIR/sessions" -name '*.json' -mtime +7 -delete 2>/dev/null  # dead sessions
+  jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
+    --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" \
+    '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts}' \
+    > "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
+  note "registered $RUNTIME session $SESSION_ID artifact: $ARTIFACT"
   emit_check
 }
 
