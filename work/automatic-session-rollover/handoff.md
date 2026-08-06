@@ -7,6 +7,37 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 11b: subagent-rollover research phase; STOP rollover at 157K)
+
+**What shipped (committed on `main`, pushed through `4fa0cdb`):**
+
+- **`subagent-rollover-research.md`** (this work dir) — full research/design
+  note on parent-managed child-session rollover: what transfers from
+  main-session rollover, parent-as-manager policy mapping, successor-dispatch
+  as the only rollover verb (resume worsens context), per-child files +
+  dispatch records, lock hierarchy with transitive validity, drain-mode
+  invariant (no parent rollover with live children), checkpoint/yield
+  protocol (§8), 14-row rollover inventory (§9), delta requirements R1–R8
+  (§10), vendor-agnostic layering (§11), depth/resilience model (§12),
+  evaluation model — state machines, invariants I1–I8, scenarios S1–S10,
+  fault properties P1–P5, cost model (§13).
+- **`subagent-rollover-stats.md`** — measured: 30 subagent transcripts, 3
+  crossed 120K WARN, max 141.8K (a *resumed* implementer), 0 ≥ 150K; claude
+  child transcripts live at `<project-dir>/<parent-uuid>/subagents/agent-*.jsonl`
+  with `.meta.json` siblings.
+- **`subagent-vendor-survey.md`** — 4-runtime capability survey: only claude
+  (and partially copilot) expose child identity; codex/gemini children are
+  opaque; opencode forbids nesting; no runtime reports per-child usage.
+
+**How it was produced:** three parallel background research agents (local
+stats; Claude Code docs mechanics; live-CLI vendor survey) + controller
+synthesis; user added mid-flight: vendor-agnostic requirement, the
+communication protocol, the rollover inventory, and the evaluation model.
+
+**Rollover:** STOP hook fired at 156,987 tokens right after the eval-model
+section landed — the system being designed terminated its own design session
+on schedule.
+
 # Session Handoff — 2026-08-06 (session 11: Task 9 shipped + final whole-branch review — PLAN COMPLETE)
 
 **What shipped (committed on `main`, pushed through `75e8cbc`):**
