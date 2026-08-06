@@ -4,10 +4,10 @@
 #          on-disk transcript and compare it against the workspace "dumb zone"
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
-# Usage:   context-budget.sh check|register|record|watch|release
+# Usage:   context-budget.sh check|register|record|watch|release|children
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
-#            [--parent-session <sid>] [--agent-id <id>] [--takeover]
+#            [--parent-session <sid>] [--agent-id <id>] [--takeover] [--all]
 #            [--interval <secs>] [--quiet]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
@@ -27,8 +27,8 @@ WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
-PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0
-case "${1:-}" in check|register|record|watch|release) COMMAND="$1"; shift ;; esac
+PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
+case "${1:-}" in check|register|record|watch|release|children) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -37,6 +37,7 @@ while [ $# -gt 0 ]; do
     --parent-session) PARENT_SESSION="$2"; shift 2 ;;
     --agent-id) AGENT_ID="$2"; shift 2 ;;
     --takeover) TAKEOVER=1; shift ;;
+    --all) ALL=1; shift ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -585,6 +586,68 @@ cmd_release() {
   fi
 }
 
+claude_child_measure() {
+  # Sidechain-INCLUSIVE variant of claude_measure: a subagent transcript's
+  # entries are all isSidechain:true, so the self-measure filter would
+  # silently degrade every child to size-estimate.
+  local f="$1" jq_prog tokens
+  jq_prog='[.[] | select(.message.usage.input_tokens != null)]
+    | last | if . == null then empty else
+      (.message.usage.input_tokens + (.message.usage.cache_read_input_tokens // 0)
+       + (.message.usage.cache_creation_input_tokens // 0)) end'
+  tokens=$(tail -n 2000 "$f" | jq -s -r "$jq_prog" 2>/dev/null)
+  [ -z "$tokens" ] && tokens=$(jq -s -r "$jq_prog" "$f" 2>/dev/null)
+  [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
+}
+
+cmd_children() {
+  # R1 sweep (research §10): no runtime reports per-child usage to the parent;
+  # measure the child transcript artifacts directly. Escalation-only output —
+  # WARN/STOP children print, OK children don't (unless --all). Exit code is
+  # the worst child status, check-style. Direct children only (R8).
+  if [ "$RUNTIME" != "auto" ] && [ "$RUNTIME" != "claude" ]; then
+    die "children: only implemented for runtime=claude (got $RUNTIME)"
+  fi
+  if [ -n "$PARENT_SESSION" ]; then
+    local prec
+    prec=$(parent_record_path "$PARENT_SESSION") \
+      || die "children: parent session $PARENT_SESSION is not registered"
+    RUNTIME=$(jq -r '.runtime // empty' "$prec")
+    ARTIFACT=$(jq -r '.artifact // empty' "$prec")
+    [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
+      || die "children: no artifact on record for parent $PARENT_SESSION"
+  else
+    resolve_session
+  fi
+  [ "$RUNTIME" = "claude" ] || die "children: only implemented for runtime=claude (got $RUNTIME)"
+  local subdir="${ARTIFACT%.jsonl}/subagents"
+  local worst=0 measured=0 escalated=0
+  local f b tokens method status pct mt age atype
+  if [ -d "$subdir" ]; then
+    for f in "$subdir"/agent-*.jsonl; do
+      [ -f "$f" ] || continue
+      read -r tokens method < <(claude_child_measure "$f") || continue
+      [ -n "$tokens" ] || continue
+      measured=$((measured+1))
+      if [ "$tokens" -ge "$THRESHOLD" ]; then status="STOP"; worst=2
+      elif [ "$tokens" -ge "$WARN" ]; then status="WARN"; [ "$worst" -lt 1 ] && worst=1
+      else status="OK"; fi
+      [ "$status" = "OK" ] || escalated=$((escalated+1))
+      if [ "$status" != "OK" ] || [ "$ALL" -eq 1 ]; then
+        pct=$(( tokens * 100 / THRESHOLD ))
+        mt=$(stat -f%m "$f" 2>/dev/null || stat -c%Y "$f" 2>/dev/null) || mt=$(date +%s)
+        age=$(( $(date +%s) - mt ))
+        atype=$(jq -r '.agentType // empty' "${f%.jsonl}.meta.json" 2>/dev/null)
+        [ -n "$atype" ] || atype="?"
+        b="${f##*/}"; b="${b%.jsonl}"
+        echo "agent=$b tokens=$tokens threshold=$THRESHOLD warn=$WARN pct=$pct status=$status age=$age type=$atype artifact=$f"
+      fi
+    done
+  fi
+  note "children: $measured measured, $escalated escalated"
+  return "$worst"
+}
+
 cmd_watch() {
   resolve_session
   note "watching $RUNTIME session every ${INTERVAL}s; threshold=$THRESHOLD warn=$WARN"
@@ -610,4 +673,5 @@ case "$COMMAND" in
   record) cmd_record ;;
   watch) cmd_watch ;;
   release) cmd_release ;;
+  children) cmd_children ;;
 esac
