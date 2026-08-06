@@ -7,6 +7,40 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 10: plan Tasks 7–8 shipped; user added Task 9 (attach helper); WARN rollover)
+
+**What shipped (committed on `main`, pushed):**
+
+- **Task 7 — `e0cb70d`:** successor option inheritance —
+  `work/<proj>/.rollover-options` read in `scripts/launch-next-session.sh`,
+  mapped to per-runtime flags; rollover-skill step 6 added; suite
+  `test-launch-next-session.sh` now 38 asserts. Live `--help` verification
+  corrected the plan's table: codex `--full-auto` does not exist in codex-cli
+  0.142.4 → shipped `--ask-for-approval never`; opencode `--auto` exists so
+  opencode stayed in the approval mapping. Review clean.
+- **Task 8 — `f9e003a`:** docs gate — `docs/context-budget.md` "Vendor hook
+  deployments" section + `.rollover-options` under Relaunch knobs, CLAUDE.md
+  Context Budget updates, backlog rows, 6 Tier-2 notes in `decisions.md`.
+  All three suites green (37/38/13). Review clean. Includes two user-requested
+  additions: "Chained rollovers & re-attach" passage (attach-vs-relaunch
+  decided by the `.active-session` lock; bg chains are claude-only) and the
+  gemini successor spurious-STOP caveat (workspace-scoped telemetry).
+
+**Mid-session user input (binding):** (1) analysis of 2+-hop rollovers per
+vendor — delivered in-session, durable parts flushed into
+`docs/context-budget.md` by Task 8; (2) attach helper is NOT YAGNI — user
+mandated `scripts/attach-session.sh`; scoped as **Task 9 (user-added)**, brief
+written at `.superpowers/sdd/2026-08-05-vendor-hook-deployments/task-9-brief.md`,
+NOT yet implemented.
+
+**What did NOT happen:** Task 9 implementation/review; the final SDD
+whole-branch review (range `13201b5..HEAD`, plus deferred-minor triage).
+SDD ledger with per-task record + deferred minors:
+`.superpowers/sdd/2026-08-05-vendor-hook-deployments/progress.md`.
+
+**Suggested skills for next session:** `superpowers:subagent-driven-development`
+(mid-plan, resume at Task 9); `session-rollover` at WARN/STOP.
+
 # Session Handoff — 2026-08-06 (session 9: plan Tasks 2–6 shipped via subagent-driven development; WARN rollover)
 
 **What shipped (committed on `main`, pushed at rollover):**
@@ -39,34 +73,4 @@ final review). Two machine gotchas routed to docs/operational-knowledge.md.
 
 **Suggested skills for next session:** `superpowers:subagent-driven-development`
 (SDD ledger above is mid-plan); `session-rollover` at WARN/STOP.
-
-# Session Handoff — 2026-08-05 (session 8: plan execution started — Task 1 shipped; WARN rollover)
-
-**What shipped (committed + pushed on `main`):**
-
-- **Task 1 of `plans/2026-08-05-vendor-hook-deployments.md` — commit `4a39bf8`:**
-  shared lib `scripts/hooks/context-budget-hook-lib.sh` (throttle /
-  escalation-only / fail-open core, canonical WARN/STOP text);
-  `context-budget-claude-hook.sh` refactored to a thin wrapper sourcing it
-  (byte-identical messages; state files renamed `hook-claude-<sid>.*` — stale
-  old files harmless); new suite `scripts/tests/test-vendor-budget-hooks.sh`,
-  13 asserts green (T1 escalation, T2 throttle, T3 fail-open, T4 claude
-  envelope).
-
-**Session friction (resolved, no action needed):** primary checkout lagged
-origin/main — session 7 had pushed its rollover commit from the worktree
-branch; `git pull --ff-only` fixed it (the launcher's First-action warning
-worked). The live claude hook fired WARN in-band at 121K right after plan
-load — the push channel this whole item builds is demonstrably working.
-
-**What did NOT happen:** Tasks 2–8 untouched (opencode runtime, codex/gemini/
-opencode/copilot deployments, option inheritance, docs gate). Task 1 was
-executed as the final work unit under WARN; rollover began at ~135K.
-
-**Loose ends:** leftover locked worktree
-`.claude/worktrees/vendor-hook-deployments` (branch fully merged into main) —
-safe to `git worktree remove --force` + `git branch -d` when convenient.
-
-**Suggested skills for next session:** `superpowers:executing-plans` on the
-plan (Tasks 2–8); `session-rollover` at WARN/STOP.
 
