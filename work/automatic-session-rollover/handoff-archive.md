@@ -3,6 +3,42 @@ ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
 
+# Session Handoff — 2026-08-05 (session 4: documentation phase shipped in one commit; WARN rollover into implementation phase)
+
+Executed the session-3 launcher's documentation plan verbatim; no design was
+reopened. Substance is in the committed docs themselves; this block is
+provenance only.
+
+- One commit, `9c6a097`, pushed to main: `docs/context-budget.md` gained
+  "Rollover trigger policy" / "Relaunch knobs" / "Multi-session model"
+  sections (each with an explicit design-accepted-implementation-pending
+  status note) and corrected stale copilot-cli "unverified" claims (smoke
+  test verified 73.0k exact); knob block landed in `context-budget.env`
+  (`ROLLOVER_RELAUNCH=manual`, `ROLLOVER_RUNTIME=claude`);
+  `skills/session-rollover/SKILL.md` gained hybrid trigger semantics, the
+  hook-less cadence fallback (~10 exchanges), and the relaunch closing step
+  (graceful when the script is absent); pointer lines in `CONTEXT.md` +
+  `docs/workspace-structure.md`; ADR-0004 companion promoted from the three
+  session-3 notes (Promote? fields flipped; ADR-0003 got a Refined-by link);
+  `issues/01-vscode-agent-mode-hooks.md` ticket created; backlog card M13
+  (registry-clobber bug, Open with approved fix) + scorecard updated.
+- Doc-phase decision recorded in `decisions.md` (newest note): one companion
+  ADR-0004, not an amended 0003 or four ADRs.
+- Ops note: `workspace-structure.md`'s scripts tree already lists planned
+  entries (`scripts/tests/` doesn't exist on disk), so the
+  `launch-next-session.sh` tree line landing pre-implementation is consistent;
+  `check-workspace-structure.sh` iterates existing scripts only.
+- WARN (122.7K) fired at commit time; user approved rollover. Docs summary was
+  presented; user raised no objections before approving — treat the doc set as
+  baseline unless they say otherwise.
+
+Suggested skills for the next session: `superpowers:writing-plans` or `tdd`
+(implementation of the registry migration), `decision-log`,
+`session-rollover` at the boundary.
+
+---
+
+
 # Session Handoff — 2026-08-05 (session 3: ALL open questions closed; research + smoke tests landed; user-directed rollover into documentation phase)
 
 Design discussion is COMPLETE. Every open question is closed and recorded;

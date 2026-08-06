@@ -6,6 +6,41 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+
+# Session Handoff — 2026-08-05 (session 6: implementation item #2 shipped — launch-next-session.sh; WARN rollover)
+
+**What shipped (all committed + pushed, `b6d245a`, `d468f7c`, `ef42a12`):**
+
+- **Item #2 complete.** `scripts/launch-next-session.sh` per ADR-0003/0004:
+  verbatim bootstrap prompt (single source of truth in the script); runtime
+  resolution --runtime flag > dying session's own registry record (D6,
+  env-first identity mirroring `context-budget.sh session_id_for()`) > newest
+  record for the project > `ROLLOVER_RUNTIME` > claude; 5 runtimes
+  seeded-interactive (`claude` [+`--bg`], `codex` positional, `gemini -i`,
+  `opencode --prompt`, `copilot -i` — all flags re-verified against live
+  `--help` this session); modes off/manual/auto honored (auto+claude implies
+  --bg); --bg claude-only (die otherwise); D8 successor confirmation poll
+  after --bg (`ROLLOVER_CONFIRM_SECS`, default 120s, non-fatal); non-tty
+  manual prints `run: <cmd>` instead of exec'ing a TUI; copilot-vscode
+  degrades to prompt-only.
+- **Tests:** `scripts/tests/test-launch-next-session.sh` — 13 cases /
+  28 asserts, all green (dry-run flag assembly + stub-binary --bg/D8/timeout/
+  non-tty paths). Registry suite still green (13/13).
+- **Docs:** `docs/context-budget.md` §Rollover trigger policy status note
+  flipped to implemented; backlog changelog row appended; four Tier-2 notes
+  in `decisions.md` (tty guard, copilot-vscode degradation, --bg-only D8
+  confirmation, always-print prompt); plan committed at
+  `plans/2026-08-05-launch-next-session.md`; stale `workspace-structure.html`
+  rebuilt.
+
+**Where things stand:** items #1+#2 done; item #3 (four vendor hook
+deployments) not started — next session's mission. Working tree clean apart
+from the live `.active-session` lock (untracked by design).
+
+**Suggested skills for next session:** superpowers:writing-plans →
+executing-plans (the pattern items #1 and #2 both used successfully);
+session-rollover at WARN/STOP.
+
 # Session Handoff — 2026-08-05 (session 5: implementation item #1 shipped — session-keyed registry, lock, release, gemini guard; WARN rollover)
 
 **What shipped (all committed + pushed, `15ec961`…`187f926` + rollover commit):**
@@ -42,39 +77,4 @@ triggered this rollover came from it).
 **Suggested skills for next session:** `superpowers:writing-plans` then
 `superpowers:executing-plans` (same pattern as this session) for item #2;
 `docs/context-budget.md` §Relaunch knobs is the spec.
-
-# Session Handoff — 2026-08-05 (session 4: documentation phase shipped in one commit; WARN rollover into implementation phase)
-
-Executed the session-3 launcher's documentation plan verbatim; no design was
-reopened. Substance is in the committed docs themselves; this block is
-provenance only.
-
-- One commit, `9c6a097`, pushed to main: `docs/context-budget.md` gained
-  "Rollover trigger policy" / "Relaunch knobs" / "Multi-session model"
-  sections (each with an explicit design-accepted-implementation-pending
-  status note) and corrected stale copilot-cli "unverified" claims (smoke
-  test verified 73.0k exact); knob block landed in `context-budget.env`
-  (`ROLLOVER_RELAUNCH=manual`, `ROLLOVER_RUNTIME=claude`);
-  `skills/session-rollover/SKILL.md` gained hybrid trigger semantics, the
-  hook-less cadence fallback (~10 exchanges), and the relaunch closing step
-  (graceful when the script is absent); pointer lines in `CONTEXT.md` +
-  `docs/workspace-structure.md`; ADR-0004 companion promoted from the three
-  session-3 notes (Promote? fields flipped; ADR-0003 got a Refined-by link);
-  `issues/01-vscode-agent-mode-hooks.md` ticket created; backlog card M13
-  (registry-clobber bug, Open with approved fix) + scorecard updated.
-- Doc-phase decision recorded in `decisions.md` (newest note): one companion
-  ADR-0004, not an amended 0003 or four ADRs.
-- Ops note: `workspace-structure.md`'s scripts tree already lists planned
-  entries (`scripts/tests/` doesn't exist on disk), so the
-  `launch-next-session.sh` tree line landing pre-implementation is consistent;
-  `check-workspace-structure.sh` iterates existing scripts only.
-- WARN (122.7K) fired at commit time; user approved rollover. Docs summary was
-  presented; user raised no objections before approving — treat the doc set as
-  baseline unless they say otherwise.
-
-Suggested skills for the next session: `superpowers:writing-plans` or `tdd`
-(implementation of the registry migration), `decision-log`,
-`session-rollover` at the boundary.
-
----
 
