@@ -138,4 +138,4 @@ After verification passes, release the work-item lock so the successor can take 
 End by telling the user: start a fresh session (don't `/compact` — rollover replaces
 compaction) and paste the bootstrap prompt — unless `ROLLOVER_RELAUNCH` already
 launched the successor, in which case tell them where it's running (attached
-terminal, or `claude attach` for a `--bg` launch).
+terminal, or `scripts/attach-session.sh <project>` for a `--bg` launch).

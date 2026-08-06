@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">2</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">29</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -521,6 +521,28 @@
       combined with the symlink install (duplicate skills; breaks the agent-agnostic single-source model).</p>
   </div>
 
+  <div class="find low open">
+    <h3><span class="id">L17</span> Final review of vendor-hook-deployments deferred four minor rollover-script issues
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/attach-session.sh · scripts/launch-next-session.sh · scripts/context-budget.sh · docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — the 2026-08-06 final whole-branch review of the vendor-hook-deployments plan
+      triaged four issues as follow-up rather than blocking: (1) <code>scripts/attach-session.sh</code>'s "live but
+      unlocked" branch prints a <code>live=yes locked=no</code> status line and then says "no live session" — the
+      wording contradicts its own status flags; (2) the <code>for f in $(ls -t …)</code> glob loop in both
+      <code>scripts/attach-session.sh</code> and <code>own_record()</code> in <code>scripts/launch-next-session.sh</code>
+      breaks on session-record paths containing spaces; (3) <code>scripts/context-budget.sh</code>'s
+      <code>opencode_measure</code> interpolates <code>$PWD</code>/<code>$sid</code> unquoted into a SQL string —
+      currently fails open (benign) but unhardened; (4) <code>docs/context-budget.md</code> names the registry test
+      suite <code>context-budget-registry.test.sh</code>, but the actual file is
+      <code>test-context-budget-registry.sh</code> (pre-existing drift).</p>
+    <p><span class="k">Impact</span> — none block current behavior (each fails open or is cosmetic), but each will
+      cost a future session time: misleading re-attach status wording, silent breakage on space-containing paths,
+      an unhardened SQL interpolation, and a doc pointer to a script name that doesn't exist.</p>
+    <p><span class="k">Fix</span> — reword the attach-session status message to match its own locked/live flags; make
+      both glob loops space-safe (e.g. <code>find … -print0</code> / <code>while read</code>, or an array); quote the
+      SQL interpolation in <code>opencode_measure</code>; correct the filename in
+      <code>docs/context-budget.md</code> to <code>test-context-budget-registry.sh</code>.</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -621,6 +643,7 @@
       <tr><td>2026-08-06</td><td>Feature: <strong>vendor hook deployments</strong> (ADR-0003/0004 item #3) — context-budget WARN/STOP now pushes in-band to all five runtimes, not just Claude Code. Extracted the shared throttle/escalation/fail-open core into <code>scripts/hooks/context-budget-hook-lib.sh</code> (<code>4a39bf8</code>), then thin per-runtime wrappers: opencode sqlite measurement adapter (<code>6a78138</code>), codex <code>UserPromptSubmit</code> hook via hash-trusted <code>.codex/config.toml</code> (<code>4543645</code>), gemini <code>BeforeAgent</code> hook reading the workspace telemetry log (<code>93e9d45</code>), opencode <code>chat.message</code> plugin registered in <code>opencode.json</code> (<code>f9579fe</code>), and copilot CLI <code>sessionStart</code>/<code>agentStop</code> hooks gated by <code>~/.copilot/config.json</code> <code>trustedFolders</code>, blocking only at STOP (<code>9fa16b7</code>). Full per-runtime wiring/channel/friction table in <code>docs/context-budget.md</code> → "Vendor hook deployments". No scorecard change.</td></tr>
       <tr><td>2026-08-06</td><td>Feature: <strong>successor option inheritance</strong> (ADR-0003/0004) — <code>e0cb70d</code>: <code>scripts/launch-next-session.sh</code> now replays the dying session's launch options (normalized approval level, model, raw-extra escape hatch) onto the successor, persisted via <code>work/&lt;project&gt;/.rollover-options</code> (written by <code>session-rollover</code> step 6) and mapped to each runtime's own flags. Flag-verification correction: the plan's table guessed codex <code>--full-auto</code>, which does not exist in codex-cli 0.142.4 — shipped <code>--ask-for-approval never</code> instead (live <code>--help</code>-verified); opencode's <code>--auto</code> flag does exist, so opencode stayed in the approval mapping (the plan's drop-contingency wasn't needed). Documented in <code>docs/context-budget.md</code> → "Relaunch knobs". No scorecard change.</td></tr>
       <tr><td>2026-08-06</td><td>Feature: <strong>attach-session.sh helper</strong> (Task 9, user-added to the vendor-hook-deployments plan — overrides the earlier YAGNI call to leave re-attach as documented-only) — <code>3fafd13</code>: <code>scripts/attach-session.sh &lt;project&gt;</code> resolves the latest session for a work item (<code>.active-session</code> lock, falling back to the newest <code>.context-budget/sessions/</code> record for the project), prints a one-line status (<code>project=… runtime=… session=… age=…s live=… locked=…</code>), and when it is alive and locked, connects this terminal to it. Fixed a latent doc bug along the way: <code>docs/context-budget.md</code>'s "Chained rollovers &amp; re-attach" passage named a <code>claude attach</code> subcommand that does not exist — re-verified live against <code>claude --help</code>/<code>claude agents --json</code> 2026-08-06, no <code>attach</code> subcommand, <code>-r/--resume &lt;session_id&gt;</code> is the closest supported form and is what the script wires (<code>run: &lt;cmd&gt;</code> in <code>--dry-run</code>/non-TTY, same idiom as <code>launch-next-session.sh</code>). Non-claude runtimes get a "cannot attach" message (no background sessions to attach to) instead of guessing a flag. Tests: <code>scripts/tests/test-attach-session.sh</code> (6 cases, liveness driven by artifact mtime vs <code>CONTEXT_LOCK_STALE_SECS</code>). Decision + rejected alternatives in <code>work/automatic-session-rollover/decisions.md</code>. No scorecard change.</td></tr>
+      <tr><td>2026-08-06</td><td>Final whole-branch review of vendor-hook-deployments. Fixed the last stale <code>claude attach</code> reference: <code>skills/session-rollover/SKILL.md</code>'s closing paragraph pointed at the nonexistent <code>claude attach</code> subcommand (same bug already fixed in <code>docs/context-budget.md</code> by <code>3fafd13</code>, missed here) — repointed to <code>scripts/attach-session.sh &lt;project&gt;</code>. Opened <strong>L17</strong>: bundled four minor issues the review triaged as non-blocking follow-up (attach-session.sh's contradictory "live but unlocked" wording, a space-unsafe <code>ls -t</code> glob loop shared by <code>attach-session.sh</code> and <code>launch-next-session.sh</code>, an unquoted SQL interpolation in <code>context-budget.sh</code>'s <code>opencode_measure</code>, and a stale test-suite filename in <code>context-budget.md</code>) so they aren't lost. Scorecard now 2/29/4/0/6.</td></tr>
     </tbody>
   </table>
 
