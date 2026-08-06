@@ -175,5 +175,47 @@ out=$(run_lns "$LNS" testproj --dry-run 2>&1)
 assert_contains "T15d: per-item ROLLOVER_RUNTIME beats global fallback" "$out" "runtime=opencode"
 rm -f "$TMP/work/testproj/context-budget.env"
 
+echo "T16: dying session's own work-item lock is released before launch"
+LOCKF="$TMP/work/testproj/.active-session"
+mklock() {  # $1=runtime $2=session-id
+  jq -n --arg rt "$1" --arg sid "$2" \
+    '{runtime:$rt, session_id:$sid, project:"testproj", acquired_at:"2026-08-05T00:00:00Z"}' \
+    > "$LOCKF"
+}
+rm -f "$SESS"/*.json; mk_record claude sid-old testproj
+mklock claude sid-old
+cat > "$TMP/bin/claude" <<STUB
+#!/usr/bin/env bash
+# Stub successor: the lock must already be gone when the launch happens.
+[ -f "$LOCKF" ] && echo "LOCK_STILL_HELD_AT_LAUNCH"
+jq -n '{runtime:"claude", session_id:"sid-new", artifact:"/dev/null",
+        project:"testproj", registered_at:"2026-08-05T00:00:01Z"}' \
+  > "$SESS/claude-sid-new.json"
+STUB
+chmod +x "$TMP/bin/claude"
+out=$(PATH="$TMP/bin:$PATH" ROLLOVER_CONFIRM_SECS=10 \
+  run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --bg 2>&1); rc=$?
+assert_eq           "T16a: exit 0"                   "$rc" "0"
+assert_not_contains "T16b: lock gone at launch time" "$out" "LOCK_STILL_HELD_AT_LAUNCH"
+assert_contains     "T16c: release noted"            "$out" "lock: released"
+
+echo "T17: a lock held by ANOTHER session is left in place"
+mklock claude sid-other
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --runtime claude </dev/null 2>&1)
+[ -f "$LOCKF" ] && ok "T17a: foreign lock kept" || bad "T17a: foreign lock removed"
+assert_contains "T17b: foreign holder noted" "$out" "not this session"
+
+echo "T18: --dry-run never mutates the lock"
+mklock claude sid-old
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --dry-run 2>&1)
+[ -f "$LOCKF" ] && ok "T18a: dry-run keeps lock" || bad "T18a: dry-run removed lock"
+
+echo "T19: mode=off still releases own lock (rollover ends this session regardless)"
+mklock claude sid-old
+out=$(run_lns ROLLOVER_RELAUNCH=off CLAUDE_CODE_SESSION_ID=sid-old \
+  "$LNS" testproj --runtime claude 2>&1)
+[ -f "$LOCKF" ] && bad "T19a: off mode kept lock" || ok "T19a: off mode released lock"
+rm -f "$LOCKF"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
