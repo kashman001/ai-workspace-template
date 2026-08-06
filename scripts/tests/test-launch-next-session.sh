@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# File: scripts/tests/test-launch-next-session.sh
+# Purpose: Regression tests for launch-next-session.sh (ADR-0003/0004 item #2).
+#          Self-contained: throwaway workspace in mktemp -d; --dry-run for flag
+#          assembly, stub binaries on PATH for the real-launch path.
+set -u
+SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+mkdir -p "$TMP/scripts" "$TMP/work/testproj" "$TMP/.context-budget/sessions" "$TMP/bin"
+cp "$SRC_ROOT/scripts/launch-next-session.sh" "$TMP/scripts/" 2>/dev/null || true
+printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$TMP/context-budget.env"
+echo "# launcher" > "$TMP/work/testproj/next-session.md"
+cd "$TMP"
+LNS="$TMP/scripts/launch-next-session.sh"
+SESS="$TMP/.context-budget/sessions"
+
+PASS=0; FAIL=0
+ok()   { PASS=$((PASS+1)); echo "  ok: $1"; }
+bad()  { FAIL=$((FAIL+1)); echo "  FAIL: $1" >&2; }
+assert_eq() { [ "$2" = "$3" ] && ok "$1" || bad "$1 (want [$3] got [$2])"; }
+assert_contains() { case "$2" in *"$3"*) ok "$1" ;; *) bad "$1 (no [$3] in [$2])" ;; esac; }
+assert_not_contains() { case "$2" in *"$3"*) bad "$1 (unexpected [$3])" ;; *) ok "$1" ;; esac; }
+
+mk_record() {  # $1=runtime $2=session-id $3=project
+  jq -n --arg rt "$1" --arg sid "$2" --arg p "$3" \
+    '{runtime:$rt, session_id:$sid, artifact:"/dev/null", project:$p, registered_at:"2026-08-05T00:00:00Z"}' \
+    > "$SESS/$1-$2.json"
+}
+# All runtime-identity env vars cleared per call unless a test sets one.
+run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
+  -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
+  -u ROLLOVER_RELAUNCH -u ROLLOVER_RUNTIME "$@"; }
+
+PROMPT='Read `work/testproj/next-session.md` and continue from **First actions**.'
+
+echo "T1: own registry record via CLAUDE_CODE_SESSION_ID resolves runtime=claude"
+mk_record claude sid-aaa testproj
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-aaa "$LNS" testproj --dry-run 2>&1)
+assert_contains "T1a: runtime resolved" "$out" "runtime=claude"
+assert_contains "T1b: claude argv"      "$out" "cmd: claude"
+assert_contains "T1c: verbatim prompt"  "$out" "continue from **First actions**"
+
+echo "T2: codex identity resolves codex argv (positional prompt)"
+mk_record codex th-bbb testproj
+out=$(run_lns CODEX_THREAD_ID=th-bbb "$LNS" testproj --dry-run 2>&1)
+assert_contains "T2a: runtime resolved" "$out" "runtime=codex"
+assert_contains "T2b: codex argv"       "$out" "cmd: codex"
+
+echo "T3: no env identity — newest record with matching project wins"
+rm -f "$SESS"/*.json; mk_record gemini workspace testproj
+out=$(run_lns "$LNS" testproj --dry-run 2>&1)
+assert_contains "T3a: runtime from project record" "$out" "runtime=gemini"
+assert_contains "T3b: gemini -i argv"              "$out" "cmd: gemini -i"
+
+echo "T4: no records at all — ROLLOVER_RUNTIME fallback"
+rm -f "$SESS"/*.json
+out=$(env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID -u COPILOT_AGENT_SESSION_ID \
+  -u VSCODE_TARGET_SESSION_LOG ROLLOVER_RELAUNCH=manual ROLLOVER_RUNTIME=opencode \
+  "$LNS" testproj --dry-run 2>&1)
+assert_contains "T4a: fallback runtime"    "$out" "runtime=opencode"
+assert_contains "T4b: opencode argv"       "$out" "cmd: opencode --prompt"
+
+echo "T5: --runtime flag overrides everything"
+mk_record claude sid-ccc testproj
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-ccc "$LNS" testproj --runtime copilot --dry-run 2>&1)
+assert_contains "T5a: flag wins"    "$out" "runtime=copilot"
+assert_contains "T5b: copilot argv" "$out" "cmd: copilot -i"
+
+echo "T6: bootstrap prompt is exact and verbatim"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T6a: exact prompt text" "$out" "$PROMPT"
+
+echo "T7: ROLLOVER_RELAUNCH=off prints prompt, launches nothing"
+out=$(env ROLLOVER_RELAUNCH=off "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains     "T7a: mode off"     "$out" "mode=off"
+assert_contains     "T7b: prompt shown" "$out" "$PROMPT"
+assert_not_contains "T7c: no cmd line"  "$out" "cmd: claude"
+
+echo "T8: --bg on a non-claude runtime is an error (exit 3)"
+out=$(run_lns "$LNS" testproj --runtime codex --bg --dry-run 2>&1); rc=$?
+assert_eq       "T8a: exit 3"        "$rc" "3"
+assert_contains "T8b: claude-only"   "$out" "claude-only"
+
+echo "T9: missing next-session.md is an error (exit 3)"
+out=$(run_lns "$LNS" nosuchproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T9a: exit 3"          "$rc" "3"
+assert_contains "T9b: names the file"  "$out" "next-session.md"
+
+echo "T10: ROLLOVER_RELAUNCH=auto + claude implies --bg"
+out=$(env ROLLOVER_RELAUNCH=auto "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T10a: bg=1"          "$out" "bg=1"
+assert_contains "T10b: --bg in argv"  "$out" "cmd: claude --bg"
+
+echo; echo "passed=$PASS failed=$FAIL"
+[ "$FAIL" -eq 0 ]
