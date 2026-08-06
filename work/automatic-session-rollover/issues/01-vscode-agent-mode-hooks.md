@@ -68,12 +68,28 @@ session (Copilot Pro, Sonnet 5, this machine, relayed by the user):
   own token/context usage (no tool or readable UI surface) — so the
   UI-comparison leg needs the USER to read the number visually, as with
   the copilot-cli 73.0k match.
-- Next diagnostic (cheap, run in the copilot chat terminal):
-  `echo "${VSCODE_TARGET_SESSION_LOG:-UNSET}"` and
-  `ls -lt "$HOME/Library/Application Support/Code/User/workspaceStorage/"*/chatSessions/ 2>/dev/null | head`
-  — settles which discovery leg fails. Until then the "Copilot VS Code"
-  row's measure stays **plausible but unverified**, now with one recorded
-  discovery failure on VS Code 1.132.0.
+- Diagnostic ran (user relay + claude-side probe), and the story flipped:
+  **the measure branch WORKS on current builds; only the in-copilot
+  environment is broken.** From the copilot agent's terminal:
+  `VSCODE_TARGET_SESSION_LOG` UNSET, and `ls` of
+  `workspaceStorage/*/chatSessions/` returned NOTHING. From a normal shell
+  (claude session, same user): the store exists exactly where
+  `copilot_vscode_discover` expects — workspace `d939e947…` with
+  `workspace.json` matching this workspace root, live session log
+  `chatSessions/89e4a886-….jsonl` carrying `promptTokens`. So the copilot
+  agent's shell either sandboxes `~/Library` reads or runs with a different
+  HOME — the discovery failure is scoped to *checks run from inside the
+  copilot session*, not to the adapter.
+- **Item-2 measure verification (2026-08-06, VS Code 1.132.0, Copilot Chat
+  agent mode, Sonnet 5):** `check --runtime copilot-vscode --transcript
+  <live chatSessions jsonl>` → `method=exact tokens=38680` while the
+  session was live and mid-conversation. Remaining leg: compare against a
+  UI-visible number (the agent cannot introspect its own usage — the user
+  must read the UI meter, if any). Consequence for the vendor-hook wiring:
+  a copilot-vscode session CANNOT self-measure from its own terminal
+  (env + `~/Library` visibility) — measurement must run from outside
+  (another session/watcher), or the hook contract must deliver the
+  artifact path in-band (item 1 territory).
 
 ## Done when
 
