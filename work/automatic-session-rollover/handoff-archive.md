@@ -2,6 +2,39 @@
 ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
+# Session Handoff — 2026-08-06 (session 12: HTML review rendition shipped; STOP rollover at 155K mid-turn)
+
+**What shipped (committed on `main`, pushed):**
+
+- **`subagent-rollover-research.html` — `d93daea`:** standalone, self-contained
+  HTML review rendition of the research note, restructured per user direction:
+  problem (with the stats evidence) → the model (§2: roles/policy, verb,
+  protocol, files, lock hierarchy, state machines, drain mode, invariants
+  I1–I8 — with 5 hand-authored inline-SVG diagrams: system model, resume-vs-
+  successor, lock hierarchy, child lifecycle, parent budget modes) → machinery
+  already in place (§3) → findings (§4) → proposal R1–R8 + inventory (§5) →
+  evaluation model (§6) → next steps. Light/dark via CSS tokens; no external
+  deps. Diagrams visually verified in Chrome (3 label-overlap fixes applied
+  pre-commit). The markdown note remains the raw record (footer says so).
+- Tier-2 decision note (HTML-vs-Artifact) in `decisions.md`; claude-in-chrome
+  `file://` gotcha routed to `docs/operational-knowledge.md`.
+
+**Mid-turn user request (binding, NOT started):** enumerate rollover
+*scenarios* — mainline functional plus corner/edge cases for resilience,
+recoverability, and performance — to (a) keep in mind while working through
+the doc and (b) drive evaluation, *before* any implementation. User asked
+whether their dimension list misses anything (candidates to consider:
+concurrency/contention incl. human attach during drain, observability/
+auditability, cost/token-economy, schema evolution of records, degradation on
+opaque runtimes, human-in-the-loop policy edges). Seed material: S1–S10 +
+P1–P5 + §13 fault model already in the research doc — the new catalog should
+extend, not duplicate, those.
+
+**Rollover:** WARN fired mid-diagram-verification (134K), STOP (155K) two
+edits later; wrapped the atomic step (commit `d93daea` + this ledger) and
+rolled. Second consecutive session terminated on schedule by its own subject
+matter.
+
 # Session Handoff — 2026-08-06 (session 11b: subagent-rollover research phase; STOP rollover at 157K)
 
 **What shipped (committed on `main`, pushed through `4fa0cdb`):**
