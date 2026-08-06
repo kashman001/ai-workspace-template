@@ -81,6 +81,13 @@ zone. Raise here as models improve. **Keep STOP below the runtime's auto-compact
 trigger** (150K < Claude Code's ~200K): if compaction fires first, the
 deliberate rollover never gets its chance.
 
+One shared pair for all sessions and roles — per-role thresholds were
+considered and ruled YAGNI (2026-08-06): thresholds encode where the model
+degrades, roles differ only in the *response* to crossing. Revisit only if
+dispatch records show mid-task `ROLLOVER_NEEDED` closures clustering in one
+role class, or pre-120K degradation attributable to a role. Full reasoning:
+`work/automatic-session-rollover/issues/08-per-role-thresholds.md`.
+
 ## Rollover trigger policy (hybrid: WARN asks, STOP goes)
 
 > **Status:** implemented 2026-08-05 (ADR-0003/ADR-0004): the

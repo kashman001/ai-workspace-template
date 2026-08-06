@@ -51,15 +51,28 @@ question stops recurring in handoffs.
   escalation is post-hoc/external only (sync `task` blocks the parent).
   Build = execution work, out of map scope → backlog row, unscheduled.
   (`issues/09-copilot-adapter-design.md`, session 25)
+- **08 — per-role WARN/STOP thresholds: YAGNI (shared pair stands).**
+  Thresholds encode where the *model* degrades, not who's running it;
+  roles differ in *response* to crossing, not in where the line sits. No
+  role taxonomy exists to key on (coordination roles ≠ task roles; task
+  roles recorded nowhere), and the data shows the shared pair working
+  (3/30 children ≥ WARN were true positives; 0 ≥ STOP; main sessions are
+  the dominant pressure). Revisit trigger recorded in
+  `docs/context-budget.md` → Thresholds. Per-item threshold plumbing
+  stays unbuilt. (`issues/08-per-role-thresholds.md`, session 27)
+
+**Destination REACHED (2026-08-06, session 27):** every §14.4 question is
+a recorded decision; no open tickets, no fog. The map is complete —
+follow-on work (copilot adapter build, backlog defects) lives outside it.
 
 ## Not yet specified
 
 - ~~Accelerator-tier design~~ — CLOSED by ticket 06 (refuted for hook
   wiring; out of scope. A parent-behavior SendMessage checkpoint push could
   be charted later if wanted — not scheduled).
-- **Per-role threshold config shape** (if ticket 08 decides they earn
-  their keep): where overrides live given the existing per-work-item
-  `context-budget.env` override mechanism.
+- ~~Per-role threshold config shape~~ — CLOSED by ticket 08 (thresholds
+  ruled YAGNI, so no config shape to specify; the conditional resolved to
+  no). Fog exhausted.
 
 ## Out of scope
 
