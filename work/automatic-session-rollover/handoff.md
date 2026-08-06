@@ -6,6 +6,38 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-05 (session 3: ALL open questions closed; research + smoke tests landed; user-directed rollover into documentation phase)
+
+Design discussion is COMPLETE. Every open question is closed and recorded;
+substance lives in `relaunch-analysis.md` (open-questions section, final
+state), `decisions.md` (three new Tier-2 notes), and the three research docs.
+This block is provenance only.
+
+- Closed with user: #1 multi-session identity redesign approved (operating
+  model: one developer, N concurrent sessions, one per work item); #2 knobs
+  (`context-budget.env`, off/manual/auto, `manual` default); #3 all four hook
+  deployments in scope (smoke tests collapsed the deferral rationale); #4
+  launcher covers all five runtimes seeded-interactive, background claude-only.
+- Research delivered (background agents): `vendor-hooks-research.md` (all
+  four runtimes PUSH-CAPABLE — the "agent discipline only" matrix rows were
+  stale); `smoke-test-opencode.md` (opencode 1.18.14 installed; chat.message
+  injection CONFIRMED live, part shape trap documented; sqlite token store);
+  `smoke-test-copilot.md` (copilot CLI 1.0.78 installed; hooks CONFIRMED
+  live; `copilot -i` seeded-interactive REFUTED the headless-only claim;
+  VS Code agent mode ships hooks since v1.109, Preview, reads our formats —
+  live verification is the one spun-out ticket).
+- Machine state changed: opencode (brew) + copilot CLI (npm) now installed;
+  scratch test dirs under the session scratchpad; a stray `$schema` line
+  opencode auto-added to `.opencode/opencode.json` was reverted.
+- Next phase (user-agreed sequence): documentation first, then
+  implementation. See `next-session.md`.
+
+Suggested skills for the next session: `writing-for-agents` (doc edits),
+`decision-log` (promotions to the ADR-0003 family), `checkpoint` or
+`session-rollover` at the boundary.
+
+---
+
 # Session Handoff — 2026-08-05 (session 2: design discussion — hybrid settled, ADR-0003, codification walkthrough, multi-session redesign proposed; WARN rollover)
 
 Same calendar day as session 1, fresh context. All substance lives in
@@ -28,22 +60,4 @@ ADR-0003; this block is provenance only.
 
 ---
 
-# Session Handoff — 2026-08-05 (session 1: project spun out of template-maintenance; demo run; analysis captured)
-
-Spun out of `work/template-maintenance/` mid-discussion: its queued
-`launch-next-session.sh` mission grew into this focused project at the user's
-request ("this deserves a good discussion and proper focused project").
-
-What got done this session (while still under template-maintenance):
-- Verified launch flags against installed CLIs — caught that
-  `claude --bg --name` doesn't exist (no `--name` flag).
-- Live demo: `claude --bg` launched a detached seeded session in this cwd; it
-  read the launcher and answered correctly in ~11s; stopped cleanly.
-- Full analysis written to `relaunch-analysis.md` (pipeline concept, vendor
-  matrix, knob proposal, four open questions).
-- User widened scope beyond the script: cross-vendor *triggering* reliability
-  and workspace-parameter optionality are explicitly part of the problem.
-
-State: no code written; `main` clean apart from this new work directory and a
-retarget note in `work/template-maintenance/next-session.md`. Immediate next
-step: the open-questions discussion (see launcher).
+*Older blocks: `handoff-archive.md`.*
