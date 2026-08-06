@@ -115,6 +115,10 @@ unnoticed.
 - The launcher was REPLACED, not appended: `next-session.md` describes only the next
   session's mission — no leftover sections from the previous rollover.
 
+After verification passes, release the work-item lock so the successor can take it:
+`scripts/context-budget.sh release --project <project-name>` (the successor's
+`register --project <project-name>` re-acquires it).
+
 ## Outputs
 
 - Ledger entries bracketing the rollover (`work/context-decay/context-ledger.jsonl`).
