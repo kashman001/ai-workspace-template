@@ -48,8 +48,31 @@ live — grilling, HITL); session-rollover at WARN/STOP.
   newer sibling rollover on origin — fetch-and-compare is the only safe
   freshness guard before trusting next-session.md.
 
-**Wrap:** clean session-end below WARN; reconcile + verification committed,
-pushed. Session-24 block archived (two-block rule).
+**Post-wrap addendum (user went live in VS Code):**
+
+- **Issue-01 item 2 largely CLOSED, diagnosis flipped twice:** live copilot
+  chat couldn't self-measure (no artifact), but `copilot_vscode_measure` was
+  then verified exact from this session (`method=exact tokens=38680` against
+  the live chatSessions jsonl). Root cause found by a user-side agent: the
+  sandboxed VS Code terminal blocks `readdir` on `workspaceStorage/` parent
+  (glob expands empty) though direct paths stay readable. **Fix spec queued:**
+  `work/context-decay/copilot-vscode-sandbox-discovery-fix.md` (derive the
+  storage hash from `VSCODE_TARGET_SESSION_LOG` via parameter expansion, no
+  readdir; keep glob as fallback) — user-approved work for the successor.
+- Archive-truncation incident: session-26's archive step opened
+  `handoff-archive.md` for write before reading it (833 lines lost,
+  restored from git history same session, commit `71ce22d`).
+
+**Learnings:** (parked)
+- Python one-liner `open(f,'w').write(...+open(f).read())` truncates before
+  reading — write-before-read archive bug (1st strike, self-inflicted).
+- Copilot Chat agent terminals: `VSCODE_TARGET_SESSION_LOG` visible in
+  session context but not exported to its shell; `~/Library` readdir
+  sandbox-blocked (1st strike; fix spec above removes the dependency).
+
+**Wrap:** WARN rollover at ~149K after the live-user verification work;
+reconcile + verification + issue-01 updates committed, pushed through
+`955de80` + this rollover commit. Session-24 block archived (two-block rule).
 
 # Session Handoff — 2026-08-06 (session 25: wayfinder ticket 09 RESOLVED — copilot adapter designed; clean wrap at ~113K)
 
