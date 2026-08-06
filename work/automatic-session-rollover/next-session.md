@@ -95,6 +95,20 @@ map's Decisions-so-far, graduate/close the matching fog patch in `map.md`.
 4. Work ticket 06 while it runs; fold both resolutions into map +
    tickets; `dispatch-close` at yield.
 
+## If you are a VS Code Copilot Chat (agent-mode) session
+
+First live copilot-vscode session on this work item — two extra rules:
+
+- After `register`, paste the emitted `runtime= method= tokens= ...` line
+  into the chat for the user: it is the live verification of
+  `copilot_vscode_measure` that `issues/01-vscode-agent-mode-hooks.md`
+  item 2 needs (record the result there; compare against the session UI).
+- If `register` reports `role=auxiliary`, a live claude session owns the
+  work item. Do NOT proceed on the mission above — ask the user: either
+  they wind down the claude session (then re-register here, expect
+  primary), or this session takes ticket 08 only (grilling, HITL — needs
+  the user live anyway) as auxiliary, touching nothing else.
+
 ## At session end
 
 Lock releases mechanically (launcher script or SessionEnd hook). Manual
