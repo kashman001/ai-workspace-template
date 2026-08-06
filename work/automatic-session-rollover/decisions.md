@@ -425,3 +425,32 @@ script has.
 `skills/session-rollover/SKILL.md` (closing step),
 `docs/context-budget.md` (work-item ownership passage), tests T16–T19.
 **Promote?:** no — mechanism detail within ADR-0003/0004's scope.
+
+## 2026-08-06 — ROLLOVER_OPT_APPROVAL `auto` re-pointed to classifier tier; old level renamed `edits` (session 15)
+
+**Decision:** the normalized approval ladder becomes `default < edits < auto
+< full`. `auto` now means "the most autonomous mode this runtime offers with
+a safety net" — claude `--permission-mode auto` (classifier-vetted; verified
+against live `--help`, claude 2.1.223); runtimes without a classifier
+equivalent fall back to their `edits` mapping with a stderr note. `edits`
+carries the old `auto` mappings (acceptEdits tier). This work item's
+`.rollover-options` switches `full` → `auto`.
+**Why:** the script's old `auto` (acceptEdits) collided with the UI's
+classifier-driven "auto mode"; no level inherited the classifier — arguably
+the best default for autonomous chains (high autonomy + tripwire on
+dangerous actions, observed live). `auto`-as-capability-tier is
+agent-agnostic: non-claude mappings are unchanged, so the semantic change
+touches claude only, and no existing file used `auto` (lineage file said
+`full`).
+**Rejected:** (1) adding a `classifier` level alongside `auto` — bakes a
+claude-specific mechanism name into the vendor-neutral vocabulary and keeps
+the ambiguous `auto`; (2) retiring `auto` as a loud unknown — the warning
+goes to stderr mid-chain where nobody reads it, and the launch degrades to
+manual mode, recreating the incident this issue documented; (3) refusing
+(die) on non-classifier runtimes — breaks cross-runtime chains; (4) falling
+back up to full bypass — silently drops the tripwire.
+**Blast radius:** `scripts/launch-next-session.sh` (OPT_ARGS + header),
+tests T14a–T14p, `docs/context-budget.md` "Option inheritance",
+`skills/session-rollover/SKILL.md` step 6, this item's `.rollover-options`
+(machine-local).
+**Promote?:** no — mapping detail within ADR-0003's flag-verification rule.
