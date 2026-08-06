@@ -118,6 +118,82 @@ the turn flushed, the same file carries `promptTokens:38152` and
 is the designed degrade. Only optional leg left: comparing tokens against
 a UI-visible meter (none reported so far).
 
+## Update 2026-08-06 (session 28) — items 1 + 3 VERIFIED live; build spec
+
+Verified on VS Code 1.132.0 (Copilot Chat built in — `code --list-extensions`
+lists no copilot extension), macOS, Copilot Pro, model claude-sonnet-5.
+Method: temporary probe hook (`.github/hooks/vscode-probe.json` +
+`scripts/hooks/vscode-hook-probe.sh`, both since deleted) logging every
+invocation to `.vscode-hook-probe.jsonl`, driven by three `code chat`
+seeded sessions launched from a claude agent shell.
+
+**Item 3 — `code chat` seeded launch: WORKS.**
+`code chat -r -m agent "<prompt>"` from a non-interactive agent shell exits
+0 immediately and opens a NEW agent session in the last-active window that
+runs the prompt (sids `265779c4`, `b38a7f09`, `e901add4`). Note: returns
+before the session responds — launcher BG confirm-loop pattern applies.
+
+**Item 1 — agent-mode hooks: FIRE, with this verified contract:**
+- Config: `.github/hooks/*.json`, **PascalCase** events, `{"type":"command",
+  "command":…, "timeout":…}` (docs: also cwd/env + windows/linux/osx
+  overrides). Probe used absolute command paths; relative-path resolution
+  (repo-relative like the CLI json?) NOT yet verified.
+- Events seen firing: `SessionStart`, `UserPromptSubmit`, `PostToolUse`,
+  `Stop` (incl. chained Stop with `stop_hook_active:true`).
+- Payload: **snake_case Claude-style** — `session_id`, `transcript_path`,
+  `cwd`, `hook_event_name`, `timestamp`; + `model`/`source` (SessionStart),
+  `prompt` (UserPromptSubmit), `tool_name` (PostToolUse),
+  `stop_hook_active` (Stop). CLI payloads are camelCase (`sessionId`) —
+  clean runtime discriminator for shared hook files.
+- `transcript_path` → `…/workspaceStorage/<hash>/GitHub.copilot-chat/
+  transcripts/<sid>.jsonl` — message log, NO token counts. The measurable
+  artifact is derivable: `<3×dirname>/chatSessions/<sid>.jsonl` (confirmed
+  live: promptTokens=36699 for sid 265779c4). **This dissolves the
+  self-measure blocker from item 2** — no env export, no sandbox issue:
+  the hook process reads `~/Library` fine.
+- In-band channels verified:
+  - `SessionStart` stdout `{"hookSpecificOutput":{"additionalContext":…}}`
+    → model-visible (run 1 ACKed the marker verbatim).
+  - `Stop` + **exit code 2 + stderr** → forces one continuation turn whose
+    instruction is the stderr text (run 3 ACKed; chained Stop arrives with
+    `stop_hook_active:true`). **JSON `{"decision":"block","reason":…}` on
+    Stop is IGNORED** (run 2) — exit-2 is the only working block channel.
+  - `PostToolUse` `hookSpecificOutput.additionalContext`: fires but marker
+    NOT visible to the model — do not rely on it.
+- Behavioral caveat: in run 3 the model saw the SessionStart marker and
+  **refused it as prompt injection** ("a fake hook… I ignored it"). The
+  canonical WARN/STOP text should read as tooling status (it does), but
+  expect occasional discounting; the Stop exit-2 channel proved more
+  authoritative (obeyed in the same run).
+- `$CLAUDE_PROJECT_DIR` is UNSET in VS Code hook processes — the repo's
+  `.claude/settings.json` claude hooks no-op harmlessly if VS Code loads
+  them (default `chat.hookFilesLocations` includes `.claude/settings.json`).
+
+**Build spec (agreed, session 28):**
+1. `scripts/hooks/context-budget-copilot-vscode-hook.sh` — mirrors the
+   copilot-cli wrapper: guard `session_id` snake_case non-empty (excludes
+   CLI); derive chatSessions path from `transcript_path`+`session_id`, exit
+   0 if absent (fail-open); `budget_hook_check copilot-vscode <sid> <cs>`;
+   `SessionStart` → `hookSpecificOutput.additionalContext` WARN/STOP;
+   `Stop` → guard `stop_hook_active`, then ONLY at STOP: message to stderr
+   + exit 2.
+2. `.github/hooks/context-budget-vscode.json` — PascalCase `SessionStart` +
+   `Stop` → that script. Use absolute-vs-relative command per the cwd
+   verification below.
+3. OPEN: verify hook-process cwd / relative command resolution (probe v4:
+   log `pwd`, wire one relative-path entry) before choosing the command
+   form in (2).
+4. `launch-next-session.sh` copilot-vscode branch → `CMD=(code chat
+   ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -r -m agent "$PROMPT")`, replacing
+   note-and-punt.
+5. Tests: W-test (dry-run argv for `--runtime copilot-vscode`) + vendor
+   T9 block (SessionStart WARN envelope; Stop WARN silent; Stop STOP rc=2
+   + stderr text; `stop_hook_active` guard; camelCase-payload guard;
+   missing-chatSessions fail-open) using the fake workspaceStorage tree.
+6. Docs: `docs/context-budget.md` (per-runtime table Copilot VS Code row —
+   hook-provided path route; vendor hook deployments section; relaunch
+   knobs), `relaunch-analysis.md` seeded-launch row, backlog card.
+
 ## Done when
 
 - All three checks pass on a Copilot-licensed machine (note VS Code +
