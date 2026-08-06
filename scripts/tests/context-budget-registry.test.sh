@@ -43,5 +43,19 @@ assert_contains "T1b: aaa check measures aaa's tokens"  "$out" "tokens=50000"
 out=$(run_as bbb check)
 assert_contains "T1c: bbb check measures bbb's tokens"  "$out" "tokens=90000"
 
+echo "T2: register --project acquires the lock; a live holder is not stolen"
+LOCK="$TMP/work/testproj/.active-session"
+mk_transcript aaa 50000; mk_transcript bbb 90000; touch "$PROJ_DIR/aaa.jsonl"
+run_as aaa register --project testproj --quiet >/dev/null
+assert_eq "T2a: lock holder is aaa" "$(jq -r .session_id "$LOCK" 2>/dev/null)" "aaa"
+err=$(run_as bbb register --project testproj 2>&1 >/dev/null)
+assert_eq "T2b: live lock not stolen" "$(jq -r .session_id "$LOCK")" "aaa"
+assert_contains "T2c: holder warning emitted" "$err" "held by claude-aaa"
+
+echo "T3: stale lock (holder artifact untouched for hours) is reclaimed"
+touch -t 202601010000 "$PROJ_DIR/aaa.jsonl"
+run_as bbb register --project testproj --quiet >/dev/null
+assert_eq "T3a: stale lock reclaimed by bbb" "$(jq -r .session_id "$LOCK")" "bbb"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

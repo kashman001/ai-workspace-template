@@ -23,6 +23,7 @@ if [ -z "${CONTEXT_DUMB_ZONE_TOKENS:-}" ] && [ -f "$WORKSPACE_ROOT/context-budge
 fi
 THRESHOLD="${CONTEXT_DUMB_ZONE_TOKENS:-150000}"
 WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
+LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
 case "${1:-}" in check|register|record|watch|release) COMMAND="$1"; shift ;; esac
@@ -280,6 +281,38 @@ emit_check() {
   case "$status" in OK) return 0 ;; WARN) return 1 ;; STOP) return 2 ;; esac
 }
 
+lock_holder_age() {
+  # Age in seconds of the lock holder's artifact (its liveness signal), via the
+  # holder's own session file; rc 1 when unknowable (treated as stale — a
+  # holder with no session record cannot be confirmed live).
+  local rt="$1" sid="$2" af mt
+  af=$(jq -r '.artifact // empty' "$STATE_DIR/sessions/$rt-$sid.json" 2>/dev/null)
+  [ -n "$af" ] && [ -f "$af" ] || return 1
+  mt=$(stat -f%m "$af" 2>/dev/null || stat -c%Y "$af" 2>/dev/null) || return 1
+  echo $(( $(date +%s) - mt ))
+}
+
+acquire_lock() {
+  local dir="$WORKSPACE_ROOT/work/$PROJECT" lock hrt hsid age
+  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
+  lock="$dir/.active-session"
+  if [ -f "$lock" ]; then
+    hrt=$(jq -r '.runtime // empty' "$lock" 2>/dev/null)
+    hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
+    if [ "$hrt-$hsid" != "$RUNTIME-$SESSION_ID" ]; then
+      if age=$(lock_holder_age "$hrt" "$hsid") && [ "$age" -lt "$LOCK_STALE" ]; then
+        note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one active session per work item"
+        return 0
+      fi
+      note "lock: reclaiming stale lock from $hrt-$hsid"
+    fi
+  fi
+  jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg proj "$PROJECT" \
+    --arg ts "$(date -u +%FT%TZ)" \
+    '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts}' > "$lock"
+  note "lock: acquired work/$PROJECT/.active-session as $RUNTIME-$SESSION_ID"
+}
+
 cmd_register() {
   resolve_session
   # Session boundary: the workspace telemetry log is shared append-only across
@@ -296,6 +329,7 @@ cmd_register() {
     '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts}' \
     > "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
   note "registered $RUNTIME session $SESSION_ID artifact: $ARTIFACT"
+  [ -n "$PROJECT" ] && acquire_lock
   emit_check
 }
 
