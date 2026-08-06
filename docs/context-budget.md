@@ -204,7 +204,10 @@ Every element must hold under N concurrent sessions:
   `exec`s, after which nothing can release); a foreign holder's lock is never
   removed. Without the launch script, the dying session releases manually after
   the rollover-verification gate. The successor's `register` acquires it; stale
-  locks (artifact untouched for hours) are reclaimable.
+  locks (artifact untouched for hours) are reclaimable. The lock file is
+  **gitignored**: its validity comes from the holder's artifact mtime, not its
+  content, so a committed copy is at best noise and at worst a resurrected
+  stale claim on checkout.
 - **Relaunch targets the dying session's own project** — read from its own
   session record, never from a global "active project" scalar (rejected:
   breaks with concurrent sessions by construction).
@@ -319,6 +322,13 @@ data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
 {"ts":"2026-07-22T12:00:00Z","runtime":"claude","session":"<file>","tokens":91000,
  "method":"exact","threshold":150000,"status":"OK","label":"onboard-repo: step 4 done"}
 ```
+
+The ledger is **gitignored** (machine-local telemetry, same class as
+`.gemini/telemetry.log` and the `.active-session` locks): hook appends would
+otherwise dirty the tree every session. It is not regenerable — when mining it
+for analysis, commit a deliberate dated snapshot (as
+`work/automatic-session-rollover/subagent-rollover-stats.md` did), never the
+live append-file.
 
 ## Known limitations
 
