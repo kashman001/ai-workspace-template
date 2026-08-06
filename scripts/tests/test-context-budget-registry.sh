@@ -177,5 +177,40 @@ run_as aaa release --project testproj --quiet >/dev/null
 [ ! -f "$LOCK" ] && [ -z "$(ls "$TMP/work/testproj/.agent-locks" 2>/dev/null)" ] \
   && ok "T12d: full tree released bottom-up" || bad "T12d: locks remain"
 
+echo "T13: superseded_by back-stamped on successor primary registration"
+SESS="$TMP/.context-budget/sessions"
+mk_transcript aaa 50000; mk_transcript bbb 90000; mk_transcript ccc 20000
+run_as aaa register --project testproj --quiet >/dev/null
+run_as aaa release --project testproj --quiet >/dev/null
+jq '.role="superseded" | .superseded_at="2026-08-06T01:00:00Z"' \
+  "$SESS/claude-aaa.json" > "$SESS/tmp.json" && mv "$SESS/tmp.json" "$SESS/claude-aaa.json"
+run_as bbb register --project testproj --quiet >/dev/null
+assert_eq "T13a: successor stamps predecessor superseded_by" \
+  "$(jq -r '.superseded_by // "none"' "$SESS/claude-aaa.json")" "claude-bbb"
+jq '.role="superseded" | .superseded_at="2026-08-06T02:00:00Z"' \
+  "$SESS/claude-bbb.json" > "$SESS/tmp.json" && mv "$SESS/tmp.json" "$SESS/claude-bbb.json"
+rm -f "$TMP/work/testproj/.active-session"
+run_as ccc register --project testproj --quiet >/dev/null
+assert_eq "T13b: only the unstamped predecessor gets the new stamp" \
+  "$(jq -r '.superseded_by // "none"' "$SESS/claude-bbb.json")" "claude-ccc"
+assert_eq "T13c: an already-stamped record is not overwritten" \
+  "$(jq -r '.superseded_by // "none"' "$SESS/claude-aaa.json")" "claude-bbb"
+run_as ccc release --project testproj --quiet >/dev/null
+
+echo "T14: --takeover — explicit recorded steal from a live holder"
+mk_transcript aaa 50000; mk_transcript bbb 90000                # both live again
+run_as aaa register --project testproj --quiet >/dev/null
+out=$(run_as bbb register --project testproj --takeover 2>&1)
+assert_eq "T14a: lock moved to bbb" "$(jq -r .session_id "$LOCK")" "bbb"
+assert_contains "T14b: register reports role=primary" "$out" "role=primary"
+assert_contains "T14c: loud takeover note" "$out" "takeover"
+assert_eq "T14d: old holder stamped superseded" \
+  "$(jq -r '.role // "none"' "$SESS/claude-aaa.json")" "superseded"
+assert_eq "T14e: old holder stamped superseded_by" \
+  "$(jq -r '.superseded_by // "none"' "$SESS/claude-aaa.json")" "claude-bbb"
+[ -n "$(jq -r '.superseded_at // empty' "$SESS/claude-aaa.json")" ] \
+  && ok "T14f: superseded_at stamped" || bad "T14f: no superseded_at"
+run_as bbb release --project testproj --quiet >/dev/null
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -171,7 +171,7 @@ run `scripts/attach-session.sh <project>` — the front door for re-attach; it
 resolves the latest session for the work item (`work/<project>/.active-session`
 lock, falling back to the newest `.context-budget/sessions/` record for that
 project when no lock exists) and prints a one-line status
-(`project=… runtime=… session=… role=primary|auxiliary|superseded|none
+(`project=… runtime=… session=… role=primary|auxiliary|child|superseded|none
 age=…s live=yes|no locked=yes|no`). Don't
 relaunch a session that's still live and locked — the lock enforces one
 active session per project — instead the script `exec`s
@@ -188,8 +188,10 @@ terminal — it `exec`s the successor interactively with options inherited from
 ## Multi-session model (session-keyed registry + per-project lock)
 
 > **Status:** implemented 2026-08-05 (session-keyed registry + `register
-> --project` lock + `release`; regression-tested in
-> `scripts/tests/context-budget-registry.test.sh`).
+> --project` lock + `release`); session roles 2026-08-06; child registry,
+> release-order guard, `superseded_by` back-stamp and `--takeover`
+> 2026-08-06 (slice 1). Regression-tested in
+> `scripts/tests/test-context-budget-registry.sh`.
 
 Operating model: one developer runs multiple work items concurrently, each
 with its own main session in the same workspace, possibly across runtimes.
@@ -223,7 +225,7 @@ Every element must hold under N concurrent sessions:
   content, so a committed copy is at best noise and at worst a resurrected
   stale claim on checkout.
 - **Session roles — one primary per work item.** Each session engaging a work
-  item (`register --project X`) holds exactly one of three roles, recorded in
+  item (`register --project X`) holds exactly one of four roles, recorded in
   its registry file and shown as `role=` by `register`/`attach-session.sh`
   (and in the Claude Code status line via
   `scripts/statusline-context-budget.sh`):
@@ -236,13 +238,42 @@ Every element must hold under N concurrent sessions:
     live primary holds the lock (review, side-quest). It gets measured and
     associated but never contends for the lock, must not write the
     launcher/ledger, and must not roll the item over.
+  - **child** — a subagent session registered *by its parent* against the
+    item (`register --parent-session <sid> [--agent-id <id>]
+    --transcript <child-artifact> --project X`). The child's session id is
+    derived from the artifact, never the env (the registering process is the
+    parent); its record carries `parent_session_id`, `depth` (parent's + 1;
+    the parent must itself be registered), and optionally `agent_id`. Unlike
+    an auxiliary, a child holds a lock and writes its task report — but it
+    never contends for the *project* lock: it gets a per-child lock at
+    `work/<proj>/.agent-locks/<runtime>-<session-id>.json`, granted only
+    when the chain of parent pointers terminates at the current
+    project-lock holder (transitive validity, ≤10 hops); otherwise a loud
+    refusal degrades it to auxiliary.
   - **superseded** — a former primary after rollover; terminal.
     `launch-next-session.sh` stamps the dying session's record
     (`role=superseded`, `superseded_at`) alongside the pre-launch lock
     release, so the lineage is auditable and a dead predecessor is never
     mistaken for a usable session. At every rollover the newest session in
     the lineage thus becomes primary automatically (release → launch →
-    successor's `register` acquires).
+    successor's `register` acquires). The successor completes the chain: on
+    primary acquisition it back-stamps `superseded_by: <runtime>-<sid>` onto
+    the newest same-project superseded record not yet claimed by a
+    successor (the launcher can't — the runtime generates the successor's
+    id after the stamp), making the lineage walkable in both directions.
+- **Release order is bottom-up (I4).** `release` first sweeps stale child
+  locks (holder artifact older than the stale threshold — the same liveness
+  rule as the project lock), then refuses (exit 3) while live child locks
+  block the releaser: the project holder is blocked by any live child lock;
+  a child is blocked by live locks naming it as parent. A child's own
+  release removes only its `.agent-locks/` file. `.agent-locks/` is
+  gitignored for the same reason as the project lock.
+- **`register --takeover` is the explicit steal.** It wins even against a
+  live holder (human authority beats liveness heuristics), and it is
+  recorded, never silent: the old holder's registry record is stamped
+  `role=superseded` + `superseded_at` + `superseded_by=<new holder>`, and
+  the takeover is announced loudly on stderr. Without the flag, a live
+  holder always demotes the newcomer to auxiliary.
 - **Relaunch targets the dying session's own project** — read from its own
   session record, never from a global "active project" scalar (rejected:
   breaks with concurrent sessions by construction).
