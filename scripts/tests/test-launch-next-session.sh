@@ -228,5 +228,21 @@ out=$(run_lns ROLLOVER_RELAUNCH=off CLAUDE_CODE_SESSION_ID=sid-old \
 [ -f "$LOCKF" ] && bad "T19a: off mode kept lock" || ok "T19a: off mode released lock"
 rm -f "$LOCKF"
 
+echo "T20: rollover stamps the dying session's registry record superseded"
+rm -f "$SESS"/*.json; mk_record claude sid-old testproj
+mklock claude sid-old
+run_lns ROLLOVER_RELAUNCH=off CLAUDE_CODE_SESSION_ID=sid-old \
+  "$LNS" testproj --runtime claude >/dev/null 2>&1
+assert_eq "T20a: role stamped superseded" \
+  "$(jq -r .role "$SESS/claude-sid-old.json")" "superseded"
+assert_contains "T20b: superseded_at stamped" \
+  "$(jq -r '.superseded_at // empty' "$SESS/claude-sid-old.json")" "20"
+rm -f "$SESS"/*.json; mk_record claude sid-old testproj
+mklock claude sid-old
+run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --dry-run >/dev/null 2>&1
+assert_eq "T20c: dry-run does not stamp" \
+  "$(jq -r '.role // "none"' "$SESS/claude-sid-old.json")" "none"
+rm -f "$LOCKF"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

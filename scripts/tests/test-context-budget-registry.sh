@@ -78,5 +78,20 @@ touch -t 202601010000 "$TMP/.gemini/telemetry.log"                            # 
 "$CB" register --runtime gemini --quiet >/dev/null 2>&1
 [ ! -s "$TMP/.gemini/telemetry.log" ] && ok "T5c: stale telemetry log reset" || bad "T5c: not reset"
 
+echo "T6: session roles — primary on acquire, auxiliary alongside a live primary"
+touch "$PROJ_DIR/aaa.jsonl" "$PROJ_DIR/bbb.jsonl"
+out=$(run_as aaa register --project testproj 2>&1)
+assert_contains "T6a: register reports role=primary" "$out" "role=primary"
+assert_eq "T6b: primary role recorded" \
+  "$(jq -r .role "$TMP/.context-budget/sessions/claude-aaa.json")" "primary"
+out=$(run_as bbb register --project testproj 2>&1)
+assert_contains "T6c: register reports role=auxiliary" "$out" "role=auxiliary"
+assert_eq "T6d: auxiliary role recorded" \
+  "$(jq -r .role "$TMP/.context-budget/sessions/claude-bbb.json")" "auxiliary"
+assert_eq "T6e: lock still held by primary" "$(jq -r .session_id "$LOCK")" "aaa"
+run_as bbb register --quiet >/dev/null
+assert_eq "T6f: no project -> no role" \
+  "$(jq -r '.role // "none"' "$TMP/.context-budget/sessions/claude-bbb.json")" "none"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

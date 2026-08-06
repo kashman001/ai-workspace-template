@@ -83,5 +83,22 @@ echo "T6: bad args -> exit 3"
 out=$("$AS" 2>&1); rc=$?
 assert_eq "T6a: missing project exits 3" "$rc" "3"
 
+echo "T7: status line reports the session's role"
+fresh_artifact sid-aaa.jsonl
+mk_record claude sid-aaa testproj "$TMP/artifacts/sid-aaa.jsonl"
+mk_lock claude sid-aaa testproj
+out=$("$AS" testproj --dry-run 2>&1)
+assert_contains "T7a: lock holder shows role=primary" "$out" "role=primary"
+rm -f "$LOCK"
+jq '.role="superseded"' "$SESS/claude-sid-aaa.json" > "$SESS/tmp.json" \
+  && mv "$SESS/tmp.json" "$SESS/claude-sid-aaa.json"
+out=$("$AS" testproj --dry-run 2>&1)
+assert_contains "T7b: recorded role shown when unlocked" "$out" "role=superseded"
+jq 'del(.role)' "$SESS/claude-sid-aaa.json" > "$SESS/tmp.json" \
+  && mv "$SESS/tmp.json" "$SESS/claude-sid-aaa.json"
+out=$("$AS" testproj --dry-run 2>&1)
+assert_contains "T7c: no role recorded -> role=none" "$out" "role=none"
+rm -f "$SESS"/*.json
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

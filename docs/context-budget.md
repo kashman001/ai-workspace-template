@@ -166,7 +166,8 @@ run `scripts/attach-session.sh <project>` — the front door for re-attach; it
 resolves the latest session for the work item (`work/<project>/.active-session`
 lock, falling back to the newest `.context-budget/sessions/` record for that
 project when no lock exists) and prints a one-line status
-(`project=… runtime=… session=… age=…s live=yes|no locked=yes|no`). Don't
+(`project=… runtime=… session=… role=primary|auxiliary|superseded|none
+age=…s live=yes|no locked=yes|no`). Don't
 relaunch a session that's still live and locked — the lock enforces one
 active session per project — instead the script `exec`s
 `claude --resume <session_id>` on a real TTY (no `claude attach` subcommand
@@ -207,12 +208,36 @@ Every element must hold under N concurrent sessions:
   dying session's own lock immediately before launching (release-before-launch:
   the successor's `register` must not race it, and the attached-manual path
   `exec`s, after which nothing can release); a foreign holder's lock is never
-  removed. Without the launch script, the dying session releases manually after
+  removed. A `SessionEnd` hook (shipped in `.claude/settings.json.example`;
+  claude-only — other runtimes have no end hook) runs `release` on exit, so a
+  plainly-closed primary session frees its lock instead of squatting until the
+  stale threshold. Without either, the dying session releases manually after
   the rollover-verification gate. The successor's `register` acquires it; stale
   locks (artifact untouched for hours) are reclaimable. The lock file is
   **gitignored**: its validity comes from the holder's artifact mtime, not its
   content, so a committed copy is at best noise and at worst a resurrected
   stale claim on checkout.
+- **Session roles — one primary per work item.** Each session engaging a work
+  item (`register --project X`) holds exactly one of three roles, recorded in
+  its registry file and shown as `role=` by `register`/`attach-session.sh`
+  (and in the Claude Code status line via
+  `scripts/statusline-context-budget.sh`):
+  - **primary** — the lock holder; sole writer of the item's launcher/ledger
+    (`next-session.md`/`handoff.md`/`.rollover-options`) and sole rollover
+    authority. The lock *is* the primary marker: a session is primary iff
+    `work/<proj>/.active-session` carries its identity — on any conflict the
+    lock wins over a record's cached `role` claim.
+  - **auxiliary** — a concurrent helper registered against the item while a
+    live primary holds the lock (review, side-quest). It gets measured and
+    associated but never contends for the lock, must not write the
+    launcher/ledger, and must not roll the item over.
+  - **superseded** — a former primary after rollover; terminal.
+    `launch-next-session.sh` stamps the dying session's record
+    (`role=superseded`, `superseded_at`) alongside the pre-launch lock
+    release, so the lineage is auditable and a dead predecessor is never
+    mistaken for a usable session. At every rollover the newest session in
+    the lineage thus becomes primary automatically (release → launch →
+    successor's `register` acquires).
 - **Relaunch targets the dying session's own project** — read from its own
   session record, never from a global "active project" scalar (rejected:
   breaks with concurrent sessions by construction).

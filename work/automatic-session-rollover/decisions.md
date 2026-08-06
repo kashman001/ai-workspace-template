@@ -454,3 +454,33 @@ tests T14a–T14p, `docs/context-budget.md` "Option inheritance",
 `skills/session-rollover/SKILL.md` step 6, this item's `.rollover-options`
 (machine-local).
 **Promote?:** no — mapping detail within ADR-0003's flag-verification rule.
+
+## 2026-08-06 — Session roles: primary / auxiliary / superseded, lock as the primary marker (session 15)
+
+**Decision:** each session engaging a work item holds one of three roles —
+primary (lock holder; sole launcher/ledger writer and rollover authority),
+auxiliary (concurrent helper alongside a live primary; associated, never
+contends), superseded (former primary after rollover; terminal). The lock
+file IS the primary marker; registry `role` fields are cached claims that
+lose to the lock on conflict. Rollover succession is emergent (release →
+launch → successor register acquires), so the newest lineage session is
+always primary with no extra mechanism. Display: in-band `role=` on
+register/attach + a Claude Code statusline; SessionEnd hook releases the
+lock on plain exit.
+**Why:** the M14 discussion exposed that a plainly-exited session squats its
+lock for the stale window, and that "non-primary" conflates two states — a
+live helper and a dead predecessor — which need opposite treatment.
+**Rejected:** (1) primary/secondary/retired — "secondary" reads as a backup
+primary; (2) storing the role only in records without lock authority — two
+sources of truth that can diverge; (3) terminal-tab-title + `sessions`
+listing displays — deprioritized by the user; (4) `superseded_by` back-link
+at stamp time — the launcher cannot know the successor's id (runtime
+generates it); deferred to a successor-side back-stamp.
+**Blast radius:** `context-budget.sh` (register/acquire_lock),
+`launch-next-session.sh` (superseded stamp), `attach-session.sh` (role=),
+`statusline-context-budget.sh` (new), `.claude/settings.json.example`
+(SessionEnd + statusLine), docs (context-budget.md "Session roles",
+work-directory-conventions.md), tests T6/T7/T20 + statusline suite.
+**Promote?:** candidate — extends ADR-0004's multi-session model; promote
+when implementation slice 1 (parent/child registry) lands and the role
+schema is final.

@@ -81,7 +81,16 @@ if [ -f "$REC" ]; then
   fi
 fi
 
-echo "project=$PROJECT runtime=$RUNTIME session=$SID age=${AGE:-unknown}${AGE:+s} live=$LIVE locked=$([ "$LOCKED" -eq 1 ] && echo yes || echo no)"
+# Role: the lock is authoritative (holder = primary); otherwise the session
+# record's cached role claim (auxiliary/superseded), else none.
+ROLE="none"
+if [ "$LOCKED" -eq 1 ]; then
+  ROLE="primary"
+elif [ -f "$REC" ]; then
+  ROLE="$(jq -r '.role // "none"' "$REC" 2>/dev/null)"
+fi
+
+echo "project=$PROJECT runtime=$RUNTIME session=$SID role=$ROLE age=${AGE:-unknown}${AGE:+s} live=$LIVE locked=$([ "$LOCKED" -eq 1 ] && echo yes || echo no)"
 
 if [ "$LIVE" != "yes" ] || [ "$LOCKED" -ne 1 ]; then
   note "no live session — run: scripts/launch-next-session.sh $PROJECT"

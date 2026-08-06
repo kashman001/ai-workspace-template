@@ -329,7 +329,8 @@ acquire_lock() {
     hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
     if [ "$hrt-$hsid" != "$RUNTIME-$SESSION_ID" ]; then
       if age=$(lock_holder_age "$hrt" "$hsid") && [ "$age" -lt "$LOCK_STALE" ]; then
-        note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one active session per work item"
+        ROLE="auxiliary"
+        note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one primary session per work item; continuing as role=auxiliary"
         return 0
       fi
       note "lock: reclaiming stale lock from $hrt-$hsid"
@@ -338,7 +339,8 @@ acquire_lock() {
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg proj "$PROJECT" \
     --arg ts "$(date -u +%FT%TZ)" \
     '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts}' > "$lock"
-  note "lock: acquired work/$PROJECT/.active-session as $RUNTIME-$SESSION_ID"
+  ROLE="primary"
+  note "lock: acquired work/$PROJECT/.active-session as $RUNTIME-$SESSION_ID role=primary"
 }
 
 cmd_register() {
@@ -364,12 +366,14 @@ cmd_register() {
   mkdir -p "$STATE_DIR/sessions"
   rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
   find "$STATE_DIR/sessions" -name '*.json' -mtime +7 -delete 2>/dev/null  # dead sessions
+  ROLE=""
+  [ -n "$PROJECT" ] && acquire_lock                             # sets ROLE
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
-    --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" \
-    '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts}' \
+    --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \
+    '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts}
+     + (if $role == "" then {} else {role:$role} end)' \
     > "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
   note "registered $RUNTIME session $SESSION_ID artifact: $ARTIFACT"
-  [ -n "$PROJECT" ] && acquire_lock
   emit_check
 }
 
