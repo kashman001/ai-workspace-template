@@ -584,6 +584,4 @@ scripts as self-contained units — ~12 duplicated lines is the cheaper cost).
 (launcher), T8 (statusline); docs/context-budget.md Worktrees subsection;
 operational-knowledge worktree entry superseded. All six suites green
 (registry 60, attach 22, launcher 81, statusline 16, vendor 37, children 27).
-**Promote?:** YES — candidate ADR amending ADR-0004/0005's implicit
-one-checkout assumption ("coordination state is keyed to the repository,
-never to a checkout").
+**Promote?:** done → ADR-0006 (promoted 2026-08-06, session 21).
