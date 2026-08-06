@@ -149,13 +149,22 @@ as before this existed.
 (`ROLLOVER_RELAUNCH=auto`, `--bg`) are claude-only (ADR-0003) — on
 codex/gemini/opencode/copilot the launcher always prints the ready-to-run
 command instead of executing it, so every hop in a non-claude chain is
-already human-mediated. To bring a claude chain into an interactive terminal:
-if `work/<project>/.active-session` names a live session, **attach** to it
-(`claude attach`; the session id is in the lock file and in the newest
-`.context-budget/sessions/` record for that project) — don't relaunch, the
-lock enforces one active session per project. If the lock is released or
-stale, run `scripts/launch-next-session.sh <project>` from a real terminal —
-it `exec`s the successor interactively with options inherited from
+already human-mediated. To bring a claude chain into an interactive terminal,
+run `scripts/attach-session.sh <project>` — the front door for re-attach; it
+resolves the latest session for the work item (`work/<project>/.active-session`
+lock, falling back to the newest `.context-budget/sessions/` record for that
+project when no lock exists) and prints a one-line status
+(`project=… runtime=… session=… age=…s live=yes|no locked=yes|no`). Don't
+relaunch a session that's still live and locked — the lock enforces one
+active session per project — instead the script `exec`s
+`claude --resume <session_id>` on a real TTY (no `claude attach` subcommand
+exists; `-r/--resume` is the closest supported attach-by-id form, verified
+against live `--help` 2026-08-06). For a non-claude runtime it reports that
+attach is not possible (those runtimes have no background sessions — the
+launcher's `--bg` is claude-only — so the session is already interactive in
+someone's terminal). If the lock is released or stale, it prints the launch
+hint instead: run `scripts/launch-next-session.sh <project>` from a real
+terminal — it `exec`s the successor interactively with options inherited from
 `.rollover-options` as above.
 
 ## Multi-session model (session-keyed registry + per-project lock)

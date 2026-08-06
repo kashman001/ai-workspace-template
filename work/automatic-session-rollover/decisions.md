@@ -318,3 +318,33 @@ mapping if `--auto` turned out missing was not needed.
 **Promote?:** no — implementation detail of the already-promoted ADR-0003
 relaunch pipeline; the rejected-alternative weight (artifact auto-detection)
 is captured here, not new ADR-worthy ground.
+
+## 2026-08-06 — Dedicated attach-session.sh helper (Task 9, user-added)
+**Chose:** a new `scripts/attach-session.sh <project>` verb: resolve the
+latest session for a work item (`.active-session` lock, falling back to the
+newest registry record for the project), and when it is alive and holds the
+lock, connect this terminal to it (`claude --resume <session_id>` on a real
+TTY; `run: <cmd>` in `--dry-run`/non-TTY, same idiom as
+`launch-next-session.sh`).
+**Because:** shipped at explicit user request — overrides the earlier YAGNI
+call to leave re-attach as a documented-only manual procedure. `docs/context-
+budget.md`'s "Chained rollovers & re-attach" passage also named a `claude
+attach` subcommand that does not exist (re-verified live against `claude
+--help`/`claude agents --json` 2026-08-06: no `attach` subcommand; `-r/
+--resume <session_id>` is the closest supported form) — the manual procedure
+it described was itself unverified, another reason to make the front door a
+tested script instead of prose.
+**Rejected:** (1) manual lock inspection only (the prior documented-only
+path) — leaves the unverified-flag risk in prose nobody re-checks; (2)
+folding attach into `launch-next-session.sh` — launch and attach are
+different verbs: the launcher must stay safe to call from a dying session's
+non-TTY shell (it never `exec`s there, per its own manual-mode branch),
+while attach is inherently interactive (its whole job is handing the
+terminal to a live session) — conflating them would either weaken the
+launcher's non-TTY safety or leave attach half-built inside it.
+**Blast radius:** `scripts/attach-session.sh` (new),
+`scripts/tests/test-attach-session.sh` (new), `docs/context-budget.md` →
+"Chained rollovers & re-attach", `docs/template-workspace-backlog.html`
+(change-log row).
+**Promote?:** no — same shape as the other ADR-0003 companion scripts
+(implementation detail of the already-promoted relaunch/re-attach pipeline).
