@@ -6,6 +6,9 @@
 #          never the transcript: the statusline refreshes often, so live
 #          measurement stays with `context-budget.sh record` at work-unit
 #          boundaries and this just replays the newest ledger entry.
+#          A project statusLine REPLACES the user's global one, so this
+#          script chains it: the global command's output comes first and the
+#          work-item segment is appended as an extra line.
 # Input:   Claude Code statusline JSON on stdin (session_id, workspace dirs).
 # Wire-up: .claude/settings.json → "statusLine": {"type": "command",
 #          "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/statusline-context-budget.sh"}
@@ -19,28 +22,43 @@ ROOT=$(printf '%s' "$IN" | jq -r '.workspace.project_dir // .cwd // empty' 2>/de
 [ -n "$ROOT" ] || ROOT=$(pwd)
 
 REC="$ROOT/.context-budget/sessions/claude-$SID.json"
-if [ -z "$SID" ] || [ ! -f "$REC" ]; then echo "no work item"; exit 0; fi
-PROJECT=$(jq -r '.project // empty' "$REC" 2>/dev/null)
-if [ -z "$PROJECT" ]; then echo "no work item"; exit 0; fi
+PROJECT=""
+[ -n "$SID" ] && [ -f "$REC" ] && PROJECT=$(jq -r '.project // empty' "$REC" 2>/dev/null)
 
-# The lock is authoritative for primary; the record's role is a cached claim.
-ROLE=$(jq -r '.role // "none"' "$REC" 2>/dev/null)
-LOCK="$ROOT/work/$PROJECT/.active-session"
-if [ -f "$LOCK" ] && \
-   [ "$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)" = "$SID" ]; then
-  ROLE="primary"
+SEGMENT=""
+if [ -n "$PROJECT" ]; then
+  # The lock is authoritative for primary; the record's role is a cached claim.
+  ROLE=$(jq -r '.role // "none"' "$REC" 2>/dev/null)
+  LOCK="$ROOT/work/$PROJECT/.active-session"
+  if [ -f "$LOCK" ] && \
+     [ "$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)" = "$SID" ]; then
+    ROLE="primary"
+  fi
+
+  # Context %: newest ledger entry for this session's artifact, if any.
+  PCT=""
+  LEDGER="$ROOT/work/context-decay/context-ledger.jsonl"
+  AF=$(jq -r '.artifact // empty' "$REC" 2>/dev/null)
+  if [ -f "$LEDGER" ] && [ -n "$AF" ]; then
+    PCT=$(tail -200 "$LEDGER" | jq -rs --arg s "$(basename "$AF")" \
+      '[.[] | select(.session == $s and .threshold > 0)] | last
+       | if . then "\(.tokens * 100 / .threshold | floor)%" else empty end' \
+      2>/dev/null)
+  fi
+  SEGMENT=$(printf '%s · %s%s' \
+    "$(printf '%s' "$ROLE" | tr '[:lower:]' '[:upper:]')" "$PROJECT" "${PCT:+ · $PCT}")
 fi
 
-# Context %: newest ledger entry for this session's artifact, if any.
-PCT=""
-LEDGER="$ROOT/work/context-decay/context-ledger.jsonl"
-AF=$(jq -r '.artifact // empty' "$REC" 2>/dev/null)
-if [ -f "$LEDGER" ] && [ -n "$AF" ]; then
-  PCT=$(tail -200 "$LEDGER" | jq -rs --arg s "$(basename "$AF")" \
-    '[.[] | select(.session == $s and .threshold > 0)] | last
-     | if . then "\(.tokens * 100 / .threshold | floor)%" else empty end' \
-    2>/dev/null)
-fi
+# Chain the user's global statusLine command (skipped when absent or when it
+# points back at this script, which would recurse).
+BASE=""
+GCMD=$(jq -r '.statusLine.command // empty' "$HOME/.claude/settings.json" 2>/dev/null)
+case "$GCMD" in
+  ""|*statusline-context-budget*) : ;;
+  *) BASE=$(printf '%s' "$IN" | sh -c "$GCMD" 2>/dev/null) || BASE="" ;;
+esac
 
-printf '%s · %s%s\n' \
-  "$(printf '%s' "$ROLE" | tr '[:lower:]' '[:upper:]')" "$PROJECT" "${PCT:+ · $PCT}"
+if [ -n "$BASE" ] && [ -n "$SEGMENT" ]; then printf '%s\n%s\n' "$BASE" "$SEGMENT"
+elif [ -n "$BASE" ]; then printf '%s\n' "$BASE"
+elif [ -n "$SEGMENT" ]; then printf '%s\n' "$SEGMENT"
+else echo "no work item"; fi

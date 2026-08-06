@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">32</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">33</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -627,6 +627,24 @@
       items in <code>work/automatic-session-rollover/issues/03-session-roles.md</code>.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L21</span> Project statusLine replaced the user's global status bar and printed "no work item" for unregistered sessions
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/statusline-context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — wiring <code>statusLine</code> in the project's
+      <code>.claude/settings.json</code> (L20) <em>overrides</em> the user's global statusLine command (Claude Code
+      takes the most specific setting), so a user running e.g. <code>ccstatusline</code> lost their model / context /
+      cost / git widgets in this workspace; and any session not registered against a work item — every plain
+      interactive session — saw a bare <code>no work item</code> line. User report, 2026-08-06.</p>
+    <p><span class="k">Impact</span> — the budget statusline cost users their existing status bar (including the
+      context-size widget, the one thing the budget system most wants visible) in exchange for a mostly-empty line.</p>
+    <p><span class="fix">Fixed:</span> <code>statusline-context-budget.sh</code> now <em>chains</em> the user's global
+      statusLine: it reads <code>~/.claude/settings.json</code> → <code>statusLine.command</code>, re-runs it with the
+      same stdin JSON, prints its output first, and appends the <code>ROLE · project · pct%</code> segment as an extra
+      line only when the session is registered against a work item (self-reference guarded to prevent recursion;
+      <code>no work item</code> shown only when there is neither a base statusline nor a segment). Tests T7a–f
+      (statusline suite, now 14 asserts; suite isolated from the real <code>$HOME</code>).</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -735,6 +753,7 @@
       <tr><td>2026-08-06</td><td>Opened + resolved <strong>L19</strong> (no normalized approval level mapped to claude's classifier-vetted auto mode; the script's <code>auto</code> collided with the UI's "auto mode" while actually meaning acceptEdits — raised as <code>work/automatic-session-rollover/issues/02</code> after the first auto-relaunched successor came up in manual mode). Fix: <code>ROLLOVER_OPT_APPROVAL</code> ladder is now <code>default &lt; edits &lt; auto &lt; full</code> — <code>auto</code> re-pointed to the classifier tier (claude <code>--permission-mode auto</code>, verified against live <code>--help</code> 2.1.223 per ADR-0003; non-classifier runtimes fall back to their <code>edits</code> mapping with a stderr note), <code>edits</code> carries the old acceptEdits-tier mappings. Tests T14a–T14p reworked/added in <code>test-launch-next-session.sh</code> (55 asserts green); <code>context-budget.md</code> "Option inheritance" + <code>session-rollover</code> skill step 6 updated; alternatives (a claude-centric <code>classifier</code> level name; retiring <code>auto</code> loudly, which degrades to manual mid-chain) recorded in the work item's <code>decisions.md</code>. Scorecard now 3/31/4/0/6.</td></tr>
       <tr><td>2026-08-06</td><td>Opened + resolved <strong>L20</strong> (plainly-exited sessions squatted their work-item lock for the whole 3h stale window — the M14 failure mode, mitigated only for the rollover path — and nothing distinguished a live helper session from a dead predecessor). Fix: session-role model <code>primary / auxiliary / superseded</code> with the lock as the authoritative primary marker; <code>register</code> records + prints <code>role=</code>, the launcher stamps <code>superseded</code> at pre-launch release, <code>attach-session.sh</code> shows <code>role=</code>, a <code>SessionEnd</code> hook releases the lock on plain exit, and a new Claude Code statusline script (<code>scripts/statusline-context-budget.sh</code>) shows <code>PRIMARY · &lt;project&gt; · &lt;pct&gt;%</code>. One-primary contract documented in <code>context-budget.md</code> "Session roles" + <code>work-directory-conventions.md</code>; deferred refinements (superseded_by back-link, --takeover, sessions listing, tab-title display) in <code>work/automatic-session-rollover/issues/03-session-roles.md</code>. Tests: registry T6, launcher T20, attach T7, new statusline suite — 107 asserts green across the four touched suites. Scorecard now 3/32/4/0/6.</td></tr>
       <tr><td>2026-08-06</td><td>Improvement: <strong>meaningful session titles for rollover successors</strong> (user finding: a successor's auto-generated title read "session lock verification" — the title generator latched onto the launcher's first mechanical step). <code>launch-next-session.sh</code> now leads the bootstrap prompt with <code>Work item &lt;project&gt; - rollover session #N</code> (helps every runtime's title generation) and passes claude <code>--name "&lt;project&gt; #N"</code> (<code>-n/--name</code> verified against live <code>--help</code> 2.1.223: session display name for picker + terminal title; no equivalent verified for other runtimes). N tracked in machine-local <code>work/&lt;proj&gt;/.session-seq</code> (gitignored; incremented per real launch, never by <code>--dry-run</code>). Gotcha fixed en route: the prompt must stay ASCII — an em-dash in it broke the <code>%q</code>-escaped <code>cmd:</code> echo through BSD sed ("illegal byte sequence"). Tests T21a–g (launcher suite 65 green); <code>session-rollover</code> skill step 7 + <code>context-budget.md</code> "Relaunch knobs" updated. No scorecard change.</td></tr>
+      <tr><td>2026-08-06</td><td>Opened + resolved <strong>L21</strong> (the L20 project-level <code>statusLine</code> replaced the user's global status bar — <code>ccstatusline</code>'s model/context/cost/git widgets vanished — and unregistered sessions saw a bare <code>no work item</code>; user report). Fix: <code>statusline-context-budget.sh</code> chains the global <code>statusLine.command</code> from <code>~/.claude/settings.json</code> (same stdin, output first, budget segment appended as an extra line only when the session is on a work item; recursion-guarded). Tests T7a–f, statusline suite 14 asserts green. Scorecard now 3/33/4/0/6.</td></tr>
     </tbody>
   </table>
 
