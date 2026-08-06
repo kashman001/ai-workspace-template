@@ -70,6 +70,19 @@ err=$(echo "$payload" | CHECK_EVERY=0 FAKE_STATUS=OK \
 assert_eq "T4c: OK exits 0" "$rc" "0"
 assert_empty "T4d: OK silent" "$err"
 
+echo "T5: codex wrapper JSON envelope"
+reset_state
+payload="{\"session_id\":\"s5\",\"transcript_path\":\"$TMP/fake-transcript\"}"
+out=$(echo "$payload" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-codex-hook.sh"); rc=$?
+assert_eq "T5a: exit 0" "$rc" "0"
+ctx=$(echo "$out" | jq -r '.hookSpecificOutput.additionalContext')
+assert_contains "T5b: additionalContext carries WARN text" "$ctx" "CONTEXT BUDGET WARN"
+assert_eq "T5c: hookEventName" "$(echo "$out" | jq -r '.hookSpecificOutput.hookEventName')" "UserPromptSubmit"
+reset_state
+out=$(echo "$payload" | CHECK_EVERY=0 FAKE_STATUS=OK "$HOOKS/context-budget-codex-hook.sh")
+assert_empty "T5d: OK silent" "$out"
+
 echo "T9: opencode runtime measurement (real script, fake sqlite db)"
 if command -v sqlite3 >/dev/null 2>&1; then
   OTMP="$(mktemp -d)"
