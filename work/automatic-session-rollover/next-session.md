@@ -11,77 +11,81 @@ Codex, Gemini, OpenCode, Copilot) — all read `CONTEXT.md` via their entrypoint
 
 ## >>> START HERE <<<
 
-Mission: design AND documentation are **DONE** (docs shipped in `9c6a097`;
-ADR-0003 + ADR-0004 govern; user raised no objections). This session starts
-the **implementation phase**. Agreed order:
+Mission: implementation item **#1 is DONE** (session-keyed registry + lock +
+`release` landed, M13 closed, 13 regression tests green). This session builds
+**item #2: `scripts/launch-next-session.sh`**, then starts item #3 if budget
+allows. Spec for #2 (settled — do not re-litigate): 5 runtimes
+seeded-interactive (`claude`, `codex`, `gemini -i`, `opencode --prompt`,
+`copilot -i`), `--bg` claude-only; bootstrap prompt baked **verbatim**; honors
+`ROLLOVER_RELAUNCH`/`ROLLOVER_RUNTIME` from `context-budget.env`; relaunch
+runtime comes from the dying session's own registry record
+(`.context-budget/sessions/<runtime>-<session-id>.json`, field `runtime`),
+`ROLLOVER_RUNTIME` is fallback-only. **Re-verify every CLI flag against
+`--help` before baking it in.**
 
-1. **Session-keyed registry migration** in `scripts/context-budget.sh`
-   (register/check/record resolve-self; `.context-budget/sessions/
-   <runtime>-<session-id>.json`; advisory lock `work/<proj>/.active-session`;
-   gemini exception; D8 = new session file, same project, new session-id).
-   Closes backlog **M13** — flip its card to Resolved when it lands.
-2. **`scripts/launch-next-session.sh`** — 5 runtimes seeded-interactive
-   (`claude`, `codex`, `gemini -i`, `opencode --prompt`, `copilot -i`),
-   `--bg` claude-only; bootstrap prompt baked verbatim; honors
-   `ROLLOVER_RELAUNCH`/`ROLLOVER_RUNTIME` from `context-budget.env`.
-   **Re-verify every CLI flag against `--help` first.**
-3. **Four hook deployments**: codex `UserPromptSubmit`, gemini `BeforeAgent`,
-   opencode `chat.message` plugin, copilot CLI `sessionStart` +
-   `agentStop`-reason at STOP.
+Item #3 (next): four hook deployments — codex `UserPromptSubmit`, gemini
+`BeforeAgent`, opencode `chat.message` plugin, copilot CLI `sessionStart` +
+`agentStop`-reason at STOP.
 
 ### First actions
 
-1. `scripts/context-budget.sh register`.
-2. Read `docs/context-budget.md` §"Rollover trigger policy" / "Relaunch
-   knobs" / "Multi-session model" — the committed spec. For deeper rationale:
-   `relaunch-analysis.md` (conductor state machine D1–D8) and ADR-0004.
-3. Plan item #1 with the user before coding (suggest
-   `superpowers:writing-plans` or `tdd`): the registry migration touches
-   register/check/record precedence, lock acquire/release, stale-lock
-   reclamation, and the existing per-runtime adapters — decide test strategy
-   (the bug has a known live repro shape: two sessions, one clobbers, record
-   measures the wrong artifact).
-4. As each item ships: update the implementation-pending status notes in
-   `docs/context-budget.md`, the M13 backlog card (item #1), and
-   `docs/workspace-structure.md` if file layout shifts.
+1. `scripts/context-budget.sh register --project automatic-session-rollover`
+   — the `--project` form now exists and acquires the work-item lock the
+   predecessor released.
+2. Read `docs/context-budget.md` §"Relaunch knobs" (spec for #2) and skim
+   §"Multi-session model" (what item #1 shipped; D8 successor confirmation =
+   new session file, same project, new session-id — the launcher script can
+   use it).
+3. Plan item #2 (`superpowers:writing-plans`, then executing-plans — the
+   pattern session 5 used successfully; its plan file is
+   `plans/2026-08-05-session-keyed-registry.md` as a shape reference). Test
+   strategy suggestion: `--dry-run`/command-echo mode so flag assembly is
+   assertable without launching real sessions; put tests in
+   `scripts/tests/test-launch-next-session.sh` (suite convention `test-*.sh`).
+4. As it ships: flip the "Until the script lands, relaunch behaves as off"
+   status note in `docs/context-budget.md` §"Rollover trigger policy", and
+   update `docs/workspace-structure.md`'s existing `launch-next-session.sh`
+   line if its description drifts.
 
 ## Constraints already decided (do not re-litigate)
 
-- Design + docs are settled: ADR-0003/0004, `docs/context-budget.md` new
-  sections, `skills/session-rollover/SKILL.md` trigger policy. Don't reopen.
-- Hybrid trigger: WARN asks, STOP automatic; declined WARN arms write-ahead.
-- Knobs live in `context-budget.env` (`ROLLOVER_RELAUNCH=manual` default,
-  `ROLLOVER_RUNTIME` fallback-only); no per-project override; no extra STOP
-  gate in `auto`.
-- Vendor specifics only in scripts (CLI-first); skills stay runtime-neutral.
-- Known hook frictions to honor (details in the demand-load docs): copilot
-  folder-trust gate (untrusted repo hooks silently no-op), copilot
-  `additionalContext` may be discounted → use `agentStop` reason at STOP,
-  codex hash-based hook trust, gemini JSON-only stdout, opencode mandatory
-  `id`/`sessionID`/`messageID` part shape (bare parts kill the turn).
-- VS Code agent-mode verification is OUT of scope → `issues/01-vscode-agent-
-  mode-hooks.md` (needs a Copilot-licensed machine).
+- ADR-0003/0004 govern; hybrid trigger (WARN asks, STOP automatic); knobs
+  workspace-level only; vendor specifics only in scripts; skills stay
+  runtime-neutral.
+- At session end / rollover: release the lock (`scripts/context-budget.sh
+  release --project automatic-session-rollover`) after the verification gate —
+  the SKILL.md now says this.
+- Known hook frictions (for item #3; details in demand-load docs): copilot
+  folder-trust gate, copilot `additionalContext` discounted → `agentStop`
+  reason at STOP, codex hash-based hook trust, gemini JSON-only stdout,
+  opencode mandatory `id`/`sessionID`/`messageID` part shape.
+- VS Code agent-mode verification OUT of scope → `issues/01-vscode-agent-mode-hooks.md`.
 - Standing push-to-main approval applies.
 
 ## Demand-load only when implementing that runtime
 
 - `vendor-hooks-research.md` — per-runtime hook schemas/events + citations.
-- `smoke-test-opencode.md` — working plugin code, sqlite artifact details
-  (`~/.local/share/opencode/opencode.db`, per-turn `tokens.total`).
+- `smoke-test-opencode.md` — working plugin code, sqlite artifact details.
 - `smoke-test-copilot.md` — working hook JSON, auth path, VS Code section.
+- `relaunch-analysis.md` — conductor state machine D1–D8 deep rationale.
 
 ## Do NOT reload
 
-- `handoff-archive.md` — sessions 1–2 provenance, superseded.
-- `work/template-maintenance/` — retargeted; nothing pending there.
+- `handoff-archive.md` — sessions 1–3 provenance, superseded.
+- `plans/2026-08-05-session-keyed-registry.md` — executed and landed; shape
+  reference only.
 - `docs/adr/0001*/0002*` — background only.
-- Upstream `claude-handoff` SKILL.md — fully absorbed into ADR-0003.
+- Item #1 design questions (identity derivation, lock semantics, gemini
+  guard) — settled, implemented, regression-tested; see `decisions.md` tail.
 
-## State snapshot (at session-4 rollover, 2026-08-05)
+## State snapshot (at session-5 rollover, 2026-08-05)
 
-- Branch `main`; docs commit `9c6a097` + this rollover commit pushed; working
-  tree clean.
-- Machine: claude, codex 0.142.4, gemini 0.46.0, opencode 1.18.14,
-  copilot CLI 1.0.78 all installed. No running processes.
-- `launch-next-session.sh` does NOT exist yet; `ROLLOVER_RELAUNCH=manual` is
-  set but inert until it does (skill falls back to paste-prompt).
+- Branch `main`, working tree clean after rollover commit; all session-5 work
+  pushed (`15ec961`, `7b99b99`, `712c4bb`, `e88bf30`, `557015e`, `187f926` +
+  rollover commit).
+- `scripts/launch-next-session.sh` does NOT exist yet (docs already point at
+  it; `ROLLOVER_RELAUNCH=manual` inert until it lands).
+- Machine: claude, codex 0.142.4, gemini 0.46.0, opencode 1.18.14, copilot
+  CLI 1.0.78 installed. No running processes.
+- Work-item lock `work/automatic-session-rollover/.active-session` released at
+  rollover; successor re-acquires via First action 1.
