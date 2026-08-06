@@ -19,6 +19,19 @@ references/*
 # Context-budget runtime state (session registrations, hook throttle stamps)
 .context-budget/
 
+# Live-session runtime state under work/ — meaningful only while a session is
+# alive on this machine (liveness = artifact mtime, not file content); tracking
+# it dirties every session and a checkout would resurrect stale locks.
+# Durable work/ files (README, next-session.md, handoff.md, decisions.md,
+# committed per-item context-budget.env) stay tracked.
+work/*/.active-session
+work/*/.rollover-options
+
+# Hook-appended measurement telemetry (same class as .gemini/telemetry.log).
+# Not regenerable — snapshot deliberately (dated copy) if mining it for
+# analysis, like subagent-rollover-stats.md did; don't track the live file.
+work/context-decay/context-ledger.jsonl
+
 # Gemini CLI local telemetry (token counts for context-budget; grows per session)
 .gemini/telemetry.log
 

@@ -79,6 +79,14 @@ the latest. Either pattern is acceptable; pick one per project and be consistent
 Keep everything else (state trackers, registries, run logs, specs) named for
 what it is; the governing skill owns the full file-level detail.
 
+**Tracked vs. untracked:** everything a *future session* must read to continue
+the work is committed (the whole table above, plus a per-item
+`context-budget.env` policy file). Live-session runtime state is gitignored —
+`.active-session` (advisory lock; validity = holder's artifact mtime, so a
+committed copy is a stale claim waiting to be checked out) and
+`.rollover-options` (per-launch flags for this machine's runtime, rewritten
+each rollover).
+
 ## Naming
 
 - Canonical backbone for new work directories: **`handoff.md`** (ledger) +
