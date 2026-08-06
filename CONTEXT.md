@@ -249,12 +249,15 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
 - Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then ask
   the user whether to roll over (`session-rollover` skill; declined = write
   ahead to disk incrementally); `2` (STOP, ≥150K) — finish only the current
-  atomic step and roll over immediately, no ask. Claude Code sessions also get
-  an in-band hook message at these thresholds.
+  atomic step and roll over immediately, no ask. All five runtimes
+  (claude/codex/gemini/opencode/copilot CLI) get the in-band push at these
+  thresholds via their committed hook wiring (`docs/context-budget.md` →
+  "Vendor hook deployments").
 
 Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in
 `context-budget.env` via `scripts/launch-next-session.sh` (see
-`docs/context-budget.md` → "Relaunch knobs").
+`docs/context-budget.md` → "Relaunch knobs"); the successor inherits the
+predecessor's launch options via `work/<proj>/.rollover-options`.
 
 Full reference: `docs/context-budget.md`; rollover workflow:
 `skills/session-rollover/SKILL.md`.

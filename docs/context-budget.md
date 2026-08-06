@@ -130,6 +130,34 @@ seeded with it. All five runtimes get seeded-interactive launch (`claude`,
 (`--bg`) is claude-only. Vendor flags live only in the script — re-verify
 against `--help` before changing them.
 
+**Option inheritance:** `work/<project>/.rollover-options` (optional; written
+by the dying session at `session-rollover` step 6, only from what it actually
+knows about its own launch — an absent or stale key is left untouched) holds
+three keys: `ROLLOVER_OPT_APPROVAL=default|auto|full` (normalized
+approval/permission level, mapped to each runtime's own flag —
+e.g. `auto` → codex `--ask-for-approval never`, gemini `--approval-mode
+auto_edit`, opencode `--auto`, copilot `--allow-all-tools`; `full` → the
+stronger bypass variant of each), optional `ROLLOVER_OPT_MODEL=<model-id>`
+(passed through as `--model`), and optional `ROLLOVER_OPT_EXTRA=<raw flags>`
+(word-split and appended verbatim — the escape hatch for anything the
+normalized mapping doesn't cover). When the file is absent, or
+`ROLLOVER_OPT_APPROVAL` is unset/`default`, `launch-next-session.sh` adds no
+extra flags — the successor launches with each runtime's own defaults, same
+as before this existed.
+
+**Chained rollovers & re-attach.** Background successor chains
+(`ROLLOVER_RELAUNCH=auto`, `--bg`) are claude-only (ADR-0003) — on
+codex/gemini/opencode/copilot the launcher always prints the ready-to-run
+command instead of executing it, so every hop in a non-claude chain is
+already human-mediated. To bring a claude chain into an interactive terminal:
+if `work/<project>/.active-session` names a live session, **attach** to it
+(`claude attach`; the session id is in the lock file and in the newest
+`.context-budget/sessions/` record for that project) — don't relaunch, the
+lock enforces one active session per project. If the lock is released or
+stale, run `scripts/launch-next-session.sh <project>` from a real terminal —
+it `exec`s the successor interactively with options inherited from
+`.rollover-options` as above.
+
 ## Multi-session model (session-keyed registry + per-project lock)
 
 > **Status:** implemented 2026-08-05 (session-keyed registry + `register
@@ -199,11 +227,15 @@ estimate. Explicit `--transcript` still overrides everything.
 
 No single mechanism covers every runtime, so four layers overlap:
 
-1. **In-band hook (Claude Code):** a `PostToolUse` hook interrupts the agent
-   mid-turn with a WARN/STOP message. Escalation-only (one WARN + one STOP per
-   session), throttled to one check/minute, fails open — any hook error exits 0
-   so it can never block real work. Wiring lives in `.claude/settings.json`
-   (gitignored — copy the `hooks` block from `.claude/settings.json.example`).
+1. **In-band hook (all five runtimes):** each runtime's own committed hook
+   wiring pushes a WARN/STOP message into the agent's turn. Escalation-only
+   (one WARN + one STOP per session), throttled to one check/minute, fails
+   open — any hook error exits 0 (or emits the vendor's silent-JSON shape) so
+   it can never block real work. Claude Code's wiring lives in
+   `.claude/settings.json` (gitignored — copy the `hooks` block from
+   `.claude/settings.json.example`); the other four ship committed. Full
+   per-runtime wiring/channel/friction breakdown: "Vendor hook deployments"
+   below.
 2. **Mandatory checkpoints in long-running skills (all runtimes):** `onboard-repo`
    and `rlm` carry a measured-checkpoint clause — `record` at every phase
    boundary and act on the exit code.
@@ -211,6 +243,24 @@ No single mechanism covers every runtime, so four layers overlap:
    status escalation.
 4. **Standing instruction:** the "Context Budget" section in `CONTEXT.md`
    (read by every runtime via the symlinked entrypoints).
+
+## Vendor hook deployments
+
+One shared core, `scripts/hooks/context-budget-hook-lib.sh`, holds all the
+logic that must not drift between runtimes — throttle (`CHECK_EVERY`, default
+60s), escalation-only emission (only on a WARN/STOP transition, tracked in
+`.context-budget/hook-<runtime>-<session>.status`), and fail-open (any
+error returns cleanly, never blocks a turn). Each per-runtime wrapper is thin:
+it owns only stdin parsing and the vendor-specific output envelope, then calls
+into the shared lib for the actual check and message text.
+
+| Runtime | Wiring file | Event | In-band channel | Friction gate |
+| --- | --- | --- | --- | --- |
+| Claude Code | `.claude/settings.json` (gitignored; copy from `.claude/settings.json.example`) → `scripts/hooks/context-budget-claude-hook.sh` | `PostToolUse` | stderr text + `exit 2` (Claude Code surfaces stderr as an interrupting message on a non-zero exit) | None beyond the local settings copy — no vendor-side trust gate. |
+| Codex | `.codex/config.toml` `[[hooks.UserPromptSubmit]]` → `context-budget-codex-hook.sh` | `UserPromptSubmit` | `hookSpecificOutput` JSON on stdout (`{hookSpecificOutput:{hookEventName,additionalContext}}`), `exit 0` | **Hash-based hook trust:** the first run of the hook in a repo prompts the human to approve it (hash recorded; editing the script re-prompts). Automation/CI must pass `--dangerously-bypass-hook-trust`. |
+| Gemini CLI | `.gemini/settings.json` `hooks.BeforeAgent` → `context-budget-gemini-hook.sh` | `BeforeAgent` | JSON-only stdout — gemini hooks require valid JSON on every invocation; the wrapper emits `{}` when silent (no jq, no escalation) and `{hookSpecificOutput:{additionalContext}}` on WARN/STOP | Measurement reads the workspace `.gemini/telemetry.log`, not the payload's `transcript_path` (the chat transcript carries no token counts) — exact only once the telemetry log has an entry for this session. **Known limitation:** the telemetry log is shared and append-only across sessions in the workspace, so a successor gemini session's *first-turn* `BeforeAgent` check can read the predecessor's last (large) entry before its own first response lands, and spuriously report STOP on turn one. Accepted — gemini chains are human-launched anyway (see "Chained rollovers & re-attach" above), so a spurious first-turn STOP is caught by a human before it matters. |
+| opencode | `.opencode/opencode.json` `"plugin"` array → `.opencode/plugins/context-budget.js`, which shells out to `context-budget-opencode-hook.sh <sessionID>` | `chat.message` | the plugin `push`es a message `Part` (`output.parts.push(...)`) | opencode's Part schema is strict: a bare `{type,text}` part fails validation and kills the turn — every part needs `id`, `sessionID`, and `messageID`. Also: `.opencode/plugins/*.js` is **not** auto-discovered in this repo (empirically verified) — a plugin must be explicitly listed in `opencode.json`'s `plugin` array or it never runs. Measurement is a sqlite read from `~/.local/share/opencode/opencode.db` (`message.data` per-turn `tokens.total`, with a session-column sum fallback; no size-estimate fallback, since the db is shared across all sessions). |
+| Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh sessionStart` / `... agentStop` | `sessionStart` (WARN/STOP) and `agentStop` (STOP only) | `sessionStart`: `{additionalContext}` JSON. `agentStop`: `{decision:"block",reason}` — **blocks only at STOP**, because `additionalContext` is model-discounted (phrased as tooling status, easy to ignore) while `block` is a strong lever; guarded by `stop_hook_active` so it never fights the CLI's 8-block continuation limit. | **Folder-trust gate:** repo-committed hooks silently no-op unless the workspace is listed in `~/.copilot/config.json` → `trustedFolders` — no error, no visible signal, the hook simply never fires. Must be pre-seeded (manually, or via config) before hooks work, including in CI. |
 
 ## Session registration
 

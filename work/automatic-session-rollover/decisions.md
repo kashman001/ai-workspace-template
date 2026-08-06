@@ -185,3 +185,136 @@ verbatim bootstrap prompt block before any launch logic.
 **Because:** the paste-me fallback must survive any launch failure; the script
 is the single source of the load-bearing wording (ADR-0003).
 **Rejected:** printing it only in `off` mode.
+
+## 2026-08-05 — Extract a shared hook lib before writing four more wrappers (item #3, Task 1)
+**Chose:** pull the throttle/escalation/fail-open core (used once for the
+Claude hook already) into `scripts/hooks/context-budget-hook-lib.sh`, sourced
+by every per-runtime wrapper; the Claude wrapper keeps its exact stderr +
+`exit 2` envelope and byte-identical messages.
+**Because:** one copy of that logic beats four near-duplicates once codex,
+gemini, opencode, and copilot each need their own thin wrapper — divergent
+throttle/escalation bugs across five copies would be far more expensive than
+extracting first.
+**Rejected:** copy-pasting the Claude hook's logic into each new wrapper
+(exactly the duplication the extraction avoids); folding the vendor-envelope
+formatting into the shared lib too (each vendor's stdout/stderr contract is
+different enough that this would just move the duplication, not remove it).
+**Blast radius:** `scripts/hooks/context-budget-hook-lib.sh` (new),
+`scripts/hooks/context-budget-claude-hook.sh` (refactored to source it).
+**Promote?:** no — small refactor, no rejected-alternative weight beyond the
+obvious.
+
+## 2026-08-05 — opencode measurement source and runtime-detection scope (item #3, Task 2)
+**Chose:** measure from sqlite `message.data` per-turn `tokens.total` (the
+same reading a live opencode session shows), falling back to a session-column
+token sum — no bytes÷4 estimate fallback, because the opencode db is shared
+across all sessions in the workspace and an estimate over the wrong slice
+would be actively misleading. `detect_runtime` (auto mode) recognizes
+opencode only via `OPENCODE_SESSION_ID` being set, not via the newest-artifact
+fallback loop the other runtimes share.
+**Because:** exact per-turn token counts already exist in the db; degrading
+to a size estimate would throw away real precision. Joining the
+freshest-artifact auto-detect loop would let a stale opencode db shadow a
+genuinely active claude/codex/gemini session that happens to be newer by
+mtime — opencode only self-identifies when its own env var says so.
+**Rejected:** size-estimate fallback for opencode (misleading over a
+shared, multi-session db); adding opencode to the freshest-artifact
+auto-detect loop (shadowing risk against other runtimes).
+**Blast radius:** `scripts/context-budget.sh` (`opencode_discover`,
+`opencode_measure`, `detect_runtime`).
+**Promote?:** no — adapter-level implementation detail, same shape as the
+other per-runtime adapters already in `docs/context-budget.md`.
+
+## 2026-08-05 — Gemini hook measures from telemetry, not the transcript payload (item #3, Task 4)
+**Chose:** the gemini `BeforeAgent` hook measures from the workspace
+`.gemini/telemetry.log` (exact token counts), never from the hook payload's
+`transcript_path` (the chat transcript carries no token counts at all —
+using it would silently degrade every gemini hook check to a bytes÷4
+estimate). The telemetry log's existing workspace-scoped, single-session
+limitation (documented pre-Task-4 in `docs/context-budget.md`) is accepted
+as-is for the hook path rather than solved here.
+**Because:** the hook's whole job is to push an accurate number in-band;
+choosing the payload path over telemetry would trade exactness for
+convenience for no reason — the telemetry log is already the adapter's
+source of truth for `check`/`record`, so the hook should agree with them.
+**Rejected:** measuring from `transcript_path` (no token counts, forces an
+estimate); building a gemini-hook-specific concurrency guard now (the
+existing telemetry limitation already has an accepted-limitation writeup —
+solving it only for the hook path would leave `check`/`record` inconsistent
+with the hook).
+**Blast radius:** `scripts/hooks/context-budget-gemini-hook.sh`,
+`.gemini/settings.json` (`hooks.BeforeAgent`).
+**Promote?:** no — consistent application of an existing, already-documented
+limitation, not a new design fork.
+
+## 2026-08-05 — Copilot CLI blocks only at STOP, via agentStop (item #3, Task 6)
+**Chose:** `sessionStart` pushes WARN/STOP as `additionalContext` (best
+effort — the model may discount tooling-status context); `agentStop` blocks
+the turn (`{decision:"block",reason}`) but **only** when status is STOP,
+guarded by `stop_hook_active` so a repeated block never fights the CLI's
+8-block continuation limit.
+**Because:** `additionalContext` is the only channel available mid-session
+and it's a weak lever (model-discounted); `block` is the strong lever but
+also the CLI's finite one (8 blocks then it gives up) — spending it at every
+WARN would exhaust the budget before STOP ever needed it. STOP is exactly
+the threshold where losing the lever must not happen.
+**Rejected:** blocking at WARN too (burns the 8-block budget on the weaker
+threshold, risking no lever left at STOP); blocking unconditionally without
+the `stop_hook_active` guard (a still-STOP session would re-block itself on
+every continuation attempt, tripping the CLI's own guard rail).
+**Blast radius:** `scripts/hooks/context-budget-copilot-hook.sh`,
+`.github/hooks/context-budget.json` (`sessionStart`, `agentStop`),
+`~/.copilot/config.json` `trustedFolders` (must list this workspace, or the
+hooks silently no-op).
+**Promote?:** no — same escalation-only shape as the other four hooks, tuned
+to one runtime's specific continuation-limit constraint.
+
+## 2026-08-05 — opencode plugin must be explicitly registered (item #3, Task 5)
+**Chose:** register `.opencode/plugins/context-budget.js` in
+`.opencode/opencode.json`'s `"plugin"` array, alongside `graphify.js`, rather
+than relying on directory-convention auto-discovery.
+**Because:** empirical testing in this repo showed `.opencode/plugins/*.js`
+is **not** auto-discovered — `graphify.js` only loads because it's
+explicitly listed in `opencode.json`; a new plugin dropped into the directory
+without the same registration silently never runs (fails open in the worst
+way: no error, just nothing happens).
+**Rejected:** trusting directory-convention auto-discovery (refuted by the
+graphify precedent already in this repo — if it worked, graphify wouldn't
+need explicit registration either).
+**Blast radius:** `.opencode/opencode.json` (`plugin` array),
+`.opencode/plugins/context-budget.js` (new).
+**Promote?:** no — a documented opencode quirk (recorded in
+`docs/context-budget.md`), not a design decision with real alternatives.
+
+## 2026-08-06 — Successor option inheritance: persist-and-replay (item #3, Task 7)
+**Chose:** the dying session writes `work/<project>/.rollover-options`
+(normalized `ROLLOVER_OPT_APPROVAL=default|auto|full`, optional
+`ROLLOVER_OPT_MODEL`, optional raw-extra `ROLLOVER_OPT_EXTRA` escape hatch —
+`session-rollover` step 6, written only from what the dying session actually
+knows about its own launch); `launch-next-session.sh` maps the normalized
+approval level to each runtime's own flag and replays it plus model/extra on
+the successor launch. Vendor flags stay in the script; the skill and the
+options file itself stay runtime-neutral.
+**Because:** the rolling session already knows how it was launched (approval
+mode, model) — that's free, reliable information the successor would
+otherwise lose and have to be relaunched by hand to restore. Persist-and-
+replay needs no new detection machinery per runtime; it just carries forward
+what's already known.
+**Rejected:** auto-detecting the predecessor's options from session
+artifacts — unverified per runtime (each vendor's session format is an
+undocumented internal, per `docs/context-budget.md` → "Per-runtime
+adapters"), and strictly worse than the dying session simply stating what it
+already knows.
+**Flag-verification findings (re-verified live against `--help`,
+2026-08-06):** the plan's table had guessed codex `--full-auto` for the
+`auto` approval level — that flag **does not exist** in codex-cli 0.142.4;
+shipped `--ask-for-approval never` instead. opencode's `--auto` flag does
+exist (same flag serves both `auto` and `full` levels), so opencode stayed in
+the approval mapping — the plan's contingency to drop opencode from the
+mapping if `--auto` turned out missing was not needed.
+**Blast radius:** `scripts/launch-next-session.sh` (`OPT_ARGS` mapping),
+`skills/session-rollover/SKILL.md` (step 6), `docs/context-budget.md` →
+"Relaunch knobs".
+**Promote?:** no — implementation detail of the already-promoted ADR-0003
+relaunch pipeline; the rejected-alternative weight (artifact auto-detection)
+is captured here, not new ADR-worthy ground.
