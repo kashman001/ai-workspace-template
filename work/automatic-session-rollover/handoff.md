@@ -25,13 +25,14 @@ Convention: docs/work-directory-conventions.md.
   Copilot Chat built-in, claude-sonnet-5).
 
 **Numbering note:** machine-local `.session-seq` (28) trails the ledger by
-one — this session is ledger-#29 but was launched as prompt-#28. Seq bumped
-to 29 at close so the next prompt matches the ledger again.
+one — this session is ledger-#29 but was launched as prompt-#28.
 
-**Left for the user:** delete throwaway probe files from the MAIN checkout
-(`scripts/hooks/vscode-hook-probe.sh`, `.github/hooks/vscode-probe.json`,
-`.vscode-hook-probe.jsonl`) and `git pull` there. Nothing else standing —
-wayfinder map complete, issue 04 parked (user-scheduled only).
+**Left for the user (main checkout, one line):** `git pull --ff-only && rm
+scripts/hooks/vscode-hook-probe.sh .github/hooks/vscode-probe.json
+.vscode-hook-probe.jsonl && echo 29 > work/automatic-session-rollover/.session-seq`
+(probe files are throwaway; the seq write realigns the next prompt number
+with the ledger). Nothing else standing — wayfinder map complete, issue 04
+parked (user-scheduled only).
 
 # Session Handoff — 2026-08-06 (session 28: issue-01 items 1+3 VERIFIED live; housekeeping done; build hands off)
 

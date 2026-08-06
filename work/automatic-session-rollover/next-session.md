@@ -35,7 +35,8 @@ never schedule it unprompted.
   throwaway probe files (`scripts/hooks/vscode-hook-probe.sh`,
   `.github/hooks/vscode-probe.json`, `.vscode-hook-probe.jsonl`) — the user
   deletes them; they are junk once deleted, do not recreate.
-- `.session-seq` bumped to 29 to re-align the prompt number with the ledger.
+- `.session-seq` realignment to 29 is in the user's one-line cleanup (see
+  handoff top block); until run, prompt numbers trail the ledger by one.
 - No live dispatches; no child agents.
 
 ## First actions
