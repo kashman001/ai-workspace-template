@@ -50,7 +50,7 @@ would silently destroy each other.
 **Blast radius:** `scripts/context-budget.sh` (register/check/record/resolve),
 `.context-budget/` layout, `work/*/.active-session` (new),
 `docs/context-budget.md`, `skills/session-rollover/SKILL.md` (D5/D8 gates).
-**Promote?:** likely — pairs with ADR-0003 at implementation time
+**Promote?:** done → ADR-0004
 
 ## 2026-08-05 — Relaunch knobs: home, shape, defaults (session 3)
 **Chose:** `ROLLOVER_RELAUNCH=off|manual|auto` + `ROLLOVER_RUNTIME` in
@@ -75,8 +75,7 @@ rollover behave differently depending on which terminal fires first. A second
 "really launch?" gate at STOP in `auto` — recreates `manual` inside `auto`.
 **Blast radius:** `context-budget.env`, `scripts/launch-next-session.sh`,
 `skills/session-rollover/SKILL.md` (closing step), `docs/context-budget.md`.
-**Promote?:** fold into the ADR-0003 family at implementation; revisitable —
-this note records the defaults' rationale for that purpose.
+**Promote?:** done → ADR-0004 (this note keeps the defaults' fuller rationale).
 
 ## 2026-08-05 — Detection + runtime scope after smoke tests (session 3)
 **Chose:** All four hook deployments (codex `UserPromptSubmit`, gemini
@@ -103,4 +102,4 @@ extension/license) and Preview-status contract may shift.
 `.codex/config.toml`, `.gemini/settings.json`, `.opencode/plugins/`,
 `.github/hooks/`, `docs/context-budget.md`, a new ticket for VS Code
 verification.
-**Promote?:** fold into the ADR-0003 family at implementation.
+**Promote?:** done → ADR-0004

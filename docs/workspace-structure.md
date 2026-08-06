@@ -313,7 +313,7 @@ the underlying product repos.
 │   └── mcp.json                #   MCP server config (gitignored, user-specific)
 ├── .env.example                # Template for required env vars (checked in)
 ├── .env                        # Local env vars (gitignored)
-├── context-budget.env          # Context-budget thresholds (checked in, non-secret)
+├── context-budget.env          # Context-budget thresholds + relaunch knobs (checked in, non-secret)
 ├── .context-budget/            # Context-budget runtime state (gitignored)
 └── temp/, tmp/                 # Scratch files (gitignored, created as needed)
 ```
@@ -451,7 +451,7 @@ docs/
 ├── operational-knowledge.md    # Distilled rules that prevent silent failures
 ├── service-access.md           # Credential framework: vault backends, verify commands
 ├── mcp-setup.md                # MCP server configuration guide
-├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover
+├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 │
 ├── agents/                     # Per-repo config the engineering skills consume
 │   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
@@ -656,6 +656,7 @@ scripts/
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt
 ├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
 ├── hooks/                         # Agent-runtime hook scripts
 │   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
@@ -782,7 +783,7 @@ agent conversation history.
 | `opencode.json`, `.opencode/` | Yes | Shared OpenCode config and plugins |
 | `.gemini/settings.json` | Yes | Shared Gemini CLI config (graphify hook + context-budget telemetry) |
 | `.env.example` | Yes | Template for required env vars |
-| `context-budget.env` | Yes | Non-secret context-budget thresholds (a count is never a credential) |
+| `context-budget.env` | Yes | Non-secret context-budget thresholds + relaunch knobs (a count is never a credential) |
 | `.mcp.json.example` | Yes | Template for project-level MCP config |
 | `.vscode/mcp.json.example` | Yes | Template for VS Code MCP config |
 | `.claude/settings.json.example` | Yes | Template for the Claude Code permission allowlist |
