@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">2</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">29</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">30</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -317,6 +317,30 @@
       <code>scripts/tests/context-budget-registry.test.sh</code>.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M14</span> Rollover launched the successor while the predecessor still held the work-item lock
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · skills/session-rollover/SKILL.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-06, fired live on the first <code>ROLLOVER_RELAUNCH=auto</code>
+      relaunch of <code>work/automatic-session-rollover/</code>: the successor's bootstrap
+      <code>register --project</code> found <code>.active-session</code> still held by the predecessor (artifact
+      active 40s prior) and refused acquisition; with <code>LOCK_STALE=3h</code> there was no reclaim path, and the
+      successor had to steal via a scoped <code>CONTEXT_LOCK_STALE_SECS</code> override. Root cause is ordering by
+      construction: the skill launches the successor at step 7 but releases the lock only after the post-launch
+      verification gate — so in auto mode the successor's <code>register</code> <em>always</em> races an unreleased
+      lock, in attached-manual mode the script <code>exec</code>s the successor so the release step can never run,
+      and the successor never retries acquisition after a failed <code>register</code>.</p>
+    <p><span class="k">Impact</span> — every auto-relaunched successor starts locked-out and runs without work-item
+      ownership (the one-active-session invariant holds on paper while the actually-active session holds nothing);
+      attached-manual rollovers leak the lock until the 3h stale reclaim.</p>
+    <p><span class="fix">Fixed:</span> same day — <code>launch-next-session.sh</code> now releases the dying
+      session's own lock immediately before any launch path (holder identity-matched against the session's own
+      registry record; a foreign holder's lock is never removed, only warned about; <code>--dry-run</code> never
+      mutates; <code>mode=off</code> still releases, since invoking the launcher means the session is ending).
+      Skill closing step and <code>docs/context-budget.md</code> reworded to release-before-launch, keeping the
+      manual <code>release</code> fallback for rollovers that never invoke the script. Regression tests T16–T19 in
+      <code>test-launch-next-session.sh</code> (49 asserts green).</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
 
@@ -543,6 +567,23 @@
       <code>docs/context-budget.md</code> to <code>test-context-budget-registry.sh</code>.</p>
   </div>
 
+  <div class="find low open">
+    <h3><span class="id">L18</span> <code>context-budget.sh</code> env-file sourcing guard keyed on the wrong variable clobbers other knob overrides
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh · context-budget.env</span></h3>
+    <p><span class="k">Evidence</span> — discovered reclaiming the M14 stale lock:
+      <code>CONTEXT_LOCK_STALE_SECS=120 … register</code> had no effect. The script sources
+      <code>context-budget.env</code> whenever <code>CONTEXT_DUMB_ZONE_TOKENS</code> is unset, and the env file's
+      plain assignment <code>CONTEXT_LOCK_STALE_SECS=10800</code> then overwrites the caller's explicit override.
+      Works only if the caller also sets the unrelated guard variable.</p>
+    <p><span class="k">Impact</span> — explicit env overrides for any knob other than
+      <code>CONTEXT_DUMB_ZONE_TOKENS</code> are silently ignored; cost a live session two attempts and a
+      source-read to diagnose.</p>
+    <p><span class="k">Fix</span> — make precedence per-variable: capture explicit env values before sourcing and
+      restore them after (the pattern <code>launch-next-session.sh</code> already uses for
+      <code>ROLLOVER_RELAUNCH</code>/<code>ROLLOVER_RUNTIME</code>), or switch the env file to
+      default-only assignments (<code>: "${VAR:=…}"</code>).</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -646,6 +687,7 @@
       <tr><td>2026-08-06</td><td>Final whole-branch review of vendor-hook-deployments. Fixed the last stale <code>claude attach</code> reference: <code>skills/session-rollover/SKILL.md</code>'s closing paragraph pointed at the nonexistent <code>claude attach</code> subcommand (same bug already fixed in <code>docs/context-budget.md</code> by <code>3fafd13</code>, missed here) — repointed to <code>scripts/attach-session.sh &lt;project&gt;</code>. Opened <strong>L17</strong>: bundled four minor issues the review triaged as non-blocking follow-up (attach-session.sh's contradictory "live but unlocked" wording, a space-unsafe <code>ls -t</code> glob loop shared by <code>attach-session.sh</code> and <code>launch-next-session.sh</code>, an unquoted SQL interpolation in <code>context-budget.sh</code>'s <code>opencode_measure</code>, and a stale test-suite filename in <code>context-budget.md</code>) so they aren't lost. Scorecard now 2/29/4/0/6.</td></tr>
       <tr><td>2026-08-06</td><td>Feature: <strong>per-work-item relaunch override</strong> — <code>8817d1d</code>: an optional, <em>committed</em> <code>work/&lt;project&gt;/context-budget.env</code> now overrides the workspace-global <code>ROLLOVER_RELAUNCH</code>/<code>ROLLOVER_RUNTIME</code> for that work item; <code>scripts/launch-next-session.sh</code> sources it after the global env (sourcing moved below arg parsing, since the per-item path needs <code>$PROJECT</code>), with precedence explicit env var &gt; per-item file &gt; global <code>context-budget.env</code> &gt; built-in default (<code>off</code>). Only the relaunch knobs are per-item — WARN/STOP thresholds stay workspace-global — but the file name/shape matches the global env so thresholds could ride in later without a rename. Rejected alternative (knob in <code>.rollover-options</code> — per-launch provenance, would be clobbered at each rollover) recorded in <code>work/per-item-relaunch-override/decisions.md</code>. Tests T15a–d added to <code>test-launch-next-session.sh</code> (42 asserts green); docs updated (<code>context-budget.md</code> "Relaunch knobs" — the old "no per-project override" claim replaced — plus <code>CONTEXT.md</code> and the <code>session-rollover</code> skill). Motivating case applied: <code>work/automatic-session-rollover/</code> now carries <code>ROLLOVER_RELAUNCH=auto</code>. No scorecard change.</td></tr>
       <tr><td>2026-08-06</td><td>Improvement: <strong>learnings capture across rollovers</strong> — three-rule scheme codified after a user retrospective discussion: (1) route learnings at <em>incident time</em> to their existing durable homes (<code>operational-knowledge.md</code>, <code>decisions.md</code>, docs), making the rollover Reflect step a sweep for what slipped; (2) observations not obviously durable get parked as one-line <code>Learnings:</code> entries in the handoff ledger block; (3) <em>second-strike promotion</em> — a parked learning graduates to a durable home only when it bites a second time (grep <code>handoff*.md</code> for the prior strike), so single events die in the archive. Edits: <code>skills/session-rollover/SKILL.md</code> (Reflect step + handoff contract) and <code>skills/checkpoint/SKILL.md</code> (human-driven retro belongs at checkpoint or successor-session start, never in a token-starved rollover). Deliberately no new <code>learnings.md</code> file and no auto-retro machinery — the bottleneck is filtering, not capture. No scorecard change.</td></tr>
+      <tr><td>2026-08-06</td><td>Opened + resolved <strong>M14</strong> (rollover launched the successor while the predecessor still held the work-item lock — fired live on this work item's first <code>ROLLOVER_RELAUNCH=auto</code> relaunch; the successor's <code>register</code> was refused and <code>LOCK_STALE=3h</code> gave no reclaim path). Fix: <code>launch-next-session.sh</code> now releases the dying session's own lock before any launch path (identity-matched against its registry record; foreign locks never removed; <code>--dry-run</code> exempt; <code>mode=off</code> included), replacing the skill's launch-then-release ordering, which could never work in auto mode (register races the lock) or attached-manual mode (<code>exec</code> forecloses the release step). Skill + <code>context-budget.md</code> reworded to release-before-launch with the manual fallback retained; tests T16–T19 added to <code>test-launch-next-session.sh</code> (49 asserts green). Opened <strong>L18</strong>: <code>context-budget.sh</code>'s env-file sourcing guard keys on <code>CONTEXT_DUMB_ZONE_TOKENS</code> only, so explicit overrides of other knobs (hit: <code>CONTEXT_LOCK_STALE_SECS</code>) are clobbered by the sourced file. Scorecard now 3/30/4/0/6.</td></tr>
     </tbody>
   </table>
 

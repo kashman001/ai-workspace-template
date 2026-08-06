@@ -132,9 +132,13 @@ unnoticed.
 - The launcher was REPLACED, not appended: `next-session.md` describes only the next
   session's mission — no leftover sections from the previous rollover.
 
-After verification passes, release the work-item lock so the successor can take it:
-`scripts/context-budget.sh release --project <project-name>` (the successor's
-`register --project <project-name>` re-acquires it).
+The work-item lock is released by `scripts/launch-next-session.sh` itself,
+immediately before it launches (release-before-launch: the successor's
+`register` must not race an unreleased lock, and the attached-manual path
+`exec`s, after which nothing can release). It removes only THIS session's own
+lock, never a foreign holder's. If the script was not invoked (absent, or the
+rollover ends without it), release manually after verification passes:
+`scripts/context-budget.sh release --project <project-name>`.
 
 ## Outputs
 

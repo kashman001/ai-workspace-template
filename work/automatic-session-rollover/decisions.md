@@ -399,3 +399,29 @@ refined in discussion).
 **Blast radius:** doc-only (HTML §2.2, research §3, scenarios S53/S54).
 **Promote?:** no — travels with the research note; revisit if implementation
 ever needs position-specific record fields.
+
+## 2026-08-06 — Work-item lock release moved into launch-next-session.sh, pre-launch (session 14)
+
+**Decision:** `scripts/launch-next-session.sh` releases the dying session's
+own `.active-session` lock immediately before launching the successor
+(identity-matched against the session's own registry record; a foreign
+holder's lock is never removed; `--dry-run` never mutates; `mode=off` still
+releases). The skill's post-verification `release` step becomes a fallback
+for rollovers that never invoke the script.
+**Why:** fired live on this work item's first `ROLLOVER_RELAUNCH=auto`
+relaunch (backlog M14): the skill's ordering — launch at step 7, release
+after post-launch verification — makes the successor's `register` race an
+unreleased lock by construction in auto mode, and can never release at all
+in attached-manual mode (`exec` replaces the predecessor). The script is the
+only place that runs strictly before every launch path.
+**Rejected:** (1) reordering the skill's steps only — cannot fix the
+attached-manual `exec` path and relies on prose ordering rather than
+mechanism; (2) successor-side retry/poll on `register` — treats the symptom,
+adds a wait loop, and leaves the manual-mode lock leak; (3) stealing the
+lock successor-side when the holder is the launching predecessor — requires
+the successor to know the predecessor's identity, which only the launch
+script has.
+**Blast radius:** `scripts/launch-next-session.sh`,
+`skills/session-rollover/SKILL.md` (closing step),
+`docs/context-budget.md` (work-item ownership passage), tests T16–T19.
+**Promote?:** no — mechanism detail within ADR-0003/0004's scope.

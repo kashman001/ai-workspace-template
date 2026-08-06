@@ -153,6 +153,24 @@ fi
 
 echo "project=$PROJECT runtime=$RUNTIME mode=$MODE bg=$BG"
 
+# Release the dying session's own work-item lock BEFORE any launch path: with
+# auto-relaunch the successor's register races an unreleased lock (and the
+# attached-manual path execs below, so nothing can release afterwards). Only a
+# lock held by this session's own registry identity is removed — a foreign
+# holder's lock is never stolen, just warned about.
+LOCK="$WORKSPACE_ROOT/work/$PROJECT/.active-session"
+if [ "$DRY" -eq 0 ] && [ -f "$LOCK" ]; then
+  hrt=$(jq -r '.runtime // empty' "$LOCK" 2>/dev/null)
+  hsid=$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)
+  drt=""; [ -n "$REC" ] && drt=$(jq -r '.runtime // empty' "$REC" 2>/dev/null)
+  if [ -n "$DYING_SID" ] && [ "$hrt-$hsid" = "$drt-$DYING_SID" ]; then
+    rm -f "$LOCK"
+    note "lock: released work/$PROJECT/.active-session (pre-launch; successor's register re-acquires)"
+  else
+    note "lock: held by $hrt-$hsid, not this session — left in place; successor will contend"
+  fi
+fi
+
 if [ "$MODE" = "off" ]; then
   note "ROLLOVER_RELAUNCH=off — not launching; paste the prompt above manually"
   exit 0

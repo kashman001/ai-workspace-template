@@ -198,9 +198,13 @@ Every element must hold under N concurrent sessions:
   (`work/<proj>/.active-session`: runtime + session-id + timestamp) enforces
   one *active* session per project — the launcher/ledger REPLACE semantics are
   single-writer by construction, and concurrent rollovers on one work item
-  would silently destroy each other. The dying session releases the lock after
-  the rollover-verification gate; the successor's `register` acquires it;
-  stale locks (artifact untouched for hours) are reclaimable.
+  would silently destroy each other. `launch-next-session.sh` releases the
+  dying session's own lock immediately before launching (release-before-launch:
+  the successor's `register` must not race it, and the attached-manual path
+  `exec`s, after which nothing can release); a foreign holder's lock is never
+  removed. Without the launch script, the dying session releases manually after
+  the rollover-verification gate. The successor's `register` acquires it; stale
+  locks (artifact untouched for hours) are reclaimable.
 - **Relaunch targets the dying session's own project** — read from its own
   session record, never from a global "active project" scalar (rejected:
   breaks with concurrent sessions by construction).
