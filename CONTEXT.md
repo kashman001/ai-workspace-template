@@ -249,10 +249,10 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
 - Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then ask
   the user whether to roll over (`session-rollover` skill; declined = write
   ahead to disk incrementally); `2` (STOP, ≥150K) — finish only the current
-  atomic step and roll over immediately, no ask. All five runtimes
-  (claude/codex/gemini/opencode/copilot CLI) get the in-band push at these
-  thresholds via their committed hook wiring (`docs/context-budget.md` →
-  "Vendor hook deployments").
+  atomic step and roll over immediately, no ask. All six runtimes
+  (claude/codex/gemini/opencode/copilot CLI/Copilot VS Code agent mode) get
+  the in-band push at these thresholds via their committed hook wiring
+  (`docs/context-budget.md` → "Vendor hook deployments").
 - Dispatching a long-running subagent: open a dispatch record and emit the
   rollover contract for its prompt in one step —
   `scripts/context-budget.sh dispatch-open --project <p> --task <slug>

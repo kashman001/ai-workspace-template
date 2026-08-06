@@ -150,10 +150,15 @@ session #N" and claude successors additionally get `--name "<project> #N"`,
 so session titles (picker, terminal title) read as work item + lineage
 number instead of a guess auto-generated from early session content; N lives
 in machine-local `work/<project>/.session-seq` (incremented per real launch,
-never by `--dry-run`). All five runtimes get seeded-interactive launch (`claude`,
-`codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached background
-(`--bg`) is claude-only. Vendor flags live only in the script — re-verify
-against `--help` before changing them.
+never by `--dry-run`). All five CLI runtimes get seeded-interactive launch
+(`claude`, `codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached
+background (`--bg`) is claude-only. Copilot **VS Code** gets a seeded launch
+too — `code chat -r -m agent "<prompt>"` opens a new agent session in the
+last-active VS Code window (verified 2026-08-06, issue 01) — but the command
+returns before the session responds, so the launcher always routes it through
+the background confirm loop (waits for the successor's `register`). Vendor
+flags live only in the script — re-verify against `--help` before changing
+them.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
 by the dying session at `session-rollover` step 6, only from what it actually
@@ -420,7 +425,7 @@ fine given the WARN→STOP margin.
 | --- | --- | --- | --- |
 | Claude Code | `~/.claude/projects/<cwd-slug>/$CLAUDE_CODE_SESSION_ID.jsonl` when that var is set (transcript basename = session id), else newest `.jsonl` in the slug dir (slug = cwd with `/` and `.` → `-`) | last main-chain `message.usage` sum of input + cache-read + cache-creation tokens; sidechain (sub-agent) rows excluded — they have their own windows | exact (verified 2026-07-22, this workspace) |
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` — pinned to `rollout-*-<id>.jsonl` when `$CODEX_THREAD_ID` is set (exported to every shell Codex spawns; equals the rollout UUID), else cwd-filtered newest-mtime fallback | last `last_token_usage.total_tokens` | exact (verified 2026-07-22, origin workspace); pin live-verified 2026-07-23 |
-| Copilot VS Code | `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export it — on current builds a `debug-logs/<id>` dir whose basename is the session id), mapped to `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/<id>.jsonl` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — deterministic, so it pins the live session even when a sibling's log is newer. Falls back to newest-mtime only when the var is unset (older builds), which can race | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-23, origin workspace) |
+| Copilot VS Code | **Hook route (preferred):** the agent-mode hooks derive the `chatSessions/<id>.jsonl` path from the hook payload's `transcript_path` + `session_id` (`…/GitHub.copilot-chat/transcripts/<id>.jsonl` → `../../../chatSessions/<id>.jsonl`) and pass it as `--transcript` — no env var, works from the unsandboxed hook process. **Terminal route:** `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export it — on current builds a `debug-logs/<id>` dir whose basename is the session id), mapped to `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/<id>.jsonl` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — deterministic, so it pins the live session even when a sibling's log is newer. Falls back to newest-mtime only when the var is unset (older builds), which can race | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-23, origin workspace; chatSessions promptTokens re-confirmed live 2026-08-06 on VS Code 1.132.0) |
 | Copilot CLI | root `${COPILOT_HOME:-~/.copilot}`; `session-state/<id>/events.jsonl` pinned via `$COPILOT_AGENT_SESSION_ID` (CLI ≥1.0.29, exported to shell commands), else newest-mtime across `session-state/` then legacy `history-session-state/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | exact (verified 2026-08-05 against a live CLI 1.0.78 session — 73.0k UI match; see `work/automatic-session-rollover/smoke-test-copilot.md`) |
 | Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4. The telemetry log is shared append-only across sessions, so `register` resets it — a new session never reads the previous session's counts | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
 
@@ -441,13 +446,14 @@ estimate. Explicit `--transcript` still overrides everything.
 
 No single mechanism covers every runtime, so four layers overlap:
 
-1. **In-band hook (all five runtimes):** each runtime's own committed hook
+1. **In-band hook (all six runtimes, incl. Copilot VS Code agent mode):** each
+   runtime's own committed hook
    wiring pushes a WARN/STOP message into the agent's turn. Escalation-only
    (one WARN + one STOP per session), throttled to one check/minute, fails
    open — any hook error exits 0 (or emits the vendor's silent-JSON shape) so
    it can never block real work. Claude Code's wiring lives in
    `.claude/settings.json` (gitignored — copy the `hooks` block from
-   `.claude/settings.json.example`); the other four ship committed. Full
+   `.claude/settings.json.example`); the others ship committed. Full
    per-runtime wiring/channel/friction breakdown: "Vendor hook deployments"
    below.
 2. **Mandatory checkpoints in long-running skills (all runtimes):** `onboard-repo`
@@ -475,6 +481,7 @@ into the shared lib for the actual check and message text.
 | Gemini CLI | `.gemini/settings.json` `hooks.BeforeAgent` → `context-budget-gemini-hook.sh` | `BeforeAgent` | JSON-only stdout — gemini hooks require valid JSON on every invocation; the wrapper emits `{}` when silent (no jq, no escalation) and `{hookSpecificOutput:{additionalContext}}` on WARN/STOP | Measurement reads the workspace `.gemini/telemetry.log`, not the payload's `transcript_path` (the chat transcript carries no token counts) — exact only once the telemetry log has an entry for this session. **Known limitation:** the telemetry log is shared and append-only across sessions in the workspace, so a successor gemini session's *first-turn* `BeforeAgent` check can read the predecessor's last (large) entry before its own first response lands, and spuriously report STOP on turn one. Accepted — gemini chains are human-launched anyway (see "Chained rollovers & re-attach" above), so a spurious first-turn STOP is caught by a human before it matters. |
 | opencode | `.opencode/opencode.json` `"plugin"` array → `.opencode/plugins/context-budget.js`, which shells out to `context-budget-opencode-hook.sh <sessionID>` | `chat.message` | the plugin `push`es a message `Part` (`output.parts.push(...)`) | opencode's Part schema is strict: a bare `{type,text}` part fails validation and kills the turn — every part needs `id`, `sessionID`, and `messageID`. Also: `.opencode/plugins/*.js` is **not** auto-discovered in this repo (empirically verified) — a plugin must be explicitly listed in `opencode.json`'s `plugin` array or it never runs. Measurement is a sqlite read from `~/.local/share/opencode/opencode.db` (`message.data` per-turn `tokens.total`, with a session-column sum fallback; no size-estimate fallback, since the db is shared across all sessions). |
 | Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh sessionStart` / `... agentStop` | `sessionStart` (WARN/STOP) and `agentStop` (STOP only) | `sessionStart`: `{additionalContext}` JSON. `agentStop`: `{decision:"block",reason}` — **blocks only at STOP**, because `additionalContext` is model-discounted (phrased as tooling status, easy to ignore) while `block` is a strong lever; guarded by `stop_hook_active` so it never fights the CLI's 8-block continuation limit. | **Folder-trust gate:** repo-committed hooks silently no-op unless the workspace is listed in `~/.copilot/config.json` → `trustedFolders` — no error, no visible signal, the hook simply never fires. Must be pre-seeded (manually, or via config) before hooks work, including in CI. |
+| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` (**PascalCase** events, `command` key, repo-relative path — hook-process cwd is the workspace root; verified 2026-08-06, VS Code 1.132.0) → `context-budget-copilot-vscode-hook.sh SessionStart` / `... Stop` | `SessionStart` (WARN/STOP) and `Stop` (STOP only) | `SessionStart`: `{hookSpecificOutput:{additionalContext}}` JSON, model-visible (occasionally discounted as "injected" — the Stop channel is the authoritative lever). `Stop`: **stderr text + `exit 2`** forces one continuation turn carrying the rollover instruction — JSON `{decision:"block"}` is IGNORED by VS Code, exit-2 is the only working block channel; guarded by `stop_hook_active`. Payloads are snake_case (`session_id`) vs the CLI's camelCase (`sessionId`) — each wrapper guards on its own casing, so both `.github/hooks/*.json` files coexist safely whichever runtime loads them. | None found — hooks fired without a trust prompt on a workspace already open in VS Code. `$CLAUDE_PROJECT_DIR` is unset in hook processes (the repo's claude hooks no-op harmlessly if VS Code loads `.claude/settings.json` via its default `chat.hookFilesLocations`). |
 
 ## Session registration
 
@@ -523,8 +530,9 @@ live append-file.
 
 ## Known limitations
 
-- Copilot **VS Code** measurement (`copilot_vscode_measure`) is plausible but
-  unverified on current builds — needs a Copilot-licensed VS Code
+- Copilot **VS Code** measurement (`copilot_vscode_measure`) was live-verified
+  2026-08-06 (VS Code 1.132.0, chatSessions `promptTokens`), along with the
+  agent-mode hooks and `code chat` seeded launch
   (`work/automatic-session-rollover/issues/01-vscode-agent-mode-hooks.md`).
   The CLI adapter was live-verified 2026-08-05.
 - Gemini CLI: the tracked `.gemini/settings.json` enables local-file telemetry

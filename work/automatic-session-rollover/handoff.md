@@ -6,6 +6,33 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 29: issue-01 probe v4 verified + build SHIPPED; issue 01 CLOSED)
+
+**What shipped (worktree `session-29-issue-01-build`, pushed to `origin/main`):**
+
+- **Probe v4 (spec step 3, the one open leg) — verified live, self-driven**
+  (no user relay needed; `code chat` seeded sessions work from the agent
+  shell): repo-relative hook commands RESOLVE, hook-process cwd = workspace
+  root, VS Code re-reads hook JSON without a window reload. Details in
+  `issues/01-vscode-agent-mode-hooks.md` → session-29 block.
+- **Build (spec steps 1–2, 4–6):** `context-budget-copilot-vscode-hook.sh` +
+  committed `.github/hooks/context-budget-vscode.json` (repo-relative,
+  PascalCase); launcher copilot-vscode `code chat -r -m agent` seeded launch
+  via the BG confirm loop; vendor T11 + launcher T22 tests (all 8 suites
+  green, 342 asserts); docs (context-budget.md, CONTEXT.md six runtimes,
+  relaunch-analysis.md, backlog changelog row).
+- **Issue 01 CLOSED** (versions recorded per Done-when: VS Code 1.132.0,
+  Copilot Chat built-in, claude-sonnet-5).
+
+**Numbering note:** machine-local `.session-seq` (28) trails the ledger by
+one — this session is ledger-#29 but was launched as prompt-#28. Seq bumped
+to 29 at close so the next prompt matches the ledger again.
+
+**Left for the user:** delete throwaway probe files from the MAIN checkout
+(`scripts/hooks/vscode-hook-probe.sh`, `.github/hooks/vscode-probe.json`,
+`.vscode-hook-probe.jsonl`) and `git pull` there. Nothing else standing —
+wayfinder map complete, issue 04 parked (user-scheduled only).
+
 # Session Handoff — 2026-08-06 (session 28: issue-01 items 1+3 VERIFIED live; housekeeping done; build hands off)
 
 **What shipped (worktree `session-28-issue-01-vscode`, pushed to `origin/main`):**

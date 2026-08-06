@@ -260,6 +260,14 @@ assert_contains "T21f: non-claude prompt still carries item+seq" "$out" "Work it
 assert_not_contains "T21g: no --name on non-claude argv" "$out" "--name"
 rm -f "$TMP/work/testproj/.session-seq"
 
+echo "T22: copilot-vscode seeded launch — code chat argv, BG confirm loop implied"
+rm -f "$SESS"/*.json
+out=$(run_lns "$LNS" testproj --runtime copilot-vscode --dry-run 2>&1)
+assert_contains "T22a: runtime resolved"  "$out" "runtime=copilot-vscode"
+assert_contains "T22b: bg implied (detached launch)" "$out" "bg=1"
+assert_contains "T22c: code chat argv"    "$out" "cmd: code chat -r -m agent"
+assert_contains "T22d: verbatim prompt"   "$out" "continue from"
+
 echo "W: worktree-invoked launch — sync the main checkout, launch from it (issue 05)"
 GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
 trap 'rm -rf "$TMP" "$GW"' EXIT
