@@ -132,7 +132,12 @@ codex session relaunches a codex successor.
 
 `scripts/launch-next-session.sh <project> [--runtime …] [--bg]` bakes the
 load-bearing bootstrap prompt in **verbatim** and launches the chosen runtime
-seeded with it. All five runtimes get seeded-interactive launch (`claude`,
+seeded with it. The prompt leads with "Work item `<project>` - rollover
+session #N" and claude successors additionally get `--name "<project> #N"`,
+so session titles (picker, terminal title) read as work item + lineage
+number instead of a guess auto-generated from early session content; N lives
+in machine-local `work/<project>/.session-seq` (incremented per real launch,
+never by `--dry-run`). All five runtimes get seeded-interactive launch (`claude`,
 `codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached background
 (`--bg`) is claude-only. Vendor flags live only in the script — re-verify
 against `--help` before changing them.

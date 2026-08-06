@@ -103,8 +103,14 @@ unnoticed.
 7. **Emit the bootstrap prompt** for the user to paste into the fresh session, in a
    fenced block, e.g.:
 
-   > Read `work/<project-name>/next-session.md` and continue from **First actions**.
+   > Work item <project-name> - rollover session #N. Read
+   > `work/<project-name>/next-session.md` and continue from **First actions**.
    > Governing skill: `skills/<skill>/SKILL.md`.
+
+   The "Work item … session #N" lead matters: session titles are
+   auto-generated from early content, so the first line names the lineage
+   (`launch-next-session.sh` builds exactly this prompt, tracks N in
+   `work/<project>/.session-seq`, and passes claude `--name "<project> #N"`).
 
    Then honor `ROLLOVER_RELAUNCH` (global `context-budget.env`, overridable
    per work item by a committed `work/<project>/context-budget.env`) via

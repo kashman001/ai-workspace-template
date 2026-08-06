@@ -19,7 +19,12 @@
 #          the successor launch.
 # Exit:    0 ok / 3 error. Requires jq.
 # Vendor flags verified against live --help 2026-08-05: claude [prompt] + --bg;
-# codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. Approval-mapping
+# codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. claude -n/--name
+# (session display name: picker + terminal title) verified 2026-08-06
+# (2.1.223); no equivalent verified for other runtimes — their session titles
+# rely on the prompt's "Work item <proj> - rollover session #N" lead (ASCII
+# only: the %q cmd-echo pipes through BSD sed, which rejects multibyte).
+# Approval-mapping
 # flags (OPT_ARGS below) re-verified against live --help 2026-08-06: claude
 # --permission-mode acceptEdits (edits), --permission-mode auto (auto —
 # classifier-vetted, claude 2.1.223), --dangerously-skip-permissions (full);
@@ -70,8 +75,20 @@ MODE="${ROLLOVER_RELAUNCH:-off}"
 FALLBACK_RUNTIME="${ROLLOVER_RUNTIME:-claude}"
 CONFIRM_SECS="${ROLLOVER_CONFIRM_SECS:-120}"
 
+# Lineage sequence: work/<proj>/.session-seq holds the last-launched session's
+# number (machine-local runtime state, gitignored). Successor = last+1;
+# persisted only on a real run (--dry-run never mutates). Absent file means
+# the current session is #1. Feeds the prompt lead + claude --name so session
+# titles read "work item + number" instead of a guess from early content.
+SEQF="$WORKSPACE_ROOT/work/$PROJECT/.session-seq"
+LAST_SEQ=""
+[ -f "$SEQF" ] && LAST_SEQ="$(tr -cd '0-9' < "$SEQF" 2>/dev/null)"
+[ -n "$LAST_SEQ" ] || LAST_SEQ=1
+SEQ=$((LAST_SEQ + 1))
+[ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
+
 # The canonical bootstrap prompt (ADR-0003: wording is load-bearing, verbatim).
-PROMPT="Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."
+PROMPT="Work item $PROJECT - rollover session #$SEQ. Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."
 
 own_record() {
   # D6 "read my own record": env-first identity, same order as
@@ -204,7 +221,7 @@ if [ "$MODE" = "off" ]; then
 fi
 
 case "$RUNTIME" in
-  claude)   CMD=(claude); [ "$BG" -eq 1 ] && CMD+=(--bg)
+  claude)   CMD=(claude --name "$PROJECT #$SEQ"); [ "$BG" -eq 1 ] && CMD+=(--bg)
             CMD+=(${OPT_ARGS[@]+"${OPT_ARGS[@]}"} "$PROMPT") ;;
   codex)    CMD=(codex ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} "$PROMPT") ;;
   gemini)   CMD=(gemini ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -i "$PROMPT") ;;
