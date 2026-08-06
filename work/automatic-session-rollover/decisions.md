@@ -527,3 +527,30 @@ successors; one register = one predecessor claimed).
 issues/03 closed. Tests: registry 54 asserts green.
 **Promote?:** promoted 2026-08-06 with the session-15/16 role notes →
 ADR-0005 (role model + parent/child registry, schema final).
+
+## 2026-08-06 — Child sweep is a `children` subcommand, sidechain-inclusive (session 18)
+
+**What:** slice 2 (R1) landed as a new `children` subcommand:
+`context-budget.sh children [--parent-session <sid>] [--all]` enumerates
+`<parent-uuid>/subagents/agent-*.jsonl`, measures each with a
+sidechain-*inclusive* variant of the Claude measure, prints escalation-only
+(WARN/STOP) check-style lines with `age=` (artifact mtime) and `type=`
+(`.meta.json` agentType), and exits with the worst child status.
+**Why:** a subagent transcript's rows are all `isSidechain:true` — the
+self-measure filter (correct for a parent excluding its children's windows)
+would silently degrade every child to a bytes÷4 estimate; verified against a
+real fleet, where the sweep surfaced the 141.8K child that motivated R1.
+Escalation-only keeps a busy parent from being spammed by N OK children.
+**Rejected:** a `--children` flag on `check` (check's contract is one
+artifact → one line → exit = own status; the sweep is N artifacts +
+filtering — a different contract); non-claude adapters (no other runtime
+has a verified per-child artifact layout — loud die instead of silent
+wrong answers); throttling and ledger writes (belong to the hook-wiring
+slice, not the CLI helper); live-only filtering (age is reported, callers
+filter).
+**Blast radius:** `context-budget.sh` (`cmd_children`,
+`claude_child_measure`, `--all`), new suite
+`scripts/tests/test-children-sweep.sh` (27 asserts), `docs/context-budget.md`
+(Per-child sweep section + quickstart line). All six suites green.
+**Promote?:** no — implementation detail within ADR-0005's model; revisit
+if the hook-wiring slice changes the escalation contract.

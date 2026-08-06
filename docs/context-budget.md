@@ -18,6 +18,7 @@ relaunch) · `work/context-decay/context-ledger.jsonl` (measurement ledger).
 scripts/context-budget.sh check                  # auto-detect runtime, one status line
 scripts/context-budget.sh check --runtime codex  # or claude|copilot-vscode|copilot-cli|gemini
 scripts/context-budget.sh watch --interval 30    # hook-less runtimes: poll + macOS notification
+scripts/context-budget.sh children               # per-subagent sweep, WARN/STOP only (claude)
 ```
 
 Output is one line: `runtime= method= tokens= threshold= warn= pct= status= artifact=`.
@@ -282,6 +283,28 @@ Every element must hold under N concurrent sessions:
 - **Gemini exception:** exact counts come from the shared workspace telemetry
   log, which is architecturally single-session-per-workspace; a second
   concurrent gemini session falls back to estimate-only.
+
+## Per-child sweep (`children`)
+
+No runtime reports a subagent's context usage to its parent — the parent must
+measure the child transcript artifacts directly (research R1). `children
+[--parent-session <sid>] [--all]` does that sweep for Claude Code sessions
+(the only runtime with a verified per-child artifact layout; anything else
+dies loudly):
+
+- Enumerates `<parent-artifact-dir>/<parent-uuid>/subagents/agent-*.jsonl`
+  (direct children only — a child's own children are its business, R8) and
+  measures each with a sidechain-*inclusive* variant of the Claude adapter: a
+  subagent transcript's rows are all `isSidechain: true`, so the self-measure
+  filter would silently degrade every child to a size estimate.
+- **Escalation-only output:** only WARN/STOP children print (one check-style
+  `agent= tokens= … status= age= type=` line each; `age` = artifact mtime age,
+  the usual liveness signal; `type` = `agentType` from the `.meta.json`
+  sibling). `--all` lists OK children too. Summary count goes to stderr.
+- **Exit code = worst child status** (0 OK / 1 WARN / 2 STOP), so a parent
+  can gate on the sweep exactly like its own `check`. Default parent is the
+  current session; `--parent-session <sid>` sweeps another *registered*
+  session's children.
 
 ## Per-runtime adapters
 
