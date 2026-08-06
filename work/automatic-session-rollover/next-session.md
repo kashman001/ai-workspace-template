@@ -4,34 +4,58 @@
 > each rollover. Past-tense provenance lives in `handoff.md` (append-only
 > ledger, newest block on top). Convention: docs/work-directory-conventions.md.
 
-## Status: vendor-hook-deployments plan COMPLETE (2026-08-06)
+## Mission
 
-All 9 tasks shipped, task-reviewed, final-whole-branch-reviewed, and pushed
-on `main` through `064641a`. No active mission remains in this work item.
+The vendor-hook-deployments plan is COMPLETE (all 9 tasks, final review,
+pushed). A new research phase just concluded: **parent-managed subagent
+rollover** — the full design note is
+`work/automatic-session-rollover/subagent-rollover-research.md` (committed,
+`4fa0cdb`). Nothing from it is implemented yet. The next session's job is
+whatever the user directs — most likely: discuss/refine the research doc, or
+start turning its §14 "Suggested next steps" into implementation slices
+(wayfinder decision tickets or an SDD plan).
 
-## First actions (only if resuming work here)
+## First actions
 
 1. `git pull --ff-only` if the checkout lags origin/main.
 2. `scripts/context-budget.sh register --project automatic-session-rollover`.
-3. Read the TOP block of `handoff.md` (session 11) for what shipped last.
+3. Read `subagent-rollover-research.md` — TL;DR + §14 first; demand-load the
+   rest per section as the discussion needs it (it's long by design: it
+   carries state machines, invariants, scenario suite, cost model for
+   evaluation).
 
-## Open follow-up (the only known remaining work)
+## Constraints already decided (do not re-litigate)
 
-Backlog card **L17** in `docs/template-workspace-backlog.html` bundles the
-deferred minors from the final review: attach-session unlocked-case wording;
-space-unsafe `ls -t` loops in `attach-session.sh` + `launch-next-session.sh`
-(fix both together); unquoted `$PWD`/`$sid` SQL interp in
-`context-budget.sh` `opencode_measure`; registry-suite filename drift in
-`docs/context-budget.md`; plus a scorecard recount (Open/Resolved counts and
-the prose status panel drifted). All cosmetic/hardening — no urgency.
+- Vendor-agnostic layering is mandatory (user directive + project memory):
+  neutral contract, per-runtime adapters, graceful degradation where a
+  runtime exposes no child handles.
+- Child rollover verb = successor dispatch, never resume (evidence: the
+  141.8K resumed implementer; resume retains full history).
+- Parent must not roll over with live children (drain mode) — successors
+  cannot adopt a predecessor's children; enforce via lock release-order.
+- Standing push-to-main approval applies.
 
 ## Do NOT reload
 
-- `handoff-archive.md` and pre-session-11 `handoff.md` blocks — superseded.
-- The plan file and `.superpowers/sdd/…` — plan done; SDD workspace deleted
-  (git history is the record).
-- Machine gotchas stay in `docs/operational-knowledge.md` (codex model pin,
-  no gemini auth, opencode `$schema` rewrite) — don't re-diagnose.
+- `handoff-archive.md` and handoff blocks before session 11b — superseded.
+- The vendor-hook-deployments plan + SDD artifacts — plan done, workspace
+  deleted; git history is the record.
+- The three research-agent transcripts/scratchpad — their findings are fully
+  captured in the three committed files (`subagent-rollover-research.md`,
+  `-stats.md`, `subagent-vendor-survey.md`).
+- Backlog card **L17** — known follow-up minors from the code plan; separate
+  from this research thread.
+
+## State snapshot (at session-11b rollover, 2026-08-06)
+
+- Branch `main` pushed through `4fa0cdb`; this rollover's commit will follow.
+- Uncommitted at rollover: only `work/context-decay/context-ledger.jsonl`
+  (goes into the rollover commit) + the live `.active-session` lock
+  (untracked by design).
+- No running background agents (all three research agents completed and were
+  harvested). No worktrees. Suites untouched this phase.
+- No `.rollover-options` file — session didn't know its own launch flags
+  (skill: leave absent); successor launches with runtime defaults.
 
 ## At session end
 

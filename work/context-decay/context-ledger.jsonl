@@ -66,3 +66,4 @@
 {"ts":"2026-08-06T06:04:38Z","runtime":"claude","session":"be795ea7-64c2-4c72-aeb8-aabe354c2f64.jsonl","tokens":137091,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN 133K after Task 8; Task 9 + final review to successor"}
 {"ts":"2026-08-06T06:05:51Z","runtime":"claude","session":"be795ea7-64c2-4c72-aeb8-aabe354c2f64.jsonl","tokens":149244,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: automatic-session-rollover"}
 {"ts":"2026-08-06T06:33:04Z","runtime":"claude","session":"f398089a-a3b2-4c58-9ac9-157b98ebb9cf.jsonl","tokens":106207,"method":"exact","threshold":150000,"status":"OK","label":"Task 9 + final whole-branch review complete"}
+{"ts":"2026-08-06T12:44:50Z","runtime":"claude","session":"f398089a-a3b2-4c58-9ac9-157b98ebb9cf.jsonl","tokens":158416,"method":"exact","threshold":150000,"status":"STOP","label":"rollover start: STOP 157K after subagent-rollover research doc"}
