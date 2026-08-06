@@ -41,6 +41,16 @@ Consequences (observed 2026-08-05, session 7):
   WARN/STOP, confirm the artifact is yours: `grep` it for a string unique to
   the current conversation.
 
+## Claude Code — worktree-isolated Bash guard refuses compound commands
+
+In a worktree-isolated session (background jobs after `EnterWorktree`), the
+Bash permission guard rejects compound commands — `for`-loops, `;`-chains
+with redirects, unquoted globs — even when they only run tests, with "too
+complex to verify that it stays inside the worktree". Hit in sessions 18
+and 19 (e.g. `for t in scripts/tests/test-*.sh; do …; done`). Mitigation:
+one plain command per Bash call; iterate by issuing separate calls instead
+of shell loops.
+
 ## Agent workflow — bound your background poll loops
 
 - **Symptom:** `run_in_background` poll loops never exit and pile up as zombie
