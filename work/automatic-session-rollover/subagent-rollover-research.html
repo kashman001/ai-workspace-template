@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parent-Managed Rollover of Subagent Sessions</title>
+<style>
+  :root {
+    --paper: #F7F9FA;
+    --card: #FFFFFF;
+    --ink: #1B2A32;
+    --muted: #5A6E78;
+    --line: #D5DEE2;
+    --accent: #0C6A6A;
+    --accent-soft: #E4F0EF;
+    --warn: #9A5B00;
+    --warn-soft: #F7ECD6;
+    --stop: #A8322A;
+    --stop-soft: #F8E4E1;
+    --code-bg: #EDF2F3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #131A1E;
+      --card: #182328;
+      --ink: #DCE6EA;
+      --muted: #8CA0AA;
+      --line: #2C3A41;
+      --accent: #4FB8B2;
+      --accent-soft: #16302F;
+      --warn: #E0A458;
+      --warn-soft: #2E2415;
+      --stop: #E4766C;
+      --stop-soft: #331B18;
+      --code-bg: #1B252A;
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #F7F9FA; --card: #FFFFFF; --ink: #1B2A32; --muted: #5A6E78;
+    --line: #D5DEE2; --accent: #0C6A6A; --accent-soft: #E4F0EF;
+    --warn: #9A5B00; --warn-soft: #F7ECD6; --stop: #A8322A; --stop-soft: #F8E4E1;
+    --code-bg: #EDF2F3;
+  }
+  :root[data-theme="dark"] {
+    --paper: #131A1E; --card: #182328; --ink: #DCE6EA; --muted: #8CA0AA;
+    --line: #2C3A41; --accent: #4FB8B2; --accent-soft: #16302F;
+    --warn: #E0A458; --warn-soft: #2E2415; --stop: #E4766C; --stop-soft: #331B18;
+    --code-bg: #1B252A;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Charter", "Bitstream Charter", "Iowan Old Style", Georgia, serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  .frame {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+  @media (min-width: 1100px) {
+    .frame {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 56px;
+    }
+    .toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; }
+  }
+
+  h1, h2, h3, h4, .eyebrow, .toc, .tag, figcaption, th {
+    font-family: -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  h1 { font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.015em; margin: 0.4em 0 0.3em; text-wrap: balance; }
+  h2 { font-size: 1.45rem; letter-spacing: -0.01em; margin: 2.6em 0 0.6em; padding-top: 0.8em; border-top: 1px solid var(--line); text-wrap: balance; }
+  h3 { font-size: 1.1rem; margin: 2em 0 0.5em; text-wrap: balance; }
+  h2 .secno, h3 .secno { color: var(--accent); font-weight: 600; margin-right: 0.45em; font-variant-numeric: tabular-nums; }
+  p, li { max-width: 70ch; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 700; margin-top: 40px;
+  }
+  .meta { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+  .meta b { color: var(--ink); }
+  .question {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 18px; border-radius: 0 6px 6px 0;
+    margin: 1.4em 0; max-width: 74ch;
+  }
+  .question p { margin: 0; }
+
+  .toc { font-size: 0.85rem; line-height: 1.5; padding-top: 48px; }
+  .toc .eyebrow { margin-top: 0; }
+  .toc ol { list-style: none; margin: 10px 0 0; padding: 0; }
+  .toc > ol > li { margin: 7px 0; }
+  .toc ol ol { margin-left: 14px; font-size: 0.8rem; }
+  .toc ol ol li { margin: 3px 0; }
+  .toc a { color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); text-decoration: underline; }
+  @media (max-width: 1099px) {
+    .toc { border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin-top: 32px; background: var(--card); }
+  }
+
+  code, pre {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.84em;
+  }
+  code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 18px; overflow-x: auto; line-height: 1.55; max-width: 100%;
+  }
+  pre code { background: none; padding: 0; }
+
+  table {
+    border-collapse: collapse; width: 100%; margin: 1.2em 0;
+    font-size: 0.88rem; line-height: 1.45;
+  }
+  .tablewrap { overflow-x: auto; margin: 1.2em 0; }
+  .tablewrap table { margin: 0; min-width: 640px; }
+  th {
+    text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); border-bottom: 2px solid var(--line); padding: 8px 10px 6px;
+  }
+  td { border-bottom: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
+  td:first-child { white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .tag {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+    padding: 1px 8px; border-radius: 99px; vertical-align: 0.12em; text-transform: uppercase;
+  }
+  .tag.ok   { background: var(--accent-soft); color: var(--accent); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.stop { background: var(--stop-soft); color: var(--stop); }
+  .tag.new  { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+
+  figure { margin: 2em 0; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption {
+    font-size: 0.82rem; color: var(--muted); margin-top: 10px; max-width: 78ch; line-height: 1.5;
+  }
+  figcaption b { color: var(--ink); }
+
+  .principle {
+    border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    background: var(--card); border-radius: 0 8px 8px 0;
+    padding: 14px 20px; margin: 1.6em 0; max-width: 74ch;
+  }
+  .principle p { margin: 0.3em 0; }
+
+  .rlist { padding-left: 0; list-style: none; max-width: 76ch; }
+  .rlist > li { margin: 0.9em 0; padding-left: 3.4em; position: relative; }
+  .rlist > li > .rid {
+    position: absolute; left: 0; top: 0.1em;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.8rem;
+    font-weight: 700; color: var(--accent);
+  }
+  .footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="frame">
+
+<nav class="toc" aria-label="Contents">
+  <div class="eyebrow">Contents</div>
+  <ol>
+    <li><a href="#problem">1 · The problem</a></li>
+    <li><a href="#model">2 · The model</a>
+      <ol>
+        <li><a href="#model-roles">2.1 Roles &amp; policy</a></li>
+        <li><a href="#model-verbs">2.2 The rollover verb</a></li>
+        <li><a href="#model-protocol">2.3 Protocol: channels &amp; messages</a></li>
+        <li><a href="#model-files">2.4 Files on disk</a></li>
+        <li><a href="#model-locks">2.5 Lock hierarchy</a></li>
+        <li><a href="#model-states">2.6 State machines</a></li>
+        <li><a href="#model-drain">2.7 Drain mode &amp; headroom</a></li>
+        <li><a href="#model-invariants">2.8 Invariants</a></li>
+      </ol>
+    </li>
+    <li><a href="#machinery">3 · Machinery already in place</a></li>
+    <li><a href="#findings">4 · Research findings</a>
+      <ol>
+        <li><a href="#findings-transfer">4.1 What transfers</a></li>
+        <li><a href="#findings-vendor">4.2 Vendor survey</a></li>
+        <li><a href="#findings-depth">4.3 Depth &amp; resilience</a></li>
+      </ol>
+    </li>
+    <li><a href="#proposal">5 · The proposal</a>
+      <ol>
+        <li><a href="#proposal-reqs">5.1 Requirements R1–R8</a></li>
+        <li><a href="#proposal-layers">5.2 Vendor-agnostic layering</a></li>
+        <li><a href="#proposal-inventory">5.3 The rollover inventory</a></li>
+      </ol>
+    </li>
+    <li><a href="#evaluation">6 · Evaluation model</a></li>
+    <li><a href="#next">7 · Suggested next steps</a></li>
+    <li><a href="#sources">8 · Sources</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<div class="eyebrow">Research &amp; design note · automatic-session-rollover</div>
+<h1>Parent-Managed Rollover of Subagent Sessions</h1>
+<p class="meta">
+  <b>Date:</b> 2026-08-06 &nbsp;·&nbsp; <b>Status:</b> research/design — no implementation &nbsp;·&nbsp;
+  <b>Source:</b> <code>subagent-rollover-research.md</code> (this page is its review rendition)<br>
+  <b>Evidence companions:</b> <code>subagent-rollover-stats.md</code> (transcript measurements) ·
+  <code>subagent-vendor-survey.md</code> (4-runtime capability survey)
+</p>
+
+<div class="question">
+  <p><b>The question.</b> The automatic-session-rollover plan gave the <em>main</em> session a
+  measured, deliberate rollover path (budget hooks → WARN/STOP → pruned handoff → successor
+  launch). Can those learnings extend to <b>subagent (child) sessions, where the parent
+  session — not a human — is the manager</b>? What extra requirements, files, and locking
+  changes does that need? How does it behave at depth, and what resilience is required?</p>
+</div>
+
+<h2 id="problem"><span class="secno">1</span>The problem</h2>
+
+<p>LLM quality degrades past ~150K context tokens regardless of advertised window size — the
+premise of the whole rollover project. Main sessions now have a defense: measurement pushes
+WARN at 120K and STOP at 150K, and a deliberate, pruned handoff replaces automatic compaction.
+<b>Child sessions have no such defense, and they are already hitting the danger zone.</b></p>
+
+<p>Measuring all 30 subagent transcripts in this project's history (peak context = max over
+each transcript of <code>input + cache_read + cache_creation</code> tokens):</p>
+
+<table>
+  <tr><th>Metric</th><th>Value</th></tr>
+  <tr><td>Subagent transcripts measured</td><td class="num">30</td></tr>
+  <tr><td>Max peak context</td><td class="num"><b>141,800</b> — within 6% of STOP <span class="tag warn">≥ WARN</span></td></tr>
+  <tr><td>Median peak context</td><td class="num">~66,900</td></tr>
+  <tr><td>≥ 120K (WARN)</td><td class="num"><b>3</b> (10%)</td></tr>
+  <tr><td>≥ 150K (STOP)</td><td class="num">0 — but only because tasks happened to be sized right</td></tr>
+</table>
+
+<p>Top peaks: Task 9 implementer (141.8K), final whole-branch reviewer (133.6K), Task 8
+implementer (133.6K), Task 5 implementer (105.6K), vendor-hooks researcher (96.1K). Two
+readings matter for design:</p>
+
+<ul>
+  <li><b>The heavy children are the ones we most need to be smart.</b> Implementers late in
+  their task and whole-branch reviewers enter the "dumb zone" risk band exactly when their
+  judgment matters most.</li>
+  <li><b>Resumption is a context accretor.</b> The 141.8K peak was an implementer
+  <em>resumed</em> for a review fix round. Every resume stacks a full round of history onto an
+  already-large context — direct evidence that resume ≠ rollover (<a href="#model-verbs">§2.2</a>).</li>
+</ul>
+
+<p>Claude Code's SDK auto-compacts a subagent that approaches its window, so children don't
+hard-fail — but auto-compaction deciding what survives is precisely the outcome the rollover
+project exists to pre-empt (ADR-0003 rationale). The gap is not a protocol — SDD has been
+field-testing successor dispatch all along — it is a <b>trigger</b>: nobody measures a running
+child, so nobody rolls it over before quality degrades.</p>
+
+<h2 id="model"><span class="secno">2</span>The model</h2>
+
+<p>Everything sufficient for a parent to manage the rollover of a child session reduces to
+seven elements: <b>roles</b> (who decides), a <b>verb</b> (what "roll over" means for a
+child), a <b>protocol</b> (how parent and child communicate), <b>files</b> (where state
+lives), <b>locks</b> (who owns what, and who is alive), <b>state machines</b> (child
+lifecycle, parent budget modes), and <b>invariants</b> (what must never be violated). The
+governing rule inherited from the main-session design:</p>
+
+<div class="principle">
+  <p><b>Disk is the authoritative channel; every in-band message is advisory and has a disk
+  counterpart.</b> The system must survive the loss of any in-band leg — a lost nudge or a
+  truncated return degrades to "the parent reads the report file", never to lost state.
+  Liveness is always inferred from artifact freshness, never asserted by an agent; recovery is
+  always re-dispatch from disk, never adoption of a live context.</p>
+</div>
+
+<figure>
+  <svg viewBox="0 0 960 480" role="img" aria-label="System model: a parent session dispatches a child; both are backed by five disk artifacts — brief, dispatch record, child lock, report, and transcript — which form the authoritative channel.">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+      </marker>
+      <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+      </marker>
+    </defs>
+    <g font-family="-apple-system, Segoe UI, system-ui, sans-serif">
+      <!-- Parent box -->
+      <rect x="50" y="40" width="300" height="120" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/>
+      <text x="200" y="66" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">PARENT SESSION</text>
+      <text x="200" y="90" text-anchor="middle" font-size="11.5" fill="var(--muted)">budget monitor · probes children</text>
+      <text x="200" y="110" text-anchor="middle" font-size="11.5" fill="var(--muted)">dispatch queue · generation counter</text>
+      <text x="200" y="130" text-anchor="middle" font-size="11.5" fill="var(--muted)">holds the project lock</text>
+      <!-- Child box -->
+      <rect x="660" y="40" width="280" height="120" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/>
+      <text x="800" y="66" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">CHILD · gen N</text>
+      <text x="800" y="90" text-anchor="middle" font-size="11.5" fill="var(--muted)">does one task's work</text>
+      <text x="800" y="110" text-anchor="middle" font-size="11.5" fill="var(--muted)">cannot measure itself (D1)</text>
+      <text x="800" y="130" text-anchor="middle" font-size="11.5" fill="var(--muted)">writes disk · never interrupts parent</text>
+      <!-- In-band lanes -->
+      <line x1="350" y1="72" x2="656" y2="72" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr)"/>
+      <text x="503" y="64" text-anchor="middle" font-size="10.5" fill="currentColor" font-family="ui-monospace, Menlo, monospace">DISPATCH(brief, report, contract, gen)</text>
+      <line x1="350" y1="104" x2="656" y2="104" stroke="currentColor" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+      <text x="503" y="96" text-anchor="middle" font-size="10.5" fill="var(--muted)" font-family="ui-monospace, Menlo, monospace">CHECKPOINT_REQUEST (resume · runtime-dep.)</text>
+      <line x1="656" y1="136" x2="350" y2="136" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr)"/>
+      <text x="503" y="152" text-anchor="middle" font-size="10.5" fill="currentColor" font-family="ui-monospace, Menlo, monospace">YIELD(status) — return capped ≤15 lines</text>
+      <!-- Disk band -->
+      <rect x="50" y="268" width="890" height="192" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 3"/>
+      <text x="70" y="290" font-size="10.5" font-weight="700" letter-spacing="1.5" fill="var(--accent)">DISK — THE AUTHORITATIVE CHANNEL</text>
+      <!-- File cards -->
+      <g font-size="10.5">
+        <rect x="70" y="300" width="158" height="100" rx="5" fill="var(--card)" stroke="currentColor"/>
+        <text x="149" y="322" text-anchor="middle" font-weight="700" fill="currentColor">task brief</text>
+        <text x="149" y="342" text-anchor="middle" fill="var(--muted)">requirements + pointers</text>
+        <text x="149" y="358" text-anchor="middle" fill="var(--muted)">replaced between gens</text>
+        <rect x="246" y="300" width="158" height="100" rx="5" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="325" y="322" text-anchor="middle" font-weight="700" fill="var(--accent)">dispatch record · NEW</text>
+        <text x="325" y="342" text-anchor="middle" fill="var(--muted)">spec · status · agent_id</text>
+        <text x="325" y="358" text-anchor="middle" fill="var(--muted)">generation counter</text>
+        <rect x="422" y="300" width="158" height="100" rx="5" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="501" y="322" text-anchor="middle" font-weight="700" fill="var(--accent)">child lock · NEW</text>
+        <text x="501" y="342" text-anchor="middle" fill="var(--muted)">parent pointer · gen</text>
+        <text x="501" y="358" text-anchor="middle" fill="var(--muted)">valid while parent valid</text>
+        <rect x="598" y="300" width="158" height="100" rx="5" fill="var(--card)" stroke="currentColor"/>
+        <text x="677" y="322" text-anchor="middle" font-weight="700" fill="currentColor">task report</text>
+        <text x="677" y="342" text-anchor="middle" fill="var(--muted)">append-only · gen-labeled</text>
+        <text x="677" y="358" text-anchor="middle" fill="var(--muted)">checkpoints + rulings</text>
+        <rect x="774" y="300" width="158" height="100" rx="5" fill="var(--card)" stroke="currentColor"/>
+        <text x="853" y="322" text-anchor="middle" font-weight="700" fill="currentColor">transcript .jsonl</text>
+        <text x="853" y="342" text-anchor="middle" fill="var(--muted)">usage envelopes</text>
+        <text x="853" y="358" text-anchor="middle" fill="var(--muted)">mtime = liveness</text>
+      </g>
+      <!-- Vertical arrows -->
+      <line x1="149" y1="160" x2="149" y2="296" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="156" y="215" font-size="10" fill="var(--muted)">writes /</text>
+      <text x="156" y="229" font-size="10" fill="var(--muted)">replaces</text>
+      <line x1="325" y1="160" x2="325" y2="296" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrA)"/>
+      <text x="332" y="200" font-size="10" fill="var(--accent)">records spec,</text>
+      <text x="332" y="214" font-size="10" fill="var(--accent)">status, gen</text>
+      <polyline points="300,160 300,250 501,250 501,296" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrA)"/>
+      <text x="340" y="244" font-size="10" fill="var(--accent)">acquires · releases last (I4)</text>
+      <line x1="677" y1="160" x2="677" y2="296" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="684" y="209" font-size="10" fill="var(--muted)">CHECKPOINT —</text>
+      <text x="684" y="223" font-size="10" fill="var(--muted)">append; mtime is</text>
+      <text x="684" y="237" font-size="10" fill="var(--muted)">the heartbeat</text>
+      <line x1="853" y1="160" x2="853" y2="296" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <text x="860" y="215" font-size="10" fill="var(--muted)">runtime writes</text>
+      <text x="860" y="229" font-size="10" fill="var(--muted)">usage</text>
+      <!-- probe route -->
+      <polyline points="80,160 80,440 853,440 853,404" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrA)"/>
+      <text x="230" y="433" font-size="10" fill="var(--accent)">probe: measure child tokens from the transcript (R1) — escalation-only, throttled, at parent turn boundaries</text>
+    </g>
+  </svg>
+  <figcaption><b>Fig. 1 — The system model.</b> The parent and child exchange three in-band
+  messages (dispatch, an optional checkpoint nudge, a capped return), but every message has a
+  disk counterpart. Two artifacts are new relative to today's machinery (accent): the
+  <b>dispatch record</b> (faithful re-dispatch; fleet-safe parent rollover) and the
+  <b>child lock</b> (hierarchy + release-order enforcement). The parent's probe measures the
+  child's transcript file directly — no runtime reports per-child usage.</figcaption>
+</figure>
+
+<h3 id="model-roles"><span class="secno">2.1</span>Roles: the human's job maps onto the parent</h3>
+
+<p>The main-session design has a human at the top of every decision. Each human touchpoint
+maps onto the parent, with one policy change: <b>children never ask the human</b>. Main-session
+policy is "WARN asks, STOP goes"; child policy is <b>"WARN → parent decides, STOP → parent
+rolls the child over."</b> Escalation to a human happens only at the top level (L0).</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Main-session mechanism</th><th>Child-session analog</th></tr>
+  <tr><td>Hook pushes WARN/STOP for the human+agent to act on</td><td>Parent-side check pushes child status into the <em>parent's</em> context — it is the parent's decision loop that must see it</td></tr>
+  <tr><td>WARN asks the user; declined = write-ahead</td><td>WARN → parent decides: instruct the child to checkpoint now, or let it finish if near-done</td></tr>
+  <tr><td>STOP → roll over immediately, no ask</td><td>STOP → parent stops waiting: instruct the child to flush + return, then successor-dispatch</td></tr>
+  <tr><td>User pastes the bootstrap prompt / relaunch script runs</td><td>Parent composes the successor child's dispatch prompt from the child's disk handoff</td></tr>
+  <tr><td><code>attach-session.sh</code> re-attaches a human terminal</td><td>No analog needed — the parent "attaches" by resuming the agent id (continuation, not rollover)</td></tr>
+  <tr><td>Human notices a dead session and relaunches</td><td>Orphan sweep via the lock hierarchy + parent re-dispatch from dispatch records</td></tr>
+</table></div>
+
+<p><b>The signal path is the hard part.</b> All five runtimes have an in-band hook for main
+sessions, but for a <em>running child</em> only Claude Code fires child-scoped hooks
+(<code>SubagentStart</code>/<code>SubagentStop</code>, tool hooks with <code>agent_id</code>),
+and documented context injection lands at the start of the child's conversation — <em>not</em>
+verified as a mid-flight push. No surveyed runtime reports per-child usage to the parent.
+Consequence: the reliable, portable signal is the <b>dispatch-time rollover contract</b>
+written into every long-running child's prompt (report path, checkpoint discipline, a defined
+<code>ROLLOVER_NEEDED</code> status). Mid-flight hook injection, where it works, is an
+accelerator — never the load-bearing path.</p>
+
+<h3 id="model-verbs"><span class="secno">2.2</span>The rollover verb: successor dispatch, not resume</h3>
+
+<p>Claude Code can resume a subagent by <code>agentId</code>, and a resumed subagent
+<em>retains its full conversation history</em>. That makes resume the analog of
+<code>attach-session.sh</code> — a <b>continuation</b> verb for fix rounds on a child with
+headroom. It is not a rollover verb: it carries the entire context forward, including
+everything a deliberate handoff would prune.</p>
+
+<figure>
+  <svg viewBox="0 0 960 340" role="img" aria-label="Comparison: resume stacks history and pushed a real child to 141.8K tokens, near STOP; successor dispatch flushes to the report file and starts a fresh child near zero context.">
+    <defs>
+      <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+      </marker>
+      <marker id="arr2A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+      </marker>
+    </defs>
+    <g font-family="-apple-system, Segoe UI, system-ui, sans-serif">
+      <!-- panel frames -->
+      <rect x="30" y="20" width="430" height="300" rx="8" fill="none" stroke="var(--line)"/>
+      <rect x="500" y="20" width="430" height="300" rx="8" fill="none" stroke="var(--line)"/>
+      <text x="50" y="46" font-size="11" font-weight="700" letter-spacing="1.2" fill="var(--warn)">RESUME = CONTINUATION</text>
+      <text x="520" y="46" font-size="11" font-weight="700" letter-spacing="1.2" fill="var(--accent)">SUCCESSOR DISPATCH = ROLLOVER</text>
+
+      <!-- left: stacked history -->
+      <g font-size="11">
+        <rect x="70" y="240" width="220" height="40" rx="4" fill="var(--card)" stroke="currentColor"/>
+        <text x="180" y="264" text-anchor="middle" fill="currentColor">gen 1 — full task history</text>
+        <rect x="70" y="196" width="220" height="40" rx="4" fill="var(--card)" stroke="currentColor"/>
+        <text x="180" y="220" text-anchor="middle" fill="currentColor">+ resume: fix round 1</text>
+        <rect x="70" y="152" width="220" height="40" rx="4" fill="var(--card)" stroke="var(--warn)" stroke-width="1.5"/>
+        <text x="180" y="176" text-anchor="middle" fill="var(--warn)">+ resume: fix round 2</text>
+        <line x1="180" y1="146" x2="180" y2="100" stroke="var(--warn)" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <text x="180" y="88" text-anchor="middle" font-size="10.5" fill="var(--warn)">context grows every resume</text>
+      </g>
+      <!-- left gauge -->
+      <g font-size="9.5">
+        <rect x="386" y="70" width="34" height="230" fill="none" stroke="currentColor"/>
+        <rect x="386" y="96" width="34" height="204" fill="var(--warn-soft)"/>
+        <rect x="386" y="96" width="34" height="204" fill="none" stroke="var(--warn)"/>
+        <line x1="378" y1="84" x2="428" y2="84" stroke="var(--stop)" stroke-width="1.5"/>
+        <text x="374" y="88" text-anchor="end" fill="var(--stop)">STOP 150K</text>
+        <line x1="378" y1="128" x2="428" y2="128" stroke="var(--warn)" stroke-width="1.5"/>
+        <text x="374" y="132" text-anchor="end" fill="var(--warn)">WARN 120K</text>
+        <text x="403" y="64" text-anchor="middle" font-weight="700" fill="var(--warn)">141.8K measured</text>
+      </g>
+
+      <!-- right: successor flow -->
+      <g font-size="11">
+        <rect x="530" y="100" width="120" height="46" rx="5" fill="var(--card)" stroke="currentColor"/>
+        <text x="590" y="127" text-anchor="middle" fill="currentColor">gen N (spent)</text>
+        <line x1="590" y1="146" x2="590" y2="206" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <text x="597" y="180" font-size="10" fill="var(--muted)">flush: last checkpoint + open items</text>
+        <rect x="530" y="210" width="180" height="56" rx="5" fill="var(--card)" stroke="currentColor"/>
+        <text x="620" y="233" text-anchor="middle" fill="currentColor">report file</text>
+        <text x="620" y="251" text-anchor="middle" font-size="10" fill="var(--muted)">append-only, gen-labeled</text>
+        <rect x="660" y="100" width="130" height="46" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="725" y="121" text-anchor="middle" fill="var(--accent)" font-weight="700">gen N+1</text>
+        <text x="725" y="138" text-anchor="middle" font-size="10" fill="var(--accent)">starts at ~0 context</text>
+        <polyline points="710,230 725,230 725,150" fill="none" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#arr2A)"/>
+        <text x="733" y="188" font-size="10" fill="var(--accent)">reads brief +</text>
+        <text x="733" y="202" font-size="10" fill="var(--accent)">report first</text>
+      </g>
+      <!-- right gauge -->
+      <g font-size="9.5">
+        <rect x="856" y="70" width="34" height="230" fill="none" stroke="currentColor"/>
+        <rect x="856" y="264" width="34" height="36" fill="var(--accent-soft)"/>
+        <rect x="856" y="264" width="34" height="36" fill="none" stroke="var(--accent)"/>
+        <line x1="848" y1="84" x2="898" y2="84" stroke="var(--stop)" stroke-width="1.5"/>
+        <text x="844" y="88" text-anchor="end" fill="var(--stop)">150K</text>
+        <line x1="848" y1="128" x2="898" y2="128" stroke="var(--warn)" stroke-width="1.5"/>
+        <text x="844" y="132" text-anchor="end" fill="var(--warn)">120K</text>
+        <text x="873" y="258" text-anchor="middle" font-weight="700" fill="var(--accent)">≈ re-read cost</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption><b>Fig. 2 — The verb difference.</b> Resume retains full history: the 141.8K
+  child got there <em>because</em> it was resumed for fix rounds. Successor dispatch resets
+  context to the cost of re-reading the brief and report. Resume stays legitimate for
+  continuations on a child with headroom — and every resume is charged against that headroom
+  before choosing it over a successor.</figcaption>
+</figure>
+
+<p><b>Child rollover is therefore always a successor dispatch:</b> (1) the predecessor child
+flushes state to its report file — ideally on instruction at WARN, at worst whatever its last
+checkpoint captured; (2) the parent composes a fresh dispatch: the same brief + a "read the
+report file first — a prior agent attempted this; you own it now" preamble + the open items;
+(3) the fresh child starts at zero context and demand-loads from disk. This is exactly SDD's
+round-4 escalation — the superpowers SDD skill has been field-testing child rollover all
+along, minus the measurement trigger.</p>
+
+<h3 id="model-protocol"><span class="secno">2.3</span>Protocol: channels and messages</h3>
+
+<p>The governing constraint is <b>asymmetric reachability</b>: a parent can always
+<em>start</em> a child and always <em>receives its return</em>, but cannot reliably message a
+running child; a child can always <em>write disk</em> but never <em>interrupt</em> the
+parent.</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Channel</th><th>Direction</th><th>When usable</th><th>Standing</th></tr>
+  <tr><td>Dispatch prompt</td><td>P → C</td><td>child start</td><td>guaranteed, portable</td></tr>
+  <tr><td>Return message</td><td>C → P</td><td>child end</td><td>guaranteed, size-capped by contract</td></tr>
+  <tr><td>Resume message</td><td>P → C</td><td>after a child stops (claude: by <code>agent_id</code>)</td><td>runtime-dependent</td></tr>
+  <tr><td>Hook injection</td><td>P → C</td><td>child start (documented); mid-flight (unverified)</td><td>accelerator only, never load-bearing</td></tr>
+  <tr><td>Brief file</td><td>P → C</td><td>any time (child re-reads on instruction)</td><td>authoritative</td></tr>
+  <tr><td>Report file</td><td>C → P</td><td>any time</td><td>authoritative</td></tr>
+  <tr><td>Dispatch record + child lock</td><td>parent bookkeeping</td><td>any time</td><td>authoritative</td></tr>
+</table></div>
+
+<p><b>Parent → child vocabulary:</b></p>
+<ul>
+  <li><b><code>DISPATCH(brief, report, contract, gen)</code></b> — the opening message. The
+  contract clauses ride inside it: checkpoint at every work-unit boundary, return cap (≤15
+  lines, detail to the report file), the status vocabulary below, and "if asked to checkpoint,
+  flush and yield — don't push on."</li>
+  <li><b><code>CHECKPOINT_REQUEST</code></b> — the nudge (a resume message): "flush state to
+  your report file now, then return status + open items." Idempotent: a finished child just
+  repeats its final status. This is the <em>only</em> new runtime demand the protocol makes;
+  where resume doesn't exist the parent skips straight to the kill row of the failure matrix.</li>
+  <li><b><code>FINDINGS(list)</code></b> — the existing SDD fix-round continuation. Not a
+  rollover message, but it participates in the budget: every resume stacks history, so the
+  parent charges continuations against the child's remaining headroom.</li>
+</ul>
+
+<p><b>Child → parent vocabulary:</b></p>
+<ul>
+  <li><b><code>CHECKPOINT</code></b> — disk-only: append a progress block to the report file.
+  Deliberately doubles as the <b>heartbeat</b>: report-file mtime is the child's liveness
+  signal — no separate keepalive mechanism.</li>
+  <li><b><code>YIELD(status)</code></b> — the capped return. Status extends SDD's contract by
+  exactly one value:
+  <code>DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED</code>.
+  <code>ROLLOVER_NEEDED</code> means "context spent, task incomplete, report current as of my
+  last checkpoint." A child never emits it from self-assessment (it cannot measure itself) —
+  only in response to a <code>CHECKPOINT_REQUEST</code> or a WARN line its own runtime hook
+  pushed into it. Existing SDD flows are already protocol-conformant.</li>
+</ul>
+
+<p>Two parent actions need no message: <b>probe</b> (measure the child's transcript artifact —
+throttled, escalation-only, at the parent's own turn boundaries) and <b>kill</b> (no
+cooperative leg exists or the nudge was ignored: stop the task, mark the child lock abandoned
+with a ledger ruling, successor-dispatch from the last checkpoint).</p>
+
+<pre><code>Happy path:      P: DISPATCH(gen 1) → C: CHECKPOINT* → C: YIELD(DONE) → P: release child lock
+Measured roll:   P: probe ⇒ WARN → P: CHECKPOINT_REQUEST → C: flush, YIELD(ROLLOVER_NEEDED)
+                 → P: DISPATCH(gen 2: brief + "read report first" + open items) → … → YIELD(DONE)
+Hung child:      P: probe ⇒ STOP / heartbeat stale → P: CHECKPOINT_REQUEST (no yield)
+                 → P: kill + ledger ruling → P: DISPATCH(gen 2 from last checkpoint)
+Parent drain:    P at WARN: no new DISPATCHes → CHECKPOINT_REQUEST broadcast to live children
+                 → collect YIELDs → last child lock clears → parent's own rollover</code></pre>
+
+<p><b>Generation fencing.</b> The dispatch record carries a generation counter; gen N+1 is
+dispatched only after gen N's lock is cleared (clean yield or kill), and each report append is
+labeled with its generation. At most one live writer per report file, and the ledger stays
+readable as history ("gen 1 attempted X, gen 2 finished it").</p>
+
+<h3 id="model-files"><span class="secno">2.4</span>Files: what a child rollover needs on disk</h3>
+
+<p>Main-session rollover writes project-scoped files. Children need the same <em>shape</em> at
+task scope — and SDD already defines most of it:</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Role</th><th>Main session (project scope)</th><th>Child (task scope)</th></tr>
+  <tr><td>Forward launcher (replaced)</td><td><code>work/&lt;proj&gt;/next-session.md</code></td><td>Task <b>brief</b> — exists in SDD (<code>task-N-brief.md</code>); requirements + pointers, never history</td></tr>
+  <tr><td>Backward ledger (append-only)</td><td><code>work/&lt;proj&gt;/handoff.md</code></td><td>Task <b>report</b> — exists (<code>task-N-report.md</code>, fix reports appended)</td></tr>
+  <tr><td>Progress map</td><td>(the ledger)</td><td>SDD <code>progress.md</code> at plan scope — which children completed</td></tr>
+  <tr><td>Launch reproduction</td><td><code>.rollover-options</code></td><td><b>Dispatch record</b> <span class="tag new">new</span> — agent type, model, effort, brief/report paths, status, gen, <code>agent_id</code></td></tr>
+  <tr><td>Registry entry</td><td><code>.context-budget/sessions/&lt;id&gt;.json</code></td><td><b>Agent record</b> <span class="tag new">new</span> — extended schema: <code>{runtime, session_id, agent_id, parent_session_id, depth, project, artifact}</code></td></tr>
+</table></div>
+
+<p>The <b>dispatch record</b> is the genuinely new file, and it earns its place twice: it lets
+the parent re-dispatch a crashed or rolled child faithfully (the child analog of
+option-inheritance), and it makes <b>parent rollover fleet-safe</b> — a successor parent
+cannot adopt predecessor children (resume is keyed to the parent's session id), but it can
+reconstruct the orchestration from dispatch records + report files and re-dispatch unfinished
+subtrees fresh. Without dispatch records, a parent rollover silently loses the fleet.
+Placement: with the plan/task state that owns them (SDD workspace, or
+<code>work/&lt;proj&gt;/agents/</code> for ad-hoc orchestration) — not in
+<code>.context-budget/</code>, which stays a registry, not a store of prompts.</p>
+
+<h3 id="model-locks"><span class="secno">2.5</span>Locking: from a flat lock to a hierarchy</h3>
+
+<figure>
+  <svg viewBox="0 0 960 356" role="img" aria-label="Lock hierarchy: the parent holds the project lock; per-child lock files carry parent pointers; an L2 lock points at its L1 parent. A child lock is valid only while its parent's lock is valid.">
+    <defs>
+      <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+      </marker>
+    </defs>
+    <g font-family="-apple-system, Segoe UI, system-ui, sans-serif" font-size="11">
+      <text x="480" y="30" text-anchor="middle" font-size="10.5" fill="var(--muted)">release refuses while live child locks reference it — the release-order guard enforces the drain invariant (I4)</text>
+      <rect x="320" y="44" width="320" height="60" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.6"/>
+      <text x="480" y="68" text-anchor="middle" font-weight="700" fill="currentColor">.active-session — project lock</text>
+      <text x="480" y="88" text-anchor="middle" font-size="10" fill="var(--muted)">holder: the parent session · liveness: artifact mtime vs LOCK_STALE</text>
+
+      <rect x="110" y="178" width="200" height="56" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="210" y="200" text-anchor="middle" font-weight="700" fill="var(--accent)">.agent-locks/agent-A.json</text>
+      <text x="210" y="220" text-anchor="middle" font-size="10" fill="var(--muted)">parent pointer · gen 2</text>
+      <rect x="380" y="178" width="200" height="56" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="480" y="200" text-anchor="middle" font-weight="700" fill="var(--accent)">.agent-locks/agent-B.json</text>
+      <text x="480" y="220" text-anchor="middle" font-size="10" fill="var(--muted)">parent pointer · gen 1</text>
+      <rect x="650" y="178" width="200" height="56" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="750" y="200" text-anchor="middle" font-weight="700" fill="var(--accent)">.agent-locks/agent-C.json</text>
+      <text x="750" y="220" text-anchor="middle" font-size="10" fill="var(--muted)">parent pointer · gen 1</text>
+
+      <polyline points="210,178 210,140 400,140 400,108" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+      <line x1="480" y1="178" x2="480" y2="108" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+      <polyline points="750,178 750,140 560,140 560,108" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+      <text x="265" y="132" font-size="10" fill="var(--muted)">parent_session_id (validity pointer)</text>
+
+      <rect x="380" y="286" width="200" height="40" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-dasharray="4 3"/>
+      <text x="480" y="311" text-anchor="middle" font-size="10.5" fill="var(--accent)">L2 lock — parent: agent-B</text>
+      <line x1="480" y1="286" x2="480" y2="238" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+      <text x="60" y="348" font-size="10" fill="var(--muted)" font-style="italic">I2: child lock valid ⇒ parent lock valid — a stale parent invalidates the whole subtree in one tree walk.</text>
+    </g>
+  </svg>
+  <figcaption><b>Fig. 3 — Lock hierarchy.</b> The parent keeps the project lock; children
+  never touch it (a child that needs it is a design smell — two agents believing they own the
+  project). Per-child lock files carry parent pointers; child liveness is the child's artifact
+  mtime, same <code>LOCK_STALE</code>. Transitive validity makes orphan detection a single
+  tree walk with no new liveness mechanism.</figcaption>
+</figure>
+
+<p>Minimal extension of today's flat lock: <b>per-child lock files</b>
+(<code>work/&lt;proj&gt;/.agent-locks/&lt;agent_id&gt;.json</code>) rather than a
+<code>children[]</code> array — append/remove without rewriting shared state, the same
+reasoning as session-keyed registry files. The <b>release-order invariant</b> is the
+mechanical enforcement of "no parent rollover with live children":
+<code>context-budget.sh release</code> on the parent refuses (or loudly warns) while live
+child locks reference it — the lock system guarantees the rule rather than trusting skill
+prose.</p>
+
+<h3 id="model-states"><span class="secno">2.6</span>State machines</h3>
+
+<figure>
+  <svg viewBox="0 0 960 370" role="img" aria-label="Child lifecycle state machine: QUEUED to RUNNING via dispatch; RUNNING yields DONE to COMPLETE, or is nudged into WRAPPING and ROLLED, or waits, or is killed; ROLLED and KILLED feed a new generation back to QUEUED.">
+    <defs>
+      <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+      </marker>
+      <marker id="arr4A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+      </marker>
+    </defs>
+    <g font-family="-apple-system, Segoe UI, system-ui, sans-serif" font-size="11.5">
+      <!-- states row 1 -->
+      <rect x="40" y="60" width="110" height="36" rx="6" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="95" y="83" text-anchor="middle" font-weight="700" fill="currentColor">QUEUED</text>
+      <rect x="270" y="60" width="120" height="36" rx="6" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="330" y="83" text-anchor="middle" font-weight="700" fill="currentColor">RUNNING</text>
+      <rect x="790" y="60" width="130" height="36" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <rect x="794" y="64" width="122" height="28" rx="4" fill="none" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="855" y="83" text-anchor="middle" font-weight="700" fill="var(--accent)">COMPLETE</text>
+      <!-- row 2 -->
+      <rect x="270" y="180" width="120" height="36" rx="6" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="330" y="203" text-anchor="middle" font-weight="700" fill="currentColor">WAITING</text>
+      <rect x="480" y="180" width="120" height="36" rx="6" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="540" y="203" text-anchor="middle" font-weight="700" fill="currentColor">WRAPPING</text>
+      <rect x="660" y="180" width="110" height="36" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="715" y="203" text-anchor="middle" font-weight="700" fill="var(--accent)">ROLLED</text>
+      <!-- row 3 -->
+      <rect x="480" y="290" width="120" height="36" rx="6" fill="var(--stop-soft)" stroke="var(--stop)" stroke-width="1.4"/>
+      <text x="540" y="313" text-anchor="middle" font-weight="700" fill="var(--stop)">KILLED</text>
+
+      <!-- edges -->
+      <line x1="150" y1="78" x2="266" y2="78" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr4)"/>
+      <text x="208" y="68" text-anchor="middle" font-size="10" fill="currentColor" font-family="ui-monospace, Menlo, monospace">DISPATCH(gen N)</text>
+      <path d="M 300 60 C 300 28, 360 28, 360 60" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <text x="330" y="24" text-anchor="middle" font-size="10" fill="var(--muted)">CHECKPOINT (append to report = heartbeat)</text>
+      <line x1="390" y1="70" x2="786" y2="70" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr4)"/>
+      <text x="588" y="60" text-anchor="middle" font-size="10" fill="currentColor" font-family="ui-monospace, Menlo, monospace">YIELD(DONE | DONE_WITH_CONCERNS)</text>
+      <path d="M 786 92 C 700 122, 480 122, 396 94" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arr4)"/>
+      <text x="588" y="126" text-anchor="middle" font-size="10" fill="var(--muted)">FINDINGS — fix round (resume; counts against headroom)</text>
+      <!-- waiting -->
+      <line x1="305" y1="96" x2="305" y2="176" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <text x="298" y="145" text-anchor="end" font-size="10" fill="var(--muted)">YIELD(BLOCKED |</text>
+      <text x="298" y="158" text-anchor="end" font-size="10" fill="var(--muted)">NEEDS_CONTEXT)</text>
+      <line x1="358" y1="180" x2="358" y2="100" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <text x="366" y="150" font-size="10" fill="var(--muted)">input arrives</text>
+      <!-- wrapping -->
+      <polyline points="390,88 434,88 434,198 476,198" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <text x="442" y="168" font-size="10" fill="currentColor" font-family="ui-monospace, Menlo, monospace">CHECKPOINT_REQUEST</text>
+      <line x1="600" y1="198" x2="656" y2="198" stroke="var(--accent)" stroke-width="1.3" marker-end="url(#arr4A)"/>
+      <text x="630" y="234" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace">YIELD(ROLLOVER_NEEDED)</text>
+      <!-- killed -->
+      <polyline points="270,88 200,88 200,308 476,308" fill="none" stroke="var(--stop)" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <text x="212" y="300" font-size="10" fill="var(--stop)">heartbeat stale ∨ nudge ignored</text>
+      <!-- return rail -->
+      <polyline points="715,216 715,350 95,350 95,100" fill="none" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#arr4A)"/>
+      <line x1="540" y1="326" x2="540" y2="350" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="420" y="344" text-anchor="middle" font-size="10" fill="var(--accent)">successor dispatch — QUEUED(gen N+1); KILLED adds a ledger ruling first</text>
+    </g>
+  </svg>
+  <figcaption><b>Fig. 4 — Child lifecycle.</b> States live in the dispatch record; transitions
+  are the protocol events of §2.3. <code>RUNNING</code> self-loops on <code>CHECKPOINT</code>.
+  Terminal states: <code>COMPLETE</code>, and <code>KILLED</code>-with-no-successor (only by
+  explicit parent ruling). The accent rail is the rollover move: both <code>ROLLED</code> and
+  <code>KILLED</code> feed a fresh generation back through <code>QUEUED</code>.</figcaption>
+</figure>
+
+<figure>
+  <svg viewBox="0 0 960 230" role="img" aria-label="Parent budget modes: NORMAL to DRAINING at WARN with live children, to ROLLING when the last child lock clears, to RELEASED when the handoff is done; NORMAL goes straight to ROLLING when it has no children.">
+    <defs>
+      <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+      </marker>
+    </defs>
+    <g font-family="-apple-system, Segoe UI, system-ui, sans-serif" font-size="11.5">
+      <rect x="60" y="64" width="140" height="52" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="130" y="94" text-anchor="middle" font-weight="700" fill="currentColor">NORMAL</text>
+      <rect x="320" y="64" width="160" height="52" rx="7" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.5"/>
+      <text x="400" y="86" text-anchor="middle" font-weight="700" fill="var(--warn)">DRAINING</text>
+      <text x="400" y="104" text-anchor="middle" font-size="9" fill="var(--warn)">no new dispatches</text>
+      <rect x="620" y="64" width="140" height="52" rx="7" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="690" y="94" text-anchor="middle" font-weight="700" fill="var(--accent)">ROLLING</text>
+      <rect x="830" y="64" width="110" height="52" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="885" y="94" text-anchor="middle" font-weight="700" fill="currentColor">RELEASED</text>
+
+      <line x1="200" y1="90" x2="316" y2="90" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr5)"/>
+      <text x="258" y="56" text-anchor="middle" font-size="10" fill="currentColor">WARN ∧ children live</text>
+      <line x1="480" y1="90" x2="616" y2="90" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr5)"/>
+      <text x="548" y="56" text-anchor="middle" font-size="10" fill="currentColor">last child lock clears</text>
+      <line x1="760" y1="90" x2="826" y2="90" stroke="currentColor" stroke-width="1.3" marker-end="url(#arr5)"/>
+      <text x="793" y="56" text-anchor="middle" font-size="10" fill="currentColor">handoff done</text>
+      <path d="M 360 116 C 360 162, 440 162, 440 116" fill="none" stroke="var(--stop)" stroke-width="1.2" marker-end="url(#arr5)"/>
+      <text x="400" y="172" text-anchor="middle" font-size="10" fill="var(--stop)">parent STOP ∧ child unresponsive → kill child, stay DRAINING</text>
+      <polyline points="130,116 130,200 690,200 690,120" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr5)"/>
+      <text x="410" y="194" text-anchor="middle" font-size="10" fill="var(--muted)">WARN ∧ no children</text>
+    </g>
+  </svg>
+  <figcaption><b>Fig. 5 — Parent budget modes</b> (orthogonal to its work). In
+  <code>DRAINING</code>: no new dispatches, <code>CHECKPOINT_REQUEST</code> broadcast, probes
+  continue. A parent crash in any mode is handled by the fault model, not the state machine —
+  crashes don't transition, they stale.</figcaption>
+</figure>
+
+<h3 id="model-drain"><span class="secno">2.7</span>The no-rollover-with-live-children invariant, and drain mode</h3>
+
+<p>A parent must not roll over while it has live children. This is correctness, not
+prudence: successor parents cannot adopt predecessor children (resume is keyed to the parent's
+session id), so rolling with children in flight strands them — results return to a session
+that no longer processes them. And the parent's handoff cannot be complete while children are
+mutating state: "flush — make disk fully current" is unsatisfiable with writers still
+running.</p>
+
+<p><b>The mechanism — drain mode</b> (the <code>DRAINING</code> state above): at parent-WARN
+with children in flight, stop dispatching, let short children complete, nudge long ones with
+<code>CHECKPOINT_REQUEST</code>, and roll only when the last child lock clears. The successor
+resumes the fleet by re-dispatch from dispatch records, not adoption.</p>
+
+<p><b>The refinement — child-aware headroom.</b> Draining is not free: each returning child
+costs the parent tokens, and the parent must still afford its own rollover ceremony. The
+honest form is a dispatch guard, not a new threshold:</p>
+
+<div class="principle"><p>Don't dispatch a child if
+<code>current_tokens + (outstanding_children + 1) × expected_return_cost + rollover_reserve &gt; STOP</code>.</p>
+<p style="color: var(--muted); font-size: 0.9em;">Return costs are boundable because the
+dispatch contract caps them — SDD's "≤15 lines, detail in the report file" rule is precisely
+this cap. A measured starting value comes from the stats file before implementation.</p></div>
+
+<p><b>The escape hatch (resilience, not policy):</b> a hung child must not pin the parent past
+its own hard limit forever. At parent-STOP with a child ignoring the nudge, the parent kills
+the child's task, marks its lock abandoned with a ledger ruling, and proceeds. Losing one
+child's uncheckpointed tail beats losing the parent's entire orchestration to
+auto-compaction.</p>
+
+<h3 id="model-invariants"><span class="secno">2.8</span>Invariants</h3>
+
+<ul class="rlist">
+  <li><span class="rid">I1</span>At most one valid project-lock holder per work item. <em>(existing lock acquire/steal logic)</em></li>
+  <li><span class="rid">I2</span>Child lock valid ⇒ its parent's lock valid — transitive validity. <em>(lock validation walks the parent pointer)</em></li>
+  <li><span class="rid">I3</span>At most one live generation per task; report appends carry their generation. <em>(fencing: gen N+1 only after gen N's lock cleared)</em></li>
+  <li><span class="rid">I4</span>Parent in <code>ROLLING</code> ⇒ zero live child locks — the drain invariant. <em>(release-order guard in <code>release</code>; skill step ordering)</em></li>
+  <li><span class="rid">I5</span>Every child terminal state leaves a ledger/report entry — no silent discard, including <code>KILLED</code>. <em>(protocol rule + skill discipline)</em></li>
+  <li><span class="rid">I6</span>Report files are append-only within and across generations; briefs are replaced only between generations. <em>(write discipline)</em></li>
+  <li><span class="rid">I7</span>Liveness is inferred only from artifact mtime vs <code>LOCK_STALE</code>, never from any agent's assertion. <em>(all checks route through one age function)</em></li>
+  <li><span class="rid">I8</span>Anything <code>CHECKPOINT</code>ed survives any single failure thereafter. <em>(follows from I5–I7 + disk-authoritative channels; fault-injection confirms)</em></li>
+</ul>
+
+<h2 id="machinery"><span class="secno">3</span>Machinery already in place</h2>
+
+<p>The child design is an extension, not a green field. Nearly every mechanism it needs
+already exists for main sessions and was hardened by the just-completed
+vendor-hook-deployments plan:</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Piece</th><th>What it provides today</th><th>Role in the child design</th></tr>
+  <tr><td><code>context-budget.env</code></td><td>Thresholds in one place: WARN 120K, STOP 150K, <code>LOCK_STALE</code>, <code>CHECK_EVERY</code>, <code>ROLLOVER_RELAUNCH</code></td><td>Same thresholds apply to children; per-role overrides possible later (YAGNI now)</td></tr>
+  <tr><td><code>scripts/context-budget.sh</code></td><td><code>register / record / check / release</code>; exact token math from transcript artifacts; project lock with mtime liveness</td><td><code>check --transcript &lt;path&gt;</code> already measures <em>any</em> jsonl — child artifacts need no new math. Registry + lock schema are the extension point (R4/R5)</td></tr>
+  <tr><td>Vendor hooks (5 runtimes)</td><td>In-band WARN/STOP push into claude / codex / gemini / opencode / copilot sessions; escalation-only, throttled, fail-open</td><td>The parent-side probe reuses the same signaling rules; claude's child-scoped hooks are the accelerator tier</td></tr>
+  <tr><td><code>skills/session-rollover/SKILL.md</code></td><td>Reflect → flush → backward <code>handoff.md</code> + forward <code>next-session.md</code> → bootstrap prompt</td><td>The parent's own rollover; gains the drain step and the fleet inventory (§5.3)</td></tr>
+  <tr><td><code>scripts/launch-next-session.sh</code> + <code>.rollover-options</code></td><td>Successor relaunch with option inheritance</td><td>The child analog is the dispatch record (§2.4)</td></tr>
+  <tr><td><code>scripts/attach-session.sh</code></td><td>Re-attach a human terminal to the live session</td><td>The child analog is resume-by-<code>agent_id</code> — continuation, not rollover</td></tr>
+  <tr><td>Work-directory conventions</td><td>Launcher/ledger split: forward <code>next-session.md</code> (replaced) vs append-only <code>handoff.md</code></td><td>Recurs at task scope as brief/report — same shape, smaller radius</td></tr>
+  <tr><td>SDD (superpowers)</td><td>Per-task brief + report files, capped returns, round-4 "fresh implementer reads the report" escalation</td><td>Field-tested successor dispatch; the protocol adds only <code>ROLLOVER_NEEDED</code> and the measurement trigger</td></tr>
+  <tr><td>ADR-0003 / ADR-0004</td><td>Trigger policy ("WARN asks, STOP goes"), hybrid relaunch, multi-session registry model</td><td>Policy gains one row (R7); the registry model gains parent pointers and depth</td></tr>
+  <tr><td>Evidence files</td><td><code>subagent-rollover-stats.md</code>, <code>subagent-vendor-survey.md</code></td><td>Measured parameters (★) for the cost model; per-runtime capability ground truth</td></tr>
+</table></div>
+
+<h2 id="findings"><span class="secno">4</span>Research findings</h2>
+
+<h3 id="findings-transfer"><span class="secno">4.1</span>What transfers from main-session rollover</h3>
+
+<div class="tablewrap"><table>
+  <tr><th>Learning (main session)</th><th>Transfers?</th><th>Notes</th></tr>
+  <tr><td>Measure, don't guess (D1)</td><td><span class="tag ok">verbatim</span></td><td>Children equally cannot self-report; parent-side measurement of the child's artifact replaces the human-side status line</td></tr>
+  <tr><td>Token math on the transcript artifact</td><td><span class="tag ok">verbatim</span></td><td>Child artifacts are ordinary jsonl with usage envelopes; <code>check --transcript</code> already computes this</td></tr>
+  <tr><td>Thresholds in one place</td><td><span class="tag ok">yes</span></td><td>Same 120K/150K to start</td></tr>
+  <tr><td>Escalation-only, throttled, fail-open signaling</td><td><span class="tag ok">yes</span></td><td>Any child-watching mechanism must obey all three or it spams/blocks the parent</td></tr>
+  <tr><td>Launcher/ledger file split</td><td><span class="tag ok">shape</span></td><td>At <em>task</em> scope: the SDD brief/report pair is the existing instance</td></tr>
+  <tr><td>Artifact-mtime liveness (<code>LOCK_STALE</code>)</td><td><span class="tag ok">yes</span></td><td>Child liveness = age of the child's transcript file; same check, different path</td></tr>
+  <tr><td>Deliberate handoff beats auto-compaction</td><td><span class="tag ok">yes</span></td><td>Claude subagents auto-compact; that's the fallback being pre-empted, not the mechanism to rely on</td></tr>
+  <tr><td>Relaunch knobs / <code>.rollover-options</code></td><td><span class="tag warn">transformed</span></td><td>Children have no CLI launch flags; the analog is the dispatch record</td></tr>
+</table></div>
+
+<h3 id="findings-vendor"><span class="secno">4.2</span>Vendor survey: capability asymmetry</h3>
+
+<p>From <code>subagent-vendor-survey.md</code> (versions: codex 0.142.4, gemini 0.46.0,
+opencode 1.18.14, copilot 1.0.78). Every surveyed runtime has <em>some</em> subagent notion,
+but only Claude Code (and plausibly Copilot) exposes child identity + transcript
+artifacts:</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Capability</th><th>claude</th><th>codex</th><th>gemini</th><th>opencode</th><th>copilot</th></tr>
+  <tr><td>Subagent concept</td><td>✅ Task/Agent tool</td><td>docs-only</td><td>docs-only (v0.38.1+)</td><td>✅ <code>task</code> tool</td><td>✅ <code>/fleet</code>, <code>--agent</code></td></tr>
+  <tr><td>Child identity visible</td><td>✅ <code>agent_id</code> + files</td><td>✗ none found</td><td>✗ none found</td><td>partial (session nav)</td><td>✅ task IDs</td></tr>
+  <tr><td>Child transcript on disk</td><td>✅ <code>subagents/agent-*.jsonl</code></td><td>✗</td><td>✗</td><td>undetermined</td><td>undetermined</td></tr>
+  <tr><td>Child resumable</td><td>✅ by agent id</td><td>✗</td><td>✗</td><td>undetermined</td><td>inferred</td></tr>
+  <tr><td>Per-child usage reported</td><td>✗ (measure files)</td><td>✗</td><td>✗</td><td>✗ (session-level)</td><td>✗ (session-level)</td></tr>
+  <tr><td>Nesting</td><td>✅ 3 levels default</td><td>conflicting docs</td><td>undetermined</td><td><b>forbidden</b> (documented)</td><td>undetermined</td></tr>
+  <tr><td>Child lifecycle hooks</td><td>✅ SubagentStart/Stop</td><td>✗</td><td>✗</td><td>✗</td><td>suggestive, unconfirmed</td></tr>
+</table></div>
+
+<p>Two caveats worth pinning: codex/gemini subagents are <em>runtime</em> features invisible
+to <code>--help</code> (the verify-against-live-help rule applies doubly — there may be
+nothing to verify against); and opencode's documented nesting prohibition means depth-related
+requirements (R8) are claude-specific until proven otherwise elsewhere.</p>
+
+<h3 id="findings-depth"><span class="secno">4.3</span>Depth: second-level children and resilience</h3>
+
+<p>With Claude's default depth of 3, an L1 child can itself parent L2 children. The design
+stays sane only with <b>subsidiarity</b>: each session manages its <em>direct</em> children
+and nothing deeper. An L1 that parents L2 children applies R1–R7 itself — its own dispatch
+records, its own drain-before-return; "return" at L1 <em>is</em> its rollover event, and the
+invariant recurses verbatim. The grandparent never reaches around to grandchildren; it sees
+only its L1 child's lock, whose validity transitively vouches for (or invalidates) the L2
+subtree.</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Failure</th><th>Detection</th><th>Recovery</th></tr>
+  <tr><td>Child crashes/hangs</td><td>Child artifact mtime stales past <code>LOCK_STALE</code>; parent sees it at its next boundary check</td><td>Parent re-dispatches from dispatch record + report file; whatever the last checkpoint captured survives</td></tr>
+  <tr><td>Parent crashes with live children</td><td>Parent artifact stales → parent lock invalid → subtree transitively orphaned</td><td>Children finish or stall harmlessly (writes are task-scoped files); next session sweeps stale locks, reads dispatch records, re-dispatches unfinished work</td></tr>
+  <tr><td>L1 rolls over correctly</td><td>— (drain ran; L2 subtree empty by invariant)</td><td>Successor L1 rebuilds from records</td></tr>
+  <tr><td>Whole tree torn down (machine dies)</td><td>All locks stale on next register</td><td>Standard main-session recovery — ledger + report files + git are the record</td></tr>
+</table></div>
+
+<h2 id="proposal"><span class="secno">5</span>The proposal</h2>
+
+<h3 id="proposal-reqs"><span class="secno">5.1</span>The delta: requirements beyond main-session rollover</h3>
+
+<ul class="rlist">
+  <li><span class="rid">R1</span><b>Parent-side measurement of child artifacts.</b> No runtime
+  reports per-child usage; the parent (or its hook, on the parent's turn boundaries) measures
+  child transcript files directly. Claude-shaped:
+  <code>context-budget.sh check --transcript &lt;project-dir&gt;/&lt;parent-uuid&gt;/subagents/agent-&lt;hash&gt;.jsonl</code>,
+  discovered via the <code>.meta.json</code> siblings. Escalation-only + throttled, or a busy
+  parent gets spammed by N children's WARN lines.</li>
+  <li><span class="rid">R2</span><b>Dispatch-time rollover contract</b> in every long-running
+  child prompt: report path, checkpoint-at-boundaries discipline, capped return size, defined
+  <code>ROLLOVER_NEEDED</code> status. The disk protocol is load-bearing; hook injection is an
+  accelerator where supported.</li>
+  <li><span class="rid">R3</span><b>Successor dispatch as the only rollover verb</b> — resume
+  is continuation only, and resumes count <em>against</em> headroom (the 141.8K child was a
+  resumed one).</li>
+  <li><span class="rid">R4</span><b>Dispatch records</b> persisted by the parent per child
+  (spec + status + agent id), enabling faithful re-dispatch and making parent rollover
+  fleet-safe.</li>
+  <li><span class="rid">R5</span><b>Lock hierarchy:</b> per-child locks with parent pointers,
+  transitive validity, release-order enforcement (parent release refuses with live
+  children).</li>
+  <li><span class="rid">R6</span><b>Drain mode + child-aware headroom</b> (§2.7), with the
+  kill-and-ledger escape hatch for hung children.</li>
+  <li><span class="rid">R7</span><b>Policy relabeling:</b> "WARN asks, STOP goes" becomes, at
+  child level, "WARN → parent decides, STOP → parent rolls the child." Humans are only
+  consulted at L0. ADR-0003's trigger-policy table gains one row; the hybrid principle — ask
+  only where a decision-maker exists in-loop — is unchanged, which is why this is a mapping,
+  not a redesign.</li>
+  <li><span class="rid">R8</span><b>Recursive application with subsidiarity</b> (§4.3): each
+  level manages only its direct children; R1–R7 apply at every parenting level.</li>
+</ul>
+
+<h3 id="proposal-layers"><span class="secno">5.2</span>Vendor-agnostic layering</h3>
+
+<p>Same split as ADR-0003/0004: the <em>contract</em> is runtime-neutral; runtime specifics
+live in <code>scripts/</code> adapters + vendor config. Three tiers that survive the §4.2
+asymmetry:</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Tier</th><th>Contents</th><th>Where it works</th></tr>
+  <tr><td><b>Portable core</b></td><td>R2's dispatch contract, brief/report protocol, dispatch records, the drain invariant, and <em>task sizing as prevention</em> (median child ~67K; the tail is what measurement catches)</td><td>Everywhere — no child handles needed. Where children are opaque (codex/gemini), this discipline <b>is</b> the whole mechanism; it degrades exactly to "SDD done carefully"</td></tr>
+  <tr><td><b>Measured tier</b></td><td>Child artifact discovery + <code>check --transcript</code> + per-child locks</td><td>Adapter per runtime, only where artifacts exist. Claude first (all handles confirmed); copilot next candidate (task IDs live-confirmed, artifact location undetermined)</td></tr>
+  <tr><td><b>Accelerator tier</b></td><td>In-flight WARN injection into running children via native hooks</td><td>Claude-only today, unverified for mid-flight delivery — enhancement, never dependency</td></tr>
+</table></div>
+
+<h3 id="proposal-inventory"><span class="secno">5.3</span>The rollover inventory: what a parenting session must account for</h3>
+
+<p>A session with no children rolls over by flushing its own state. A parenting session holds
+much more. The completeness test:</p>
+
+<div class="principle"><p>Every inventory item is either <b>drained</b> to completion,
+<b>persisted</b> in its authoritative disk home, or <b>explicitly ruled lost</b> in the
+ledger. The handoff is complete exactly when nothing on the board is implicit.</p></div>
+
+<div class="tablewrap"><table>
+  <tr><th>#</th><th>Element</th><th>Why it matters at rollover</th><th>Authoritative home</th><th>If unaccounted</th></tr>
+  <tr><td>1</td><td><b>Outstanding (live) children</b></td><td>The drain set; successors can't adopt them</td><td>Child locks + registry agent records</td><td>Stranded children; results returned to a dead session</td></tr>
+  <tr><td>2</td><td>Dispatch queue + dependency edges</td><td>Tasks planned but not dispatched; which wait on in-flight results</td><td>Plan file / SDD <code>progress.md</code></td><td>Successor re-derives the plan wrong or re-runs finished work</td></tr>
+  <tr><td>3</td><td>Arrived-but-unprocessed returns</td><td>A <code>YIELD</code> received in-context but not acted on is conversation-only state</td><td>Child report files (returns are pointers by contract)</td><td>The one rollover-fatal case: a return that <em>only</em> lived in the return message — the size cap exists to prevent exactly this</td></tr>
+  <tr><td>4</td><td>Open review/fix loops</td><td>Round count, open findings, loop ownership</td><td>Ledger fix-round lines + report files</td><td>Successor restarts review from zero or merges unreviewed work</td></tr>
+  <tr><td>5</td><td>Resumable agent handles</td><td>Expiring assets — keyed to the parent's session id, worthless to a successor</td><td>Dispatch records (marked non-portable)</td><td>Successor wastes turns attempting resumes that can't work</td></tr>
+  <tr><td>6</td><td>The lock set</td><td>Project lock + child locks + generations; release order is the enforcement</td><td><code>.active-session</code> + child lock files</td><td>Orphan subtrees undetectable; two sessions believe they own the project</td></tr>
+  <tr><td>7</td><td>Dispatch records + gen counters</td><td>The fleet's reconstruction map and write-fencing state</td><td>With the owning plan/task state</td><td>Fleet silently lost; or two generations write one report</td></tr>
+  <tr><td>8</td><td>Shared workspace mutations</td><td>Uncommitted files, per-child worktrees, branch state</td><td><code>git status</code> per repo; worktree list in the snapshot</td><td>Successor commits over (or nukes) a child's half-finished tree</td></tr>
+  <tr><td>9</td><td>Background processes &amp; monitors</td><td>Watchers, servers, workflow runs started for children</td><td>State snapshot in <code>next-session.md</code></td><td>Zombie processes; successor double-starts them</td></tr>
+  <tr><td>10</td><td>Session-scoped scratch artifacts</td><td>Scratchpad dirs die with the session — child output there is on a timer</td><td>Promote to <code>work/&lt;proj&gt;/</code> before rollover</td><td>Research/intermediate outputs silently evaporate</td></tr>
+  <tr><td>11</td><td>Per-child equipment config</td><td>Model, effort, agent type, tool restrictions, MCP fragments</td><td>Dispatch records; parent's flags in <code>.rollover-options</code></td><td>Successor re-dispatches children under-equipped or over-privileged</td></tr>
+  <tr><td>12</td><td>Promises made to children</td><td>Contract clauses like "you will be resumed with findings" — a successor cannot honor them by resume</td><td>Dispatch records note the obligation; successor honors by fresh dispatch + report pointer</td><td>A child's parked expectations rot; loops never close</td></tr>
+  <tr><td>13</td><td>Human-pending items</td><td>A <code>BLOCKED</code> child waiting on a user decision must survive as a question, not a stalled process</td><td>Handoff ledger + <code>next-session.md</code> open items</td><td>The question dies with the parent; work stays blocked invisibly</td></tr>
+  <tr><td>14</td><td>Budget/registry state</td><td>The parent's record trail and each child's artifact path (the successor's probe targets)</td><td><code>.context-budget/</code> registry + ledger</td><td>Successor can't measure inherited children it re-dispatches</td></tr>
+</table></div>
+
+<p>Rows 1–7 are new with parenting; rows 8–14 exist for plain sessions too but gain a
+multiplier — N children each carry their own slice. The main-session skill's flush step
+("verify sub-agent-claimed outputs actually exist on disk") was row 3 in embryo; a
+parenting-aware rollover skill walks all fourteen.</p>
+
+<h2 id="evaluation"><span class="secno">6</span>Evaluation model</h2>
+
+<p>The design reduces to a checkable model — everything phrased so it can become a test or a
+measurement in the workspace's existing harness style (mktemp fixtures, <code>touch -t</code>
+mtimes, stub CLIs). State machines: §2.6. Invariants: §2.8.</p>
+
+<h3><span class="secno">6.1</span>Functional evaluation — scenario suite</h3>
+
+<div class="tablewrap"><table>
+  <tr><th>ID</th><th>Scenario</th><th>Pass criteria</th></tr>
+  <tr><td>S1</td><td>Happy path: dispatch → checkpoints → DONE</td><td>COMPLETE; lock released; report has ≥1 checkpoint + final block</td></tr>
+  <tr><td>S2</td><td>Measured child roll: probe WARN → nudge → ROLLOVER_NEEDED → gen 2 → DONE</td><td>Gen 2 resumes from report, no re-done work; I3, I6 hold</td></tr>
+  <tr><td>S3</td><td>Hung child: heartbeat stales, nudge ignored → kill → gen 2</td><td>KILLED has ledger ruling (I5); gen 2 starts from last checkpoint; loss limited to post-checkpoint tail</td></tr>
+  <tr><td>S4</td><td>Parent drain: WARN with 3 live children → broadcast → drain → parent rolls</td><td>No new dispatches after WARN; parent ROLLING only at 0 child locks (I4); successor re-dispatches queue from records</td></tr>
+  <tr><td>S5</td><td>Parent crash mid-fleet</td><td>All child locks invalid via I2 within <code>LOCK_STALE</code>; sweeper + records reconstruct; no adoption attempted</td></tr>
+  <tr><td>S6</td><td>Child crash mid-write</td><td>Half-written report tail tolerated (last full checkpoint wins); gen 2 dispatched; I8 holds</td></tr>
+  <tr><td>S7</td><td>BLOCKED child with human-pending question, then parent rolls</td><td>Question survives into handoff/<code>next-session.md</code> (inventory row 13); successor re-raises it</td></tr>
+  <tr><td>S8</td><td>Two-level: L1 with live L2 children told to drain</td><td>L1 refuses to yield until its own drain completes (I4 recursively); grandparent never touches L2</td></tr>
+  <tr><td>S9</td><td>Dependency queue: task B depends on in-flight A when parent rolls</td><td>Successor dispatches B only after A's gen completes; edge came from disk (row 2)</td></tr>
+  <tr><td>S10</td><td>Opaque runtime (no child handles): same plan</td><td>Degrades to contract discipline: capped returns + report files still yield S1/S2-equivalent outcomes minus the measurement trigger</td></tr>
+</table></div>
+
+<h3><span class="secno">6.2</span>Resilience — fault model and required properties</h3>
+
+<p>Faults in scope: crash of any node (parent or child, any depth) at any point;
+loss/truncation of any in-band message; stale or slow children; concurrent unrelated sessions
+on the same workspace. Out of scope: disk loss (git + push is the existing answer), clock
+skew beyond mtime granularity (same exposure as the shipped lock system).</p>
+
+<ul class="rlist">
+  <li><span class="rid">P1</span><b>No lost committed state:</b> anything that reached a
+  <code>CHECKPOINT</code> survives every in-scope fault (I8). <em>Inject:
+  <code>kill -9</code> the child between and during report appends.</em></li>
+  <li><span class="rid">P2</span><b>No orphan writers:</b> post-fault, at most one generation
+  can append to any report (I3). <em>Inject: crash the parent after dispatching gen 2,
+  restart, attempt gen 3.</em></li>
+  <li><span class="rid">P3</span><b>Bounded detection:</b> any dead node is detectable within
+  <code>LOCK_STALE</code> by artifact age alone (I7). <em>Inject: manufacture stale mtimes
+  with <code>touch -t</code>, assert sweep verdicts.</em></li>
+  <li><span class="rid">P4</span><b>Idempotent recovery:</b> re-dispatch from records +
+  reports is safe to repeat — duplicate successors prevented by fencing; a successor
+  re-reading a complete report re-completes without redoing side effects (side effects live in
+  git-visible files, so "redo" is detectable). <em>Inject: run recovery twice.</em></li>
+  <li><span class="rid">P5</span><b>Graceful message loss:</b> drop any single in-band
+  message; the system reaches the same end state via disk, at worst one probe/nudge cycle
+  later. <em>Inject: stub runtime that swallows returns/nudges.</em></li>
+</ul>
+
+<h3><span class="secno">6.3</span>Performance — cost model</h3>
+
+<p>The costs that matter are parent-context tokens (the scarce resource this system protects)
+and wall-clock latency. Parameters marked ★ should be measured from existing registry/ledger
+data before implementation fixes them.</p>
+
+<div class="tablewrap"><table>
+  <tr><th>Cost</th><th>Model</th><th>Notes / current evidence</th></tr>
+  <tr><td>Parent overhead per child</td><td><code>dispatch_prompt + return_cap + probe_lines</code></td><td>Dispatch ~1–2K tokens; return capped (SDD's ≤15 lines ≈ ≤500 tokens ★); probes ≈ 0 in steady state (escalation-only)</td></tr>
+  <tr><td>Child rollover cost</td><td>child writes handoff (≈1 checkpoint) + successor re-reads brief + report</td><td>The startup read is the price of pruning; the alternative is auto-compaction's unbounded quality loss in the dumb zone</td></tr>
+  <tr><td>Resume vs successor</td><td>resume: +full history retained; successor: reset to re-read cost</td><td>The 141.8K resumed child is the measured argument ★; crossover computable from ★ values</td></tr>
+  <tr><td>Drain latency</td><td><code>max(remaining runtime of live children)</code>, bounded by nudge response time</td><td>The nudge converts unbounded to ~one child turn; the S3 kill path caps even that at parent-STOP</td></tr>
+  <tr><td>Max safe concurrent children</td><td><code>N ≤ (STOP − current − rollover_reserve) / return_cap</code></td><td>The §2.7 dispatch guard, solved for N; all parameters measurable ★</td></tr>
+  <tr><td>Probe cost at scale</td><td>O(children) file stats per parent boundary, throttled by <code>CHECK_EVERY</code></td><td>Filesystem-only; zero tokens unless escalating — same profile as the shipped hooks</td></tr>
+</table></div>
+
+<p>Questions these answer concretely: at what N children does orchestration overhead alone
+push a parent to WARN? Is a child roll cheaper than one fix-round resume at a given
+transcript size? Does drain latency fit inside the parent's WARN→STOP token runway at its
+observed burn rate ★?</p>
+
+<h2 id="next"><span class="secno">7</span>Suggested next steps (not started)</h2>
+
+<ol>
+  <li><b>Registry/lock schema extension</b> in <code>context-budget.sh</code>: agent records
+  with <code>parent_session_id</code>/<code>depth</code>, per-child locks, release-order guard
+  — the smallest testable slice (R4/R5).</li>
+  <li><b><code>check --transcript</code> sweep helper:</b> given a parent session, enumerate
+  <code>subagents/*.jsonl</code> + <code>.meta.json</code> and report per-child status (R1),
+  escalation-only. Claude adapter only.</li>
+  <li><b>SDD dispatch-contract hardening</b> (R2/R3): fold the rollover contract and the
+  "roll instead of resume when the child is fat" rule into the workspace's orchestration
+  guidance — cheap, portable, and it addresses the 141.8K pattern directly.</li>
+  <li><b>Wayfinder-style decision tickets</b> for the open questions: mid-flight hook
+  injection into running claude children (verify empirically); copilot child artifact
+  location; whether per-role thresholds earn their keep.</li>
+</ol>
+
+<h2 id="sources"><span class="secno">8</span>Sources</h2>
+
+<ul>
+  <li>Local measurements: <code>subagent-rollover-stats.md</code> (30 subagent + 20 main
+  transcripts under <code>~/.claude/projects/…ai-workspace-template*/</code>, method and jq
+  commands inline).</li>
+  <li>Vendor survey: <code>subagent-vendor-survey.md</code> (live <code>--help</code> on
+  installed CLIs + official docs, cited per claim).</li>
+  <li>Claude Code / Agent SDK docs: subagents (storage, resume, nesting depth), agent-loop
+  (auto-compaction, budget scope), hooks (SubagentStart/Stop, <code>agent_id</code> in tool
+  hooks, additionalContext injection) —
+  <a href="https://code.claude.com/docs/en/agent-sdk/subagents.md">subagents.md</a>,
+  <a href="https://code.claude.com/docs/en/agent-sdk/agent-loop.md">agent-loop.md</a>,
+  <a href="https://code.claude.com/docs/en/hooks.md">hooks.md</a>.</li>
+  <li>This workspace: <code>docs/context-budget.md</code>, <code>docs/adr/0003</code>,
+  <code>docs/adr/0004</code>, <code>skills/session-rollover/SKILL.md</code>,
+  <code>docs/work-directory-conventions.md</code>.</li>
+</ul>
+
+<div class="footer">
+  Rendition of <code>work/automatic-session-rollover/subagent-rollover-research.md</code>,
+  restructured for review: problem → model → existing machinery → findings → proposal →
+  evaluation. The markdown note remains the raw research record; the evidence companions
+  hold the verbatim measurements and survey.
+</div>
+
+</main>
+</div>
+</body>
+</html>
