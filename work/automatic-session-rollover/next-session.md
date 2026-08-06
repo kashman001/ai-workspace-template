@@ -6,8 +6,18 @@
 
 ## Mission
 
-Wayfinder work-through-the-map mode (`map.md`). Ticket 09 (copilot adapter
-design) resolved in session 25. **The map has exactly one ticket left:**
+**FIRST TASK (user-approved, session 26): implement the copilot-vscode
+sandbox discovery fix.** Spec: `work/context-decay/
+copilot-vscode-sandbox-discovery-fix.md` (derive the workspaceStorage hash
+from `VSCODE_TARGET_SESSION_LOG` by parameter expansion — the sandboxed
+VS Code terminal blocks readdir on `workspaceStorage/`; keep the existing
+glob scan as fallback). Verify per the spec's Verify section + run the
+existing `scripts/tests/` suite (last green: 326 asserts). Context:
+issue-01 update block (item 2: measure verified exact, tokens=38680 live).
+
+Then: wayfinder work-through-the-map mode (`map.md`). Ticket 09 (copilot
+adapter design) resolved in session 25, verified session 26. **The map has
+exactly one ticket left:**
 
 - **Ticket 08** (`issues/08-per-role-thresholds.md`) — per-role threshold
   config, grilling, **HITL only**: take it only if the user is live; never
@@ -26,7 +36,9 @@ matching fog patch.
 
 ## Read these, in order
 
-1. `handoff.md` top block — session-26 record.
+1. `handoff.md` top block — session-26 record (incl. post-wrap addendum).
+1a. `work/context-decay/copilot-vscode-sandbox-discovery-fix.md` — the
+    first task's spec (short, self-contained).
 2. `map.md` — destination, decisions so far, remaining fog.
 3. Ticket 08 only if the user is live (plus, for context, the threshold
    passages in `docs/context-budget.md` and the per-item override row in
