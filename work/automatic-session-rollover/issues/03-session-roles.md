@@ -1,7 +1,8 @@
 # 03 — Session roles per work item (primary / auxiliary / superseded)
 
-Status: core resolved 2026-08-06 (session 15) · raised 2026-08-06 (session 15,
-lock-lifecycle discussion with user)
+Status: resolved 2026-08-06 (core session 15; slice-1 items sessions 16–17;
+only the user-deprioritized listing/display items remain deferred) · raised
+2026-08-06 (session 15, lock-lifecycle discussion with user)
 
 ## The model (decided with the user, 2026-08-06)
 
@@ -45,19 +46,23 @@ releases the dying primary's lock pre-launch (M14) and the successor's
 - Docs: `context-budget.md` → "Session roles"; work-directory-conventions →
   "One primary session per work item".
 
-## Deferred (revisit with implementation slice 1 — parent/child registry)
+## Shipped with implementation slice 1 (sessions 16–17, 2026-08-06)
 
-- **`superseded_by` back-link** — the launcher can't know the successor's
-  session id at stamp time (the runtime generates it); a successor-side
-  back-stamp at `register` could complete the chain. Time-ordered records
-  per project suffice for now.
-- **`--takeover` flag** — explicit reclaim for a dead-holder-within-stale
-  window; rare once SessionEnd release exists (crash-only), and the env
-  override path is blocked by backlog L18 anyway.
+- **`superseded_by` back-link** — successor-side back-stamp at `register`:
+  on primary acquisition, the newest same-project `role=superseded` record
+  without a `superseded_by` gets `superseded_by=<runtime>-<sid>`. Test T13
+  (registry suite).
+- **`--takeover` flag** — explicit *recorded* steal at `register`; wins even
+  against a live holder (human authority); old holder's record stamped
+  `superseded` + `superseded_at` + `superseded_by`. Test T14.
+- **Convergence** — role set extended (not forked) with `child`:
+  parent-side artifact-keyed registration, `parent_session_id`/`depth`/
+  `agent_id`, per-child locks in `work/<p>/.agent-locks/`, transitive
+  parent-chain validation, I4 release-order guard with stale sweep. Tests
+  T7–T12; decision note in `decisions.md` (session 16).
+
+## Still deferred
+
 - **`sessions` listing subcommand** and **terminal-tab-title display via the
   five-runtime hook layer** — user deprioritized both (chose in-band +
   claude statusline).
-- **Convergence:** child sessions in the subagent-rollover design are
-  structured auxiliaries (`parent_session_id`/`depth`, per-child locks,
-  release-order guard R4/R5); the role field should extend, not fork, when
-  that slice lands.

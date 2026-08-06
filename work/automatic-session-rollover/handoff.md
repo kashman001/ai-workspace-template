@@ -7,6 +7,48 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 17: slice 1 COMPLETE — T13/T14 + follow-through + ADR-0005; WARN rollover at ~128K)
+
+**What shipped (committed and pushed to `origin/main`; work done in worktree
+`slice-1-t13-t14` — main checkout BEHIND until pulled):**
+
+- **T13 `superseded_by` back-stamp:** on primary acquisition, `register`
+  stamps `superseded_by=<runtime>-<sid>` onto the newest same-project
+  `role=superseded` record without one (`backstamp_superseded` in
+  `context-budget.sh`); already-stamped records never overwritten. Lineage
+  now walkable both directions from disk.
+- **T14 `register --takeover`:** explicit recorded steal — wins even against
+  a live holder (S33 human authority); loser's record stamped
+  `superseded`/`superseded_at`/`superseded_by`; loud stderr note. Without
+  the flag, live-holder refusal to auxiliary unchanged.
+- **Tests:** registry suite T13a–c + T14a–f → 54 asserts; all five suites
+  green (registry 54, attach 22, launcher 65, statusline 14, vendor 37).
+- **Follow-through, all done:** `context-budget.md` multi-session model
+  reworked (four roles incl. `child`, release-order guard, takeover,
+  back-stamp; status blockquote + attach role enum fixed); usage header of
+  `context-budget.sh` gained the three new flags; issues/03 closed (only
+  user-deprioritized listing/display items remain deferred); decisions.md
+  session-17 note appended; **promoted → ADR-0005**
+  (`docs/adr/0005-session-roles-and-child-registry.md`, indexed in README;
+  session-15/16 notes marked promoted); scenario catalog gained
+  "Implementation notes" (I2/I4 groundwork, S33, H-group seeds); backlog
+  changelog row added (no new card — resolved the launcher's "L22?" as
+  feature work, not a finding); plan file marked COMPLETE.
+
+**Learnings:** (parked, first strike each)
+- A `claude bg-spare` daemon (pid-alive) held the session-16 worktree lock;
+  EnterWorktree refused re-entry. Fresh worktree from main cost nothing
+  since everything was pushed.
+- `record` run from inside a worktree writes to the *worktree's own*
+  `.context-budget/` + ledger (script resolves WORKSPACE_ROOT from its own
+  path) — measurement still correct, but those ledger entries are throwaway;
+  the real lock/registry live in the main checkout where `register` ran.
+
+**Rollover:** WARN fired at ~126K during backlog edit, right after all
+suites green; finished follow-through, committed, pushed, rolled. Per the
+operational-knowledge rule, auto-relaunch NOT invoked from the worktree;
+user pulls main checkout, then launches.
+
 # Session Handoff — 2026-08-06 (session 16: statusline chaining fix + slice-1 cycles 1–3; STOP rollover at 152K)
 
 **What shipped (committed and pushed to `origin/main` through `4c6569e`; work
@@ -40,51 +82,3 @@ scenario-catalog notes — all enumerated in the plan file.
 rolled. Auto-relaunch NOT invoked from the worktree (operational-knowledge
 rule); user pulls main checkout, then launches.
 
-# Session Handoff — 2026-08-06 (session 15: issue-02 approval ladder + issue-03 session roles; STOP rollover at 177K)
-
-**What shipped (committed on `main`, pushed through `e7d9f10` — work done in
-worktree `issue-02-permission-mode-auto`, pushed to origin/main; the LOCAL
-main checkout is BEHIND until pulled):**
-
-- **`ad16eb0` — issue 02 resolved (approval ladder):** `ROLLOVER_OPT_APPROVAL`
-  is now `default < edits < auto < full`; `auto` re-pointed to the classifier
-  tier (claude `--permission-mode auto`, verified live `--help` 2.1.223,
-  ADR-0003), `edits` carries the old acceptEdits-tier mappings; non-classifier
-  runtimes fall back to `edits` + stderr note. User decisions: option-2
-  spelling (agent-agnostic capability ladder), nearest-level fallback, this
-  item switches `full`→`auto` (machine-local `.rollover-options` updated
-  live). Tests T14a–p; backlog **L19**; issue file + `decisions.md` updated.
-- **`e7d9f10` — issue 03 core (session roles, from lock-lifecycle discussion
-  with user):** roles **primary / auxiliary / superseded**, lock =
-  authoritative primary marker; `register` records + prints `role=`
-  (auxiliary association persisted); launcher stamps `superseded` at
-  pre-launch release; `attach-session.sh` prints `role=`; **SessionEnd hook**
-  releases the lock on plain exit (own-transcript identity);
-  `scripts/statusline-context-budget.sh` (new) shows
-  `PRIMARY · <project> · <pct>%`. Docs: `context-budget.md` "Session roles",
-  work-directory-conventions "One primary session". Tests: registry T6,
-  launcher T20, attach T7, statusline suite — 19+58+22+8+37 green. Backlog
-  **L20**; deferred items (superseded_by back-link, --takeover, sessions
-  listing, tab-title) in `issues/03-session-roles.md`; `decisions.md` note
-  (promote-candidate when slice 1 lands).
-- **Machine-local (not in git):** live `.claude/settings.json` gained the
-  SessionEnd hook + statusLine wiring; statusline live-verified
-  (`PRIMARY · automatic-session-rollover · 65%`). Live settings now reference
-  `scripts/statusline-context-budget.sh`, which exists in the main checkout
-  only after `git pull`.
-- **M14 fix verified live** at this session's bootstrap (session-14's parked
-  learning, closed): first auto-relaunch successor acquired the lock cleanly.
-- Doc review of `subagent-rollover-research.html` remained with the user all
-  session; untouched.
-
-**Learnings:** *(parked; promote on second strike)*
-- Worktree-isolated sessions push tracked work to origin/main while the MAIN
-  checkout stays behind and holds all runtime state (registry, locks, ledger,
-  live settings) — successor launches and live-settings references break
-  until the main checkout pulls. This rollover's launcher carries the pull as
-  a first action; if it bites again, route to operational-knowledge.md.
-
-**Rollover:** STOP fired at 177K on the `record` immediately after issue-03
-shipped; atomic step was complete. Auto-relaunch deliberately NOT invoked
-from the worktree (would seed a successor with divergent runtime state);
-user pulls main checkout, then launches.

@@ -1,6 +1,7 @@
 # Slice 1 — registry/lock schema extension (R4/R5)
 
-Status: in progress (session 16, worktree `slice-1-registry-schema`).
+Status: COMPLETE (sessions 16–17; T7–T14 green, follow-through done,
+promoted to ADR-0005).
 Scope: `scripts/context-budget.sh` + registry tests. Research §5/§6 + §14.1;
 issues/03 deferred items folded in where they touch the schema.
 

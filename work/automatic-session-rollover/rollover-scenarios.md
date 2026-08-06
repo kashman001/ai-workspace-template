@@ -159,3 +159,16 @@ Class column: **M** = mainline flow, **E** = edge/corner case,
   parameters before implementation freezes them.
 - Results (pass/fail/measured value, date) should be appended as a column or
   per-scenario notes *in this file* as the harness lands.
+
+## Implementation notes (landings against this catalog)
+
+- **2026-08-06 — slice 1 (sessions 16–17):** registry/lock schema groundwork
+  for I2/I4 landed in `scripts/context-budget.sh`. Per-child locks
+  (`work/<p>/.agent-locks/`) with transitive parent-chain validation and
+  bottom-up release refusal + stale sweep give I4 its enforcement point
+  (registry tests T10–T12); S33's "explicit recorded steal" now exists as
+  `register --takeover` (old holder's record stamped
+  `superseded`/`superseded_at`/`superseded_by`; test T14); the
+  successor-side `superseded_by` back-stamp (test T13) seeds the H-group
+  reconstruction/attribution scenarios — lineage is now walkable both ways
+  from disk alone.

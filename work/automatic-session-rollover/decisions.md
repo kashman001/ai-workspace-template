@@ -481,9 +481,9 @@ generates it); deferred to a successor-side back-stamp.
 `statusline-context-budget.sh` (new), `.claude/settings.json.example`
 (SessionEnd + statusLine), docs (context-budget.md "Session roles",
 work-directory-conventions.md), tests T6/T7/T20 + statusline suite.
-**Promote?:** candidate — extends ADR-0004's multi-session model; promote
-when implementation slice 1 (parent/child registry) lands and the role
-schema is final.
+**Promote?:** promoted 2026-08-06 → ADR-0005 (with the session-16/17 child
+registry + lineage notes; criterion met — slice 1 landed, role schema
+final).
 
 ## 2026-08-06 — Slice-1 child registry: artifact-keyed identity, role `child`, blocked-release I4 guard (session 16)
 
@@ -503,3 +503,27 @@ identity in the system); liveness checks inside `parent_chain_holds_lock`
 (stale sweep at release keeps one liveness rule, I7).
 **Blast radius:** `context-budget.sh`, registry tests T7–T12, `.gitignore`
 (`work/*/.agent-locks/`). See `plans/slice-1-registry-schema.md`.
+**Promote?:** promoted 2026-08-06 → ADR-0005 (with the session-15/17 notes).
+
+## 2026-08-06 — Rollover lineage completed successor-side; takeover is a recorded steal (session 17)
+
+**What:** (1) `superseded_by` is back-stamped by the *successor* at primary
+acquisition — newest same-project `role=superseded` record without one gets
+`superseded_by=<runtime>-<sid>`. (2) `register --takeover` steals the
+project lock even from a live holder, stamping the old holder's record
+`superseded` + `superseded_at` + `superseded_by` and announcing loudly.
+**Why:** the launcher cannot stamp the successor id — the runtime generates
+it after the stamp (issues/03 deferral rationale); scenario S33 puts human
+authority above liveness heuristics, but a steal that isn't recorded is
+indistinguishable from the M14 clobber class, so the takeover must leave an
+auditable trail on the loser's record.
+**Rejected:** launcher-side successor stamping (id unknowable at stamp
+time); takeover blocked by a live holder (defeats its S33 purpose — the
+non-takeover path already refuses); stamping every unclaimed superseded
+record instead of the newest (older lineage tails belong to earlier
+successors; one register = one predecessor claimed).
+**Blast radius:** `context-budget.sh` (backstamp_superseded, acquire_lock,
+`--takeover` flag), registry tests T13–T14, `docs/context-budget.md`,
+issues/03 closed. Tests: registry 54 asserts green.
+**Promote?:** promoted 2026-08-06 with the session-15/16 role notes →
+ADR-0005 (role model + parent/child registry, schema final).
