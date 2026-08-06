@@ -6,6 +6,51 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 23: slice (c) registry hygiene COMPLETE + wayfinder map charted; WARN rollover at ~132K)
+
+**What shipped (commits `0b71c46`, `f10941a`, `52b94ea` in worktree
+`session-23-registry-hygiene`, all pushed to `origin/main`):**
+
+- **Slice (c) — register-time sweep of stale primary records
+  (`0b71c46`):** `sweep_stale_primaries` in `context-budget.sh` runs at
+  primary acquisition (after `backstamp_superseded`): any other
+  same-project `role=primary` record whose artifact liveness is stale
+  (`LOCK_STALE` rule) is stamped with the takeover triple
+  (`superseded`/`superseded_at`/`superseded_by=<new primary>`); live
+  records, other projects, non-primary roles untouched; auxiliary/child
+  registrations never sweep. Registry suite T15 (8 asserts, 68 total);
+  all eight suites green (326 asserts). Plan:
+  `plans/registry-hygiene-sweep.md`; stamp-don't-delete rationale in
+  `decisions.md` session-23 note (not promoted). Docs paragraph in
+  `context-budget.md` roles section; backlog row. **Retires the parked
+  sessions-19/21 learning.**
+- **Slice (a) — wayfinder map charted (`f10941a`):** `map.md` +
+  tickets `issues/06-midflight-hook-injection.md` (task, AFK),
+  `07-copilot-child-artifact-location.md` (research, AFK),
+  `08-per-role-thresholds.md` (grilling, HITL). Accelerator-tier and
+  copilot-adapter design parked in the map's fog until 06/07 resolve.
+- **Ticket-07 gen 1 dispatched and rolled (`52b94ea`):** research
+  subagent launched via `dispatch-open` (first live use of the R4
+  machinery — open → contract emit → close worked end-to-end); child hit
+  its own WARN at ~123K before any copilot probe runs and yielded
+  `ROLLOVER_NEEDED` per contract; gen 1 closed with that status; report
+  checkpointed at `research/07-copilot-child-artifacts.md`
+  (self-contained: pre-run `~/.copilot` snapshot + method; gen 2 starts
+  at its open item 1). Ticket 07 back to `Status: open`.
+
+**Suggested skills (next session):** wayfinder (work-through-the-map
+mode); session-rollover at WARN/STOP.
+
+**Learnings:** (parked)
+- Worktree-isolated sessions: the sandbox refuses compound shell
+  commands (for-loops, multi-statement `&&`/`;` chains with redirects)
+  as "too complex to verify"; use separate plain commands. Bit both the
+  parent and the ticket-07 child this session (also documented in the
+  gen-1 report).
+
+**Rollover:** WARN at ~122K as charting finished; child's
+ROLLOVER_NEEDED yield folded in, committed, pushed, rolled.
+
 # Session Handoff — 2026-08-06 (session 22: R4 COMPLETE — dispatch records + generation fencing; WARN rollover at ~127K)
 
 **What shipped (committed `1713daa` in worktree
@@ -50,48 +95,3 @@ retirement)
 **Rollover:** WARN at ~125K right as R4 follow-through finished; committed,
 pushed, rolled. Session-19 block archived (two-block ledger rule).
 
-# Session Handoff — 2026-08-06 (session 21: ADR-0006 promoted + slice 3 COMPLETE — dispatch-contract (R2/R3); WARN rollover at ~129K)
-
-**What shipped (committed `d2ee5dd` + `6fc7cec` in worktree
-`session-21-adr-0006-slice-3`, both pushed to `origin/main`):**
-
-- **ADR-0006 promoted (`d2ee5dd`):** the session-19 note ("coordination
-  state keyed to repository identity, never a checkout") is now
-  `docs/adr/0006-repository-keyed-coordination-state.md`, amending
-  ADR-0004/0005's implicit one-checkout assumption; README index + backlog
-  row updated, note flipped to `done → ADR-0006`.
-- **Slice 3 — dispatch-contract hardening, R2/R3 (`6fc7cec`):** new
-  stateless, runtime-agnostic `context-budget.sh dispatch-contract
-  --report <path> [--brief <path>] [--gen <n>]` emits the R2 rollover
-  contract for a long-running child's dispatch prompt (checkpoint to report
-  at work-unit boundaries = heartbeat; 15-line return cap; five-status
-  vocabulary incl. `ROLLOVER_NEEDED` only-on-request, never
-  self-assessment; gen≥2 read-report-first clause; ASCII-only for the
-  `%q`/BSD-sed launch paths). R3 documented parent-side: successor dispatch
-  is the only rollover verb; sweep (`children`) before any resume, roll at
-  child WARN/STOP, no human ask (R7). Design + rejected alternatives:
-  `plans/slice-3-dispatch-contract.md` + session-21 `decisions.md` note
-  (not promoted — implementation within ADR-0005's model).
-- **Tests:** new suite `scripts/tests/test-dispatch-contract.sh` K1–K7
-  (24 asserts); all seven suites green — registry 60, attach 22, launcher
-  81, statusline 16, vendor 37, children 27, dispatch-contract 24 (267).
-- **Docs:** `docs/context-budget.md` new "Dispatching long-running
-  children" section + agent-quickstart line + children cross-ref;
-  CONTEXT.md Context Budget bullet (dispatch-time pointer); backlog rows
-  for both units.
-- **Live verification:** first live T13-via-launcher back-stamp — session
-  19's record was stamped `superseded_by` this session's id at register
-  (the launcher-mediated succession chain now closes end-to-end).
-
-**Suggested skills (next session):** tdd for the next slice; wayfinder if
-slice 4 (decision tickets) is picked; session-rollover at WARN/STOP.
-
-**Learnings:** (parked, carried from session 19 — did not bite this
-session)
-- Registry hygiene: stale `role=primary` records accumulate in
-  `.context-budget/sessions/` from sessions that never released; cosmetic —
-  lock is authoritative.
-
-**Rollover:** WARN at ~121.6K right after slice-3 suites green;
-follow-through finished, committed, rolled. Second worktree-invoked
-auto-relaunch.
