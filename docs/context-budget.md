@@ -54,9 +54,10 @@ is what keeps concurrent sessions from reading each other's counts.
   then run `skills/session-rollover/SKILL.md` — no ask. Never start a new work
   unit in WARN/STOP state.
 - **Dispatching a long-running subagent:** `scripts/context-budget.sh
-  dispatch-contract --report <path> [--brief <path>] [--gen <n>]` — emit the
-  rollover contract into the child's prompt (see "Dispatching long-running
-  children").
+  dispatch-open --project <p> --task <slug> --report <path>` — persist the
+  dispatch record and emit the rollover contract for the child's prompt in
+  one step; `dispatch-close --status <S>` at yield (see "Dispatching
+  long-running children").
 
 ## Why you can't ask the model (D1)
 
@@ -338,12 +339,12 @@ dies loudly):
 What to do when the sweep escalates is the next section's R3 rule: roll the
 child (fresh dispatch), don't resume it.
 
-## Dispatching long-running children (`dispatch-contract`, R2/R3)
+## Dispatching long-running children (`dispatch-contract` + dispatch records, R2–R4)
 
 A child can't measure itself (D1 applies twice over — it has no hook wiring
 and no envelope), and no runtime lets a parent reliably message a running
-child. So child rollover rests on two portable rules, workable in every
-runtime with no child handles at all (research §8/§10/§11):
+child. So child rollover rests on three portable rules, workable in every
+runtime with no child handles at all (research §5/§8/§10/§11):
 
 - **R2 — every long-running child is dispatched under a contract.**
   `dispatch-contract --report <path> [--brief <path>] [--gen <n>]` emits the
@@ -366,11 +367,34 @@ runtime with no child handles at all (research §8/§10/§11):
   contract then opens with "read the report file first; finish its open
   items"). Child WARN is the parent's decision, no human ask — humans are
   only consulted at the top level (R7).
+- **R4 — the parent persists a dispatch record per task; generations are
+  fenced.** `dispatch-open --project <p> --task <slug> --report <path>
+  [--brief <path>] [--agent-type <t>] [--model <m>] [--effort <e>]
+  [--agent-id <id>]` appends generation N+1 (status `open`) to
+  `work/<p>/.agent-dispatch/<slug>.json` and emits the R2 contract for that
+  generation in one step — never pass `--gen` here, it is computed from the
+  record. Fencing: `dispatch-open` refuses while the previous generation is
+  still open; close it first with `dispatch-close --project <p> --task
+  <slug> --status <S>` (`S` = the five yield statuses, or `KILLED` — the
+  parent's ruling on a hung/crashed child that never yielded; `--agent-id`
+  merges at close once known). At most one live writer per report file, and
+  the contract labels every appended block `[gen N]`, so the report reads as
+  history across generations. `dispatch-list --project <p>` prints one
+  `task= gen= status= report=` line per record and exits 1 while any
+  generation is open — the drain check a rolling parent runs before its own
+  rollover. Records are gitignored runtime state anchored to the workspace
+  root (ADR-0006), same class as `.agent-locks/`.
+
+The records are what make parent rollover fleet-safe: a successor parent
+cannot resume the predecessor's children (resume is keyed to the dead
+parent's session id), but it can `dispatch-list`, close orphaned open
+generations `KILLED`, and re-dispatch each unfinished task fresh from its
+recorded spec — `dispatch-open` hands gen N+1 the read-report-first clause
+automatically. Without records, a parent rollover silently loses the fleet.
 
 Task sizing is the cheapest prevention: scope child tasks so the expected
 peak stays under WARN (the measured median child is ~67K; the tail is what
-the sweep catches). Deferred to a later slice: parent-persisted dispatch
-records and generation fencing (R4), drain mode (R6).
+the sweep catches). Deferred to a later slice: drain mode (R6).
 
 ## Per-runtime adapters
 
