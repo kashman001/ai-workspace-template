@@ -650,3 +650,28 @@ asserts).
 **Promote?:** no — R4 completes research §5/§8 within ADR-0005/0006's model;
 revisit at drain mode (R6) when the protocol becomes contractual across
 parent rollover.
+
+## 2026-08-06 — Registry hygiene: stale primaries stamped at register, not deleted (session 23)
+
+**What:** primary acquisition in `context-budget.sh register` now sweeps
+other same-project `role=primary` records whose artifact liveness is stale
+(same `LOCK_STALE` rule as the lock), stamping them `role=superseded` +
+`superseded_at` + `superseded_by=<new primary>` — the takeover stamp shape.
+Live records and other projects' records are untouched; auxiliary/child
+registrations never sweep. Retires the parked sessions-19/21 learning.
+**Why:** sessions that die without release/rollover (or lose the lock to a
+stale reclaim — `acquire_lock` noted the reclaim but never stamped the old
+holder) left `role=primary` records lingering until the 7-day mtime GC;
+cosmetic (lock is authoritative) but misleading to humans and
+`attach-session.sh` readers.
+**Rejected:** deleting the swept files (loses succession provenance and
+diverges from how every other role transition is recorded — records still
+GC at 7 days); a new `role=stale` value (role schema was finalized in
+session 19: primary/auxiliary/child/superseded); sweeping at `release` time
+(the dying session may never release — register-time is the one moment a
+new primary is guaranteed to run).
+**Blast radius:** one function + one call site in
+`scripts/context-budget.sh`; registry suite T15 (8 asserts, 68 total);
+one paragraph in docs/context-budget.md. All eight suites green (326
+asserts).
+**Promote?:** no — hygiene within ADR-0004/0005's role model.

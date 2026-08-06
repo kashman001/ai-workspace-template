@@ -267,6 +267,11 @@ Every element must hold under N concurrent sessions:
     the newest same-project superseded record not yet claimed by a
     successor (the launcher can't — the runtime generates the successor's
     id after the stamp), making the lineage walkable in both directions.
+    Primary acquisition also sweeps registry leftovers: any other
+    same-project `role=primary` record whose artifact liveness is stale
+    (a session that died without release/rollover, or lost the lock to a
+    stale reclaim) is stamped with the same superseded triple; live records
+    are left alone — liveness beats bookkeeping.
 - **Release order is bottom-up (I4).** `release` first sweeps stale child
   locks (holder artifact older than the stale threshold — the same liveness
   rule as the project lock), then refuses (exit 3) while live child locks
