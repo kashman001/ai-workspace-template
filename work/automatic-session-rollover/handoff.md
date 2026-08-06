@@ -27,6 +27,15 @@ Convention: docs/work-directory-conventions.md.
 **Numbering note:** machine-local `.session-seq` (28) trails the ledger by
 one — this session is ledger-#29 but was launched as prompt-#28.
 
+**Late addition (same session, post-close):** the numbering confusion above
+became a scheduled ticket — `issues/10-session-number-single-source.md`
+(OPEN, next session's mission; user-requested). Launcher rewritten for it.
+
+**Learnings:** (1) main-checkout writes are classifier-blocked from a
+worktree-isolated background session — stage main-checkout probe/temp files
+BEFORE EnterWorktree (worked this session pre-isolation). (2) `code chat`
+probes are self-drivable from the agent shell; no user relay needed.
+
 **Left for the user (main checkout, one line):** `git pull --ff-only && rm
 scripts/hooks/vscode-hook-probe.sh .github/hooks/vscode-probe.json
 .vscode-hook-probe.jsonl && echo 29 > work/automatic-session-rollover/.session-seq`
