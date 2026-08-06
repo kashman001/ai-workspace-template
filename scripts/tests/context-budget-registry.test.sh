@@ -57,5 +57,14 @@ touch -t 202601010000 "$PROJ_DIR/aaa.jsonl"
 run_as bbb register --project testproj --quiet >/dev/null
 assert_eq "T3a: stale lock reclaimed by bbb" "$(jq -r .session_id "$LOCK")" "bbb"
 
+echo "T4: release removes own lock, never another session's"
+err=$(run_as aaa release --project testproj 2>&1 >/dev/null)   # bbb holds it
+assert_eq "T4a: foreign lock left in place" "$(jq -r .session_id "$LOCK")" "bbb"
+run_as bbb release --project testproj --quiet >/dev/null
+[ ! -f "$LOCK" ] && ok "T4b: own lock released" || bad "T4b: lock still present"
+run_as bbb register --project testproj --quiet >/dev/null      # project now in session file
+run_as bbb release --quiet >/dev/null                          # no --project: self-derived
+[ ! -f "$LOCK" ] && ok "T4c: release derives project from own session file" || bad "T4c"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

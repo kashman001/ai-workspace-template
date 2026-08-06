@@ -347,6 +347,23 @@ cmd_record() {
   return $rc
 }
 
+cmd_release() {
+  resolve_session
+  if [ -z "$PROJECT" ]; then
+    PROJECT=$(jq -r '.project // empty' "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" 2>/dev/null)
+    [ -n "$PROJECT" ] || die "release: no --project given and none recorded for this session"
+  fi
+  local lock="$WORKSPACE_ROOT/work/$PROJECT/.active-session" hrt hsid
+  [ -f "$lock" ] || { note "release: no lock at work/$PROJECT/.active-session"; return 0; }
+  hrt=$(jq -r '.runtime // empty' "$lock" 2>/dev/null)
+  hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
+  if [ "$hrt-$hsid" = "$RUNTIME-$SESSION_ID" ]; then
+    rm -f "$lock"; note "release: released work/$PROJECT/.active-session"
+  else
+    note "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID); left in place"
+  fi
+}
+
 cmd_watch() {
   resolve_session
   note "watching $RUNTIME session every ${INTERVAL}s; threshold=$THRESHOLD warn=$WARN"
@@ -371,4 +388,5 @@ case "$COMMAND" in
   register) cmd_register ;;
   record) cmd_record ;;
   watch) cmd_watch ;;
+  release) cmd_release ;;
 esac
