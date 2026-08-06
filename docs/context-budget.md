@@ -77,10 +77,10 @@ deliberate rollover never gets its chance.
 
 ## Rollover trigger policy (hybrid: WARN asks, STOP goes)
 
-> **Status:** design accepted 2026-08-05 (ADR-0003/ADR-0004); the
-> `session-rollover` skill carries the policy now, `launch-next-session.sh` and
-> the session-keyed registry are the implementation items. Until the script
-> lands, relaunch behaves as `ROLLOVER_RELAUNCH=off` regardless of the knob.
+> **Status:** implemented 2026-08-05 (ADR-0003/ADR-0004): the
+> `session-rollover` skill carries the policy, the session-keyed registry and
+> `scripts/launch-next-session.sh` implement it (tests:
+> `scripts/tests/test-launch-next-session.sh`).
 
 Who decides that a rollover happens, and when:
 
