@@ -6,79 +6,66 @@
 
 ## Mission
 
-The subagent-rollover design is under **active user review** of
-`subagent-rollover-research.html` — no new work unprompted. Session 15
-shipped issues 02 (approval ladder: `default<edits<auto<full`, `auto` =
-classifier tier) and 03-core (session roles primary/auxiliary/superseded,
-SessionEnd lock release, role statusline). Next: respond to review findings
-as the user raises them; when review settles, start implementation slice 1
-(registry/lock schema extension in `context-budget.sh` — agent records with
-`parent_session_id`/`depth`, per-child locks, release-order guard; R4/R5),
-M-class scenarios first, folding in issues/03's deferred items
-(superseded_by back-link, --takeover) where they touch the same schema.
+Finish implementation **slice 1** (registry/lock schema extension, R4/R5).
+Cycles 1–3 shipped in session 16 (`4c6569e`): child records
+(`parent_session_id`/`depth`/`agent_id`, role `child`), per-child locks in
+`work/<p>/.agent-locks/` with transitive parent-chain validation, and the
+I4 release-order guard (stale sweep + bottom-up refusal), tests T7–T12
+green. Remaining: T13 `superseded_by` back-stamp at successor register, T14
+`--takeover` (explicit recorded steal), then docs + tracker follow-through.
+The design doc `subagent-rollover-research.html` remains user-reviewed; no
+new design work unprompted.
 
 ## Read these, in order
 
-1. `handoff.md` top block — session-15 record.
-2. On demand only: `issues/03-session-roles.md` (roles model + deferred);
-   `rollover-scenarios.md`; research md by §-pointer; HTML only for the
-   section being edited.
-
-## First actions
-
-1. **Sync check:** confirm the local main checkout is at/past `e7d9f10`
-   (`git log --oneline -1`). If behind, `git pull --ff-only` first — session
-   15 worked in a worktree; live `.claude/settings.json` references
-   `scripts/statusline-context-budget.sh`, which only exists after the pull.
-2. `scripts/context-budget.sh register --project automatic-session-rollover`
-   — expect `role=primary` in the output (first live exercise of the role
-   field; the predecessor's lock should be gone via SessionEnd hook or manual
-   release — if `register` reports auxiliary against a dead holder, that's a
-   finding for issues/03's `--takeover` case).
-3. Report readiness and wait for the user (mid-review; no new work
-   unprompted). If they green-light slice 1: TDD per `scripts/tests/` harness
-   style (mktemp fixtures, `touch -t` mtimes).
+1. `plans/slice-1-registry-schema.md` — the slice plan: design decisions,
+   T13/T14 specs, follow-through checklist. THE working document.
+2. `handoff.md` top block — session-16 record.
+3. On demand only: `scripts/context-budget.sh` (register/acquire_lock/
+   cmd_release — the code under change); registry test suite T7–T12 for
+   harness idioms; `issues/03-session-roles.md` for the deferred-item
+   wording being folded in.
 
 ## Do NOT reload
 
-- `handoff-archive.md` and blocks before session 15 — superseded.
-- The full HTML file — mirror of md content; open only the section under edit.
-- Backlog cards **L17**/**L18** — separate follow-up threads.
-- Issues 02 (approval ladder) and 03-core (roles) — shipped, tested,
-  documented; re-derive nothing. Deferred 03 items live in the issue file.
-- The M14 fix — shipped and now verified live (session-15 bootstrap).
-- The gitignore/tracked-vs-untracked discussion — codified in
-  `docs/work-directory-conventions.md`.
+- Research md/HTML — slice-1-relevant parts (§5/§6, R4/R5) are already
+  distilled into the plan file.
+- `rollover-scenarios.md` — consulted; only the follow-through note-append
+  touches it.
+- Issues 01/02, sessions ≤15 handoff blocks, `handoff-archive.md` — settled.
+- The L21 statusline chaining fix — shipped (`3f97027`), tested, backlogged.
+- Role vocabulary debate — decided: `child` extends the role set
+  (decisions.md 2026-08-06 session 16).
 
 ## Constraints already decided (do not re-litigate)
 
-- Vendor-agnostic layering; child rollover verb = successor dispatch, never
-  resume; parent never rolls with live children (drain; I4).
-- Parent kinds = node *position* — `depth`/`parent_session_id` suffice
-  (decisions.md 2026-08-06).
-- Approval ladder `default<edits<auto<full`; `auto` = classifier where the
-  runtime has one, nearest-level fallback + note elsewhere (decisions.md
-  2026-08-06, backlog L19).
-- Session roles: one primary per work item, lock authoritative; auxiliary
-  never writes launcher/ledger; superseded is terminal (decisions.md
-  2026-08-06, backlog L20, issues/03).
-- Runtime state stays gitignored; commit only what a future session reads.
-- Implementation may begin when the user says so. Standing push-to-main
-  approval applies.
+- Child identity is artifact-derived, never env; children never contend for
+  the project lock; liveness lives in the release-time stale sweep only.
+- Ladder/roles/verb constraints from sessions ≤15 stand (see previous
+  launcher via git history if ever needed — do not reload wholesale).
+- Runtime state stays gitignored. Standing push-to-main approval applies.
 
-## State snapshot (at session-15 rollover, 2026-08-06)
+## State snapshot (at session-16 rollover, 2026-08-06)
 
-- origin/main at `e7d9f10`; worktree `issue-02-permission-mode-auto` fully
-  pushed; **local main checkout behind until pulled** (was `bc3fab3`).
-- Machine-local: live `.claude/settings.json` has SessionEnd + statusLine;
-  `work/automatic-session-rollover/.rollover-options` =
-  `ROLLOVER_OPT_APPROVAL=auto`; `context-budget.env` per-item sets
-  `ROLLOVER_RELAUNCH=auto` (not exercised this rollover — worktree
-  divergence; see handoff).
-- No background agents or servers.
+- `origin/main` at `4c6569e`; worktree `slice-1-registry-schema` fully
+  pushed; **user's main checkout behind until `git pull --ff-only`** (live
+  statusline fix inert until then).
+- All 5 test suites green (registry 45, launcher 65, attach 22,
+  statusline 14, vendor hooks 37).
+- No background agents. Session-16 worktree lock released at rollover;
+  main-checkout lock free.
+
+## First actions
+
+1. `scripts/context-budget.sh register --project automatic-session-rollover`
+   — expect `role=primary`, and (once T13 lands — not before) check the
+   predecessor back-stamp behavior live.
+2. Confirm checkout at/past `4c6569e` (`git log --oneline -1`); pull if not.
+3. TDD T13 then T14 per the plan file, registry-suite style; then the
+   follow-through checklist (docs, issues/03, backlog card L22?, scenario
+   notes, decisions promote-check).
 
 ## At session end
 
-The lock now releases mechanically: `launch-next-session.sh` at rollover, or
-the SessionEnd hook on plain exit. Manual fallback:
-`scripts/context-budget.sh release --project automatic-session-rollover`.
+Lock releases mechanically (launcher script or SessionEnd hook). Manual
+fallback: `scripts/context-budget.sh release --project automatic-session-rollover`.

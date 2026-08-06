@@ -7,6 +7,39 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 16: statusline chaining fix + slice-1 cycles 1–3; STOP rollover at 152K)
+
+**What shipped (committed and pushed to `origin/main` through `4c6569e`; work
+done in worktree `slice-1-registry-schema` — main checkout BEHIND until
+pulled):**
+
+- **`3f97027` — L21 statusline chaining fix (user report, mid-session):** the
+  L20 project-level statusLine had replaced the user's global `ccstatusline`
+  bar and printed `no work item` for unregistered sessions.
+  `statusline-context-budget.sh` now re-runs the global `statusLine.command`
+  from `~/.claude/settings.json` with the same stdin (output first, budget
+  segment appended only on a work item, recursion-guarded). Tests T7a–f
+  (statusline suite 14). Backlog L21 opened+resolved.
+- **`4c6569e` — slice 1 cycles 1–3 (R4/R5 partial):** `register
+  --parent-session/--agent-id` → artifact-keyed child records with
+  `parent_session_id`/`depth`; role extends to `child`; per-child locks in
+  `work/<p>/.agent-locks/` with transitive parent-chain validation;
+  `release` sweeps stale child locks and enforces bottom-up order (I4, die
+  exit 3). Tests T7–T12 (registry suite 45; all 5 suites green).
+  Design + remaining work: `plans/slice-1-registry-schema.md`.
+- Decisions routed to `decisions.md` (artifact-keyed child identity, role
+  `child`, lock filename, liveness placement). Worktree/main-checkout
+  runtime-state divergence promoted to `docs/operational-knowledge.md`
+  (second strike).
+
+**Not done (successor picks up):** T13 `superseded_by` back-stamp, T14
+`--takeover`, docs (`context-budget.md`), issues/03 + backlog card +
+scenario-catalog notes — all enumerated in the plan file.
+
+**Rollover:** STOP fired at 152K right after cycle-3 green; committed, pushed,
+rolled. Auto-relaunch NOT invoked from the worktree (operational-knowledge
+rule); user pulls main checkout, then launches.
+
 # Session Handoff — 2026-08-06 (session 15: issue-02 approval ladder + issue-03 session roles; STOP rollover at 177K)
 
 **What shipped (committed on `main`, pushed through `e7d9f10` — work done in
@@ -55,36 +88,3 @@ main checkout is BEHIND until pulled):**
 shipped; atomic step was complete. Auto-relaunch deliberately NOT invoked
 from the worktree (would seed a successor with divergent runtime state);
 user pulls main checkout, then launches.
-
-# Session Handoff — 2026-08-06 (session 14: M14 lock-release fix + runtime-state gitignore; WARN rollover at ~123K)
-
-**What shipped (committed on `main`, pushed through `bc3fab3`):**
-
-- **`c45969d` — M14 lock-release-before-launch fix** (fired live at this
-  session's own bootstrap: predecessor's `.active-session` lock survived the
-  auto-relaunch; successor's `register` refused, `LOCK_STALE=3h` gave no
-  reclaim). `launch-next-session.sh` now releases the dying session's own
-  lock — identity-matched via its registry record, foreign holders never
-  removed — before every launch path; `--dry-run` inert; `mode=off` included.
-  Skill + `docs/context-budget.md` reworded to release-before-launch (manual
-  `release` kept as no-script fallback). Tests T16–T19 (suite: 49 asserts).
-  Backlog **M14** opened+resolved; **L18** opened (env-file sourcing guard
-  keyed on `CONTEXT_DUMB_ZONE_TOKENS` clobbers other knob overrides).
-  Decision note (rejected: skill reordering only / successor retry /
-  successor-side steal) in `decisions.md`.
-- **`bc3fab3` — runtime-state gitignore** (user-requested architecture
-  review): untracked `work/*/.active-session` +
-  `work/context-decay/context-ledger.jsonl`, pre-ignored
-  `work/*/.rollover-options`. Rule codified — commit what a future session
-  must read; ignore live-session state — in `.gitignore` comments,
-  `docs/context-budget.md`, `docs/work-directory-conventions.md` ("Tracked
-  vs. untracked"). Working tree now genuinely clean between sessions.
-- User review of `subagent-rollover-research.html` continued in background;
-  one model question answered in-conversation (multiple parallel subagent
-  sessions under one main session — already covered: parent-only project
-  lock, per-child locks, R5, S13/S35/S36; no doc change needed).
-
-**Learnings:** *(parked; promote on second strike)*
-- This session's own bootstrap was the first live exercise of auto-relaunch
-  succession; the next successor's clean lock acquisition is the fix's first
-  real verification — check `register` output at bootstrap.

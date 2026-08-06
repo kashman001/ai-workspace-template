@@ -2,6 +2,39 @@
 ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
+# Session Handoff — 2026-08-06 (session 14: M14 lock-release fix + runtime-state gitignore; WARN rollover at ~123K)
+
+**What shipped (committed on `main`, pushed through `bc3fab3`):**
+
+- **`c45969d` — M14 lock-release-before-launch fix** (fired live at this
+  session's own bootstrap: predecessor's `.active-session` lock survived the
+  auto-relaunch; successor's `register` refused, `LOCK_STALE=3h` gave no
+  reclaim). `launch-next-session.sh` now releases the dying session's own
+  lock — identity-matched via its registry record, foreign holders never
+  removed — before every launch path; `--dry-run` inert; `mode=off` included.
+  Skill + `docs/context-budget.md` reworded to release-before-launch (manual
+  `release` kept as no-script fallback). Tests T16–T19 (suite: 49 asserts).
+  Backlog **M14** opened+resolved; **L18** opened (env-file sourcing guard
+  keyed on `CONTEXT_DUMB_ZONE_TOKENS` clobbers other knob overrides).
+  Decision note (rejected: skill reordering only / successor retry /
+  successor-side steal) in `decisions.md`.
+- **`bc3fab3` — runtime-state gitignore** (user-requested architecture
+  review): untracked `work/*/.active-session` +
+  `work/context-decay/context-ledger.jsonl`, pre-ignored
+  `work/*/.rollover-options`. Rule codified — commit what a future session
+  must read; ignore live-session state — in `.gitignore` comments,
+  `docs/context-budget.md`, `docs/work-directory-conventions.md` ("Tracked
+  vs. untracked"). Working tree now genuinely clean between sessions.
+- User review of `subagent-rollover-research.html` continued in background;
+  one model question answered in-conversation (multiple parallel subagent
+  sessions under one main session — already covered: parent-only project
+  lock, per-child locks, R5, S13/S35/S36; no doc change needed).
+
+**Learnings:** *(parked; promote on second strike)*
+- This session's own bootstrap was the first live exercise of auto-relaunch
+  succession; the next successor's clean lock acquisition is the fix's first
+  real verification — check `register` output at bootstrap.
+
 # Session Handoff — 2026-08-06 (session 13: scenario catalog + parent positions + learnings rules; WARN rollover at ~125K)
 
 **What shipped (committed on `main`, pushed):**

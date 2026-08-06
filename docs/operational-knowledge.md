@@ -127,3 +127,18 @@ unparseable URL"). To preview a local HTML file in a browser-automation
 session, serve it first: `python3 -m http.server <port> --bind 127.0.0.1`
 from the file's directory, then navigate to `http://127.0.0.1:<port>/…`.
 Kill the server when done (it's a background task otherwise).
+
+## Worktree-isolated sessions vs. the main checkout — runtime state diverges
+
+Background/worktree sessions push tracked work to `origin/main` while the
+MAIN checkout stays behind and holds all machine-local runtime state
+(`.context-budget/` registry, `work/*/.active-session` locks, ledger,
+`.session-seq`, live `.claude/settings.json` references). Two consequences,
+both hit twice (sessions 15 and 16):
+
+- Anything the user's live session executes (statusline script, hooks) only
+  updates after `git pull --ff-only` in the main checkout — ship, then have
+  the user pull.
+- Never auto-relaunch a rollover successor from inside a worktree: its
+  registry/locks are worktree-local and die with it. Launch the successor
+  from the main checkout after pulling.
