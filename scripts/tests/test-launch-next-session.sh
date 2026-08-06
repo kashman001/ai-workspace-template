@@ -31,7 +31,7 @@ run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
   -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
   -u ROLLOVER_RELAUNCH -u ROLLOVER_RUNTIME "$@"; }
 
-PROMPT='Read `work/testproj/next-session.md` and continue from **First actions**.'
+PROMPT='Work item testproj - rollover session #2. Read `work/testproj/next-session.md` and continue from **First actions**.'
 
 echo "T1: own registry record via CLAUDE_CODE_SESSION_ID resolves runtime=claude"
 mk_record claude sid-aaa testproj
@@ -89,7 +89,7 @@ assert_contains "T9b: names the file"  "$out" "next-session.md"
 echo "T10: ROLLOVER_RELAUNCH=auto + claude implies --bg"
 out=$(env ROLLOVER_RELAUNCH=auto "$LNS" testproj --runtime claude --dry-run 2>&1)
 assert_contains "T10a: bg=1"          "$out" "bg=1"
-assert_contains "T10b: --bg in argv"  "$out" "cmd: claude --bg"
+assert_contains "T10b: --bg in argv"  "$out" "--bg"
 
 echo "T11: --bg launch with stub claude; successor registers -> confirmed"
 rm -f "$SESS"/*.json; mk_record claude sid-old testproj
@@ -243,6 +243,22 @@ run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --dry-run >/dev/null 2>&1
 assert_eq "T20c: dry-run does not stamp" \
   "$(jq -r '.role // "none"' "$SESS/claude-sid-old.json")" "none"
 rm -f "$LOCKF"
+
+echo "T21: session sequence + claude display name (work item + number)"
+rm -f "$TMP/work/testproj/.session-seq" "$SESS"/*.json
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T21a: first successor is session #2" "$out" "rollover session #2"
+assert_contains "T21b: claude argv carries --name" "$out" "--name testproj"
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "T21c: dry-run does not persist seq" || bad "T21c: dry-run wrote seq file"
+printf '15\n' > "$TMP/work/testproj/.session-seq"
+out=$(run_lns ROLLOVER_RELAUNCH=off "$LNS" testproj --runtime claude 2>&1)
+assert_contains "T21d: seq continues from file" "$out" "rollover session #16"
+assert_eq "T21e: real run persists seq" "$(cat "$TMP/work/testproj/.session-seq")" "16"
+out=$(run_lns "$LNS" testproj --runtime codex --dry-run 2>&1)
+assert_contains "T21f: non-claude prompt still carries item+seq" "$out" "Work item testproj - rollover session #17"
+assert_not_contains "T21g: no --name on non-claude argv" "$out" "--name"
+rm -f "$TMP/work/testproj/.session-seq"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

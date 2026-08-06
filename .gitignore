@@ -26,6 +26,7 @@ references/*
 # committed per-item context-budget.env) stay tracked.
 work/*/.active-session
 work/*/.rollover-options
+work/*/.session-seq
 
 # Hook-appended measurement telemetry (same class as .gemini/telemetry.log).
 # Not regenerable — snapshot deliberately (dated copy) if mining it for
