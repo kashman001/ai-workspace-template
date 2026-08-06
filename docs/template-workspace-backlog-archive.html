@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ai-workspace-template — Backlog Archive</title>
+<style>
+  :root{
+    --bg:#0f1222;--panel:#171a2e;--panel-2:#1d2138;--ink:#e7e9f3;--muted:#a3a8c3;
+    --line:#2b3052;--accent:#7c83ff;--accent-2:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#f87171;
+    --radius:14px;--maxw:1000px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0c0f1d,#0f1222 240px);color:var(--ink);
+    font-family:var(--sans);line-height:1.6;font-size:15.5px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header.hero{padding:56px 0 24px;border-bottom:1px solid var(--line)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent-2);border:1px solid var(--line);padding:5px 11px;border-radius:999px;background:var(--panel)}
+  h1{font-size:38px;line-height:1.1;margin:16px 0 8px;letter-spacing:-.02em}
+  h2{font-size:23px;margin:44px 0 12px;letter-spacing:-.01em}
+  .lede{font-size:18px;color:var(--muted);max-width:74ch}
+  .meta{color:var(--muted);font-size:13.5px;font-family:var(--mono);margin-top:10px}
+  .scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:26px 0}
+  .sc{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .sc .num{font-size:30px;font-weight:800;line-height:1}
+  .sc .lab{color:var(--muted);font-size:12.5px;margin-top:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+  .sc.red .num{color:var(--red)}.sc.amber .num{color:var(--amber)}.sc.blue .num{color:var(--accent-2)}.sc.green .num{color:var(--green)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin:18px 0}
+  .find{background:var(--panel);border:1px solid var(--line);border-left-width:4px;border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0}
+  .find.high{border-left-color:var(--red)}
+  .find.med{border-left-color:var(--amber)}
+  .find.low{border-left-color:var(--accent-2)}
+  .find.dec{border-left-color:var(--accent)}
+  .find.resolved{opacity:.96}
+  .find h3{margin:0 0 6px;font-size:17px;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+  .id{font-family:var(--mono);color:var(--muted);font-size:13px}
+  .sev{font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:6px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+  .sev.high{color:var(--red);border-color:#5a2020;background:#241010}
+  .sev.med{color:var(--amber);border-color:#5a4a1e;background:#241d0c}
+  .sev.low{color:var(--accent-2);border-color:#194a52;background:#0c2025}
+  .sev.dec{color:var(--accent);border-color:#2f2f6b;background:#13132b}
+  .status{font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:6px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+  .status.resolved{color:var(--green);border-color:#1f5a3f;background:#0c2418}
+  .status.open{color:var(--amber);border-color:#5a4a1e;background:#241d0c}
+  .status.decided{color:var(--accent-2);border-color:#194a52;background:#0c2025}
+  .status.wontfix{color:var(--muted)}
+  .area{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:auto}
+  .find p{margin:7px 0}
+  .find .k{color:var(--muted);font-weight:600;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+  .fix{color:var(--green);font-weight:600;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+  code{font-family:var(--mono);font-size:.9em;background:#20243f;padding:1px 6px;border-radius:6px;color:#cfd4ff}
+  ul.tight{margin:8px 0;padding-left:20px}ul.tight li{margin:4px 0}
+  ol.steps{margin:8px 0;padding-left:22px}ol.steps li{margin:6px 0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel-2)}
+  .good{color:var(--green)}
+  footer{border-top:1px solid var(--line);margin-top:50px;padding:24px 0 60px;color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+  <h1>ai-workspace-template — Review &amp; Backlog: Archive</h1>
+  <p class="meta">Settled (Resolved / Decided / Won't fix) findings moved out of <code>template-workspace-backlog.html</code> to keep the active file small. IDs remain permanent; never renumber or move cards back. Newly settled cards are appended to the matching section here.</p>
+
+  <h2>High</h2>
+
+  <div class="find high resolved">
+    <h3><span class="id">H1</span> Bootstrap scripts were <code>exit 1</code> stubs while the Quick Start told you to run them
+      <span class="sev high">High</span><span class="status resolved">Resolved</span><span class="area">scripts/</span></h3>
+    <p><span class="k">Evidence</span> — the three <code>scripts/*.sh</code> only echoed a TODO and exited 1, yet
+      <code>setup-guide.html</code> Step 2 and <code>workspace-setup.md</code> instructed running them.</p>
+    <p><span class="fix">Fixed:</span> implemented real, idempotent <code>setup.sh</code> (symlinks, <code>.env</code>/
+      <code>.mcp.json</code>/<code>.claude/settings.local.json</code> copies, <code>--clone-repos</code> that parses the
+      registry), <code>check-workspace-structure.sh</code> (dirs/symlinks/exec/gitignore checks, non-zero on failure),
+      and <code>check-service-access.sh</code> (gh + token preflight, writes the cache). Guide/setup wording updated.</p>
+  </div>
+
+  <div class="find high resolved">
+    <h3><span class="id">H2</span> Gemini graphify hook called <code>python</code> (not <code>python3</code>)
+      <span class="sev high">High</span><span class="status resolved">Resolved</span><span class="area">.gemini/settings.json</span></h3>
+    <p><span class="k">Evidence</span> — the <code>BeforeTool</code> hook ran <code>python -c "…"</code>, which fails on
+      python3-only machines, erroring on every Gemini file read/list.</p>
+    <p><span class="fix">Fixed:</span> rewrote the hook as a pure POSIX-shell one-liner (<code>if [ -f graphify-out/graph.json ]; then printf …</code>)
+      that emits the allow/context JSON with no Python dependency at all.</p>
+  </div>
+
+  <h2>Medium</h2>
+
+  <div class="find med resolved">
+    <h3><span class="id">M1</span> Public template depended on the author's personal agent-context tooling
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">recommended-tooling.md</span></h3>
+    <p><span class="fix">Fixed:</span> added a clearly-labelled <em>"Without agent-context (fallback)"</em> section —
+      plain <code>git clone</code> + <code>ln -sfn</code> into <code>~/.claude/skills</code> — so anyone can use the
+      skills without the private <code>init-project-ai-infra</code>/<code>agent-context-sync</code> setup.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M2</span> <code>.vscode/</code> / <code>&lt;Project&gt;.code-workspace</code> listed as shipped but absent
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">workspace-structure.md</span></h3>
+    <p><span class="fix">Fixed:</span> shipped <code>.vscode/settings.json</code> and <code>.vscode/mcp.json.example</code>
+      (so those table rows are now accurate) and annotated the <code>.code-workspace</code> row as "VS Code only —
+      create per project; not shipped."</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M3</span> <code>mcp-setup.md</code> carried a machine-specific "Warp (this app)" section
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs/mcp-setup.md</span></h3>
+    <p><span class="fix">Fixed:</span> replaced it with a generic "Other runtimes" section pointing at the remote URL /
+      Docker command.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M4</span> No <code>LICENSE</code> on a public, reuse-oriented template
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">root</span></h3>
+    <p><span class="fix">Fixed:</span> added an MIT <code>LICENSE</code> (matches the karpathy-examples upstream),
+      so "Use this template" reuse is unambiguous.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M5</span> README pointed at raw <code>docs/setup-guide.html</code>, not the rendered Pages URL
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">README.md</span></h3>
+    <p><span class="fix">Fixed:</span> README now links the live
+      <code>kashman001.github.io/ai-workspace-template/setup-guide.html</code> first, with the source path secondary.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M6</span> No dependency-check phase
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/ · runbooks/</span></h3>
+    <p><span class="k">Evidence</span> — nothing verified <code>git</code>/<code>node</code>/<code>uv</code>/<code>python3</code>/<code>docker</code>;
+      the only tool check anywhere was <code>command -v gh</code> in <code>check-service-access.sh</code>.</p>
+    <p><span class="fix">Fixed:</span> added <code>scripts/check-dependencies.sh</code> (per-OS; required <code>git</code>
+      vs recommended tools; non-zero only on a hard miss), wired it as a preflight in <code>setup.sh</code>, and wrote
+      the agent runbook <code>docs/runbooks/dependencies.md</code> (install commands for macOS/Linux/Windows). Surfaced
+      in the setup guide and <code>workspace-setup.md</code>.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M7</span> No authentication phase (only docs + a partial verify)
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/ · runbooks/</span></h3>
+    <p><span class="k">Evidence</span> — auth was documented but nothing checked/guided it end to end; setup didn't
+      surface fix commands.</p>
+    <p><span class="fix">Fixed (verify + instruct + agent runbook):</span> strengthened
+      <code>check-service-access.sh</code> to print exact per-OS fix commands and point to the runbook; added
+      <code>docs/runbooks/authentication.md</code> for an AI agent to follow (login is flagged interactive →
+      confirm with the user; no secret ever stored in the repo). Kept the keychain-outside-the-workspace philosophy
+      — no interactive login baked into a script.</p>
+  </div>
+
+  <div class="find medium resolved">
+    <h3><span class="id">M8</span> Published <code>workspace-structure.html</code> could silently drift from its Markdown source
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/ · docs/</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review of the new HTML-guide feature: editing
+      <code>docs/workspace-structure.md</code> without re-running <code>build-guide-html.sh</code> ships a stale
+      published guide, and nothing detected the mismatch.</p>
+    <p><span class="fix">Fixed:</span> <code>build-guide-html.sh</code> now embeds a <code>source-md-sha1</code> of the
+      Markdown in the HTML head, and <code>check-workspace-structure.sh</code> compares it to the current source,
+      warning (soft) to regenerate when they differ.</p>
+  </div>
+
+  <div class="find medium resolved">
+    <h3><span class="id">M9</span> <code>context-budget.sh register</code> reused the previous session's artifact instead of re-discovering
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-07-22, first fresh session after the D4 build: <code>register</code> at
+      session start reported <code>tokens=146794 status=WARN</code> — the <em>previous</em> session's transcript.
+      <code>resolve_session()</code> consulted the saved registry (<code>.context-budget/session-claude.json</code>)
+      before discovery, so <code>register</code> — whose whole purpose is to bind the current session — inherited the
+      prior binding and never re-discovered. Every session after the first would measure the wrong transcript until it
+      happened to overtake the stale one in mtime.</p>
+    <p><span class="fix">Fixed:</span> <code>resolve_session()</code> now skips the registry lookup when the command is
+      <code>register</code>, forcing fresh discovery; <code>check</code>/<code>record</code>/<code>watch</code> still
+      trust the registry. Verified live: re-running <code>register</code> in the same session bound the correct
+      artifact (<code>tokens=50856 status=OK</code>) and a follow-up <code>check</code> read it back.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M10</span> Copilot VS Code discovery pins a stale sibling session by mtime, ignoring <code>VSCODE_TARGET_SESSION_LOG</code>
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-07-23, live copilot-vscode session on a workspace built from this
+      template: <code>register</code> reported a false <code>STOP</code>. <code>copilot_vscode_discover()</code> picks
+      the newest-modified <code>chatSessions/*.jsonl</code>; at register time the current session's log wasn't flushed
+      yet, so it grabbed a stale rollover session's 1.4&nbsp;MB log instead. The Copilot terminal exports
+      <code>VSCODE_TARGET_SESSION_LOG</code> — the live session log's path — which the script ignored. Nearly
+      triggered a needless rollover; the session was actually at 25% (<code>tokens=38388 status=OK</code>).</p>
+    <p><span class="fix">Fixed:</span> <code>copilot_vscode_discover()</code> now uses
+      <code>$VSCODE_TARGET_SESSION_LOG</code> when set and the file exists, falling back to the newest-mtime scan
+      otherwise (var unset, or pointing at a not-yet-created log). Verified all three branches: pinned discovery
+      returns the exact artifact and token count; unset and dangling-path cases preserve the old behavior. Adapter
+      table in <code>docs/context-budget.md</code> updated. <em>Follow-up (2026-07-23, <code>7c29476</code>, delivered
+      from the origin copilot workspace):</em> on current builds the var is a <code>debug-logs/&lt;id&gt;</code>
+      <em>directory</em>, not the token file — discovery now derives the session id from its basename and pins
+      <code>chatSessions/&lt;id&gt;.jsonl</code> deterministically; newest-mtime remains only the var-unset fallback.
+      <em>Follow-up (2026-08-06, session 27):</em> the sandboxed VS Code terminal blocks <code>readdir</code> on the
+      <code>workspaceStorage/</code> parent (glob expands empty; direct paths stay readable), so the glob-and-grep scan
+      failed in-copilot — discovery now derives the storage hash from <code>$VSCODE_TARGET_SESSION_LOG</code> itself
+      (<code>…/workspaceStorage/&lt;hash&gt;/GitHub.copilot-chat/debug-logs/&lt;sid&gt;</code>) by parameter expansion and
+      probes <code>workspaceStorage/&lt;hash&gt;/chatSessions/&lt;sid&gt;.jsonl</code> directly, no directory listing; the
+      glob scan survives as the fallback for older builds. Spec: <code>work/context-decay/copilot-vscode-sandbox-discovery-fix.md</code>.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M11</span> <code>claude_discover</code> races concurrent same-workspace sessions (newest-mtime proxy)
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-07-23 review of all adapters after M10: <code>claude_discover()</code>
+      takes the newest-modified <code>*.jsonl</code> in the project dir. Claude Code flushes per-turn so the live
+      session usually wins, but two concurrent sessions in one workspace race, and the transcript basename is exactly
+      the session id Claude Code already exports as <code>$CLAUDE_CODE_SESSION_ID</code> (verified live) — the
+      heuristic was never necessary.</p>
+    <p><span class="fix">Fixed:</span> pin <code>&lt;proj&gt;/$CLAUDE_CODE_SESSION_ID.jsonl</code> when the var is set
+      and the file exists; newest-mtime fallback otherwise. Differential-verified in one shell call: with a stale
+      transcript touched newest, unpinned <code>register</code> binds the stale file, pinned binds the live session.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M12</span> Gemini shared telemetry log serves the previous session's counts at register
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>gemini_measure()</code> reads the last <code>input_token_count</code>
+      from the workspace-scoped, append-only <code>.gemini/telemetry.log</code>, which is shared by every Gemini
+      session in the workspace. A new session's <code>register</code>, before its first response, reads the
+      <em>previous</em> session's final (potentially near-threshold) count — a false WARN/STOP needing no concurrency
+      at all. Concurrent sessions also interleave, attributing whichever response landed last.</p>
+    <p><span class="k">Impact</span> — same failure the M10 incident showed: a fresh session can be told to roll over
+      immediately.</p>
+    <p><span class="fix">Fixed:</span> <code>register --runtime gemini</code> now truncates the workspace telemetry
+      log after binding it, safe under the single-session-per-runtime assumption (L12); measures then only ever see
+      the current session's responses. When neither responses nor a chat log exist yet, <code>gemini_measure</code>
+      reports <code>0 estimate</code> (fresh session, empty context) instead of failing. Lifecycle-verified with
+      fixtures: stale 140K count read as <code>WARN</code> pre-fix → <code>register</code> truncates and reports
+      <code>tokens=0</code> → appended response read back <code>exact</code>. Rejected alternative: filtering OTLP
+      records by session id — Gemini CLI exports no session-id env var to match against. Live-session verification
+      rides the existing Gemini-auth gated item.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M13</span> Scalar per-runtime registry lets one session measure another's artifact
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-05, fired live during the automatic-session-rollover design session:
+      a <code>claude --bg</code> demo session clobbered <code>.context-budget/session-claude.json</code>; the design
+      session's later <code>record</code> measured the dead demo transcript (47.7K, OK) while the in-band hook — which
+      resolves per-session from the payload's <code>transcript_path</code> — correctly showed ~128K WARN. Discovery is
+      already session-exact via env vars (M11), but <code>check</code>/<code>record</code> prefer the registry over
+      re-discovery, and the registry is one file per <em>runtime</em>, not per session.</p>
+    <p><span class="k">Impact</span> — wrong WARN/STOP decisions under the multi-session operating model (N concurrent
+      sessions per workspace); a session can be told it's fine while deep in the dumb zone.</p>
+    <p><span class="k">Fix</span> — approved (ADR-0004): session-keyed registry
+      <code>.context-budget/sessions/&lt;runtime&gt;-&lt;session-id&gt;.json</code> (each session writes only its own
+      file, resolve-self via env-var identity first) + per-project advisory lock
+      <code>work/&lt;proj&gt;/.active-session</code>; gemini's exact path stays single-session-per-workspace.
+      Implementation item #1 of <code>work/automatic-session-rollover/</code>; interim workaround is separate clones
+      or explicit <code>--transcript</code> (documented in <code>docs/context-budget.md</code>).</p>
+    <p><span class="fix">Fixed:</span> 2026-08-05 — session-keyed registry landed (commits <code>15ec961</code>…):
+      <code>check</code>/<code>record</code> resolve-self via env-var identity and read only their own
+      <code>sessions/&lt;runtime&gt;-&lt;session-id&gt;.json</code>; <code>register --project</code> acquires the
+      per-project advisory lock with stale reclamation, <code>release</code> frees it; gemini gets a
+      concurrent-session guard on the telemetry reset. Regression-tested (M13 clobber repro is test T1) in
+      <code>scripts/tests/context-budget-registry.test.sh</code>.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M14</span> Rollover launched the successor while the predecessor still held the work-item lock
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · skills/session-rollover/SKILL.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-06, fired live on the first <code>ROLLOVER_RELAUNCH=auto</code>
+      relaunch of <code>work/automatic-session-rollover/</code>: the successor's bootstrap
+      <code>register --project</code> found <code>.active-session</code> still held by the predecessor (artifact
+      active 40s prior) and refused acquisition; with <code>LOCK_STALE=3h</code> there was no reclaim path, and the
+      successor had to steal via a scoped <code>CONTEXT_LOCK_STALE_SECS</code> override. Root cause is ordering by
+      construction: the skill launches the successor at step 7 but releases the lock only after the post-launch
+      verification gate — so in auto mode the successor's <code>register</code> <em>always</em> races an unreleased
+      lock, in attached-manual mode the script <code>exec</code>s the successor so the release step can never run,
+      and the successor never retries acquisition after a failed <code>register</code>.</p>
+    <p><span class="k">Impact</span> — every auto-relaunched successor starts locked-out and runs without work-item
+      ownership (the one-active-session invariant holds on paper while the actually-active session holds nothing);
+      attached-manual rollovers leak the lock until the 3h stale reclaim.</p>
+    <p><span class="fix">Fixed:</span> same day — <code>launch-next-session.sh</code> now releases the dying
+      session's own lock immediately before any launch path (holder identity-matched against the session's own
+      registry record; a foreign holder's lock is never removed, only warned about; <code>--dry-run</code> never
+      mutates; <code>mode=off</code> still releases, since invoking the launcher means the session is ending).
+      Skill closing step and <code>docs/context-budget.md</code> reworded to release-before-launch, keeping the
+      manual <code>release</code> fallback for rollovers that never invoke the script. Regression tests T16–T19 in
+      <code>test-launch-next-session.sh</code> (49 asserts green).</p>
+  </div>
+
+  <h2>Low</h2>
+
+  <div class="find low resolved">
+    <h3><span class="id">L1</span> Two OpenCode config files (root + <code>.opencode/</code>)
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">mcp-setup.md</span></h3>
+    <p><span class="fix">Fixed:</span> documented the intended split (root <code>opencode.json</code> = MCP server;
+      <code>.opencode/opencode.json</code> = plugin list) in the OpenCode section of <code>mcp-setup.md</code>.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L2</span> Committed symlinks may not survive every checkout / Windows
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">workspace-setup.md</span></h3>
+    <p><span class="fix">Fixed:</span> the new idempotent <code>setup.sh</code> repairs flattened symlinks; documented
+      the Windows <code>core.symlinks</code> note and the "delete + re-run setup.sh" recovery.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L3</span> <code>.claude/settings.json.example</code> redundancy
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">.claude/settings.json.example</span></h3>
+    <p><span class="fix">Fixed:</span> dropped <code>enableAllProjectMcpServers</code>, keeping the explicit
+      <code>enabledMcpjsonServers: ["github"]</code>.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L4</span> <code>system-design.md</code> / <code>operational-knowledge.md</code> were bare TODO stubs
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/</span></h3>
+    <p><span class="fix">Fixed:</span> added a "what good content looks like" prompt to each so a fill-in agent has a target.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L5</span> <code>SPEC.md</code> single-repo assumption
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">SPEC.md</span></h3>
+    <p><span class="fix">Fixed (verified):</span> confirmed the multi-repo path in <code>CONTEXT.md</code> only references
+      SPEC conditionally ("if there's a product spec"), so deleting <code>SPEC.md</code> leaves no dangling reference.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L6</span> <code>build-guide-html.sh</code> leaked temp files and used a non-portable <code>mktemp -t</code>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/build-guide-html.sh</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review: <code>"$(mktemp -t x).html"</code> orphaned the bare mktemp
+      file (the trap removed only the <code>.html</code> path), leaking two temp files per run; <code>mktemp -t</code> is
+      also not GNU-portable.</p>
+    <p><span class="fix">Fixed:</span> switched to <code>mktemp "$TMPDIR/wsguide-*.XXXXXX"</code> — one file each, cleaned
+      by the trap, portable across BSD/GNU.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L7</span> <code>resolve_repo_path()</code> duplicated across two scripts and already drifted
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review: <code>onboard-repo.sh</code> and
+      <code>check-repo-context.sh</code> each carried a copy of <code>resolve_repo_path()</code> under a "keep in sync"
+      comment, yet the two had already diverged on their final line.</p>
+    <p><span class="fix">Fixed:</span> extracted the single definition to <code>scripts/lib/repo-paths.sh</code>, sourced by
+      both; verified external-Location resolution is unchanged (path + provenance + <code>graphify=live</code>).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L8</span> <code>pandoc</code> dependency for the guide build was undocumented
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">README.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review: regenerating the guide needs <code>pandoc</code>, mentioned
+      only inside <code>build-guide-html.sh</code>.</p>
+    <p><span class="fix">Fixed:</span> noted the <code>pandoc</code> prerequisite at the README link to the generator
+      (the script already prints an install hint when it is missing).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L9</span> <code>usage-scenarios.html</code> footer linked <code>../CONTEXT.md</code>, broken on GitHub Pages
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/usage-scenarios.html</span></h3>
+    <p><span class="k">Evidence</span> — 2026-06-25 re-review of the new usage-scenarios doc: <code>.nojekyll</code> lives in
+      <code>docs/</code>, so Pages serves the site rooted at <code>docs/</code>; a <code>../CONTEXT.md</code> link escapes the
+      site root and 404s when published. Sibling docs never use <code>../</code> — they link <code>docs/</code> siblings
+      relatively and out-of-<code>docs/</code> files via absolute GitHub blob URLs (e.g. <code>workspace-structure.html</code>).</p>
+    <p><span class="fix">Fixed:</span> repointed the CONTEXT.md link to its absolute
+      <code>github.com/.../blob/main/CONTEXT.md</code> URL (the other three footer links are <code>docs/</code> siblings, so
+      relative is correct). Also corrected a zero-impact latent typo in the same file — two SVG labels read
+      <code>class="lab.c lab"</code> (now <code>class="lab c"</code>); they rendered correctly only via an inline
+      <code>text-anchor</code> fallback. Verified both diagrams render cleanly via headless Chrome.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L10</span> Principle 1 didn't ask the agent to surface unknowns/assumptions <em>before</em> answering
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — <em>"Think before coding"</em> told the agent to state assumptions but not to
+      <em>proactively</em> say what it would need to know and which assumptions it would otherwise make silently before
+      responding — the ask-first behaviour from the XDA piece <em>"I added one line to my Claude prompts, and the
+      improvement was immediate"</em> (<code>Before you answer, tell me what you need to know to answer well, and point
+      out any assumptions you'd otherwise make</code>).</p>
+    <p><span class="fix">Fixed:</span> folded that behaviour into principle 1 (phrased as a standing agent directive, not
+      the article's user-voiced one-off) in both copies — <code>CONTEXT.md</code> and its
+      <code>docs/workspace-structure.md</code> mirror — with a trivial-change escape hatch so it adds no ceremony to
+      typo/one-liner requests. The wording now differs slightly from the agent-context <code>global.md</code> source;
+      that divergence is sanctioned by <strong>D1</strong> (<code>CONTEXT.md</code> is intentionally self-contained —
+      self-containment over DRY).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L11</span> Codex &amp; Copilot CLI discovery share the newest-mtime race; codex fallback can bind another project
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>codex_discover()</code> picks the newest rollout whose head mentions the
+      cwd (per-turn flushing makes single-session use safe; concurrent same-cwd sessions race), and its last-resort
+      fallback takes the newest rollout <em>anywhere</em> when the cwd grep misses — silently binding a different
+      project's session. <code>copilot_cli_discover()</code> is a bare newest-file scan (adapter still unverified,
+      CLI not installed).</p>
+    <p><span class="fix">Landed 2026-07-23:</span> the any-project codex fallback is removed —
+      <code>codex_discover()</code> now fails ("no session artifact") rather than bind another project's rollout;
+      verified on a machine with 4 non-matching rollouts (pre-fix would have bound the newest). </p>
+    <p><span class="k">Fix</span> (remaining, machine-gated) — in a live Codex session, check
+      <code>env | grep CODEX</code> for a session/rollout identifier and pin like M10/M11 if one exists; same env-var
+      check for Copilot CLI once installed (existing gated item).</p>
+    <p><span class="fix">Fixed:</span> codex now pins <code>rollout-*-$CODEX_THREAD_ID.jsonl</code> —
+      live-verified on the origin machine (the env var was probed inside a real <code>codex exec</code> session, its
+      value equals the rollout UUID and <code>session_meta.payload.id</code>, and the injection is confirmed in
+      <code>openai/codex</code> source); differential-verified (a stale rollout touched newest still loses to the
+      pinned live session). Copilot CLI now pins <code>session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl</code>
+      under <code>${COPILOT_HOME:-~/.copilot}</code> and scans the correct <code>session-state/</code> path (the
+      unattested <code>sessions/</code> path is dropped; legacy <code>history-session-state/</code> kept as fallback) —
+      research-sourced from the CLI changelog and fixture-verified, but live verification still pends an install, so the
+      copilot-cli adapter stays marked unverified.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L12</span> Session registry is keyed per-runtime — concurrent same-runtime sessions clobber each other
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>register</code> writes <code>.context-budget/session-&lt;runtime&gt;.json</code>;
+      two concurrent sessions of the same runtime in one workspace overwrite each other's artifact pin, so
+      <code>check</code>/<code>record</code>/<code>watch</code> in one session can measure the other's transcript even
+      after M10/M11-style discovery pins.</p>
+    <p><span class="fix">Fixed:</span> documented single-session-per-runtime-per-workspace as an explicit limitation
+      in <code>docs/context-budget.md</code> (the M12 reset-at-register fix leans on the same assumption; concurrent
+      same-runtime sessions belong in separate workspace clones). Rejected alternative: keying the registry by session
+      id — the in-band hook and ad-hoc <code>check</code> calls would then need the session id to find their registry
+      entry, complexity the single-session reality doesn't justify. Revisit only if concurrent same-runtime sessions
+      become a real workflow.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L13</span> Session registration is documented for agents only — no developer-facing lifecycle doc, no mechanical trigger
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/context-budget.md · .claude/settings.json.example</span></h3>
+    <p><span class="k">Evidence</span> — the developer quickstart in <code>docs/context-budget.md</code> shows
+      <code>check</code>/<code>watch</code> but never says sessions are registered at start; <code>register</code>
+      appears only in the agent quickstart and <code>CONTEXT.md</code> standing instruction. Registration is
+      by-instruction, not by-mechanism: no <code>SessionStart</code> hook exists, so an agent that ignores its context
+      file never registers.</p>
+    <p><span class="k">Impact</span> — a developer reading only their quickstart can't tell whether registration is
+      automatic or their job; an instruction-ignoring agent silently depends on discovery fallbacks.</p>
+    <p><span class="fix">Fixed:</span> session-lifecycle paragraph added to the developer quickstart (registration is
+      the agent's job, automatic-by-instruction via <code>CONTEXT.md</code>, only for sessions started inside the
+      workspace tree; unregistered sessions fall back to discovery), and a <code>SessionStart</code> hook added to
+      <code>.claude/settings.json.example</code> that runs <code>register --transcript &lt;path from the hook
+      payload&gt;</code>, making registration mechanical for Claude Code. Hook event live-verified (this session
+      received <code>SessionStart</code> hook context); hook command verified end-to-end against a simulated payload
+      (pins the exact transcript, exits 0) and fails open on an empty payload.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L14</span> Template changes delivered from downstream sessions bypass the backlog convention
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · this file</span></h3>
+    <p><span class="k">Evidence</span> — three same-day deliveries pushed from downstream sessions
+      (<code>7c29476</code> copilot-vscode pin follow-up, <code>bd40023</code> launcher/ledger convention,
+      <code>f3928e6</code> <code>diff-review.sh</code>) each landed with no backlog row or card update; each had to be
+      reconciled after the fact by the pulling session (<code>df12f76</code>, <code>2ed1eec</code>,
+      <code>eeb0a78</code>).</p>
+    <p><span class="k">Impact</span> — the backlog silently drifts from repo reality whenever work arrives from
+      outside this workspace, undermining its "source of truth for template-improvement work" claim; reconciliation
+      depends on the pulling session noticing the gap.</p>
+    <p><span class="fix">Fixed:</span> the convention now covers deliveries explicitly, on both ends — a new rule in
+      the "Maintaining this backlog" list (delivering commit carries its backlog update; the pulling session adds any
+      missing row as part of incorporation) and a matching sentence in the Template Backlog section of
+      <code>CONTEXT.md</code>, which downstream template-repo sessions load.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L16</span> workspace-structure.md documented a phantom test suite
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-05, while landing the M13 regression tests: the <code>scripts/</code>
+      listing described <code>tests/</code> as an "Automated workspace validation suite" with six named files
+      (<code>validate-workspace.sh</code>, <code>test-helpers.sh</code>, four <code>test-*.sh</code>) — none of which
+      exist anywhere in the repo. The directory itself did not exist until the M13 tests created it.</p>
+    <p><span class="k">Impact</span> — agents trust the structure doc as the authoritative map; a phantom listing sends
+      them hunting for a runner/helpers that were never committed (cost a live session a wasted search).</p>
+    <p><span class="fix">Fixed:</span> same session — listing now shows the one real test file
+      (<code>test-context-budget-registry.sh</code>, named to the documented <code>test-*.sh</code> convention). If the
+      full validation suite ever lands, re-document it then, not before.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L15</span> Two installed upstream skills undocumented; no "skill not found on another machine" recovery note
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/recommended-tooling.md</span></h3>
+    <p><span class="k">Evidence</span> — an audit of the installed skill set against <code>recommended-tooling.md</code> §3
+      (prompted by a review of upstream <code>mattpocock/skills</code> at <code>ed37663</code>) found
+      <code>git-guardrails-claude-code</code> and <code>setup-pre-commit</code> (upstream's <code>skills/misc/</code> bucket)
+      installed and in active use but absent from the skill table. Separately, a second machine running a workspace cloned
+      from this template hit "skill not found" pulling in <code>teach</code> — its reference clone predated the skill and
+      nothing documented the staleness failure mode or its fix.</p>
+    <p><span class="k">Impact</span> — the doc under-describes the toolchain it claims to define, and cross-machine users
+      have no recovery path when a documented skill is missing locally.</p>
+    <p><span class="fix">Fixed:</span> added the two missing rows to the §3 skill table (git-guardrails flagged
+      <strong>Claude Code-only</strong>), a "skill not found" staleness note (<code>agent-context-sync</code> / manual
+      re-link, with the bucket caveat — <code>teach</code> is under <code>productivity/</code>), and a caveat documenting
+      upstream's new native Claude Code plugin distribution as a Claude-Code-only alternative that must <em>not</em> be
+      combined with the symlink install (duplicate skills; breaks the agent-agnostic single-source model).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L19</span> No normalized approval level mapped to claude's classifier-vetted "auto mode"; script <code>auto</code> ≠ UI auto
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>ROLLOVER_OPT_APPROVAL=auto</code> mapped to claude
+      <code>--permission-mode acceptEdits</code>, not the CLI's classifier-vetted <code>--permission-mode auto</code>
+      (routine actions run unattended, risky ones blocked — arguably the best default for autonomous rollover
+      chains). The naming collision invited the wrong expectation, and no level inherited the classifier at all.
+      Raised in <code>work/automatic-session-rollover/issues/02-permission-mode-inheritance.md</code> after the
+      first <code>ROLLOVER_RELAUNCH=auto</code> successor launched in manual mode.</p>
+    <p><span class="k">Impact</span> — autonomous chains had to choose between prompt-heavy <code>acceptEdits</code>
+      and tripwire-free <code>full</code> bypass; the middle mode the CLI actually offers was unreachable.</p>
+    <p><span class="fix">Fixed:</span> re-pointed <code>auto</code> to the classifier tier (claude
+      <code>--permission-mode auto</code>, verified against live <code>--help</code> 2.1.223 per ADR-0003) and renamed
+      the acceptEdits tier to <code>edits</code> — ladder <code>default &lt; edits &lt; auto &lt; full</code>.
+      Runtimes with no classifier equivalent (codex/gemini/opencode/copilot) fall back to their <code>edits</code>
+      mapping with a stderr note (chosen over refusing, which breaks cross-runtime chains, and over falling up to
+      full bypass, which drops the tripwire). Tests T14a–T14p green (55 asserts); docs + skill updated. Full
+      alternatives analysis in the work item's <code>decisions.md</code> (2026-08-06).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L20</span> A plainly-exited session squatted its work-item lock for the whole stale window; no session-role model
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · launch-next-session.sh · attach-session.sh</span></h3>
+    <p><span class="k">Evidence</span> — closing a session without rolling over left
+      <code>work/&lt;proj&gt;/.active-session</code> in place (no <code>SessionEnd</code> hook existed); a restart on
+      the same item within <code>CONTEXT_LOCK_STALE_SECS</code> (3h) was refused its own lock — the M14 failure
+      mode, mitigated only for the rollover path. A second session registering against a held item was warned
+      "NOT acquired" and its association silently dropped; nothing distinguished a live helper from a dead
+      predecessor.</p>
+    <p><span class="k">Impact</span> — dead sessions blocked their own successors for hours; no way to mark or see
+      which session is the one allowed to write the launcher/ledger and roll the item over.</p>
+    <p><span class="fix">Fixed:</span> session-role model <code>primary / auxiliary / superseded</code>, lock as the
+      authoritative primary marker (design discussion with user, 2026-08-06). <code>register --project</code> records
+      the role and prints <code>role=</code> in-band (auxiliary association now persisted);
+      <code>launch-next-session.sh</code> stamps the dying record <code>superseded</code> at the pre-launch release;
+      <code>attach-session.sh</code> shows <code>role=</code>; a <code>SessionEnd</code> hook
+      (<code>settings.json.example</code>) releases the lock on plain exit (identity-matched via own transcript);
+      new <code>scripts/statusline-context-budget.sh</code> shows <code>PRIMARY · &lt;project&gt; · &lt;pct&gt;%</code>
+      in the Claude Code status line. Tests: registry T6, launcher T20, attach T7, statusline suite (8) — all green.
+      Docs: <code>context-budget.md</code> "Session roles", <code>work-directory-conventions.md</code>. Deferred
+      items in <code>work/automatic-session-rollover/issues/03-session-roles.md</code>.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L21</span> Project statusLine replaced the user's global status bar and printed "no work item" for unregistered sessions
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/statusline-context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — wiring <code>statusLine</code> in the project's
+      <code>.claude/settings.json</code> (L20) <em>overrides</em> the user's global statusLine command (Claude Code
+      takes the most specific setting), so a user running e.g. <code>ccstatusline</code> lost their model / context /
+      cost / git widgets in this workspace; and any session not registered against a work item — every plain
+      interactive session — saw a bare <code>no work item</code> line. User report, 2026-08-06.</p>
+    <p><span class="k">Impact</span> — the budget statusline cost users their existing status bar (including the
+      context-size widget, the one thing the budget system most wants visible) in exchange for a mostly-empty line.</p>
+    <p><span class="fix">Fixed:</span> <code>statusline-context-budget.sh</code> now <em>chains</em> the user's global
+      statusLine: it reads <code>~/.claude/settings.json</code> → <code>statusLine.command</code>, re-runs it with the
+      same stdin JSON, prints its output first, and appends the <code>ROLE · project · pct%</code> segment as an extra
+      line only when the session is registered against a work item (self-reference guarded to prevent recursion;
+      <code>no work item</code> shown only when there is neither a base statusline nor a segment). Tests T7a–f
+      (statusline suite, now 14 asserts; suite isolated from the real <code>$HOME</code>).</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L22</span> CONTEXT.md skills section duplicated per-skill detail already in each SKILL.md (~2K tokens of always-on context)
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>/context</code> showed the project context file at ~6.5K tokens, ~2.5K of
+      which was the "Workspace Skills" section carrying a full paragraph per skill; every detail in those paragraphs
+      (workflow steps, refresh commands, vendored provenance, wayfinder map location) was verified to also live in the
+      skill's own demand-loaded <code>SKILL.md</code>. The graphify placement paragraph likewise duplicated
+      <code>recommended-tooling.md</code> §5. User report during a context-optimization pass, 2026-08-06.</p>
+    <p><span class="k">Impact</span> — every session in every runtime paid ~2K tokens twice-stated context against the
+      ~150K dumb-zone budget; violated the file's own "keep it concise, link out for detail" rule.</p>
+    <p><span class="fix">Fixed:</span> Workspace Skills section condensed to one line per skill (trigger + slash
+      shortcut) with an explicit "open the skill's <code>SKILL.md</code> for the full workflow before acting on it"
+      instruction so non-skill runtimes (Codex/Gemini/OpenCode) still demand-load the detail; graphify placement
+      paragraph compressed to a pointer at <code>recommended-tooling.md</code> §5. Cross-skill precedence rule
+      (checkpoint vs session-rollover at WARN/STOP) kept inline. ~1.9K tokens saved per session.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L23</span> Backlog file was a 29K-token whole-read for every template-changing session
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/template-workspace-backlog.html</span></h3>
+    <p><span class="k">Evidence</span> — CONTEXT.md obliges every template change to update the backlog; the file had
+      grown to ~29K est tokens (40 of 42 cards settled), so a naive full read cost ~20% of the 150K dumb-zone budget.</p>
+    <p><span class="fix">Fixed:</span> settled cards split into this archive file (script-driven; badge-based, zero
+      class/badge inconsistencies found; stale scorecard 3/34 corrected to 2/36). Active file now holds Open cards
+      only; maintenance rules updated (move card on resolve; targeted reads only). 2026-08-06.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L24</span> Agents edit the CLAUDE.md/AGENTS.md symlink and fail — no "edit CONTEXT.md itself" instruction
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md</span></h3>
+    <p><span class="k">Evidence</span> — write tools refuse to write through symlinks; an agent editing the context
+      file via the path it read (CLAUDE.md) loses a round-trip and duplicates the edit payload in context. Hit live
+      2026-08-06.</p>
+    <p><span class="fix">Fixed:</span> explicit "edit <code>CONTEXT.md</code> itself, never a symlink path"
+      instruction added to the CONTEXT.md header (all vendors read it); same for the global
+      <code>agent-context/global.md</code> header.</p>
+  </div>
+
+  <h2>Decisions</h2>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D1</span> Four coding principles duplicated: <code>CONTEXT.md</code> vs <code>global.md</code>
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">CONTEXT.md</span></h3>
+    <p><span class="fix">Decided:</span> <strong>keep</strong> the principles in <code>CONTEXT.md</code>. A public
+      template can't assume the agent-context <code>global.md</code> exists, so self-containment wins over DRY. The
+      intentional duplication is documented in <code>recommended-tooling.md</code>.</p>
+  </div>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D2</span> <code>init-project-ai-infra</code> redundancy for template-cloned workspaces
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">recommended-tooling.md</span></h3>
+    <p><span class="fix">Decided:</span> still recommend running <code>init-project-ai-infra --full</code> — not to
+      create the symlinks (the template ships those) but to scaffold <code>docs/agents/</code>
+      that the Matt Pocock skills expect; it's idempotent and won't clobber existing files. Docs updated.
+      <em>Update 2026-07-14:</em> the template now also ships <code>docs/adr/</code> itself (with the
+      <code>decision-log</code> skill), so <code>--full</code> is only needed for <code>docs/agents/</code>.</p>
+  </div>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D4</span> Ship the context-budget &amp; session-rollover system as a template feature
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">scripts/ · skills/ · docs/ · CONTEXT.md</span></h3>
+    <p><span class="fix">Decided:</span> ported the Context Budget &amp; Session Rollover spec
+      (<code>work/context-decay/context-decay-spec.md</code>) into the template as a first-class feature:
+      <code>scripts/context-budget.sh</code> (exact per-runtime context measurement, exit 0/1/2),
+      <code>scripts/hooks/context-budget-claude-hook.sh</code> + wiring in
+      <code>.claude/settings.json.example</code>, <code>context-budget.env</code> thresholds,
+      <code>skills/session-rollover/</code> (+ <code>/session-rollover</code> command), measured-checkpoint
+      clauses in <code>onboard-repo</code>/<code>rlm</code>, a standing "Context Budget" section in
+      <code>CONTEXT.md</code>, and <code>docs/context-budget.md</code>. Verified live: the hook fired a real
+      WARN in the implementing session. Adaptation decisions in <code>work/context-decay/decisions.md</code>.</p>
+  </div>
+
+  <div class="find dec resolved">
+    <h3><span class="id">D3</span> Work-directory naming: drop the <code>&lt;username&gt;_</code> prefix
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">work/ · docs · skills</span></h3>
+    <p><span class="fix">Decided:</span> work directories are now <code>work/&lt;project-name&gt;/</code> instead of
+      <code>work/&lt;username&gt;_&lt;project-name&gt;/</code>. The prefix existed to avoid collisions in shared
+      workspaces, but added noise for the common single-user case. Updated <code>CONTEXT.md</code>, the
+      <code>decision-log</code>/<code>checkpoint</code> skills, <code>/decision</code> command,
+      <code>workspace-structure</code>/<code>usage-scenarios</code>/<code>setup-guide</code> docs (md + html), and the
+      ADR template/README/ADR-0001.</p>
+  </div>
+</body>
+</html>
