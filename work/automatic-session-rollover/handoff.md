@@ -7,6 +7,43 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 13: scenario catalog + parent positions + learnings rules; WARN rollover at ~125K)
+
+**What shipped (committed on `main`, pushed):**
+
+- **`967b3d2` — scenario catalog S11–S54:** new `rollover-scenarios.md`
+  (authoritative; nine dimension groups, each scenario with pass criteria),
+  mirrored as HTML §7. Answered the user's open question: five missing
+  dimensions added (concurrency/contention, vendor heterogeneity,
+  human-in-the-loop policy, observability/auditability,
+  evolution/compatibility); cost folds into performance.
+- **`5d2f75d` — root vs intermediate parent positions** (user review finding):
+  HTML §2.2 + research-md §3 subsection — parent *role* is
+  position-invariant; the node's own lifecycle differs by position (delta
+  table: manager, rollover path, measurement, escalation, authority, lock,
+  recovery owner). No parent-type field — `depth`/`parent_session_id`
+  suffice. Scenarios S53 (BLOCKED bubbles L2→L1→root) and S54 (intermediate
+  parent rolls itself: drain own children, then yield) added; HTML §2.3–2.9
+  renumbered.
+- **`536fd9c` — learnings-capture rules** (user retro discussion): rollover
+  skill Reflect step now says capture at incident time + park uncertain
+  observations as `Learnings:` ledger lines + second-strike promotion;
+  checkpoint skill points the human retro at checkpoint/successor-start.
+  Backlog changelog row added. Deliberately no learnings.md, no auto-retro.
+- This rollover commit: decisions.md notes (catalog placement; parent
+  positions as node position, not type enum), ledger restructure.
+
+**Learnings:** *(parked; promote on second strike)*
+- Blind sed renumbering of doc section numbers also matched CSS (`2.6em`)
+  and version strings (`0.142.4`) — pattern-guard (`§`, `secno">`, TOC text)
+  and a pre-grep of all `2.x` occurrences avoided corruption.
+- A ~15-line python `html.parser` tag-balance + id-dedup + secno-order check
+  before committing hand-edited HTML is cheap, reusable pre-commit insurance.
+
+**Rollover:** WARN fired at 122K mid-edit; finished the parent-positions and
+learnings units cleanly; user then asked to close the learnings thread and
+roll over. First rollover of this work item triggered below STOP.
+
 # Session Handoff — 2026-08-06 (session 12: HTML review rendition shipped; STOP rollover at 155K mid-turn)
 
 **What shipped (committed on `main`, pushed):**
@@ -39,34 +76,3 @@ extend, not duplicate, those.
 edits later; wrapped the atomic step (commit `d93daea` + this ledger) and
 rolled. Second consecutive session terminated on schedule by its own subject
 matter.
-
-# Session Handoff — 2026-08-06 (session 11b: subagent-rollover research phase; STOP rollover at 157K)
-
-**What shipped (committed on `main`, pushed through `4fa0cdb`):**
-
-- **`subagent-rollover-research.md`** (this work dir) — full research/design
-  note on parent-managed child-session rollover: what transfers from
-  main-session rollover, parent-as-manager policy mapping, successor-dispatch
-  as the only rollover verb (resume worsens context), per-child files +
-  dispatch records, lock hierarchy with transitive validity, drain-mode
-  invariant (no parent rollover with live children), checkpoint/yield
-  protocol (§8), 14-row rollover inventory (§9), delta requirements R1–R8
-  (§10), vendor-agnostic layering (§11), depth/resilience model (§12),
-  evaluation model — state machines, invariants I1–I8, scenarios S1–S10,
-  fault properties P1–P5, cost model (§13).
-- **`subagent-rollover-stats.md`** — measured: 30 subagent transcripts, 3
-  crossed 120K WARN, max 141.8K (a *resumed* implementer), 0 ≥ 150K; claude
-  child transcripts live at `<project-dir>/<parent-uuid>/subagents/agent-*.jsonl`
-  with `.meta.json` siblings.
-- **`subagent-vendor-survey.md`** — 4-runtime capability survey: only claude
-  (and partially copilot) expose child identity; codex/gemini children are
-  opaque; opencode forbids nesting; no runtime reports per-child usage.
-
-**How it was produced:** three parallel background research agents (local
-stats; Claude Code docs mechanics; live-CLI vendor survey) + controller
-synthesis; user added mid-flight: vendor-agnostic requirement, the
-communication protocol, the rollover inventory, and the evaluation model.
-
-**Rollover:** STOP hook fired at 156,987 tokens right after the eval-model
-section landed — the system being designed terminated its own design session
-on schedule.

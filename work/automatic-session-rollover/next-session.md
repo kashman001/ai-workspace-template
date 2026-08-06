@@ -6,68 +6,64 @@
 
 ## Mission
 
-The subagent-rollover research doc now has an HTML review rendition
-(`subagent-rollover-research.html`, structure: problem → model → machinery →
-findings → proposal → evaluation). The user's next directive (given mid-turn,
-NOT started): **enumerate rollover scenarios** — mainline functional flows
-plus corner/edge cases across resilience, recoverability, and performance —
-so the team can (a) keep them in mind while working through the doc and
-(b) use them as the evaluation harness, *before* implementing anything. The
-user also asked: "is there a dimension I missed?" — answer that first.
+The subagent-rollover design is under **active user review** of
+`subagent-rollover-research.html`. Session 13 resolved the first review
+finding (root vs intermediate parent positions → HTML §2.2, S53/S54) and
+shipped the full scenario catalog (S11–S54, `rollover-scenarios.md`,
+mirrored HTML §7). Next: respond to further review findings as the user
+raises them; when review settles, start implementation next-steps item 1
+(registry/lock schema extension in `context-budget.sh` — agent records with
+`parent_session_id`/`depth`, per-child locks, release-order guard; R4/R5),
+using the catalog as the harness (M-class scenarios first).
 
 ## Read these, in order
 
-1. `subagent-rollover-research.md` — §13 only (S1–S10 scenarios, I1–I8
-   invariants, P1–P5 fault properties, cost model): the seed the new catalog
-   must extend, not duplicate. Demand-load other sections per §-pointer as
-   needed; the HTML mirrors the same content restructured.
-2. `handoff.md` top block — the session-12 record, including candidate
-   missing dimensions already sketched (concurrency/contention incl. human
-   attach during drain, observability/auditability, cost/token-economy,
-   record schema evolution, opaque-runtime degradation, human-in-the-loop
-   policy edges).
+1. `handoff.md` top block — session-13 record (what shipped, parked
+   learnings).
+2. On demand only: `rollover-scenarios.md` (catalog + dimension set);
+   research md by §-pointer (§13 eval model, §3 parent positions); HTML only
+   for the section being edited.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project automatic-session-rollover`
    (also `git pull --ff-only` if the checkout lags origin/main).
-2. Answer the user's open question (missed dimensions), agree the dimension
-   set, then build the scenario catalog — likely as a new section of the HTML
-   doc (keep the md note in sync or record where the catalog is
-   authoritative). Mainline + edge/corner cases per dimension, each phrased
-   with pass criteria so it can become an acceptance/fault-injection test.
+2. Ask the user whether to continue doc review or begin implementation
+   slice 1 (above). If starting implementation: TDD per the harness style in
+   `scripts/tests/` (mktemp fixtures, `touch -t` mtimes).
 
 ## Do NOT reload
 
-- `handoff-archive.md` and blocks before session 12 — superseded.
-- The vendor-hook-deployments plan + SDD artifacts — done; git history is
-  the record.
-- The research-agent transcripts/scratchpad — findings fully captured in the
-  three committed research files.
+- `handoff-archive.md` and blocks before session 13 — superseded.
+- The full HTML file — mirror of md content; open only the section under
+  edit.
+- The research-agent transcripts/scratchpad — captured in the three
+  committed research files.
 - Backlog card **L17** — separate follow-up thread.
-- The full HTML file — only open the section being edited; it duplicates the
-  md content you already have pointers into.
+- The learnings/retro discussion — codified in `skills/session-rollover/
+  SKILL.md` (Reflect step) + `skills/checkpoint/SKILL.md`; don't re-derive.
 
 ## Constraints already decided (do not re-litigate)
 
-- Vendor-agnostic layering is mandatory (neutral contract, per-runtime
-  adapters, graceful degradation without child handles).
-- Child rollover verb = successor dispatch, never resume.
-- Parent must not roll over with live children (drain mode; release-order
-  enforcement in the lock system).
-- Scenarios-before-implementation ordering is the user's explicit direction.
+- Vendor-agnostic layering; child rollover verb = successor dispatch, never
+  resume; parent never rolls with live children (drain; I4).
+- Parent kinds = node *position* (root vs intermediate), not a type enum —
+  `depth`/`parent_session_id` suffice (decisions.md 2026-08-06).
+- Scenarios-before-implementation: done — the catalog exists; implementation
+  may begin when the user says so.
 - Standing push-to-main approval applies.
 
-## State snapshot (at session-12 rollover, 2026-08-06)
+## State snapshot (at session-13 rollover, 2026-08-06)
 
-- Branch `main` pushed through `d93daea` (HTML doc); this rollover's commit
-  follows. Uncommitted at rollover: ledger + handoff/decisions/ops-knowledge
-  appends (go into the rollover commit); `.active-session` lock untracked by
-  design.
-- No running background agents or servers (the localhost:8749 preview server
-  was killed). No worktrees.
-- No `.rollover-options` file — launch flags unknown again (skill: leave
-  absent); successor launches with runtime defaults.
+- Branch `main` pushed through `536fd9c`; this rollover's commit follows
+  (ledger restructure + decisions notes + launcher). `.active-session` lock
+  released at session end; `work/context-decay/context-ledger.jsonl`
+  hook-maintained.
+- No running background agents, servers, or worktrees.
+- `work/automatic-session-rollover/context-budget.env` sets
+  `ROLLOVER_RELAUNCH=auto` — the successor is launched by
+  `scripts/launch-next-session.sh`. No `.rollover-options` file (launch
+  flags unknown; runtime defaults).
 
 ## At session end
 
