@@ -2,6 +2,43 @@
 ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
+# Session Handoff — 2026-08-06 (session 13: scenario catalog + parent positions + learnings rules; WARN rollover at ~125K)
+
+**What shipped (committed on `main`, pushed):**
+
+- **`967b3d2` — scenario catalog S11–S54:** new `rollover-scenarios.md`
+  (authoritative; nine dimension groups, each scenario with pass criteria),
+  mirrored as HTML §7. Answered the user's open question: five missing
+  dimensions added (concurrency/contention, vendor heterogeneity,
+  human-in-the-loop policy, observability/auditability,
+  evolution/compatibility); cost folds into performance.
+- **`5d2f75d` — root vs intermediate parent positions** (user review finding):
+  HTML §2.2 + research-md §3 subsection — parent *role* is
+  position-invariant; the node's own lifecycle differs by position (delta
+  table: manager, rollover path, measurement, escalation, authority, lock,
+  recovery owner). No parent-type field — `depth`/`parent_session_id`
+  suffice. Scenarios S53 (BLOCKED bubbles L2→L1→root) and S54 (intermediate
+  parent rolls itself: drain own children, then yield) added; HTML §2.3–2.9
+  renumbered.
+- **`536fd9c` — learnings-capture rules** (user retro discussion): rollover
+  skill Reflect step now says capture at incident time + park uncertain
+  observations as `Learnings:` ledger lines + second-strike promotion;
+  checkpoint skill points the human retro at checkpoint/successor-start.
+  Backlog changelog row added. Deliberately no learnings.md, no auto-retro.
+- This rollover commit: decisions.md notes (catalog placement; parent
+  positions as node position, not type enum), ledger restructure.
+
+**Learnings:** *(parked; promote on second strike)*
+- Blind sed renumbering of doc section numbers also matched CSS (`2.6em`)
+  and version strings (`0.142.4`) — pattern-guard (`§`, `secno">`, TOC text)
+  and a pre-grep of all `2.x` occurrences avoided corruption.
+- A ~15-line python `html.parser` tag-balance + id-dedup + secno-order check
+  before committing hand-edited HTML is cheap, reusable pre-commit insurance.
+
+**Rollover:** WARN fired at 122K mid-edit; finished the parent-positions and
+learnings units cleanly; user then asked to close the learnings thread and
+roll over. First rollover of this work item triggered below STOP.
+
 # Session Handoff — 2026-08-06 (session 12: HTML review rendition shipped; STOP rollover at 155K mid-turn)
 
 **What shipped (committed on `main`, pushed):**

@@ -7,6 +7,55 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 15: issue-02 approval ladder + issue-03 session roles; STOP rollover at 177K)
+
+**What shipped (committed on `main`, pushed through `e7d9f10` — work done in
+worktree `issue-02-permission-mode-auto`, pushed to origin/main; the LOCAL
+main checkout is BEHIND until pulled):**
+
+- **`ad16eb0` — issue 02 resolved (approval ladder):** `ROLLOVER_OPT_APPROVAL`
+  is now `default < edits < auto < full`; `auto` re-pointed to the classifier
+  tier (claude `--permission-mode auto`, verified live `--help` 2.1.223,
+  ADR-0003), `edits` carries the old acceptEdits-tier mappings; non-classifier
+  runtimes fall back to `edits` + stderr note. User decisions: option-2
+  spelling (agent-agnostic capability ladder), nearest-level fallback, this
+  item switches `full`→`auto` (machine-local `.rollover-options` updated
+  live). Tests T14a–p; backlog **L19**; issue file + `decisions.md` updated.
+- **`e7d9f10` — issue 03 core (session roles, from lock-lifecycle discussion
+  with user):** roles **primary / auxiliary / superseded**, lock =
+  authoritative primary marker; `register` records + prints `role=`
+  (auxiliary association persisted); launcher stamps `superseded` at
+  pre-launch release; `attach-session.sh` prints `role=`; **SessionEnd hook**
+  releases the lock on plain exit (own-transcript identity);
+  `scripts/statusline-context-budget.sh` (new) shows
+  `PRIMARY · <project> · <pct>%`. Docs: `context-budget.md` "Session roles",
+  work-directory-conventions "One primary session". Tests: registry T6,
+  launcher T20, attach T7, statusline suite — 19+58+22+8+37 green. Backlog
+  **L20**; deferred items (superseded_by back-link, --takeover, sessions
+  listing, tab-title) in `issues/03-session-roles.md`; `decisions.md` note
+  (promote-candidate when slice 1 lands).
+- **Machine-local (not in git):** live `.claude/settings.json` gained the
+  SessionEnd hook + statusLine wiring; statusline live-verified
+  (`PRIMARY · automatic-session-rollover · 65%`). Live settings now reference
+  `scripts/statusline-context-budget.sh`, which exists in the main checkout
+  only after `git pull`.
+- **M14 fix verified live** at this session's bootstrap (session-14's parked
+  learning, closed): first auto-relaunch successor acquired the lock cleanly.
+- Doc review of `subagent-rollover-research.html` remained with the user all
+  session; untouched.
+
+**Learnings:** *(parked; promote on second strike)*
+- Worktree-isolated sessions push tracked work to origin/main while the MAIN
+  checkout stays behind and holds all runtime state (registry, locks, ledger,
+  live settings) — successor launches and live-settings references break
+  until the main checkout pulls. This rollover's launcher carries the pull as
+  a first action; if it bites again, route to operational-knowledge.md.
+
+**Rollover:** STOP fired at 177K on the `record` immediately after issue-03
+shipped; atomic step was complete. Auto-relaunch deliberately NOT invoked
+from the worktree (would seed a successor with divergent runtime state);
+user pulls main checkout, then launches.
+
 # Session Handoff — 2026-08-06 (session 14: M14 lock-release fix + runtime-state gitignore; WARN rollover at ~123K)
 
 **What shipped (committed on `main`, pushed through `bc3fab3`):**
@@ -39,41 +88,3 @@ Convention: docs/work-directory-conventions.md.
 - This session's own bootstrap was the first live exercise of auto-relaunch
   succession; the next successor's clean lock acquisition is the fix's first
   real verification — check `register` output at bootstrap.
-
-# Session Handoff — 2026-08-06 (session 13: scenario catalog + parent positions + learnings rules; WARN rollover at ~125K)
-
-**What shipped (committed on `main`, pushed):**
-
-- **`967b3d2` — scenario catalog S11–S54:** new `rollover-scenarios.md`
-  (authoritative; nine dimension groups, each scenario with pass criteria),
-  mirrored as HTML §7. Answered the user's open question: five missing
-  dimensions added (concurrency/contention, vendor heterogeneity,
-  human-in-the-loop policy, observability/auditability,
-  evolution/compatibility); cost folds into performance.
-- **`5d2f75d` — root vs intermediate parent positions** (user review finding):
-  HTML §2.2 + research-md §3 subsection — parent *role* is
-  position-invariant; the node's own lifecycle differs by position (delta
-  table: manager, rollover path, measurement, escalation, authority, lock,
-  recovery owner). No parent-type field — `depth`/`parent_session_id`
-  suffice. Scenarios S53 (BLOCKED bubbles L2→L1→root) and S54 (intermediate
-  parent rolls itself: drain own children, then yield) added; HTML §2.3–2.9
-  renumbered.
-- **`536fd9c` — learnings-capture rules** (user retro discussion): rollover
-  skill Reflect step now says capture at incident time + park uncertain
-  observations as `Learnings:` ledger lines + second-strike promotion;
-  checkpoint skill points the human retro at checkpoint/successor-start.
-  Backlog changelog row added. Deliberately no learnings.md, no auto-retro.
-- This rollover commit: decisions.md notes (catalog placement; parent
-  positions as node position, not type enum), ledger restructure.
-
-**Learnings:** *(parked; promote on second strike)*
-- Blind sed renumbering of doc section numbers also matched CSS (`2.6em`)
-  and version strings (`0.142.4`) — pattern-guard (`§`, `secno">`, TOC text)
-  and a pre-grep of all `2.x` occurrences avoided corruption.
-- A ~15-line python `html.parser` tag-balance + id-dedup + secno-order check
-  before committing hand-edited HTML is cheap, reusable pre-commit insurance.
-
-**Rollover:** WARN fired at 122K mid-edit; finished the parent-positions and
-learnings units cleanly; user then asked to close the learnings thread and
-roll over. First rollover of this work item triggered below STOP.
-
