@@ -221,7 +221,10 @@ fi
 printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n' "$PROMPT"
 
 [ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
-if [ "$BG" -eq 1 ] && [ "$RUNTIME" != "claude" ]; then
+# copilot-vscode's `code chat` is detached by nature (exits before the seeded
+# session responds — issue 01) — always confirm the successor via the BG loop.
+[ "$RUNTIME" = "copilot-vscode" ] && BG=1
+if [ "$BG" -eq 1 ] && [ "$RUNTIME" != "claude" ] && [ "$RUNTIME" != "copilot-vscode" ]; then
   die "--bg (background launch) is claude-only (ADR-0003); runtime=$RUNTIME"
 fi
 
@@ -266,8 +269,9 @@ case "$RUNTIME" in
   opencode) CMD=(opencode ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} --prompt "$PROMPT") ;;
   copilot|copilot-cli) CMD=(copilot ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -i "$PROMPT") ;;
   copilot-vscode)
-    note "copilot-vscode has no CLI seeded launch (see issues/01-vscode-agent-mode-hooks.md) — paste the prompt into VS Code agent mode"
-    exit 0 ;;
+    # Verified (issue 01, session 28): opens a NEW agent session in the
+    # last-active VS Code window and returns immediately.
+    CMD=(code chat ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -r -m agent "$PROMPT") ;;
   *) die "unknown runtime: $RUNTIME" ;;
 esac
 

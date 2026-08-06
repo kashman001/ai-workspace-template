@@ -167,4 +167,45 @@ out=$(echo "$active_payload" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000
       "$HOOKS/context-budget-copilot-hook.sh" agentStop)
 assert_empty "T8e: stop_hook_active -> never re-block" "$out"
 
+echo "T11: copilot-vscode wrapper — additionalContext at start, exit-2 block only at STOP"
+reset_state
+WS="$TMP/vscode-ws/User/workspaceStorage/hash1"
+mkdir -p "$WS/GitHub.copilot-chat/transcripts" "$WS/chatSessions"
+touch "$WS/GitHub.copilot-chat/transcripts/s11.jsonl" "$WS/chatSessions/s11.jsonl"
+vs_payload="{\"session_id\":\"s11\",\"transcript_path\":\"$WS/GitHub.copilot-chat/transcripts/s11.jsonl\",\"cwd\":\"/x\"}"
+out=$(echo "$vs_payload" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-copilot-vscode-hook.sh" SessionStart); rc=$?
+assert_eq "T11a: SessionStart WARN exits 0" "$rc" "0"
+assert_contains "T11b: WARN in hookSpecificOutput.additionalContext" \
+  "$(echo "$out" | jq -r '.hookSpecificOutput.additionalContext')" "CONTEXT BUDGET WARN"
+reset_state
+out=$(echo "$vs_payload" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-copilot-vscode-hook.sh" Stop 2>&1); rc=$?
+assert_eq "T11c: Stop WARN -> exit 0 (block only at STOP)" "$rc" "0"
+assert_empty "T11d: Stop WARN silent" "$out"
+reset_state
+err=$(echo "$vs_payload" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-copilot-vscode-hook.sh" Stop 2>&1 >/dev/null); rc=$?
+assert_eq "T11e: Stop STOP -> exit 2" "$rc" "2"
+assert_contains "T11f: STOP text on stderr" "$err" "CONTEXT BUDGET STOP: this session is at 151000 tokens"
+vs_active="{\"session_id\":\"s11\",\"transcript_path\":\"$WS/GitHub.copilot-chat/transcripts/s11.jsonl\",\"stop_hook_active\":true}"
+reset_state
+out=$(echo "$vs_active" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-copilot-vscode-hook.sh" Stop 2>&1); rc=$?
+assert_eq "T11g: stop_hook_active -> exit 0 (never re-block)" "$rc" "0"
+assert_empty "T11h: stop_hook_active silent" "$out"
+cli_payload="{\"sessionId\":\"s11\",\"transcript_path\":\"$WS/GitHub.copilot-chat/transcripts/s11.jsonl\"}"
+reset_state
+out=$(echo "$cli_payload" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-copilot-vscode-hook.sh" Stop 2>&1); rc=$?
+assert_eq "T11i: camelCase (Copilot CLI) payload -> exit 0" "$rc" "0"
+assert_empty "T11j: camelCase payload silent" "$out"
+vs_fresh="{\"session_id\":\"s12\",\"transcript_path\":\"$WS/GitHub.copilot-chat/transcripts/s12.jsonl\"}"
+touch "$WS/GitHub.copilot-chat/transcripts/s12.jsonl"
+reset_state
+out=$(echo "$vs_fresh" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
+      "$HOOKS/context-budget-copilot-vscode-hook.sh" SessionStart 2>&1); rc=$?
+assert_eq "T11k: missing chatSessions file -> exit 0 (fail-open)" "$rc" "0"
+assert_empty "T11l: missing chatSessions file silent" "$out"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

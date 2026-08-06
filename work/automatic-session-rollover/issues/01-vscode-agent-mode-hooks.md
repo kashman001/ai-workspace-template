@@ -194,8 +194,45 @@ before the session responds — launcher BG confirm-loop pattern applies.
    hook-provided path route; vendor hook deployments section; relaunch
    knobs), `relaunch-analysis.md` seeded-launch row, backlog card.
 
+## Update 2026-08-06 (session 29) — probe v4 verified; build SHIPPED. DONE.
+
+**Spec step 3 (probe v4, the one open leg) — verified live:** wired one
+repo-relative command entry (`scripts/hooks/vscode-hook-probe.sh
+UserPromptSubmit-REL`) alongside the absolute SessionStart control, drove one
+`code chat -r -m agent` seeded session (sid `c9efe334`). Results:
+- **Relative command resolution WORKS** (the `-REL` entry fired).
+- **Hook-process cwd = workspace root** (`pwd` logged as the repo root,
+  matching the payload's `cwd`).
+- VS Code re-read the hook JSON with **no window reload** (config change took
+  effect on the next `code chat` session).
+- `$CLAUDE_PROJECT_DIR` still UNSET (consistent with session 28).
+
+**Build (steps 1–2, 4–6) shipped:**
+- `scripts/hooks/context-budget-copilot-vscode-hook.sh` — snake_case
+  `session_id` guard (CLI camelCase exits harmlessly); chatSessions path
+  derived from `transcript_path` (3×dirname); fail-open when absent;
+  SessionStart → `hookSpecificOutput.additionalContext` WARN/STOP; Stop →
+  `stop_hook_active` guard, STOP-only stderr + exit 2.
+- `.github/hooks/context-budget-vscode.json` — PascalCase `SessionStart` +
+  `Stop`, **repo-relative** commands (per probe v4).
+- `launch-next-session.sh` — copilot-vscode `CMD=(code chat … -r -m agent
+  "$PROMPT")`, always routed through the BG confirm loop (detached by
+  nature); the `--bg` claude-only guard exempts copilot-vscode.
+- Tests: vendor T11 block (12 asserts, fake workspaceStorage tree) and
+  launcher T22 (dry-run argv + implied bg) — full suites green.
+- Docs: `docs/context-budget.md` (runtime-table hook route, vendor
+  deployments row, relaunch knobs, known-limitations), CONTEXT.md
+  (five→six runtimes), `relaunch-analysis.md`, backlog changelog row.
+
+**Versions (per Done-when):** VS Code 1.132.0 (Copilot Chat built in —
+`code --list-extensions` lists no separate copilot extension), macOS,
+Copilot Pro, model claude-sonnet-5. Probe files
+(`scripts/hooks/vscode-hook-probe.sh`, `.github/hooks/vscode-probe.json`,
+`.vscode-hook-probe.jsonl`) are disposable — delete from the main checkout.
+
 ## Done when
 
 - All three checks pass on a Copilot-licensed machine (note VS Code +
   extension versions in this file), or findings recorded here and the
   adapter/docs/launcher amended to match reality.
+  **→ MET (sessions 28–29, versions above). Ticket CLOSED.**

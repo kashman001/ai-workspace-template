@@ -71,8 +71,12 @@ fully automatic (no ask). `off` remains today's paste-the-prompt behavior.
 | **gemini** | Exact via workspace telemetry log (`.gemini/settings.json`); no in-band push — agent discipline only | `gemini -i "<prompt>"` | none — `gemini -p` is headless but foreground |
 | **opencode** | **Not measured** by context-budget.sh | `opencode run "<prompt>"` — CLI absent on this machine, untested | none known |
 
-(context-budget.sh also measures copilot-vscode / copilot-cli; no seeded-launch
-story evaluated for those.)
+(context-budget.sh also measures copilot-vscode / copilot-cli; the CLI's
+seeded launch is `copilot -i "<prompt>"`. **copilot-vscode (2026-08-06,
+issue 01):** `code chat -r -m agent "<prompt>"` is a verified seeded launch —
+opens a new agent session in the last-active VS Code window, but exits 0
+before the session responds, so `launch-next-session.sh` always routes it
+through the BG confirm loop and treats registration as the success signal.)
 
 **Consequence:** interactive seeded relaunch is the universal, agent-agnostic
 core; detached auto-handoff is a claude-only tier. For codex/gemini the closest
