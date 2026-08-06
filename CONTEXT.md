@@ -253,9 +253,11 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
   (claude/codex/gemini/opencode/copilot CLI) get the in-band push at these
   thresholds via their committed hook wiring (`docs/context-budget.md` →
   "Vendor hook deployments").
-- Dispatching a long-running subagent: include the rollover contract in its
-  prompt — `scripts/context-budget.sh dispatch-contract --report <path>`; at
-  child WARN/STOP, roll (fresh dispatch), never resume
+- Dispatching a long-running subagent: open a dispatch record and emit the
+  rollover contract for its prompt in one step —
+  `scripts/context-budget.sh dispatch-open --project <p> --task <slug>
+  --report <path>`; close it at yield (`dispatch-close --status <S>`); at
+  child WARN/STOP, roll (fresh `dispatch-open`), never resume
   (`docs/context-budget.md` → "Dispatching long-running children").
 
 Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in

@@ -610,3 +610,43 @@ docs/context-budget.md new section + quickstart line + children cross-ref,
 CONTEXT.md Context Budget bullet. All seven suites green (267 asserts).
 **Promote?:** no — implementation of research §14.3 within ADR-0005's model;
 revisit when R4 (dispatch records/fencing) makes the protocol contractual.
+
+## 2026-08-06 — R4: dispatch records as stateful subcommands layered on the stateless contract emitter (session 22)
+
+**Chose:** three new `context-budget.sh` subcommands owning persistence —
+`dispatch-open` (appends generation N+1 status=`open` to
+`work/<proj>/.agent-dispatch/<task>.json` and emits the R2 contract for that
+generation in one step; refuses while the previous generation is open;
+`--gen` rejected, computed from the record), `dispatch-close --status
+<five yield statuses|KILLED>` (closes the open generation, merges
+`--agent-id` post-hoc), `dispatch-list` (per-task `task= gen= status=
+report=` lines, exit 1 while any generation open — the parent's drain
+check). Records are dot-prefixed gitignored runtime state anchored to the
+workspace root (ADR-0006), same class as `.agent-locks/`. The contract
+emitter gains one clause: progress blocks are labeled `[gen N]`.
+**Because:** R4's fencing ("gen N+1 only after gen N's lock cleared") needs
+a single enforcement point — the moment a generation comes into being — and
+unifying record-write with contract-emit means the parent can't forget the
+record and the gen on disk can't drift from the gen in the prompt. Records
+are what make parent rollover fleet-safe: a successor parent can't resume
+predecessor children (resume is keyed to the dead parent's session id) but
+can reconstruct from records + reports and re-dispatch fresh.
+**Rejected:** folding persistence into `dispatch-contract` (its
+statelessness was a slice-3 decision — usable unregistered from any
+runtime/checkout); a single `dispatch` verb with modes (flat hyphenated
+commands match the existing CLI surface); research §5's literal
+`work/<proj>/agents/` placement (undotted reads as durable content; the
+dot-prefix + gitignore matches the established runtime-state convention);
+storing records in `.context-budget/` (the registry stays a registry, not a
+store of dispatch specs); tying fencing to `.agent-locks` liveness (ad-hoc
+Task-tool children never register — record status is the portable signal,
+with `KILLED` as the explicit parent ruling for children that never yield).
+**Blast radius:** `scripts/context-budget.sh` (three subcommands + five
+flags + one contract clause), new suite
+`scripts/tests/test-dispatch-records.sh` L1–L9 (51 asserts), `.gitignore`
+runtime-state block, docs/context-budget.md R2–R4 section rewrite +
+quickstart bullet, CONTEXT.md dispatch bullet. All eight suites green (318
+asserts).
+**Promote?:** no — R4 completes research §5/§8 within ADR-0005/0006's model;
+revisit at drain mode (R6) when the protocol becomes contractual across
+parent rollover.
