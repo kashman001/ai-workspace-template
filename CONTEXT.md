@@ -256,8 +256,9 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
 
 Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in
 `context-budget.env` via `scripts/launch-next-session.sh` (see
-`docs/context-budget.md` → "Relaunch knobs"); the successor inherits the
-predecessor's launch options via `work/<proj>/.rollover-options`.
+`docs/context-budget.md` → "Relaunch knobs"); a committed
+`work/<proj>/context-budget.env` overrides it per work item. The successor
+inherits the predecessor's launch options via `work/<proj>/.rollover-options`.
 
 Full reference: `docs/context-budget.md`; rollover workflow:
 `skills/session-rollover/SKILL.md`.

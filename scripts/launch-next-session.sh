@@ -8,9 +8,11 @@
 #          ROLLOVER_RUNTIME > claude.
 # Usage:   launch-next-session.sh <project>
 #            [--runtime claude|codex|gemini|opencode|copilot] [--bg] [--dry-run]
-# Knobs:   context-budget.env — ROLLOVER_RELAUNCH=off|manual|auto,
-#          ROLLOVER_RUNTIME (fallback only). ROLLOVER_CONFIRM_SECS (env only,
-#          default 120) bounds the --bg successor-confirmation poll.
+# Knobs:   ROLLOVER_RELAUNCH=off|manual|auto, ROLLOVER_RUNTIME (fallback
+#          only). Precedence: explicit env > work/<project>/context-budget.env
+#          (committed per-item policy, optional) > global context-budget.env >
+#          built-in default. ROLLOVER_CONFIRM_SECS (env only, default 120)
+#          bounds the --bg successor-confirmation poll.
 #          work/<project>/.rollover-options (optional, written at rollover):
 #          ROLLOVER_OPT_APPROVAL=default|auto|full, ROLLOVER_OPT_MODEL=<id>,
 #          ROLLOVER_OPT_EXTRA=<raw args> — replayed as per-runtime flags on
@@ -31,13 +33,6 @@ set -u
 WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 
-if [ -z "${ROLLOVER_RELAUNCH:-}" ] && [ -f "$WORKSPACE_ROOT/context-budget.env" ]; then
-  . "$WORKSPACE_ROOT/context-budget.env" >/dev/null 2>&1 || true
-fi
-MODE="${ROLLOVER_RELAUNCH:-off}"
-FALLBACK_RUNTIME="${ROLLOVER_RUNTIME:-claude}"
-CONFIRM_SECS="${ROLLOVER_CONFIRM_SECS:-120}"
-
 note() { echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
 
@@ -54,6 +49,23 @@ done
 [ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run]"
 [ -f "$WORKSPACE_ROOT/work/$PROJECT/next-session.md" ] \
   || die "work/$PROJECT/next-session.md not found — run session-rollover first"
+
+# Relaunch knobs: explicit env > per-item work/$PROJECT/context-budget.env >
+# global context-budget.env > built-in default. Sourced here (not at the top)
+# because the per-item path needs $PROJECT from the args.
+EXPLICIT_RELAUNCH="${ROLLOVER_RELAUNCH:-}"
+EXPLICIT_RUNTIME="${ROLLOVER_RUNTIME:-}"
+for envf in "$WORKSPACE_ROOT/context-budget.env" \
+            "$WORKSPACE_ROOT/work/$PROJECT/context-budget.env"; do
+  if [ -f "$envf" ]; then
+    . "$envf" >/dev/null 2>&1 || true
+  fi
+done
+[ -n "$EXPLICIT_RELAUNCH" ] && ROLLOVER_RELAUNCH="$EXPLICIT_RELAUNCH"
+[ -n "$EXPLICIT_RUNTIME" ] && ROLLOVER_RUNTIME="$EXPLICIT_RUNTIME"
+MODE="${ROLLOVER_RELAUNCH:-off}"
+FALLBACK_RUNTIME="${ROLLOVER_RUNTIME:-claude}"
+CONFIRM_SECS="${ROLLOVER_CONFIRM_SECS:-120}"
 
 # The canonical bootstrap prompt (ADR-0003: wording is load-bearing, verbatim).
 PROMPT="Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."

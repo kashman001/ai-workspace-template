@@ -160,5 +160,20 @@ out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1)
 assert_contains "T14j: raw extra args pass through" "$out" "--add-dir /somewhere"
 rm -f "$TMP/work/testproj/.rollover-options"
 
+echo "T15: per-item work/<proj>/context-budget.env overrides global knobs"
+rm -f "$SESS"/*.json
+printf 'ROLLOVER_RELAUNCH=auto\n' > "$TMP/work/testproj/context-budget.env"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T15a: per-item file beats global (mode=auto)" "$out" "mode=auto"
+out=$(env ROLLOVER_RELAUNCH=off "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T15b: explicit env beats per-item file (mode=off)" "$out" "mode=off"
+rm -f "$TMP/work/testproj/context-budget.env"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1)
+assert_contains "T15c: no per-item file -> global applies (mode=manual)" "$out" "mode=manual"
+printf 'ROLLOVER_RUNTIME=opencode\n' > "$TMP/work/testproj/context-budget.env"
+out=$(run_lns "$LNS" testproj --dry-run 2>&1)
+assert_contains "T15d: per-item ROLLOVER_RUNTIME beats global fallback" "$out" "runtime=opencode"
+rm -f "$TMP/work/testproj/context-budget.env"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

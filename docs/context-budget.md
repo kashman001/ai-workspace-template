@@ -118,10 +118,17 @@ ROLLOVER_RUNTIME=claude   # fallback default only — the actual relaunch runtim
                           # comes from the dying session's own registry record
 ```
 
-Workspace-level only — no per-project override: the multi-session operating
-model varies *sessions* per project, not relaunch policy. `ROLLOVER_RUNTIME`
-is a fallback for unregistered sessions; a registered codex session relaunches
-a codex successor.
+**Per-work-item override:** an optional `work/<project>/context-budget.env`
+may set `ROLLOVER_RELAUNCH` (and/or `ROLLOVER_RUNTIME`) for that work item
+alone — e.g. one project runs hands-free `auto` chaining while the workspace
+default stays `manual`. Precedence in `launch-next-session.sh`: explicit
+environment variable > per-item file > global `context-budget.env` > built-in
+default (`off`). The per-item file is **committed** — it is standing policy
+(unlike `.active-session` and `.rollover-options`, which are per-launch
+state), so it applies to anyone who clones the workspace. Only the relaunch
+knobs are read per-item; WARN/STOP thresholds remain workspace-global.
+`ROLLOVER_RUNTIME` is a fallback for unregistered sessions; a registered
+codex session relaunches a codex successor.
 
 `scripts/launch-next-session.sh <project> [--runtime …] [--bg]` bakes the
 load-bearing bootstrap prompt in **verbatim** and launches the chosen runtime
