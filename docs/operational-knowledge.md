@@ -115,6 +115,18 @@ Select the tool with `-t`: `bc` (Beyond Compare, default), `code` (VS Code +
 Compare Folders extension tree), or `vscode` (VS Code built-in per-file diff).
 The script fast-fails on a bad SHA before opening any GUI.
 
+Beyond Compare binary/path facts (this Mac): the app is
+`/Applications/Beyond Compare.app`; the real CLIs are
+`…/Contents/MacOS/bcomp` (the blocking helper git wants) and
+`…/Contents/MacOS/BCompare`. The `/usr/local/bin/bcomp`/`bcompare` symlinks
+are **not** installed and `/usr/local/bin` needs root, so bare
+`bcomp`/`bcompare` don't resolve in the shell (add via `sudo ln -sf …` or
+BC → *Install Command Line Tools*). Git's global `difftool.bc.path`/
+`mergetool.bc.path` point straight at the app-bundle `bcomp`, so
+`git difftool -t bc` resolves the tool — but that fixes the path, **not** the
+symlink/temp-dir races above; still prefer `diff-review.sh` for commit-range
+review.
+
 ## Codex CLI on this machine — global config pins an unavailable model
 
 `~/.codex/config.toml` pins `gpt-5.6-terra`, which the account can't use:

@@ -5,6 +5,8 @@ Keep it concise (it loads into every conversation); link out for detail.
 
 `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` are symlinks to this file, so
 Claude Code, Codex, OpenCode, and Gemini all read the same context.
+**Agents: edit `CONTEXT.md` itself, never a symlink path** — write tools
+refuse to write through symlinks and the edit fails.
 
 > **This is a template.** Replace the `<…>` placeholders below for your
 > project, prune sections you don't need, and delete this note. See
@@ -75,77 +77,32 @@ Driven by the **decision-log** skill (`skills/decision-log/SKILL.md`); Claude Co
 
 Vendor-neutral skills live under `skills/<name>/SKILL.md` — any runtime can read
 them (Codex/Gemini/OpenCode via this file; Claude Code also gets slash-command
-shortcuts under `.claude/commands/`).
+shortcuts under `.claude/commands/`). One line each below — **open the skill's
+`SKILL.md` for the full workflow before acting on it**; that file carries the
+details omitted here.
 
-- **checkpoint** (`skills/checkpoint/SKILL.md`) — session-boundary wrap-up:
-  reconcile the backlog/issue tracker + project memory + reference docs, write a
-  hand-off doc (contract inlined in the skill), confirm clean branch state, and
-  emit a catch-up prompt for the next (post-compaction) session. Claude Code
-  shortcut: **`/checkpoint [next-focus]`**. On a context-budget WARN/STOP signal,
-  `session-rollover` takes precedence (measurement wins). Optional helpers: the
-  global `handoff` skill and `superpowers:brainstorming`
-  (see `docs/recommended-tooling.md`).
-
-- **onboard-repo** (`skills/onboard-repo/SKILL.md`) — bring a repo into the
-  workspace: record its identity/auth in `docs/repos-registry.md`, build/wire a
-  graphify code index (manual-scan fallback), and derive committed
-  `code-structure.md` / `design.md` / `api.md` under `docs/repo-context/<repo>/`.
-  Claude Code shortcut: **`/onboard-repo <repo-name> [repo-path]`**. Freshness:
-  `scripts/check-repo-context.sh`; refresh: `scripts/onboard-repo.sh <repo> --refresh`.
-
-- **rlm** (`skills/rlm/SKILL.md`) — Recursive Language Model loop for answering a
-  query over a context too large to read into chat: loads it as a variable in a
-  persistent Python REPL (`skills/rlm/scripts/rlm_repl.py`) and probes/chunks/
-  sub-queries a cheap leaf LLM over slices, then aggregates. Use for counting,
-  classifying every item, multi-hop lookup, or whole-corpus summarisation when "the
-  answer depends on almost every line". Claude Code shortcut:
-  **`/rlm context=<path> query=<question>`**. Leaf sub-LM is a nested `claude -p`
-  (vendored from github.com/brainqub3/claude_code_rlm, MIT).
-
-- **session-rollover** (`skills/session-rollover/SKILL.md`) — roll work over to a
-  fresh session via a deliberate, pruned handoff when the context budget hits
-  WARN/STOP (hook message or `scripts/context-budget.sh` exit code), instead of
-  letting automatic compaction decide what survives. Reflect → flush → backward
-  `handoff.md` + forward `next-session.md` (with a "Do NOT reload" section) →
-  paste-ready bootstrap prompt, then successor relaunch per `ROLLOVER_RELAUNCH`
-  (`context-budget.env`, via `scripts/launch-next-session.sh`). Claude Code
-  shortcut: **`/session-rollover [reason]`**.
-  See `docs/context-budget.md` and the **Context Budget** section below.
-
-- **decision-log** (`skills/decision-log/SKILL.md`) — capture the *why* behind a
-  decision so it survives context compaction: a three-tier scheme (commit trailer →
-  ephemeral note in `work/<proj>/decisions.md` → promoted ADR under `docs/adr/`).
-  Most reasoning is captured cheaply in `work/`; only lasting-weight decisions get
-  promoted to committed ADRs (on demand or at `checkpoint`). ADRs + commit trailers
-  become graphify nodes. Claude Code shortcut: **`/decision <what + why + rejected>`**
-  (or `/decision promote <note>`). See the **Decision Records** section above.
-
-- **create-work-item** (`skills/create-work-item/SKILL.md`) — scaffold a new
-  `work/<project>/` directory that follows the work-directory conventions
-  (durable `README.md` + forward launcher `next-session.md` + append-only ledger
-  `handoff.md`). Use when starting multi-session work; not for one-shot tasks.
-  Claude Code shortcut: **`/create-work-item <name>`**. Convention:
-  `docs/work-directory-conventions.md`.
-
-- **wayfinder** (`skills/wayfinder/SKILL.md`, vendored from
-  [mattpocock/skills](https://github.com/mattpocock/skills)) — plan a chunk of
-  work too big for one session as a **map of decision tickets**, resolved one
-  per session until the way to the destination is clear. User-invoked only.
-  In this workspace maps live under `work/<effort>/` (`map.md` +
-  `issues/NN-<slug>.md`) per `docs/agents/issue-tracker.md` → "Wayfinding
-  operations"; resolved tickets are Tier-2 decisions (see **Decision Records**).
-  Claude Code shortcut: **`/wayfinder [map path or ticket]`**. Full experience
-  needs the global Matt Pocock skill set (`grilling`, `research`, `prototype`,
-  `domain-modeling` — `docs/recommended-tooling.md` §3); without it those
-  ticket types degrade to plain conversation.
-
-- **writing-for-agents** (`skills/writing-for-agents/SKILL.md`, vendored from
-  [mattpocock/skills](https://github.com/mattpocock/skills)) — style guide for
-  writing any document an agent consumes: skills, `AGENTS.md`/`CLAUDE.md`,
-  docs reached by pointers. Model-invoked when creating or editing skills (no
-  slash command); `SKILL-MECHANICS.md` beside it covers skill frontmatter and
-  invocation choice. Consult it before writing or reworking anything under
-  `skills/`.
+- **checkpoint** — session-boundary wrap-up: reconcile backlog/memory/docs,
+  write a hand-off doc, emit a catch-up prompt for the next session. On a
+  context-budget WARN/STOP, `session-rollover` takes precedence (measurement
+  wins). `/checkpoint [next-focus]`
+- **session-rollover** — deliberate, pruned handoff to a fresh session when the
+  context budget hits WARN/STOP, instead of letting automatic compaction decide
+  what survives (see **Context Budget** below). `/session-rollover [reason]`
+- **create-work-item** — scaffold a `work/<project>/` directory (README +
+  launcher + ledger) when starting multi-session work; not for one-shot tasks.
+  `/create-work-item <name>`
+- **decision-log** — capture the *why* behind a decision per the three-tier
+  scheme above. `/decision <what + why + rejected>` (or `/decision promote <note>`)
+- **onboard-repo** — bring a repo into the workspace: registry entry, graphify
+  index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
+- **rlm** — answer a query over a context too large to read into chat
+  (persistent Python REPL + cheap leaf LLM over slices; good for counting,
+  per-item classification, whole-corpus summaries). `/rlm context=<path> query=<question>`
+- **wayfinder** — plan work too big for one session as a map of decision
+  tickets, resolved one per session. User-invoked only. `/wayfinder [map path or ticket]`
+- **writing-for-agents** — style guide for any document an agent consumes;
+  consult before writing or reworking anything under `skills/`. Model-invoked
+  (no slash command).
 
 ## Service Access
 
@@ -176,8 +133,10 @@ per-repo steps for Matt Pocock config and graphify graphs. All optional.
 `docs/template-workspace-backlog.html` is the living backlog of review findings
 and improvements for this template. **Agents: when you fix, change, or discover
 an issue in the template, update that file** — flip the item's status to
-Resolved with a `Fixed:` note, or append a new finding. Its "Maintaining this
-backlog" section defines the ID/status/scorecard convention. This applies to
+Resolved with a `Fixed:` note (then move the card to
+`docs/template-workspace-backlog-archive.html`), or append a new finding. Its
+"Maintaining this backlog" section defines the ID/status/scorecard convention.
+Edit both files with targeted reads (grep the ID); never load them whole. This applies to
 work **pushed from other sessions or clones** too: the delivering commit should
 carry the backlog update; when pulling a template change that arrived without
 one, add the missing row/card as part of incorporating it.
@@ -276,15 +235,12 @@ knowledge-graph tool): a Gemini `BeforeTool` hook (`.gemini/settings.json`)
 and an OpenCode plugin (`.opencode/plugins/graphify.js`). They activate only
 once a graph exists at `graphify-out/` relative to the session cwd.
 
-**Graph placement — per repo, never committed.** In a single-repo workspace
-(root *is* the product repo) the graph lives at root `graphify-out/` (already
-gitignored). In a **multi-repo** workspace, build each graph *inside its repo*
-at `repos/<name>/graphify-out/` — run `/graphify` (or the CLI) from that repo's
-root, not the workspace root. Cloned repos have their own git and won't inherit
-this workspace's `.gitignore`: add `graphify-out/` to the repo's
-`.git/info/exclude` (keeps the exercise/product repo's working tree clean
-without touching its tracked `.gitignore`). Point the MCP server at the graph
-via `.mcp.json` → `"args": ["repos/<name>/graphify-out/graph.json"]`.
+**Graph placement — per repo, never committed.** Single-repo: root
+`graphify-out/` (already gitignored). Multi-repo: build each graph *inside its
+repo* at `repos/<name>/graphify-out/` (run `/graphify` from that repo's root),
+add `graphify-out/` to the repo's `.git/info/exclude`, and point the MCP server
+at it via `.mcp.json` args. Full setup detail:
+`docs/recommended-tooling.md` §5.
 
 Rules (apply once a `graphify-out/graph.json` exists at the placement above):
 - For codebase questions, first run `graphify query "<question>"` from the
