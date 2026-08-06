@@ -6,6 +6,51 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 26: ticket-09 duplicate resolution reconciled + design verified; launcher-staleness race found)
+
+**What shipped (worktree `session-26-ticket-09`, pushed to `origin/main`):**
+
+- **Incident: session 26 launched from a stale checkout and re-resolved
+  ticket 09 in parallel.** Session 25 had already resolved it and pushed,
+  but the local main checkout was never ff-pulled, so this session read
+  session 24's launcher (whose "pull if missing session-24" first-action
+  check passed vacuously) and independently re-derived the design.
+  Reconciled: origin/main (session 25's answer) is canonical; session-26's
+  duplicate commit was discarded (kept on backup branch
+  `session-26-pre-reconcile`), and its value reduced to a verification
+  addendum. Root cause + mitigation recorded as a backlog Finding row;
+  launcher First-actions now demand `git fetch` + empty `HEAD..origin/main`
+  BEFORE trusting the launcher.
+- **Ticket-09 design VERIFIED on the durable evidence files** (addendum in
+  the ticket): child (`agentId`-tagged) events carry ONLY `outputTokens` +
+  `subagent.completed.totalTokens`; every `inputTokens` sits on the single
+  `session.shutdown` rollup — so sqlite-first measurement (§3) is confirmed
+  necessary (no input-side number in events.jsonl mid-session), and the
+  `copilot_cli_measure` silent-degrade concern (§3 bonus) is confirmed real.
+  The independent re-derivation also converged on context-size-not-
+  totalTokens, R4-reuse-verbatim, and the background/`write_agent` probe
+  gate — one divergence (no-locks vs composite-id locks) adjudicated in
+  session 25's favor (addendum has the reasoning).
+- decisions.md session-26 note; backlog: 1 new Finding row (launcher
+  staleness race) + verification sentence appended to the session-25 design
+  row. No code/tests touched.
+- **User is live in VS Code with Copilot Chat (Sonnet 5) and offered to run
+  prompts there** — issue-01 item 2 (`copilot_vscode_measure` live
+  verification) prompt handed over; result to be recorded in
+  `issues/01-vscode-agent-mode-hooks.md` when it comes back.
+
+**Suggested skills (next session):** wayfinder (ticket 08, ONLY if user is
+live — grilling, HITL); session-rollover at WARN/STOP.
+
+**Learnings:**
+- Launcher staleness race (1st strike, mitigated same session): a
+  "checkout carries session N's commit" first-action check cannot detect a
+  newer sibling rollover on origin — fetch-and-compare is the only safe
+  freshness guard before trusting next-session.md.
+
+**Wrap:** clean session-end below WARN; reconcile + verification committed,
+pushed. Session-24 block archived (two-block rule).
+
 # Session Handoff — 2026-08-06 (session 25: wayfinder ticket 09 RESOLVED — copilot adapter designed; clean wrap at ~113K)
 
 **What shipped (worktree `session-25-ticket-09`, pushed to `origin/main`):**
@@ -44,49 +89,4 @@ if it bites a check).
 **Wrap:** clean end at ~113K (OK, below WARN) — ticket resolved, map has
 no AFK frontier left, so the session wrapped rather than idling toward
 WARN. Committed, pushed. Session-23 block archived (two-block rule).
-
-# Session Handoff — 2026-08-06 (session 24: wayfinder tickets 06+07 RESOLVED; STOP rollover at ~157K)
-
-**What shipped (worktree `session-24-wayfinder-tickets`, pushed to `origin/main`):**
-
-- **Ticket 06 — mid-flight hook injection: REFUTED, dispatch-only stands.**
-  Empirical run on production wiring (evidence:
-  `research/06-midflight-hook-injection.md`): PostToolUse hooks DO fire on a
-  child's tool calls but keyed to the PARENT session_id (shared 60s throttle
-  + shared escalation state), and the harness DROPS hook exit-2 stderr for
-  those fires — a natural 120K WARN crossing mid-run reached no transcript
-  (parent/child/grandchild all grepped clean). Accelerator-tier fog patch
-  closed. Surviving model-mediated alternative noted in the ticket answer
-  (parent SendMessage → contract checkpoint clause). Two defects filed as
-  backlog rows: swallowed-WARN (busy child consumes the one-shot escalation)
-  and EnterWorktree registry-artifact staleness.
-- **Ticket 07 — copilot child artifacts: resolved via gen 2
-  (DONE_WITH_CONCERNS, ~23 min).** Findable + parseable: per-child events in
-  `~/.copilot/session-state/<sid>/events.jsonl` tagged `agentId=<toolCallId>`
-  (+ `subagent.completed.totalTokens`), and `session-store.db::
-  assistant_usage_events` per-request rows. Adapter buildable → fog patch
-  graduated to new ticket `issues/09-copilot-adapter-design.md`. Dispatch
-  gen 2 closed; drain clean. Caveats in the ticket answer (model varies,
-  background/`write_agent` unverified, `-wal` sidecar).
-- Map updated (2 decisions, 2 fog patches closed/graduated); `decisions.md`
-  session-24 notes; backlog: 2 finding rows.
-- Note: gen 2's report edits landed in the worktree copy of
-  `research/07-copilot-child-artifacts.md` (my mid-task worktree entry
-  blocked its shared-checkout writes; it adapted via a worktree-isolated
-  sub-subagent) — committed from the worktree, so origin/main carries it.
-
-**Suggested skills (next session):** wayfinder (ticket 09 AFK, or 08 if user
-is live); session-rollover at WARN/STOP.
-
-**Learnings:** (parked)
-- Auto-mode permission classifier blocks spawning nested `claude -p` with
-  `--settings`/`--dangerously-skip-permissions`/`--allowedTools` (1st strike;
-  worked around by testing against the production hook wiring instead).
-- Mid-session EnterWorktree severed a RUNNING subagent's shared-checkout
-  writes and all its Bash (1st strike; child adapted with an
-  `isolation: worktree` sub-subagent — enter the worktree BEFORE dispatching
-  children, or expect this).
-
-**Rollover:** STOP at ~157K immediately after the ticket/map writes;
-committed, pushed, rolled. Session-22 block archived (two-block rule).
 

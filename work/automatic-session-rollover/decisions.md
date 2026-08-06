@@ -689,3 +689,20 @@ asserts).
   toolCallId (events.jsonl + session-store.db). Graduated to ticket 09
   rather than specifying inline (rejected: same-session design at >120K
   tokens violates WARN discipline).
+
+## Session 26 (2026-08-06) — ticket-09 duplicate reconciled; design verified
+
+- **Reconcile direction: origin canonical, duplicate discarded.** Session 26
+  re-resolved ticket 09 off a stale checkout; on discovering session 25's
+  pushed resolution, reset to origin/main and reduced its work to a
+  verification addendum in the ticket. **Rejected:** merging the two answers
+  (session 25's was a superset with one divergence, adjudicated in the
+  addendum); keeping both as parallel answers (one ticket, one answer).
+- **Verification (evidence files):** child events carry no input-side token
+  fields (all `inputTokens` on `session.shutdown`) → sqlite-first is
+  necessary; `copilot_cli_measure` mid-session silent-degrade confirmed.
+- **Launcher freshness guard:** fetch + empty `HEAD..origin/main` before
+  trusting `next-session.md`. **Rejected:** keying on the previous session's
+  commit marker (cannot see a newer sibling rollover — the failure mode
+  itself). Mechanical guard in `launch-next-session.sh` left as backlog.
+- **Promote?:** no — incident + hygiene; backlog Finding row carries it.
