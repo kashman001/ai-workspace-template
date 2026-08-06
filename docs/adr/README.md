@@ -58,3 +58,4 @@ keep it here.
 - [ADR-0003: Automate the rollover→relaunch handoff with a workspace script, not vendor prompt mechanisms](0003-automate-rollover-relaunch.md) — accepted 2026-08-05
 - [ADR-0004: Operate rollover automation under a multi-session model — session-keyed budget state, per-project locks, hybrid trigger](0004-multi-session-rollover-model.md) — accepted 2026-08-05
 - [ADR-0005: Session roles with the lock as primary marker, and a parent/child session registry](0005-session-roles-and-child-registry.md) — accepted 2026-08-06
+- [ADR-0006: Key coordination state to repository identity, never to a checkout](0006-repository-keyed-coordination-state.md) — accepted 2026-08-06
