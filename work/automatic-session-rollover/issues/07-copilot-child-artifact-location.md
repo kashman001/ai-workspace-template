@@ -1,11 +1,7 @@
 # 07 — Where does Copilot CLI persist per-child (task) artifacts?
 
 Type: research (AFK)
-Status: open (gen 1 yielded ROLLOVER_NEEDED at its own WARN — no verdict
-yet; report checkpointed at `../research/07-copilot-child-artifacts.md`,
-self-contained for gen 2; dispatch record
-`.agent-dispatch/07-copilot-artifacts.json`. Next session: `dispatch-open`
-gen 2, agent starts at the report's open item 1)
+Status: resolved (session 24, 2026-08-06; gen 2 DONE_WITH_CONCERNS)
 Blocked by: none
 Map: ../map.md
 
@@ -28,3 +24,24 @@ Method: probe `~/.copilot/` (history-session-state, logs) after a `-p` run
 that spawns a task; check `--share`/`--output-format json` output for
 per-task usage; consult official docs only for corroboration — live
 verification wins (workspace verify-against-live-help rule).
+
+## Answer
+
+**Findable + parseable — the copilot measured-tier adapter is buildable**
+(gen-2 live probes on copilot 1.0.78; full evidence + adapter sketch in
+`../research/07-copilot-child-artifacts.md` [gen 2] blocks + VERDICT):
+
+- Children get NO session dir of their own; artifacts are keyed by the
+  parent's `task` toolCallId, in two places:
+  1. `~/.copilot/session-state/<sessionId>/events.jsonl` — full child
+     transcript tagged `agentId=<toolCallId>`; `subagent.completed` carries
+     `totalTokens` (cross-checked exactly vs `session.shutdown.modelMetrics`).
+  2. `~/.copilot/session-store.db` (SQLite; copy the `-wal` sidecar) table
+     `assistant_usage_events` — per-request token rows with `agent_id`,
+     `initiator='sub-agent'`, full token split.
+- Adapter caveats: subagent model varies per run (don't assume); background
+  (`mode: background`) tasks and `write_agent` children assumed same event
+  stream, unverified; task *name* only surfaces in
+  `tool.execution_complete.toolTelemetry.restrictedProperties.agent_id`.
+- Fog patch graduates: copilot-adapter design is now specifiable →
+  charted as ticket 09.

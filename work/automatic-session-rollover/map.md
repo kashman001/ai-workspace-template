@@ -31,16 +31,25 @@ question stops recurring in handoffs.
 
 <!-- one line per closed ticket: gist + link -->
 
-(none yet)
+- **06 — mid-flight hook injection: REFUTED (dispatch-only stands).** Hooks
+  fire on child tool calls (parent-keyed, shared throttle/escalation) but
+  their exit-2 stderr is dropped — reaches no conversation. Accelerator
+  tier closed for hook wiring; model-mediated SendMessage push noted as the
+  surviving parent-behavior alternative. Bonus: swallowed-WARN defect →
+  template backlog. (`issues/06-midflight-hook-injection.md`, session 24)
+- **07 — copilot child artifacts: FINDABLE + PARSEABLE (adapter buildable).**
+  Keyed by parent `task` toolCallId: session `events.jsonl` child events +
+  `session-store.db::assistant_usage_events` token rows. Fog patch
+  graduated to design ticket 09. (`issues/07-copilot-child-artifact-location.md`,
+  session 24, gen 2)
 
 ## Not yet specified
 
-- **Accelerator-tier design** (claude in-flight WARN push into running
-  children): shape depends entirely on ticket 06's verdict — don't ticket
-  until the injection path is confirmed or refuted.
-- **Copilot measured-tier adapter** (child artifact discovery +
-  `check --transcript` + per-child locks for copilot): specifiable only
-  after ticket 07 locates (or rules out) per-child artifacts.
+- ~~Accelerator-tier design~~ — CLOSED by ticket 06 (refuted for hook
+  wiring; out of scope. A parent-behavior SendMessage checkpoint push could
+  be charted later if wanted — not scheduled).
+- ~~Copilot measured-tier adapter~~ — GRADUATED to ticket
+  `issues/09-copilot-adapter-design.md` (open, AFK-able).
 - **Per-role threshold config shape** (if ticket 08 decides they earn
   their keep): where overrides live given the existing per-work-item
   `context-budget.env` override mechanism.

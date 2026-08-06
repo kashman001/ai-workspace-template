@@ -675,3 +675,17 @@ new primary is guaranteed to run).
 one paragraph in docs/context-budget.md. All eight suites green (326
 asserts).
 **Promote?:** no — hygiene within ADR-0004/0005's role model.
+
+## Session 24 (2026-08-06) — wayfinder tickets 06 + 07 resolved
+
+- **Ticket 06 refutation method:** tested mid-flight hook injection with the
+  *production* wiring + a natural WARN crossing (parent at 117.5K → 120K with
+  a live child racing the shared 60s throttle), instead of a synthetic
+  nested-claude testbed (rejected: the permission classifier blocks
+  `claude -p --settings`/`--dangerously-skip-permissions` spawns; and the
+  production path is the one the accelerator would use anyway). Evidence:
+  `research/06-midflight-hook-injection.md`.
+- **Ticket 07:** copilot adapter buildable; artifacts keyed by parent
+  toolCallId (events.jsonl + session-store.db). Graduated to ticket 09
+  rather than specifying inline (rejected: same-session design at >120K
+  tokens violates WARN discipline).
