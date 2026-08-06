@@ -484,3 +484,22 @@ work-directory-conventions.md), tests T6/T7/T20 + statusline suite.
 **Promote?:** candidate — extends ADR-0004's multi-session model; promote
 when implementation slice 1 (parent/child registry) lands and the role
 schema is final.
+
+## 2026-08-06 — Slice-1 child registry: artifact-keyed identity, role `child`, blocked-release I4 guard (session 16)
+
+**What:** `register --parent-session <sid> [--agent-id]` derives the child's
+session id from the artifact, never the env; role set extends to `child`;
+per-child locks in `work/<p>/.agent-locks/<runtime>-<sid>.json` granted only
+when the parent chain terminates at the project-lock holder; `release`
+sweeps stale child locks then refuses bottom-up violations (die, exit 3).
+**Why:** the registering process is the parent, so env identity would claim
+the child record for the parent (caught designing T7); a child holds a lock
+and writes reports while an auxiliary must not — materially different
+authority.
+**Rejected:** overloading `auxiliary` for children (loses the write-authority
+distinction issues/03 defined); keying child locks by agent_id alone
+(non-claude children may have none; runtime-sid matches every other
+identity in the system); liveness checks inside `parent_chain_holds_lock`
+(stale sweep at release keeps one liveness rule, I7).
+**Blast radius:** `context-budget.sh`, registry tests T7–T12, `.gitignore`
+(`work/*/.agent-locks/`). See `plans/slice-1-registry-schema.md`.
