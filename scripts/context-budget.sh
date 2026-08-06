@@ -7,6 +7,7 @@
 # Usage:   context-budget.sh check|register|record|watch|release
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
+#            [--parent-session <sid>] [--agent-id <id>] [--takeover]
 #            [--interval <secs>] [--quiet]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
@@ -26,7 +27,7 @@ WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
-PARENT_SESSION=""; AGENT_ID=""
+PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0
 case "${1:-}" in check|register|record|watch|release) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -35,6 +36,7 @@ while [ $# -gt 0 ]; do
     --project) PROJECT="$2"; shift 2 ;;
     --parent-session) PARENT_SESSION="$2"; shift 2 ;;
     --agent-id) AGENT_ID="$2"; shift 2 ;;
+    --takeover) TAKEOVER=1; shift ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -395,6 +397,28 @@ acquire_child_lock() {
   note "lock: acquired work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json under parent $PARENT_SESSION role=child"
 }
 
+backstamp_superseded() {
+  # Successor side of the rollover chain: launch-next-session.sh stamps the
+  # dying record role=superseded; the successor's primary acquisition completes
+  # it with superseded_by — newest same-project superseded record not yet
+  # claimed by a successor.
+  local f ts best="" best_ts=""
+  for f in "$STATE_DIR/sessions/"*.json; do
+    [ -f "$f" ] || continue
+    [ "$f" = "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" ] && continue
+    ts=$(jq -r --arg proj "$PROJECT" \
+      'select(.project == $proj and .role == "superseded"
+              and (.superseded_by // "") == "")
+       | .superseded_at // .registered_at // ""' "$f" 2>/dev/null)
+    [ -n "$ts" ] || continue
+    if [ -z "$best" ] || [ "$ts" \> "$best_ts" ]; then best="$f"; best_ts="$ts"; fi
+  done
+  [ -n "$best" ] || return 0
+  jq --arg by "$RUNTIME-$SESSION_ID" '.superseded_by = $by' "$best" \
+    > "$best.tmp" && mv "$best.tmp" "$best"
+  note "role: ${best##*/} back-stamped superseded_by=$RUNTIME-$SESSION_ID"
+}
+
 acquire_lock() {
   local dir="$WORKSPACE_ROOT/work/$PROJECT" lock hrt hsid age
   [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
@@ -404,11 +428,24 @@ acquire_lock() {
     hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
     if [ "$hrt-$hsid" != "$RUNTIME-$SESSION_ID" ]; then
       if age=$(lock_holder_age "$hrt" "$hsid") && [ "$age" -lt "$LOCK_STALE" ]; then
-        ROLE="auxiliary"
-        note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one primary session per work item; continuing as role=auxiliary"
-        return 0
+        if [ "$TAKEOVER" -eq 1 ]; then
+          # Explicit recorded steal (S33 — human authority beats liveness):
+          # the old holder's record is stamped, never silently orphaned.
+          local hrec="$STATE_DIR/sessions/$hrt-$hsid.json"
+          if [ -f "$hrec" ]; then
+            jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
+              '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
+              "$hrec" > "$hrec.tmp" && mv "$hrec.tmp" "$hrec"
+          fi
+          note "lock: takeover — stealing work/$PROJECT/.active-session from live holder $hrt-$hsid (artifact active ${age}s ago); old holder stamped superseded"
+        else
+          ROLE="auxiliary"
+          note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one primary session per work item; continuing as role=auxiliary"
+          return 0
+        fi
+      else
+        note "lock: reclaiming stale lock from $hrt-$hsid"
       fi
-      note "lock: reclaiming stale lock from $hrt-$hsid"
     fi
   fi
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg proj "$PROJECT" \
@@ -452,6 +489,7 @@ cmd_register() {
   if [ -n "$PROJECT" ]; then
     # Children never contend for the project lock (research §6).
     if [ -n "$PARENT_SESSION" ]; then acquire_child_lock; else acquire_lock; fi
+    [ "$ROLE" = "primary" ] && backstamp_superseded
   fi
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
     --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \
