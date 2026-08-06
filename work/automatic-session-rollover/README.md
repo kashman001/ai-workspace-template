@@ -26,3 +26,7 @@ discussion rather than a queued side mission.
 - `relaunch-analysis.md` — the grounding analysis: pipeline concept, verified
   per-vendor launch/detection matrix, demo results, proposed knobs, open
   questions.
+- `rollover-scenarios.md` — authoritative scenario catalog (S11–S52) for the
+  subagent-rollover design: dimension set + mainline/edge/measurement
+  scenarios with pass criteria; extends S1–S10 in the research note and is
+  mirrored in `subagent-rollover-research.html` §7.

@@ -565,6 +565,11 @@ not the state machine — crashes don't transition, they stale.
 Each scenario is an acceptance test; pass criteria in terms of end state +
 invariants held throughout.
 
+> S1–S10 below are the seed suite. The full catalog (S11–S52, grouped by
+> evaluation dimension, incl. the dimensions added after review) lives in
+> `rollover-scenarios.md` — authoritative for everything beyond S1–S10 —
+> and is mirrored in the HTML rendition §7.
+
 | ID | Scenario | Pass criteria |
 |---|---|---|
 | S1 | Happy path: dispatch → checkpoints → DONE | COMPLETE; lock released; report has ≥1 checkpoint + final block |
