@@ -284,6 +284,31 @@ Every element must hold under N concurrent sessions:
   log, which is architecturally single-session-per-workspace; a second
   concurrent gemini session falls back to estimate-only.
 
+## Worktrees (workspace-root anchoring)
+
+**Coordination state is keyed to the repository, never to a checkout**
+(issue 05, session 19). All coordination scripts resolve `WORKSPACE_ROOT`
+through `git rev-parse --git-common-dir` (parent of the shared `.git`), so a
+script invoked from any git worktree — Claude Code's `.claude/worktrees/`,
+a manually created one, any runtime — reads and writes the **main
+checkout's** `.context-budget/`, per-work-item locks, ledger, and
+`.session-seq`. Consequences:
+
+- `register`/`record`/`release`/statusline/hooks behave identically in a
+  worktree and in the main checkout; the old register-before-isolate
+  discipline is obsolete.
+- `launch-next-session.sh` invoked from a worktree first syncs the main
+  checkout (verifies the worktree has no uncommitted `work/<proj>/` changes
+  and no unpushed commits, then `pull --ff-only`s the main checkout; loud
+  exit-3 refusal on each — human problem), and launches the successor from
+  the main root. The former "no auto-relaunch from worktrees" rule is
+  retired.
+- Fallback: outside a git repo (template pre-`git init`), or when the git
+  root is not this workspace, resolution reverts to the script-relative
+  root — single-checkout behavior unchanged.
+- A worktree may be deleted while its session still has registry entries or
+  locks in the shared root; the release-time stale sweep covers that.
+
 ## Per-child sweep (`children`)
 
 No runtime reports a subagent's context usage to its parent — the parent must

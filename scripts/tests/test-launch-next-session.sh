@@ -260,5 +260,73 @@ assert_contains "T21f: non-claude prompt still carries item+seq" "$out" "Work it
 assert_not_contains "T21g: no --name on non-claude argv" "$out" "--name"
 rm -f "$TMP/work/testproj/.session-seq"
 
+echo "W: worktree-invoked launch — sync the main checkout, launch from it (issue 05)"
+GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
+trap 'rm -rf "$TMP" "$GW"' EXIT
+GMAIN="$GW/main"
+mkdir -p "$GMAIN/scripts" "$GMAIN/work/testproj"
+cp "$SRC_ROOT/scripts/launch-next-session.sh" "$GMAIN/scripts/"
+printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$GMAIN/context-budget.env"
+echo "# launcher v1" > "$GMAIN/work/testproj/next-session.md"
+GITC() { git -c user.email=t@t -c user.name=t "$@"; }
+GITC -C "$GMAIN" init -q -b main
+GITC -C "$GMAIN" add -A; GITC -C "$GMAIN" commit -qm init
+git init -q --bare "$GW/origin.git"
+git -C "$GMAIN" remote add origin "$GW/origin.git"
+git -C "$GMAIN" push -q -u origin main
+git -C "$GMAIN" worktree add -q "$GMAIN/wt" -b session-branch
+WLNS="$GMAIN/wt/scripts/launch-next-session.sh"
+
+echo "W1: pushed worktree, clean main — main ff-pulled, launch from main root"
+echo "# launcher v2" > "$GMAIN/wt/work/testproj/next-session.md"
+GITC -C "$GMAIN/wt" commit -qam "rollover: new launcher"
+git -C "$GMAIN/wt" push -q origin session-branch:main
+out=$(run_lns "$WLNS" testproj 2>&1 </dev/null); rc=$?
+assert_eq "W1a: exit 0" "$rc" "0"
+assert_contains "W1b: worktree-invoked sync noted" "$out" "worktree-invoked"
+assert_eq "W1c: main checkout ff-pulled (launcher current)" \
+  "$(cat "$GMAIN/work/testproj/next-session.md")" "# launcher v2"
+assert_contains "W1d: non-tty manual prints run: line" "$out" "run: claude"
+[ -f "$GMAIN/work/testproj/.session-seq" ] \
+  && ok "W1e: session-seq written in main root" || bad "W1e: no main-root seq"
+[ ! -f "$GMAIN/wt/work/testproj/.session-seq" ] \
+  && ok "W1f: no session-seq in the worktree" || bad "W1f: worktree seq written"
+
+echo "W2: unpushed worktree commits / dirty worktree launcher — loud refusal"
+echo "# launcher v3" > "$GMAIN/wt/work/testproj/next-session.md"
+out=$(run_lns "$WLNS" testproj 2>&1 </dev/null); rc=$?
+assert_eq "W2a: dirty worktree work/ dies" "$rc" "3"
+assert_contains "W2b: names the uncommitted state" "$out" "uncommitted"
+GITC -C "$GMAIN/wt" commit -qam "rollover v3"
+out=$(run_lns "$WLNS" testproj 2>&1 </dev/null); rc=$?
+assert_eq "W2c: unpushed worktree commit dies" "$rc" "3"
+assert_contains "W2d: says push first" "$out" "push"
+git -C "$GMAIN/wt" push -q origin session-branch:main
+
+echo "W3: dirty main checkout under work/<proj> — loud refusal"
+git -C "$GMAIN" pull -q --ff-only
+echo "local edit" >> "$GMAIN/work/testproj/next-session.md"
+out=$(run_lns "$WLNS" testproj 2>&1 </dev/null); rc=$?
+assert_eq "W3a: dirty main dies" "$rc" "3"
+assert_contains "W3b: names the main checkout" "$out" "main checkout"
+git -C "$GMAIN" checkout -q -- work/testproj
+
+echo "W4: diverged main checkout — ff-only pull fails, loud refusal"
+echo "# main-local" > "$GMAIN/work/testproj/next-session.md"
+GITC -C "$GMAIN" commit -qam "main-local commit"
+echo "# launcher v4" > "$GMAIN/wt/work/testproj/next-session.md"
+GITC -C "$GMAIN/wt" commit -qam "rollover v4"
+git -C "$GMAIN/wt" push -q origin session-branch:main
+out=$(run_lns "$WLNS" testproj 2>&1 </dev/null); rc=$?
+assert_eq "W4a: diverged main dies" "$rc" "3"
+assert_contains "W4b: ff-only failure surfaced" "$out" "ff-only"
+git -C "$GMAIN" reset -q --hard origin/main
+
+echo "W5: main-checkout invocation — sync path not taken"
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq "W5a: exit 0" "$rc" "0"
+assert_not_contains "W5b: no worktree sync attempted" "$out" "worktree-invoked"
+cd "$TMP"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

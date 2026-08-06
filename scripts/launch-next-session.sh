@@ -38,7 +38,23 @@
 
 set -u
 
-WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Workspace identity = repository identity, not checkout path (issue 05):
+# resolve through git's common dir so a launcher invoked from a worktree
+# still reads/writes the main checkout's coordination state. Fallbacks: not
+# a git repo, or the git root is not this workspace — script-relative root.
+SCRIPT_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+resolve_workspace_root() {
+  local common repo
+  if common="$(git -C "$SCRIPT_ROOT" rev-parse --git-common-dir 2>/dev/null)"; then
+    case "$common" in /*) : ;; *) common="$SCRIPT_ROOT/$common" ;; esac
+    repo="$(cd "$common/.." 2>/dev/null && pwd -P)"
+    if [ -n "$repo" ] && [ -f "$repo/scripts/launch-next-session.sh" ]; then
+      printf '%s' "$repo"; return
+    fi
+  fi
+  printf '%s' "$SCRIPT_ROOT"
+}
+WORKSPACE_ROOT="$(resolve_workspace_root)"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 
 note() { echo "$@" >&2; }
@@ -55,6 +71,28 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run]"
+
+# Worktree-invoked (issue 05): tracked handoff artifacts (launcher/ledger)
+# flow only through git, so before launching make the successor's launch root
+# current — verify the worktree's state is committed+pushed, ff-only-pull the
+# main checkout, then launch from the main root. Refusals are loud and die
+# BEFORE the paste-me prompt: they are precondition failures (like the
+# missing-launcher die below), and the human must resolve them.
+if [ "$SCRIPT_ROOT" != "$WORKSPACE_ROOT" ]; then
+  [ -z "$(git -C "$SCRIPT_ROOT" status --porcelain -uno -- "work/$PROJECT" 2>/dev/null)" ] \
+    || die "worktree has uncommitted changes under work/$PROJECT — commit them before relaunch"
+  [ -z "$(git -C "$SCRIPT_ROOT" rev-list -n1 HEAD --not --remotes 2>/dev/null)" ] \
+    || die "worktree has commits not on any remote — push first (the successor launches from the main checkout)"
+  [ -z "$(git -C "$WORKSPACE_ROOT" status --porcelain -uno -- "work/$PROJECT" 2>/dev/null)" ] \
+    || die "main checkout has uncommitted changes under work/$PROJECT — resolve them before relaunch"
+  if [ "$DRY" -eq 0 ]; then
+    git -C "$WORKSPACE_ROOT" pull --ff-only -q 2>/dev/null \
+      || die "main checkout 'git pull --ff-only' failed (diverged or offline) — sync it manually"
+  fi
+  note "worktree-invoked: main checkout synced; launching from $WORKSPACE_ROOT"
+  cd "$WORKSPACE_ROOT"
+fi
+
 [ -f "$WORKSPACE_ROOT/work/$PROJECT/next-session.md" ] \
   || die "work/$PROJECT/next-session.md not found — run session-rollover first"
 

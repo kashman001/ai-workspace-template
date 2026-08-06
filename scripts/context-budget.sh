@@ -15,7 +15,24 @@
 
 set -u
 
-WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Workspace identity = repository identity, not checkout path (issue 05):
+# resolve through git's common dir so every worktree converges on the main
+# checkout's coordination state. Fallbacks: not a git repo (template pre-
+# `git init`), or the git root is not this workspace (workspace nested in an
+# unrelated repo) — then the checkout containing the script is the root.
+resolve_workspace_root() {  # $1 = script-relative candidate root
+  local root common repo
+  root="$(cd "$1" && pwd -P)"
+  if common="$(git -C "$root" rev-parse --git-common-dir 2>/dev/null)"; then
+    case "$common" in /*) : ;; *) common="$root/$common" ;; esac
+    repo="$(cd "$common/.." 2>/dev/null && pwd -P)"
+    if [ -n "$repo" ] && [ -f "$repo/scripts/context-budget.sh" ]; then
+      printf '%s' "$repo"; return
+    fi
+  fi
+  printf '%s' "$root"
+}
+WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 LEDGER="$WORKSPACE_ROOT/work/context-decay/context-ledger.jsonl"
 

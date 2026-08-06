@@ -19,7 +19,22 @@
 
 set -u
 
-WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Workspace identity = repository identity, not checkout path (issue 05):
+# resolve through git's common dir so worktree invocations converge on the
+# main checkout's state. Fallback: script-relative root (non-git workspace).
+resolve_workspace_root() {  # $1 = script-relative candidate root
+  local root common repo
+  root="$(cd "$1" && pwd -P)"
+  if common="$(git -C "$root" rev-parse --git-common-dir 2>/dev/null)"; then
+    case "$common" in /*) : ;; *) common="$root/$common" ;; esac
+    repo="$(cd "$common/.." 2>/dev/null && pwd -P)"
+    if [ -n "$repo" ] && [ -f "$repo/scripts/attach-session.sh" ]; then
+      printf '%s' "$repo"; return
+    fi
+  fi
+  printf '%s' "$root"
+}
+WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 
 if [ -z "${CONTEXT_LOCK_STALE_SECS:-}" ] && [ -f "$WORKSPACE_ROOT/context-budget.env" ]; then
