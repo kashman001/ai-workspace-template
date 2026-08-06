@@ -6,97 +6,94 @@
 
 ## Mission
 
-**The wayfinder map is COMPLETE** (destination reached, session 27): all
-research-§14.4 questions are recorded decisions, no open tickets, no fog.
-There is **no standing mission** — every remaining item is user-scheduled.
-Menu (take one ONLY when the user picks it, or the bootstrap names it):
+**Execute the issue-01 build spec** — turn the session-28 live verification
+of VS Code agent-mode hooks + `code chat` seeded launch into shipped wiring.
+The spec is fully written down: `issues/01-vscode-agent-mode-hooks.md` →
+"Update 2026-08-06 (session 28)" → **Build spec**, steps 1–6 (vscode hook
+script, PascalCase JSON wiring, cwd/relative-path probe v4, launcher
+`code chat` branch, W-test + vendor T9 tests, docs + backlog). Nothing needs
+re-verifying; do not re-run the probe sessions except the ONE open leg
+(spec step 3: hook-process cwd — needs the user to relay one `!` cp and one
+`code chat` run; probe files are already in place in the main checkout).
 
-- **Issue 01 items 1+3** (`issues/01-vscode-agent-mode-hooks.md`) — HITL,
-  needs the user live in VS Code: (1) verify agent-mode hooks fire in-band;
-  (3) verify `code chat -r -m agent "<prompt>"` end-to-end, then upgrade
-  `launch-next-session.sh`'s copilot-vscode branch + W-test + docs. Item 2
-  is closed (only the optional UI-meter comparison leg remains).
-- **Backlog items** (template work, in `docs/template-workspace-backlog.html`):
-  swallowed-WARN defect; EnterWorktree registry staleness (two strikes);
-  launcher-staleness mechanical fix (guaranteed ff-pull before the successor
-  reads this file); copilot adapter BUILD (designed in ticket 09; slice 0 =
-  background/`write_agent` probe + `copilot_cli_measure` sqlite-first).
-- **Housekeeping:** prune the disposable worktrees (all pushed); delete
-  branch `session-26-pre-reconcile`.
-
-If the user is AFK and named nothing: idle-report. Do not invent work.
+After the build ships green: issue 01 is done — record versions in the
+ticket per its "Done when", have the user delete the probe files +
+`.vscode-hook-probe.jsonl`, and fall back to the user-scheduled menu
+(backlog items in `docs/template-workspace-backlog.html`; nothing else is
+standing — the wayfinder map is complete).
 
 ## Read these, in order
 
-1. `handoff.md` top block — session-27 record.
-2. Only what the chosen item needs: its issue file / backlog row. The map
-   (`map.md`) is now reference, not frontier — load only if asked about
-   past decisions.
+1. `handoff.md` top block — session-28 record.
+2. `issues/01-vscode-agent-mode-hooks.md` — session-28 update block ONLY
+   (verified contract + build spec). Earlier blocks are provenance.
+3. At build time, the files the spec touches:
+   `scripts/hooks/context-budget-copilot-hook.sh` (pattern to mirror),
+   `scripts/hooks/context-budget-hook-lib.sh` (budget_hook_check/message),
+   `scripts/launch-next-session.sh` (copilot-vscode branch ~line 268),
+   `scripts/tests/test-vendor-budget-hooks.sh` (T8 = model for T9),
+   `scripts/tests/test-launch-next-session.sh` (T-test pattern).
 
 ## Do NOT reload
 
-- Research md/HTML corpus, `research/*` — settled; distilled into
-  ADR-0005/0006, `docs/context-budget.md`, ticket answers.
-- All map tickets 06–09 + ticket 08 — RESOLVED (answers inline in the
-  ticket files; map's Decisions-so-far has the gists). The map needs no
-  further updates.
-- Issue 04 — parked by the user; never schedule unprompted (its file is
-  intentionally untracked in the user's checkout).
-- `rollover-scenarios.md`, `plans/*` — build slices all COMPLETE.
-- Sessions ≤25 handoff blocks, `handoff-archive.md` — settled.
-- `work/context-decay/copilot-vscode-sandbox-discovery-fix.md` — spec
-  IMPLEMENTED + VERIFIED (session 27); read only if the fix regresses.
+- Research md/HTML corpus, `research/*`, `vendor-hooks-research.md` — the
+  session-28 ticket block supersedes its VS Code guesses (verified > doc).
+- Map (`map.md`) + tickets 06–09 — map COMPLETE; reference only.
+- Issue 04 — parked by the user; never schedule unprompted.
+- Sessions ≤27 handoff blocks, `handoff-archive.md` — settled.
+- `work/context-decay/copilot-vscode-sandbox-discovery-fix.md` — shipped;
+  unrelated to the hook path (hooks read `~/Library` unsandboxed).
+- Probe transcripts under `~/Library/…/GitHub.copilot-chat/transcripts/` —
+  findings already distilled into the ticket.
 
 ## Constraints already decided (do not re-litigate)
 
-- Role schema final: primary / auxiliary / child / superseded.
-- Dispatch-time contract is the load-bearing parent→child channel.
-  Accelerator tier (hook injection into children): CLOSED (ticket 06).
-- Copilot measured-tier adapter: DESIGNED (ticket 09); build unscheduled.
-- **Per-role WARN/STOP thresholds: YAGNI (ticket 08)** — one shared pair,
-  keyed to the model's dumb zone; revisit trigger lives in
-  `docs/context-budget.md` → Thresholds. Per-item threshold plumbing
-  deliberately unbuilt (per-item env = relaunch knobs only).
-- Coordination state is repository-keyed (ADR-0006).
-- R2/R3/R4 shipped; R6 drain mode stays deferred. Runtime state stays
-  gitignored. Standing push-to-main approval applies.
+- Stop-block channel is **exit 2 + stderr** (JSON `decision:block` verified
+  IGNORED by VS Code) — don't "fix" the new hook to emit JSON blocks.
+- Hook fires ONLY for VS Code payloads: guard on snake_case `session_id`
+  (CLI sends camelCase `sessionId`) — keeps shared `.github/hooks/` files
+  safe for both runtimes.
+- Mirror copilot-cli hook semantics: SessionStart additionalContext
+  (WARN/STOP catch-up), Stop block ONLY at STOP; escalation-only lib
+  semantics stay.
+- Role schema, repository-keyed state (ADR-0006), one shared WARN/STOP
+  threshold pair (ticket 08 YAGNI), standing push-to-main approval — all
+  unchanged.
 
-## State snapshot (at session-27 rollover, 2026-08-06)
+## State snapshot (at session-28 rollover, 2026-08-06)
 
-- All session-27 work committed on main and pushed: `2c45bfe` (sandbox
-  discovery fix, live-verified in-copilot) + `18c5aee` (ticket 08 + map
-  completion) + the rollover commit.
-- Tests: eight suites, 326 asserts, green this session (at `2c45bfe`).
-- No live dispatches; no child agents.
-- Copilot durable evidence dirs (don't delete):
-  `~/.copilot/session-state/c356dbd8-…` and `96cbc930-…`.
-- Worktrees (all pushed, disposable — prune when convenient):
-  `session-26-ticket-09` (carries deletable branch
-  `session-26-pre-reconcile`), `session-25-ticket-09`,
-  `session-24-wayfinder-tickets`, `session-23-registry-hygiene`, plus the
-  session-22-snapshot set (`git worktree list` is authoritative).
-- Sandbox gotchas live in `docs/operational-knowledge.md`.
+- main at `64c3f85` (issue-01 findings + build spec), pushed. Session-28
+  rollover commit lands after this file. Tests last green at `2c45bfe`
+  (326 asserts); nothing code-bearing changed since.
+- USER'S main checkout: probe files present, untracked, NEEDED for spec
+  step 3 (`scripts/hooks/vscode-hook-probe.sh`,
+  `.github/hooks/vscode-probe.json`, `.vscode-hook-probe.jsonl`) — plus it
+  may be behind origin; the user pulls, or the freshness guard catches it.
+- Worktrees: only `session-28-issue-01-vscode` (this rollover's, pushed,
+  disposable after merge). All older worktrees/branches pruned (session 28
+  housekeeping).
+- No live dispatches; no child agents. Copilot durable evidence dirs
+  (don't delete): `~/.copilot/session-state/c356dbd8-…`, `96cbc930-…`.
+- The user is live in VS Code with a Copilot agent chat panel and will
+  relay `!` commands and `code chat` runs on request.
 
 ## First actions
 
-1. **Freshness guard — BEFORE trusting anything in this file:**
-   `git fetch origin` then `git log --oneline HEAD..origin/main` — MUST be
-   empty. If not, `git pull --ff-only` and RE-READ this launcher. (If the
-   pull refuses on an untracked file, diff it against the incoming blob
-   first — delete only if identical/stale.)
+1. **Freshness guard:** `git fetch origin` then
+   `git log --oneline HEAD..origin/main` — MUST be empty; else
+   `git pull --ff-only` and RE-READ this launcher.
 2. `scripts/context-budget.sh register --project automatic-session-rollover`
-   — expect `role=primary`; session 27's record back-stamped with YOUR id.
-3. Ask the user (or read the bootstrap) which menu item to take. AFK with
-   no instruction → idle-report only.
+   — expect `role=primary`; session 28's record back-stamped with your id.
+3. Open the ticket's Build spec and start at step 3 (probe v4 cwd check —
+   it gates the JSON command form in step 2), then steps 1–2, 4–6.
 
 ## If you are a VS Code Copilot Chat (agent-mode) session
 
 - After `register`, paste the emitted `runtime= method= tokens= ...` line
-  into the chat — with the session-27 sandbox fix, discovery should now
-  succeed from the sandboxed terminal IF `VSCODE_TARGET_SESSION_LOG` is
-  exported (visible in session context, NOT auto-exported to the shell —
-  export it first). `method=estimate` before the first turn flush is
-  normal; expect `exact` afterward.
+  into the chat. Discovery works from the sandboxed terminal IF
+  `VSCODE_TARGET_SESSION_LOG` is exported first (visible in session
+  context, NOT auto-exported). `method=estimate` before the first turn
+  flush is normal; expect `exact` afterward.
 - If `register` reports `role=auxiliary`, a live claude session owns the
   work item — coordinate with the user before touching anything.
 
