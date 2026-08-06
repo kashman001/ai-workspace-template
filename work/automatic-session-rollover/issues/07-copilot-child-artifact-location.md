@@ -1,9 +1,11 @@
 # 07 — Where does Copilot CLI persist per-child (task) artifacts?
 
 Type: research (AFK)
-Status: claimed (session 23 — research subagent dispatched; report:
-`../research/07-copilot-child-artifacts.md`, dispatch record
-`.agent-dispatch/07-copilot-artifacts.json`)
+Status: open (gen 1 yielded ROLLOVER_NEEDED at its own WARN — no verdict
+yet; report checkpointed at `../research/07-copilot-child-artifacts.md`,
+self-contained for gen 2; dispatch record
+`.agent-dispatch/07-copilot-artifacts.json`. Next session: `dispatch-open`
+gen 2, agent starts at the report's open item 1)
 Blocked by: none
 Map: ../map.md
 
