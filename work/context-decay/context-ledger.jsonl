@@ -45,3 +45,4 @@
 {"ts":"2026-08-06T01:15:05Z","runtime":"claude","session":"8e633452-52c4-470d-a7ec-28db31163322.jsonl","tokens":137396,"method":"exact","threshold":150000,"status":"WARN","label":"rollover complete: automatic-session-rollover"}
 {"ts":"2026-08-06T01:32:11Z","runtime":"claude","session":"90710a32-c4c9-4efa-8817-d206d442c729.jsonl","tokens":129233,"method":"exact","threshold":150000,"status":"WARN","label":"item #1 session-keyed registry landed"}
 {"ts":"2026-08-06T01:36:42Z","runtime":"claude","session":"90710a32-c4c9-4efa-8817-d206d442c729.jsonl","tokens":132282,"method":"exact","threshold":150000,"status":"WARN","label":"rollover start: WARN 129K after item #1 landed"}
+{"ts":"2026-08-06T02:08:25Z","runtime":"claude","session":"90710a32-c4c9-4efa-8817-d206d442c729.jsonl","tokens":0,"method":"exact","threshold":150000,"status":"OK","label":"rollover complete: automatic-session-rollover"}
