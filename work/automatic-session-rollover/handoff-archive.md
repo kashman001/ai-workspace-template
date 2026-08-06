@@ -535,3 +535,36 @@ final review). Two machine gotchas routed to docs/operational-knowledge.md.
 **Suggested skills for next session:** `superpowers:subagent-driven-development`
 (SDD ledger above is mid-plan); `session-rollover` at WARN/STOP.
 
+# Session Handoff — 2026-08-06 (session 16: statusline chaining fix + slice-1 cycles 1–3; STOP rollover at 152K)
+
+**What shipped (committed and pushed to `origin/main` through `4c6569e`; work
+done in worktree `slice-1-registry-schema` — main checkout BEHIND until
+pulled):**
+
+- **`3f97027` — L21 statusline chaining fix (user report, mid-session):** the
+  L20 project-level statusLine had replaced the user's global `ccstatusline`
+  bar and printed `no work item` for unregistered sessions.
+  `statusline-context-budget.sh` now re-runs the global `statusLine.command`
+  from `~/.claude/settings.json` with the same stdin (output first, budget
+  segment appended only on a work item, recursion-guarded). Tests T7a–f
+  (statusline suite 14). Backlog L21 opened+resolved.
+- **`4c6569e` — slice 1 cycles 1–3 (R4/R5 partial):** `register
+  --parent-session/--agent-id` → artifact-keyed child records with
+  `parent_session_id`/`depth`; role extends to `child`; per-child locks in
+  `work/<p>/.agent-locks/` with transitive parent-chain validation;
+  `release` sweeps stale child locks and enforces bottom-up order (I4, die
+  exit 3). Tests T7–T12 (registry suite 45; all 5 suites green).
+  Design + remaining work: `plans/slice-1-registry-schema.md`.
+- Decisions routed to `decisions.md` (artifact-keyed child identity, role
+  `child`, lock filename, liveness placement). Worktree/main-checkout
+  runtime-state divergence promoted to `docs/operational-knowledge.md`
+  (second strike).
+
+**Not done (successor picks up):** T13 `superseded_by` back-stamp, T14
+`--takeover`, docs (`context-budget.md`), issues/03 + backlog card +
+scenario-catalog notes — all enumerated in the plan file.
+
+**Rollover:** STOP fired at 152K right after cycle-3 green; committed, pushed,
+rolled. Auto-relaunch NOT invoked from the worktree (operational-knowledge
+rule); user pulls main checkout, then launches.
+
