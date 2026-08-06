@@ -7,7 +7,8 @@ set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/scripts" "$TMP/work/testproj" "$TMP/work/context-decay" \
-  "$TMP/.context-budget/sessions"
+  "$TMP/.context-budget/sessions" "$TMP/home/.claude"
+export HOME="$TMP/home"   # isolate from the real user's global statusLine
 cp "$SRC_ROOT/scripts/statusline-context-budget.sh" "$TMP/scripts/" 2>/dev/null || true
 SL="$TMP/scripts/statusline-context-budget.sh"
 SESS="$TMP/.context-budget/sessions"
@@ -70,6 +71,26 @@ printf '%s\n' \
   > "$TMP/work/context-decay/context-ledger.jsonl"
 out=$(sl_input sid-aaa | bash "$SL")
 assert_contains "T6a: newest own entry pct" "$out" "65%"
+
+echo "T7: user's global statusLine is chained, not replaced"
+jq -n '{statusLine:{type:"command", command:"jq -r \"\\\"BASE:\\\" + .session_id\""}}' \
+  > "$HOME/.claude/settings.json"
+jq -n '{runtime:"claude", session_id:"sid-aaa", project:"testproj"}' > "$LOCK"
+out=$(sl_input sid-aaa | bash "$SL")
+assert_contains "T7a: base output shown (stdin forwarded)" "$out" "BASE:sid-aaa"
+assert_contains "T7b: budget segment appended" "$out" "PRIMARY"
+assert_eq "T7c: base line first, segment last" "$(printf '%s' "$out" | tail -1)" \
+  "PRIMARY · testproj · 65%"
+out=$(sl_input sid-zzz | bash "$SL")
+assert_eq "T7d: no work item -> base output alone, no noise" "$out" "BASE:sid-zzz"
+jq -n --arg c "$SL" '{statusLine:{type:"command", command:$c}}' \
+  > "$HOME/.claude/settings.json"
+out=$(sl_input sid-aaa | bash "$SL")
+assert_eq "T7e: self-referencing global command not recursed" "$out" \
+  "PRIMARY · testproj · 65%"
+rm -f "$HOME/.claude/settings.json"
+out=$(sl_input sid-zzz | bash "$SL")
+assert_eq "T7f: no global command + no work item -> previous behavior" "$out" "no work item"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
