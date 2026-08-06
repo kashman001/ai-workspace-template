@@ -134,6 +134,37 @@ injection, where it works, is an accelerator — never the load-bearing path.
 This mirrors the main-session design's layering: hooks are the push channel,
 but the disk protocol is what correctness rests on.
 
+### Two parent positions: root vs intermediate
+
+"Parent" names a *role*, and two different kinds of node can hold it: the
+**root parent** — the main work-item session (depth 0, human-attached, top of
+the lock hierarchy) — and an **intermediate parent** — a subagent that itself
+dispatches children (an L1 orchestrator running L2 workers; depth ≥1), which
+is simultaneously a child of the node above it.
+
+The load-bearing claim: **the parent role is position-invariant; the node's
+own lifecycle is not.** Dispatching, probing, findings rounds, drain, and
+kill rulings work identically at any depth — that is what makes I4 recursive
+and lets the model compose (§12). Everything that differs comes from the
+node's *own* position:
+
+| Dimension | Root parent (main session) | Intermediate parent (subagent) |
+|---|---|---|
+| Managed by | The human | Its own parent — the §3 mapping applies to it *as a child* |
+| Own rollover | `session-rollover` skill: `handoff.md` + `next-session.md` + relaunch knobs | Successor dispatch by its parent from brief + report (§4) — never the skill; must drain its own children first (I4 recursively; S8, S54) |
+| Budget measurement | Registered hooks, exact in-band push | Parent-side probe of its transcript where the runtime exposes one; contract mode otherwise (vendor survey) |
+| Human questions | Asks directly | BLOCKED escalates upward — only the root talks to a human; questions bubble the chain hop by hop, recorded on disk at each hop (S53) |
+| Authority / approvals | Holds standing approvals | Only what its dispatch record grants explicitly; never assumed (S45) |
+| Lock | Work-item lock, hierarchy root | Child lock, valid only transitively through its parent (I2) |
+| Crash recovery owner | Human / successor root via cold reconstruction (S22) | Its parent, via the ordinary kill/successor machinery — the grandparent never adopts (§12) |
+
+Design consequence: **no separate "parent type" field is needed** — position
+is already derivable from the `depth`/`parent_session_id` that R4 puts in
+every dispatch record. What must be explicit is the table above: statements
+in this note about a parent's *own* rollover, measurement, or authority
+silently assumed the root until now; for an intermediate parent, substitute
+the right column. (S53/S54 exercising the deltas: `rollover-scenarios.md`.)
+
 ## 4. The rollover verb: successor dispatch, not resume
 
 Claude Code supports resuming a subagent by `agentId`, and "a resumed subagent
@@ -565,7 +596,7 @@ not the state machine — crashes don't transition, they stale.
 Each scenario is an acceptance test; pass criteria in terms of end state +
 invariants held throughout.
 
-> S1–S10 below are the seed suite. The full catalog (S11–S52, grouped by
+> S1–S10 below are the seed suite. The full catalog (S11–S54, grouped by
 > evaluation dimension, incl. the dimensions added after review) lives in
 > `rollover-scenarios.md` — authoritative for everything beyond S1–S10 —
 > and is mirrored in the HTML rendition §7.

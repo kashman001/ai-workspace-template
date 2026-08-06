@@ -66,6 +66,7 @@ Class column: **M** = mainline flow, **E** = edge/corner case,
 | S13 | M | Full queue drains to completion: N tasks, concurrency cap M, one parent rollover mid-queue | Every task has exactly one COMPLETE generation chain; nothing lost or duplicated across the parent succession; dependency edges honored (S9 superset) |
 | S14 | M | Long-running child: many checkpoint cycles, no rollover ever needed | Report checkpoints are monotonic; steady-state probe cost ≈ 0 parent tokens (escalation-only); no spurious nudges |
 | S15 | E | Child's `YIELD(DONE)` crosses the drain broadcast in flight | DONE wins; no gen 2 dispatched for a finished task; drain child-count decrements correctly |
+| S54 | M | Intermediate parent rolls itself: L1 orchestrator hits its own budget mid-fleet (research §3, parent positions) | L1 drains its own children first (I4 recursively), then yields `ROLLOVER_NEEDED`; the root dispatches successor L1, which re-dispatches L2 generations from on-disk records; grandparent never touches L2; loss limited to post-checkpoint tails |
 
 ## B. Resilience (extends S3, S5, S6; exercises P1–P5)
 
@@ -127,6 +128,7 @@ Class column: **M** = mainline flow, **E** = edge/corner case,
 | S44 | E | Human kills a child process directly | Indistinguishable from a crash — S3/S5 machinery absorbs it; if the human declares intent, the ledger records a human ruling instead of a crash verdict |
 | S45 | E | Approval scope across generations: gen N held a standing approval (e.g. push-to-main) | Approvals are carried *explicitly* in records/handoff; a successor (child or parent) never assumes authority that isn't written down |
 | S46 | E | Human takes over a child session and continues it by hand | Ownership change recorded; parent stops nudging/killing that child; liveness still judged from artifacts only (I7) |
+| S53 | E | Human question raised at depth 2: L2 child yields BLOCKED (research §3, parent positions) | Question bubbles L2→L1→root with a disk record at each hop; only the root surfaces it to the human; the answer propagates back down; if the root rolls meanwhile, S7/S43 machinery preserves it |
 
 ## H. Observability & auditability
 
