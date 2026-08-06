@@ -1,0 +1,7 @@
+# Codex CLI repo config — context-budget WARN/STOP push (ADR-0003/0004).
+# Trust: codex prompts once to trust this hook (hash-based; re-prompts on edit).
+[[hooks.UserPromptSubmit]]
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "scripts/hooks/context-budget-codex-hook.sh"
+timeout = 30
