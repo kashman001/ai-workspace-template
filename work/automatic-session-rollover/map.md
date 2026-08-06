@@ -42,14 +42,21 @@ question stops recurring in handoffs.
   `session-store.db::assistant_usage_events` token rows. Fog patch
   graduated to design ticket 09. (`issues/07-copilot-child-artifact-location.md`,
   session 24, gen 2)
+- **09 — copilot measured-tier adapter: DESIGNED (in-place extension of
+  `context-budget.sh`).** Composite child id `<sid>+<toolCallId>` via
+  `--agent-id`; `children` grows a copilot branch (events.jsonl scan +
+  sqlite cross-check); measurement = last `assistant_usage_events` row
+  input+cache (exact, WAL-snapshot first), `subagent.completed.totalTokens`
+  fallback (estimate); locks + R4 dispatch records reused verbatim;
+  escalation is post-hoc/external only (sync `task` blocks the parent).
+  Build = execution work, out of map scope → backlog row, unscheduled.
+  (`issues/09-copilot-adapter-design.md`, session 25)
 
 ## Not yet specified
 
 - ~~Accelerator-tier design~~ — CLOSED by ticket 06 (refuted for hook
   wiring; out of scope. A parent-behavior SendMessage checkpoint push could
   be charted later if wanted — not scheduled).
-- ~~Copilot measured-tier adapter~~ — GRADUATED to ticket
-  `issues/09-copilot-adapter-design.md` (open, AFK-able).
 - **Per-role threshold config shape** (if ticket 08 decides they earn
   their keep): where overrides live given the existing per-work-item
   `context-budget.env` override mechanism.
@@ -59,6 +66,9 @@ question stops recurring in handoffs.
 - Build slices already tracked in the work item's `plans/` (R6 drain mode,
   hook-wiring throttling/ledger writes) — execution work, not decisions on
   this map.
+- Copilot adapter build — designed by ticket 09; execution work tracked as
+  a template-backlog row (incl. its slice-0 background/`write_agent`
+  probe), scheduled with the user, not a map ticket.
 - Issue 04 (in-place `/clear` relaunch) — parked by the user; not scheduled
   unprompted.
 - Issue 01 (VS Code agent-mode hooks) — spun out; needs a machine profile
