@@ -7,6 +7,39 @@ Convention: docs/work-directory-conventions.md.
 -->
 
 
+# Session Handoff — 2026-08-06 (session 14: M14 lock-release fix + runtime-state gitignore; WARN rollover at ~123K)
+
+**What shipped (committed on `main`, pushed through `bc3fab3`):**
+
+- **`c45969d` — M14 lock-release-before-launch fix** (fired live at this
+  session's own bootstrap: predecessor's `.active-session` lock survived the
+  auto-relaunch; successor's `register` refused, `LOCK_STALE=3h` gave no
+  reclaim). `launch-next-session.sh` now releases the dying session's own
+  lock — identity-matched via its registry record, foreign holders never
+  removed — before every launch path; `--dry-run` inert; `mode=off` included.
+  Skill + `docs/context-budget.md` reworded to release-before-launch (manual
+  `release` kept as no-script fallback). Tests T16–T19 (suite: 49 asserts).
+  Backlog **M14** opened+resolved; **L18** opened (env-file sourcing guard
+  keyed on `CONTEXT_DUMB_ZONE_TOKENS` clobbers other knob overrides).
+  Decision note (rejected: skill reordering only / successor retry /
+  successor-side steal) in `decisions.md`.
+- **`bc3fab3` — runtime-state gitignore** (user-requested architecture
+  review): untracked `work/*/.active-session` +
+  `work/context-decay/context-ledger.jsonl`, pre-ignored
+  `work/*/.rollover-options`. Rule codified — commit what a future session
+  must read; ignore live-session state — in `.gitignore` comments,
+  `docs/context-budget.md`, `docs/work-directory-conventions.md` ("Tracked
+  vs. untracked"). Working tree now genuinely clean between sessions.
+- User review of `subagent-rollover-research.html` continued in background;
+  one model question answered in-conversation (multiple parallel subagent
+  sessions under one main session — already covered: parent-only project
+  lock, per-child locks, R5, S13/S35/S36; no doc change needed).
+
+**Learnings:** *(parked; promote on second strike)*
+- This session's own bootstrap was the first live exercise of auto-relaunch
+  succession; the next successor's clean lock acquisition is the fix's first
+  real verification — check `register` output at bootstrap.
+
 # Session Handoff — 2026-08-06 (session 13: scenario catalog + parent positions + learnings rules; WARN rollover at ~125K)
 
 **What shipped (committed on `main`, pushed):**
@@ -44,35 +77,3 @@ Convention: docs/work-directory-conventions.md.
 learnings units cleanly; user then asked to close the learnings thread and
 roll over. First rollover of this work item triggered below STOP.
 
-# Session Handoff — 2026-08-06 (session 12: HTML review rendition shipped; STOP rollover at 155K mid-turn)
-
-**What shipped (committed on `main`, pushed):**
-
-- **`subagent-rollover-research.html` — `d93daea`:** standalone, self-contained
-  HTML review rendition of the research note, restructured per user direction:
-  problem (with the stats evidence) → the model (§2: roles/policy, verb,
-  protocol, files, lock hierarchy, state machines, drain mode, invariants
-  I1–I8 — with 5 hand-authored inline-SVG diagrams: system model, resume-vs-
-  successor, lock hierarchy, child lifecycle, parent budget modes) → machinery
-  already in place (§3) → findings (§4) → proposal R1–R8 + inventory (§5) →
-  evaluation model (§6) → next steps. Light/dark via CSS tokens; no external
-  deps. Diagrams visually verified in Chrome (3 label-overlap fixes applied
-  pre-commit). The markdown note remains the raw record (footer says so).
-- Tier-2 decision note (HTML-vs-Artifact) in `decisions.md`; claude-in-chrome
-  `file://` gotcha routed to `docs/operational-knowledge.md`.
-
-**Mid-turn user request (binding, NOT started):** enumerate rollover
-*scenarios* — mainline functional plus corner/edge cases for resilience,
-recoverability, and performance — to (a) keep in mind while working through
-the doc and (b) drive evaluation, *before* any implementation. User asked
-whether their dimension list misses anything (candidates to consider:
-concurrency/contention incl. human attach during drain, observability/
-auditability, cost/token-economy, schema evolution of records, degradation on
-opaque runtimes, human-in-the-loop policy edges). Seed material: S1–S10 +
-P1–P5 + §13 fault model already in the research doc — the new catalog should
-extend, not duplicate, those.
-
-**Rollover:** WARN fired mid-diagram-verification (134K), STOP (155K) two
-edits later; wrapped the atomic step (commit `d93daea` + this ledger) and
-rolled. Second consecutive session terminated on schedule by its own subject
-matter.
