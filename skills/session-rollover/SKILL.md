@@ -96,7 +96,8 @@ unnoticed.
    > Read `work/<project-name>/next-session.md` and continue from **First actions**.
    > Governing skill: `skills/<skill>/SKILL.md`.
 
-   Then honor `ROLLOVER_RELAUNCH` (`context-budget.env`) via
+   Then honor `ROLLOVER_RELAUNCH` (global `context-budget.env`, overridable
+   per work item by a committed `work/<project>/context-budget.env`) via
    `scripts/launch-next-session.sh <project>` — the script owns all vendor
    launch specifics. If the script is absent or the knob is `off`, the pasted
    prompt above is the whole handoff.
