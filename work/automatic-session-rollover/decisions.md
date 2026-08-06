@@ -366,3 +366,20 @@ runtime-agnostic, invisible to downloaders; (2) mermaid diagrams — need
 external JS, which a self-contained in-repo file can't load offline.
 **Blast radius:** one new file in this work dir.
 **Promote?:** no.
+
+## 2026-08-06 — Scenario catalog: separate authoritative md, mirrored in HTML §7 (session 13)
+
+**Decision:** the rollover scenario catalog (S11–S52, nine dimension groups)
+lives in a new `rollover-scenarios.md` — authoritative, greppable, and the
+file where harness results will accrue — mirrored as §7 of
+`subagent-rollover-research.html` for the review reading flow. Research md
+§13.3 keeps S1–S10 as the seed with a pointer.
+**Why:** the catalog is a living deliverable (test results, additions) while
+the research note is a finished record; a separate file avoids churning the
+note and gives the future harness a single source. HTML mirror follows the
+md-raw/HTML-rendition pattern already established for the doc itself.
+**Rejected:** (1) extending research md §13.3 in place — bloats a finished
+note and renumbers nothing cleanly; (2) HTML-only — not greppable, awkward to
+derive tests from, breaks the "md is raw record" convention.
+**Blast radius:** one new file; one new HTML section (+ §7→8, §8→9 renumber).
+**Promote?:** no.
