@@ -1,3 +1,42 @@
+# Session Handoff — 2026-08-06 (session 25: wayfinder ticket 09 RESOLVED — copilot adapter designed; clean wrap at ~113K)
+
+**What shipped (worktree `session-25-ticket-09`, pushed to `origin/main`):**
+
+- **Ticket 09 — copilot measured-tier adapter: DESIGNED.** Full design +
+  rejected alternatives under `## Answer` in
+  `issues/09-copilot-adapter-design.md`; gist: in-place extension of
+  `context-budget.sh` (no new script) — composite child identity
+  `<parentSessionId>+<toolCallId>` via the existing `--agent-id` flag
+  (task children have no session); `children` grows a copilot-cli branch
+  (events.jsonl `subagent.started` scan cross-checked against
+  `session-store.db::assistant_usage_events initiator='sub-agent'` — the
+  hedge for unverified background/`write_agent` streams); measurement
+  keeps claude context-size semantics — last usage row's
+  `input+cache_read+cache_write` per agent_id, `method=exact`, WAL-sidecar
+  snapshot before reading; `subagent.completed.totalTokens` demoted to
+  estimate-only fallback (lifetime sum, not context size); per-child locks
+  and R4 dispatch records reused verbatim; escalation is post-hoc/external
+  only (sync `task` blocks the parent; push tier closed by ticket 06).
+  Build = execution work, out of map scope: backlog row added (incl.
+  slice-0 probe + `copilot_cli_measure` sqlite-first upgrade), unscheduled.
+- Map updated: ticket-09 decision line, fog patch cleared (Not-yet-specified
+  now holds only the ticket-08-dependent threshold-config item), Out-of-scope
+  line for the adapter build. Launcher REPLACED (frontier = ticket 08 only,
+  HITL; AFK sessions have no map work left).
+- No code/tests touched (design-only session). No dispatches opened.
+
+**Suggested skills (next session):** wayfinder (ticket 08, ONLY if user is
+live — grilling, HITL); session-rollover at WARN/STOP.
+
+**Learnings:** none new (the two session-24 parked learnings did not
+re-strike; register-time artifact path did go worktree-stale again after
+EnterWorktree — already an open backlog finding, second strike noted there
+if it bites a check).
+
+**Wrap:** clean end at ~113K (OK, below WARN) — ticket resolved, map has
+no AFK frontier left, so the session wrapped rather than idling toward
+WARN. Committed, pushed. Session-23 block archived (two-block rule).
+
 # Session Handoff — 2026-08-06 (session 24: wayfinder tickets 06+07 RESOLVED; STOP rollover at ~157K)
 
 **What shipped (worktree `session-24-wayfinder-tickets`, pushed to `origin/main`):**

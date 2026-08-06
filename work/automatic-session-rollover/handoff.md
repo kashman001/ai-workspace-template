@@ -6,6 +6,52 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 27: sandbox discovery fix shipped + live-verified; ticket 08 RESOLVED — map destination REACHED)
+
+**What shipped (main checkout, pushed to `origin/main`):**
+
+- **Copilot-vscode sandbox discovery fix (`2c45bfe`).**
+  `copilot_vscode_discover()` now derives the workspaceStorage hash from
+  `$VSCODE_TARGET_SESSION_LOG` by parameter expansion and probes
+  `chatSessions/<sid>.jsonl` directly (no `readdir` on `workspaceStorage/`);
+  glob-and-grep kept as older-build fallback. Verified: fake-HOME harness
+  incl. `chmod 311` readdir-blocked parent (7/7), all eight `scripts/tests/`
+  suites green (326 asserts), AND live in-copilot run of the spec's Verify
+  section (user-relayed): correct artifact pinned, no listing.
+  `method=estimate` mid-first-turn is the designed pre-usage-flush degrade —
+  same file measured `38152 exact` after the turn flushed. Recorded:
+  backlog M10 second follow-up + changelog row; issue-01 session-27 update
+  block (item 2 effectively closed — only the optional UI-meter comparison
+  leg remains); spec file carries a Status: IMPLEMENTED+VERIFIED header.
+- **Ticket 08 — per-role WARN/STOP thresholds: YAGNI (`18c5aee`), resolved
+  live with the user (grilling, all four decision points confirmed).** One
+  shared pair stands; thresholds encode where the model degrades, roles
+  differ only in response to crossing; no task-role taxonomy exists to key
+  on. Revisit trigger recorded in `docs/context-budget.md` → Thresholds.
+  Premise correction: per-item `context-budget.env` overrides relaunch
+  knobs ONLY — threshold plumbing unbuilt, deliberately. Full answer +
+  rejected alternatives in `issues/08-per-role-thresholds.md`.
+- **Map destination REACHED:** all §14.4 questions are recorded decisions,
+  fog exhausted, no open tickets. Map body carries the completion note.
+- Session start: registered primary (stale session-26 record swept);
+  ff-pull required deleting a byte-identical untracked copy of the fix spec.
+
+**Suggested skills (next session):** none standing — the map is complete.
+Issue-01 items 1+3 are task-type HITL (need the user live in VS Code);
+`session-rollover` at WARN/STOP as ever.
+
+**Learnings:**
+- `git pull --ff-only` refuses when an untracked file matches an incoming
+  tracked path — diff against the incoming blob first (here byte-identical
+  → safe delete), then pull (1st strike, parked).
+- Copilot Chat flushes `promptTokens` to chatSessions only at turn end —
+  mid-turn checks size-estimate by design (routed: issue-01 update block +
+  spec status note, not conversation-only).
+
+**Wrap:** WARN rollover at ~132K after ticket-08 resolution. All work
+committed and pushed (`2c45bfe`, `18c5aee`). Session-25 block archived
+(two-block rule).
+
 # Session Handoff — 2026-08-06 (session 26: ticket-09 duplicate resolution reconciled + design verified; launcher-staleness race found)
 
 **What shipped (worktree `session-26-ticket-09`, pushed to `origin/main`):**
@@ -73,43 +119,3 @@ live — grilling, HITL); session-rollover at WARN/STOP.
 **Wrap:** WARN rollover at ~149K after the live-user verification work;
 reconcile + verification + issue-01 updates committed, pushed through
 `955de80` + this rollover commit. Session-24 block archived (two-block rule).
-
-# Session Handoff — 2026-08-06 (session 25: wayfinder ticket 09 RESOLVED — copilot adapter designed; clean wrap at ~113K)
-
-**What shipped (worktree `session-25-ticket-09`, pushed to `origin/main`):**
-
-- **Ticket 09 — copilot measured-tier adapter: DESIGNED.** Full design +
-  rejected alternatives under `## Answer` in
-  `issues/09-copilot-adapter-design.md`; gist: in-place extension of
-  `context-budget.sh` (no new script) — composite child identity
-  `<parentSessionId>+<toolCallId>` via the existing `--agent-id` flag
-  (task children have no session); `children` grows a copilot-cli branch
-  (events.jsonl `subagent.started` scan cross-checked against
-  `session-store.db::assistant_usage_events initiator='sub-agent'` — the
-  hedge for unverified background/`write_agent` streams); measurement
-  keeps claude context-size semantics — last usage row's
-  `input+cache_read+cache_write` per agent_id, `method=exact`, WAL-sidecar
-  snapshot before reading; `subagent.completed.totalTokens` demoted to
-  estimate-only fallback (lifetime sum, not context size); per-child locks
-  and R4 dispatch records reused verbatim; escalation is post-hoc/external
-  only (sync `task` blocks the parent; push tier closed by ticket 06).
-  Build = execution work, out of map scope: backlog row added (incl.
-  slice-0 probe + `copilot_cli_measure` sqlite-first upgrade), unscheduled.
-- Map updated: ticket-09 decision line, fog patch cleared (Not-yet-specified
-  now holds only the ticket-08-dependent threshold-config item), Out-of-scope
-  line for the adapter build. Launcher REPLACED (frontier = ticket 08 only,
-  HITL; AFK sessions have no map work left).
-- No code/tests touched (design-only session). No dispatches opened.
-
-**Suggested skills (next session):** wayfinder (ticket 08, ONLY if user is
-live — grilling, HITL); session-rollover at WARN/STOP.
-
-**Learnings:** none new (the two session-24 parked learnings did not
-re-strike; register-time artifact path did go worktree-stale again after
-EnterWorktree — already an open backlog finding, second strike noted there
-if it bites a check).
-
-**Wrap:** clean end at ~113K (OK, below WARN) — ticket resolved, map has
-no AFK frontier left, so the session wrapped rather than idling toward
-WARN. Committed, pushed. Session-23 block archived (two-block rule).
-
