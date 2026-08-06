@@ -14,15 +14,27 @@ Vendor-neutral: any agent runtime can follow these steps. Claude Code also expos
 this as the `/session-rollover` slash command (`.claude/commands/session-rollover.md`,
 a thin wrapper around this skill).
 
-## When to invoke
+## When to invoke (trigger policy: WARN asks, STOP goes)
 
 - **STOP** (tokens ≥ `CONTEXT_DUMB_ZONE_TOKENS`, exit code 2, or a hook STOP
-  message): finish only the current *atomic step* — nothing new — then run this.
+  message): finish only the current *atomic step* — nothing new — then run this
+  **without asking**. Mid-discussion, the atomic step is the current exchange:
+  answer the user's message first, then roll over, carrying the live question
+  verbatim into the launcher's START HERE so the successor re-poses it.
 - **WARN** (exit code 1, or a hook WARN message): finish the current *work unit*,
-  then run this before starting the next.
+  then **ask the user** "roll over now?". On yes, run this. On no, arm
+  **write-ahead mode** for the WARN→STOP grace window: route state to disk
+  incrementally at each natural pause (settled points → `decisions.md`/docs;
+  open threads → the launcher), so the eventual STOP rollover is cheap.
 - The user asks to roll over / hand off to a fresh session.
 
 Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migration).
+
+**Hook-less cadence fallback:** in runtimes with no in-band WARN/STOP push,
+the signal only arrives when you run `record` — and pure discussions have no
+work-unit boundaries. In an extended discussion, run
+`scripts/context-budget.sh record` every ~10 exchanges so STOP can't pass
+unnoticed.
 
 ## Which boundary skill? (first yes wins)
 
@@ -75,6 +87,11 @@ Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migrat
    > Read `work/<project-name>/next-session.md` and continue from **First actions**.
    > Governing skill: `skills/<skill>/SKILL.md`.
 
+   Then honor `ROLLOVER_RELAUNCH` (`context-budget.env`) via
+   `scripts/launch-next-session.sh <project>` — the script owns all vendor
+   launch specifics. If the script is absent or the knob is `off`, the pasted
+   prompt above is the whole handoff.
+
 7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 
 ## Guardrails
@@ -106,4 +123,6 @@ Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migrat
 - A paste-ready bootstrap prompt.
 
 End by telling the user: start a fresh session (don't `/compact` — rollover replaces
-compaction) and paste the bootstrap prompt.
+compaction) and paste the bootstrap prompt — unless `ROLLOVER_RELAUNCH` already
+launched the successor, in which case tell them where it's running (attached
+terminal, or `claude attach` for a `--bg` launch).

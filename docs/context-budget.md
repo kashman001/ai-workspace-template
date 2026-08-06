@@ -9,7 +9,8 @@ automatic compaction.
 Pieces: `scripts/context-budget.sh` (measurement core) ·
 `scripts/hooks/context-budget-claude-hook.sh` (in-band Claude Code warning) ·
 `skills/session-rollover/SKILL.md` (rollover workflow) · `context-budget.env`
-(thresholds) · `work/context-decay/context-ledger.jsonl` (measurement ledger).
+(thresholds + relaunch knobs) · `scripts/launch-next-session.sh` (successor
+relaunch) · `work/context-decay/context-ledger.jsonl` (measurement ledger).
 
 ## Quickstart — developer
 
@@ -24,7 +25,9 @@ Exit code: `0` OK · `1` WARN · `2` STOP · `3` error. Requires `jq`.
 
 When an agent tells you it got a WARN/STOP: let it finish the current unit, have
 it run the `session-rollover` skill, then start a fresh session with the
-bootstrap prompt it emits. Don't push new work into a STOP'd session.
+bootstrap prompt it emits — or let the agent relaunch the successor itself per
+`ROLLOVER_RELAUNCH` (see "Relaunch knobs"). Don't push new work into a STOP'd
+session.
 
 **Session lifecycle:** registering a session (`register`, below) is the
 *agent's* job, not yours. It's automatic-by-instruction, not by mechanism — the
@@ -44,9 +47,11 @@ is what keeps concurrent sessions from reading each other's counts.
 - **Every work-unit boundary:** `scripts/context-budget.sh record --label
   "<skill>: <unit> done"` — measures, appends to the ledger, and returns the
   status via exit code.
-- **Exit 1 (WARN):** finish the current unit's bookkeeping, then run
-  `skills/session-rollover/SKILL.md`. **Exit 2 (STOP):** flush shared state and
-  hand off immediately. Never start a new work unit in WARN/STOP state.
+- **Exit 1 (WARN):** finish the current unit's bookkeeping, then ask the user
+  whether to roll over; if declined, write ahead incrementally (see "Rollover
+  trigger policy"). **Exit 2 (STOP):** finish only the current atomic step,
+  then run `skills/session-rollover/SKILL.md` — no ask. Never start a new work
+  unit in WARN/STOP state.
 
 ## Why you can't ask the model (D1)
 
@@ -70,6 +75,97 @@ zone. Raise here as models improve. **Keep STOP below the runtime's auto-compact
 trigger** (150K < Claude Code's ~200K): if compaction fires first, the
 deliberate rollover never gets its chance.
 
+## Rollover trigger policy (hybrid: WARN asks, STOP goes)
+
+> **Status:** design accepted 2026-08-05 (ADR-0003/ADR-0004); the
+> `session-rollover` skill carries the policy now, `launch-next-session.sh` and
+> the session-keyed registry are the implementation items. Until the script
+> lands, relaunch behaves as `ROLLOVER_RELAUNCH=off` regardless of the knob.
+
+Who decides that a rollover happens, and when:
+
+- **WARN (≥120K) asks.** The agent finishes the current work unit, then asks
+  the user "roll over now?". On yes, the **dying agent conducts the rollover
+  itself** — mandatory, because the reflect step routes conversation-only
+  state to disk and only the dying context has it.
+- **Declining at WARN arms write-ahead mode** for the WARN→STOP grace window
+  (~30K tokens): the agent routes discussion state to disk *incrementally* at
+  each natural pause (settled points → `decisions.md`/analysis docs; open
+  threads → the launcher), so the eventual STOP rollover is cheap and nearly
+  lossless.
+- **STOP (≥150K) goes automatic.** No ask; the agent finishes only the current
+  *atomic step*, then rolls over. Mid-discussion, the atomic step is the
+  current exchange: answer the user's message first, then roll over, carrying
+  the live question verbatim into the launcher's START HERE so the successor
+  re-poses it.
+
+Consent lives in this trigger policy — WARN is the ask; STOP in `auto` mode
+does not add a second "really launch?" gate (that would recreate `manual`
+inside `auto`).
+
+## Relaunch knobs
+
+`context-budget.env` (same file as the thresholds):
+
+```sh
+# Relaunch behavior at session-rollover's closing step:
+#   off    — emit the paste-ready bootstrap prompt only
+#   manual — consent-gated: the agent asks, then runs launch-next-session.sh itself
+#   auto   — background-launch the successor where the runtime supports it
+#            (claude --bg); fall back to manual elsewhere
+ROLLOVER_RELAUNCH=manual
+ROLLOVER_RUNTIME=claude   # fallback default only — the actual relaunch runtime
+                          # comes from the dying session's own registry record
+```
+
+Workspace-level only — no per-project override: the multi-session operating
+model varies *sessions* per project, not relaunch policy. `ROLLOVER_RUNTIME`
+is a fallback for unregistered sessions; a registered codex session relaunches
+a codex successor.
+
+`scripts/launch-next-session.sh <project> [--runtime …] [--bg]` bakes the
+load-bearing bootstrap prompt in **verbatim** and launches the chosen runtime
+seeded with it. All five runtimes get seeded-interactive launch (`claude`,
+`codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached background
+(`--bg`) is claude-only. Vendor flags live only in the script — re-verify
+against `--help` before changing them.
+
+## Multi-session model (session-keyed registry + per-project lock)
+
+> **Status:** approved 2026-08-05 (ADR-0004), implementation item #1. The
+> shipped script still uses the scalar per-runtime registry described under
+> "Session registration" — a live wrong-measurement bug under concurrency.
+
+Operating model: one developer runs multiple work items concurrently, each
+with its own main session in the same workspace, possibly across runtimes.
+Every element must hold under N concurrent sessions:
+
+- **Measurement is per-session.** Registry state moves to
+  `.context-budget/sessions/<runtime>-<session-id>.json`
+  (`{runtime, artifact, project, registered_at}`); each session writes only
+  its own file and resolves itself via runtime env-var identity first
+  (`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`;
+  the Claude Code hook bypasses even that — it receives the exact
+  `transcript_path` on stdin). This replaces the scalar
+  `session-<runtime>.json`, where `check`/`record` prefer the registry over
+  re-discovery, so session A can measure session B's artifact (fired live
+  2026-08-05: a `--bg` demo session clobbered the design session's entry).
+- **Work-item ownership is per-project.** An advisory lock
+  (`work/<proj>/.active-session`: runtime + session-id + timestamp) enforces
+  one *active* session per project — the launcher/ledger REPLACE semantics are
+  single-writer by construction, and concurrent rollovers on one work item
+  would silently destroy each other. The dying session releases the lock after
+  the rollover-verification gate; the successor's `register` acquires it;
+  stale locks (artifact untouched for hours) are reclaimable.
+- **Relaunch targets the dying session's own project** — read from its own
+  session record, never from a global "active project" scalar (rejected:
+  breaks with concurrent sessions by construction).
+- **Successor confirmation** = a new session file appears with the same
+  project and a different session-id.
+- **Gemini exception:** exact counts come from the shared workspace telemetry
+  log, which is architecturally single-session-per-workspace; a second
+  concurrent gemini session falls back to estimate-only.
+
 ## Per-runtime adapters
 
 Session formats are undocumented internals; each runtime gets one discover + one
@@ -83,21 +179,24 @@ fine given the WARN→STOP margin.
 | Claude Code | `~/.claude/projects/<cwd-slug>/$CLAUDE_CODE_SESSION_ID.jsonl` when that var is set (transcript basename = session id), else newest `.jsonl` in the slug dir (slug = cwd with `/` and `.` → `-`) | last main-chain `message.usage` sum of input + cache-read + cache-creation tokens; sidechain (sub-agent) rows excluded — they have their own windows | exact (verified 2026-07-22, this workspace) |
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` — pinned to `rollout-*-<id>.jsonl` when `$CODEX_THREAD_ID` is set (exported to every shell Codex spawns; equals the rollout UUID), else cwd-filtered newest-mtime fallback | last `last_token_usage.total_tokens` | exact (verified 2026-07-22, origin workspace); pin live-verified 2026-07-23 |
 | Copilot VS Code | `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export it — on current builds a `debug-logs/<id>` dir whose basename is the session id), mapped to `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/<id>.jsonl` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — deterministic, so it pins the live session even when a sibling's log is newer. Falls back to newest-mtime only when the var is unset (older builds), which can race | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-23, origin workspace) |
-| Copilot CLI | root `${COPILOT_HOME:-~/.copilot}`; `session-state/<id>/events.jsonl` pinned via `$COPILOT_AGENT_SESSION_ID` (CLI ≥1.0.29, exported to shell commands), else newest-mtime across `session-state/` then legacy `history-session-state/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | **unverified** against a live install — refine on first real CLI session |
+| Copilot CLI | root `${COPILOT_HOME:-~/.copilot}`; `session-state/<id>/events.jsonl` pinned via `$COPILOT_AGENT_SESSION_ID` (CLI ≥1.0.29, exported to shell commands), else newest-mtime across `session-state/` then legacy `history-session-state/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | exact (verified 2026-08-05 against a live CLI 1.0.78 session — 73.0k UI match; see `work/automatic-session-rollover/smoke-test-copilot.md`) |
 | Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4. The telemetry log is shared append-only across sessions, so `register` resets it — a new session never reads the previous session's counts | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
 
 Non-macOS: the Copilot VS Code storage root differs (Linux `~/.config/Code/…`,
 Windows `%APPDATA%/Code/…`); BSD `stat -f` already falls back to GNU `stat -c`;
 replace the `osascript` notification in `watch` with `notify-send` or equivalent.
 
-**Limitation — one session per runtime per workspace.** The registry
+**Limitation — one session per runtime per workspace (until the
+session-keyed registry lands).** The shipped registry
 (`.context-budget/session-<runtime>.json`) is keyed by runtime, and the gemini
 telemetry reset at `register` assumes the workspace log belongs to a single
 live session. Two concurrent sessions of the same runtime in one workspace
 clobber each other's registration (measures then bind whichever registered
-last) and, for gemini, interleave the shared telemetry log. Run concurrent
-sessions of the same runtime from separate workspace clones. Different
-runtimes coexist fine — their registrations are separate files.
+last) and, for gemini, interleave the shared telemetry log. Until then, run
+concurrent sessions of the same runtime from separate workspace clones — or
+pass `--transcript` explicitly. Different runtimes coexist fine. The approved
+fix is the session-keyed registry under "Multi-session model" above (gemini's
+exact path stays single-session-per-workspace even after it).
 
 ## How warnings reach the agent (layered, D8)
 
@@ -141,8 +240,10 @@ data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
 
 ## Known limitations
 
-- Copilot CLI adapter is a best-effort probe until verified against real files
-  (Copilot CLI isn't installed on the origin machine).
+- Copilot **VS Code** measurement (`copilot_vscode_measure`) is plausible but
+  unverified on current builds — needs a Copilot-licensed VS Code
+  (`work/automatic-session-rollover/issues/01-vscode-agent-mode-hooks.md`).
+  The CLI adapter was live-verified 2026-08-05.
 - Gemini CLI: the tracked `.gemini/settings.json` enables local-file telemetry
   (`target: local`, no data leaves the machine, `logPrompts: false`), and the
   adapter reads the last response's input-token attribute from

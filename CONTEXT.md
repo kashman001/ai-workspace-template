@@ -107,7 +107,9 @@ shortcuts under `.claude/commands/`).
   WARN/STOP (hook message or `scripts/context-budget.sh` exit code), instead of
   letting automatic compaction decide what survives. Reflect → flush → backward
   `handoff.md` + forward `next-session.md` (with a "Do NOT reload" section) →
-  paste-ready bootstrap prompt. Claude Code shortcut: **`/session-rollover [reason]`**.
+  paste-ready bootstrap prompt, then successor relaunch per `ROLLOVER_RELAUNCH`
+  (`context-budget.env`, via `scripts/launch-next-session.sh`). Claude Code
+  shortcut: **`/session-rollover [reason]`**.
   See `docs/context-budget.md` and the **Context Budget** section below.
 
 - **decision-log** (`skills/decision-log/SKILL.md`) — capture the *why* behind a
@@ -244,10 +246,15 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
 
 - At session start: `scripts/context-budget.sh register`.
 - At every work-unit boundary: `scripts/context-budget.sh record --label "<what just finished>"`.
-- Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then run
-  the `session-rollover` skill; `2` (STOP, ≥150K) — finish only the current
-  atomic step and roll over immediately. Claude Code sessions also get an
-  in-band hook message at these thresholds.
+- Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then ask
+  the user whether to roll over (`session-rollover` skill; declined = write
+  ahead to disk incrementally); `2` (STOP, ≥150K) — finish only the current
+  atomic step and roll over immediately, no ask. Claude Code sessions also get
+  an in-band hook message at these thresholds.
+
+Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in
+`context-budget.env` via `scripts/launch-next-session.sh` (see
+`docs/context-budget.md` → "Relaunch knobs").
 
 Full reference: `docs/context-budget.md`; rollover workflow:
 `skills/session-rollover/SKILL.md`.

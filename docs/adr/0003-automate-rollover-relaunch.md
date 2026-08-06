@@ -71,6 +71,7 @@ carries a single runtime-neutral pointer to it.
 
 ## Provenance
 
+- Refined by: ADR-0004 (multi-session model, trigger policy, knobs, runtime scope)
 - Promoted from: `work/automatic-session-rollover/decisions.md#2026-08-05--automate-the-rolloverrelaunch-pipeline-the-effort-itself`
 - Commits: 69dd976
 - Refs: `work/automatic-session-rollover/relaunch-analysis.md` (verified vendor
