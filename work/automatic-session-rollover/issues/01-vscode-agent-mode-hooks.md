@@ -51,6 +51,30 @@ scope after smoke tests (session 3)"; ADR-0004.
   the `copilot_vscode_measure` evidence needed (compare tokens against the
   session UI, like copilot-cli's 73.0k match).
 
+## Update 2026-08-06 (session 26) — item 2 first live attempt: NEGATIVE result
+
+First run of the item-2 verification in a live Copilot Chat agent-mode
+session (Copilot Pro, Sonnet 5, this machine, relayed by the user):
+
+- `check --runtime copilot-vscode` found **no session artifact** —
+  `copilot_vscode_discover` came up empty in a live agent session. Not yet
+  diagnosed: whether `VSCODE_TARGET_SESSION_LOG` was unset in the agent's
+  terminal, or no `workspaceStorage/*/chatSessions/*.jsonl` matched the cwd
+  (current builds may have moved/renamed the store, or the session hadn't
+  flushed). Note the copilot agent itself mis-attributed the miss to "a
+  usage-tracking hook not having written its file" — discovery reads
+  VS Code's own chatSessions logs, no hook involved.
+- Independent constraint confirmed by the agent: it cannot introspect its
+  own token/context usage (no tool or readable UI surface) — so the
+  UI-comparison leg needs the USER to read the number visually, as with
+  the copilot-cli 73.0k match.
+- Next diagnostic (cheap, run in the copilot chat terminal):
+  `echo "${VSCODE_TARGET_SESSION_LOG:-UNSET}"` and
+  `ls -lt "$HOME/Library/Application Support/Code/User/workspaceStorage/"*/chatSessions/ 2>/dev/null | head`
+  — settles which discovery leg fails. Until then the "Copilot VS Code"
+  row's measure stays **plausible but unverified**, now with one recorded
+  discovery failure on VS Code 1.132.0.
+
 ## Done when
 
 - All three checks pass on a Copilot-licensed machine (note VS Code +
