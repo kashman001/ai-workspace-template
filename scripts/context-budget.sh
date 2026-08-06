@@ -315,11 +315,23 @@ acquire_lock() {
 
 cmd_register() {
   resolve_session
-  # Session boundary: the workspace telemetry log is shared append-only across
-  # gemini sessions — reset it so a new session never reads the previous
-  # session's counts (single-session-per-runtime assumption, see docs).
+  # Session boundary: the workspace telemetry log is shared append-only and
+  # single-session — normally reset it so a new session never reads the previous
+  # session's counts. But a non-empty log written in the last 10 min means
+  # another live gemini session owns it — don't corrupt its counts; this session
+  # degrades to estimate-only from the chat log (docs: "a second concurrent
+  # gemini session falls back to estimate-only").
   if [ "$RUNTIME" = "gemini" ] && [ "$ARTIFACT" = "$WORKSPACE_ROOT/.gemini/telemetry.log" ]; then
-    : > "$ARTIFACT"
+    local mt age
+    mt=$(stat -f%m "$ARTIFACT" 2>/dev/null || stat -c%Y "$ARTIFACT" 2>/dev/null || echo 0)
+    age=$(( $(date +%s) - mt ))
+    if [ -s "$ARTIFACT" ] && [ "$age" -lt 600 ]; then
+      note "gemini: telemetry log active ${age}s ago — concurrent session suspected; falling back to estimate-only"
+      ARTIFACT=$(find "$HOME/.gemini/tmp" -name 'logs.json' 2>/dev/null | xargs ls -t 2>/dev/null | head -1)
+      [ -n "$ARTIFACT" ] || die "no gemini chat log to fall back to"
+    else
+      : > "$ARTIFACT"
+    fi
   fi
   mkdir -p "$STATE_DIR/sessions"
   rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
