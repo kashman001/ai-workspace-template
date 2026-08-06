@@ -6,6 +6,51 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 21: ADR-0006 promoted + slice 3 COMPLETE — dispatch-contract (R2/R3); WARN rollover at ~129K)
+
+**What shipped (committed `d2ee5dd` + `6fc7cec` in worktree
+`session-21-adr-0006-slice-3`, both pushed to `origin/main`):**
+
+- **ADR-0006 promoted (`d2ee5dd`):** the session-19 note ("coordination
+  state keyed to repository identity, never a checkout") is now
+  `docs/adr/0006-repository-keyed-coordination-state.md`, amending
+  ADR-0004/0005's implicit one-checkout assumption; README index + backlog
+  row updated, note flipped to `done → ADR-0006`.
+- **Slice 3 — dispatch-contract hardening, R2/R3 (`6fc7cec`):** new
+  stateless, runtime-agnostic `context-budget.sh dispatch-contract
+  --report <path> [--brief <path>] [--gen <n>]` emits the R2 rollover
+  contract for a long-running child's dispatch prompt (checkpoint to report
+  at work-unit boundaries = heartbeat; 15-line return cap; five-status
+  vocabulary incl. `ROLLOVER_NEEDED` only-on-request, never
+  self-assessment; gen≥2 read-report-first clause; ASCII-only for the
+  `%q`/BSD-sed launch paths). R3 documented parent-side: successor dispatch
+  is the only rollover verb; sweep (`children`) before any resume, roll at
+  child WARN/STOP, no human ask (R7). Design + rejected alternatives:
+  `plans/slice-3-dispatch-contract.md` + session-21 `decisions.md` note
+  (not promoted — implementation within ADR-0005's model).
+- **Tests:** new suite `scripts/tests/test-dispatch-contract.sh` K1–K7
+  (24 asserts); all seven suites green — registry 60, attach 22, launcher
+  81, statusline 16, vendor 37, children 27, dispatch-contract 24 (267).
+- **Docs:** `docs/context-budget.md` new "Dispatching long-running
+  children" section + agent-quickstart line + children cross-ref;
+  CONTEXT.md Context Budget bullet (dispatch-time pointer); backlog rows
+  for both units.
+- **Live verification:** first live T13-via-launcher back-stamp — session
+  19's record was stamped `superseded_by` this session's id at register
+  (the launcher-mediated succession chain now closes end-to-end).
+
+**Suggested skills (next session):** tdd for the next slice; wayfinder if
+slice 4 (decision tickets) is picked; session-rollover at WARN/STOP.
+
+**Learnings:** (parked, carried from session 19 — did not bite this
+session)
+- Registry hygiene: stale `role=primary` records accumulate in
+  `.context-budget/sessions/` from sessions that never released; cosmetic —
+  lock is authoritative.
+
+**Rollover:** WARN at ~121.6K right after slice-3 suites green;
+follow-through finished, committed, rolled. Second worktree-invoked
+auto-relaunch.
 
 # Session Handoff — 2026-08-06 (session 19: issue 05 COMPLETE — workspace-root anchoring; WARN rollover at ~139K)
 
@@ -55,40 +100,3 @@ WARN/STOP.
 **Rollover:** WARN at ~126K right after all suites green; follow-through
 finished, committed, rolled. First rollover to use the worktree-invoked
 auto-relaunch path this slice just shipped.
-# Session Handoff — 2026-08-06 (session 18: slice 2 COMPLETE — `children` per-child sweep (R1); WARN rollover at ~120K)
-
-**What shipped (committed `d194cc1`, pushed to `origin/main`; work done in
-worktree `slice-2-children-sweep` — main checkout BEHIND until pulled):**
-
-- **`children` subcommand (slice 2, R1):** `context-budget.sh children
-  [--parent-session <sid>] [--all]` — enumerates a Claude parent's
-  `subagents/agent-*.jsonl` + `.meta.json`, measures each with a
-  sidechain-INCLUSIVE Claude-measure variant (child rows are all
-  `isSidechain:true`; the self-measure filter would degrade them to size
-  estimates), prints escalation-only WARN/STOP check-style lines
-  (`agent= tokens= … status= age= type=`), exits with the worst child
-  status. Non-claude runtimes die loudly. Design + rejected alternatives:
-  `plans/slice-2-children-sweep.md` and the session-18 `decisions.md` note.
-- **Tests:** new suite `scripts/tests/test-children-sweep.sh` C1–C9
-  (27 asserts); all six suites green (registry 54, attach 22, launcher 65,
-  statusline 14, vendor 37, children 27).
-- **Live verification:** T13 back-stamp confirmed at register (session-17
-  record stamped with this session's id); smoke sweep of a real fleet
-  surfaced the research's motivating 141.8K subagent as WARN.
-- **Follow-through, all done:** usage header; `docs/context-budget.md`
-  "Per-child sweep" section + quickstart line; decisions.md note (not
-  promoted — implementation detail within ADR-0005); backlog changelog row;
-  plan file marked COMPLETE.
-
-**Suggested skills (next session):** tdd for the next slice;
-session-rollover at WARN/STOP.
-
-**Learnings:** (parked, first strike each)
-- The worktree-isolated Bash guard refuses compound commands (for-loops,
-  `;`-chains with redirects, unquoted globs) even when they only run tests —
-  split into one plain command per call.
-
-**Rollover:** WARN at ~120K right at the slice boundary (record after push);
-deliberate rollover, no unfinished work. Lock released manually (launch
-script not invoked from a worktree, per operational rule).
-

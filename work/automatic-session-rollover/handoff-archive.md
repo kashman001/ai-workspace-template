@@ -2,6 +2,44 @@
 ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
+# Session Handoff — 2026-08-06 (session 18: slice 2 COMPLETE — `children` per-child sweep (R1); WARN rollover at ~120K)
+
+**What shipped (committed `d194cc1`, pushed to `origin/main`; work done in
+worktree `slice-2-children-sweep` — main checkout BEHIND until pulled):**
+
+- **`children` subcommand (slice 2, R1):** `context-budget.sh children
+  [--parent-session <sid>] [--all]` — enumerates a Claude parent's
+  `subagents/agent-*.jsonl` + `.meta.json`, measures each with a
+  sidechain-INCLUSIVE Claude-measure variant (child rows are all
+  `isSidechain:true`; the self-measure filter would degrade them to size
+  estimates), prints escalation-only WARN/STOP check-style lines
+  (`agent= tokens= … status= age= type=`), exits with the worst child
+  status. Non-claude runtimes die loudly. Design + rejected alternatives:
+  `plans/slice-2-children-sweep.md` and the session-18 `decisions.md` note.
+- **Tests:** new suite `scripts/tests/test-children-sweep.sh` C1–C9
+  (27 asserts); all six suites green (registry 54, attach 22, launcher 65,
+  statusline 14, vendor 37, children 27).
+- **Live verification:** T13 back-stamp confirmed at register (session-17
+  record stamped with this session's id); smoke sweep of a real fleet
+  surfaced the research's motivating 141.8K subagent as WARN.
+- **Follow-through, all done:** usage header; `docs/context-budget.md`
+  "Per-child sweep" section + quickstart line; decisions.md note (not
+  promoted — implementation detail within ADR-0005); backlog changelog row;
+  plan file marked COMPLETE.
+
+**Suggested skills (next session):** tdd for the next slice;
+session-rollover at WARN/STOP.
+
+**Learnings:** (parked, first strike each)
+- The worktree-isolated Bash guard refuses compound commands (for-loops,
+  `;`-chains with redirects, unquoted globs) even when they only run tests —
+  split into one plain command per call.
+
+**Rollover:** WARN at ~120K right at the slice boundary (record after push);
+deliberate rollover, no unfinished work. Lock released manually (launch
+script not invoked from a worktree, per operational rule).
+
+
 # Session Handoff — 2026-08-06 (session 17: slice 1 COMPLETE — T13/T14 + follow-through + ADR-0005; WARN rollover at ~128K)
 
 **What shipped (committed and pushed to `origin/main`; work done in worktree
