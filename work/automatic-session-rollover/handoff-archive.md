@@ -2,6 +2,37 @@
 ARCHIVE of work/automatic-session-rollover/handoff.md — older ledger blocks,
 newest first. Moved here when handoff.md exceeds the two most recent blocks.
 -->
+# Session Handoff — 2026-08-05 (session 8: plan execution started — Task 1 shipped; WARN rollover)
+
+**What shipped (committed + pushed on `main`):**
+
+- **Task 1 of `plans/2026-08-05-vendor-hook-deployments.md` — commit `4a39bf8`:**
+  shared lib `scripts/hooks/context-budget-hook-lib.sh` (throttle /
+  escalation-only / fail-open core, canonical WARN/STOP text);
+  `context-budget-claude-hook.sh` refactored to a thin wrapper sourcing it
+  (byte-identical messages; state files renamed `hook-claude-<sid>.*` — stale
+  old files harmless); new suite `scripts/tests/test-vendor-budget-hooks.sh`,
+  13 asserts green (T1 escalation, T2 throttle, T3 fail-open, T4 claude
+  envelope).
+
+**Session friction (resolved, no action needed):** primary checkout lagged
+origin/main — session 7 had pushed its rollover commit from the worktree
+branch; `git pull --ff-only` fixed it (the launcher's First-action warning
+worked). The live claude hook fired WARN in-band at 121K right after plan
+load — the push channel this whole item builds is demonstrably working.
+
+**What did NOT happen:** Tasks 2–8 untouched (opencode runtime, codex/gemini/
+opencode/copilot deployments, option inheritance, docs gate). Task 1 was
+executed as the final work unit under WARN; rollover began at ~135K.
+
+**Loose ends:** leftover locked worktree
+`.claude/worktrees/vendor-hook-deployments` (branch fully merged into main) —
+safe to `git worktree remove --force` + `git branch -d` when convenient.
+
+**Suggested skills for next session:** `superpowers:executing-plans` on the
+plan (Tasks 2–8); `session-rollover` at WARN/STOP.
+
+
 # Session Handoff — 2026-08-05 (session 7: item #3 planned — vendor hooks + option inheritance; STOP rollover before execution)
 
 **What shipped (committed + pushed from worktree branch

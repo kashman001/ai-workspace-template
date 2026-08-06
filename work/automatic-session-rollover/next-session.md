@@ -14,64 +14,60 @@ Codex, Gemini, OpenCode, Copilot) — all read `CONTEXT.md` via their entrypoint
 1. `git pull --ff-only` if the checkout lags origin/main.
 2. `scripts/context-budget.sh register --project automatic-session-rollover`
    — re-acquires the work-item lock the predecessor released.
-3. Read the plan's Tasks 7–8 + Global Constraints:
+3. Read the plan's **Global Constraints** only (not the task bodies):
    `work/automatic-session-rollover/plans/2026-08-05-vendor-hook-deployments.md`.
-4. Continue execution with `superpowers:subagent-driven-development` — the SDD
-   ledger `.superpowers/sdd/2026-08-05-vendor-hook-deployments/progress.md`
-   records Tasks 1–6 complete; resume at **Task 7**, then Task 8, then the
-   plan-wide **final whole-branch review** (merge-base = `a1d5c8f`'s parent…
-   use `git merge-base` guidance in the SDD skill; branch work is all on main,
-   range `13201b5..HEAD` covers plan commits).
+4. Continue with `superpowers:subagent-driven-development`. The SDD ledger
+   `.superpowers/sdd/2026-08-05-vendor-hook-deployments/progress.md` records
+   Tasks 1–8 complete. Resume at **Task 9 (user-added)** — brief already
+   written: `.superpowers/sdd/2026-08-05-vendor-hook-deployments/task-9-brief.md`
+   (attach-session.sh helper; user overrode the YAGNI call, this is mandated).
+   Dispatch implementer → task review per SDD.
+5. Then the plan-wide **final whole-branch review** (most capable model) over
+   range `13201b5..HEAD` — includes Task 9's commit; triage the SDD ledger's
+   deferred minors (T3 set -e sourcing, T5 report self-description, T7 dangling
+   pointer now fixed by Task 8, T8 backlog footer date).
 
-## Mission: finish the plan — Task 7 (option inheritance), Task 8 (docs + gate), final review
+## Mission: Task 9 (attach-session.sh), then the final whole-branch review
 
-**Tasks 1–6 are DONE** (commits `4a39bf8`, `6a78138`, `4543645`, `93e9d45`,
-`f9579fe`, `9fa16b7`) — all five runtime hooks shipped, suite
-`test-vendor-budget-hooks.sh` 37 asserts green. Do not redo them; the SDD
-ledger holds per-task review results and deferred minors for the final review.
-
-Remaining:
-- **Task 7:** `.rollover-options` persist-and-replay in
-  `scripts/launch-next-session.sh` + rollover-skill step. VERIFY vendor flags
-  against live `--help` before wiring (plan Step 3 lists the exact greps).
-- **Task 8:** docs/context-budget.md vendor-hooks section, CLAUDE.md update,
-  backlog rows, decisions.md Tier-2 notes, full 3-suite verification gate.
-- **Final SDD whole-branch review** (most capable model) over all plan
-  commits, triaging the ledger's deferred minors.
+Tasks 1–8 are DONE and pushed (through `f9e003a`) — all five runtime hooks,
+option inheritance, docs gate. Do not redo or re-review them individually;
+the final review covers the whole branch.
 
 ## Constraints already decided (do not re-litigate)
 
-- The plan's **Global Constraints** section is authoritative (ADR-0003/0004;
-  escalation-only / throttled / fail-open; bash-3.2 empty-array form).
+- Plan's **Global Constraints** are authoritative (ADR-0003/0004; escalation-
+  only / throttled / fail-open; bash-3.2 empty-array form; verify vendor flags
+  against live `--help` before wiring — the plan's table already had one
+  nonexistent codex flag).
 - Standing push-to-main approval applies.
-- VS Code agent-mode verification OUT of scope → `issues/01-vscode-agent-mode-hooks.md`.
+- Task 9 is user-mandated (attach helper ≠ YAGNI); its brief is the
+  requirements doc — follow it, including the claude-attach-syntax live
+  verification and the non-claude "already interactive elsewhere" behavior.
 - Machine gotchas (do NOT re-diagnose): codex global config pins unavailable
-  model (`-m gpt-5.5` to smoke); gemini has no auth on this machine;
-  `opencode run` re-appends `$schema` to `.opencode/opencode.json` — all in
+  model; gemini has no auth; `opencode run` re-appends `$schema` — all in
   docs/operational-knowledge.md.
 - At session end / rollover: release the lock (`scripts/context-budget.sh
   release --project automatic-session-rollover`).
 
 ## Do NOT reload
 
-- `handoff-archive.md` — sessions 1–7 provenance, superseded.
-- Task 2–6 briefs/reports under `.superpowers/sdd/…/` — reviewed and closed;
-  only `progress.md` matters (deferred minors for the final review).
-- `vendor-hooks-research.md`, `smoke-test-*.md` — consumed by Tasks 2–6;
-  Task 7 needs only live `--help` output.
-- `relaunch-analysis.md`, `docs/adr/0001*/0002*` — background only.
-- Items #1/#2 design questions — settled; `decisions.md` tail has the notes.
+- `handoff-archive.md` — sessions 1–8 provenance, superseded.
+- Task 1–8 briefs/reports under `.superpowers/sdd/…/` — reviewed and closed;
+  only `progress.md` (deferred minors) + `task-9-brief.md` matter now.
+- `vendor-hooks-research.md`, `smoke-test-*.md`, `relaunch-analysis.md`,
+  `docs/adr/0001*/0002*` — consumed/background only.
+- The multi-hop rollover design discussion — settled and flushed into
+  `docs/context-budget.md` ("Chained rollovers & re-attach", gemini caveat);
+  Task 9's brief carries the actionable remainder.
 
-## State snapshot (at session-9 rollover, 2026-08-06)
+## State snapshot (at session-10 rollover, 2026-08-06)
 
-- Branch `main`, pushed through the session-9 rollover commit. Working tree
-  clean; only the live `.active-session` lock is untracked, by design.
-- Suites green: vendor-budget-hooks 37, launch-next-session 28, registry 13.
-- `~/.copilot/config.json` now lists this workspace in `trustedFolders`
-  (added during Task 6 smoke check — machine state, intentional).
+- Branch `main` pushed through `f9e003a`. Uncommitted at rollover: only
+  `work/context-decay/context-ledger.jsonl` (budget ledger, committed by the
+  rollover commit) and the live `.active-session` lock (untracked by design).
+- Suites green: vendor-budget-hooks 37, launch-next-session 38, registry 13.
+- No `.rollover-options` file exists — this session didn't know its own launch
+  flags (skill says leave absent); successor launches with runtime defaults.
 - Cleanup candidate (low priority): leftover merged worktree
   `.claude/worktrees/vendor-hook-deployments` + its branch.
-- Machine: claude, codex 0.142.4, gemini 0.46.0, opencode 1.18.14, copilot
-  CLI 1.0.78, sqlite3 present. No running background processes.
-- Work-item lock released at rollover; successor re-acquires via First
-  action 2.
+- No running background processes; work-item lock released at rollover.
