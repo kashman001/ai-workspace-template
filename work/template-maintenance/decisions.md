@@ -28,3 +28,10 @@
 - **Blast radius:** skills/checkpoint/, skills/session-rollover/, CONTEXT.md
   checkpoint bullet.
 - **Promote?:** no (small-scope consistency fix; reversible).
+
+## 2026-08-06 — Demand-load trims: index over split, condense over delete
+**Chose:** In-file section index + grep-the-header access note for docs/context-budget.md; shell-heredoc append + 16KB archive rule for decisions.md; condensing (not deleting) CONTEXT.md's graphify / tool-loading / backlog sections.
+**Because:** Context audit showed the cost is whole-file loads, not file existence; an index fixes access without breaking the file's 11 inbound pointers, and condensed sections keep every rule reachable via a verified pointer target.
+**Rejected:** Splitting context-budget.md into multiple files — churns 11 pointers across docs/skills for the same saving; deleting CONTEXT.md sections outright — graphify rules and backlog discipline are per-session guidance, and recommended-tooling.md §5 circularly pointed back at CONTEXT.md for removal steps.
+**Blast radius:** CONTEXT.md, docs/context-budget.md, skills/decision-log/SKILL.md, docs/recommended-tooling.md §5, both backlog HTML files (L25–L27).
+**Promote?:** no

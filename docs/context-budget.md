@@ -12,6 +12,32 @@ Pieces: `scripts/context-budget.sh` (measurement core) ·
 (thresholds + relaunch knobs) · `scripts/launch-next-session.sh` (successor
 relaunch) · `work/context-decay/context-ledger.jsonl` (measurement ledger).
 
+> **Agents — don't read this file whole (~10K tokens).** Pick your section from
+> the index below, `grep -n '^## '` for its header, and Read with
+> offset/limit from there. The two Quickstarts immediately below cover the
+> common cases; go deeper only when a pointer names a specific section.
+
+Section index:
+
+- **Quickstart — developer** / **Quickstart — agent** — the commands and
+  exit-code protocol; most visits end here.
+- **Why you can't ask the model (D1)** — why usage is measured from disk.
+- **Thresholds** — WARN/STOP values and where they live.
+- **Rollover trigger policy** — what to do on exit 1 (WARN) vs 2 (STOP).
+- **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override.
+- **Multi-session model** — session-keyed registry, per-project lock,
+  session roles.
+- **Worktrees** — workspace-root anchoring.
+- **Per-child sweep (`children`)** — monitoring subagent context.
+- **Dispatching long-running children** — dispatch records + the rollover
+  contract for child prompts.
+- **Per-runtime adapters** — how each runtime's usage artifact is read.
+- **How warnings reach the agent** — layered in-band delivery (D8).
+- **Vendor hook deployments** — committed hook wiring per runtime.
+- **Session registration** — what `register` pins and why.
+- **Ledger** — measurement log format.
+- **Known limitations**
+
 ## Quickstart — developer
 
 ```sh

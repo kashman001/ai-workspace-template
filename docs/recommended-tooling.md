@@ -305,7 +305,10 @@ exists:
 - `.opencode/plugins/graphify.js` + `.opencode/opencode.json` — the OpenCode plugin
 - `CONTEXT.md` → "graphify" section — the usage rules for all agents
 
-(If you don't use graphify, remove those graphify pieces — see the note at the bottom of `CONTEXT.md` for exactly what to delete.)
+(If you don't use graphify, delete: the `hooks` block in `.gemini/settings.json`
+— keep the file, its `telemetry` block feeds the context-budget system —
+`.opencode/plugins/graphify.js`, the plugin entry in `.opencode/opencode.json`,
+and the `CONTEXT.md` → "graphify" section.)
 
 **Setup (global, once per machine):**
 
