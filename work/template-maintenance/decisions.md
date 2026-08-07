@@ -35,3 +35,10 @@
 **Rejected:** Splitting context-budget.md into multiple files — churns 11 pointers across docs/skills for the same saving; deleting CONTEXT.md sections outright — graphify rules and backlog discipline are per-session guidance, and recommended-tooling.md §5 circularly pointed back at CONTEXT.md for removal steps.
 **Blast radius:** CONTEXT.md, docs/context-budget.md, skills/decision-log/SKILL.md, docs/recommended-tooling.md §5, both backlog HTML files (L25–L27).
 **Promote?:** no
+
+## 2026-08-07 — GitHub access: gh CLI required, GitHub MCP fully removed
+**Chose:** Delete the GitHub MCP fragment and all wiring (opencode block, PAT-export plumbing, docker dep); promote `gh` to a required dependency verified at setup (`check-dependencies.sh` req + `gh auth login` in the auth runbook).
+**Because:** Largest per-server context cost (~900 tokens standing) for tools the ADR-0002 transcript scan showed are almost never used; gh CLI covers the capability at zero standing cost in every runtime.
+**Rejected:** Keeping the fragment as a documented escape hatch — doc surface for a path nobody takes; re-add is one 8-line file (recipe kept in mcp-fragments/README.md). Keeping PAT export — its only consumer was the MCP server; gh manages its own keychain credential.
+**Blast radius:** mcp-fragments/, opencode.json, .claude/settings.json.example, .mcp.json.example, .vscode/mcp.json.example, scripts/check-dependencies.sh, scripts/check-service-access.sh, docs/{mcp-setup,service-access,workspace-setup,template-usage,recommended-tooling,setup-guide.html,runbooks/*}, ADR-0002 amendment.
+**Promote?:** no — implements existing ADR-0002 direction, recorded there as an amendment

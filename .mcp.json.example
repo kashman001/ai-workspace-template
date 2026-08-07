@@ -1,5 +1,5 @@
 {
-  "_comment": "File: .mcp.json.example — template for the core MCP config. Copy to .mcp.json (gitignored) for runtimes that read a project-level .mcp.json (e.g. Claude Code). Core carries only the always-useful, cheap server set (graphify); heavier task-specific servers (github, youtube-transcript) live in mcp-fragments/ and are loaded on demand — see docs/mcp-setup.md and mcp-fragments/README.md. graphify serves graphify-out/graph.json in the cwd by default; multi-repo: point args at a specific graph, e.g. [\"repos/<name>/graphify-out/graph.json\"].",
+  "_comment": "File: .mcp.json.example — template for the core MCP config. Copy to .mcp.json (gitignored) for runtimes that read a project-level .mcp.json (e.g. Claude Code). Core carries only the always-useful, cheap server set (graphify); heavier task-specific servers (youtube-transcript) live in mcp-fragments/ and are loaded on demand — see docs/mcp-setup.md and mcp-fragments/README.md. graphify serves graphify-out/graph.json in the cwd by default; multi-repo: point args at a specific graph, e.g. [\"repos/<name>/graphify-out/graph.json\"].",
   "mcpServers": {
     "graphify": {
       "type": "stdio",

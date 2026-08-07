@@ -80,7 +80,7 @@
   <div class="pill-row">
     <span class="pill">Claude Code</span><span class="pill">Codex</span>
     <span class="pill">OpenCode</span><span class="pill">Gemini</span>
-    <span class="pill">graphify MCP (core)</span><span class="pill">MCP fragments: GitHub · YouTube (opt-in)</span>
+    <span class="pill">graphify MCP (core)</span><span class="pill">gh CLI (required)</span><span class="pill">MCP fragments: YouTube (opt-in)</span>
   </div>
 </div></header>
 
@@ -249,7 +249,7 @@ rm -rf .git &amp;&amp; git init</code></pre>
 cp .mcp.json.example .mcp.json
 cp .claude/settings.json.example .claude/settings.local.json
 ./scripts/check-service-access.sh                  # reports gaps + fix commands
-export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
+gh auth login                                      # if not already authenticated</code></pre>
   </div></div>
 
   <div class="step"><div class="num">4</div><div class="body">
@@ -269,8 +269,9 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
     <h3>Start building</h3>
     <p>Decide on the optional bits: <strong>graphify</strong> is the core MCP server (wired by default;
     it also adds <code>.gemini/settings.json</code> / <code>.opencode/plugins/graphify.js</code>).
-    <strong>GitHub</strong> and <strong>YouTube transcript</strong> MCP are opt-in fragments under
-    <code>mcp-fragments/</code>, loaded per session — see <code>docs/mcp-setup.md</code>. Delete what you don't use.
+    <strong>YouTube transcript</strong> MCP is an opt-in fragment under
+    <code>mcp-fragments/</code>, loaded per session — see <code>docs/mcp-setup.md</code>; GitHub goes
+    through the required <code>gh</code> CLI (no MCP server). Delete what you don't use.
     Add reusable workflows under <code>skills/</code> and list them in <code>CONTEXT.md</code>.
     The template ships four: <code>checkpoint</code> (session wrap-up), <code>onboard-repo</code>
     (bring a repo in), <code>rlm</code> (query huge contexts), and <code>decision-log</code> —
@@ -302,14 +303,12 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"</code></pre>
 
       <text class="it" x="40" y="104">agent CLIs on PATH</text>
       <text class="ds" x="40" y="120">claude · codex · opencode · gemini</text>
-      <text class="it" x="40" y="148">gh CLI login</text>
-      <text class="ds" x="40" y="164">source of the MCP token · gh auth status</text>
-      <text class="it" x="40" y="192">~/.zshrc → export token</text>
-      <text class="ds" x="40" y="208">GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token)</text>
+      <text class="it" x="40" y="148">gh CLI login (required)</text>
+      <text class="ds" x="40" y="164">all GitHub operations · gh auth status</text>
       <text class="it" x="40" y="236">~/.codex/config.toml</text>
-      <text class="ds" x="40" y="252">Codex MCP registration</text>
+      <text class="ds" x="40" y="252">Codex MCP registration (optional)</text>
       <text class="it" x="40" y="280">~/.gemini/settings.json</text>
-      <text class="ds" x="40" y="296">Gemini MCP registration</text>
+      <text class="ds" x="40" y="296">Gemini MCP registration (optional)</text>
       <text class="it" x="40" y="324">OS keychain</text>
 
       <rect x="430" y="20" width="370" height="320" rx="14" fill="#0c2025" stroke="#194a52"/>
@@ -441,7 +440,6 @@ agent-context-sync                    # links new skills into ~/.config/agent-co
   <div class="callout">
     <h3>Verify before you call it done</h3>
     <pre><code>gh auth status                                    # global: GitHub auth
-echo "${GITHUB_PERSONAL_ACCESS_TOKEN:+token set}" # global: MCP token exported
 claude mcp list                                   # local:  core MCP (graphify) visible
 scripts/mcp/youtube-transcript.sh                 # local:  starts YouTube MCP (opt-in fragment)
 ./scripts/check-workspace-structure.sh            # local:  symlinks + dirs OK</code></pre>

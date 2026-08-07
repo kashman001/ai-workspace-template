@@ -47,7 +47,6 @@
   },
   "enabledMcpjsonServers": [
     "graphify",
-    "github",
     "youtube-transcript"
   ]
 }

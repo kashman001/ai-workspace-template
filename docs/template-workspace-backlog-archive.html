@@ -647,6 +647,21 @@
       already includes the materialized attachments, so tracker numbers were correct throughout. 2026-08-06.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L30</span> GitHub MCP removed — gh CLI promoted to required setup-time prerequisite
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">mcp-fragments/ · scripts/check-* · docs</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-06 context audit: GitHub MCP was the largest per-server context
+      cost (~900 tokens/session standing; ~2.2K when its instruction block landed), while the CLI-first doctrine
+      and ADR-0002 already prefer <code>gh</code>; the transcript scan behind ADR-0002 found the structured tools
+      almost never used.</p>
+    <p><span class="fix">Fixed:</span> full removal 2026-08-07 — <code>mcp-fragments/github.json</code> deleted
+      (re-add recipe kept in the fragments README), <code>opencode.json</code> github block and PAT-export
+      plumbing removed (auth runbook, service-access check + doc, workspace-setup, setup-guide.html,
+      mcp-setup.md per-runtime blocks); <code>gh</code> flipped to <em>required</em> in check-dependencies.sh
+      and the dependencies runbook; docker dependency dropped (GitHub-MCP-only consumer); ADR-0002 amended.
+      GitHub now rides <code>gh auth login</code> + the gh CLI in every runtime.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

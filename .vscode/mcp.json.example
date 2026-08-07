@@ -1,6 +1,6 @@
 // Template for VS Code MCP config. Copy to .vscode/mcp.json (gitignored).
 // Core server set only (graphify) — lean by design. Task-specific servers
-// (github, youtube-transcript) live in mcp-fragments/; copy an entry in here
+// (youtube-transcript) live in mcp-fragments/; copy an entry in here
 // (VS Code uses "servers", fragments use "mcpServers" — same server shape)
 // when you need it. See docs/mcp-setup.md.
 {

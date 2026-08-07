@@ -35,6 +35,9 @@ never loads.
 - **Keeping the GitHub MCP plugin (user-level, always-on in every project)** —
   rejected: zero recorded plugin tool calls across 30 transcripts; `gh` covers it.
   Uninstalled; `mcp-fragments/github.json` remains the sanctioned opt-in path.
+  *(Amendment 2026-08-07: the github fragment was removed entirely — the `gh`
+  CLI, now a required dependency, is the only GitHub path; re-add recipe in
+  `mcp-fragments/README.md`. See backlog L30.)*
 
 ## Consequences
 
