@@ -70,7 +70,8 @@ is what keeps concurrent sessions from reading each other's counts.
 ## Quickstart — agent
 
 - **Session start:** `scripts/context-budget.sh register` — pins your session
-  artifact so later checks aren't confused by concurrent sessions.
+  artifact so later checks aren't confused by concurrent sessions. (Claude
+  Code: the `SessionStart` hook already ran it — don't re-run.)
 - **Every work-unit boundary:** `scripts/context-budget.sh record --label
   "<skill>: <unit> done"` — measures, appends to the ledger, and returns the
   status via exit code.
