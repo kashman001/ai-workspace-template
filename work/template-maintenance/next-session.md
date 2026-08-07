@@ -11,10 +11,10 @@ template upkeep: pick up new work from `docs/template-workspace-backlog.html`
 
 One optional thread from the 2026-08-06 context audit, awaiting user appetite:
 trim the remaining empty-session floor — workspace-level GitHub MCP was
-removed 2026-08-07 (L30, commit `2ba9f11`); still open, all user-global
-config: `claude mcp remove github` at user scope if wired there, claude.ai
-connectors (~410 tokens), superpowers plugin (~1.8K). Numbers: `handoff.md`
-top block, Learnings.
+removed 2026-08-07 (L30, commit `2ba9f11`; user scope confirmed clean —
+no `mcpServers` in `~/.claude.json`). Still open, both user-global:
+claude.ai connectors (~410 tokens, claude.ai settings) and the superpowers
+plugin (~1.8K). Numbers: `handoff.md` top block, Learnings.
 
 ## Read these, in order
 

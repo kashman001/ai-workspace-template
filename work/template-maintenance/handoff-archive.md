@@ -2,6 +2,19 @@
 ARCHIVE of work/template-maintenance/handoff.md — older Session Handoff
 blocks, newest first. See handoff.md for the purpose header + live blocks.
 -->
+# Session Handoff — 2026-08-05 (closed out: launch-next-session effort spun out to its own project)
+
+The open question in the block below (background demo vs interactive) was
+resumed and resolved: demo run, discussion held, and the whole effort spun
+out into **`work/automatic-session-rollover/`** at the user's request — it
+grew from one script into script + optionality knobs + cross-vendor trigger
+reliability + multi-session identity redesign. See that project's
+`relaunch-analysis.md` and ADR-0003 for everything; nothing about this
+effort remains pending in template-maintenance. The launcher here is
+retargeted to umbrella/backlog duty.
+
+---
+
 # Session Handoff — 2026-08-05 (follow-up: claude-handoff comparison; launch-next-session.sh mission queued; STOP rollover)
 
 **Trigger:** user-requested rollover; budget hit STOP (150K) as it started.
