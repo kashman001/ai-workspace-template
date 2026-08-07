@@ -572,6 +572,27 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L31</span> context-inspect attributed <code>hook_success</code> at whole-JSON size; hook stdout never enters model context
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-inspect.sh</span></h3>
+    <p><span class="k">Evidence</span> — residual analysis 2026-08-07 (the open attribution question parked on the
+      first L19 card / session-#4 launcher): on two Warp-plugin-heavy transcripts, per-turn residuals went
+      systematically negative with whole-JSON attribution (median −43 and −14; 57–73% of turns negative —
+      impossible if attribution were correct), and returned to the expected uniform small-positive pattern
+      (median ≈ +155, thinking + estimate error) once <code>hook_success</code> records were excluded. Mechanism
+      confirmed by field inspection: the model-visible hook text is the attachment's <code>content</code> field
+      only — the context-budget SessionStart hook (its line demonstrably in context) has <code>content</code> ≈
+      its stdout, every Warp PostToolUse/Stop record has <code>content=0</code> (stdout is terminal escape
+      sequences), and the superpowers SessionStart context arrives via the separate
+      <code>hook_additional_context</code> attachment.</p>
+    <p><span class="k">Impact</span> — Warp-heavy sessions over-attributed ~190 tok/turn (~20–29K per long
+      session), inflating the <code>att</code> column and masking real growth in the <code>--phases</code> table.</p>
+    <p><span class="fix">Fixed:</span> both jq measure sites in <code>context-inspect.sh</code> now attribute
+      <code>hook_success</code> at <code>content</code> length (other attachment types unchanged). Verified on a
+      136-hook-record Warp transcript: hook_success rows drop to 0 tok and the per-turn residuals are uniformly
+      small-positive.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L19</span> No normalized approval level mapped to claude's classifier-vetted "auto mode"; script <code>auto</code> ≠ UI auto
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · docs/context-budget.md</span></h3>
     <p><span class="k">Evidence</span> — <code>ROLLOVER_OPT_APPROVAL=auto</code> mapped to claude

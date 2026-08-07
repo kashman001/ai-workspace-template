@@ -55,3 +55,10 @@
 **Rejected:** user-level `~/.gemini/settings.json` — per-machine setup the template can't ship; parsing the cumulative `gemini_cli.token.usage` metric — measures lifetime total, not live context; bytes÷4 of the telemetry log as fallback — its size reflects telemetry volume, not context (observed: 223KB from one failed call).
 **Blast radius:** `.gemini/settings.json`, `.gitignore`, `scripts/context-budget.sh` (gemini discover/measure), `docs/context-budget.md`, `CONTEXT.md` + `docs/recommended-tooling.md` (graphify-deletion guidance now preserves the file), `docs/workspace-structure.md`.
 **Promote?:** no
+
+## 2026-08-07 — Decline turn-1 context trims (options 1+2)
+**Chose:** no trims — leave skill_listing descriptions and project CLAUDE.md as-is; `trim-estimates.md` stands as the record.
+**Because:** user's bar is "unused AND no negative implications"; measurement showed no repo-side candidate meets it — workspace share of skill_listing is only ~307 tok (trigger-accuracy risk to cut), and every sizable CLAUDE.md section is load-bearing for non-Claude runtimes, template downloaders, or always-on behavioral rules. Combined saving (~0.7–1.45K of 43.9K turn-1) doesn't justify the downsides.
+**Rejected:** CLAUDE.md moderate (~600–800 tok) and aggressive (~1,000–1,300 tok) link-out passes; workspace skill-description tightening (~100–150 tok); user-global cleanup (option 3, superpowers/hooks/user skills — deferred by user, not evaluated for action).
+**Blast radius:** none (no files changed); closes mission steps 1–2 of session #4's launcher.
+**Promote?:** no
