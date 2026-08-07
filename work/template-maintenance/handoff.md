@@ -6,6 +6,31 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-07 (L30: GitHub MCP removed, gh required; rollover)
+
+**Trigger:** user-requested rollover. Same conversation continued past the
+2026-08-06 STOP rollover and shipped one more approved plan.
+
+**What shipped (all on `main`, clean tree, pushed):**
+- `2ba9f11` — L30: GitHub MCP fully removed; `gh` CLI promoted to required
+  prerequisite (20 files, −101 net). Fragment deleted (re-add recipe in
+  `mcp-fragments/README.md`), PAT-export plumbing gone (auth runbook is just
+  `gh auth login`), docker dep dropped, ADR-0002 amended, setup-guide.html
+  swept (exploration had missed it). Both check scripts verified passing.
+- Launcher touch-up commit marking L30 done in the floor-trim thread.
+- Backlog: L30 resolved card (scorecard 44); Tier-2 decision note in
+  `decisions.md` (full-removal over escape-hatch; `Promote?: no`, ADR-0002
+  amendment carries it).
+
+**Learnings (parked):**
+- github MCP on this machine was project-local only (stale pre-split live
+  `.mcp.json`); user-scope `~/.claude.json` has no `mcpServers` at all —
+  `claude mcp list` confirms clean. No user-scope removal was needed.
+- Old worktree `.claude/worktrees/session-30-issue-10/` still holds pre-L30
+  file copies (separate checkout; intentionally untouched).
+
+---
+
 # Session Handoff — 2026-08-06 (context audit: L25–L29 shipped; STOP rollover)
 
 **Trigger:** context-budget STOP (151K, then 157K mid-rollover) right after the
@@ -36,18 +61,5 @@ L29 commit. All work committed and pushed; clean tree.
   session's jsonl if needed (method: jq over attachment types).
 - Warp terminal plugin injects a `hook_success` envelope per PostToolUse —
   model-visible cost unmeasured; worth checking if it bites again.
-
----
-
-# Session Handoff — 2026-08-05 (closed out: launch-next-session effort spun out to its own project)
-
-The open question in the block below (background demo vs interactive) was
-resumed and resolved: demo run, discussion held, and the whole effort spun
-out into **`work/automatic-session-rollover/`** at the user's request — it
-grew from one script into script + optionality knobs + cross-vendor trigger
-reliability + multi-session identity redesign. See that project's
-`relaunch-analysis.md` and ADR-0003 for everything; nothing about this
-effort remains pending in template-maintenance. The launcher here is
-retargeted to umbrella/backlog duty.
 
 ---
