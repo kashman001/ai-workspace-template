@@ -619,6 +619,20 @@
       CONTEXT.md for them. All cut detail remains reachable via its pointer target. 2026-08-06.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L28</span> SessionStart register hook raced the transcript file — "error: measurement failed" in every fresh Claude Code session
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — `cmd_register` ends with `emit_check`, but the SessionStart hook fires
+      before the runtime writes its first transcript bytes, so `tail` failed and every fresh session opened with
+      hook stderr noise (seen live 2026-08-06). Compounding: CONTEXT.md's "register at session start" instruction
+      made Claude Code agents re-run register the hook had already done.</p>
+    <p><span class="fix">Fixed:</span> register now treats a missing/empty artifact as expected — emits
+      <code>method=deferred tokens=0 status=OK</code> and exits 0, skipping measurement; the register
+      instructions in CONTEXT.md and the context-budget.md agent quickstart are scoped "Claude Code: the
+      SessionStart hook already ran it — don't re-run" (other five runtimes keep the in-band instruction,
+      they have no such hook). 2026-08-06.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

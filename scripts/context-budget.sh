@@ -572,6 +572,12 @@ cmd_register() {
      + (if $aid == "" then {} else {agent_id:$aid} end)' \
     > "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
   note "registered $RUNTIME session $SESSION_ID artifact: $ARTIFACT"
+  # SessionStart hooks fire before the runtime writes its first transcript
+  # bytes — a missing/empty artifact at register time is expected, not an error.
+  if [ ! -s "$ARTIFACT" ]; then
+    echo "runtime=$RUNTIME method=deferred tokens=0 threshold=$THRESHOLD warn=$WARN pct=0 status=OK artifact=$ARTIFACT"
+    return 0
+  fi
   emit_check
 }
 
