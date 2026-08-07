@@ -6,6 +6,24 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-07 (session 31: session-30 branch DELIVERED to main)
+
+**What shipped:** merge commit `284897d` — `worktree-session-30-issue-10`
+(`1a3fa5b`: ADR-0007, session-number canon) merged into main on explicit user
+instruction. One conflict (`docs/template-workspace-backlog.html` change-log
+table, both sides appended rows) resolved by keeping all rows in date order;
+auto-merges in `docs/context-budget.md` + `skills/session-rollover/SKILL.md`
+reviewed coherent. All 8 test suites green (343 asserts). `.session-seq`
+synced 30→31 (this session launched from a hand-pasted numberless prompt —
+the ADR-0007 self-heal write).
+
+**Left for the user:** `git push` (agent does not push main); optionally
+prune merged worktrees `session-28-issue-01-vscode` /
+`session-29-issue-01-build` / `session-30-issue-10`
+(`git worktree remove <path>` + `git branch -d <branch>`).
+
+**State:** unchanged — map fully drained, item DORMANT.
+
 # Session Handoff — 2026-08-06 (session 30: issue 10 RESOLVED — session-number canon = .session-seq, ADR-0007; map fully drained)
 
 **What shipped (worktree `session-30-issue-10`, branch
