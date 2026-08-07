@@ -706,3 +706,26 @@ asserts).
   commit marker (cannot see a newer sibling rollover — the failure mode
   itself). Mechanical guard in `launch-next-session.sh` left as backlog.
 - **Promote?:** no — incident + hygiene; backlog Finding row carries it.
+
+## 2026-08-06 — Session numbers: `.session-seq` + bootstrap prompt canonical (issue 10, session 30)
+**Chose:** Machine-local `work/<proj>/.session-seq` (as surfaced through each
+session's bootstrap prompt) is the single source of truth for session numbers.
+Sessions use their prompt number **verbatim** in ledger block titles and
+worktree/branch names; on disagreement the ledger note is repaired, never the
+counter. Self-heal: at `session-rollover` step 7 the dying session writes its
+*own* prompt number to `.session-seq` before emitting/launching the successor,
+so a hand-pasted (launcher-bypassing) launch that skipped the increment
+corrects within one rollover. Prompt with no number (ad-hoc start): take
+counter + 1 as your number; the sync write counts you in.
+**Because:** Three independent sources (seq, ledger prose, worktree names)
+drifted apart — session 29 launched as prompt-#28 (live user confusion). Only
+the seq→prompt chain is mechanical end-to-end; the fix had to need no human
+or agent hand-repair, which the rollover-time sync provides.
+**Rejected:** ledger titles as source (parsing prose is fragile); committing
+`.session-seq` (clones/multi-machine fight over it every rollover); a
+`register`-time warning comparing ledger title to seq (reintroduces the same
+prose parsing as a checker — YAGNI once the sync closes the drift vector).
+**Blast radius:** `skills/session-rollover/SKILL.md` step 7,
+`docs/work-directory-conventions.md` (ledger section),
+`docs/context-budget.md` (launcher paragraph). No launcher code change.
+**Promote?:** done → ADR-0007
