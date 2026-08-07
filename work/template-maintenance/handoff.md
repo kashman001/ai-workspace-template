@@ -6,6 +6,33 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-07 (session #3: L17+L18 resolved — backlog at 0 Open)
+
+**Trigger:** normal completion (background session; 107K tokens, under WARN).
+
+**What shipped (branch `worktree-l17-l18-backlog-fixes`, NOT yet on main —
+worktree-isolated background session; user merges):**
+- L17 (four deferred rollover-script issues): attach-session.sh
+  live-but-unlocked message reworded to match its flags (T4d updated); both
+  `ls -t` glob loops (attach-session.sh, own_record in
+  launch-next-session.sh) made space-safe via `while IFS= read -r`;
+  opencode_measure SQL-escapes `$PWD`/`$sid`; the stale registry-suite
+  filename was only in the test file's own `# File:` header — the
+  docs/context-budget.md reference was already correct.
+- L18: per-variable precedence around the context-budget.env source in
+  context-budget.sh (capture-before/restore-after, the launch-next-session.sh
+  ROLLOVER_* pattern). New regression test T16 — verified red on the pre-fix
+  script, green after. Tier-2 decision note (capture/restore over default-only
+  env assignments; the latter inverts the per-item override chain).
+- All eight test suites green (343 asserts). Backlog: L17+L18 cards moved to
+  archive with Fixed: notes; scorecard 0 Open / 46 Resolved; change-log row.
+
+**Learnings (parked):**
+- L30's session added no change-log row for L30 in the backlog (card+scorecard
+  only); left as-is per surgical-changes.
+
+---
+
 # Session Handoff — 2026-08-07 (L30: GitHub MCP removed, gh required; rollover)
 
 **Trigger:** user-requested rollover. Same conversation continued past the
