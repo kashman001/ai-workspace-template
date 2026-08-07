@@ -24,6 +24,20 @@ re-run `register` (it always re-discovers and `CLAUDE_CODE_SESSION_ID` pins
 your own artifact). Root fix (session-keyed state) is designed in
 `work/automatic-session-rollover/relaunch-analysis.md`.
 
+## Claude Code — /context under-reports by ~10K until the first real message
+
+**Symptom:** `/context all` run as a fresh session's first action shows ~10K
+fewer tokens (Messages ≈ 1K) than the same command after one "Hi" (Messages
+≈ 11K), reading like a startup regression. **Cause:** the harness materializes
+its listing attachments — deferred-tool roster, skill listing, MCP server
+instructions, agent listing — *with the first real user message*, not at
+session start; `/context` is a local command and doesn't trigger them.
+**Rule:** treat post-first-message numbers as the session's true floor
+(~44.7K on this machine, 2026-08-06); `scripts/context-budget.sh` measures
+from the transcript artifact, which includes the materialized attachments,
+so its numbers are the trustworthy ones — WARN/STOP sit ~10K closer than a
+pre-message `/context` suggests.
+
 ## Claude Code — EnterWorktree re-keys the session transcript path mid-session
 
 Claude Code stores the live transcript under `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`,
