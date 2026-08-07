@@ -6,6 +6,34 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-07 (context-inspect tool shipped)
+
+**Trigger:** user request during a template-maintenance background session:
+a tool an agent can run to analyze context *composition* (baseline vs what
+the first message pulls in), feeding future optimization work items.
+
+**What shipped:** `scripts/context-inspect.sh` — resolves the session
+transcript ($CLAUDE_CODE_SESSION_ID, else newest for the workspace slug),
+prints exact per-turn context totals from the usage envelope, a harness
+attachment breakdown split turn-1 vs later (skill_listing, deferred_tools,
+mcp_instructions, agent_listing, hook context…), the disk-side
+CLAUDE.md/memory stack (harness-injected, absent from transcripts), and the
+harness-fixed remainder. Verified on two real transcripts (45.7K/43.9K
+turn-1 exact; turn-1 attachments ~10K est — the L29 /context under-report,
+now itemized). Doc pointer: context-budget.md → Quickstart — agent.
+Claude-runtime transcripts only.
+
+**Learnings (parked):**
+- CLAUDE.md / auto-memory / userEmail never appear in the transcript jsonl —
+  harness-injected; only attachments + usage are recorded. Any per-component
+  audit must combine transcript + disk.
+- Workspace-root resolution self-heals post-merge: the script keys on
+  `scripts/context-inspect.sh` existing at the git-common root, so worktree
+  runs before the merge fall back to the worktree root (memory-slug path
+  misses); harmless afterward.
+
+---
+
 # Session Handoff — 2026-07-23 (session 4b: post-rollover continuation — convention migration + ledger analysis pass 2)
 
 Session 4 continued past its rollover (user-driven) and hit **STOP at
