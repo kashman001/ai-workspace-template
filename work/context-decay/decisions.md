@@ -1,5 +1,19 @@
 # Decisions — context-decay
 
+## 2026-08-07 — Rollover option capture: approval mode only, never model
+**Chose:** `capture-rollover-options.sh` mechanically captures only `ROLLOVER_OPT_APPROVAL` (from the claude transcript's last recorded `permissionMode`); `ROLLOVER_OPT_MODEL`/`ROLLOVER_OPT_EXTRA` stay hand-set and are preserved across re-captures.
+**Because:** the transcript's model id can't be distinguished from "the runtime default at the time", so auto-pinning it would silently opt successors out of default-model upgrades; approval mode has no such ambiguity — the recorded `permissionMode` IS the session's live mode.
+**Rejected:** capturing model from assistant `message.model` — ambiguity above; capturing nothing and keeping step 6 knowledge-only — sessions rarely know their own launch flags, which is exactly why inheritance silently failed (a background auto-mode session's successors launched in default mode).
+**Blast radius:** `scripts/capture-rollover-options.sh` (new), `skills/session-rollover/SKILL.md` step 6, `docs/context-budget.md` option-inheritance + Quickstart.
+**Promote?:** no
+
+## 2026-08-07 — Phase snapshots are computed post-hoc, not captured live
+**Chose:** the three-snapshot protocol (S1 session-start prediction / S2 post-first-message / S3 post-workload) is implemented as transcript analysis (`context-inspect.sh --phases`) plus a headless driver (`context-experiment.sh`), not as a snapshot-taking daemon or hook.
+**Because:** every assistant turn already carries an exact context total in the transcript's usage envelope — snapshots need marking, not taking; and S1 *cannot* be exact (no API call exists before the first message), so it is honestly a disk-side prediction whose delta vs S2 is itself a finding.
+**Rejected:** live snapshot hooks per phase — duplicates what the transcript records, adds standing hook cost to every session.
+**Blast radius:** `scripts/context-inspect.sh` (`--phases`), `scripts/context-experiment.sh` (new), `docs/context-budget.md` Quickstart — agent.
+**Promote?:** no
+
 ## 2026-07-22 — Threshold env file name/location
 **Chose:** new checked-in root file `context-budget.env`, sourced by `context-budget.sh`.
 **Because:** this workspace has no checked-in env file (`.env` is gitignored and reserved for secrets); thresholds are non-secret and must ship with the template, raised in one place.

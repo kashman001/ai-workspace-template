@@ -7,38 +7,31 @@
 
 ## Mission
 
-**Context-composition audit** (user-directed, 2026-08-07). The tool is
-shipped: `scripts/context-inspect.sh` (see `docs/context-budget.md` →
-"Quickstart — agent"). The user runs the experiment protocol themselves:
-fresh session → `/context` → say "hi" → `/context` again → then this audit.
-Your job in that session:
+**Act on the 2026-08-07 audit** (numbers in the TOP block of `handoff.md`).
+The tooling is done: `context-inspect.sh --phases`, `context-experiment.sh`,
+`capture-rollover-options.sh` (all in `scripts/`, doc:
+`docs/context-budget.md` → Quickstart — agent). Next:
 
-1. Run `scripts/context-inspect.sh` (no args — resolves this session's
-   transcript). Compare its exact turn-1 total and component breakdown
-   against the two `/context` outputs the user pastes (expect the first
-   `/context` to under-report ~10K — the turn-1 attachment materialization,
-   L29, itemized by the tool).
-2. Produce the baseline-vs-pulled-in table: harness-fixed remainder,
-   CLAUDE.md/memory stack, per-attachment costs (skill_listing ~4K,
-   deferred_tools ~2.4K, hook context ~2K, mcp_instructions ~0.9K,
-   agent_listing ~0.8K on 2026-08-07 numbers).
-3. Where a component is trimmable, propose it with numbers; **for each
-   accepted improvement create a work item** (`/create-work-item` for
-   multi-session, or a backlog card in
-   `docs/template-workspace-backlog.html` for one-shots) and work them by
-   user priority. Known candidates already parked: superpowers plugin
-   ~1.8K, claude.ai connectors ~410 (both user-global — need user action);
-   skill_listing is the largest workspace-controlled block.
+1. Ask the user to prioritize the trim candidates: skill_listing ~4.0K
+   (largest workspace lever), project CLAUDE.md ~3.1K (template-only
+   sections), superpowers SessionStart ~1.9K + claude.ai connectors
+   (user-global — need user action, not repo changes). Open a work item or
+   backlog card per accepted trim, then execute by priority.
+2. After any trim lands: `scripts/context-experiment.sh` for the
+   before/after S1/S2/S3 comparison (that's the tool's purpose).
+3. Settle the open attribution question: do Warp PostToolUse `hook_success`
+   records enter model context? Compare a `--phases` run on a Warp session
+   vs a non-Warp one (residual analysis) — L19 card has the background.
 
 ## Read these, in order
 
 1. This file.
-2. The TOP block of `handoff.md` — the tool's design + the
-   transcript-vs-disk attribution learnings.
+2. TOP block of `handoff.md` (session #3: audit numbers + what shipped).
 
 ## Do NOT reload
 
-- `context-decay-spec.md`, `design.html` — implemented; reference only.
+- `plan-snapshot-tool.md`, `context-decay-spec.md`, `design.html` —
+  implemented; reference only.
 - **Gemini auth on this machine** — settled dead ends
   (`docs/operational-knowledge.md`); do not retry.
 - `ledger-analysis.md` — re-read only at the next analysis pass.
@@ -52,13 +45,18 @@ Your job in that session:
 
 ## State snapshot
 
-Branch `main`, clean, pushed through `4b51a5e` (context-inspect tool).
-Live gitignored `.claude/settings.json` carries the SessionStart
-registration hook.
+Session #3 worked on branch `worktree-context-decay-snapshot-tool`
+(worktree), committed + pushed; **verify it's merged to `main` before
+trusting this launcher** (if `git log main..origin/worktree-context-decay-snapshot-tool`
+is non-empty, merge first — a draft PR may already exist).
+`work/context-decay/.rollover-options` in the main checkout carries
+`ROLLOVER_OPT_APPROVAL=auto` — successors launch in auto permission mode
+via `launch-next-session.sh`.
 
 ## First actions
 
-1. `git fetch origin` + confirm `git log HEAD..origin/main` is empty before
-   trusting this launcher (staleness race — see backlog 2026-08-06 finding).
+1. `git fetch origin` + confirm the snapshot-tool branch is merged and
+   `git log HEAD..origin/main` is empty (staleness race — backlog
+   2026-08-06 finding).
 2. `scripts/context-budget.sh register` (skip if the SessionStart hook ran).
-3. Follow the Mission — the user drives the `/context` captures.
+3. Follow the Mission — step 1 needs the user's priority call.

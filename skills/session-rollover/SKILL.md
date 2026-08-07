@@ -88,17 +88,21 @@ unnoticed.
    - **First actions** — step 1 is always `scripts/context-budget.sh register`;
      then the concrete next steps.
 
-6. **Write `work/<project-name>/.rollover-options`** recording how THIS session
-   was launched, so the successor inherits it: `ROLLOVER_OPT_APPROVAL=default|
-   edits|auto|full` (normalized approval/permission level — `edits` =
-   auto-approve file edits only; `auto` = the runtime's classifier-vetted
-   autonomous mode where one exists, nearest-level fallback elsewhere;
-   `full` = bypass), optional
-   `ROLLOVER_OPT_MODEL=<model-id>`, optional `ROLLOVER_OPT_EXTRA=<raw flags for
-   this runtime>`. If you don't know your own launch options, leave any
-   existing file untouched (it carries the last known values); create or
-   update it only from knowledge. `scripts/launch-next-session.sh` maps these
-   to each runtime's flags.
+6. **Capture `work/<project-name>/.rollover-options`** recording how THIS
+   session was launched, so the successor inherits it. Run
+   `scripts/capture-rollover-options.sh <project-name>` — on claude it reads
+   the session transcript's recorded `permissionMode` (last value wins) and
+   writes `ROLLOVER_OPT_APPROVAL=default|edits|auto|full` (normalized
+   approval/permission level — `edits` = auto-approve file edits only;
+   `auto` = the runtime's classifier-vetted autonomous mode where one
+   exists, nearest-level fallback elsewhere; `full` = bypass); on other
+   runtimes it no-ops, leaving the file's last known values. Hand-edit only
+   the fields capture can't know: optional `ROLLOVER_OPT_MODEL=<model-id>`
+   (deliberately not auto-captured — the transcript can't distinguish an
+   explicit `--model` from the runtime default) and optional
+   `ROLLOVER_OPT_EXTRA=<raw flags for this runtime>`; the script preserves
+   both across re-captures. `scripts/launch-next-session.sh` maps these to
+   each runtime's flags.
 
 7. **Emit the bootstrap prompt** for the user to paste into the fresh session, in a
    fenced block, e.g.:
