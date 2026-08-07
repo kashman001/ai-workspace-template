@@ -486,6 +486,50 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L17</span> Final review of vendor-hook-deployments deferred four minor rollover-script issues
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/attach-session.sh · scripts/launch-next-session.sh · scripts/context-budget.sh · docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — the 2026-08-06 final whole-branch review of the vendor-hook-deployments plan
+      triaged four issues as follow-up rather than blocking: (1) <code>scripts/attach-session.sh</code>'s "live but
+      unlocked" branch prints a <code>live=yes locked=no</code> status line and then says "no live session" — the
+      wording contradicts its own status flags; (2) the <code>for f in $(ls -t …)</code> glob loop in both
+      <code>scripts/attach-session.sh</code> and <code>own_record()</code> in <code>scripts/launch-next-session.sh</code>
+      breaks on session-record paths containing spaces; (3) <code>scripts/context-budget.sh</code>'s
+      <code>opencode_measure</code> interpolates <code>$PWD</code>/<code>$sid</code> unquoted into a SQL string —
+      currently fails open (benign) but unhardened; (4) <code>docs/context-budget.md</code> names the registry test
+      suite <code>context-budget-registry.test.sh</code>, but the actual file is
+      <code>test-context-budget-registry.sh</code> (pre-existing drift).</p>
+    <p><span class="k">Impact</span> — none block current behavior (each fails open or is cosmetic), but each will
+      cost a future session time: misleading re-attach status wording, silent breakage on space-containing paths,
+      an unhardened SQL interpolation, and a doc pointer to a script name that doesn't exist.</p>
+    <p><span class="fix">Fixed:</span> (1) the live-but-unlocked branch now says "session is live but does not hold
+      the work-item lock — not attaching" (T4d updated to assert the new wording); (2) both glob loops rewritten as
+      space-safe <code>while IFS= read -r</code> over <code>ls -t</code> output; (3) <code>opencode_measure</code>
+      SQL-escapes embedded single quotes in <code>$PWD</code>/<code>$sid</code> before interpolating; (4) the doc
+      reference in <code>docs/context-budget.md</code> had already been corrected — the surviving stale name was the
+      test file's <em>own</em> <code># File:</code> header, now fixed. All eight suites green.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L18</span> <code>context-budget.sh</code> env-file sourcing guard keyed on the wrong variable clobbers other knob overrides
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · context-budget.env</span></h3>
+    <p><span class="k">Evidence</span> — discovered reclaiming the M14 stale lock:
+      <code>CONTEXT_LOCK_STALE_SECS=120 … register</code> had no effect. The script sources
+      <code>context-budget.env</code> whenever <code>CONTEXT_DUMB_ZONE_TOKENS</code> is unset, and the env file's
+      plain assignment <code>CONTEXT_LOCK_STALE_SECS=10800</code> then overwrites the caller's explicit override.
+      Works only if the caller also sets the unrelated guard variable.</p>
+    <p><span class="k">Impact</span> — explicit env overrides for any knob other than
+      <code>CONTEXT_DUMB_ZONE_TOKENS</code> are silently ignored; cost a live session two attempts and a
+      source-read to diagnose.</p>
+    <p><span class="fix">Fixed:</span> per-variable precedence via capture-before/restore-after around the
+      <code>context-budget.env</code> source (the <code>launch-next-session.sh</code>
+      <code>ROLLOVER_*</code> pattern); the alternative — default-only <code>: "${VAR:=…}"</code> assignments in the
+      env file — was rejected because it would invert the per-item <code>work/&lt;proj&gt;/context-budget.env</code>
+      override chain in <code>launch-next-session.sh</code> (global would win over per-item). Regression test T16 in
+      <code>test-context-budget-registry.sh</code>: an hours-stale holder plus an explicit huge
+      <code>CONTEXT_LOCK_STALE_SECS</code> must NOT lose its lock — red on the pre-fix script, green after.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L19</span> No normalized approval level mapped to claude's classifier-vetted "auto mode"; script <code>auto</code> ≠ UI auto
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · docs/context-budget.md</span></h3>
     <p><span class="k">Evidence</span> — <code>ROLLOVER_OPT_APPROVAL=auto</code> mapped to claude

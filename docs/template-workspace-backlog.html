@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-06 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-07 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">2</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">44</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">46</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -140,45 +140,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low open">
-    <h3><span class="id">L17</span> Final review of vendor-hook-deployments deferred four minor rollover-script issues
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/attach-session.sh · scripts/launch-next-session.sh · scripts/context-budget.sh · docs/context-budget.md</span></h3>
-    <p><span class="k">Evidence</span> — the 2026-08-06 final whole-branch review of the vendor-hook-deployments plan
-      triaged four issues as follow-up rather than blocking: (1) <code>scripts/attach-session.sh</code>'s "live but
-      unlocked" branch prints a <code>live=yes locked=no</code> status line and then says "no live session" — the
-      wording contradicts its own status flags; (2) the <code>for f in $(ls -t …)</code> glob loop in both
-      <code>scripts/attach-session.sh</code> and <code>own_record()</code> in <code>scripts/launch-next-session.sh</code>
-      breaks on session-record paths containing spaces; (3) <code>scripts/context-budget.sh</code>'s
-      <code>opencode_measure</code> interpolates <code>$PWD</code>/<code>$sid</code> unquoted into a SQL string —
-      currently fails open (benign) but unhardened; (4) <code>docs/context-budget.md</code> names the registry test
-      suite <code>context-budget-registry.test.sh</code>, but the actual file is
-      <code>test-context-budget-registry.sh</code> (pre-existing drift).</p>
-    <p><span class="k">Impact</span> — none block current behavior (each fails open or is cosmetic), but each will
-      cost a future session time: misleading re-attach status wording, silent breakage on space-containing paths,
-      an unhardened SQL interpolation, and a doc pointer to a script name that doesn't exist.</p>
-    <p><span class="k">Fix</span> — reword the attach-session status message to match its own locked/live flags; make
-      both glob loops space-safe (e.g. <code>find … -print0</code> / <code>while read</code>, or an array); quote the
-      SQL interpolation in <code>opencode_measure</code>; correct the filename in
-      <code>docs/context-budget.md</code> to <code>test-context-budget-registry.sh</code>.</p>
-  </div>
-
-  <div class="find low open">
-    <h3><span class="id">L18</span> <code>context-budget.sh</code> env-file sourcing guard keyed on the wrong variable clobbers other knob overrides
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh · context-budget.env</span></h3>
-    <p><span class="k">Evidence</span> — discovered reclaiming the M14 stale lock:
-      <code>CONTEXT_LOCK_STALE_SECS=120 … register</code> had no effect. The script sources
-      <code>context-budget.env</code> whenever <code>CONTEXT_DUMB_ZONE_TOKENS</code> is unset, and the env file's
-      plain assignment <code>CONTEXT_LOCK_STALE_SECS=10800</code> then overwrites the caller's explicit override.
-      Works only if the caller also sets the unrelated guard variable.</p>
-    <p><span class="k">Impact</span> — explicit env overrides for any knob other than
-      <code>CONTEXT_DUMB_ZONE_TOKENS</code> are silently ignored; cost a live session two attempts and a
-      source-read to diagnose.</p>
-    <p><span class="k">Fix</span> — make precedence per-variable: capture explicit env values before sourcing and
-      restore them after (the pattern <code>launch-next-session.sh</code> already uses for
-      <code>ROLLOVER_RELAUNCH</code>/<code>ROLLOVER_RUNTIME</code>), or switch the env file to
-      default-only assignments (<code>: "${VAR:=…}"</code>).</p>
-  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -259,13 +220,14 @@
       <tr><td>2026-08-06</td><td>Finding: <strong>launcher (<code>next-session.md</code>) staleness race — successor session trusted a stale launcher because the local checkout lagged origin/main</strong> (session 26). Session 25 resolved wayfinder ticket 09, REPLACED the launcher, and pushed to origin/main from its worktree; the local main checkout was never ff-pulled, so session 26 launched against session 24's launcher, whose freshness first-action ("confirm the checkout carries the session-24 commit, pull if not") passed vacuously — it keys on the <em>previous</em> session's commit marker and cannot detect a newer sibling rollover that exists only on the remote. Session 26 re-resolved ticket 09 in parallel before the push rejection exposed the race; reconciled with origin canonical (duplicate kept on branch <code>session-26-pre-reconcile</code>). Mitigation shipped in the launcher: First-actions now require <code>git fetch origin</code> + empty <code>git log HEAD..origin/main</code> BEFORE trusting the launcher's content. Broader fix direction (unbuilt): <code>launch-next-session.sh</code> / the work-directory convention should guarantee the ff-pull mechanically before a successor reads <code>next-session.md</code>, instead of relying on a prose first-action. Status: <strong>Open</strong>.</td></tr>
       <tr><td>2026-08-06</td><td>Fix <strong>M10</strong> second follow-up (session 27): <code>copilot_vscode_discover()</code> failed under the sandboxed VS Code terminal — the sandbox blocks <code>readdir</code> on the <code>workspaceStorage/</code> parent, so the glob-and-grep workspace scan silently expanded to nothing even though the token file itself stays readable via a direct path. Discovery now derives the workspace-storage hash from <code>$VSCODE_TARGET_SESSION_LOG</code> by parameter expansion (the debug-logs path embeds it) and probes <code>chatSessions/&lt;sid&gt;.jsonl</code> directly before falling back to the glob scan (older builds / var unset unchanged). Verified with a fake-<code>HOME</code> harness including a <code>chmod 311</code> readdir-blocked simulation (7/7), all eight <code>scripts/tests/</code> suites green (326 asserts), and a live in-copilot run of the spec's Verify section (sandboxed terminal, user-relayed): correct artifact pinned with no directory listing; <code>method=estimate</code> mid-first-turn is the designed pre-usage-flush degrade — the same file measured <code>38152 exact</code> once the turn flushed. Spec (user-approved, session 26): <code>work/context-decay/copilot-vscode-sandbox-discovery-fix.md</code>. No scorecard change (M10 already resolved).</td></tr>
       <tr><td>2026-08-06</td><td>Ship Copilot <strong>VS Code agent-mode</strong> context-budget wiring (issue 01, sessions 28–29): new <code>scripts/hooks/context-budget-copilot-vscode-hook.sh</code> + committed <code>.github/hooks/context-budget-vscode.json</code> (PascalCase events, repo-relative command — hook-process cwd verified as the workspace root, VS Code 1.132.0). SessionStart pushes WARN/STOP as <code>hookSpecificOutput.additionalContext</code>; Stop blocks ONLY at STOP via <strong>stderr + exit 2</strong> (JSON <code>decision:block</code> verified IGNORED by VS Code), guarded by <code>stop_hook_active</code>. Runtime discriminator: VS Code payloads are snake_case (<code>session_id</code>) vs Copilot CLI camelCase (<code>sessionId</code>) — both <code>.github/hooks/*.json</code> files coexist safely. Token artifact derived hook-side from <code>transcript_path</code> → <code>chatSessions/&lt;sid&gt;.jsonl</code> (promptTokens re-confirmed live). <code>launch-next-session.sh</code> gains a real copilot-vscode seeded launch: <code>code chat -r -m agent "&lt;prompt&gt;"</code> (verified: opens a new agent session in the last-active window, exits before it responds → always routed through the BG confirm loop). Tests: vendor T11 block (12 asserts, fake workspaceStorage tree) + launcher T22 (argv + implied bg). Docs: <code>context-budget.md</code> (runtime table hook route, vendor deployments row, relaunch knobs), <code>relaunch-analysis.md</code>, CONTEXT.md five→six runtimes.</td></tr>
+      <tr><td>2026-08-07</td><td>Resolved <strong>L17</strong> + <strong>L18</strong>, the last two Open cards. L17 (four deferred rollover-script issues): attach-session live-but-unlocked message now matches its own flags; both <code>ls -t</code> glob loops space-safe via <code>while IFS= read -r</code>; <code>opencode_measure</code> SQL-escapes <code>$PWD</code>/<code>$sid</code>; the stale registry-suite filename survived only in the test file's own <code># File:</code> header (the <code>docs/context-budget.md</code> reference was already correct), now fixed. L18: per-variable precedence around the <code>context-budget.env</code> source in <code>context-budget.sh</code> (capture-before/restore-after, the <code>launch-next-session.sh</code> pattern) — default-only env-file assignments rejected (would invert the per-item override chain). New regression test T16 (red on pre-fix script, green after); T4d updated to the new attach wording. All eight suites green (343 asserts). Scorecard now 0/46/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-06.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-07.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>

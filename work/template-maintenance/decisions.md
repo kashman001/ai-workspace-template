@@ -42,3 +42,10 @@
 **Rejected:** Keeping the fragment as a documented escape hatch — doc surface for a path nobody takes; re-add is one 8-line file (recipe kept in mcp-fragments/README.md). Keeping PAT export — its only consumer was the MCP server; gh manages its own keychain credential.
 **Blast radius:** mcp-fragments/, opencode.json, .claude/settings.json.example, .mcp.json.example, .vscode/mcp.json.example, scripts/check-dependencies.sh, scripts/check-service-access.sh, docs/{mcp-setup,service-access,workspace-setup,template-usage,recommended-tooling,setup-guide.html,runbooks/*}, ADR-0002 amendment.
 **Promote?:** no — implements existing ADR-0002 direction, recorded there as an amendment
+
+## 2026-08-07 — L18 env-knob precedence: capture/restore over default-only env file
+**Chose:** Per-variable precedence in `context-budget.sh` — capture explicit env values for the three knobs before sourcing `context-budget.env`, restore after (the `launch-next-session.sh` ROLLOVER_* pattern); plus regression test T16.
+**Because:** The old guard keyed on `CONTEXT_DUMB_ZONE_TOKENS` alone, so the env file silently clobbered any other knob's explicit override (bit the M14 lock reclaim live).
+**Rejected:** Switching `context-budget.env` to default-only assignments (`: "${VAR:=…}"`) — fixes all consumers in one place but inverts the per-item `work/<proj>/context-budget.env` override chain in `launch-next-session.sh` (global sourced first would win over per-item), and per-item env files are user-authored plain assignments.
+**Blast radius:** scripts/context-budget.sh lines 42–52; scripts/tests/test-context-budget-registry.sh (T16).
+**Promote?:** no

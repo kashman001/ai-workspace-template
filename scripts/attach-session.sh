@@ -70,13 +70,14 @@ if [ -f "$LOCK" ]; then
 fi
 if [ "$LOCKED" -eq 0 ]; then
   RUNTIME=""; SID=""
-  for f in $(ls -t "$STATE_DIR/sessions/"*.json 2>/dev/null); do
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
     if [ "$(jq -r '.project // empty' "$f" 2>/dev/null)" = "$PROJECT" ]; then
       RUNTIME="$(jq -r '.runtime // empty' "$f" 2>/dev/null)"
       SID="$(jq -r '.session_id // empty' "$f" 2>/dev/null)"
       break
     fi
-  done
+  done < <(ls -t "$STATE_DIR/sessions/"*.json 2>/dev/null)
 fi
 [ -n "$RUNTIME" ] && [ -n "$SID" ] || die "no session known for work/$PROJECT"
 
@@ -108,7 +109,11 @@ fi
 echo "project=$PROJECT runtime=$RUNTIME session=$SID role=$ROLE age=${AGE:-unknown}${AGE:+s} live=$LIVE locked=$([ "$LOCKED" -eq 1 ] && echo yes || echo no)"
 
 if [ "$LIVE" != "yes" ] || [ "$LOCKED" -ne 1 ]; then
-  note "no live session — run: scripts/launch-next-session.sh $PROJECT"
+  if [ "$LIVE" = "yes" ]; then
+    note "session is live but does not hold the work-item lock — not attaching; run: scripts/launch-next-session.sh $PROJECT"
+  else
+    note "no live session — run: scripts/launch-next-session.sh $PROJECT"
+  fi
   exit 0
 fi
 
