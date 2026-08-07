@@ -2,6 +2,29 @@
 ARCHIVE of work/template-maintenance/handoff.md — older Session Handoff
 blocks, newest first. See handoff.md for the purpose header + live blocks.
 -->
+# Session Handoff — 2026-08-05 (follow-up: claude-handoff comparison; launch-next-session.sh mission queued; STOP rollover)
+
+**Trigger:** user-requested rollover; budget hit STOP (150K) as it started.
+Same session as the hardening execution below, continued interactively.
+
+**What happened after the hardening close-out:**
+- Compared upstream `claude-handoff` (in-progress bucket, clone `8b36d4f`,
+  18 lines) against `session-rollover` — the comparison the recon note had
+  skipped. Verdict: its three content rules already landed via the inlined
+  hand-off contract (hardening item 5); its prompt-only background-handoff
+  mechanism stays rejected; the one adopted concept is launch acceleration.
+- User approved building `scripts/launch-next-session.sh` (multi-runtime,
+  vendor specifics confined to the script per CLI-first). Full mission spec +
+  verdict + implementation notes queued in `next-session.md`, pushed
+  (`01a851c`) — read that, not this, for what to build.
+- **Open question, paused mid-answer:** how to start the implementing session
+  — a `claude --bg` background demo of the concept vs interactive
+  implementation. The user chose "roll over and continue the discussion".
+  Resume that question before implementing.
+- No code written this segment; only launcher/ledger bookkeeping mutated.
+
+---
+
 # Session Handoff — 2026-08-05 (skill-hardening plan EXECUTED; all 8 items shipped)
 
 **Trigger:** mission complete — the full `skill-hardening-plan.md` executed and
