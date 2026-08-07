@@ -39,9 +39,17 @@ WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 LEDGER="$WORKSPACE_ROOT/work/context-decay/context-ledger.jsonl"
 
-if [ -z "${CONTEXT_DUMB_ZONE_TOKENS:-}" ] && [ -f "$WORKSPACE_ROOT/context-budget.env" ]; then
+# Precedence is per-variable: explicit env > context-budget.env > built-in
+# default (same capture/restore pattern as launch-next-session.sh).
+EXPLICIT_TOTAL="${CONTEXT_DUMB_ZONE_TOKENS:-}"
+EXPLICIT_WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-}"
+EXPLICIT_STALE="${CONTEXT_LOCK_STALE_SECS:-}"
+if [ -f "$WORKSPACE_ROOT/context-budget.env" ]; then
   . "$WORKSPACE_ROOT/context-budget.env" >/dev/null 2>&1 || true
 fi
+[ -n "$EXPLICIT_TOTAL" ] && CONTEXT_DUMB_ZONE_TOKENS="$EXPLICIT_TOTAL"
+[ -n "$EXPLICIT_WARN" ] && CONTEXT_DUMB_ZONE_WARN_TOKENS="$EXPLICIT_WARN"
+[ -n "$EXPLICIT_STALE" ] && CONTEXT_LOCK_STALE_SECS="$EXPLICIT_STALE"
 THRESHOLD="${CONTEXT_DUMB_ZONE_TOKENS:-150000}"
 WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
@@ -253,17 +261,19 @@ opencode_measure() {
   # session in OPENCODE_SESSION_ID (exported by the chat.message plugin);
   # fallback: newest session for this cwd. No size-estimate fallback — the
   # shared db spans all sessions, its size says nothing about one context.
-  local db="$1" sid="${OPENCODE_SESSION_ID:-}" tokens
+  local db="$1" sid="${OPENCODE_SESSION_ID:-}" tokens dir_sql sid_sql
   command -v sqlite3 >/dev/null 2>&1 || return 1
+  dir_sql="${PWD//\'/\'\'}"  # SQL-escape embedded single quotes
   [ -n "$sid" ] || sid=$(sqlite3 "$db" \
-    "select id from session where directory='$PWD' order by time_updated desc limit 1" 2>/dev/null)
+    "select id from session where directory='$dir_sql' order by time_updated desc limit 1" 2>/dev/null)
   [ -n "$sid" ] || return 1
+  sid_sql="${sid//\'/\'\'}"
   tokens=$(sqlite3 "$db" "select json_extract(data,'\$.tokens.total') from message
-    where session_id='$sid' and json_extract(data,'\$.tokens.total') is not null
+    where session_id='$sid_sql' and json_extract(data,'\$.tokens.total') is not null
     order by rowid desc limit 1" 2>/dev/null)
   if [ -z "$tokens" ]; then
     tokens=$(sqlite3 "$db" "select tokens_input+tokens_output+tokens_reasoning+tokens_cache_read
-      from session where id='$sid'" 2>/dev/null)
+      from session where id='$sid_sql'" 2>/dev/null)
   fi
   [ -n "$tokens" ] && echo "$tokens exact" || return 1
 }

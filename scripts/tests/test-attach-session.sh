@@ -71,7 +71,7 @@ out=$("$AS" testproj --dry-run 2>&1); rc=$?
 assert_eq       "T4a: exit 0"                "$rc" "0"
 assert_contains "T4b: fallback resolved sid" "$out" "runtime=claude session=sid-ccc"
 assert_contains "T4c: locked=no"             "$out" "locked=no"
-assert_contains "T4d: launch hint (unlocked, no attach)" "$out" "no live session — run:"
+assert_contains "T4d: launch hint (unlocked, no attach)" "$out" "live but does not hold the work-item lock — not attaching; run:"
 
 echo "T5: nothing known -> exit 3"
 rm -f "$LOCK" "$SESS"/*.json

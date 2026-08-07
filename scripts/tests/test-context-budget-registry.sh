@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# File: scripts/tests/context-budget-registry.test.sh
+# File: scripts/tests/test-context-budget-registry.sh
 # Purpose: Regression tests for the session-keyed registry + per-project lock
 #          in context-budget.sh (backlog M13 / ADR-0004). Self-contained:
 #          builds a throwaway workspace + fake $HOME in mktemp -d.
@@ -285,6 +285,17 @@ grep -q "wt-unit" "$GW/work/context-decay/context-ledger.jsonl" 2>/dev/null \
 CLAUDE_CODE_SESSION_ID=ggg "$GW/wt/scripts/context-budget.sh" \
   release --project testproj --runtime claude --quiet >/dev/null 2>&1
 cd "$TMP"
+
+echo "T16: explicit env override beats context-budget.env (L18)"
+printf 'CONTEXT_LOCK_STALE_SECS=10800\n' >> "$TMP/context-budget.env"
+rm -f "$LOCK"
+mk_transcript aaa 50000; mk_transcript bbb 90000
+run_as aaa register --project testproj --quiet >/dev/null
+touch -t 202601010000 "$PROJ_DIR/aaa.jsonl"   # hours-stale under the env file's 10800
+CONTEXT_LOCK_STALE_SECS=999999999 CLAUDE_CODE_SESSION_ID=bbb \
+  "$CB" register --project testproj --runtime claude --quiet >/dev/null 2>&1
+assert_eq "T16a: huge explicit stale-secs keeps holder live — lock not stolen" \
+  "$(jq -r .session_id "$LOCK")" "aaa"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -147,11 +147,12 @@ own_record() {
       echo "$STATE_DIR/sessions/$rt-$sid.json"; return 0
     fi
   done
-  for f in $(ls -t "$STATE_DIR/sessions/"*.json 2>/dev/null); do
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
     if [ "$(jq -r '.project // empty' "$f" 2>/dev/null)" = "$PROJECT" ]; then
       echo "$f"; return 0
     fi
-  done
+  done < <(ls -t "$STATE_DIR/sessions/"*.json 2>/dev/null)
   return 1
 }
 
