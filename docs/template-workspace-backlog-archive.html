@@ -584,6 +584,41 @@
       <code>agent-context/global.md</code> header.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L25</span> docs/context-budget.md was a ~10K-token obligated whole-read
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — CONTEXT.md points at the file from four places (vendor hooks, dispatch,
+      relaunch knobs, full reference); each pointer needs one section but the natural move was a whole read
+      (~40KB, ~10K est tokens — the workspace's most-visited demand-load trap per the 2026-08-06 context audit).</p>
+    <p><span class="fix">Fixed:</span> access note ("don't read this file whole — grep the header, Read with
+      offset/limit") + one-line-per-section index added after the intro; CONTEXT.md pointers already named their
+      target sections. 2026-08-06.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L26</span> decision-log Tier-2 capture forced a whole-file load of a growing decisions.md
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/decision-log/SKILL.md</span></h3>
+    <p><span class="k">Evidence</span> — appending a note via Read+Edit loads the whole file into context
+      (work/automatic-session-rollover/decisions.md had reached ~45KB / ~11K est tokens); no archive rule, so the
+      cost grew with every decision, unlike the handoff ledger.</p>
+    <p><span class="fix">Fixed:</span> skill now specifies shell-heredoc append (<code>cat &gt;&gt; … &lt;&lt;'EOF'</code>,
+      no context load) and a ledger-style archive rule: past ~16KB, settled notes (<code>Promote?: no</code> /
+      <code>done</code>) move to <code>decisions-archive.md</code>; open <code>maybe/yes</code> notes stay, so the
+      checkpoint promotion scan is unaffected. 2026-08-06.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L27</span> CONTEXT.md carried ~1.2K always-on tokens of compressible exposition
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-06 fresh-session baseline: project CLAUDE.md = 5.2K tokens, the
+      largest user-controlled always-on item, paid by every session in all four runtimes. graphify rules, the
+      three-layer tool-loading model, and the Template Backlog section restated detail their pointer targets
+      (recommended-tooling.md §5, mcp-setup.md, the backlog's own maintenance section) already carry.</p>
+    <p><span class="fix">Fixed:</span> three sections condensed (14.0KB → 12.6KB, ~350 est tokens/session);
+      graphify removal instructions moved into recommended-tooling.md §5, which had circularly pointed back at
+      CONTEXT.md for them. All cut detail remains reachable via its pointer target. 2026-08-06.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

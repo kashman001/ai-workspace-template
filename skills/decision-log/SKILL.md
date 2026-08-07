@@ -65,9 +65,19 @@ Append to `work/<project-name>/decisions.md` (create it if absent), newest last:
 **Promote?:** no | maybe — <condition> | yes — <why it's ADR-worthy>
 ```
 
+Append with a shell heredoc (`cat >> work/<project-name>/decisions.md <<'EOF' … EOF`)
+— the file is append-only, and shell append lands the note without loading the
+file into context (in a long-lived work item it can run to thousands of tokens).
+
 Write it *when you decide*, not in a cleanup pass — the reasoning is freshest (and only)
 in the moment. Keep it to the fork that mattered; skip decisions with no real alternative.
 Never put secrets in it.
+
+**Archive when it grows.** When `decisions.md` passes ~16KB (`wc -c`), move the
+settled notes — `Promote?:` reads `no` or `done → ADR-NNNN` — to
+`decisions-archive.md` beside it (create on first use, newest last), keeping
+open `maybe`/`yes` notes in place. Same discipline as the handoff ledger:
+the live file stays cheap to consult; history stays on disk.
 
 Counter-example — *don't* log this: "picked `date-fns` over `dayjs` for a one-off
 formatting helper". Reversible in minutes, either lib would do, no trade-off that

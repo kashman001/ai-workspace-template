@@ -130,16 +130,14 @@ per-repo steps for Matt Pocock config and graphify graphs. All optional.
 > Only relevant while working **on this template repo itself** — delete this
 > section when you adapt the workspace for a real project.
 
-`docs/template-workspace-backlog.html` is the living backlog of review findings
-and improvements for this template. **Agents: when you fix, change, or discover
-an issue in the template, update that file** — flip the item's status to
-Resolved with a `Fixed:` note (then move the card to
-`docs/template-workspace-backlog-archive.html`), or append a new finding. Its
-"Maintaining this backlog" section defines the ID/status/scorecard convention.
-Edit both files with targeted reads (grep the ID); never load them whole. This applies to
-work **pushed from other sessions or clones** too: the delivering commit should
-carry the backlog update; when pulling a template change that arrived without
-one, add the missing row/card as part of incorporating it.
+`docs/template-workspace-backlog.html` is the living backlog for this template;
+settled cards move to `docs/template-workspace-backlog-archive.html`.
+**When you fix, change, or discover a template issue, update the backlog** —
+resolve with a `Fixed:` note (card moves to the archive) or append a new
+finding, per its "Maintaining this backlog" section (ID/status/scorecard).
+Edit both files with targeted reads (grep the ID); never load them whole.
+Work pulled from other sessions/clones counts too: when the delivering commit
+lacks the backlog update, add it while incorporating the change.
 
 ## Agent Coding Principles
 
@@ -176,25 +174,20 @@ Rules for keeping the LLM context window healthy across long sessions:
 ## Tool & Context Loading — Lean by Default
 
 Every always-on tool and doc taxes every session; bring capabilities in on
-demand instead. Layered model (full detail: `docs/mcp-setup.md` and
-`mcp-fragments/README.md`):
+demand instead. Three layers (full detail + per-runtime commands:
+`docs/mcp-setup.md`, `mcp-fragments/README.md`):
 
-1. **CLI-first (agent-agnostic).** A capability enters the workspace as a CLI
-   on `PATH` (`gh`, `graphify`, `yt-dlp`) — zero standing context, works in
-   every runtime. MCP is the exception, reserved for where it genuinely beats
-   the CLI.
-2. **Core vs. fragments.** `.mcp.json` carries only the core server set
-   (graphify). Heavier task-specific servers live in `mcp-fragments/` and are
-   loaded per session (`claude --mcp-config mcp-fragments/<name>.json`; other
-   runtimes: see `docs/mcp-setup.md`). OpenCode's `opencode.json` pre-declares
-   them with `"enabled": false` — flip locally to opt in.
-3. **Asymmetric parent/child toolsets (platform accelerators).** A parent
-   session stays lean and delegates: Claude Code subagent profiles under
-   `.claude/agents/` restrict a child to a narrow toolset (e.g.
-   `repo-navigator`); the reverse — a child carrying tools the parent lacks —
-   is a scoped worker: `claude -p "<task>" --mcp-config mcp-fragments/<name>.json`.
-   Claude Code also defers MCP tool schemas automatically (loaded via tool
-   search on first use), so core servers stay cheap there.
+1. **CLI-first.** Capabilities enter as CLIs on `PATH` (`gh`, `graphify`,
+   `yt-dlp`) — zero standing context, every runtime. MCP is the exception,
+   for where it genuinely beats the CLI.
+2. **Core vs. fragments.** `.mcp.json` carries only the core set (graphify);
+   heavier servers live in `mcp-fragments/`, loaded per session
+   (`claude --mcp-config mcp-fragments/<name>.json`; other runtimes per
+   `docs/mcp-setup.md`).
+3. **Asymmetric parent/child toolsets.** The parent stays lean and delegates:
+   `.claude/agents/` profiles narrow a child (e.g. `repo-navigator`); a child
+   carrying tools the parent lacks is a scoped worker
+   (`claude -p "<task>" --mcp-config mcp-fragments/<name>.json`).
 
 ## Context Budget — Measure, Don't Guess
 
@@ -230,33 +223,18 @@ Full reference: `docs/context-budget.md`; rollover workflow:
 
 ## graphify
 
-This workspace ships with [graphify](https://graphify.net) wiring (a
-knowledge-graph tool): a Gemini `BeforeTool` hook (`.gemini/settings.json`)
-and an OpenCode plugin (`.opencode/plugins/graphify.js`). They activate only
-once a graph exists at `graphify-out/` relative to the session cwd.
+This workspace ships [graphify](https://graphify.net) wiring (a knowledge-graph
+tool: Gemini `BeforeTool` hook, OpenCode plugin), active only once a graph
+exists at `graphify-out/` — per repo, never committed. Placement, multi-repo
+setup, and removal if unused: `docs/recommended-tooling.md` §5.
 
-**Graph placement — per repo, never committed.** Single-repo: root
-`graphify-out/` (already gitignored). Multi-repo: build each graph *inside its
-repo* at `repos/<name>/graphify-out/` (run `/graphify` from that repo's root),
-add `graphify-out/` to the repo's `.git/info/exclude`, and point the MCP server
-at it via `.mcp.json` args. Full setup detail:
-`docs/recommended-tooling.md` §5.
-
-Rules (apply once a `graphify-out/graph.json` exists at the placement above):
-- For codebase questions, first run `graphify query "<question>"` from the
-  repo root. Use `graphify path "<A>" "<B>"` for relationships and
-  `graphify explain "<concept>"` for focused concepts. These return a scoped
-  subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead
-  of raw source browsing.
-- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or
-  when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current
-  (AST-only, no API cost). Committed ADRs (`docs/adr/`) and commit `Refs:`/`Decision:`
-  trailers are decision-provenance inputs — with them the graph can answer *why*
-  (`code → commit → ADR → alternatives-rejected`), not just *what*.
-
-If you don't use graphify, delete this section, the `hooks` block in
-`.gemini/settings.json` (keep the file — its `telemetry` block feeds the
-context-budget system), `.opencode/plugins/graphify.js`, and the
-`.opencode/opencode.json` plugin entry.
+Rules once `graphify-out/graph.json` exists:
+- Answer codebase questions with `graphify query "<question>"` first (repo
+  root); `graphify path "<A>" "<B>"` for relationships, `graphify explain
+  "<concept>"` for focused concepts — each returns a scoped subgraph far
+  smaller than raw grep output. Use `graphify-out/wiki/index.md` (if present)
+  for broad navigation; read `graphify-out/GRAPH_REPORT.md` only for broad
+  architecture review.
+- After modifying code, run `graphify update .` (AST-only, no API cost).
+  Committed ADRs and `Decision:`/`Refs:` commit trailers let the graph answer
+  *why* (`code → commit → ADR → alternatives-rejected`), not just *what*.
