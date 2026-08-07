@@ -10,9 +10,16 @@
 #          remainder is the harness-fixed floor (system prompt, tool schemas).
 #          Context: /context under-reports ~10K before the first real message
 #          (docs/operational-knowledge.md); usage numbers are exact.
-# Usage:   context-inspect.sh [transcript.jsonl]
+# Usage:   context-inspect.sh [--phases] [transcript.jsonl]
 #          No argument: $CLAUDE_CODE_SESSION_ID's transcript for this
 #          workspace, else the newest one in the project slug dir.
+#          --phases adds a per-turn diff table: exact delta per assistant
+#          turn vs the attributed estimate of what arrived between turns
+#          (attachments, user/tool messages, prior assistant output); the
+#          residual flags content the transcript doesn't attribute (or
+#          transcribed records that never enter model context). Snapshot
+#          frame: S1 = pre-turn-1 disk/attachment estimate (a prediction —
+#          no API call exists yet), S2 = turn-1 exact, S3 = last-turn exact.
 # Notes:   figures marked "est" are chars/4 estimates; "exact" comes from the
 #          API usage envelope. Requires jq. Needs >=1 assistant turn.
 
@@ -36,15 +43,25 @@ die() { echo "error: $*" >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || die "jq is required"
 
 # --- resolve transcript ------------------------------------------------------
+PHASES=0
+if [ "${1:-}" = "--phases" ]; then PHASES=1; shift; fi
 F="${1:-}"
+# Transcript slug follows the session's CWD, not the repo root — a worktree
+# session's transcript lives under the worktree-path slug. Try cwd first.
 if [ -z "$F" ]; then
-  SLUG="$(printf '%s' "$WORKSPACE_ROOT" | tr '/.' '--')"
-  PROJ_DIR="$HOME/.claude/projects/$SLUG"
-  if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && [ -f "$PROJ_DIR/$CLAUDE_CODE_SESSION_ID.jsonl" ]; then
-    F="$PROJ_DIR/$CLAUDE_CODE_SESSION_ID.jsonl"
-  else
-    F="$(ls -t "$PROJ_DIR"/*.jsonl 2>/dev/null | head -1)"
-  fi
+  for base in "$PWD" "$WORKSPACE_ROOT"; do
+    SLUG="$(printf '%s' "$base" | tr '/.' '--')"
+    PROJ_DIR="$HOME/.claude/projects/$SLUG"
+    if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && [ -f "$PROJ_DIR/$CLAUDE_CODE_SESSION_ID.jsonl" ]; then
+      F="$PROJ_DIR/$CLAUDE_CODE_SESSION_ID.jsonl"; break
+    fi
+  done
+fi
+if [ -z "$F" ]; then
+  SLUG="$(printf '%s' "$PWD" | tr '/.' '--')"
+  F="$(ls -t "$HOME/.claude/projects/$SLUG"/*.jsonl \
+             "$HOME/.claude/projects/$(printf '%s' "$WORKSPACE_ROOT" | tr '/.' '--')"/*.jsonl \
+       2>/dev/null | head -1)"
 fi
 [ -n "$F" ] && [ -f "$F" ] || die "no transcript found (pass one explicitly)"
 
@@ -62,6 +79,48 @@ echo "assistant turns: $TURNS"
 printf 'context at turn 1:   %8d tokens (exact)\n' "$FIRST_TOTAL"
 printf 'context at last turn:%8d tokens (exact)\n' "$LAST_TOTAL"
 echo
+
+# --- per-turn phase table (--phases) -----------------------------------------
+# A "turn" here = one API request (grouped by requestId; a turn with several
+# content blocks spans several assistant jsonl lines sharing one usage
+# envelope). Records between turn N-1's last line and turn N's first line are
+# attributed to turn N; turn N's own output is attributed to turn N+1.
+if [ "$PHASES" -eq 1 ]; then
+  echo "per-turn phase table (est cols = chars/4; resid = exact delta - attributed):"
+  echo "  S1 = the disk/attachment estimates below (pre-turn-1 prediction);"
+  echo "  S2 = turn-1 exact; S3 = last-turn exact."
+  jq -r '
+    if .type=="assistant" then
+      "A\t\(.requestId // "-")\t\(.message.usage
+        | (.input_tokens + .cache_read_input_tokens + .cache_creation_input_tokens) // 0
+        )\t\(.message.content|tojson|length)"
+    elif .type=="attachment" then "att\t-\t0\t\(.attachment|tojson|length)"
+    elif .type=="user" then "msg\t-\t0\t\((.message.content // "")|tojson|length)"
+    else empty end' "$F" | awk '
+    BEGIN { FS="\t"; turn=1; prevreq="" }
+    $1=="A" {
+      if ($2=="-" || $2!=prevreq) { exact[turn]=$3; turn++ }
+      asst[turn]+=$4; prevreq=$2; next
+    }
+    $1=="att" { att[turn]+=$4 }
+    $1=="msg" { msg[turn]+=$4 }
+    END {
+      N=turn-1
+      printf "  %4s %9s %8s %7s %7s %7s %7s\n", \
+        "turn","exact","delta","att~","msg~","asst~","resid~"
+      for (t=1; t<=N; t++) {
+        a=int(att[t]/4); m=int(msg[t]/4); s=int(asst[t]/4)
+        if (t==1)
+          printf "  %4d %9d %8s %7d %7d %7d %7s  (resid = harness+CLAUDE.md floor)\n", \
+            t, exact[t], "-", a, m, s, "-"
+        else {
+          d=exact[t]-exact[t-1]
+          printf "  %4d %9d %8d %7d %7d %7d %7d\n", t, exact[t], d, a, m, s, d-a-m-s
+        }
+      }
+    }'
+  echo
+fi
 
 # --- attachment breakdown, turn-1 vs later -----------------------------------
 # Stream "A" for assistant lines and "type chars" for attachments; awk phases

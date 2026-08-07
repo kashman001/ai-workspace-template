@@ -86,11 +86,20 @@ is what keeps concurrent sessions from reading each other's counts.
   one step; `dispatch-close --status <S>` at yield (see "Dispatching
   long-running children").
 - **What is IN the context (composition, not just size):**
-  `scripts/context-inspect.sh [transcript.jsonl]` — exact per-turn totals
-  from the usage envelope plus a per-component breakdown (harness attachments
-  turn-1 vs later, disk-side CLAUDE.md/memory stack, harness-fixed
-  remainder). Use it when optimizing what the session floor is spent on;
-  claude-runtime transcripts only.
+  `scripts/context-inspect.sh [--phases] [transcript.jsonl]` — exact
+  per-turn totals from the usage envelope plus a per-component breakdown
+  (harness attachments turn-1 vs later, disk-side CLAUDE.md/memory stack,
+  harness-fixed remainder). `--phases` adds a per-turn diff table — exact
+  delta vs the attributed estimate (attachments / user+tool messages /
+  prior assistant output) with the residual — for settling what a turn's
+  growth actually was. Use it when optimizing what the session floor is
+  spent on; claude-runtime transcripts only.
+- **Reproducible composition experiment:** `scripts/context-experiment.sh
+  [--workload <prompt-file>]` — runs two headless claude sessions (baseline
+  "hi" + your workload), analyzes both with `--phases`, and prints the
+  three-snapshot summary (S1 pre-turn-1 prediction, S2 turn-1 exact, S3
+  post-workload exact). Re-run after template changes to see what they cost
+  at session start. Bills real tokens (two sessions).
 
 ## Why you can't ask the model (D1)
 
@@ -194,8 +203,11 @@ flags live only in the script — re-verify against `--help` before changing
 them.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
-by the dying session at `session-rollover` step 6, only from what it actually
-knows about its own launch — an absent or stale key is left untouched) holds
+by the dying session at `session-rollover` step 6 via
+`scripts/capture-rollover-options.sh <project>`, which on claude reads the
+approval level mechanically from the transcript's recorded `permissionMode` —
+last value wins — and preserves hand-set keys; on other runtimes, or when
+nothing is known, the file is left untouched) holds
 three keys: `ROLLOVER_OPT_APPROVAL=default|edits|auto|full` (normalized
 approval/permission level, mapped to each runtime's own flag — `edits`
 auto-approves file edits only: claude `--permission-mode acceptEdits`, codex

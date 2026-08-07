@@ -6,7 +6,45 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 2026-08-07 (context-inspect tool shipped)
+# Session Handoff — 2026-08-07 (session #3: audit done, snapshot tool + rollover capture shipped)
+
+**Ran as a background job in auto permission mode; rolled at WARN 128.5K.**
+Work on branch `worktree-context-decay-snapshot-tool` (worktree), NOT main —
+merge required before the successor sees these files.
+
+**Audit (mission step 1–2):** turn-1 = 43,857 exact. Composition:
+harness-fixed ~31.6K; skill_listing ~4.0K (largest workspace lever); project
+CLAUDE.md ~3.1K; global CLAUDE.md ~1.7K; superpowers SessionStart injection
+~1.9K (user-global); agent_listing ~0.8K; memory ~0.1K. Post-turn-1 pulls
+~2.5K (deferred MCP tools, mcp_instructions). The user never pasted /context
+outputs — superseded by building the tool instead (their call, mid-session).
+
+**Built (user-accepted, plan in `plan-snapshot-tool.md`):**
+- `context-inspect.sh --phases` — per-turn diff table: exact delta vs
+  attributed est (att/msg/asst) + residual; turns grouped by requestId
+  (one turn = several assistant jsonl lines sharing one usage envelope).
+  Verified on a 36-turn transcript: residuals small-positive (thinking +
+  est error).
+- `scripts/context-experiment.sh [--workload <file>]` — headless two-run
+  driver (baseline "hi" + workload), prints S1/S2/S3 summary. Live-verified:
+  S2=34,063, S3=36,049 (headless baseline is ~10K lighter than interactive —
+  fewer connectors/skills).
+- `scripts/capture-rollover-options.sh <project>` — mechanical capture of
+  the session's permissionMode → `.rollover-options` (user ask: successors
+  inherit e.g. auto mode). Live-verified end-to-end: dry-run successor cmd
+  carries `--permission-mode auto`. Model deliberately not captured
+  (decisions.md 2026-08-07). Wired into session-rollover step 6 + docs.
+
+**Learnings (parked):**
+- Worktree sessions write transcripts under the WORKTREE-path slug, and the
+  harness *moves* the live transcript file on EnterWorktree — both inspect
+  and capture scripts now try `$PWD` slug before workspace-root slug.
+- Transcript records `permissionMode` per line ("last wins" is correct;
+  stale sibling transcripts can disagree — always pin the live session).
+- Backlog: L19 + L20 added and resolved (archive); scorecard 48.
+
+---
+
 
 **Trigger:** user request during a template-maintenance background session:
 a tool an agent can run to analyze context *composition* (baseline vs what
