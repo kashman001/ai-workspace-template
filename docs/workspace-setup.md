@@ -28,11 +28,10 @@ Authoritative list: `docs/workspace-structure.md` → "User-Level Files
 | Item | Where | Used for | Verify |
 |---|---|---|---|
 | Agent CLIs | `claude`, `codex`, `opencode`, `gemini` on `PATH` | The agent runtimes themselves | `claude --version` |
-| `gh` CLI + login | `~/.config/gh/`, system keychain | GitHub auth; source of the MCP token | `gh auth status` |
+| `gh` CLI + login | `~/.config/gh/`, system keychain | GitHub auth + all GitHub operations (required) | `gh auth status` |
 | `yt-dlp` | executable on `PATH` | YouTube transcript MCP server | `yt-dlp --version` |
-| MCP token export | `~/.zshrc` (or per-shell) | Expands `${GITHUB_PERSONAL_ACCESS_TOKEN}` for MCP servers | `echo "${GITHUB_PERSONAL_ACCESS_TOKEN:+set}"` |
-| Codex MCP registration | `~/.codex/config.toml` | GitHub MCP for Codex (optional — opt-in per task, see docs/mcp-setup.md) | `codex` MCP list |
-| Gemini MCP registration | `~/.gemini/settings.json` | GitHub MCP for Gemini (optional — opt-in per task, see docs/mcp-setup.md) | restart Gemini, check tools |
+| Codex MCP registration | `~/.codex/config.toml` | Optional per-task servers for Codex (see docs/mcp-setup.md) | `codex` MCP list |
+| Gemini MCP registration | `~/.gemini/settings.json` | Optional per-task servers for Gemini (see docs/mcp-setup.md) | restart Gemini, check tools |
 | MCP wrapper scripts (if used) | `~/.mcp-scripts/` or `scripts/mcp/` | Launch scripts referenced by MCP config | run the script |
 | Service credentials | OS keychain (`security …`), `~/.pgpass`, `~/.aws/`, … | Tokens/passwords for external services | per-service verify cmd in `docs/service-access.md` |
 
@@ -106,7 +105,6 @@ What each local file is for:
 
 ```bash
 gh auth status                                    # global: GitHub auth
-echo "${GITHUB_PERSONAL_ACCESS_TOKEN:+token set}" # global: MCP token exported
 claude mcp list                                   # local:  core MCP (graphify) visible to Claude Code
 scripts/mcp/youtube-transcript.sh                 # local:  starts the YouTube MCP server
 ./scripts/check-workspace-structure.sh            # local:  symlinks resolve, dirs present

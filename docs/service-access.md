@@ -14,13 +14,11 @@ Windows Credential Manager) and are retrieved on demand. Never commit tokens.
 
 ### GitHub
 
-- **Primary token source**: `gh auth token` (reuses the `gh` CLI login; no separate secret to store)
+- **Primary credential**: the `gh` CLI login (`gh auth login`; token managed in the OS keychain by `gh` — nothing to store or export)
 - **Username**: `<your-github-username>`
-- **Export for MCP**: `export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"`
 - **Verify cmd**: `gh auth status`
-- **Alt (Keychain)**: store a PAT, retrieve with `security find-generic-password -s github-pat -w`
-- **Used by**: GitHub MCP server (see `docs/mcp-setup.md`); the `gh` CLI
-- **Rotation**: managed via `gh auth` / PAT settings
+- **Used by**: the `gh` CLI — the workspace's GitHub path for all runtimes
+- **Rotation**: managed via `gh auth`
 
 ### YouTube transcript MCP
 
