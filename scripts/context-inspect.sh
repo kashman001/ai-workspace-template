@@ -94,7 +94,7 @@ if [ "$PHASES" -eq 1 ]; then
       "A\t\(.requestId // "-")\t\(.message.usage
         | (.input_tokens + .cache_read_input_tokens + .cache_creation_input_tokens) // 0
         )\t\(.message.content|tojson|length)"
-    elif .type=="attachment" then "att\t-\t0\t\(.attachment|tojson|length)"
+    elif .type=="attachment" then "att\t-\t0\t\(if .attachment.type=="hook_success" then ((.attachment.content // "")|length) else (.attachment|tojson|length) end)"
     elif .type=="user" then "msg\t-\t0\t\((.message.content // "")|tojson|length)"
     else empty end' "$F" | awk '
     BEGIN { FS="\t"; turn=1; prevreq="" }
@@ -126,9 +126,13 @@ fi
 # Stream "A" for assistant lines and "type chars" for attachments; awk phases
 # them by whether the first assistant line has been seen yet.
 echo "harness attachments recorded in the transcript (est tokens = chars/4):"
+# hook_success records are attributed at .content length only: stdout/stderr/
+# command are transcript-only and never enter model context (residual analysis
+# 2026-08-07, work/context-decay — whole-JSON attribution went ~190 tok/turn
+# negative on Warp-plugin sessions).
 att_stream() {
   jq -r 'if .type=="assistant" then "A"
-         elif .type=="attachment" then "\(.attachment.type) \(.attachment|tojson|length)"
+         elif .type=="attachment" then "\(.attachment.type) \(if .attachment.type=="hook_success" then ((.attachment.content // "")|length) else (.attachment|tojson|length) end)"
          else empty end' "$F"
 }
 # Rows carry tab-separated sort keys: phase (0=turn1, 1=later), then
