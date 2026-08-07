@@ -633,6 +633,20 @@
       they have no such hook). 2026-08-06.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L29</span> /context under-reports the session floor by ~10K until the first real message — read as a false startup regression
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/operational-knowledge.md</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-06 transcript timeline: SessionStart hooks land at session open,
+      but the harness's listing attachments (deferred-tool roster, skill listing, MCP instructions, agent listing —
+      ~9.5K est tokens) are stamped at the same second as the first user message. A pre-message
+      <code>/context all</code> showed 35.3K (Messages 1.3K); post-"Hi" showed ~44.7K (Messages 11.5K), which was
+      misread as the L25–L28 trims having increased the baseline.</p>
+    <p><span class="fix">Fixed:</span> measurement-timing gotcha documented in
+      <code>docs/operational-knowledge.md</code> ("/context under-reports by ~10K until the first real message");
+      no template change needed — <code>context-budget.sh</code> measures from the transcript artifact, which
+      already includes the materialized attachments, so tracker numbers were correct throughout. 2026-08-06.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">
