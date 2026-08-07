@@ -32,10 +32,8 @@ plugin (~1.8K). Numbers: `handoff.md` (2026-08-06 block), Learnings.
 
 ## State snapshot
 
-- L17+L18 fixes live on branch `worktree-l17-l18-backlog-fixes` (pushed),
-  awaiting user merge to `main` — the session that shipped them was
-  worktree-isolated and does not push to main. Merge is a fast-forward-able
-  `git merge worktree-l17-l18-backlog-fixes` from an up-to-date main.
+- Branch `main`, clean, pushed through `b366240` (L17+L18 merged
+  2026-08-07 at user direction; the feature branch is deleted).
 - Vendored skill pins: `wayfinder` and `writing-for-agents` at upstream
   `8b36d4f` (clone: `~/Developer/references/mattpocock-skills`).
 
@@ -43,7 +41,4 @@ plugin (~1.8K). Numbers: `handoff.md` (2026-08-06 block), Learnings.
 
 1. `scripts/context-budget.sh register` (skip if the Claude Code SessionStart
    hook already ran it).
-2. If `worktree-l17-l18-backlog-fixes` is unmerged, ask the user to merge it
-   (or confirm and merge) before further backlog work — it carries the
-   backlog/archive card moves.
-3. Ask the user (or run a fresh evidence pass) for the next task.
+2. Ask the user (or run a fresh evidence pass) for the next task.
