@@ -85,6 +85,12 @@ is what keeps concurrent sessions from reading each other's counts.
   dispatch record and emit the rollover contract for the child's prompt in
   one step; `dispatch-close --status <S>` at yield (see "Dispatching
   long-running children").
+- **What is IN the context (composition, not just size):**
+  `scripts/context-inspect.sh [transcript.jsonl]` — exact per-turn totals
+  from the usage envelope plus a per-component breakdown (harness attachments
+  turn-1 vs later, disk-side CLAUDE.md/memory stack, harness-fixed
+  remainder). Use it when optimizing what the session floor is spent on;
+  claude-runtime transcripts only.
 
 ## Why you can't ask the model (D1)
 
