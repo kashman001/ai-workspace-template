@@ -530,6 +530,48 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L19</span> Context composition had no per-turn diffing or reproducible experiment path
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-inspect.sh · scripts/context-experiment.sh</span></h3>
+    <p><span class="k">Evidence</span> — the 2026-08-07 context-composition audit (work item
+      <code>context-decay</code>): <code>context-inspect.sh</code> showed only turn-1 vs later attachment buckets, so
+      per-turn growth couldn't be attributed (e.g. whether transcribed Warp PostToolUse <code>hook_success</code>
+      records actually enter model context), and the three-snapshot protocol (session start → "hi" → workload)
+      required a human manually pasting <code>/context</code> output.</p>
+    <p><span class="k">Impact</span> — composition findings weren't reproducible across template changes, and
+      attribution questions stayed unsettled.</p>
+    <p><span class="fix">Fixed:</span> <code>context-inspect.sh --phases</code> adds a per-turn table (exact delta
+      from the usage envelope vs attributed estimate — attachments / user+tool messages / prior assistant output —
+      plus residual; turns grouped by <code>requestId</code> since one turn spans several assistant jsonl lines
+      sharing one usage envelope); new <code>scripts/context-experiment.sh [--workload &lt;prompt-file&gt;]</code>
+      runs baseline-"hi" and workload headless claude sessions and prints the S1/S2/S3 snapshot summary
+      (S1 is necessarily a pre-first-call disk prediction — no usage envelope exists before turn 1). Both scripts
+      now also resolve worktree-session transcripts (slug follows the session cwd, not the repo root). Verified
+      live: 36-turn transcript reconciles with small positive residuals; experiment run S2=34,063 / S3=36,049.
+      Doc: <code>docs/context-budget.md</code> Quickstart — agent.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L20</span> Rollover option inheritance had a replay side but no capture side — successor sessions silently lost the dying session's permission mode
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/capture-rollover-options.sh · skills/session-rollover · docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — user report 2026-08-07: successive sessions must start with the same
+      properties as the current one (e.g. auto permission mode). <code>launch-next-session.sh</code> already replays
+      <code>work/&lt;proj&gt;/.rollover-options</code>, but skill step 6 said "create or update it only from
+      knowledge" — and a session rarely knows its own launch flags, so the file was never written and a
+      background auto-mode session's successors launched in default mode.</p>
+    <p><span class="k">Impact</span> — autonomous rollover chains silently downgraded to interactive-approval
+      mode, stalling unattended work.</p>
+    <p><span class="fix">Fixed:</span> new <code>scripts/capture-rollover-options.sh &lt;project&gt;</code> reads the
+      claude transcript's recorded <code>permissionMode</code> (last value wins; default/acceptEdits/auto/
+      bypassPermissions → default/edits/auto/full; plan → default) and writes <code>ROLLOVER_OPT_APPROVAL</code>,
+      preserving hand-set <code>MODEL</code>/<code>EXTRA</code> lines; non-claude runtimes and unknown modes fail
+      open (file untouched). Model capture deliberately excluded (can't distinguish explicit <code>--model</code>
+      from the runtime default — see <code>work/context-decay/decisions.md</code> 2026-08-07). Wired into skill
+      step 6 and the option-inheritance doc. Verified live: capture on the running auto-mode session +
+      <code>launch-next-session.sh --dry-run</code> shows <code>--permission-mode auto</code> on the successor
+      command.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L19</span> No normalized approval level mapped to claude's classifier-vetted "auto mode"; script <code>auto</code> ≠ UI auto
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · docs/context-budget.md</span></h3>
     <p><span class="k">Evidence</span> — <code>ROLLOVER_OPT_APPROVAL=auto</code> mapped to claude
