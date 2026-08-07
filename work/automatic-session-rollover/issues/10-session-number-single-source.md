@@ -1,6 +1,11 @@
 # 10 — Session numbering: one source of truth
 
-**Opened:** 2026-08-06 (session 29, user-requested). **Status:** OPEN.
+**Opened:** 2026-08-06 (session 29, user-requested).
+**Status:** CLOSED (2026-08-06, session 30) — `.session-seq` + bootstrap
+prompt canonical, self-heal sync at rollover step 7; decision promoted to
+ADR-0007. Enforcement = docs + skill step only; register-time ledger-title
+warning rejected as YAGNI (see ADR alternatives). All three sources verified
+aligned at #30 before the rule landed.
 
 ## Problem
 

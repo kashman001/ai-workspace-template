@@ -6,6 +6,37 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-06 (session 30: issue 10 RESOLVED — session-number canon = .session-seq, ADR-0007; map fully drained)
+
+**What shipped (worktree `session-30-issue-10`, branch
+`worktree-session-30-issue-10` — NOT on main; user merge one-liner below):**
+
+- **Issue 10 CLOSED — decision made with the user.** Canonical session-number
+  source = machine-local `.session-seq` as surfaced through the bootstrap
+  prompt; ledger titles + worktree names copy the prompt number verbatim;
+  ledger repaired on disagreement. Self-heal: `session-rollover` step 7 now
+  has the dying session write its OWN prompt number to `.session-seq` before
+  emitting/launching. Enforcement = docs + skill step only; register-time
+  ledger-title parsing rejected as YAGNI. Decision: Tier-2 note in
+  `decisions.md`, promoted to **ADR-0007** (+ README index row).
+- **Files:** `skills/session-rollover/SKILL.md` (step-7 sync),
+  `docs/work-directory-conventions.md` (ledger numbering rule),
+  `docs/context-budget.md` (launcher paragraph), issue 10 status, backlog
+  changelog row. No script changes, so no test-suite deltas.
+- **Alignment verified before the rule landed:** user's cleanup one-liner had
+  run (probe files gone, seq realigned); seq=30 = prompt-#30 = ledger-#30 —
+  this block's number follows the new rule.
+
+**State:** wayfinder map COMPLETE and fully drained — issues 01–10 all
+CLOSED/settled except 04 (PARKED, user-scheduled only). No standing missions.
+Work item goes dormant.
+
+**Left for the user (main checkout):** merge the branch —
+`git fetch origin && git merge --ff-only origin/worktree-session-30-issue-10 && git push`
+(background-session guardrail: agent does not push main). Optionally prune
+worktrees `session-28-issue-01-vscode` / `session-29-issue-01-build` /
+`session-30-issue-10` after the merge.
+
 # Session Handoff — 2026-08-06 (session 29: issue-01 probe v4 verified + build SHIPPED; issue 01 CLOSED)
 
 **What shipped (worktree `session-29-issue-01-build`, pushed to `origin/main`):**
@@ -42,47 +73,4 @@ scripts/hooks/vscode-hook-probe.sh .github/hooks/vscode-probe.json
 (probe files are throwaway; the seq write realigns the next prompt number
 with the ledger). Nothing else standing — wayfinder map complete, issue 04
 parked (user-scheduled only).
-
-# Session Handoff — 2026-08-06 (session 28: issue-01 items 1+3 VERIFIED live; housekeeping done; build hands off)
-
-**What shipped (worktree `session-28-issue-01-vscode`, pushed to `origin/main`):**
-
-- **Issue-01 items 1+3 VERIFIED (`64c3f85`).** The full verified VS Code
-  1.132 agent-hooks contract + a numbered build spec live in
-  `issues/01-vscode-agent-mode-hooks.md` → "Update … (session 28)". Gist:
-  `code chat -r -m agent "<prompt>"` works from an agent shell (item 3);
-  hooks fire from `.github/hooks/*.json` with PascalCase events and
-  snake_case Claude-style payloads carrying `transcript_path` from which
-  the promptTokens chatSessions artifact is derivable (self-measure blocker
-  dissolved); in-band = SessionStart `hookSpecificOutput.additionalContext`
-  (verified) + Stop **exit-2 stderr** block (verified; JSON
-  `decision:block` IGNORED). Method: 3 probe runs relayed via the user's
-  live VS Code, read back from the hook-provided transcripts.
-- **Housekeeping COMPLETE:** all 12 disposable worktrees removed + pruned,
-  their merged `worktree-*` branches deleted; `session-26-pre-reconcile`
-  deleted by the user via `!` (permission classifier blocks
-  `git branch -D` even user-approved — 1st strike, parked).
-- **Build NOT started** — that is session 29's whole mission; spec is in
-  the ticket, nothing lives only in conversation.
-- **Probe files intentionally left in the user's main checkout**
-  (untracked): `scripts/hooks/vscode-hook-probe.sh`,
-  `.github/hooks/vscode-probe.json`, `.vscode-hook-probe.jsonl` — build
-  spec step 3 (hook-process cwd / relative-command verification, probe v4)
-  still needs them. Delete only after the real wiring ships.
-
-**Suggested skills (next session):** none beyond the standard set;
-`superpowers:verification-before-completion` before claiming the build done;
-`session-rollover` at WARN/STOP.
-
-**Learnings:**
-- Copilot's model may refuse hook-injected `additionalContext` as prompt
-  injection while OBEYING the Stop exit-2 forced-turn instruction in the
-  same session (routed: ticket's session-28 block, behavioral caveat).
-- Claude Code's auto-mode classifier blocks `git branch -D` regardless of
-  user approval in chat — hand force-deletes to the user via `!` (1st
-  strike, parked).
-
-**Wrap:** WARN rollover (~124.6K at trigger); findings flushed to the
-ticket BEFORE the rollover decision, so the handoff carries pointers only.
-Session-26 block archived (two-block rule).
 
