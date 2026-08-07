@@ -18,8 +18,7 @@ resume this item on an explicit user mission.
    `git pull --ff-only` and RE-READ this launcher.
 2. `scripts/context-budget.sh register --project automatic-session-rollover`
    — expect `role=primary`.
-3. Read the top `handoff.md` block (session 30), then ask the user what the
-   mission is.
+3. Read the top `handoff.md` block, then ask the user what the mission is.
 
 ## Numbering rule (ADR-0007, binding)
 
