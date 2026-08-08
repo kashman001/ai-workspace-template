@@ -22,6 +22,10 @@ to main):
 - Mid-turn user addition (brief req 10): teams author shared
   skills/agents/runbooks/scripts for common product work → new E18 (◐),
   Gap 8, matrix row.
+- Post-close user directive: keep it simple, push back where a simple path
+  or documentation suffices → "Simplicity guardrails" section added to
+  gaps-and-coverage.md (per-gap don't-build list; Gaps 3/8 recommendations
+  amended to reuse-existing / documentation-only).
 - Backlog updated per convention: opened M15 (catalog meta-card) and
   promoted un-carded CL-1/2/3 to cards M16/L32/L33; scorecard 4 Open;
   change-log row added. **M16 reproduced live this session** (artifact path

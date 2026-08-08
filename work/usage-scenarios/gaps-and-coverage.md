@@ -69,13 +69,14 @@ hard requirement anywhere is `req git`+`req gh` in check-dependencies.sh
 everything optional; check-service-access.sh always exits 0; E10's own doc
 depends on three skills the template doesn't guarantee.
 
-**Recommendation:** a committed `required-tooling` manifest (one file,
-e.g. `docs/required-tooling.md` with a machine-readable block, or a
-`.toolchain.json`) declaring per-product: required binaries, required
-skills, required MCP servers, required services — each with a check
-command. `check-dependencies.sh`/`check-service-access.sh` read it and
-exit non-zero on missing *required* entries. This also gives I7 its missing
-installation check (hook wiring becomes a required, checkable item).
+**Recommendation:** no new manifest format — the mechanism already exists.
+Extend `check-dependencies.sh`'s `req`/`rec` lists (they are the manifest),
+add the same hard-fail distinction to `check-service-access.sh`, and put
+one human-readable "required for everyone" table in an existing doc
+(recommended-tooling.md, replacing its blanket "everything optional").
+This also gives I7 its missing installation check (hook wiring becomes a
+required, checkable item). A separate `.toolchain.json` is over-engineering
+until a second product instance needs per-product variation.
 
 ## Gap 4 — Shared secrets don't exist (moves E8, E5, E17)
 
@@ -165,13 +166,13 @@ team which container fits a product capability, how to wire the
 `.claude/commands/` mirror, how the hand-maintained CONTEXT.md skills list
 gets updated, or how to mark a capability required (E7's manifest).
 
-**Recommendation:** a short authoring doc (or `create-capability` skill)
-with a container decision rule — *deterministic and runnable → `scripts/`;
+**Recommendation:** documentation only — no new skill. A short authoring
+section with a container decision rule — *deterministic and runnable → `scripts/`;
 agent workflow → `skills/` (+ commands mirror); needs its own toolset or
 isolation → `.claude/agents/` profile; human-only steps → `docs/runbooks/`*
 — plus the two mechanical steps (mirror + CONTEXT.md listing) automated or
-checklisted, and a `required: true` hook into Gap 3's manifest so a team
-can make "run the tests before finishing a branch" non-negotiable. E10's
+checklisted, and an entry in Gap 3's required lists so a team can make
+"run the tests before finishing a branch" non-negotiable. E10's
 feature loop then names team capabilities instead of external optional
 skills.
 
@@ -194,6 +195,32 @@ skills.
   cards; CL-2 (worktree stales registry artifact) *reproduced during this
   session* — the budget `record` after EnterWorktree shows the artifact
   path switching to the worktree-scoped project directory.
+
+## Simplicity guardrails (user directive, 2026-08-08)
+
+Don't over-engineer; where a simple path or plain documentation covers the
+need, prefer it and make the doc discoverable. Applied per gap — the
+"don't build" column is as binding as the recommendations:
+
+- **Gap 1**: build nothing beyond phase 1 (identity fields) until a second
+  person is real. Until then, *document* the single-user assumption and its
+  breakage points prominently (a "before you add a teammate" note in
+  workspace-structure.md) — that alone prevents the silent-failure cases.
+- **Gap 2**: start with a Z0 doc template + interview checklist committed
+  where S0 already lives, not a new skill. Promote to an `/onboard-product`
+  skill only if the checklist proves too long to follow by hand.
+- **Gap 3**: reuse `check-dependencies.sh`'s existing `req`/`rec` lists as
+  the manifest; no new file format (amended above).
+- **Gap 4**: document the shared-vs-personal interface only; no vault
+  tooling until a real second service exists (already the recommendation).
+- **Gap 5**: the fix is mostly *un*-gitignoring two files + one ADR.
+  Don't build an OpenCode merge layer — document the dirty-tree cost as
+  accepted; don't script Codex/Gemini global config — document the bleed.
+- **Gap 6**: the clean-room instantiation test only. No doc-accuracy
+  "harness" — just add asserts for the two claims already caught false.
+- **Gap 7**: retire the HTML with a pointer; no generated-view machinery.
+- **Gap 8**: documentation only, no `create-capability` skill (amended
+  above).
 
 ## Recommended sequencing
 
