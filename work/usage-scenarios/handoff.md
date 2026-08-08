@@ -6,6 +6,35 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-08 (session 4: walk-through verdicts + Gaps 6 and 2 shipped)
+
+What got done (branch `worktree-quiet-marinating-dolphin` — needs delivery
+to main):
+- Interactive walk-through held (AskUserQuestion): user adopted the gap
+  sequencing as-is, endorsed retiring usage-scenarios.html (Gap 7's
+  supersede), green-lit Gaps 6+2 now, queued 3+8 then 7, deferred 4
+  (until a second service) and 1 (until a second person). Two Tier-2 notes
+  in decisions.md; verdicts paragraph added to backlog card M15.
+- **Gap 6 shipped**: `scripts/tests/test-template-instantiation.sh` —
+  clean-room clone→setup→structure-check, idempotency, symlink repair,
+  placeholder --clone-repos, plus doc-accuracy pins (T6) for the two false
+  claims, both fixed in workspace-structure.md (reconciliation claim
+  removed; --clone-repos ignores-tiers stated honestly). 20/20 green.
+  Note: the suite clones committed state — commit before running it.
+- **Gap 2 shipped**: Z0 product interview checklist beside the S0
+  preconditions in workspace-structure.md; SPEC.md + docs/system-design.md
+  rewritten as fillable Z0 templates; E1 local-vs-remote fork documented as
+  an explicit choice point in template-usage.md. Deliberately skipped (per
+  guardrail): no /onboard-product skill, no placeholder-Z0 check extension.
+- Backlog: M15 verdicts paragraph + session-4 change-log row. Guide HTML
+  rebuilt twice (workspace-structure.md edits).
+- L33's shape recurred AGAIN (worktree branched from lagging origin/main;
+  fixed with `git merge --ff-only main` before editing). M16 mitigation
+  applied (re-ran `register` after EnterWorktree).
+
+State: peak recorded context ~93K (OK). Branch not merged (background
+policy); delivery to main is the user's/successor's step.
+
 # Session Handoff — 2026-08-08 (session 2: catalog complete + gap analysis + backlog cards; finished well under WARN)
 
 What got done (all on branch `worktree-usage-scenarios-s2` — needs delivery
