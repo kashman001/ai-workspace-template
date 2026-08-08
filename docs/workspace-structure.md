@@ -305,6 +305,30 @@ the underlying product repos.
    runtime. Tool-specific config (Claude memory, Codex config) lives in
    user-level locations outside the workspace.
 
+### Before You Add a Teammate
+
+The coordination model is **one developer, many sessions** (ADR-0004).
+Session locks, registries, and dispatch records identify sessions by
+`user@host`, but liveness and mutual exclusion are machine-local. A second
+person breaks these assumptions **silently** — nothing errors, state just
+gets stolen or collides:
+
+- **Lock liveness is local artifact mtime.** Another machine's
+  `.active-session` lock always reads stale, so a primary role can be
+  swept and taken over without the other person noticing.
+- **Coordination state is gitignored** (`.context-budget/`), so there is
+  zero cross-machine mutual exclusion.
+- **Machine-local counters collide in committed files**: session numbers
+  (`.session-seq`) in ledgers, ADR numbers in `docs/adr/`.
+- **Launcher/ledger are single-writer**: two people rolling over the same
+  work item produce merge conflicts in `next-session.md`/`handoff.md`.
+
+Before onboarding a second person, design the shared-liveness mechanism in
+an ADR (a committed lease or remote ref — extend, don't weaken, the local
+lock) and make numbering collision-proof (`<user>-<n>` or
+allocation-on-merge). Until then, treat the workspace as single-user per
+work item.
+
 ---
 
 ## Top-Level Layout
@@ -821,6 +845,7 @@ needed to authenticate and verify access without guessing:
 ```markdown
 ### Atlassian (Jira / Confluence)
 
+- **Scope**: personal   <!-- personal (each member's own credential) | shared (team vault — see docs/service-access.md → "Shared credentials") -->
 - **Vault key**: `atlassian-api-token`
 - **Username**: `you@example.com`
 - **Retrieve cmd** (macOS): `security find-generic-password -s atlassian-api-token -w`

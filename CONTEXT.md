@@ -39,7 +39,9 @@ and `api.md`. None are documented yet.
 ## Workspace Structure
 
 See `docs/workspace-structure.md` for the authoritative map of how this
-workspace is organized (directories, entrypoints, conventions).
+workspace is organized (directories, entrypoints, conventions);
+`docs/README.md` indexes every doc by need. How product knowledge is
+layered — and what to load for a task — is `docs/zoom-model.md`.
 Hard-won operational gotchas (build/CI/shell traps) are recorded in
 `docs/operational-knowledge.md` — read it before debugging those.
 
