@@ -127,7 +127,9 @@ verify-only; the runbooks are the sanctioned setup steps (per OS).
 The external agent toolchain this workflow assumes (status line, superpowers
 plugin, Matt Pocock engineering skills, Karpathy principles, graphify) is
 documented in `docs/recommended-tooling.md` — global/per-user setup plus the
-per-repo steps for Matt Pocock config and graphify graphs. All optional.
+per-repo steps for Matt Pocock config and graphify graphs. The toolchain
+items are optional; the same doc also carries the "Required for everyone"
+manifest (git, gh, jq, hook wiring).
 
 ## Template Backlog
 

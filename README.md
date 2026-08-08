@@ -18,12 +18,17 @@ Gemini.
 [`docs/setup-guide.html`](docs/setup-guide.html). Prefer Markdown?
 [`docs/template-usage.md`](docs/template-usage.md).
 
+**Looking for a specific doc?** [`docs/README.md`](docs/README.md) indexes
+every workspace doc by need (using the workspace · developing your product ·
+developing the template).
+
 **Want to see how the workspace is meant to be used?** Two docs:
 [`docs/zoom-model.md`](docs/zoom-model.md) — how product knowledge is layered
 so agents load only what a task needs — and the scenario catalog
 ([`work/usage-scenarios/scenarios.md`](work/usage-scenarios/scenarios.md) §3,
 E1–E18: lifecycle, personal layer, working loop, knowledge access,
-concurrency, team capabilities). The older HTML walkthrough is retired at
+concurrency, team capabilities — an evaluation artifact from template
+development; coverage notes there reflect its writing date). The older HTML walkthrough is retired at
 [`docs/archive/usage-scenarios.html`](docs/archive/usage-scenarios.html).
 
 **Want the full workspace guide?** Every directory, convention, and the

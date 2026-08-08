@@ -26,7 +26,7 @@ Every service entry carries a **Scope**:
 |---|---|---|
 | macOS | `security add-generic-password -a "$USER" -s <name> -w` | `security find-generic-password -s <name> -w` |
 | Linux | `secret-tool store --label=<name> service <name>` | `secret-tool lookup service <name>` |
-| Windows | `cmdkey /generic:<name> /user:$env:USERNAME /pass` | PowerShell `Get-StoredCredential -Target <name>` (CredentialManager module) |
+| Windows | `cmdkey /generic:<name> /user:$env:USERNAME /pass` | PowerShell `Get-StoredCredential -Target <name>` (third-party module: `Install-Module CredentialManager`) |
 
 ### GitHub
 

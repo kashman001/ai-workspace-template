@@ -766,16 +766,15 @@ scripts/
   `req` lines (git, gh, jq, hook wiring) exit 1 when missing; `rec` lines
   (e.g. `yt-dlp` for the YouTube MCP server) warn only. Human-readable view:
   `docs/recommended-tooling.md` → "Required for everyone".
+- `check-service-access.sh` — verifies service credentials are reachable
+  (database, cloud CLI, Atlassian, etc.); required services (today: GitHub
+  via `gh`) exit 1 when unreachable, optional ones only degrade the status.
 - `check-workspace-structure.sh` — validates that documented directories
   exist, symlinks resolve, scripts are executable, and the repo-context doc
   templates are present. (It does **not** reconcile the registry against the
   on-disk repos.)
 
 **Recommended scripts** (add as the workspace matures):
-
-- `check-service-access.sh` — verifies service credentials are reachable
-  (database, cloud CLI, Atlassian, etc.); required services (today: GitHub
-  via `gh`) exit 1 when unreachable, optional ones only degrade the status.
 - `diff-review.sh` — open a commit or range as a directory diff for review;
   wraps `git difftool` with the symlink-safe `--no-symlinks` flag and the
   blocking `bcomp` launcher. See `docs/operational-knowledge.md` → "Diff
@@ -845,7 +844,7 @@ needed to authenticate and verify access without guessing:
 ```markdown
 ### Atlassian (Jira / Confluence)
 
-- **Scope**: personal   <!-- personal (each member's own credential) | shared (team vault — see docs/service-access.md → "Shared credentials") -->
+- **Scope**: personal   <!-- personal (each member's own credential) | shared (team vault — see docs/service-access.md → "Shared credentials — the team-vault interface") -->
 - **Vault key**: `atlassian-api-token`
 - **Username**: `you@example.com`
 - **Retrieve cmd** (macOS): `security find-generic-password -s atlassian-api-token -w`

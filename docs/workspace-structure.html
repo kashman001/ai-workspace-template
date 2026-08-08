@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 600f57a356b954adee559dea31b4b21fc11c62a9 -->
+  <!-- source-md-sha1: 3e99f02e4eb80f618d9d5ceead891649996bc4a6 -->
 </head>
 <body>
 <div class="src-banner">
@@ -1125,6 +1125,10 @@ tooling manifest: <code>req</code> lines (git, gh, jq, hook wiring) exit
 1 when missing; <code>rec</code> lines (e.g. <code>yt-dlp</code> for the
 YouTube MCP server) warn only. Human-readable view:
 <code>docs/recommended-tooling.md</code> → "Required for everyone".</li>
+<li><code>check-service-access.sh</code> — verifies service credentials
+are reachable (database, cloud CLI, Atlassian, etc.); required services
+(today: GitHub via <code>gh</code>) exit 1 when unreachable, optional
+ones only degrade the status.</li>
 <li><code>check-workspace-structure.sh</code> — validates that
 documented directories exist, symlinks resolve, scripts are executable,
 and the repo-context doc templates are present. (It does
@@ -1134,10 +1138,6 @@ repos.)</li>
 <p><strong>Recommended scripts</strong> (add as the workspace
 matures):</p>
 <ul>
-<li><code>check-service-access.sh</code> — verifies service credentials
-are reachable (database, cloud CLI, Atlassian, etc.); required services
-(today: GitHub via <code>gh</code>) exit 1 when unreachable, optional
-ones only degrade the status.</li>
 <li><code>diff-review.sh</code> — open a commit or range as a directory
 diff for review; wraps <code>git difftool</code> with the symlink-safe
 <code>--no-symlinks</code> flag and the blocking <code>bcomp</code>
@@ -1216,7 +1216,7 @@ guessing:</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">### Atlassian (Jira / Confluence)</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scope**: personal   <span class="co">&lt;!-- personal (each member&#39;s own credential) | shared (team vault — see docs/service-access.md → &quot;Shared credentials&quot;) --&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scope**: personal   <span class="co">&lt;!-- personal (each member&#39;s own credential) | shared (team vault — see docs/service-access.md → &quot;Shared credentials — the team-vault interface&quot;) --&gt;</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Vault key**: <span class="in">`atlassian-api-token`</span></span>
 <span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Username**: <span class="in">`you@example.com`</span></span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Retrieve cmd** (macOS): <span class="in">`security find-generic-password -s atlassian-api-token -w`</span></span>

@@ -39,7 +39,7 @@ req gh  "GitHub CLI — the workspace's GitHub path (auth, PRs, API)"
 req jq  "context-budget accounting (scripts/context-budget.sh) — every session runs it"
 
 # Wiring, not a binary: the context-budget hooks must be wired into Claude Code's
-# per-user settings (scripts/setup.sh copies .claude/settings.json.example there).
+# project-level gitignored settings (scripts/setup.sh copies .claude/settings.json.example there).
 if grep -qs 'context-budget-claude-hook' .claude/settings.json .claude/settings.local.json 2>/dev/null; then
   printf '  \033[32m✓\033[0m %-8s context-budget hooks wired (.claude/settings*.json)\n' "hooks"
 else

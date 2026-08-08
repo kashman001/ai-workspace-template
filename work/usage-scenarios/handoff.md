@@ -6,6 +6,53 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-08 (session 5 continued: Gaps 7+4+1 shipped, M15 CLOSED)
+
+User directive mid-session: finish all remaining gaps + holistic re-review
+by another agent + ensure usage/development guides present; user away,
+complete autonomously. Context WARN (~122K) hit — heavier pieces delegated
+to subagents to keep the parent lean.
+
+What got done (same branch `worktree-usage-scenarios-s5`):
+- **Gap 7**: scenarios.md §1/§1b/§1c promoted to `docs/zoom-model.md`
+  (standalone doc; rejected workspace-structure.md section — file already
+  ~900 lines). usage-scenarios.html retired to `docs/archive/` with a
+  supersede banner (stale `work/<user>_` refs die with it); README
+  repointed to zoom-model.md + the E-catalog. Guide HTML rebuilt.
+- **Gap 4** (interface only, per guardrail): service-access.md gains
+  Scope field (personal|shared), per-OS keychain command table, and the
+  team-vault interface (fetch-by-name / bootstrap / rotation) with a
+  1Password worked example. Scope line added to the registry entry shape
+  in workspace-structure.md.
+- **Gap 1** (phase 1 only, per guardrail): "Before You Add a Teammate"
+  breakage-points section in workspace-structure.md; additive `user`
+  (`$USER@hostname`) field in session registry records, .active-session
+  lock, and dispatch generation entries (subagent; documented in
+  context-budget.md shapes). Phases 2–3 stay deferred BY DESIGN until a
+  second person is real.
+- **Docs consumption pass**: new `docs/README.md` need→doc index (three
+  audience tables: using / developing product / developing template);
+  CONTEXT.md pointers to it + zoom-model.md.
+- **M15 CLOSED** (subagent): card → backlog archive with Fixed note;
+  scorecard 3/50/4/0/6; change-log row added. Open cards: M16, L32, L33.
+- All nine suites green post-commit (363 asserts), incl. clean-room
+  instantiation; structure check green; guide HTML in sync.
+- Holistic fresh-eyes review agent ran over the full branch diff: verdict
+  clean on simplicity and audience coverage; 9 small findings (3 med, 6
+  low), 8 fixed in the final commit (archive HTML relative links, CONTEXT.md
+  "All optional." reword, README label on the scenarios link + docs-index
+  link, check-dependencies comment wording, heading-cite alignment,
+  check-service-access bullet moved to shipped list, Windows credential
+  module note). Skipped by judgement: gating the hook-wiring req on Claude
+  Code presence — the failure message already prints the setup.sh fix.
+- Context STOP (~154K) hit after the review dispatch; per protocol only the
+  in-flight atomic unit (review fixes + push) was finished, then the
+  session ended; close-out deferred to the launcher's mission.
+
+State: branch pushed to origin; merge to main left for the user (background
+session). Work item's mission is COMPLETE — all 8 gaps resolved or
+deliberately deferred; consider closing/checkpointing the work item next.
+
 # Session Handoff — 2026-08-08 (session 5: Gaps 3+8 shipped)
 
 What got done (branch `worktree-usage-scenarios-s5`, pushed to origin —
