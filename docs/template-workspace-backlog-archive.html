@@ -282,6 +282,46 @@
       <code>test-launch-next-session.sh</code> (49 asserts green).</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M15</span> Usage-scenario catalog: eight template-level gaps where the brief's requirements have no artifact
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">work/usage-scenarios/</span></h3>
+    <p><span class="k">Evidence</span> — the usage-scenarios work item (sessions 1–2, 2026-08-08) built an evaluation
+      catalog: external scenarios E1–E18, internal scenarios I1–I10, a zoom-level doc model, and a
+      scenario→docs→tests coverage matrix (<code>work/usage-scenarios/scenarios.md</code>; evidence base
+      <code>ground-truth.md</code>). Every ❌ scenario maps to a user-brief requirement: multi-user (E17/E2),
+      product onboarding &amp; Z0 docs (E3/E15), required-vs-optional tooling manifest (E7), shared secrets (E8),
+      personal-layer unevenness (E6), team-authored capabilities (E18), template-level eval harness (I10),
+      zoom-model doc restructure (E14).</p>
+    <p><span class="k">Impact</span> — the template is excellent at one person's session/context discipline and repo
+      onboarding, and unbuilt at what the brief asks next; test effort is inverted (deep coverage on the
+      context-budget subsystem, zero on setup.sh/check-*.sh/onboarding — the paths every new user runs first).</p>
+    <p><span class="k">Fix</span> — work the ranked recommendations in
+      <code>work/usage-scenarios/gaps-and-coverage.md</code> (sequencing at its end: clean-room instantiation test
+      first, then product onboarding, tooling manifest, personal-layer ADR, zoom docs, shared-secrets interface,
+      multi-user via its own wayfinder map). Big items (multi-user, product onboarding) deserve their own cards/maps
+      when picked up.</p>
+    <p><span class="k">Verdicts (2026-08-08, session-4 walk-through)</span> — user adopted the sequencing as-is and
+      endorsed retiring <code>usage-scenarios.html</code> (superseded by the E-catalog; Gap 7). Green-lit now:
+      <strong>Gap 6</strong> (clean-room instantiation test) and <strong>Gap 2</strong> (Z0 doc template + interview
+      checklist). Queued: Gaps 3+8, then 7. Deferred until real: Gap 4 (second service), Gap 1 (second person;
+      phase-1 identity fields may land any time). Notes in <code>work/usage-scenarios/decisions.md</code>.</p>
+    <p><span class="k">Progress (2026-08-08, session 5)</span> — Gaps 6 and 2 shipped session 4; <strong>Gaps 3+8</strong>
+      shipped session 5: <code>check-dependencies.sh</code> req list extended (jq + Claude hook wiring, previously
+      unchecked), <code>check-service-access.sh</code> now hard-fails on required services, "Required for everyone"
+      table in <code>recommended-tooling.md</code>, and an "Authoring a Team Capability" section in
+      <code>workspace-structure.md</code> (container decision rule + wiring steps + required-manifest hook).
+      Remaining before close: <strong>Gap 7</strong> (zoom docs + HTML retirement).</p>
+    <p><span class="fix">Fixed:</span> 2026-08-08 (session 5) — all tracked gap work done, under the user's binding
+      simplicity guardrail (prefer documenting over building). <strong>Gap 7</strong>: zoom model promoted to
+      committed <code>docs/zoom-model.md</code>; <code>usage-scenarios.html</code> retired to <code>docs/archive/</code>
+      with a pointer; <code>README.md</code> repointed. <strong>Gap 4</strong>: team-vault interface + per-service
+      <code>Scope</code> field documented in <code>docs/service-access.md</code> — interface only, no vault tooling.
+      <strong>Gap 1</strong>: "Before You Add a Teammate" breakage points documented in
+      <code>workspace-structure.md</code> + phase-1 <code>user@host</code> identity fields in coordination records;
+      phases 2–3 remain deferred <em>by design</em> (user verdict: until a second person is real — not an open item).
+      With sessions 4–5's Gaps 6, 2, 3, 8 above, that closes the card.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

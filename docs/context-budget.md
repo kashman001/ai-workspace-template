@@ -267,7 +267,7 @@ Every element must hold under N concurrent sessions:
 
 - **Measurement is per-session.** Registry state moves to
   `.context-budget/sessions/<runtime>-<session-id>.json`
-  (`{runtime, artifact, project, registered_at}`); each session writes only
+  (`{runtime, artifact, project, registered_at, user}`); each session writes only
   its own file and resolves itself via runtime env-var identity first
   (`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`;
   the Claude Code hook bypasses even that — it receives the exact
@@ -276,7 +276,7 @@ Every element must hold under N concurrent sessions:
   re-discovery, so session A can measure session B's artifact (fired live
   2026-08-05: a `--bg` demo session clobbered the design session's entry).
 - **Work-item ownership is per-project.** An advisory lock
-  (`work/<proj>/.active-session`: runtime + session-id + timestamp) enforces
+  (`work/<proj>/.active-session`: runtime + session-id + timestamp + user) enforces
   one *active* session per project — the launcher/ledger REPLACE semantics are
   single-writer by construction, and concurrent rollovers on one work item
   would silently destroy each other. `launch-next-session.sh` releases the
@@ -536,7 +536,7 @@ into the shared lib for the actual check and message text.
 ## Session registration
 
 `register` writes `.context-budget/sessions/<runtime>-<session-id>.json`
-(`runtime, session_id, artifact, project, registered_at`) pinning the exact
+(`runtime, session_id, artifact, project, registered_at, user`) pinning the exact
 artifact, because newest-mtime discovery is ambiguous under concurrent sessions.
 The session id comes from the runtime's own env var first
 (`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`,

@@ -531,8 +531,8 @@ acquire_lock() {
     fi
   fi
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg proj "$PROJECT" \
-    --arg ts "$(date -u +%FT%TZ)" \
-    '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts}' > "$lock"
+    --arg ts "$(date -u +%FT%TZ)" --arg user "$USER@$(hostname -s)" \
+    '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts, user:$user}' > "$lock"
   ROLE="primary"
   note "lock: acquired work/$PROJECT/.active-session as $RUNTIME-$SESSION_ID role=primary"
 }
@@ -576,7 +576,8 @@ cmd_register() {
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
     --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \
     --arg psid "$PARENT_SESSION" --arg aid "$AGENT_ID" --argjson depth "$DEPTH" \
-    '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts}
+    --arg user "$USER@$(hostname -s)" \
+    '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts, user:$user}
      + (if $role == "" then {} else {role:$role} end)
      + (if $psid == "" then {} else {parent_session_id:$psid, depth:$depth} end)
      + (if $aid == "" then {} else {agent_id:$aid} end)' \
@@ -820,13 +821,13 @@ cmd_dispatch_open() {
   fi
   jq --arg ts "$(date -u +%FT%TZ)" --arg rp "$REPORT_FILE" --arg bf "$BRIEF_FILE" \
      --arg at "$AGENT_TYPE" --arg md "$MODEL" --arg ef "$EFFORT" \
-     --arg aid "$AGENT_ID" --argjson gen "$gen" \
+     --arg aid "$AGENT_ID" --argjson gen "$gen" --arg user "$USER@$(hostname -s)" \
     '.report = $rp
      | (if $bf == "" then . else .brief = $bf end)
      | (if $at == "" then . else .agent_type = $at end)
      | (if $md == "" then . else .model = $md end)
      | (if $ef == "" then . else .effort = $ef end)
-     | .generations += [{gen:$gen, dispatched_at:$ts, status:"open"}
+     | .generations += [{gen:$gen, dispatched_at:$ts, status:"open", user:$user}
                         + (if $aid == "" then {} else {agent_id:$aid} end)]' \
     "$rec" > "$rec.tmp" && mv "$rec.tmp" "$rec"
   GEN="$gen"

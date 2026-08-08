@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">4</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">49</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">50</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -137,37 +137,6 @@
 
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
-
-  <div class="find med">
-    <h3><span class="id">M15</span> Usage-scenario catalog: eight template-level gaps where the brief's requirements have no artifact
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">work/usage-scenarios/</span></h3>
-    <p><span class="k">Evidence</span> — the usage-scenarios work item (sessions 1–2, 2026-08-08) built an evaluation
-      catalog: external scenarios E1–E18, internal scenarios I1–I10, a zoom-level doc model, and a
-      scenario→docs→tests coverage matrix (<code>work/usage-scenarios/scenarios.md</code>; evidence base
-      <code>ground-truth.md</code>). Every ❌ scenario maps to a user-brief requirement: multi-user (E17/E2),
-      product onboarding &amp; Z0 docs (E3/E15), required-vs-optional tooling manifest (E7), shared secrets (E8),
-      personal-layer unevenness (E6), team-authored capabilities (E18), template-level eval harness (I10),
-      zoom-model doc restructure (E14).</p>
-    <p><span class="k">Impact</span> — the template is excellent at one person's session/context discipline and repo
-      onboarding, and unbuilt at what the brief asks next; test effort is inverted (deep coverage on the
-      context-budget subsystem, zero on setup.sh/check-*.sh/onboarding — the paths every new user runs first).</p>
-    <p><span class="k">Fix</span> — work the ranked recommendations in
-      <code>work/usage-scenarios/gaps-and-coverage.md</code> (sequencing at its end: clean-room instantiation test
-      first, then product onboarding, tooling manifest, personal-layer ADR, zoom docs, shared-secrets interface,
-      multi-user via its own wayfinder map). Big items (multi-user, product onboarding) deserve their own cards/maps
-      when picked up.</p>
-    <p><span class="k">Verdicts (2026-08-08, session-4 walk-through)</span> — user adopted the sequencing as-is and
-      endorsed retiring <code>usage-scenarios.html</code> (superseded by the E-catalog; Gap 7). Green-lit now:
-      <strong>Gap 6</strong> (clean-room instantiation test) and <strong>Gap 2</strong> (Z0 doc template + interview
-      checklist). Queued: Gaps 3+8, then 7. Deferred until real: Gap 4 (second service), Gap 1 (second person;
-      phase-1 identity fields may land any time). Notes in <code>work/usage-scenarios/decisions.md</code>.</p>
-    <p><span class="k">Progress (2026-08-08, session 5)</span> — Gaps 6 and 2 shipped session 4; <strong>Gaps 3+8</strong>
-      shipped session 5: <code>check-dependencies.sh</code> req list extended (jq + Claude hook wiring, previously
-      unchecked), <code>check-service-access.sh</code> now hard-fails on required services, "Required for everyone"
-      table in <code>recommended-tooling.md</code>, and an "Authoring a Team Capability" section in
-      <code>workspace-structure.md</code> (container decision rule + wiring steps + required-manifest hook).
-      Remaining before close: <strong>Gap 7</strong> (zoom docs + HTML retirement).</p>
-  </div>
 
   <div class="find med">
     <h3><span class="id">M16</span> EnterWorktree mid-session stales the registry artifact path — wrongful stale-primary sweeps
@@ -297,6 +266,7 @@
       <tr><td>2026-08-08</td><td>Usage-scenario catalog delivered (<code>work/usage-scenarios/</code>, sessions 1–2, user brief): external scenarios <strong>E1–E18</strong> (lifecycle, personal layer, working loop, knowledge access, concurrency, team capabilities) + internal scenarios <strong>I1–I10</strong> (mechanism groups A–G with per-scenario test status), the zoom-level doc model (Z0–Z3 × O0–O4 + agent profiles), a scenario→docs→tests coverage matrix, and <code>gaps-and-coverage.md</code> (8 ranked gaps with recommendations + sequencing). Opened <strong>M15</strong> (catalog meta-card) and promoted the three un-carded change-log findings to cards: <strong>M16</strong> (EnterWorktree stales registry artifact — reproduced live this session), <strong>L32</strong> (WARN push swallowed via busy child), <strong>L33</strong> (launcher staleness race — shape recurred this session via a worktree branched from lagging origin/main). Scorecard now 4/49/4/0/6.</td></tr>
       <tr><td>2026-08-08</td><td>Usage-scenarios <strong>session-4 walk-through + first two gaps shipped</strong>. User verdicts recorded on M15 (sequencing adopted as-is; <code>usage-scenarios.html</code> retirement endorsed; Gaps 6+2 green-lit; 3+8 and 7 queued; 4 and 1 deferred until real). <strong>Gap 6</strong>: new <code>scripts/tests/test-template-instantiation.sh</code> (20 asserts, nine suites now) — clean-room clone→<code>setup.sh</code>→<code>check-workspace-structure.sh</code> with produced-structure, idempotency, symlink-repair, and placeholder <code>--clone-repos</code> cases, plus doc-accuracy pins for the two claims previously caught false (<code>workspace-structure.md</code> registry↔disk reconciliation claim removed; <code>--clone-repos</code> ignores-tiers behavior now stated honestly). <strong>Gap 2</strong>: Z0 product interview checklist added beside the S0 preconditions in <code>workspace-structure.md</code>; <code>SPEC.md</code> and <code>docs/system-design.md</code> upgraded from bare stubs to fillable Z0 templates (components/entry-points tables); E1 local-vs-remote fork now an explicit choice point in <code>template-usage.md</code> with both paths. M15 stays Open (Gaps 3+8, 7 next). No scorecard change.</td></tr>
       <tr><td>2026-08-08</td><td>Usage-scenarios <strong>session-5: Gaps 3+8 shipped</strong> (M15). <strong>Gap 3</strong> (tooling manifest): <code>check-dependencies.sh</code> gains <code>req jq</code> (hard-required by <code>context-budget.sh</code>, previously unlisted) and a required hook-wiring check (I7's missing installation check — <code>.claude/settings*.json</code> must wire the context-budget hooks); <code>check-service-access.sh</code> gains the same hard-fail distinction (required services → exit 1; was always exit 0); <code>recommended-tooling.md</code>'s blanket "everything optional" replaced with a "Required for everyone" table; runbooks updated (jq install lines, exit-code meaning); <code>setup.sh</code> dependency check moved after the per-user copies so its verdict reflects post-setup state. <strong>Gap 8</strong> (capability authoring, documentation only): "Authoring a Team Capability" section in <code>workspace-structure.md</code> — container decision rule (<code>scripts/</code> vs <code>skills/</code> vs <code>.claude/agents/</code> vs <code>docs/runbooks/</code>), the two mechanical skill-wiring steps (commands mirror + <code>CONTEXT.md</code> listing), and the make-it-required hook into Gap 3's manifest; pointer added in <code>CONTEXT.md</code> → "Workspace Skills". M15 stays Open (Gap 7 last). No scorecard change.</td></tr>
+      <tr><td>2026-08-08</td><td>Usage-scenarios <strong>session-5 continued: Gaps 7+4+1 shipped, M15 closed</strong>. <strong>Gap 7</strong>: zoom model promoted from the work item to committed <code>docs/zoom-model.md</code>; superseded <code>usage-scenarios.html</code> retired to <code>docs/archive/</code> with a pointer stub; <code>README.md</code> repointed. <strong>Gap 4</strong> (interface only, per the simplicity guardrail — document, don't build): team-vault interface + per-service <code>Scope</code> field documented in <code>docs/service-access.md</code>; no vault tooling. <strong>Gap 1</strong> (phase 1 only): "Before You Add a Teammate" breakage points documented in <code>workspace-structure.md</code> + <code>user@host</code> identity fields in coordination records; phases 2–3 stay deferred by design until a second person is real (user verdict — not an open item). Also added a new <code>docs/README.md</code> index. All M15 gap work done → card <span class="status resolved">Resolved</span> and moved to the archive. Scorecard now 3/50/4/0/6.</td></tr>
     </tbody>
   </table>
 

@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 57a88c50b4a943eeae2c087a4aeb46cc4deab1e9 -->
+  <!-- source-md-sha1: 600f57a356b954adee559dea31b4b21fc11c62a9 -->
 </head>
 <body>
 <div class="src-banner">
@@ -624,6 +624,33 @@ variables, not hardcoded into tracked files.</li>
 for any agent runtime. Tool-specific config (Claude memory, Codex
 config) lives in user-level locations outside the workspace.</li>
 </ol>
+<h3 id="before-you-add-a-teammate">Before You Add a Teammate</h3>
+<p>The coordination model is <strong>one developer, many
+sessions</strong> (ADR-0004). Session locks, registries, and dispatch
+records identify sessions by <code>user@host</code>, but liveness and
+mutual exclusion are machine-local. A second person breaks these
+assumptions <strong>silently</strong> — nothing errors, state just gets
+stolen or collides:</p>
+<ul>
+<li><strong>Lock liveness is local artifact mtime.</strong> Another
+machine's <code>.active-session</code> lock always reads stale, so a
+primary role can be swept and taken over without the other person
+noticing.</li>
+<li><strong>Coordination state is gitignored</strong>
+(<code>.context-budget/</code>), so there is zero cross-machine mutual
+exclusion.</li>
+<li><strong>Machine-local counters collide in committed files</strong>:
+session numbers (<code>.session-seq</code>) in ledgers, ADR numbers in
+<code>docs/adr/</code>.</li>
+<li><strong>Launcher/ledger are single-writer</strong>: two people
+rolling over the same work item produce merge conflicts in
+<code>next-session.md</code>/<code>handoff.md</code>.</li>
+</ul>
+<p>Before onboarding a second person, design the shared-liveness
+mechanism in an ADR (a committed lease or remote ref — extend, don't
+weaken, the local lock) and make numbering collision-proof
+(<code>&lt;user&gt;-&lt;n&gt;</code> or allocation-on-merge). Until
+then, treat the workspace as single-user per work item.</p>
 <hr />
 <h2 id="top-level-layout">Top-Level Layout</h2>
 <pre><code>&lt;your-project&gt;-dev-ai-workspace/
@@ -920,6 +947,52 @@ Skills</h3>
 problem domain (testing methodology, bug triage pipeline, deployment
 runbooks). These carry the project's institutional knowledge.</li>
 </ul>
+<h3 id="authoring-a-team-capability">Authoring a Team Capability</h3>
+<p>When your team needs its own capability for common product work —
+"run the test suite", "test component A", "run the performance suite" —
+pick the container by what executes it:</p>
+<ul>
+<li><strong>Deterministic and runnable</strong> → a script in
+<code>scripts/</code>. If it has external prerequisites, guard them (see
+"required" below).</li>
+<li><strong>Agent workflow</strong> (judgement, multiple steps, tool
+use) → a skill in <code>skills/&lt;name&gt;/SKILL.md</code>, plus the
+wiring below.</li>
+<li><strong>Needs its own toolset or isolation</strong> (heavy MCP
+servers, scoped permissions) → a subagent profile in
+<code>.claude/agents/</code> (see "<code>.claude/</code> — Claude Code
+(Project-Level)").</li>
+<li><strong>Human-only steps</strong> (dashboards, interactive logins) →
+a runbook in <code>docs/runbooks/</code>, listed in its
+<code>README.md</code> index with its paired check script if one
+exists.</li>
+</ul>
+<p>A new <strong>skill</strong> takes two mechanical wiring steps, or
+agents won't find it:</p>
+<ol type="1">
+<li><strong>Commands mirror</strong> — add
+<code>.claude/commands/&lt;name&gt;.md</code> (frontmatter:
+<code>description</code>, <code>argument-hint</code>; body: one
+paragraph delegating to <code>skills/&lt;name&gt;/SKILL.md</code>). Copy
+an existing one as the pattern. This gives Claude Code the
+<code>/&lt;name&gt;</code> shortcut; other runtimes read the skill via
+<code>CONTEXT.md</code>.</li>
+<li><strong><code>CONTEXT.md</code> listing</strong> — one line in its
+"Workspace Skills" section (name, one-line trigger/description). This
+list is hand-maintained; a skill absent from it is invisible to every
+non-Claude runtime.</li>
+</ol>
+<p>To make a capability <strong>required</strong> — "run the tests
+before finishing a branch" as a non-negotiable — put its prerequisites
+in the manifest: a <code>req</code> line in
+<code>scripts/check-dependencies.sh</code> per binary it needs, a
+required block in <code>scripts/check-service-access.sh</code> per
+service, and a row in <code>docs/recommended-tooling.md</code> →
+"Required for everyone". The check scripts then fail (exit 1) on any
+machine missing it, instead of the capability failing mid-task.</p>
+<p>Before writing the <code>SKILL.md</code>, consult the
+<code>writing-for-agents</code> skill for style; keep the skill
+agent-vendor-neutral (plain Markdown, no runtime-specific syntax).</p>
 <hr />
 <h2 id="work--active-project-work"><code>work/</code> — Active Project
 Work</h2>
@@ -1047,9 +1120,11 @@ Bootstrap and Utility Scripts</h2>
 <code>.env.example</code>, creates required symlinks
 (<code>CLAUDE.md</code>, <code>AGENTS.md</code>,
 <code>repos/README.md</code>), optionally clones repos.</li>
-<li><code>check-dependencies.sh</code> — verifies core tools and warns
-about optional tools such as <code>yt-dlp</code> for the YouTube MCP
-server.</li>
+<li><code>check-dependencies.sh</code> — the required-vs-optional
+tooling manifest: <code>req</code> lines (git, gh, jq, hook wiring) exit
+1 when missing; <code>rec</code> lines (e.g. <code>yt-dlp</code> for the
+YouTube MCP server) warn only. Human-readable view:
+<code>docs/recommended-tooling.md</code> → "Required for everyone".</li>
 <li><code>check-workspace-structure.sh</code> — validates that
 documented directories exist, symlinks resolve, scripts are executable,
 and the repo-context doc templates are present. (It does
@@ -1059,8 +1134,10 @@ repos.)</li>
 <p><strong>Recommended scripts</strong> (add as the workspace
 matures):</p>
 <ul>
-<li><code>check-service-access.sh</code> — verifies all required
-credentials are reachable (database, cloud CLI, Atlassian, etc.).</li>
+<li><code>check-service-access.sh</code> — verifies service credentials
+are reachable (database, cloud CLI, Atlassian, etc.); required services
+(today: GitHub via <code>gh</code>) exit 1 when unreachable, optional
+ones only degrade the status.</li>
 <li><code>diff-review.sh</code> — open a commit or range as a directory
 diff for review; wraps <code>git difftool</code> with the symlink-safe
 <code>--no-symlinks</code> flag and the blocking <code>bcomp</code>
@@ -1139,12 +1216,13 @@ guessing:</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">### Atlassian (Jira / Confluence)</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Vault key**: <span class="in">`atlassian-api-token`</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Username**: <span class="in">`you@example.com`</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Retrieve cmd** (macOS): <span class="in">`security find-generic-password -s atlassian-api-token -w`</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Verify cmd**: <span class="in">`curl -su &quot;$USER:$TOKEN&quot; https://your-org.atlassian.net/rest/api/3/myself`</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Used by**: MCP <span class="in">`atlassian-*`</span> servers; <span class="in">`scripts/file-bug.sh`</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Rotation**: every 90 days; rotate at id.atlassian.com → Account → Security</span></code></pre></div>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scope**: personal   <span class="co">&lt;!-- personal (each member&#39;s own credential) | shared (team vault — see docs/service-access.md → &quot;Shared credentials&quot;) --&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Vault key**: <span class="in">`atlassian-api-token`</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Username**: <span class="in">`you@example.com`</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Retrieve cmd** (macOS): <span class="in">`security find-generic-password -s atlassian-api-token -w`</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Verify cmd**: <span class="in">`curl -su &quot;$USER:$TOKEN&quot; https://your-org.atlassian.net/rest/api/3/myself`</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Used by**: MCP <span class="in">`atlassian-*`</span> servers; <span class="in">`scripts/file-bug.sh`</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Rotation**: every 90 days; rotate at id.atlassian.com → Account → Security</span></code></pre></div>
 <p>This keeps credentials out of <code>.env</code>, out of tracked
 files, and out of agent conversation history.</p>
 <hr />
