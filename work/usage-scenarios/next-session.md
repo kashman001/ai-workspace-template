@@ -15,9 +15,9 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
    trusting this launcher (L33 race). If in a fresh worktree, also
    `git merge --ff-only main` — worktrees branch from origin/main, which
    may lag local main.
-2. Confirm session-4's branch (`worktree-quiet-marinating-dolphin`) was
-   merged to main. If not, deliver it first — it carries Gaps 6+2 and the
-   walk-through verdicts.
+2. Session-4's work is already merged to main and pushed (c6a2f03 + this
+   rollover bookkeeping); its worktree and local branch are deleted.
+   Nothing to deliver — start on the mission.
 
 ## Mission (session 5): Gaps 3+8 — tooling manifest + capability authoring doc
 

@@ -32,8 +32,15 @@ to main):
   fixed with `git merge --ff-only main` before editing). M16 mitigation
   applied (re-ran `register` after EnterWorktree).
 
-State: peak recorded context ~93K (OK). Branch not merged (background
-policy); delivery to main is the user's/successor's step.
+State: delivered — user directed merge+push in-session: main fast-forwarded
+to c6a2f03, pushed to origin/main, worktree + local branch deleted (remote
+branch copy remains, deletable). Rolled over at WARN (~124K).
+
+Learnings: (parked) the worktree-isolated Bash guard also refuses
+`git -C <shared-checkout>` redirects, not just compound commands — merging
+to main from a background session requires ExitWorktree(keep) first; and
+the shared-checkout edit guard forces a second throwaway worktree for
+rollover bookkeeping written after delivery.
 
 # Session Handoff — 2026-08-08 (session 2: catalog complete + gap analysis + backlog cards; finished well under WARN)
 
