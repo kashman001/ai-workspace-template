@@ -288,7 +288,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 3a35f34391ec0d01715df8b6874bbf8fd74c4843 -->
+  <!-- source-md-sha1: 57a88c50b4a943eeae2c087a4aeb46cc4deab1e9 -->
 </head>
 <body>
 <div class="src-banner">
@@ -375,6 +375,34 @@ registry.</li>
 </ol>
 <p>If any answer is unclear, stop and ask — do not guess. Do not invent
 repo names or clone URLs.</p>
+<h3
+id="z0-product-interview--turn-the-answers-into-product-level-docs">Z0
+product interview — turn the answers into product-level docs</h3>
+<p>The preconditions above gather facts; these questions produce the Z0
+(product-level) docs. Ask them in the same sitting and write the answers
+into the named files — <code>SPEC.md</code> and
+<code>docs/system-design.md</code> ship as fillable templates for
+exactly this:</p>
+<ol type="1">
+<li><strong>What is the product, who uses it, and what must it
+do?</strong> → <code>SPEC.md</code> (intent, core requirements,
+constraints, out of scope).</li>
+<li><strong>What are the major components or services, and which repo
+owns each?</strong> → <code>docs/system-design.md</code> components
+table + <code>docs/repos-registry.md</code>.</li>
+<li><strong>How do the components talk</strong> (APIs, queues, shared
+stores)? → <code>docs/system-design.md</code> communication
+section.</li>
+<li><strong>How is each component built, run, and debugged
+locally</strong> — the actual entry-point commands? →
+<code>docs/system-design.md</code> entry-points table.</li>
+<li><strong>Which decisions are already settled, and why?</strong> →
+<code>docs/adr/</code> (one record per settled decision worth
+keeping).</li>
+</ol>
+<p>The workspace has its Z0 pane when <code>SPEC.md</code> and
+<code>docs/system-design.md</code> no longer contain their
+<code>TODO</code> fill-in markers.</p>
 <h3 id="execution-rules">Execution rules</h3>
 <ul>
 <li><strong>Create empty, instruction-bearing stub files</strong> for
@@ -967,11 +995,15 @@ inside <code>repos/</code>.</p>
 <h3 id="primary-vs-optional-repos">Primary vs. Optional Repos</h3>
 <p>Split repos into two tiers:</p>
 <ul>
-<li><strong>Primary</strong> — required for the workspace to be useful,
-cloned by <code>setup.sh --clone-repos</code>.</li>
+<li><strong>Primary</strong> — required for the workspace to be
+useful.</li>
 <li><strong>Optional</strong> — listed in the registry, cloned only when
 a developer needs them.</li>
 </ul>
+<p>Note: <code>setup.sh --clone-repos</code> currently clones
+<strong>every</strong> clone URL found in the registry, regardless of
+tier — the tier split is guidance for humans until the script learns to
+filter.</p>
 <h3 id="handling-mixed-hosts-and-restricted-network-repos">Handling
 Mixed Hosts and Restricted-Network Repos</h3>
 <p>Real projects often have repos on different hosts, or one repo behind
@@ -1019,8 +1051,10 @@ Bootstrap and Utility Scripts</h2>
 about optional tools such as <code>yt-dlp</code> for the YouTube MCP
 server.</li>
 <li><code>check-workspace-structure.sh</code> — validates that
-documented directories exist, symlinks resolve, and the registry matches
-the on-disk repos.</li>
+documented directories exist, symlinks resolve, scripts are executable,
+and the repo-context doc templates are present. (It does
+<strong>not</strong> reconcile the registry against the on-disk
+repos.)</li>
 </ul>
 <p><strong>Recommended scripts</strong> (add as the workspace
 matures):</p>

@@ -59,6 +59,29 @@ Before creating any files, ask the user for:
 If any answer is unclear, stop and ask — do not guess. Do not invent repo
 names or clone URLs.
 
+### Z0 product interview — turn the answers into product-level docs
+
+The preconditions above gather facts; these questions produce the Z0
+(product-level) docs. Ask them in the same sitting and write the answers
+into the named files — `SPEC.md` and `docs/system-design.md` ship as
+fillable templates for exactly this:
+
+1. **What is the product, who uses it, and what must it do?**
+   → `SPEC.md` (intent, core requirements, constraints, out of scope).
+2. **What are the major components or services, and which repo owns
+   each?** → `docs/system-design.md` components table +
+   `docs/repos-registry.md`.
+3. **How do the components talk** (APIs, queues, shared stores)?
+   → `docs/system-design.md` communication section.
+4. **How is each component built, run, and debugged locally** — the
+   actual entry-point commands? → `docs/system-design.md` entry-points
+   table.
+5. **Which decisions are already settled, and why?** → `docs/adr/`
+   (one record per settled decision worth keeping).
+
+The workspace has its Z0 pane when `SPEC.md` and `docs/system-design.md`
+no longer contain their `TODO` fill-in markers.
+
 ### Execution rules
 
 - **Create empty, instruction-bearing stub files** for everything listed in

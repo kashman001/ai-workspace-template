@@ -12,13 +12,25 @@ comment. Turn it into a real workspace like this.
 
 ## 1. Create your workspace from the template
 
-On GitHub, use **"Use this template"** (or clone and re-init git):
+First decide where the workspace itself will live — an explicit choice
+point the rest of the docs depend on:
 
-```bash
-git clone https://github.com/<you>/ai-workspace-template.git <your-project>-workspace
-cd <your-project>-workspace
-rm -rf .git && git init
-```
+- **Local-only** — just you, one machine, no remote. Clone and re-init git:
+
+  ```bash
+  git clone https://github.com/<you>/ai-workspace-template.git <your-project>-workspace
+  cd <your-project>-workspace
+  rm -rf .git && git init
+  ```
+
+- **Shared repo** — a team, or you across machines. On GitHub use
+  **"Use this template"** to create `<your-project>-workspace` under your
+  account/org, then `git clone <your-repo-url>`. Every subsequent machine
+  follows the fresh-clone path in `docs/workspace-setup.md`, which assumes
+  this variant.
+
+Starting local-only and publishing later is fine
+(`git remote add origin <url> && git push -u origin main`).
 
 ## 2. Fill in the placeholders
 
