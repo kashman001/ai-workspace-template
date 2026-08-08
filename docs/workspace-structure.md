@@ -623,10 +623,13 @@ the registry is discoverable from inside `repos/`.
 
 Split repos into two tiers:
 
-- **Primary** — required for the workspace to be useful, cloned by
-  `setup.sh --clone-repos`.
+- **Primary** — required for the workspace to be useful.
 - **Optional** — listed in the registry, cloned only when a developer needs
   them.
+
+Note: `setup.sh --clone-repos` currently clones **every** clone URL found in
+the registry, regardless of tier — the tier split is guidance for humans
+until the script learns to filter.
 
 ### Handling Mixed Hosts and Restricted-Network Repos
 
@@ -675,7 +678,9 @@ scripts/
 - `check-dependencies.sh` — verifies core tools and warns about optional
   tools such as `yt-dlp` for the YouTube MCP server.
 - `check-workspace-structure.sh` — validates that documented directories
-  exist, symlinks resolve, and the registry matches the on-disk repos.
+  exist, symlinks resolve, scripts are executable, and the repo-context doc
+  templates are present. (It does **not** reconcile the registry against the
+  on-disk repos.)
 
 **Recommended scripts** (add as the workspace matures):
 
