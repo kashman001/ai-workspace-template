@@ -6,7 +6,38 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 2026-08-08 (session 1: scaffold + ground-truth mining + catalog §1–3; rolled at WARN 139K)
+# Session Handoff — 2026-08-08 (session 2: catalog complete + gap analysis + backlog cards; finished well under WARN)
+
+What got done (all on branch `worktree-usage-scenarios-s2` — needs delivery
+to main):
+- `scenarios.md` §4 internal catalog I1–I10 (from ground-truth §D groups
+  A–G, each with support status AND test status incl. T:⊘
+  untestable-by-construction) and §5 scenario→docs→tests coverage matrix
+  (all E1–E18 + I1–I10 rows). Status flipped to COMPLETE.
+- `gaps-and-coverage.md`: 8 ranked gaps (multi-user; product onboarding/Z0;
+  required-tooling manifest; shared secrets; personal-layer unevenness;
+  template eval harness; zoom doc restructure — includes the decision to
+  **supersede usage-scenarios.html** with the E-catalog; team capability
+  authoring) + cross-cutting observations + recommended sequencing.
+- Mid-turn user addition (brief req 10): teams author shared
+  skills/agents/runbooks/scripts for common product work → new E18 (◐),
+  Gap 8, matrix row.
+- Backlog updated per convention: opened M15 (catalog meta-card) and
+  promoted un-carded CL-1/2/3 to cards M16/L32/L33; scorecard 4 Open;
+  change-log row added. **M16 reproduced live this session** (artifact path
+  switched to the worktree-scoped dir after EnterWorktree); **L33's shape
+  recurred too** (fresh worktree branched from origin/main which lagged
+  local main by the session-1 commit — fixed with `git merge --ff-only
+  main` before editing).
+
+State: Tasks #3–5 done → work item's build phase COMPLETE. Peak recorded
+context 102K (OK). Branch not merged: background-session policy forbids
+merging to main; delivery is the successor's/user's one remaining step.
+
+Learnings: harness-enforced worktree isolation for background sessions
+interacts with both M16 and L33 — every background session on this
+template will hit the lagging-origin worktree base unless local main is
+pushed before dispatch.
 
 What got done:
 - Scaffolded the work item; committed per-item `context-budget.env` with
