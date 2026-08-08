@@ -15,55 +15,58 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
    trusting this launcher (L33 race). If in a fresh worktree, also
    `git merge --ff-only main` — worktrees branch from origin/main, which
    may lag local main.
-2. Session-4's work is already merged to main and pushed (c6a2f03 + this
-   rollover bookkeeping); its worktree and local branch are deleted.
-   Nothing to deliver — start on the mission.
+2. **Deliver session-5 first if still pending**: branch
+   `worktree-usage-scenarios-s5` (Gaps 3+8, commits through the session-5
+   bookkeeping) is pushed to origin but NOT merged to main (background
+   session; merge reserved for the user). If `git branch --contains
+   <s5 tip> main` is empty: merge it to main (user or interactive session),
+   push, delete the worktree + branches. Then start the mission.
 
-## Mission (session 5): Gaps 3+8 — tooling manifest + capability authoring doc
+## Mission (session 6): Gap 7 — zoom docs + execute the HTML retirement
 
-Per the user-adopted sequencing (see decisions.md, 2026-08-08): Gap 6
-(clean-room test) and Gap 2 (Z0 templates) are DONE. Next up together:
+Last M15 gap (sequencing + verdicts in decisions.md, 2026-08-08). Scope:
 
-- **Gap 3** — extend `scripts/check-dependencies.sh`'s existing `req`/`rec`
-  lists as the required-vs-optional manifest; add the same hard-fail
-  distinction to `check-service-access.sh` (today it always exits 0); one
-  "required for everyone" table in recommended-tooling.md replacing its
-  blanket "everything optional". NO new manifest file format.
-- **Gap 8** — documentation only: a capability-authoring section with the
-  container decision rule (scripts/ vs skills/ vs .claude/agents/ vs
-  runbooks/), the two mechanical wiring steps (.claude/commands/ mirror +
-  CONTEXT.md listing), and a hook into Gap 3's required list. NO
-  create-capability skill.
-
-Then Gap 7 (zoom docs + execute the endorsed HTML retirement) in a later
-session. Gaps 4 and 1 stay deferred until a second service/person is real.
+- Promote the catalog's §1/§1b/§1c (zoom-level model Z0–Z3 × O0–O4, zoom
+  discipline, delegate-vs-zoom-in-place rule) from
+  `work/usage-scenarios/scenarios.md` into a committed doc —
+  `docs/zoom-model.md` or a workspace-structure.md section (pick one,
+  note the choice).
+- Retire `docs/usage-scenarios.html` to the archive with a pointer — the
+  markdown E-catalog (scenarios.md §3) supersedes it. NO generated-view
+  machinery. Fix the three stale `work/<user>_` references in whatever
+  survives.
+- The supersede decision may deserve ADR promotion (decisions.md note says
+  "promote when Gap 7 executes, if contentious") — judge then.
+- Close-out: when Gap 7 lands, M15 closes — update the card (Open→Fixed,
+  scorecard) + change-log row per the backlog's maintenance section, and
+  decide the work item's own fate (checkpoint/close).
 
 ## Read these, in order
 
-1. `work/usage-scenarios/gaps-and-coverage.md` — Gap 3 + Gap 8 sections
-   and the simplicity guardrails (binding don't-build list).
-2. `work/usage-scenarios/decisions.md` — the two 2026-08-08 verdict notes.
-3. `scripts/check-dependencies.sh` + `scripts/check-service-access.sh`
-   before touching them; run `scripts/tests/test-template-instantiation.sh`
-   after any change (it clones COMMITTED state — commit first).
+1. `work/usage-scenarios/scenarios.md` §1/§1b/§1c ONLY (the promotion
+   source) and §3 header (E-catalog role).
+2. `work/usage-scenarios/decisions.md` — the usage-scenarios.html verdict
+   note (blast radius lists the touchpoints).
+3. `grep -rn "usage-scenarios.html" docs/ CONTEXT.md` — every pointer that
+   must move to the survivor.
 
 ## Do NOT reload
 
-- `ground-truth.md`, `scenarios.md` — open only to verify a specific fact.
-- docs/context-budget.md, workspace-structure.md, ADRs — targeted reads only.
+- `ground-truth.md`, `gaps-and-coverage.md` — open only to verify a
+  specific fact.
+- The backlog HTMLs whole — grep the M15 card / change-log anchor only.
 
 ## Constraints already decided (do not re-litigate)
 
-- Simplicity guardrails (user, 2026-08-08) are binding; prefer documenting
-  over building.
-- Sequencing adopted as-is; usage-scenarios.html retirement endorsed
-  (execute under Gap 7, not before).
-- Update the M15 backlog card + change-log row when gaps land; M15 closes
-  when Gaps 3+8 and 7 are done.
+- Simplicity guardrails (user, 2026-08-08) binding: retire with a pointer,
+  no generated-view machinery.
+- Gaps 4 and 1 stay deferred until a second service/person is real.
+- Nine test suites must stay green; test-template-instantiation.sh clones
+  COMMITTED state — commit before running it.
 
 ## State snapshot
 
-- Branch: worktree-quiet-marinating-dolphin (session 4) — merge to main
-  pending, then delete.
-- Backlog: M15/M16/L32/L33 Open (4). Nine test suites, all green.
+- Branch: `worktree-usage-scenarios-s5` pushed to origin; merge to main
+  pending (see First actions #2). Session-4 work already on origin/main.
+- Backlog: M15/M16/L32/L33 Open (4). Nine suites, 363 asserts, all green.
 - No running processes, no open subagents.

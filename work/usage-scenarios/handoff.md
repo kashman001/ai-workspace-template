@@ -6,6 +6,46 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-08 (session 5: Gaps 3+8 shipped)
+
+What got done (branch `worktree-usage-scenarios-s5`, pushed to origin —
+needs delivery to main):
+- **Gap 3 shipped** (tooling manifest, no new file format per guardrail):
+  - `check-dependencies.sh`: `req jq` added (context-budget.sh hard-requires
+    it — was entirely unlisted), plus a required hook-wiring check (I7):
+    `.claude/settings*.json` must mention `context-budget-claude-hook`,
+    else exit 1 with a fix pointer to setup.sh. Script now cd's to ROOT.
+  - `check-service-access.sh`: required/optional split; required services
+    (GitHub) unreachable → exit 1 (was always exit 0). Header documents it.
+  - `setup.sh`: dependency check moved from step 0 to after the per-user
+    copies (step 3b) so its hook-wiring verdict reflects post-setup state —
+    otherwise every fresh instantiation printed a spurious hooks failure.
+  - `recommended-tooling.md`: blanket "everything optional" replaced by a
+    "Required for everyone" table (git, gh auth, jq, hook wiring) naming
+    the check scripts as the machine-readable manifest.
+  - Runbooks: dependencies.md gains jq rows + per-OS install lines;
+    authentication.md documents exit-1-means-required-missing.
+  - workspace-structure.md scripts-section descriptions updated to match.
+- **Gap 8 shipped** (documentation only per guardrail — no skill):
+  "Authoring a Team Capability" section in workspace-structure.md after the
+  skills taxonomy: container decision rule (scripts/ vs skills/ vs
+  .claude/agents/ vs docs/runbooks/), the two mechanical skill-wiring steps
+  (.claude/commands/ mirror + CONTEXT.md listing), and the make-it-required
+  hook into Gap 3's manifest. Discoverability pointer added in CONTEXT.md →
+  "Workspace Skills" intro.
+- Backlog: M15 progress paragraph + session-5 change-log row.
+- Verification: all nine suites green (363 asserts), incl. clean-room
+  instantiation post-commit; check-service-access fail path tested via
+  PATH-hidden gh (rc=1); setup.sh→check-dependencies loop verified rc=0.
+
+State: committed on `worktree-usage-scenarios-s5`, pushed to origin; merge
+to main NOT done (background session — merge/push-to-main reserved for the
+user per harness rules). Finished ~102K tokens, under WARN.
+
+Learnings: setup.sh's old step order (dependency check before per-user
+copies) made any settings-dependent required check self-contradictory on
+first run — order preflights after the state they check.
+
 # Session Handoff — 2026-08-08 (session 4: walk-through verdicts + Gaps 6 and 2 shipped)
 
 What got done (branch `worktree-quiet-marinating-dolphin` — needs delivery
