@@ -4,6 +4,8 @@
 #          .service-access.local.json. Verify + INSTRUCT only — it never logs you in
 #          or stores secrets. When something's missing it prints exact fix commands;
 #          an AI agent or human then follows docs/runbooks/authentication.md.
+#          Required services missing → exit 1 (same hard-fail distinction as
+#          check-dependencies.sh). Optional services missing → warn only, exit 0.
 # See: docs/workspace-structure.md → "Service Access Pattern"
 set -uo pipefail
 
@@ -15,15 +17,20 @@ case "$(uname -s)" in
 esac
 echo "Service access preflight (OS: $OS)"
 status="ok"
+missing_required=0
 
-# --- GitHub: gh CLI present + authenticated ---
+# Required services hard-fail (missing_required=1 → exit 1); optional services
+# would only set status="degraded". Today GitHub is the sole — and required —
+# service; add optional ones below the required block as the registry grows.
+
+# --- GitHub (required): gh CLI present + authenticated ---
 if command -v gh >/dev/null 2>&1; then
   if gh auth status >/dev/null 2>&1; then
     echo "  ✓ gh authenticated"
   else
     echo "  ✗ gh not authenticated" >&2
     echo "    fix: gh auth login" >&2
-    status="degraded"
+    status="degraded"; missing_required=1
   fi
 else
   echo "  ✗ gh CLI not found" >&2
@@ -33,7 +40,7 @@ else
     Windows) echo "    fix: winget install GitHub.cli  (then gh auth login)" >&2 ;;
     *)       echo "    fix: install gh, then gh auth login" >&2 ;;
   esac
-  status="degraded"
+  status="degraded"; missing_required=1
 fi
 
 # --- cache (gitignored) so agents don't re-discover the commands ---
@@ -50,4 +57,5 @@ echo "  wrote .service-access.local.json"
 
 echo "Status: $status"
 [ "$status" = "ok" ] || echo "Some services need setup — follow docs/runbooks/authentication.md" >&2
+[ "$missing_required" = 0 ] || exit 1
 exit 0

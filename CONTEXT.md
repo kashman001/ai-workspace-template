@@ -79,7 +79,9 @@ Vendor-neutral skills live under `skills/<name>/SKILL.md` — any runtime can re
 them (Codex/Gemini/OpenCode via this file; Claude Code also gets slash-command
 shortcuts under `.claude/commands/`). One line each below — **open the skill's
 `SKILL.md` for the full workflow before acting on it**; that file carries the
-details omitted here.
+details omitted here. Adding a team capability (script vs. skill vs. agent
+profile vs. runbook, plus the two wiring steps): `docs/workspace-structure.md`
+→ "Authoring a Team Capability".
 
 - **checkpoint** — session-boundary wrap-up: reconcile backlog/memory/docs,
   write a hand-off doc, emit a catch-up prompt for the next session. On a

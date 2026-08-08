@@ -20,11 +20,6 @@ done
 log(){ printf '  %s\n' "$*"; }
 echo "Bootstrapping workspace at $ROOT"
 
-# 0. Dependency preflight (informational; does not abort setup)
-if [ -x scripts/check-dependencies.sh ]; then
-  scripts/check-dependencies.sh || log "some dependencies missing — see docs/runbooks/dependencies.md"
-fi
-
 # 1. Agent entrypoint symlinks → CONTEXT.md
 #    Idempotent; also repairs symlinks flattened to files by Windows/copy-based "Use this template" flows.
 for f in CLAUDE.md AGENTS.md GEMINI.md; do
@@ -46,6 +41,12 @@ copy_if_missing(){ if [ -f "$1" ] && [ ! -e "$2" ]; then cp "$1" "$2" && log "cr
 copy_if_missing .env.example .env
 copy_if_missing .mcp.json.example .mcp.json
 copy_if_missing .claude/settings.json.example .claude/settings.local.json
+
+# 3b. Dependency check (informational; does not abort setup). Runs after the
+#     per-user copies so its hook-wiring check reflects post-setup state.
+if [ -x scripts/check-dependencies.sh ]; then
+  scripts/check-dependencies.sh || log "some dependencies missing — see docs/runbooks/dependencies.md"
+fi
 
 # 4. Optional: clone product repos listed in docs/repos-registry.md
 if [ "$CLONE_REPOS" = 1 ]; then

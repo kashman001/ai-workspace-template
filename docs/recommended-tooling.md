@@ -14,8 +14,26 @@ plugins), **not** committed to this repo. That keeps the workspace
 agent-vendor-neutral (see `docs/workspace-structure.md` → "User-Level Files
 (Outside the Workspace)").
 
-Everything here is **optional** — the workspace works without it. Set up what
-matches how you work.
+## Required for everyone
+
+Not everything is optional. The workspace's workflow hard-requires a small
+set; `scripts/check-dependencies.sh` (`req` lines) and
+`scripts/check-service-access.sh` (required block) are the machine-readable
+manifest — they exit 1 while anything below is missing:
+
+| Requirement | Why it's non-negotiable |
+|---|---|
+| `git` | Clone, symlinks, registry — nothing works without it |
+| `gh`, authenticated | The workspace's only GitHub path (auth, PRs, API) |
+| `jq` | `scripts/context-budget.sh` — every session start/record runs it |
+| context-budget hook wiring | The in-band WARN/STOP push (`docs/context-budget.md`); `scripts/setup.sh` wires it for Claude Code |
+
+Teams add their own non-negotiables the same way: a `req` line per binary, a
+required block per service (see `docs/workspace-structure.md` → "Authoring a
+Team Capability").
+
+Everything **below** is optional — the workspace works without it. Set up
+what matches how you work.
 
 | Tool | What it gives you | Scope |
 |---|---|---|

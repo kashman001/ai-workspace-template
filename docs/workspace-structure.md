@@ -550,6 +550,46 @@ Skills" section with a one-line description so agents can discover them.
   (testing methodology, bug triage pipeline, deployment runbooks). These
   carry the project's institutional knowledge.
 
+### Authoring a Team Capability
+
+When your team needs its own capability for common product work — "run the
+test suite", "test component A", "run the performance suite" — pick the
+container by what executes it:
+
+- **Deterministic and runnable** → a script in `scripts/`. If it has
+  external prerequisites, guard them (see "required" below).
+- **Agent workflow** (judgement, multiple steps, tool use) → a skill in
+  `skills/<name>/SKILL.md`, plus the wiring below.
+- **Needs its own toolset or isolation** (heavy MCP servers, scoped
+  permissions) → a subagent profile in `.claude/agents/` (see "`.claude/` —
+  Claude Code (Project-Level)").
+- **Human-only steps** (dashboards, interactive logins) → a runbook in
+  `docs/runbooks/`, listed in its `README.md` index with its paired check
+  script if one exists.
+
+A new **skill** takes two mechanical wiring steps, or agents won't find it:
+
+1. **Commands mirror** — add `.claude/commands/<name>.md` (frontmatter:
+   `description`, `argument-hint`; body: one paragraph delegating to
+   `skills/<name>/SKILL.md`). Copy an existing one as the pattern. This
+   gives Claude Code the `/<name>` shortcut; other runtimes read the skill
+   via `CONTEXT.md`.
+2. **`CONTEXT.md` listing** — one line in its "Workspace Skills" section
+   (name, one-line trigger/description). This list is hand-maintained; a
+   skill absent from it is invisible to every non-Claude runtime.
+
+To make a capability **required** — "run the tests before finishing a
+branch" as a non-negotiable — put its prerequisites in the manifest: a `req`
+line in `scripts/check-dependencies.sh` per binary it needs, a required
+block in `scripts/check-service-access.sh` per service, and a row in
+`docs/recommended-tooling.md` → "Required for everyone". The check scripts
+then fail (exit 1) on any machine missing it, instead of the capability
+failing mid-task.
+
+Before writing the `SKILL.md`, consult the `writing-for-agents` skill for
+style; keep the skill agent-vendor-neutral (plain Markdown, no
+runtime-specific syntax).
+
 ---
 
 ## `work/` — Active Project Work
@@ -698,8 +738,10 @@ scripts/
 - `setup.sh` — creates `.env` from `.env.example`, creates required
   symlinks (`CLAUDE.md`, `AGENTS.md`, `repos/README.md`), optionally clones
   repos.
-- `check-dependencies.sh` — verifies core tools and warns about optional
-  tools such as `yt-dlp` for the YouTube MCP server.
+- `check-dependencies.sh` — the required-vs-optional tooling manifest:
+  `req` lines (git, gh, jq, hook wiring) exit 1 when missing; `rec` lines
+  (e.g. `yt-dlp` for the YouTube MCP server) warn only. Human-readable view:
+  `docs/recommended-tooling.md` → "Required for everyone".
 - `check-workspace-structure.sh` — validates that documented directories
   exist, symlinks resolve, scripts are executable, and the repo-context doc
   templates are present. (It does **not** reconcile the registry against the
@@ -707,8 +749,9 @@ scripts/
 
 **Recommended scripts** (add as the workspace matures):
 
-- `check-service-access.sh` — verifies all required credentials are
-  reachable (database, cloud CLI, Atlassian, etc.).
+- `check-service-access.sh` — verifies service credentials are reachable
+  (database, cloud CLI, Atlassian, etc.); required services (today: GitHub
+  via `gh`) exit 1 when unreachable, optional ones only degrade the status.
 - `diff-review.sh` — open a commit or range as a directory diff for review;
   wraps `git difftool` with the symlink-safe `--no-symlinks` flag and the
   blocking `bcomp` launcher. See `docs/operational-knowledge.md` → "Diff

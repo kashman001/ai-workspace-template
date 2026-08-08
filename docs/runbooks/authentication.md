@@ -20,6 +20,8 @@ manages its own token.
 ```
 
 Each ✗ line prints a fix command. Act only on what's missing; re-run to confirm.
+Exit 1 means a **required** service (GitHub) is unreachable; optional services
+only degrade the status.
 Prereq: `gh` installed — if not, do [`dependencies.md`](dependencies.md) first.
 
 ## 1. Log in to GitHub (interactive — confirm with the user before running)

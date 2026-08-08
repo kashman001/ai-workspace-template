@@ -6,6 +6,9 @@
 # See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"
 set -uo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
 case "$(uname -s)" in
   Darwin)               OS=macOS ;;
   Linux)                OS=Linux ;;
@@ -33,6 +36,16 @@ rec(){
 echo "Required:"
 req git "core — clone/symlinks/registry"
 req gh  "GitHub CLI — the workspace's GitHub path (auth, PRs, API)"
+req jq  "context-budget accounting (scripts/context-budget.sh) — every session runs it"
+
+# Wiring, not a binary: the context-budget hooks must be wired into Claude Code's
+# per-user settings (scripts/setup.sh copies .claude/settings.json.example there).
+if grep -qs 'context-budget-claude-hook' .claude/settings.json .claude/settings.local.json 2>/dev/null; then
+  printf '  \033[32m✓\033[0m %-8s context-budget hooks wired (.claude/settings*.json)\n' "hooks"
+else
+  printf '  \033[31m✗\033[0m %-8s MISSING (required) — context-budget hooks not wired; run scripts/setup.sh (copies .claude/settings.json.example → .claude/settings.local.json)\n' "hooks" >&2
+  missing_required=1
+fi
 
 echo "Recommended (install the ones whose features you use):"
 rec node    "Claude Code status line (npx ccstatusline)"
