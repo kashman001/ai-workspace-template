@@ -9,61 +9,50 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > `handoff.md` (the append-only ledger). Convention:
 > docs/work-directory-conventions.md.
 
-## Mission
+## Mission status: BUILD PHASE COMPLETE (session 2)
 
-Build the usage-scenario catalog as an evaluation lens for the template:
-external scenarios (done, §3) + critical internal scenarios (§4, NEXT) +
-scenario→docs→tests coverage matrix (§5), then a gap analysis with concrete
-recommendations (`gaps-and-coverage.md`). The catalog also drives future
-usage/internal/architecture docs. User is away; work autonomously; rollover
-is hands-free (auto).
+The catalog and gap analysis are done. `scenarios.md` (E1–E18 external +
+I1–I10 internal + zoom model + coverage matrix) and `gaps-and-coverage.md`
+(8 ranked gaps, recommendations, sequencing) are the deliverables. The
+backlog carries M15 (meta-card) + M16/L32/L33 (promoted findings).
 
-## Read these, in order
+## The one remaining step
 
-1. `work/usage-scenarios/brief.md` — requirements + evaluation directives.
-2. `work/usage-scenarios/scenarios.md` — §1–3 done; §4/§5 are stubs to fill.
-3. `work/usage-scenarios/ground-truth.md` — ALL evidence (four distilled
-   audit reports). §D has the internal-mechanism groups A–G and the test
-   coverage map — §4 of scenarios.md is written from it.
+**Deliver branch `worktree-usage-scenarios-s2` to main.** Session 2 ran as
+a background job (worktree-isolated, forbidden from merging). Merge it —
+`git merge worktree-usage-scenarios-s2` from main — or review first via
+`scripts/diff-review.sh worktree-usage-scenarios-s2 main`. Then delete the
+worktree/branch.
+
+## After delivery (user's call, not automatic)
+
+- Read `gaps-and-coverage.md` end-to-end (it's the payoff artifact).
+- Pick up gaps as new work items per its "Recommended sequencing"; Gap 1
+  (multi-user) explicitly wants a wayfinder map; Gap 6's clean-room test is
+  the recommended first mover.
+- The usage-scenarios.html supersede decision (Gap 7) is recorded but not
+  executed — it's a recommendation until the user endorses it.
 
 ## Do NOT reload
 
-- The four subagent raw reports — gone; `ground-truth.md` IS the distillate.
+- The four session-1 subagent raw reports — gone; `ground-truth.md` IS the
+  distillate.
 - docs/context-budget.md, docs/workspace-structure.md, usage-scenarios.html,
-  ADRs — already mined into ground-truth.md; re-read only to verify a
-  specific fact you're about to assert.
-- Zoom-model design debate — settled in scenarios.md §1/§1b/§1c (two
-  orthogonal dimensions + agent profiles). Don't re-derive.
-- `ROLLOVER_RELAUNCH=auto` decision — committed, constraint below.
+  ADRs — mined into ground-truth.md; re-read only to verify a specific fact.
+- Zoom-model design debate — settled in scenarios.md §1/§1b/§1c.
 
 ## Constraints already decided (do not re-litigate)
 
-- Rollovers for this work item run hands-free: `ROLLOVER_RELAUNCH=auto` via
-  committed `work/usage-scenarios/context-budget.env` (user, 2026-08-08).
-- Catalog supersets the existing docs/usage-scenarios.html (option (a),
-  session 1); the HTML doc's fate is decided later, in recommendations.
+- `ROLLOVER_RELAUNCH=auto` via committed per-item context-budget.env.
+- Catalog supersets docs/usage-scenarios.html; its fate (supersede) is a
+  recommendation in gaps-and-coverage.md Gap 7, pending user endorsement.
+- Brief req 10 (team capabilities) added mid-session-2 → E18/Gap 8.
 
 ## State snapshot
 
-- Branch: main; work committed at session-1 rollover.
-- Tasks: #3 (internal catalog §4) in progress; #4 (gaps-and-coverage.md);
-  #5 (close-out: backlog note, final commit) pending.
-- No running processes, no open subagents.
-
-## First actions
-
-1. `scripts/context-budget.sh register --project usage-scenarios`
-   (SessionStart hook registers the session; this adds the project claim →
-   primary role.)
-2. Fill `scenarios.md` §4 (internal catalog I1…In) from ground-truth §D:
-   one entry per mechanism-scenario group with support status + test status.
-3. Fill §5 coverage matrix (scenario ↔ doc home ↔ test/eval coverage).
-4. Write `gaps-and-coverage.md`: ranked gaps (multi-user, product
-   onboarding/Z0 docs, non-negotiable tooling manifest, shared secrets,
-   personal layer unevenness, template-level eval harness, doc-architecture
-   zoom restructure) + concrete recommendations, each tagged with which
-   E/I scenarios it moves.
-5. Update the template backlog (per CONTEXT.md → Template Backlog) with a
-   card pointing at the catalog; note the three un-carded Open findings
-   (CL-1/2/3) surfaced in ground-truth §A.
-6. Close out: ledger block, replace this launcher, commit.
+- Branch: `worktree-usage-scenarios-s2` (from main @ session-1 commit),
+  committed + pushed at session-2 close. Main untouched.
+- All 5 tasks done. No running processes, no open subagents.
+- Known trap for background sessions on this repo: fresh worktrees branch
+  from origin/main — if local main is ahead, `git merge --ff-only main`
+  before editing (see ledger session-2 learnings; backlog L33/M16).

@@ -7,7 +7,8 @@ exists today, what the agent harnesses already give us, where docs should
 carry it, and what test/eval coverage it has. Seed requirements:
 `brief.md`. Gap analysis and recommendations: `gaps-and-coverage.md`.
 
-Status: DRAFT (session 1). Sections marked ⏳ await ground-truth reports.
+Status: COMPLETE (session 2) — all five sections filled; gap analysis in
+`gaps-and-coverage.md`.
 
 ---
 
@@ -149,7 +150,7 @@ covers it (e.g. Claude Code settings.local.json), the template's job is the
 Each entry: what happens, who acts, where it sits in the two dimensions
 (Z = product-information zoom, O = operational level), current support
 (✅ solid / ◐ partial / ❌ absent), and the one-line verdict. Evidence and
-pointers: `ground-truth.md`. E1–E16 is the evaluation checklist: a template
+pointers: `ground-truth.md`. E1–E18 is the evaluation checklist: a template
 change is good if it moves some scenario toward ✅ without dragging another
 back.
 
@@ -279,11 +280,161 @@ cross-machine arbitration is impossible; single-writer work/ files collide
 on merge; ADR numbering collides. The operating model is documented as
 "one developer" (ADR-0004). Everything multi-user is greenfield.
 
-## 4. Internal scenario catalog ⏳
+### Team capabilities
 
-(To be filled from ground-truth report on context-budget machinery, rollover,
-checkpoint, wayfinder, dispatch, locks, multi-runtime hooks.)
+**E18 — Author team capabilities for common product work** (O0 · Z1–Z2) ◐
+The team creates its own skills, agents, runbooks, and scripts for
+recurring product work — "run the tests", "test component A", "run the
+performance suite" — and shares them through the workspace (brief req 10,
+added session 2). Today: the *containers* all exist and are agent-neutral
+(`skills/<name>/SKILL.md` + `.claude/commands/` mirror, `.claude/agents/`
+profiles, `docs/runbooks/`, `scripts/`), and authoring support exists
+(writing-for-agents, superpowers:writing-skills). But everything shipped in
+them is *workspace-process* tooling (rollover, work items, onboarding) —
+no documented flow tells a team how to add a **product** capability: which
+container to pick (skill vs agent vs runbook vs script), naming, the
+commands mirror, updating the CONTEXT.md skills list (hand-maintained),
+or marking one required for everyone (ties to E7). Product-specific
+capability authoring is possible but uncharted.
 
-## 5. Scenario → docs → tests coverage matrix ⏳
+The template's own machinery, exercised as scenarios: things the *template*
+must do correctly for the external scenarios to hold. Grouped from
+ground-truth §D (mechanism groups A–G). Each entry: support status
+(✅/◐/❌ as in §3) **and** test status — `T:✅` scripted suite exists,
+`T:◐` partial, `T:❌` zero coverage, `T:⊘` untestable-by-construction today
+(instruction-only discipline, verified by agent behavior not CI).
 
-(See `gaps-and-coverage.md` once drafted.)
+### Measurement & thresholds
+
+**I1 — Measure a session's context from disk** (group A) ✅ / T:◐
+Register pins the session artifact; `record --label` at work-unit
+boundaries; six per-runtime adapters with bytes÷4 estimate fallback;
+never ask the model (D1). Tests: registry/launcher suites cover the
+protocol, but **most per-runtime measure adapters are untested** (only
+opencode fixture-tested); estimate fallback and `--transcript` precedence
+untested.
+
+**I2 — Act on WARN/STOP** (group B) ✅ / T:⊘
+WARN = consent point (ask user; declined → write-ahead mode, ~30K grace);
+STOP = roll immediately, no ask; 150K sits deliberately below Claude's
+~200K auto-compact so the deliberate rollover wins. The *trigger policy
+compliance* — does the agent actually wrap up and roll — is instruction-only:
+no CI can currently verify it.
+
+### Rollover & lineage
+
+**I3 — Roll over to a successor session** (groups B/C) ✅ / T:◐
+7+1-step procedure: prune-and-replace launcher, prepend ledger, commit,
+relaunch per `ROLLOVER_RELAUNCH` (off/manual/auto; committed per-item
+override), verbatim bootstrap prompt across 6 runtimes. Tests: launcher
+suite is the largest (27 groups incl. option inheritance,
+release-before-launch, seq/--name), **but capture-rollover-options.sh —
+the capture half of option inheritance — has zero coverage**, and the
+7-step procedure itself is T:⊘.
+
+**I4 — Number and chain sessions** (group C) ✅ / T:✅
+ADR-0007 `.session-seq` canonical numbering + self-heal; successor confirm
+loop; `attach-session` re-attach front door (7 test groups). Caveat:
+numbering is machine-local — collides under multi-user (feeds E17).
+
+### Concurrency & fleet
+
+**I5 — Coordinate one person's concurrent sessions** (group D) ✅ / T:✅
+Session-keyed registry; advisory per-item lock (liveness = holder artifact
+mtime, stale >3h reclaimed); roles primary/auxiliary/child/superseded;
+child locks via parent chain (≤10 hops); bottom-up release; `--takeover`
+recorded steal; gemini single-session exception. Best-tested area
+(18 groups). **Three live races remain — the un-carded CL-1/2/3**: WARN
+push swallowed under a busy child's parent session id; EnterWorktree
+mid-session stales the registry artifact path (two real primary-takeover
+incidents); launcher staleness when checkout lags remote. ≤10-hop cap
+boundary untested.
+
+**I6 — Dispatch and recover a subagent fleet** (group E) ✅ / T:◐
+R2 dispatch contract (report-file heartbeat, 15-line return cap, status
+vocabulary); R3 successor-dispatch-not-resume at child WARN/STOP; R4
+dispatch records + generation fencing + drain check; fleet-safe parent
+rollover (orphans closed KILLED, re-dispatch from recorded spec). Tests:
+dispatch contract (7) + records (9) + children sweep (9), but **the E5
+fleet-recovery end-to-end and KILLED-reap flows are untested**.
+
+### Delivery & wiring
+
+**I7 — Deliver threshold warnings in-band across six runtimes** (group F)
+◐ / T:✅
+4-layer delivery; shared hook lib (throttle/escalation-once/fail-open);
+six vendor channels each with a live quirk (codex hash trust, copilot
+trustedFolders silent no-op, VS Code stderr-only block, gemini first-turn
+spurious STOP). Vendor-hook suite covers all six envelopes (11 groups) —
+but **wiring is not installed by any script** (B: setup.sh copies only
+settings.local.json; Claude Code hooks never wired; copilot trustedFolders
+covered by no check), so a fresh machine silently gets no delivery. The
+mechanism is ✅; the *installation path* is the ◐.
+
+### Work-item & boundary discipline
+
+**I8 — Keep work-item files healthy across boundaries** (group G) ✅ / T:⊘
+Launcher REPLACE / ledger APPEND + archival tiers + heredoc-append (file
+never enters context) + checkpoint-vs-rollover precedence (measurement
+wins) + 3-tier decisions with promotion scan. All instruction-only:
+verified by agent discipline, unverifiable in CI today.
+
+**I9 — Handle bigger-than-one-session / bigger-than-context work**
+(group G) ✅ / T:⊘
+Wayfinder (decision-ticket maps, one ticket per session, fog-or-ticket
+test) and rlm (persistent REPL holds the corpus; LLM=semantics,
+Python=arithmetic; root sees truncated stdout only). Both documented and
+vendored; both instruction-only; rlm REPL has zero scripted tests.
+
+### Scaffolding & self-checks
+
+**I10 — Scaffold and verify the workspace itself** (groups B/F context) ◐ / T:❌
+`setup.sh`, all `check-*.sh`, `onboard-repo.sh` — the scripts every
+onboarding scenario (E1/E4/E5) rests on — have **zero test coverage**, and
+there is no template-level eval (no clean-machine clone test, no
+doc-accuracy harness; ground-truth §A). The 8 suites/~343 asserts all test
+the context-budget subsystem; the template *as a template* is untested.
+
+## 5. Scenario → docs → tests coverage matrix
+
+One row per scenario: where its documentation lives today (or `—` none),
+what scripted coverage touches it, and the § status. "usage-scenarios.html"
+= docs/usage-scenarios.html (S1–S6 spine). T-codes as in §4.
+
+| Scenario | Doc home today | Test/eval coverage | Status |
+|---|---|---|---|
+| E1 instantiate workspace | workspace-structure.md §bootstrap; template-usage vs workspace-setup **contradict** (local vs clone) | none (setup.sh untested) | ◐ |
+| E2 publish as team repo | — | none | ❌ |
+| E3 onboard a product | S0 interview (workspace-structure.md); SPEC.md/system-design.md stubs | none | ❌→◐ |
+| E4 onboard a repo | skills/onboard-repo + docs/repo-context/README | onboard-repo.sh untested; freshness check exists | ✅ |
+| E5 onboard person/machine | runbooks/dependencies + authentication; no user/machine runbook | check scripts untested; verify-only | ◐ |
+| E6 personal tooling layer | workspace-structure.md (`*.example` pattern); uneven per runtime | none | ◐ |
+| E7 required-vs-optional manifest | — (recommended-tooling.md says all optional) | check-dependencies `req` only | ❌ |
+| E8 service access & secrets | service-access.md + auth runbook (macOS only) | check-service-access always exit 0 | ◐ |
+| E9 start a work item | work-directory-conventions.md + create-work-item | none (scaffold untested) | ✅ |
+| E10 feature loop | usage-scenarios.html S4 | n/a (product-repo tests) | ✅/◐ |
+| E11 checkpoint & resume | usage-scenarios.html S5 + checkpoint skill | T:⊘ | ✅ |
+| E12 finish a branch | usage-scenarios.html S6 | T:⊘ | ✅ |
+| E13 bigger-than-session planning | wayfinder skill | T:⊘ | ✅ |
+| E14 answer at right zoom level | scattered (graphify §, rlm, repo-navigator); no zoom doc — §1 is the proposal | none | ◐ |
+| E15 root product docs (Z0) | placeholders only (SPEC.md, system-design.md) | none | ❌→◐ |
+| E16 one person, many sessions | context-budget.md + ADR-0004/5/6/7 | best-tested (18+27+… groups) | ✅/◐ |
+| E17 multiple people | — (ADR-0004 explicitly one-developer) | none | ❌ |
+| E18 team-authored capabilities | containers documented (workspace-structure.md, skills/README pattern); no authoring flow | none | ◐ |
+| I1 measure context | context-budget.md §measurement | adapters mostly untested | ✅ T:◐ |
+| I2 WARN/STOP response | context-budget.md + CONTEXT.md | T:⊘ | ✅ T:⊘ |
+| I3 rollover | session-rollover skill + context-budget.md | 27 groups; capture half T:❌ | ✅ T:◐ |
+| I4 numbering/lineage | ADR-0007 | attach suite (7) | ✅ T:✅ |
+| I5 session concurrency | ADR-0004/5/6 + context-budget.md | 18 groups; CL-1/2/3 open | ✅ T:✅ |
+| I6 subagent fleet | context-budget.md §dispatch | 7+9+9 groups; E2E T:❌ | ✅ T:◐ |
+| I7 vendor hook delivery | context-budget.md §vendor hooks | 11 groups; install path T:❌ | ◐ T:✅ |
+| I8 work-item discipline | work-directory-conventions.md | T:⊘ | ✅ T:⊘ |
+| I9 wayfinder / rlm | respective skills | T:⊘ / T:❌ | ✅ T:⊘ |
+| I10 scaffold & self-checks | workspace-structure.md | **zero**; no template-level eval | ◐ T:❌ |
+
+Reading of the matrix (full analysis in `gaps-and-coverage.md`): test
+effort is inverted relative to risk — the context-budget subsystem is
+deeply tested while every entry point a new user or product actually
+touches (setup, checks, onboarding, docs accuracy) has none; and the ❌
+column clusters exactly where the brief's requirements sit (multi-user,
+product-level docs, required tooling, shared secrets).

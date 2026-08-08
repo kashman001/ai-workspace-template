@@ -33,6 +33,10 @@ requirements the template is evaluated **against** — several are aspirational
    only; zooming in reveals more — like Google Maps from earth view down to a
    few houses on a street. Docs and context loading should follow this
    zoom-level structure.
+10. **Team-authored capabilities** *(added mid-session-2, 2026-08-08)*.
+    Teams can create skills, agents, runbooks, and scripts for common work
+    they do on the product — e.g. testing, testing component A, running
+    performance tests — shared with the whole team through the workspace.
 
 ## Evaluation directives
 

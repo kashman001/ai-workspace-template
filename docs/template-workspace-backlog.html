@@ -69,13 +69,13 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-07 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-08 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">4</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">49</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -138,8 +138,67 @@
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
 
+  <div class="find med">
+    <h3><span class="id">M15</span> Usage-scenario catalog: eight template-level gaps where the brief's requirements have no artifact
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">work/usage-scenarios/</span></h3>
+    <p><span class="k">Evidence</span> — the usage-scenarios work item (sessions 1–2, 2026-08-08) built an evaluation
+      catalog: external scenarios E1–E18, internal scenarios I1–I10, a zoom-level doc model, and a
+      scenario→docs→tests coverage matrix (<code>work/usage-scenarios/scenarios.md</code>; evidence base
+      <code>ground-truth.md</code>). Every ❌ scenario maps to a user-brief requirement: multi-user (E17/E2),
+      product onboarding &amp; Z0 docs (E3/E15), required-vs-optional tooling manifest (E7), shared secrets (E8),
+      personal-layer unevenness (E6), team-authored capabilities (E18), template-level eval harness (I10),
+      zoom-model doc restructure (E14).</p>
+    <p><span class="k">Impact</span> — the template is excellent at one person's session/context discipline and repo
+      onboarding, and unbuilt at what the brief asks next; test effort is inverted (deep coverage on the
+      context-budget subsystem, zero on setup.sh/check-*.sh/onboarding — the paths every new user runs first).</p>
+    <p><span class="k">Fix</span> — work the ranked recommendations in
+      <code>work/usage-scenarios/gaps-and-coverage.md</code> (sequencing at its end: clean-room instantiation test
+      first, then product onboarding, tooling manifest, personal-layer ADR, zoom docs, shared-secrets interface,
+      multi-user via its own wayfinder map). Big items (multi-user, product onboarding) deserve their own cards/maps
+      when picked up.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M16</span> EnterWorktree mid-session stales the registry artifact path — wrongful stale-primary sweeps
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh · ADR-0006</span></h3>
+    <p><span class="k">Evidence</span> — change-log finding 2026-08-06 (session 24), previously un-carded: entering a
+      worktree relocates the claude transcript to a worktree-scoped project directory, so the artifact path pinned at
+      <code>register</code> goes stale; two live primary-takeover incidents. <strong>Reproduced 2026-08-08</strong>
+      (usage-scenarios session 2): <code>record</code> after EnterWorktree shows the artifact path switching to
+      <code>…-claude-worktrees-usage-scenarios-s2/…</code> while the lock was registered under the launch-dir path.</p>
+    <p><span class="k">Impact</span> — the pinned artifact stops updating → holder looks dead → stale-primary sweep
+      or takeover fires against a live session.</p>
+    <p><span class="k">Fix</span> — re-pin the artifact at <code>record</code> time when the session-id's transcript
+      has moved (the session id is stable across the move), or a worktree-entry hook that re-registers; add a
+      regression test with a relocated artifact fixture.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L32</span> In-band WARN push swallowed when a busy child wins the throttle race
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/hooks/ (claude runtime)</span></h3>
+    <p><span class="k">Evidence</span> — change-log finding 2026-08-06 (session 24, ticket 06 empirical run),
+      previously un-carded: the hook throttle key is shared, so a subagent's hook firing can consume the
+      escalation-once slot under the parent session id and the parent never sees the WARN push.</p>
+    <p><span class="k">Impact</span> — a session can cross WARN unnotified and drift toward STOP/auto-compaction
+      territory; defeats the consent-point design.</p>
+    <p><span class="k">Fix</span> — key the throttle/escalation state per (session-id, main-vs-sidechain) instead of
+      per session id alone; cover with a vendor-hook test that fires a sidechain event first.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L33</span> Launcher staleness race: successor trusts a stale <code>next-session.md</code> when the checkout lags origin
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/session-rollover · scripts/launch-next-session.sh</span></h3>
+    <p><span class="k">Evidence</span> — change-log finding 2026-08-06, previously un-carded: a successor session read
+      a stale launcher because the local checkout lagged origin/main; mitigation is prose-only. Same shape recurred
+      2026-08-08 session 2: a fresh worktree branched from origin/main, which lagged local main by the session-1
+      commit — caught only because the work files were visibly missing.</p>
+    <p><span class="k">Impact</span> — successor resumes from an outdated plan; wasted work or conflicting edits.</p>
+    <p><span class="k">Fix</span> — cheap freshness guard at bootstrap: compare the launcher's last-commit sha against
+      origin (and against local main when branching a worktree); warn and stop if behind.</p>
+  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -224,13 +283,14 @@
       <tr><td>2026-08-07</td><td>Resolved <strong>L17</strong> + <strong>L18</strong>, the last two Open cards. L17 (four deferred rollover-script issues): attach-session live-but-unlocked message now matches its own flags; both <code>ls -t</code> glob loops space-safe via <code>while IFS= read -r</code>; <code>opencode_measure</code> SQL-escapes <code>$PWD</code>/<code>$sid</code>; the stale registry-suite filename survived only in the test file's own <code># File:</code> header (the <code>docs/context-budget.md</code> reference was already correct), now fixed. L18: per-variable precedence around the <code>context-budget.env</code> source in <code>context-budget.sh</code> (capture-before/restore-after, the <code>launch-next-session.sh</code> pattern) — default-only env-file assignments rejected (would invert the per-item override chain). New regression test T16 (red on pre-fix script, green after); T4d updated to the new attach wording. All eight suites green (343 asserts). Scorecard now 0/46/4/0/6.</td></tr>
       <tr><td>2026-08-07</td><td>Improvement: <strong>scripts/context-inspect.sh</strong> — context <em>composition</em> analyzer for the context-decay work item (user request). Exact per-turn totals from the usage envelope; harness-attachment breakdown split turn-1 vs later (itemizes the L29 ~10K first-message materialization: skill_listing ~4K, deferred_tools ~2.4K, hook context ~2K, mcp_instructions ~0.9K, agent_listing ~0.8K); disk-side CLAUDE.md/memory stack (harness-injected, never transcribed); harness-fixed remainder. Verified on two live transcripts. Doc pointer in <code>context-budget.md</code> &rarr; Quickstart &mdash; agent. Claude-runtime transcripts only. No scorecard change.</td></tr>
       <tr><td>2026-08-07</td><td>Resolved <strong>L31</strong> (session #4, settling the attribution question parked on the first L19 card): residual analysis over two Warp-plugin-heavy transcripts proved <code>hook_success</code> stdout never enters model context — only the attachment's <code>content</code> field does. <code>context-inspect.sh</code> now attributes hook_success at content length (was whole-JSON, over-attributing ~20&ndash;29K tok on Warp-heavy sessions). Same session: turn-1 trim candidates analyzed and <em>declined</em> by user decision (no repo-side item is both unused and consequence-free; skill_listing is only ~307 tok workspace-controlled) — see <code>work/context-decay/trim-estimates.md</code> + decision note. Scorecard now 0/49/4/0/6.</td></tr>
+      <tr><td>2026-08-08</td><td>Usage-scenario catalog delivered (<code>work/usage-scenarios/</code>, sessions 1–2, user brief): external scenarios <strong>E1–E18</strong> (lifecycle, personal layer, working loop, knowledge access, concurrency, team capabilities) + internal scenarios <strong>I1–I10</strong> (mechanism groups A–G with per-scenario test status), the zoom-level doc model (Z0–Z3 × O0–O4 + agent profiles), a scenario→docs→tests coverage matrix, and <code>gaps-and-coverage.md</code> (8 ranked gaps with recommendations + sequencing). Opened <strong>M15</strong> (catalog meta-card) and promoted the three un-carded change-log findings to cards: <strong>M16</strong> (EnterWorktree stales registry artifact — reproduced live this session), <strong>L32</strong> (WARN push swallowed via busy child), <strong>L33</strong> (launcher staleness race — shape recurred this session via a worktree branched from lagging origin/main). Scorecard now 4/49/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-07.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-08.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>
