@@ -11,9 +11,11 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## First actions
 
-1. `git fetch origin` + confirm `git log HEAD..origin/main` is empty before
+1. `scripts/context-budget.sh register` (skip if the SessionStart hook
+   already ran it — its output says so).
+2. `git fetch origin` + confirm `git log HEAD..origin/main` is empty before
    trusting this launcher (L33 race).
-2. **Deliver session-5 if still pending**: branch
+3. **Deliver session-5 if still pending**: branch
    `worktree-usage-scenarios-s5` (Gaps 3+8+7+4+1, M15 close, docs index,
    review fixes) is pushed to origin but NOT merged to main (background
    session; merge reserved for the user). If main doesn't contain its tip:

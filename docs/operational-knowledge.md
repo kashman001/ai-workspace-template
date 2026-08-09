@@ -63,7 +63,12 @@ with redirects, unquoted globs — even when they only run tests, with "too
 complex to verify that it stays inside the worktree". Hit in sessions 18
 and 19 (e.g. `for t in scripts/tests/test-*.sh; do …; done`). Mitigation:
 one plain command per Bash call; iterate by issuing separate calls instead
-of shell loops.
+of shell loops. Also refused (usage-scenarios sessions 4–5): `git -C
+<other-checkout>` redirects, `cd "$PWD" && perl -pi`, and `;`-chains
+ending in `>/dev/null` — prefer the Edit tool for file rewrites and drop
+output redirects; merging to main from a worktree-isolated background
+session requires `ExitWorktree(keep)` first (the guard blocks any git
+aimed at the shared checkout).
 
 ## Agent workflow — bound your background poll loops
 
