@@ -27,3 +27,17 @@ consumer.
 workspace-structure.md section (new), pointers in CONTEXT.md/docs index.
 **Promote?:** maybe — promote to an ADR when Gap 7 executes, if the
 supersede proves contentious.
+
+## 2026-08-09 — Fate of the work directory at close-out (session 6)
+**Chose:** Keep `work/usage-scenarios/` in maintenance mode (README banner,
+launcher replaced with a maintenance note) rather than delete or archive it.
+**Because:** committed docs (docs/README.md index, zoom-model.md, the
+archived HTML's supersede banner) point into `scenarios.md` §3 as the
+canonical external-scenario catalog — deleting the directory breaks those
+links; archiving the catalog elsewhere would just move it away from the
+conventions that reference it.
+**Rejected:** delete the dir (breaks committed links); promote scenarios.md
+into docs/ (churns every pointer for zero reader benefit, contradicts the
+work-directory convention that active artifacts live where they grew).
+**Blast radius:** work/usage-scenarios/README.md + next-session.md only.
+**Promote?:** no — housekeeping, reversible.

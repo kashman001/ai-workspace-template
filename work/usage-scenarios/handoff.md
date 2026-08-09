@@ -6,6 +6,29 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-09 (session 6: close-out — work item → MAINTENANCE MODE)
+
+Close-out session per the session-6 launcher; ran the `checkpoint` skill.
+
+- **Session-5 delivery verified already done**: all five s5 commits
+  (13db689…75d9258) are on origin/main; both copies of
+  `worktree-usage-scenarios-s5` deleted. Nothing to merge.
+- **Record reconciled, no changes needed**: backlog already current (M15
+  archived with Fixed note, scorecard 3/50/4/0/6; open M16/L32/L33 are
+  separate efforts); reference docs shipped in s5; nothing durable and
+  non-obvious to add to agent memory (project state lives here, per the
+  context-discipline rules).
+- **Directory moved to maintenance mode**: README gains a maintenance-mode
+  banner (dir is NOT deletable — committed docs point into scenarios.md §3);
+  launcher replaced with a maintenance note carrying the deferred residuals
+  and their wake-up conditions; Tier-2 decision note appended.
+- Deferred-by-design residuals (unchanged): Gap 4 vault tooling (second
+  shared service), Gap 1 phases 2–3 (second person; breakage points in
+  workspace-structure.md → "Before You Add a Teammate").
+
+State: work item CLOSED (maintenance mode). No pending work; no running
+processes. This block is the item's final full-session entry.
+
 # Session Handoff — 2026-08-08 (session 5 continued: Gaps 7+4+1 shipped, M15 CLOSED)
 
 User directive mid-session: finish all remaining gaps + holistic re-review
