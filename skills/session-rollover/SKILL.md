@@ -78,6 +78,18 @@ unnoticed.
    installed (`docs/recommended-tooling.md`) you may use it to draft the doc; the
    contract above binds either way.
 
+   **Prepend/archive safely — block-marker hazard.** When splitting or
+   prepending blocks programmatically (script or ad-hoc code), match the block
+   marker **anchored to start-of-line**: `grep -n '^# Session Handoff'` or a
+   multiline `re.split(r'(?m)^# Session Handoff …')`. The PURPOSE comment
+   itself contains an *example* of the marker, so an unanchored `str.find(…)`
+   / `grep '# Session Handoff'` matches inside the comment and splits the file
+   there — corrupting it. Prefer inserting the new block immediately above the
+   top existing block over rewriting the whole file; if you must rewrite, keep
+   the PURPOSE comment verbatim and never let the split point land inside it.
+   Verify after: `grep -c '^# Session Handoff' handoff.md` equals the block
+   count you intended, and the PURPOSE comment is intact.
+
 5. **Write `work/<project-name>/next-session.md`** — *forward-looking and
    deliberately pruned*:
    - **Mission** — the goal, one paragraph.
