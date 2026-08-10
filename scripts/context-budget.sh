@@ -124,38 +124,37 @@ copilot_vscode_discover() {
   # debug-logs dir whose basename is the session id — and the chatSessions token
   # file is named after that same id. Either way we pin the live session
   # deterministically instead of racing on newest-mtime, which pins a stale
-  # sibling session whose log happened to flush later (the silent-freeze bug).
-  local t="${VSCODE_TARGET_SESSION_LOG:-}" sid="" hash=""
+  # sibling session whose log happened to flush later (the silent-freeze bug),
+  # or — at session start, before VS Code has flushed our own token file — a
+  # *larger* sibling, producing a false STOP (fresh-session false-STOP bug).
+  local t="${VSCODE_TARGET_SESSION_LOG:-}" sid=""
   if [ -n "$t" ]; then
     [ -f "$t" ] && { echo "$t"; return 0; }
     sid="$(basename "$t")"; sid="${sid%.jsonl}"
-    # Fast path: the debug-logs path already embeds the workspaceStorage hash
-    # (.../workspaceStorage/<hash>/GitHub.copilot-chat/debug-logs/<sid>), so the
-    # token file is derivable without listing workspaceStorage/ — sandboxed
-    # terminals block readdir on that parent dir (glob expands empty) even
-    # though direct paths under it stay readable.
+    # Authoritative id in hand: the token file is
+    # <workspaceStorage>/<hash>/chatSessions/<sid>.jsonl, fully determined by $t
+    # (exact root, no workspaceStorage listing — sandboxed terminals block
+    # readdir on that parent). Return it whether or not it exists yet: a fresh
+    # session must measure as ITSELF (0 tokens), never a sibling by newest-mtime
+    # (fatal with concurrent sessions).
     case "$t" in
       */workspaceStorage/*/GitHub.copilot-chat/debug-logs/*)
-        hash="${t#*/workspaceStorage/}"; hash="${hash%%/*}"
-        ;;
+        echo "${t%/GitHub.copilot-chat/debug-logs/*}/chatSessions/$sid.jsonl"
+        return 0 ;;
     esac
   fi
   local root ws d
-  if [ -n "$hash" ] && [ -n "$sid" ]; then
-    for root in "Code" "Code - Insiders" "VSCodium"; do
-      local f="$HOME/Library/Application Support/$root/User/workspaceStorage/$hash/chatSessions/$sid.jsonl"
-      [ -f "$f" ] && { echo "$f"; return 0; }
-    done
-  fi
   for root in "Code" "Code - Insiders" "VSCodium"; do
     ws="$HOME/Library/Application Support/$root/User/workspaceStorage"
     [ -d "$ws" ] || continue
     for d in "$ws"/*/; do
       [ -f "$d/workspace.json" ] || continue
       if grep -qF "$(pwd)" "$d/workspace.json" 2>/dev/null; then
-        # Deterministic: the session-id-named token file wins over newest-mtime.
-        [ -n "$sid" ] && [ -f "$d""chatSessions/$sid.jsonl" ] \
-          && { echo "$d""chatSessions/$sid.jsonl"; return 0; }
+        # Authoritative sid (VSCODE_TARGET_SESSION_LOG in .jsonl form): its own
+        # token file, existing or not. Only with NO sid may we fall back to
+        # newest-mtime — a last resort unsafe across concurrent sessions, so it
+        # never runs once an sid is known.
+        [ -n "$sid" ] && { echo "$d""chatSessions/$sid.jsonl"; return 0; }
         newest_of "$d"chatSessions/*.jsonl "$d"chatSessions/*.json && return 0
       fi
     done
@@ -220,6 +219,9 @@ codex_measure() {
 
 copilot_vscode_measure() {
   local f="$1" tokens
+  # Authoritative token file not flushed yet (fresh session at register time):
+  # report empty context, never fail or bind a sibling's transcript.
+  [ -f "$f" ] || { echo "0 fresh"; return 0; }
   # grep -o, not jq: multi-MB single-line records; survives nesting changes.
   tokens=$(grep -o '"promptTokens":[0-9]*' "$f" 2>/dev/null | tail -1 | grep -o '[0-9]*$')
   [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
@@ -282,6 +284,10 @@ detect_runtime() {
   if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ]; then echo "claude"; return; fi
   if [ -n "${CODEX_SANDBOX:-}" ] || [ -n "${CODEX_HOME:-}" ]; then echo "codex"; return; fi
   if [ -n "${OPENCODE_SESSION_ID:-}" ]; then echo "opencode"; return; fi
+  # VSCODE_TARGET_SESSION_LOG is Copilot-chat-terminal specific and
+  # authoritative; trust it over the newest-file heuristic, which at session
+  # start (our token file not flushed) would misdetect a stale sibling runtime.
+  if [ -n "${VSCODE_TARGET_SESSION_LOG:-}" ]; then echo "copilot-vscode"; return; fi
   local best_rt="" best_file="" f
   for rt in claude codex copilot-vscode copilot-cli gemini; do
     f=$(discover_for "$rt") || continue
@@ -369,7 +375,11 @@ resolve_session() {
   fi
   if [ -z "$ARTIFACT" ]; then
     ARTIFACT=$(discover_for "$RUNTIME") || true
-    [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
+    [ -n "$ARTIFACT" ] || die "no session artifact found for runtime=$RUNTIME"
+    # copilot-vscode may return an authoritative-but-not-yet-flushed path at
+    # session start; accept it (measures as fresh) rather than dying or, worse,
+    # rediscovering into a sibling. Every other runtime requires it to exist.
+    [ -f "$ARTIFACT" ] || [ "$RUNTIME" = copilot-vscode ] \
       || die "no session artifact found for runtime=$RUNTIME"
   fi
   [ -n "$SESSION_ID" ] || SESSION_ID="$(session_id_for "$RUNTIME" "$ARTIFACT")" || SESSION_ID="unknown"
