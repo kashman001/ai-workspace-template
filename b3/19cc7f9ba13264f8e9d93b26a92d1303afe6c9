@@ -1,0 +1,37 @@
+scripts/check-dependencies.sh
+  s_395f264a10652d::t_0fa1065a9a556e 57-70
+docs/template-workspace-backlog-archive.html
+  s_395f264a10652d::t_6292caa50836b7 325-349
+scripts/setup.sh
+  s_395f264a10652d::t_b5995ea153e1ea 45-76
+scripts/tests/test-template-instantiation.sh
+  s_395f264a10652d::t_3233127655db77 51
+  s_395f264a10652d::t_2a6178bd0a99db 26,28
+  s_395f264a10652d::t_0fb00a4329d4fc 59
+  s_395f264a10652d::t_77126010f9db84 76-97
+  s_395f264a10652d::t_0e80d9281beb1f 12-14
+  s_395f264a10652d::t_9664f0e7a9fdb2 42
+docs/context-budget.md
+  s_395f264a10652d::t_d02cb7a137da7b 533
+docs/template-workspace-backlog.html
+  s_395f264a10652d::t_7118e93f4608ca 79
+  s_395f264a10652d::t_45985c8571c9b1 270
+  s_395f264a10652d::t_7def04ada2a070 72
+  s_395f264a10652d::t_ed6113712e5183 277
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "b319cc7f9ba13264f8e9d93b26a92d1303afe6c9",
+  "prompts": {},
+  "sessions": {
+    "s_395f264a10652d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "66615c25-2658-40c1-9f7e-bc90dc37f3b5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
