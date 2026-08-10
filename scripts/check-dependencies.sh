@@ -54,6 +54,20 @@ rec python3 "graphify runtime / general tooling"
 rec yt-dlp  "workspace-local YouTube transcript MCP server"
 rec graphify "per-repo knowledge graph (optional)"
 
+# Copilot folder trust (advisory): the repo-committed Copilot hooks
+# (.github/hooks/*.json → context-budget wrappers) silently no-op when this
+# workspace is not in ~/.copilot/config.json trustedFolders — no error, no
+# signal. scripts/setup.sh seeds it; this only reports. Config is JSONC —
+# strip // comment lines before parsing.
+if [ -d "$HOME/.copilot" ] && have jq; then
+  if grep -vE '^[[:space:]]*//' "$HOME/.copilot/config.json" 2>/dev/null \
+       | jq -e --arg r "$ROOT" '.trustedFolders // [] | index($r)' >/dev/null 2>&1; then
+    printf '  \033[32m✓\033[0m %-8s Copilot trusts this workspace (trustedFolders)\n' "copilot"
+  else
+    printf '  \033[33m•\033[0m %-8s Copilot does NOT trust this workspace — its hooks will silently no-op; run scripts/setup.sh (seeds ~/.copilot/config.json trustedFolders)\n' "copilot"
+  fi
+fi
+
 echo
 if [ "$missing_required" = 0 ]; then
   echo "Required dependencies present. Install any missing recommended tools per docs/runbooks/dependencies.md"

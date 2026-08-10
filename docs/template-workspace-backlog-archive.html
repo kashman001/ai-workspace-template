@@ -322,6 +322,31 @@
       With sessions 4–5's Gaps 6, 2, 3, 8 above, that closes the card.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M17</span> Copilot folder-trust gate: <code>trustedFolders</code> seeding was manual and checked by no script
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/setup.sh · scripts/check-dependencies.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/usage-scenarios/ground-truth.md</code> and
+      <code>gaps-and-coverage.md</code> (2026-08-08) record that the repo-committed Copilot hooks
+      (<code>.github/hooks/*.json</code> → context-budget wrappers) silently no-op unless the workspace is listed in
+      <code>~/.copilot/config.json</code> → <code>trustedFolders</code>, and that this step was "checked by NO check
+      script"; <code>docs/context-budget.md</code>'s vendor table said "must be pre-seeded (manually, or via
+      config)".</p>
+    <p><span class="k">Impact</span> — a fresh machine/user gets zero context-budget pushes in Copilot CLI / VS Code
+      agent mode, with no error or signal that anything is unwired — exactly the silent-failure class the budget
+      system exists to prevent.</p>
+    <p><span class="k">Fix</span> — seed at setup time, verify in the dependency check (per the checks-verify /
+      runbooks-fix split).</p>
+    <p><span class="fix">Fixed:</span> 2026-08-10 — <code>scripts/setup.sh</code> step 3b now seeds
+      <code>trustedFolders</code> idempotently (JSONC-aware: strips Copilot's <code>//</code> comment lines before
+      <code>jq</code> and preserves them on rewrite; "already trusted" fast path; skips with a re-run note until
+      Copilot's first run creates <code>~/.copilot/</code>; warns, never fails, on missing jq or an unparseable
+      config), and <code>scripts/check-dependencies.sh</code> gained a verify-only advisory reporting whether Copilot
+      trusts the workspace. Vendor-table friction cell in <code>docs/context-budget.md</code> updated.
+      <code>test-template-instantiation.sh</code> now sandboxes <code>$HOME</code> around <code>setup.sh</code> runs
+      (so the test can't pollute the real Copilot config) and covers the seed/comment-preservation/idempotency paths.
+      Ported from the downstream insight workspace's implementation.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

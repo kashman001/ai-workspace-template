@@ -42,8 +42,38 @@ copy_if_missing .env.example .env
 copy_if_missing .mcp.json.example .mcp.json
 copy_if_missing .claude/settings.json.example .claude/settings.local.json
 
-# 3b. Dependency check (informational; does not abort setup). Runs after the
-#     per-user copies so its hook-wiring check reflects post-setup state.
+# 3b. Seed Copilot folder trust (per-machine state; idempotent).
+#     Repo-committed Copilot hooks (.github/hooks/*.json → context-budget
+#     wrappers) silently no-op unless this workspace is listed in
+#     ~/.copilot/config.json trustedFolders — no error, no visible signal.
+#     Verify-only counterpart: scripts/check-dependencies.sh. The config is
+#     JSONC (Copilot writes // comment lines) — strip them before jq,
+#     preserve them on rewrite.
+COPILOT_CFG="$HOME/.copilot/config.json"
+if [ ! -d "$HOME/.copilot" ]; then
+  log "Copilot not initialized (~/.copilot missing) — skipping trust seed; re-run scripts/setup.sh after Copilot's first run"
+elif ! command -v jq >/dev/null 2>&1; then
+  log "WARNING: jq not found — cannot seed Copilot trustedFolders; add \"trustedFolders\": [\"$ROOT\"] to $COPILOT_CFG manually"
+else
+  cfg_comments=""; cfg_json="{}"
+  if [ -f "$COPILOT_CFG" ]; then
+    cfg_comments="$(grep -E '^[[:space:]]*//' "$COPILOT_CFG" || true)"
+    cfg_json="$(grep -vE '^[[:space:]]*//' "$COPILOT_CFG" || true)"
+    [ -n "$cfg_json" ] || cfg_json="{}"
+  fi
+  if printf '%s' "$cfg_json" | jq -e --arg r "$ROOT" '.trustedFolders // [] | index($r)' >/dev/null 2>&1; then
+    log "Copilot: workspace already in trustedFolders (skipping)"
+  elif cfg_updated="$(printf '%s' "$cfg_json" | jq --arg r "$ROOT" '.trustedFolders = (((.trustedFolders // []) + [$r]) | unique)')"; then
+    { [ -n "$cfg_comments" ] && printf '%s\n' "$cfg_comments"; printf '%s\n' "$cfg_updated"; } > "$COPILOT_CFG"
+    log "Copilot: added workspace to trustedFolders in $COPILOT_CFG"
+  else
+    log "WARNING: could not parse $COPILOT_CFG — add trustedFolders manually"
+  fi
+fi
+
+# 3c. Dependency check (informational; does not abort setup). Runs after the
+#     per-user copies and the trust seed so its wiring checks reflect
+#     post-setup state.
 if [ -x scripts/check-dependencies.sh ]; then
   scripts/check-dependencies.sh || log "some dependencies missing — see docs/runbooks/dependencies.md"
 fi

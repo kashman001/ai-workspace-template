@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-08 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-10 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
     <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">50</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">51</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -267,13 +267,14 @@
       <tr><td>2026-08-08</td><td>Usage-scenarios <strong>session-4 walk-through + first two gaps shipped</strong>. User verdicts recorded on M15 (sequencing adopted as-is; <code>usage-scenarios.html</code> retirement endorsed; Gaps 6+2 green-lit; 3+8 and 7 queued; 4 and 1 deferred until real). <strong>Gap 6</strong>: new <code>scripts/tests/test-template-instantiation.sh</code> (20 asserts, nine suites now) — clean-room clone→<code>setup.sh</code>→<code>check-workspace-structure.sh</code> with produced-structure, idempotency, symlink-repair, and placeholder <code>--clone-repos</code> cases, plus doc-accuracy pins for the two claims previously caught false (<code>workspace-structure.md</code> registry↔disk reconciliation claim removed; <code>--clone-repos</code> ignores-tiers behavior now stated honestly). <strong>Gap 2</strong>: Z0 product interview checklist added beside the S0 preconditions in <code>workspace-structure.md</code>; <code>SPEC.md</code> and <code>docs/system-design.md</code> upgraded from bare stubs to fillable Z0 templates (components/entry-points tables); E1 local-vs-remote fork now an explicit choice point in <code>template-usage.md</code> with both paths. M15 stays Open (Gaps 3+8, 7 next). No scorecard change.</td></tr>
       <tr><td>2026-08-08</td><td>Usage-scenarios <strong>session-5: Gaps 3+8 shipped</strong> (M15). <strong>Gap 3</strong> (tooling manifest): <code>check-dependencies.sh</code> gains <code>req jq</code> (hard-required by <code>context-budget.sh</code>, previously unlisted) and a required hook-wiring check (I7's missing installation check — <code>.claude/settings*.json</code> must wire the context-budget hooks); <code>check-service-access.sh</code> gains the same hard-fail distinction (required services → exit 1; was always exit 0); <code>recommended-tooling.md</code>'s blanket "everything optional" replaced with a "Required for everyone" table; runbooks updated (jq install lines, exit-code meaning); <code>setup.sh</code> dependency check moved after the per-user copies so its verdict reflects post-setup state. <strong>Gap 8</strong> (capability authoring, documentation only): "Authoring a Team Capability" section in <code>workspace-structure.md</code> — container decision rule (<code>scripts/</code> vs <code>skills/</code> vs <code>.claude/agents/</code> vs <code>docs/runbooks/</code>), the two mechanical skill-wiring steps (commands mirror + <code>CONTEXT.md</code> listing), and the make-it-required hook into Gap 3's manifest; pointer added in <code>CONTEXT.md</code> → "Workspace Skills". M15 stays Open (Gap 7 last). No scorecard change.</td></tr>
       <tr><td>2026-08-08</td><td>Usage-scenarios <strong>session-5 continued: Gaps 7+4+1 shipped, M15 closed</strong>. <strong>Gap 7</strong>: zoom model promoted from the work item to committed <code>docs/zoom-model.md</code>; superseded <code>usage-scenarios.html</code> retired to <code>docs/archive/</code> with a pointer stub; <code>README.md</code> repointed. <strong>Gap 4</strong> (interface only, per the simplicity guardrail — document, don't build): team-vault interface + per-service <code>Scope</code> field documented in <code>docs/service-access.md</code>; no vault tooling. <strong>Gap 1</strong> (phase 1 only): "Before You Add a Teammate" breakage points documented in <code>workspace-structure.md</code> + <code>user@host</code> identity fields in coordination records; phases 2–3 stay deferred by design until a second person is real (user verdict — not an open item). Also added a new <code>docs/README.md</code> index. All M15 gap work done → card <span class="status resolved">Resolved</span> and moved to the archive. Scorecard now 3/50/4/0/6.</td></tr>
+      <tr><td>2026-08-10</td><td>Fix <strong>M17</strong> (new card, resolved on filing — archived): <strong>Copilot folder-trust seeding</strong> — closes the <code>work/usage-scenarios/</code> gap "trustedFolders step is checked by NO check script". <code>scripts/setup.sh</code> step 3b seeds <code>~/.copilot/config.json</code> <code>trustedFolders</code> idempotently (JSONC-aware: <code>//</code> comment lines stripped before <code>jq</code>, preserved on rewrite; already-trusted fast path; skip-with-note until Copilot's first run creates <code>~/.copilot/</code>; warn-not-fail on missing jq / unparseable config); <code>scripts/check-dependencies.sh</code> gains the verify-only advisory (trusts / does-NOT-trust with the silent-no-op warning); <code>docs/context-budget.md</code> vendor-table friction cell updated. <code>test-template-instantiation.sh</code> now sandboxes <code>$HOME</code> around <code>setup.sh</code> runs and adds a T7 seed/comment-preservation/idempotency block. Ported from the downstream insight workspace. Scorecard now 3/51/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-08.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-10.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>
