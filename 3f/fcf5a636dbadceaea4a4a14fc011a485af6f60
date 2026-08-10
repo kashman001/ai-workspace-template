@@ -1,0 +1,19 @@
+skills/session-rollover/SKILL.md
+  s_755c9465bf0023::t_4c1d1d4fbafc6a 81-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3ffcf5a636dbadceaea4a4a14fc011a485af6f60",
+  "prompts": {},
+  "sessions": {
+    "s_755c9465bf0023": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5430cc2c-dd70-485b-b56c-b30f9ba08525",
+        "model": "copilot/claude-opus-4.8"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
