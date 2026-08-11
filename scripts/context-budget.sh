@@ -55,6 +55,9 @@ WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
+# Set by copilot_vscode_discover when it pins by newest-mtime while >1 Copilot
+# session is concurrently active (no authoritative id) — an unsafe guess.
+COPILOT_PIN_AMBIGUOUS=0
 PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
 REPORT_FILE=""; BRIEF_FILE=""; GEN=1; GEN_SET=0
 TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""
@@ -155,6 +158,15 @@ copilot_vscode_discover() {
         # newest-mtime — a last resort unsafe across concurrent sessions, so it
         # never runs once an sid is known.
         [ -n "$sid" ] && { echo "$d""chatSessions/$sid.jsonl"; return 0; }
+        # No authoritative id (VSCODE_TARGET_SESSION_LOG absent — e.g. an agent's
+        # run_in_terminal shell, which does not export it). If >1 chatSessions
+        # file was written in the last 2 min, sibling sessions are live and
+        # newest-mtime would pin the wrong one (false STOP off another context).
+        # Flag it so register refuses to guess (resolve_session).
+        if [ "$(find "${d}chatSessions" -name '*.jsonl' -mmin -2 2>/dev/null | wc -l | tr -d ' ')" -gt 1 ]; then
+          COPILOT_PIN_AMBIGUOUS=1
+          note "warning: multiple Copilot sessions active and VSCODE_TARGET_SESSION_LOG unset — pinning by newest-mtime may bind a sibling session's context"
+        fi
         newest_of "$d"chatSessions/*.jsonl "$d"chatSessions/*.json && return 0
       fi
     done
@@ -381,6 +393,15 @@ resolve_session() {
     # rediscovering into a sibling. Every other runtime requires it to exist.
     [ -f "$ARTIFACT" ] || [ "$RUNTIME" = copilot-vscode ] \
       || die "no session artifact found for runtime=$RUNTIME"
+    # register pins identity, so it must never guess: an ambiguous newest-mtime
+    # pin here would write a sibling session's context as ours (the false-STOP
+    # bug). Fail loud with the fix instead. check/record only warned (above) and
+    # fall through — a read is less harmful than a wrong pin, and they prefer the
+    # registry when one exists.
+    if [ "$COMMAND" = register ] && [ "$RUNTIME" = copilot-vscode ] \
+       && [ "$COPILOT_PIN_AMBIGUOUS" = 1 ]; then
+      die "cannot identify this Copilot VS Code session: several are active and \$VSCODE_TARGET_SESSION_LOG is unset, so register would pin a sibling and mis-report context. Re-run with the session log, e.g.: VSCODE_TARGET_SESSION_LOG=\"<...>/GitHub.copilot-chat/debug-logs/<your-session-id>\" scripts/context-budget.sh register"
+    fi
   fi
   [ -n "$SESSION_ID" ] || SESSION_ID="$(session_id_for "$RUNTIME" "$ARTIFACT")" || SESSION_ID="unknown"
 }

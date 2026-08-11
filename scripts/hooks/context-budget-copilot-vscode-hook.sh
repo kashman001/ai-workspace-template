@@ -23,6 +23,21 @@ sid=$(echo "$input" | jq -r '.session_id // empty')
 transcript=$(echo "$input" | jq -r '.transcript_path // empty')
 [ -n "$transcript" ] || exit 0
 cs="$(dirname "$(dirname "$(dirname "$transcript")")")/chatSessions/$sid.jsonl"
+# DEFINITE auto-registration — does NOT depend on the agent running `register`.
+# Both hook events carry the authoritative session id + transcript path, so the
+# first invocation pins THIS session's artifact (once; cheap `[ -f ]` no-op
+# thereafter). Must run BEFORE the [ -f "$cs" ] measurement guard: SessionStart
+# fires on the first prompt seconds before VS Code creates the chatSessions
+# token file (3s–49s observed), and `register` handles a missing artifact as
+# method=deferred — gating registration on the file existing caused the s78/s79
+# false negatives (work/context-decay/copilot-vscode-hook-research-findings.md).
+# The inline VSCODE_TARGET_SESSION_LOG gives the script the same session
+# identity a Copilot terminal would export (the hook process does not inherit
+# it).
+reg="$BUDGET_STATE_DIR/sessions/copilot-vscode-$sid.json"
+[ -f "$reg" ] || VSCODE_TARGET_SESSION_LOG="$cs" \
+  "$WORKSPACE_ROOT/scripts/context-budget.sh" register \
+  --runtime copilot-vscode --transcript "$cs" >/dev/null 2>&1 || true
 [ -f "$cs" ] || exit 0    # fresh session: nothing to measure yet
 case "$event" in
   SessionStart)

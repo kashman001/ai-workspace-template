@@ -202,8 +202,9 @@ advertised window size. You **cannot introspect your own usage** — the numbers
 live in the API envelope, on disk; never estimate them. Thresholds are in
 `context-budget.env` (checked in; raise in one place as models improve).
 
-- At session start: `scripts/context-budget.sh register` (Claude Code: the
-  `SessionStart` hook already ran it — don't re-run).
+- At session start: `scripts/context-budget.sh register` (Claude Code and
+  Copilot VS Code agent mode: the `SessionStart` hook already ran it
+  mechanically — don't re-run; register manually only if hooks are disabled).
 - At every work-unit boundary: `scripts/context-budget.sh record --label "<what just finished>"`.
 - Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then ask
   the user whether to roll over (`session-rollover` skill; declined = write

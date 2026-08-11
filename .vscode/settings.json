@@ -2,6 +2,8 @@
 // .vscode/mcp.json (gitignored) — copy it from .vscode/mcp.json.example.
 // See: docs/workspace-structure.md → "IDE and Agent Configuration"
 {
+  // Required for the Copilot VS Code context-budget hooks (.github/hooks/) to load.
+  "chat.useHooks": true,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "files.exclude": {

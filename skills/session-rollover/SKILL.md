@@ -21,11 +21,24 @@ a thin wrapper around this skill).
   **without asking**. Mid-discussion, the atomic step is the current exchange:
   answer the user's message first, then roll over, carrying the live question
   verbatim into the launcher's START HERE so the successor re-poses it.
-- **WARN** (exit code 1, or a hook WARN message): finish the current *work unit*,
-  then **ask the user** "roll over now?". On yes, run this. On no, arm
-  **write-ahead mode** for the WARN→STOP grace window: route state to disk
-  incrementally at each natural pause (settled points → `decisions.md`/docs;
-  open threads → the launcher), so the eventual STOP rollover is cheap.
+- **WARN** (exit code 1, or a hook WARN message): finish the current *work unit*
+  **only if it is small** (a doc edit, a review pass, bookkeeping — not an
+  implement+test+commit unit), then **ask the user** "roll over now?". On yes,
+  run this. On no, arm **write-ahead mode** for the WARN→STOP grace window:
+  route state to disk incrementally at each natural pause (settled points →
+  `decisions.md`/docs; open threads → the launcher), so the eventual STOP
+  rollover is cheap. Cross-deployment ledger evidence
+  (`work/context-decay/ledger-analysis*.md`): the rollover procedure itself
+  costs ~1–7K in light sessions but ~20K median in heavy workflows, so WARN
+  leaves room for one small closing unit at most — "finish freely then roll"
+  landed heavy sessions at 160–230K.
+- **Pre-flight at work-unit boundaries:** before *starting* a major unit
+  (observed cost 20–40K in light workflows, 50–130K in heavy ones), run
+  `record` and check headroom. If current tokens + the unit's likely cost
+  exceed the STOP threshold, roll over **first** — a heavy unit can span the
+  whole WARN→STOP band, so starting one near WARN means blowing past STOP
+  mid-unit (in the heavy deployment's ledger, 63% of STOP sessions never saw
+  a WARN checkpoint).
 - The user asks to roll over / hand off to a fresh session.
 
 Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migration).
