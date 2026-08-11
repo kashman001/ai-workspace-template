@@ -1,0 +1,38 @@
+docs/README.md
+  s_9b74ec986e8b8d::t_0f7d983a94d839 23
+  s_9b74ec986e8b8d::t_c51fa24ce7f977 41
+docs/workspace-structure.md
+  s_9b74ec986e8b8d::t_e371cf4c53f8c1 818-819
+  s_9b74ec986e8b8d::t_413bfe6e69abb5 785-788
+docs/agent-onboarding-check.md
+  s_9b74ec986e8b8d::t_49377b45a49521 1-131
+CONTEXT.md
+  s_9b74ec986e8b8d::t_fd55ea62588388 11-16
+scripts/tests/test-parameterization.sh
+  s_9b74ec986e8b8d::t_8cddcdd74d3592 1-56
+docs/template-workspace-backlog-archive.html
+  s_9b74ec986e8b8d::t_1f944341f03e51 682-695
+  s_9b74ec986e8b8d::t_01b73791e3d14a 681
+scripts/tests/test-agent-entrypoints.sh
+  s_9b74ec986e8b8d::t_2b0a88b298ade9 1-60
+docs/template-workspace-backlog.html
+  s_9b74ec986e8b8d::t_425dbd44c9263e 79
+docs/workspace-structure.html
+  s_9b74ec986e8b8d::t_609c7189131e71 5,290,1149-1153,1187-1189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "28c49f046a634d01f804287de044541501679a2e",
+  "prompts": {},
+  "sessions": {
+    "s_9b74ec986e8b8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "26d2e1ce-8715-433d-b50a-5e87e88a1f20",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
