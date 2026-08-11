@@ -6,13 +6,14 @@ description: Use when the context budget hits WARN/STOP (hook message, `context-
 # session-rollover
 
 The session is approaching or past the **dumb zone** — the ~150K-token point where
-LLM quality degrades regardless of advertised window size (see
-`docs/context-budget.md`). Roll the work over to a fresh session *deliberately*:
-decide what the next session loads, instead of letting automatic compaction decide.
+LLM quality degrades regardless of advertised window size. Roll the work over to a
+fresh session *deliberately*: decide what the next session loads, instead of
+letting automatic compaction decide.
 
 Vendor-neutral: any agent runtime can follow these steps. Claude Code also exposes
-this as the `/session-rollover` slash command (`.claude/commands/session-rollover.md`,
-a thin wrapper around this skill).
+this as the `/session-rollover` slash command. This file plus the script output in
+step 1 carry everything a rollover needs; `docs/context-budget.md` is
+setup/debugging reference for other occasions.
 
 ## When to invoke (trigger policy: WARN asks, STOP goes)
 
@@ -24,14 +25,13 @@ a thin wrapper around this skill).
 - **WARN** (exit code 1, or a hook WARN message): finish the current *work unit*
   **only if it is small** (a doc edit, a review pass, bookkeeping — not an
   implement+test+commit unit), then **ask the user** "roll over now?". On yes,
-  run this. On no, arm **write-ahead mode** for the WARN→STOP grace window:
-  route state to disk incrementally at each natural pause (settled points →
-  `decisions.md`/docs; open threads → the launcher), so the eventual STOP
-  rollover is cheap. Cross-deployment ledger evidence
-  (`work/context-decay/ledger-analysis*.md`): the rollover procedure itself
-  costs ~1–7K in light sessions but ~20K median in heavy workflows, so WARN
-  leaves room for one small closing unit at most — "finish freely then roll"
-  landed heavy sessions at 160–230K.
+  run this; on no, write ahead through the WARN→STOP grace window (the standing
+  discipline below, at every natural pause) so the eventual STOP rollover is
+  cheap. Ledger evidence (`work/context-decay/ledger-analysis*.md`): the
+  procedure costs ~1–7K in light sessions but ~20K median in heavy workflows —
+  the gap is deferred bookkeeping, not handoff writing — so WARN leaves room
+  for one small closing unit at most; "finish freely then roll" landed heavy
+  sessions at 160–230K.
 - **Pre-flight at work-unit boundaries:** before *starting* a major unit
   (observed cost 20–40K in light workflows, 50–130K in heavy ones), run
   `record` and check headroom. If current tokens + the unit's likely cost
@@ -41,13 +41,19 @@ a thin wrapper around this skill).
   a WARN checkpoint).
 - The user asks to roll over / hand off to a fresh session.
 
+**Write-ahead is the standing discipline, not a WARN-time fallback:** route
+learnings and decisions to their disk homes at incident time, and bring the
+ledger/launcher current at each work-unit boundary, so steps 2–3 below are a
+sweep for what slipped, not the primary capture. That discipline is the
+difference between the 1–7K and 20K+ rollovers above
+(`work/context-decay/rollover-cost-analysis-2026-08-11.md`).
+
 Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migration).
 
-**Hook-less cadence fallback:** in runtimes with no in-band WARN/STOP push,
-the signal only arrives when you run `record` — and pure discussions have no
-work-unit boundaries. In an extended discussion, run
-`scripts/context-budget.sh record` every ~10 exchanges so STOP can't pass
-unnoticed.
+**Hook-less cadence fallback:** in runtimes with no in-band WARN/STOP push, the
+signal only arrives when you run `record` — in an extended discussion (no
+work-unit boundaries), run `scripts/context-budget.sh record` every ~10
+exchanges so STOP can't pass unnoticed.
 
 ## Which boundary skill? (first yes wins)
 
@@ -57,54 +63,42 @@ unnoticed.
 3. Both true? → `session-rollover` — measurement wins; fold `checkpoint`'s step-1
    reconciliation (backlog, memory, docs, promotions) into steps 2–3 below.
 
-## Prerequisites
-
-- `scripts/context-budget.sh` (measurement) — see `docs/context-budget.md`.
-
 ## Steps
 
-1. **Record the trigger.** `scripts/context-budget.sh record --label "rollover start: <reason>"`.
+1. **Prep — one call.** `scripts/rollover-prep.sh <project> --reason "<trigger>"`.
+   It records the "rollover start" ledger entry, prints a compact git summary,
+   rotates older `handoff.md` blocks into `handoff-archive.md` (verified-lossless,
+   anchored matching — prep owns the archive step), and prints
+   the remaining top handoff block, `.session-seq`, and the freshly captured
+   `.rollover-options`. Read its output; it replaces separate git-status /
+   handoff-read / archive / options-capture calls. Hand-edit `.rollover-options`
+   only for `ROLLOVER_OPT_MODEL` / `ROLLOVER_OPT_EXTRA` (see
+   `scripts/capture-rollover-options.sh` header for semantics).
 
 2. **Reflect — route conversation-only learnings to disk.** Anything learned this
-   session that lives only in conversation is unrecoverable after rollover. Route it
-   now, per workspace convention: operational gotchas → `docs/operational-knowledge.md`;
-   decisions with a rejected alternative → `work/<project-name>/decisions.md` (the
-   `decision-log` skill); durable reference facts → the matching doc under `docs/`,
-   with `repo/path:line` pointers where code-derived.
-   Ideally learnings were routed at incident time (when the failure was hit and fixed),
-   making this step a sweep for what slipped, not the primary capture. For observations
-   not obviously durable, don't force a routing decision now: park each as a one-line
-   entry under `Learnings:` in the handoff block. A parked learning is promoted to a
-   durable home the *second* time it bites (grep `handoff*.md` for a prior strike);
-   single events die in the archive — which is the right fate for them.
+   session that lives only in conversation is unrecoverable after rollover:
+   operational gotchas → `docs/operational-knowledge.md`; decisions with a rejected
+   alternative → `work/<project>/decisions.md` (the `decision-log` skill); durable
+   reference facts → the matching doc under `docs/`, with `repo/path:line` pointers
+   where code-derived. For observations not obviously durable, park each as a
+   one-line entry under `Learnings:` in the handoff block. A parked learning is
+   promoted to a durable home the *second* time it bites (grep `handoff*.md` for a
+   prior strike); single events die in the archive — the right fate for them.
 
 3. **Flush — make disk fully current.** Update state/tracker files the session was
-   maintaining; run `git status` in every touched repo; commit per convention or
-   explicitly note uncommitted work in the handoff; verify any sub-agent-claimed
-   outputs actually exist on disk (summaries are hints, not facts).
+   maintaining; commit per convention or explicitly note uncommitted work in the
+   handoff (the prep output's git summary shows what's dirty); verify any
+   sub-agent-claimed outputs actually exist on disk (summaries are hints, not facts).
 
-4. **Write `work/<project-name>/handoff.md`** — *backward-looking*: what happened,
-   what shipped, where things stand. The hand-off contract: reference artifacts by
-   path/URL (never duplicate their content); include a **suggested skills** section
-   for the next session; an optional `Learnings:` line-list of parked observations
-   (step 2); redact secrets/PII. If the global `handoff` skill is
-   installed (`docs/recommended-tooling.md`) you may use it to draft the doc; the
-   contract above binds either way.
+4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
+   directly below the PURPOSE comment, above the single block prep left behind.
+   *Backward-looking*: what happened, what shipped, where things stand. Contract:
+   **≤40 lines**; reference artifacts by path/URL (never duplicate their content);
+   a **suggested skills** section for the next session; optional `Learnings:`
+   line-list (step 2); redact secrets/PII.
 
-   **Prepend/archive safely — block-marker hazard.** When splitting or
-   prepending blocks programmatically (script or ad-hoc code), match the block
-   marker **anchored to start-of-line**: `grep -n '^# Session Handoff'` or a
-   multiline `re.split(r'(?m)^# Session Handoff …')`. The PURPOSE comment
-   itself contains an *example* of the marker, so an unanchored `str.find(…)`
-   / `grep '# Session Handoff'` matches inside the comment and splits the file
-   there — corrupting it. Prefer inserting the new block immediately above the
-   top existing block over rewriting the whole file; if you must rewrite, keep
-   the PURPOSE comment verbatim and never let the split point land inside it.
-   Verify after: `grep -c '^# Session Handoff' handoff.md` equals the block
-   count you intended, and the PURPOSE comment is intact.
-
-5. **Write `work/<project-name>/next-session.md`** — *forward-looking and
-   deliberately pruned*:
+5. **Write `work/<project>/next-session.md`** — *forward-looking and deliberately
+   pruned*, REPLACING the old content:
    - **Mission** — the goal, one paragraph.
    - **Read these, in order** — the *smallest sufficient* set of file pointers.
    - **Do NOT reload** — settled side quests and dead ends, each with a one-line
@@ -113,53 +107,24 @@ unnoticed.
    - **First actions** — step 1 is always `scripts/context-budget.sh register`;
      then the concrete next steps.
 
-6. **Capture `work/<project-name>/.rollover-options`** recording how THIS
-   session was launched, so the successor inherits it. Run
-   `scripts/capture-rollover-options.sh <project-name>` — on claude it reads
-   the session transcript's recorded `permissionMode` (last value wins) and
-   writes `ROLLOVER_OPT_APPROVAL=default|edits|auto|full` (normalized
-   approval/permission level — `edits` = auto-approve file edits only;
-   `auto` = the runtime's classifier-vetted autonomous mode where one
-   exists, nearest-level fallback elsewhere; `full` = bypass); on other
-   runtimes it no-ops, leaving the file's last known values. Hand-edit only
-   the fields capture can't know: optional `ROLLOVER_OPT_MODEL=<model-id>`
-   (deliberately not auto-captured — the transcript can't distinguish an
-   explicit `--model` from the runtime default) and optional
-   `ROLLOVER_OPT_EXTRA=<raw flags for this runtime>`; the script preserves
-   both across re-captures. `scripts/launch-next-session.sh` maps these to
-   each runtime's flags.
+6. **Sync the counter, emit the bootstrap prompt.** Write the session number from
+   your **own** bootstrap prompt to `work/<project>/.session-seq`
+   (`echo <N> > …`; no number in your prompt → use the prep-printed value + 1).
+   The prompt + counter are the canonical session-number source; on disagreement
+   the ledger note gets repaired, never the counter (ADR-0007). Then emit the
+   successor's prompt in a fenced block:
 
-7. **Emit the bootstrap prompt** for the user to paste into the fresh session, in a
-   fenced block, e.g.:
+   > Work item <project> - rollover session #N+1. Read
+   > `work/<project>/next-session.md` and continue from **First actions**.
+   > Governing skill: `skills/session-rollover/SKILL.md`.
 
-   > Work item <project-name> - rollover session #N. Read
-   > `work/<project-name>/next-session.md` and continue from **First actions**.
-   > Governing skill: `skills/<skill>/SKILL.md`.
+   The "Work item … session #" lead line names the lineage (session titles are
+   auto-generated from early content). Honor `ROLLOVER_RELAUNCH` via
+   `scripts/launch-next-session.sh <project>` — it builds exactly this prompt,
+   tracks N, and owns all vendor launch specifics. Script absent or knob `off`:
+   the pasted prompt is the whole handoff.
 
-   The "Work item … session #N" lead matters: session titles are
-   auto-generated from early content, so the first line names the lineage
-   (`launch-next-session.sh` builds exactly this prompt, tracks N in
-   `work/<project>/.session-seq`, and passes claude `--name "<project> #N"`).
-
-   **First, sync the counter to yourself** (numbering canon, ADR-0007):
-   write the number from your **own** bootstrap prompt to
-   `work/<project>/.session-seq` — `echo <your-number> > work/<project>/.session-seq`
-   — then let the launcher compute the successor as yours + 1 (the emitted
-   prompt's #N above). `.session-seq` + the prompt are the canonical
-   session-number source: ledger block titles and worktree names copy the
-   prompt number verbatim, and on disagreement the ledger note gets repaired,
-   never the counter. This sync is what makes drift self-heal — a session
-   launched from a hand-pasted prompt (launcher bypassed) never incremented
-   the counter, and the write repairs it before the next launch. If your own
-   prompt carried no number, use the counter's value + 1 as your number.
-
-   Then honor `ROLLOVER_RELAUNCH` (global `context-budget.env`, overridable
-   per work item by a committed `work/<project>/context-budget.env`) via
-   `scripts/launch-next-session.sh <project>` — the script owns all vendor
-   launch specifics. If the script is absent or the knob is `off`, the pasted
-   prompt above is the whole handoff.
-
-8. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
+7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 
 ## Guardrails
 
@@ -169,32 +134,23 @@ unnoticed.
 - Prefer **file pointers over content summaries** — a summary spends the next
   session's budget on possibly-stale prose; a pointer lets it demand-load.
 - **No secrets** in any rollover artifact.
-- If no `work/<project-name>/` directory fits the current work, ask the user where
-  to persist rather than inventing a location.
+- If no `work/<project>/` directory fits the current work, ask the user where to
+  persist rather than inventing a location.
 
 ## Verification
 
-- The new handoff block is on TOP (newest-first is the ledger contract):
-  `grep -n '^# Session Handoff' work/<project-name>/handoff.md | head -3` — the first
-  hit is this session's block, with today's date.
-- Archive rule applied: if that grep lists more than 2 blocks, the older ones were
-  moved to `handoff-archive.md`.
-- The launcher was REPLACED, not appended: `next-session.md` describes only the next
-  session's mission — no leftover sections from the previous rollover.
-
-The work-item lock is released by `scripts/launch-next-session.sh` itself,
-immediately before it launches (release-before-launch: the successor's
-`register` must not race an unreleased lock, and the attached-manual path
-`exec`s, after which nothing can release). It removes only THIS session's own
-lock, never a foreign holder's. If the script was not invoked (absent, or the
-rollover ends without it), release manually after verification passes:
-`scripts/context-budget.sh release --project <project-name>`.
+- `grep -n '^# Session Handoff' work/<project>/handoff.md` shows exactly 2 blocks,
+  yours on top with today's date (prep rotated the rest; you prepended one).
+- The launcher was REPLACED, not appended: `next-session.md` describes only the
+  next session's mission.
+- Work-item lock: `scripts/launch-next-session.sh` releases it itself immediately
+  before launching. If the script was not invoked, release manually:
+  `scripts/context-budget.sh release --project <project>`.
 
 ## Outputs
 
-- Ledger entries bracketing the rollover (`work/context-decay/context-ledger.jsonl`).
-- Learnings routed to their workspace homes; disk fully current.
-- `work/<project-name>/handoff.md`, `next-session.md`, and `.rollover-options`.
+- Ledger entries bracketing the rollover; learnings routed; disk fully current.
+- `work/<project>/handoff.md`, `next-session.md`, and `.rollover-options`.
 - A paste-ready bootstrap prompt.
 
 End by telling the user: start a fresh session (don't `/compact` — rollover replaces

@@ -22,7 +22,7 @@ We use `.session-seq`, as surfaced through each session's bootstrap prompt, as
 the canonical session number. A session takes the number from its own prompt
 verbatim for ledger block titles and worktree names — never re-derived from
 ledger prose. Ledger/counter disagreement is repaired in the ledger note; the
-counter wins. Drift self-heals mechanically: at `session-rollover` step 7 the
+counter wins. Drift self-heals mechanically: at `session-rollover` step 6 the
 dying session writes its own prompt number to `.session-seq` before emitting
 or launching the successor, so a launcher-bypassing launch corrects the
 counter within one rollover. A session whose prompt carries no number (ad-hoc
@@ -41,7 +41,7 @@ start) takes counter + 1 as its number; its rollover sync counts it in.
 ## Consequences
 
 - Numbering stays correct with zero standing maintenance; the cost is one
-  `echo` in the rollover skill's step 7, executed every rollover.
+  `echo` in the rollover skill's step 6, executed every rollover.
 - Drift from an ad-hoc/hand-pasted launch persists until that session's
   *next* rollover (self-heal is eventual, one-rollover-lagged, not instant).
 - The number is machine-local by design: two machines working the same item

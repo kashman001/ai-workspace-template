@@ -323,6 +323,27 @@
   </div>
 
   <div class="find med resolved">
+    <h3><span class="id">M18</span> Session-rollover procedure cost grew to ~10–20K tokens, paid past WARN — mechanics unscripted, skill overgrown
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">skills/session-rollover · scripts/rollover-prep.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-decay/rollover-cost-analysis-2026-08-11.md</code>: 36 local
+      <code>rollover start→complete</code> ledger deltas show median ~11K (July: ~4.6K); the heavy deployment's ledger
+      shows median 20K (its F3). <code>SKILL.md</code> grew 4.6KB→12.1KB over the same window; the mechanical floor
+      (~8–10K: skill load, handoff read/write, launcher, git flush, ~5 bookkeeping calls) is paid at 120K+, the
+      scarcest budget region.</p>
+    <p><span class="k">Impact</span> — STOP-triggered rollovers land at ~170–190K — inside compaction territory on
+      claude's ~200K window, defeating the system's purpose; the cost also eats the WARN→STOP grace band.</p>
+    <p><span class="k">Fix</span> — script the mechanical steps into one call; slim the skill; make write-ahead the
+      standing discipline; cap the handoff block.</p>
+    <p><span class="fix">Fixed:</span> 2026-08-11 — R1–R5 applied: new <code>scripts/rollover-prep.sh</code> (start
+      record + git summary + verified-lossless archive rotation + top block + seq + options capture in one call;
+      28-assert suite <code>scripts/tests/test-rollover-prep.sh</code>); <code>SKILL.md</code> 12,074→9,222 bytes with
+      the block-marker/counter/lock mechanics disclosed to scripts; write-ahead promoted to standing discipline;
+      ≤40-line handoff-block contract; skill declared self-sufficient (no <code>docs/context-budget.md</code> load
+      mid-rollover). Savings validation after ~5 real rollovers is an open item in
+      <code>work/context-decay/next-session.md</code>.</p>
+  </div>
+
+  <div class="find med resolved">
     <h3><span class="id">M17</span> Copilot folder-trust gate: <code>trustedFolders</code> seeding was manual and checked by no script
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/setup.sh · scripts/check-dependencies.sh</span></h3>
     <p><span class="k">Evidence</span> — <code>work/usage-scenarios/ground-truth.md</code> and

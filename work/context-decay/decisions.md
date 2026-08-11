@@ -62,3 +62,12 @@
 **Rejected:** CLAUDE.md moderate (~600–800 tok) and aggressive (~1,000–1,300 tok) link-out passes; workspace skill-description tightening (~100–150 tok); user-global cleanup (option 3, superpowers/hooks/user skills — deferred by user, not evaluated for action).
 **Blast radius:** none (no files changed); closes mission steps 1–2 of session #4's launcher.
 **Promote?:** no
+
+## 2026-08-11 — rollover-prep.sh is a sibling script, not a context-budget.sh subcommand
+
+Rollover-cost R1 (one-shot mechanical prep) shipped as `scripts/rollover-prep.sh`
+calling context-budget.sh/capture-rollover-options.sh, rejecting a
+`context-budget.sh rollover-prep` subcommand: that file is measurement-only
+and already large; prep is orchestration, not measurement. Also: rotation
+leaves handoff.md at ONE block pre-write (rejected: rotate-after-write —
+would need a second call and re-introduce the agent-side splitting hazard).

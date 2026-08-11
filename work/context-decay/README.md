@@ -16,5 +16,9 @@ shipped system itself lives in `scripts/context-budget.sh`,
 
 Other files: `context-ledger.jsonl` (measurement ledger, append-only),
 `context-decay-spec.md` + `design.html` (implemented spec/design — do not
-reload), `ledger-analysis.md` (last analysis pass), `decisions.md` (Tier-2
-decision notes), `research/` (session-pinning research with citations).
+reload), `ledger-analysis.md` (last analysis pass; its "rollover is cheap" finding is
+superseded), `ledger-analysis-heavy-deployment-2026-08-11.md` (imported
+cross-deployment evidence), `rollover-cost-analysis-2026-08-11.md` (where the
+rollover's ~10–20K goes + optimization recommendations), `decisions.md`
+(Tier-2 decision notes), `research/` (session-pinning research with
+citations).

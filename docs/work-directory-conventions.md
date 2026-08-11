@@ -71,7 +71,7 @@ ledger block titles and worktree/branch names copy the prompt number — never
 re-derive N from ledger prose. If the ledger disagrees with your prompt number,
 repair the ledger note; seq wins. Drift self-heals at rollover: the dying
 session syncs `.session-seq` to its own number before launching the successor
-(`session-rollover` step 7). If your prompt carries no number (ad-hoc start),
+(`session-rollover` step 6). If your prompt carries no number (ad-hoc start),
 use `.session-seq` + 1 as your N and the sync write counts you in.
 
 **Archival (prevents unbounded growth):** keep only the two most recent session

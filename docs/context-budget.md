@@ -211,7 +211,7 @@ in machine-local `work/<project>/.session-seq` (incremented per real launch,
 never by `--dry-run`). `.session-seq` + the bootstrap prompt are the
 **canonical** session-number source (ADR-0007): sessions use their prompt
 number verbatim in ledger titles and worktree names, and the dying session
-syncs the counter to its own number at `session-rollover` step 7 before
+syncs the counter to its own number at `session-rollover` step 6 before
 launching — so a hand-pasted (launcher-bypassing) launch that skipped the
 increment self-corrects within one rollover. All five CLI runtimes get seeded-interactive launch
 (`claude`, `codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached
@@ -224,8 +224,9 @@ flags live only in the script — re-verify against `--help` before changing
 them.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
-by the dying session at `session-rollover` step 6 via
-`scripts/capture-rollover-options.sh <project>`, which on claude reads the
+by the dying session at `session-rollover` step 1 via
+`scripts/rollover-prep.sh <project>`, whose options-capture step
+(`scripts/capture-rollover-options.sh`) on claude reads the
 approval level mechanically from the transcript's recorded `permissionMode` —
 last value wins — and preserves hand-set keys; on other runtimes, or when
 nothing is known, the file is left untouched) holds

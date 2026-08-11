@@ -30,7 +30,7 @@
   (`docs/operational-knowledge.md`); do not retry.
 - `ledger-analysis.md` — re-read only at the next analysis pass.
 
-## Open items (all externally gated — nothing actionable without them)
+## Open items
 
 1. Gemini live-response verification — needs a user `GEMINI_API_KEY`.
 2. Copilot CLI adapter live verification — needs Copilot CLI installed.
@@ -38,7 +38,14 @@
    first non-claude rows.
 4. User-global context cleanup (option 3: superpowers SessionStart, unused
    `~/.claude/skills`, plugins) — deferred by user 2026-08-07; revisit only
-   if they raise it.
+   if they raise it. (Items 1–4: externally gated.)
+5. Rollover-cost savings validation — R1–R5 from
+   `rollover-cost-analysis-2026-08-11.md` were applied 2026-08-11
+   (`scripts/rollover-prep.sh` + slimmed skill). Predicted floor ~10K →
+   ~6-7K. After the next ~5 real rollovers, compare
+   `rollover start`→`complete` ledger deltas against the pre-change
+   medians (~11K local / ~20K heavy) and record the verdict in the
+   analysis doc.
 
 ## State snapshot
 
