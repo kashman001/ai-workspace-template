@@ -1,0 +1,31 @@
+CONTEXT.md
+  s_fcc56f610f99fd::t_ce3d3ba11d5102 205-207
+.vscode/settings.json
+  s_fcc56f610f99fd::t_2ada234d404b9e 5-6
+docs/context-budget.md
+  s_fcc56f610f99fd::t_2ada234d404b9e 64-81,89-90,494,550
+scripts/hooks/context-budget-copilot-vscode-hook.sh
+  s_fcc56f610f99fd::t_2ada234d404b9e 26-40
+work/context-decay/ledger-analysis-heavy-deployment-2026-08-11.md
+  s_fcc56f610f99fd::t_2ada234d404b9e 1-106
+skills/session-rollover/SKILL.md
+  s_fcc56f610f99fd::t_2ada234d404b9e 24-41
+scripts/context-budget.sh
+  s_fcc56f610f99fd::t_2ada234d404b9e 58-60,161-169,396-404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6a6f1fab417cd467417a7f26cebbd0505ab5ac8c",
+  "prompts": {},
+  "sessions": {
+    "s_fcc56f610f99fd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b36d8-4bc5-4e53-9b95-847d0ffe0ace",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
