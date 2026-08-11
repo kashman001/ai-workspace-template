@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc 3.10" />
+  <meta name="generator" content="pandoc 3.10.1" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Dev-AI Workspace Structure — ai-workspace-template
 guide</title>
@@ -42,7 +42,6 @@ guide</title>
       body {
         background-color: transparent;
         color: black;
-        font-size: 12pt;
       }
       p, h2, h3 {
         orphans: 3;
@@ -288,7 +287,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 3e99f02e4eb80f618d9d5ceead891649996bc4a6 -->
+  <!-- source-md-sha1: 0323ef335f171d5c542669215004f9b6b0882118 -->
 </head>
 <body>
 <div class="src-banner">
@@ -1147,9 +1146,11 @@ Workflow".</li>
 servers or launchers that are safe to share across runtimes. The
 template ships a YouTube transcript server backed by
 <code>yt-dlp</code>.</li>
-<li>A test suite under <code>scripts/tests/</code> for catching
-parameterization regressions (no hardcoded secrets, no machine-specific
-paths in tracked files, etc.).</li>
+<li>The template ships
+<code>scripts/tests/test-parameterization.sh</code> for catching
+parameterization regressions (version-pinned tool paths, personal
+identifiers in tracked files) — configure its <code>PII_PATTERNS</code>
+when instantiating.</li>
 </ul>
 <hr />
 <h2 id="environment-parameterization">Environment Parameterization</h2>
@@ -1183,8 +1184,9 @@ context.</li>
 <li><strong>Never:</strong> passwords, API keys, tokens, connection
 strings with embedded passwords.</li>
 </ul>
-<p>Enforce this with a parameterization test in
-<code>scripts/tests/</code>.</p>
+<p>Enforce this with <code>scripts/tests/test-parameterization.sh</code>
+(ships with the template; add project-specific patterns as they
+emerge).</p>
 <hr />
 <h2 id="service-access-pattern">Service Access Pattern</h2>
 <p>When the workspace integrates with external services (Atlassian,

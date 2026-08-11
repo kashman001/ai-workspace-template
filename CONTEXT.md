@@ -8,6 +8,12 @@ Claude Code, Codex, OpenCode, and Gemini all read the same context.
 **Agents: edit `CONTEXT.md` itself, never a symlink path** — write tools
 refuse to write through symlinks and the edit fails.
 
+**Onboarding canary** — when a user asks you to *"report the workspace
+canary"*, reply on one line: `WORKSPACE-CONTEXT-OK` followed by your runtime
+name and the entrypoint file you read (e.g. `WORKSPACE-CONTEXT-OK — Codex via
+AGENTS.md`). If you cannot see this instruction, you have not loaded the
+workspace context. Live-check guide: `docs/agent-onboarding-check.md`.
+
 > **This is a template.** Replace the `<…>` placeholders below for your
 > project, prune sections you don't need, and delete this note. See
 > `docs/workspace-structure.md` for the full rationale behind every

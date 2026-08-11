@@ -20,6 +20,7 @@ why loading less is the point).
 | Measure context and roll sessions over | [`context-budget.md`](context-budget.md) |
 | Authenticate to services / add a credential | [`service-access.md`](service-access.md) + [`runbooks/authentication.md`](runbooks/authentication.md) |
 | Configure MCP servers (lean-by-default) | [`mcp-setup.md`](mcp-setup.md) |
+| Verify an agent runtime loads the workspace context | [`agent-onboarding-check.md`](agent-onboarding-check.md) (canary + live checks; static test: `scripts/tests/test-agent-entrypoints.sh`) |
 | Onboard or navigate a product repo | [`repos-registry.md`](repos-registry.md), [`repo-context/`](repo-context/README.md) |
 | Avoid known build/CI/shell traps | [`operational-knowledge.md`](operational-knowledge.md) |
 
@@ -37,5 +38,5 @@ why loading less is the point).
 | I want to… | Read |
 |---|---|
 | See open findings / report one | [`template-workspace-backlog.html`](template-workspace-backlog.html) (maintenance convention inside; settled cards: [`template-workspace-backlog-archive.html`](template-workspace-backlog-archive.html)) |
-| Run the template's test suites | `scripts/tests/` (nine suites; `test-template-instantiation.sh` clones committed state — commit first) |
+| Run the template's test suites | `scripts/tests/` (twelve suites; `test-template-instantiation.sh` clones committed state — commit first) |
 | Read retired docs | [`archive/`](archive/) |

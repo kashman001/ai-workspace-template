@@ -679,6 +679,21 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L34</span> No onboarding canary or entrypoint/parameterization test suites; workspace-structure.md recommended a parameterization test the template never shipped
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · docs/ · scripts/tests/</span></h3>
+    <p><span class="k">Evidence</span> — the template had no way to verify a runtime actually loaded
+      <code>CONTEXT.md</code> (a downstream workspace lost its canary token during a doc-shrink pass and only a
+      static test caught it), and <code>workspace-structure.md</code> said "enforce this with a parameterization
+      test in <code>scripts/tests/</code>" while no such suite existed. Ported upstream from the
+      insight-dev-ai-workspace clone, 2026-08-11.</p>
+    <p><span class="fix">Fixed:</span> added the <code>WORKSPACE-CONTEXT-OK</code> onboarding-canary line to
+      <code>CONTEXT.md</code>, the live-check guide <code>docs/agent-onboarding-check.md</code>, and two suites:
+      <code>test-agent-entrypoints.sh</code> (symlink targets + canary + guide present) and
+      <code>test-parameterization.sh</code> (Cellar-path guard + configurable PII ratchet, skip-by-default until
+      <code>PII_PATTERNS</code> is set at instantiation).</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L19</span> No normalized approval level mapped to claude's classifier-vetted "auto mode"; script <code>auto</code> ≠ UI auto
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · docs/context-budget.md</span></h3>
     <p><span class="k">Evidence</span> — <code>ROLLOVER_OPT_APPROVAL=auto</code> mapped to claude

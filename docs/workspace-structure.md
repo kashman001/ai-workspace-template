@@ -782,9 +782,10 @@ scripts/
 - `scripts/mcp/` — checked-in, credential-free local MCP servers or launchers
   that are safe to share across runtimes. The template ships a YouTube
   transcript server backed by `yt-dlp`.
-- A test suite under `scripts/tests/` for catching parameterization
-  regressions (no hardcoded secrets, no machine-specific paths in tracked
-  files, etc.).
+- The template ships `scripts/tests/test-parameterization.sh` for catching
+  parameterization regressions (version-pinned tool paths, personal
+  identifiers in tracked files) — configure its `PII_PATTERNS` when
+  instantiating.
 
 ---
 
@@ -814,7 +815,8 @@ variable with placeholder values.
 - **Never:** passwords, API keys, tokens, connection strings with embedded
   passwords.
 
-Enforce this with a parameterization test in `scripts/tests/`.
+Enforce this with `scripts/tests/test-parameterization.sh` (ships with the
+template; add project-specific patterns as they emerge).
 
 ---
 
