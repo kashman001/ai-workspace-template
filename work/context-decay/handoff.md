@@ -6,6 +6,41 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-11 (session #6: dormant watch check + security audit + email history rewrite)
+
+- Watch check: 0 rollovers since session #5; only post-change data point is
+  #5's own delta (~4.2K, beats the 6–7K prediction). Fixed launcher count
+  baseline 37→40 (4 pre-change completes were miscounted as new); comparison
+  triggers at ≥45 total `rollover complete` ledger entries.
+- Verified the pasted context-decay research against primary sources via
+  Chrome: Pocock dictionary 125K–150K "debated" verbatim; Chroma + RULER
+  confirmed (with precision fixes); the research's "better mechanism" is
+  largely lifted from the same Anthropic post it critiques, and Pocock's
+  dictionary states dilution, not the quadratic story attributed to him.
+  Outcome baked into `context-budget.env` header comment (threshold update
+  rule + source links) — rejected a prose note in docs/context-budget.md as
+  standing-context weight.
+- Full secrets/PII audit of the workspace: no secrets in tree, history, env,
+  or scripts; no emails/phones/IPs in file content; .gitignore coverage
+  verified. Findings: commit-metadata emails on the public repo. User kept
+  the yahoo address; work email purged via `git filter-repo` rewrite (12
+  commits → noreply), force-pushed. **All SHAs from 2026-07-23 onward
+  changed** (e.g. R1–R5 commit `6d637b1`→`23f3b9b`); tree content verified
+  identical. Backup bundle (contains old history — delete when satisfied):
+  `~/Developer/experiments/ai-workspace-template-pre-filter-backup.bundle`.
+  Decision note appended to `decisions.md`.
+- USER ACTION PENDING: other machine must `git fetch && git reset --hard
+  origin/main` and switch its `git config user.email` off the work address,
+  or the leak recurs on its next push.
+
+Suggested skills: `session-rollover` (watch cadence); `decision-log`.
+
+Learnings:
+- Pre-rewrite SHAs in older handoff blocks/ledger/backlog rows are stale —
+  map via commit message (`git log --all --format='%h %s' | grep`).
+- gitleaks/trufflehog not installed on this machine; pattern-grep sweep is
+  the fallback (`sk-` pattern false-positives on "disk-state").
+
 # Session Handoff — 2026-08-11 (session #5: rollover-cost analysis + R1–R5 shipped)
 
 - User question (from heavy deployment's F3): why does rollover cost ~20K, how
@@ -37,37 +72,4 @@ Learnings:
   cards are newest-on-top — easy to get backwards.
 - `$c:path` in zsh triggers history-modifier parsing — quote `"$c:path"` in
   `git show` loops.
-
-# Session Handoff — 2026-08-07 (session #4: trims declined, Warp attribution settled, inspector fixed)
-
-**Ran as a background job (worktree `context-decay-s4`), user live mid-session.**
-
-**Trim candidates (mission steps 1–2):** measured live (turn-1 = 43,855 exact).
-skill_listing ~4,026 tok is only ~307 tok workspace-controlled (built-ins
-~1,511 / user-global skills ~954 / plugins ~872); CLAUDE.md moderate pass
-~600–800, aggressive ~1,000–1,300, all with real downsides (non-Claude
-runtimes, downloaders, always-on behavioral rules). Full table:
-`trim-estimates.md`. **User declined all trims** — bar was "unused AND no
-negative implications"; decision note in `decisions.md` (2026-08-07). Don't
-re-propose.
-
-**Warp attribution (mission step 3): settled.** hook_success stdout/stderr
-never enter model context; only the `content` field does (context-budget
-SessionStart hook: content≈stdout and visibly in context; Warp PostToolUse/
-Stop: content=0; superpowers SessionStart arrives as separate
-hook_additional_context). Residual analysis over two Warp-heavy transcripts:
-whole-JSON attribution → median residual −43/−14 with 57–73% turns negative;
-content-only → uniform small-positive (median ≈ +155). Fixed both jq measure
-sites in `scripts/context-inspect.sh` (hook_success now content-length);
-verified: 136 Warp records drop to 0 tok, residuals all small-positive.
-Backlog L31 (archive), scorecard 49.
-
-**Learnings (parked):**
-- Every session on this machine carries Warp plugin hooks — there is no
-  non-Warp control session; residual-delta comparison within a session is
-  the usable method.
-- Backlog archive has pre-existing duplicate IDs (two L19s, two L20s from
-  parallel passes; L-series otherwise runs to L30 — new cards start L31).
-
----
 

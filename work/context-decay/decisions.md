@@ -71,3 +71,14 @@ calling context-budget.sh/capture-rollover-options.sh, rejecting a
 and already large; prep is orchestration, not measurement. Also: rotation
 leaves handoff.md at ONE block pre-write (rejected: rotate-after-write —
 would need a second call and re-introduce the agent-side splitting hazard).
+
+## 2026-08-11 — Purge work email via full history rewrite
+
+**What:** Removed `kashif.siddiqui@core42.ai` from all 12 affected commits with
+`git filter-repo --email-callback` (→ `kashman001@users.noreply.github.com`) and
+force-pushed; HEAD tree hash verified unchanged. Backup bundle:
+`~/Developer/experiments/ai-workspace-template-pre-filter-backup.bundle`.
+**Why:** Public repo tied to an employer via commit metadata; config-only fix
+would leave the 12 existing commits exposed.
+**Rejected:** noreply-config-only (stops recurrence but doesn't erase);
+rewriting the personal yahoo email too (user explicitly accepted it as public).
