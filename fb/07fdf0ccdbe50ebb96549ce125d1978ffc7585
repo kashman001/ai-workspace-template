@@ -1,0 +1,19 @@
+docs/template-workspace-backlog.html
+  s_fcc56f610f99fd::t_aff3bd1f1a54bb 72,271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fb07fdf0ccdbe50ebb96549ce125d1978ffc7585",
+  "prompts": {},
+  "sessions": {
+    "s_fcc56f610f99fd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b36d8-4bc5-4e53-9b95-847d0ffe0ace",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
