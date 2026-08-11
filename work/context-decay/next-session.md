@@ -54,5 +54,7 @@ dir `work/kimi-k3-agent-integration/` belongs to another effort — leave it.
 2. `git pull --ff-only origin main` (another deployment also pushes here).
 3. Count post-change rollovers:
    `grep -c 'rollover complete' work/context-decay/context-ledger.jsonl`
-   minus the 37 pre-change ones — if ≥5 new, run the savings comparison
-   (mission); otherwise ask the user what's next or stay dormant.
+   minus the 40 pre-change ones (everything before session #5's own complete
+   at 2026-08-11T17:28:36Z; verified session #6). Session #5's own delta is
+   post-change data point #1, so run the savings comparison (mission) when
+   the total reaches ≥45; otherwise ask the user what's next or stay dormant.
