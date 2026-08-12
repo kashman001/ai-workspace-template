@@ -13,7 +13,11 @@ We're resuming devex-review — the FIX PROGRAM. Works in any runtime
 Session 4 ran as a background job on branch
 `worktree-devex-m24-setup-correctness` (package (c)/M24, commit `a7efb94`).
 If `git log --oneline -5` does not show that commit, the branch is unmerged —
-**stop and ask the user to merge it first**.
+**stop and ask the user to merge it first**. Merge note: main may carry
+uncommitted changes to `work/devex-review/handoff*.md` (a `rollover-prep.sh`
+bug rotated main's ledger from the worktree — card M25); they duplicate what
+the branch carries, so discard them first:
+`git checkout -- work/devex-review/` in main.
 
 ## Mission
 

@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">8</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">9</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">55</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -209,6 +209,23 @@
       despite the repo already carrying all three.</p>
     <p><span class="k">Fix</span> — one-page <code>docs/for-non-engineers.md</code> (status / decisions / contributing
       + ~6-term glossary); <code>work/README.md</code> status index; audience tags on skills.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M25</span> <code>rollover-prep.sh</code> operates on the workspace root, not the invoking worktree
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/rollover-prep.sh</span></h3>
+    <p><span class="k">Evidence</span> — devex-review sessions 3 and 4 (2026-08-11): invoked from a background-job
+      worktree, prep printed the MAIN checkout's git status and rotated the main checkout's
+      <code>work/&lt;proj&gt;/handoff.md</code> → <code>handoff-archive.md</code> (uncommitted), while the worktree's
+      copies — the ones that get committed and merged — were untouched. Session 3 misdiagnosed this as "rotated only
+      1 of 2 blocks"; session 4 reproduced it and traced the cause: the script resolves the workspace root from its
+      own path, not <code>$PWD</code>. Both sessions repaired the ledgers by hand.</p>
+    <p><span class="k">Impact</span> — every worktree-isolated rollover dirties the user's checkout and leaves the
+      committed ledger un-rotated, setting up merge conflicts on the handoff files and breaking the ≤2-block
+      verification contract.</p>
+    <p><span class="k">Fix</span> — resolve the root from <code>$PWD</code> (<code>git rev-parse --show-toplevel</code>)
+      instead of the script location (audit the sibling context-budget scripts for the same pattern), or refuse with
+      a warning when <code>$PWD</code> belongs to a different checkout; cover with a worktree-based test.</p>
   </div>
 
   <!-- ========================= LOW ========================= -->

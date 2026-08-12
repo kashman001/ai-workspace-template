@@ -1,3 +1,32 @@
+# Session Handoff — 2026-08-11 (session 2 close: fix plan agreed, backlog filed)
+
+Session 2 completed the planning mission early (rolled at ~72K, not WARN —
+deliberate: each fix package is a heavy unit, so the executor starts fresh).
+Shipped:
+
+- **Backlog filed:** 7 consolidated cards M19–M24 + L34 in
+  `docs/template-workspace-backlog.html` mapping the review's 7-item fix list
+  (commit "backlog(devex-review): file M19-M24, L34…"); scorecard 3→10 open.
+- **Plan agreed with user** (see `decisions.md`, both notes): one work item
+  (this one), packages sequenced (a) M19 day-1 state → (c) M24 setup
+  correctness → (b) M20–M22 spec workflow + QA seat (collaborative session)
+  → (d) M23 PM entry point → (e) L34 minimal mode. Rejected: wayfinder map,
+  per-package work items, spec-first ordering.
+- **`ROLLOVER_RELAUNCH=auto`** in `context-budget.env` (user directive,
+  committed with Decision trailer) — successors now auto-launch.
+
+Nothing dirty except this rollover's own files at write time; no processes,
+no open agents. `work/kimi-k3-agent-integration/` untracked = other effort,
+leave alone.
+
+Suggested skills for next session: `decision-log` (scope calls inside M19),
+backlog maintenance per `docs/template-workspace-backlog.html` (flip M19 to
+Resolved + archive the card when done), `session-rollover` at WARN/STOP.
+
+Learnings:
+- Session-1 handoff wrote `.session-seq`=1 but the bootstrap prompt said #2; per ADR-0007 the prompt wins — repaired to 2 at this rollover.
+
+
 # Session Handoff — 2026-08-11 (session 1 close: rollover at WARN, review shipped)
 
 Session 1 delivered the full DevEx review: three parallel read-only persona
