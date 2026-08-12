@@ -12,6 +12,15 @@ Pieces: `scripts/context-budget.sh` (measurement core) ·
 (thresholds + relaunch knobs) · `scripts/launch-next-session.sh` (successor
 relaunch) · `.context-budget/context-ledger.jsonl` (measurement ledger).
 
+> **Minimal mode — solo dev, one session at a time?** You need exactly three
+> things: `register` at session start (automatic via hook in Claude Code),
+> `scripts/context-budget.sh record --label "<what just finished>"` at
+> work-unit boundaries, and the `session-rollover` skill when a WARN/STOP
+> fires. That's the whole daily loop. Everything beyond the two Quickstarts —
+> session roles, locks, dispatch records and generation fencing, the
+> per-runtime hook matrix — is **fleet-only**: load-bearing for concurrent
+> sessions and subagent fleets, safe to skip until you run those.
+
 > **Agents — don't read this file whole (~10K tokens).** Pick your section from
 > the index below, `grep -n '^## '` for its header, and Read with
 > offset/limit from there. The two Quickstarts immediately below cover the
@@ -25,12 +34,13 @@ Section index:
 - **Thresholds** — WARN/STOP values and where they live.
 - **Rollover trigger policy** — what to do on exit 1 (WARN) vs 2 (STOP).
 - **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override.
-- **Multi-session model** — session-keyed registry, per-project lock,
-  session roles.
-- **Worktrees** — workspace-root anchoring.
-- **Per-child sweep (`children`)** — monitoring subagent context.
-- **Dispatching long-running children** — dispatch records + the rollover
-  contract for child prompts.
+- **Multi-session model** *(fleet-only)* — session-keyed registry,
+  per-project lock, session roles.
+- **Worktrees** *(fleet-only)* — workspace-root anchoring.
+- **Per-child sweep (`children`)** *(fleet-only)* — monitoring subagent
+  context.
+- **Dispatching long-running children** *(fleet-only)* — dispatch records +
+  the rollover contract for child prompts.
 - **Per-runtime adapters** — how each runtime's usage artifact is read.
 - **How warnings reach the agent** — layered in-band delivery (D8).
 - **Vendor hook deployments** — committed hook wiring per runtime.

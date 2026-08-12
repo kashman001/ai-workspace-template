@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">61</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">63</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -155,32 +155,8 @@
       regression test with a relocated artifact fixture.</p>
   </div>
 
-  <div class="find med">
-    <h3><span class="id">M23</span> No PM-facing entry point — content is PM-capable, surfaces are not
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/</span></h3>
-    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (PM 1.1, 2.2, 2.3, 4.2, 5.1): "product manager"
-      appears nowhere; yet ADRs are highly readable, work READMEs are real status reports, and
-      <code>/create-work-item</code> + <code>/decision</code> are usable by non-engineers but unadvertised; the PM
-      persona needed ~6 terms but was presented dozens, with no glossary.</p>
-    <p><span class="k">Impact</span> — a non-engineer stakeholder can't find status, decisions, or a way to contribute
-      despite the repo already carrying all three.</p>
-    <p><span class="k">Fix</span> — one-page <code>docs/for-non-engineers.md</code> (status / decisions / contributing
-      + ~6-term glossary); <code>work/README.md</code> status index; audience tags on skills.</p>
-  </div>
-
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L35</span> Context-budget system conceptually overloaded — no "minimal mode" statement
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/context-budget.md</span></h3>
-    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 11; PM 5.1): the daily loop is three commands,
-      but trusting the system requires absorbing session roles, locks, dispatch generations, and a six-runtime hook
-      matrix.</p>
-    <p><span class="k">Impact</span> — solo adopters bounce off machinery that's only load-bearing for fleets.</p>
-    <p><span class="k">Fix</span> — top-of-doc "Minimal mode" statement of the 3-command solo subset in
-      <code>docs/context-budget.md</code>; label everything else fleet-only.</p>
-  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -275,6 +251,7 @@
       <tr><td>2026-08-11</td><td>Fix <strong>M19</strong> (devex-review fix package (a) — archived): <strong>clean day-1 state</strong>. Telemetry ledger moved <code>work/context-decay/context-ledger.jsonl</code> → <code>.context-budget/context-ledger.jsonl</code> with a self-cleaning migration shim (any legacy ledger is folded in at script load; G3a–c regression asserts). Prune-<code>work/</code> guidance added as <code>template-usage.md</code> §5 (+ step-4 bullet in <code>setup-guide.html</code>): <code>work/</code> is a worked example, not machinery. Doc-worthy research promoted to <code>docs/archive/</code> (<code>ledger-analysis.md</code>, <code>ledger-analysis-heavy-deployment-2026-08-11.md</code>, <code>rollover-cost-analysis-2026-08-11.md</code>, <code>design.html</code> → <code>context-budget-design.html</code>) and every shipped-artifact citation repointed (<code>session-rollover/SKILL.md</code>, <code>context-budget.sh</code>, copilot-vscode hook, <code>context-inspect.sh</code>, <code>docs/context-budget.md</code> — whose pointer to the never-imported <code>copilot-vscode-hook-research-findings.md</code> was dropped as already dangling). All 10 suites green (402 asserts). Scorecard now 9 open / 54 resolved.</td></tr>
       <tr><td>2026-08-11</td><td>Repair: <strong>L34 ID collision</strong> — the devex-review session (unpushed) and the downstream insight clone independently assigned L34 to different findings. The clone's card (onboarding canary + entrypoint/parameterization suites, filed resolved, <code>28c49f0</code>) published first and keeps the ID; the devex review's "context-budget minimal mode" card is renumbered <strong>L34 → L35</strong> (references in the review header and <code>work/devex-review/decisions.md</code> updated; session-1/2 handoff history keeps the old ID and is explained by this row). Scorecard unchanged. Lesson for concurrent clones: an ID is only claimed once pushed.</td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>M25 + L33 + L32</strong> (devex-review fix package (d) — archived): <strong>session-mechanics reliability</strong>. M25: <code>rollover-prep.sh</code> splits root resolution — tracked work files (handoff rotation, git summary) now target the invoking checkout (<code>$PWD</code>'s toplevel, adopted only when it shares this repo's git common dir), untracked coordination state (<code>.session-seq</code>, <code>.rollover-options</code>) stays on the main checkout; sibling audit confirmed <code>capture-rollover-options.sh</code>/<code>context-budget.sh</code>/<code>launch-next-session.sh</code> touch only coordination state, so their main-checkout convergence is correct by design; worktree regression test T10. L33: mechanical stale-launcher guard in <code>launch-next-session.sh</code> — refuses to launch when any local/remote ref carries a <code>next-session.md</code>-touching commit not reachable from HEAD (reachability, not timestamps); <code>--skip-freshness</code> overrides; tests F1–F4. L32: claude hook keys throttle/escalation state per (session, chain) via transcript basename, so a sidechain firing can't swallow the parent's WARN; test T12. Suites green: 38+94+54 asserts. Scorecard now 3/61/4/0/6.</td></tr>
+      <tr><td>2026-08-12</td><td>Fix <strong>M23 + L35</strong> (devex-review fix package (e), the program's final package — archived): <strong>non-engineer surfaces</strong>. M23: new <code>docs/for-non-engineers.md</code> (status / decisions / contributing routes + the six-term glossary, agent-prompt fallbacks for the optional to-spec/to-tickets toolchain); new <code>work/README.md</code> status index (one row + status per work item, refreshed at checkpoint/rollover) with a 60-second work-directory reading key; <em>(anyone)</em> audience tags on create-work-item/decision-log/to-spec in CONTEXT.md's skills list plus a human-redirect line atop CONTEXT.md; discoverability rows in <code>docs/README.md</code> (top-of-table non-engineer row; rendered backlog URL on the findings row) and a README.md pointer. L35: "Minimal mode" statement at the top of <code>docs/context-budget.md</code> (solo loop = register + record + session-rollover) with the fleet-only sections tagged in the section index. Doc-only change; no suites affected. Scorecard now 1/63/4/0/6 — remaining open card: M16.</td></tr>
     </tbody>
   </table>
 

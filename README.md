@@ -41,6 +41,10 @@ the HTML with [`scripts/build-guide-html.sh`](scripts/build-guide-html.sh), whic
 **Working in a scaffolded workspace?** Start here →
 [`CONTEXT.md`](CONTEXT.md)
 
+**Not an engineer?** Status, decisions, and how to contribute — with the
+only six terms you need — live in
+[`docs/for-non-engineers.md`](docs/for-non-engineers.md).
+
 **Improving the template itself?** Review findings and their status live in the
 backlog —
 [rendered](https://kashman001.github.io/ai-workspace-template/template-workspace-backlog.html)

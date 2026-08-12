@@ -323,6 +323,29 @@
   </div>
 
   <div class="find med resolved">
+    <h3><span class="id">M23</span> No PM-facing entry point — content is PM-capable, surfaces are not
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs/</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (PM 1.1, 2.2, 2.3, 4.2, 5.1): "product manager"
+      appears nowhere; yet ADRs are highly readable, work READMEs are real status reports, and
+      <code>/create-work-item</code> + <code>/decision</code> are usable by non-engineers but unadvertised; the PM
+      persona needed ~6 terms but was presented dozens, with no glossary.</p>
+    <p><span class="k">Impact</span> — a non-engineer stakeholder can't find status, decisions, or a way to contribute
+      despite the repo already carrying all three.</p>
+    <p><span class="k">Fixed:</span> (2026-08-12, fix package (e)) new <code>docs/for-non-engineers.md</code> — one
+      page routing the three PM jobs: <em>status</em> (the new <code>work/README.md</code> index + per-effort READMEs
+      + the rendered backlog page; "don't read git log"), <em>decisions</em> (<code>docs/adr/</code> +
+      <code>work/*/decisions.md</code> + a canonical ask-the-agent prompt), <em>contributing</em> (<code>SPEC.md</code>
+      as the PM-native deliverable, <code>/create-work-item</code>, <code>/decision</code>, and plain-language agent
+      prompts as the fallback when the optional to-spec/to-tickets toolchain isn't installed) — plus the six-term
+      glossary (work item, launcher, ledger/handoff, rollover, ADR/decision note, backlog card). New
+      <code>work/README.md</code> status index: one row + status per work item, a 60-second "how to read a work
+      directory" key, refreshed at checkpoint/rollover. Audience tags: <em>(anyone)</em> on
+      create-work-item/decision-log/to-spec in CONTEXT.md's skills list with a one-line legend; human-redirect line
+      atop CONTEXT.md. Discoverability: top-of-table row in <code>docs/README.md</code>, rendered-backlog URL on its
+      findings row, and a "Not an engineer?" pointer in README.md.</p>
+  </div>
+
+  <div class="find med resolved">
     <h3><span class="id">M25</span> <code>rollover-prep.sh</code> operates on the workspace root, not the invoking worktree
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/rollover-prep.sh</span></h3>
     <p><span class="k">Evidence</span> — devex-review sessions 3 and 4 (2026-08-11): invoked from a background-job
@@ -804,6 +827,20 @@
       step 6 and the option-inheritance doc. Verified live: capture on the running auto-mode session +
       <code>launch-next-session.sh --dry-run</code> shows <code>--permission-mode auto</code> on the successor
       command.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L35</span> Context-budget system conceptually overloaded — no "minimal mode" statement
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 11; PM 5.1): the daily loop is three commands,
+      but trusting the system requires absorbing session roles, locks, dispatch generations, and a six-runtime hook
+      matrix.</p>
+    <p><span class="k">Impact</span> — solo adopters bounce off machinery that's only load-bearing for fleets.</p>
+    <p><span class="k">Fixed:</span> (2026-08-12, fix package (e)) "Minimal mode" blockquote at the top of
+      <code>docs/context-budget.md</code>: solo daily loop = <code>register</code> (hook-automatic in Claude Code) +
+      <code>record</code> at work-unit boundaries + the <code>session-rollover</code> skill at WARN/STOP; everything
+      beyond the two Quickstarts declared <strong>fleet-only</strong>, and the fleet-only entries in the section
+      index (multi-session model, worktrees, per-child sweep, dispatching long-running children) tagged inline.</p>
   </div>
 
   <div class="find low resolved">

@@ -117,3 +117,19 @@ for ops work); renaming either spec file (churn, paths already
 disambiguate); mandatory traceability fields (no enforcement mechanism);
 separate test-plan.md + verification.md (doubles the skip chance); vendoring
 all five skills / declaring all as prerequisites.
+
+## 2026-08-12 — work/README.md status index lists committed work items only (M23)
+
+**What:** The new `work/README.md` status index carries one row per
+*committed* work item; untracked directories (today:
+`work/kimi-k3-agent-integration/`, another effort's uncommitted scaffold) are
+omitted until their own effort commits them, at which point that effort adds
+its row.
+
+**Why:** The index is a committed doc — a row pointing at an untracked
+directory is a broken link for every clone and would fail the "all internal
+links resolve" strength the backlog asserts. The maintenance rule (refresh at
+checkpoint/rollover) makes self-registration cheap.
+
+**Rejected:** listing untracked items with a "(not yet committed)" marker —
+truthful only on one machine, broken everywhere else.

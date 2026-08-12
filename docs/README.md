@@ -12,6 +12,7 @@ why loading less is the point).
 
 | I want to… | Read |
 |---|---|
+| Find status, decisions, or how to contribute — without being an engineer | [`for-non-engineers.md`](for-non-engineers.md) (entry point + glossary); status index: [`work/README.md`](../work/README.md) |
 | Instantiate the template for my project | [`template-usage.md`](template-usage.md) (markdown) or the rendered [`setup-guide.html`](setup-guide.html) |
 | Get a machine ready (tools, auth) | [`runbooks/`](runbooks/README.md) — paired with `scripts/check-*.sh`; required-vs-optional table in [`recommended-tooling.md`](recommended-tooling.md) |
 | Understand the directory layout and conventions | [`workspace-structure.md`](workspace-structure.md) (rendered: [`workspace-structure.html`](workspace-structure.html)) |
@@ -37,6 +38,6 @@ why loading less is the point).
 
 | I want to… | Read |
 |---|---|
-| See open findings / report one | [`template-workspace-backlog.html`](template-workspace-backlog.html) (maintenance convention inside; settled cards: [`template-workspace-backlog-archive.html`](template-workspace-backlog-archive.html)) |
+| See open findings / report one | [rendered backlog page](https://kashman001.github.io/ai-workspace-template/template-workspace-backlog.html) · source [`template-workspace-backlog.html`](template-workspace-backlog.html) (maintenance convention inside; settled cards: [`template-workspace-backlog-archive.html`](template-workspace-backlog-archive.html)) |
 | Run the template's test suites | `scripts/tests/` (`test-template-instantiation.sh` clones committed state — commit first) |
 | Read retired docs | [`archive/`](archive/) |

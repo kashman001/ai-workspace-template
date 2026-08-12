@@ -8,6 +8,8 @@ Claude Code, Codex, OpenCode, and Gemini all read the same context.
 **Agents: edit `CONTEXT.md` itself, never a symlink path** — write tools
 refuse to write through symlinks and the edit fails.
 
+Humans: start at `README.md`; non-engineers: `docs/for-non-engineers.md`.
+
 **Onboarding canary** — when a user asks you to *"report the workspace
 canary"*, reply on one line: `WORKSPACE-CONTEXT-OK` followed by your runtime
 name and the entrypoint file you read (e.g. `WORKSPACE-CONTEXT-OK — Codex via
@@ -98,7 +100,9 @@ shortcuts under `.claude/commands/`). One line each below — **open the skill's
 `SKILL.md` for the full workflow before acting on it**; that file carries the
 details omitted here. Adding a team capability (script vs. skill vs. agent
 profile vs. runbook, plus the two wiring steps): `docs/workspace-structure.md`
-→ "Authoring a Team Capability".
+→ "Authoring a Team Capability". Skills tagged **(anyone)** are safe for
+non-engineers to drive conversationally (see `docs/for-non-engineers.md`);
+untagged skills assume an engineering operator.
 
 - **checkpoint** — session-boundary wrap-up: reconcile backlog/memory/docs,
   write a hand-off doc, emit a catch-up prompt for the next session. On a
@@ -107,18 +111,19 @@ profile vs. runbook, plus the two wiring steps): `docs/workspace-structure.md`
 - **session-rollover** — deliberate, pruned handoff to a fresh session when the
   context budget hits WARN/STOP, instead of letting automatic compaction decide
   what survives (see **Context Budget** below). `/session-rollover [reason]`
-- **create-work-item** — scaffold a `work/<project>/` directory (README +
-  launcher + ledger) when starting multi-session work; not for one-shot tasks.
-  `/create-work-item <name>`
-- **decision-log** — capture the *why* behind a decision per the three-tier
-  scheme above. `/decision <what + why + rejected>` (or `/decision promote <note>`)
+- **create-work-item** *(anyone)* — scaffold a `work/<project>/` directory
+  (README + launcher + ledger) when starting multi-session work; not for
+  one-shot tasks. `/create-work-item <name>`
+- **decision-log** *(anyone)* — capture the *why* behind a decision per the
+  three-tier scheme above. `/decision <what + why + rejected>` (or
+  `/decision promote <note>`)
 - **onboard-repo** — bring a repo into the workspace: registry entry, graphify
   index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
 - **rlm** — answer a query over a context too large to read into chat
   (persistent Python REPL + cheap leaf LLM over slices; good for counting,
   per-item classification, whole-corpus summaries). `/rlm context=<path> query=<question>`
-- **to-spec** — synthesize the current conversation into an effort spec at
-  `work/<effort>/spec.md`, per the spec conventions
+- **to-spec** *(anyone)* — synthesize the current conversation into an effort
+  spec at `work/<effort>/spec.md`, per the spec conventions
   (`docs/agents/issue-tracker.md`). `/to-spec [effort]`
 - **to-tickets** — break a plan/spec/conversation into tracer-bullet tickets
   with blocking edges under `work/<effort>/issues/`. `/to-tickets [source]`
