@@ -1155,6 +1155,31 @@
       instance actually converges on <code>.context-budget/</code>).</p>
   </div>
 
+  <div class="find low">
+    <h3><span class="id">L37</span> Portable agent brief — exporting workspace state to an out-of-workspace agent is an unrecognized pattern
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/work-directory-conventions.md · skills/</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-08-12 — captured as a convention only (no skill, simplicity-first;
+      promotable later if the pattern recurs — Tier-2 note): new "Portable agent brief" section in
+      <code>docs/work-directory-conventions.md</code>, contrasted with dispatch records (same-machine children),
+      plus a <code>briefs/&lt;audience&gt;-vN.md</code> row in the optional-files table. The convention: one
+      sealed file per version (corrections ship as v(N+1) — the consuming agent holds a copy an edit cannot
+      reach), a supersession header ("Supersedes all earlier briefs; discard them" — the only retraction
+      mechanism available), an explicit never-reveal section (each fact paired with its deflection), and ledger
+      notes at issue and at staleness so the export stays visible to future sessions. Skeleton included.</p>
+    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12: sessions 6–7 hand-invented
+      <code>research/portable-agent-brief-*.md</code> — versioned, self-contained briefings written for the Claude
+      phone app acting as a live negotiation "back room": role framing, a never-reveal list, a terse response
+      format, and explicit supersession ("v2 … supersedes any earlier brief"). Nothing in the template covers
+      exporting state to an agent outside the workspace (dispatch records assume same-machine children); the
+      session-7 ledger already had to flag the v2 brief as stale after a decision changed the picture.</p>
+    <p><span class="k">Impact</span> — users reinvent the pattern ad hoc; briefs go stale silently with no
+      supersession or sync-back convention, and private-data boundaries ride on improvised wording.</p>
+    <p><span class="k">Fix</span> — capture as a lightweight convention (or a small <code>portable-brief</code>
+      skill): a sealed, dated, self-contained brief with a supersession header, an explicit
+      never-reveal/redaction section, and a ledger note recording when a brief was issued and when it went stale;
+      document in work-directory-conventions next to the dispatch-record pattern.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

@@ -6,6 +6,33 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-12 (session #5: L37 fixed — house-sale mission COMPLETE)
+
+**Trigger:** normal completion (background session, worktree
+`worktree-template-maintenance-s5-l37`; well under WARN).
+
+**What shipped (on the worktree branch, NOT yet on main — user merges):**
+- **L37** (portable agent brief): new "Portable agent brief" section in
+  `docs/work-directory-conventions.md` (between Verification evidence and
+  Naming) + a `briefs/<audience>-vN.md` row in the optional-files table.
+  Convention: one sealed file per version (corrections = v(N+1)), supersession
+  header ("Supersedes all earlier briefs; discard them"), explicit
+  never-reveal section (fact + deflection), ledger notes at issue and at
+  staleness, skeleton included. Contrasted with dispatch records
+  (same-machine children). Convention-only — no skill (simplicity-first;
+  promotable if the pattern recurs); Tier-2 note in `decisions.md`
+  (2026-08-12: convention-over-skill).
+- Card Resolved → archive (Low, before Decisions); scorecard **1 Open
+  (M16) / 66 Resolved**. Doc-only change — no suites affected.
+- Backlog hygiene: added the change-log row session 4 omitted for its own
+  M26+L36 resolution (marked retroactive), fixed the stale footer date.
+- `work/README.md` status row refreshed.
+
+**House-sale mission (M26 → L36 → L37) is COMPLETE.** Remaining open card
+M16 was explicitly out of mission scope.
+
+---
+
 # Session Handoff — 2026-08-12 (session #4: M26 + L36 fixed; L37 next)
 
 **Trigger:** context-budget WARN at 123K after closing L36.
@@ -38,33 +65,3 @@ Convention: docs/work-directory-conventions.md.
 
 **Suggested skills:** `writing-for-agents` (before authoring the L37
 convention text); `decision-log`.
-
----
-
-# Session Handoff — 2026-08-07 (session #3: L17+L18 resolved — backlog at 0 Open)
-
-**Trigger:** normal completion (background session; 107K tokens, under WARN).
-
-**What shipped (branch `worktree-l17-l18-backlog-fixes`, NOT yet on main —
-worktree-isolated background session; user merges):**
-- L17 (four deferred rollover-script issues): attach-session.sh
-  live-but-unlocked message reworded to match its flags (T4d updated); both
-  `ls -t` glob loops (attach-session.sh, own_record in
-  launch-next-session.sh) made space-safe via `while IFS= read -r`;
-  opencode_measure SQL-escapes `$PWD`/`$sid`; the stale registry-suite
-  filename was only in the test file's own `# File:` header — the
-  docs/context-budget.md reference was already correct.
-- L18: per-variable precedence around the context-budget.env source in
-  context-budget.sh (capture-before/restore-after, the launch-next-session.sh
-  ROLLOVER_* pattern). New regression test T16 — verified red on the pre-fix
-  script, green after. Tier-2 decision note (capture/restore over default-only
-  env assignments; the latter inverts the per-item override chain).
-- All eight test suites green (343 asserts). Backlog: L17+L18 cards moved to
-  archive with Fixed: notes; scorecard 0 Open / 46 Resolved; change-log row.
-
-**Learnings (parked):**
-- L30's session added no change-log row for L30 in the backlog (card+scorecard
-  only); left as-is per surgical-changes.
-
----
-

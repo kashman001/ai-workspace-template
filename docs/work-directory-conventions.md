@@ -96,6 +96,7 @@ the latest. Either pattern is acceptable; pick one per project and be consistent
 | `map.md` + `issues/NN-<slug>.md` | Optional | Wayfinder map + decision tickets for the effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations" (governing skill: `skills/wayfinder/SKILL.md`). |
 | `spec.md` | Required when "done" is debatable | The effort's spec/PRD — skeleton, when-required rule, approval flow, and external-tracker (spec-of-record) handling: `docs/agents/issue-tracker.md` → "Spec conventions". Distinct from root `SPEC.md` (product-level Z0). **No spec → success criteria go in a `## Success criteria` section of `README.md`.** |
 | `verification.md` | Recommended when there's anything to verify | The evidence behind "done": test plan (before) + results (after) in one file (skeleton below). |
+| `briefs/<audience>-vN.md` | Optional | Sealed, versioned export of project state to an out-of-workspace agent (see "Portable agent brief" below). |
 
 Keep everything else (state trackers, registries, run logs, specs) named for
 what it is; the governing skill owns the full file-level detail.
@@ -132,6 +133,49 @@ the work is committed (the whole table above, plus a per-item
 committed copy is a stale claim waiting to be checked out) and
 `.rollover-options` (per-launch flags for this machine's runtime, rewritten
 each rollover).
+
+## Portable agent brief (`briefs/<audience>-vN.md`)
+
+Dispatch records (`docs/context-budget.md` → "Dispatching long-running
+children") cover children launched on the same machine, able to read these
+files. A **portable brief** is the opposite export: project state handed to
+an agent *outside* the workspace — a phone-app chat, another person's
+assistant, any runtime with no file access. The brief must be self-contained,
+and once a copy is out the workspace can neither update nor retract it, so
+staleness is managed by convention:
+
+- **One file per version, sealed.** `work/<proj>/briefs/<audience>-vN.md`.
+  Issued means frozen: corrections ship as v(N+1), because the consuming
+  agent holds a copy an edit here cannot reach.
+- **Supersession header.** Version, issue date, and the line
+  "Supersedes all earlier briefs; discard them." — the discard instruction
+  is the only retraction mechanism available.
+- **Never-reveal section.** An explicit list of facts the agent must not
+  disclose, each with what to say if asked. The private-data boundary lives
+  in this section, stated — the consuming agent has no other way to know it.
+- **Ledger notes at issue and at staleness.** The issuing session's ledger
+  block records that vN went out; when a later decision changes the picture,
+  the ledger flags the brief stale and the next brief is v(N+1). The ledger
+  note is what makes the export visible to future sessions — without it the
+  brief goes stale silently.
+
+Skeleton:
+
+```markdown
+# Brief — <audience / purpose> (v2, issued 2026-08-12)
+
+Supersedes all earlier briefs; discard them.
+Role: <what the receiving agent is doing with this>
+
+## Never reveal
+- <fact> — if asked, say: <deflection>
+
+## Situation
+<self-contained current state: no pointers into the workspace>
+
+## How to respond
+<the response format the situation calls for, e.g. terse live prompts>
+```
 
 ## Naming
 

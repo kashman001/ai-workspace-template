@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">2</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">65</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">66</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -157,23 +157,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L37</span> Portable agent brief — exporting workspace state to an out-of-workspace agent is an unrecognized pattern
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md · skills/</span></h3>
-    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12: sessions 6–7 hand-invented
-      <code>research/portable-agent-brief-*.md</code> — versioned, self-contained briefings written for the Claude
-      phone app acting as a live negotiation "back room": role framing, a never-reveal list, a terse response
-      format, and explicit supersession ("v2 … supersedes any earlier brief"). Nothing in the template covers
-      exporting state to an agent outside the workspace (dispatch records assume same-machine children); the
-      session-7 ledger already had to flag the v2 brief as stale after a decision changed the picture.</p>
-    <p><span class="k">Impact</span> — users reinvent the pattern ad hoc; briefs go stale silently with no
-      supersession or sync-back convention, and private-data boundaries ride on improvised wording.</p>
-    <p><span class="k">Fix</span> — capture as a lightweight convention (or a small <code>portable-brief</code>
-      skill): a sealed, dated, self-contained brief with a supersession header, an explicit
-      never-reveal/redaction section, and a ledger note recording when a brief was issued and when it went stale;
-      document in work-directory-conventions next to the dispatch-record pattern.</p>
-  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -270,13 +253,15 @@
       <tr><td>2026-08-12</td><td>Fix <strong>M25 + L33 + L32</strong> (devex-review fix package (d) — archived): <strong>session-mechanics reliability</strong>. M25: <code>rollover-prep.sh</code> splits root resolution — tracked work files (handoff rotation, git summary) now target the invoking checkout (<code>$PWD</code>'s toplevel, adopted only when it shares this repo's git common dir), untracked coordination state (<code>.session-seq</code>, <code>.rollover-options</code>) stays on the main checkout; sibling audit confirmed <code>capture-rollover-options.sh</code>/<code>context-budget.sh</code>/<code>launch-next-session.sh</code> touch only coordination state, so their main-checkout convergence is correct by design; worktree regression test T10. L33: mechanical stale-launcher guard in <code>launch-next-session.sh</code> — refuses to launch when any local/remote ref carries a <code>next-session.md</code>-touching commit not reachable from HEAD (reachability, not timestamps); <code>--skip-freshness</code> overrides; tests F1–F4. L32: claude hook keys throttle/escalation state per (session, chain) via transcript basename, so a sidechain firing can't swallow the parent's WARN; test T12. Suites green: 38+94+54 asserts. Scorecard now 3/61/4/0/6.</td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>M23 + L35</strong> (devex-review fix package (e), the program's final package — archived): <strong>non-engineer surfaces</strong>. M23: new <code>docs/for-non-engineers.md</code> (status / decisions / contributing routes + the six-term glossary, agent-prompt fallbacks for the optional to-spec/to-tickets toolchain); new <code>work/README.md</code> status index (one row + status per work item, refreshed at checkpoint/rollover) with a 60-second work-directory reading key; <em>(anyone)</em> audience tags on create-work-item/decision-log/to-spec in CONTEXT.md's skills list plus a human-redirect line atop CONTEXT.md; discoverability rows in <code>docs/README.md</code> (top-of-table non-engineer row; rendered backlog URL on the findings row) and a README.md pointer. L35: "Minimal mode" statement at the top of <code>docs/context-budget.md</code> (solo loop = register + record + session-rollover) with the fleet-only sections tagged in the section index. Doc-only change; no suites affected. Scorecard now 1/63/4/0/6 — remaining open card: M16.</td></tr>
       <tr><td>2026-08-12</td><td>New findings <strong>M26 + L36 + L37</strong> filed from an evidence pass over a real non-code instantiation (personal house-sale workspace, 8 sessions, no product code): the process core (launcher/ledger, decisions.md, measured rollovers) worked unmodified, surfacing three gaps — no-git privacy mode is real but unsupported (M26), instantiation pruning leaves template-development artifacts behind (L36), and the hand-invented "portable agent brief" export pattern has no convention (L37). Scorecard now 4/63/4/0/6.</td></tr>
+      <tr><td>2026-08-12</td><td>Fix <strong>M26 + L36</strong> (house-sale mission, cards 1–2 — archived): M26: <code>docs/template-usage.md</code> §1 gains a third, no-git ("private") instantiation variant + a "No-git mode" subsection — paste-in Privacy Posture block for <code>CONTEXT.md</code>, Tier-1→Tier-2 decision-capture rewrite, N/A list for git-dependent machinery — with one-line N/A notes at each point of use (CONTEXT.md Tier-1 bullet; decision-log / checkpoint / session-rollover skills); no code change (<code>launch-next-session.sh</code> already degrades without git). L36: §5 broadened to the full template-development prune list (backlog pair, template-usage itself, unused mcp-fragments, LICENSE swap, README index rows, operational-knowledge trim; scaffolding dirs stay), <code>setup.sh</code> prune reminder gated on the backlog pair (regression T1c), M19 ledger-migration shim verified via registry G3. Suites: 72/72 registry, 28/28 instantiation. Scorecard now 2/65/4/0/6. <em>(Row added retroactively by session 5 — the delivering session omitted it.)</em></td></tr>
+      <tr><td>2026-08-12</td><td>Fix <strong>L37</strong> (house-sale mission, final card — archived): portable-agent-brief convention documented in <code>docs/work-directory-conventions.md</code> — new "Portable agent brief" section (one sealed file per version under <code>work/&lt;proj&gt;/briefs/&lt;audience&gt;-vN.md</code>, supersession header with the discard line, explicit never-reveal section, ledger notes at issue and at staleness, skeleton included) plus an optional-files-table row; contrasted with dispatch records (same-machine children). Kept convention-only per simplicity-first — a skill is promotable if the pattern recurs (Tier-2 note). Scorecard now 1/66/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-10.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-12.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>

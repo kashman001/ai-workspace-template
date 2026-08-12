@@ -63,3 +63,10 @@
 **Rejected:** `--prune-template` flag or interactive TTY prompt in setup.sh performing the deletions — destructive code in the bootstrap path for a once-per-instance action; the card's "offer the prune interactively" is satisfied by the unmissable reminder at the moment of instantiation.
 **Blast radius:** scripts/setup.sh, docs/template-usage.md §5, scripts/tests/test-template-instantiation.sh (T1c), both backlog HTML files.
 **Promote?:** no
+
+## 2026-08-12 — L37 portable brief: convention-only over a portable-brief skill
+**Chose:** Document the portable-agent-brief pattern as a convention section in `docs/work-directory-conventions.md` (sealed one-file-per-version `briefs/<audience>-vN.md`, supersession header, never-reveal section, ledger notes at issue/staleness, skeleton) plus an optional-files-table row. No skill.
+**Because:** One real occurrence so far (house-sale sessions 6–7); the pattern is pure file discipline with no steps a skill would automate — a convention beside the other work-directory file conventions is where an agent scaffolding a brief would look. Simplicity-first: a skill can be promoted later if the pattern recurs.
+**Rejected:** A small `skills/portable-brief/SKILL.md` + `/portable-brief` shortcut — adds an always-loaded CONTEXT.md skills-list line and a skill to maintain for a workflow that is one template file; premature until a second instance reinvents or misapplies the convention.
+**Blast radius:** docs/work-directory-conventions.md, both backlog HTML files.
+**Promote?:** no

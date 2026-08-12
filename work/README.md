@@ -20,5 +20,5 @@ convention: [`docs/work-directory-conventions.md`](../docs/work-directory-conven
 | [`context-decay`](context-decay/README.md) | The context-budget system (measure, warn, roll over) | Dormant — all backlog findings resolved; remaining items externally gated |
 | [`devex-review`](devex-review/README.md) | Persona-based DevEx review of this template + fix program | Complete — all review findings carded and fixed (final package: M23 + L35) |
 | [`per-item-relaunch-override`](per-item-relaunch-override/README.md) | Per-work-item override of `ROLLOVER_RELAUNCH` | Done — one-shot task, shipped |
-| [`template-maintenance`](template-maintenance/README.md) | Umbrella for ongoing template upkeep (backlog, skill syncs) | Standing — no queued mission; picks up new findings |
+| [`template-maintenance`](template-maintenance/README.md) | Umbrella for ongoing template upkeep (backlog, skill syncs) | Standing — house-sale mission complete (M26+L36+L37); no queued mission |
 | [`usage-scenarios`](usage-scenarios/README.md) | Scenario catalog for evaluating the template | Maintenance mode — mission complete; catalog kept accurate |
