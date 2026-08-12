@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">4</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">63</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -155,8 +155,66 @@
       regression test with a relocated artifact fixture.</p>
   </div>
 
+  <div class="find med">
+    <h3><span class="id">M26</span> No-git ("private") workspace mode is real but unsupported
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">CONTEXT.md template · docs/template-usage.md · git-assuming scripts/skills</span></h3>
+    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12 (a real 8-session, non-code personal
+      instantiation at <code>~/projects/Personal/house-sale</code>): the workspace deliberately runs with NO git
+      repository for privacy (personal financial documents), enforced only by a hand-written PRIVACY block in its
+      CONTEXT.md ("do not run git init, do not commit, never push/upload"). Meanwhile the inherited template text
+      still mandates Tier-1 decision capture as a commit trailer "(always)", <code>checkpoint</code> expects clean
+      branch state, and the package-(d) stale-launcher/freshness guards are git-reachability checks that cannot run
+      at all. The instance degraded gracefully only because every collision was hand-patched; the launcher/ledger,
+      decisions.md, and context-budget loop (19 measured rollover records) all worked fine without git.</p>
+    <p><span class="k">Impact</span> — privacy-sensitive instantiations (personal, legal, financial) must discover
+      and hand-patch the git assumptions themselves; git-dependent machinery silently no-ops or gives misleading
+      instructions (an "always" rule that is impossible to follow).</p>
+    <p><span class="k">Fix</span> — document a supported no-git variant: an instantiation choice that (1) states the
+      privacy posture in CONTEXT.md template text (no init, no push, no external upload of <code>work/</code>);
+      (2) rewrites Tier-1 decision capture to a dated ledger/decisions.md line when there are no commits;
+      (3) marks git-dependent pieces (checkpoint branch checks, launch-next-session freshness guard, worktree
+      isolation, diff-review) as N/A in this mode. The core loop (launcher/ledger, decisions, context budget) is
+      already git-free — the fix is labeling, not new machinery.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L36</span> Instantiation pruning leaves template-development artifacts in instances
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/template-usage.md §5 · scripts/setup.sh</span></h3>
+    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12: a personal house-sale workspace still
+      carries the template's own backlog HTML pair, <code>docs/template-usage.md</code>, the template LICENSE, a
+      GitHub MCP fragment, build/CI content in <code>operational-knowledge.md</code>, and empty
+      <code>repos/</code>/<code>references/</code>/<code>prompt-library/</code> scaffolding. The instance predates
+      M19's prune-<code>work/</code> guidance and, after a 2026-08-07 template update
+      (<code>.template-update-backup-2026-08-07</code> present), its context ledger still sits at the legacy
+      <code>work/context-decay/context-ledger.jsonl</code> path.</p>
+    <p><span class="k">Impact</span> — engineering vestige confuses non-code instances, bloats the always-on doc
+      surface, and legacy state paths persist through updates.</p>
+    <p><span class="k">Fix</span> — extend the template-usage §5 prune list beyond <code>work/</code> to template-only
+      files (backlog pair, template-usage itself, unused mcp-fragments, LICENSE swap); have
+      <code>scripts/setup.sh</code> or an instantiation checklist offer the prune interactively; verify the
+      template-update flow triggers the M19 ledger-migration shim (it runs at script load — confirm an updated
+      instance actually converges on <code>.context-budget/</code>).</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L37</span> Portable agent brief — exporting workspace state to an out-of-workspace agent is an unrecognized pattern
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md · skills/</span></h3>
+    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12: sessions 6–7 hand-invented
+      <code>research/portable-agent-brief-*.md</code> — versioned, self-contained briefings written for the Claude
+      phone app acting as a live negotiation "back room": role framing, a never-reveal list, a terse response
+      format, and explicit supersession ("v2 … supersedes any earlier brief"). Nothing in the template covers
+      exporting state to an agent outside the workspace (dispatch records assume same-machine children); the
+      session-7 ledger already had to flag the v2 brief as stale after a decision changed the picture.</p>
+    <p><span class="k">Impact</span> — users reinvent the pattern ad hoc; briefs go stale silently with no
+      supersession or sync-back convention, and private-data boundaries ride on improvised wording.</p>
+    <p><span class="k">Fix</span> — capture as a lightweight convention (or a small <code>portable-brief</code>
+      skill): a sealed, dated, self-contained brief with a supersession header, an explicit
+      never-reveal/redaction section, and a ledger note recording when a brief was issued and when it went stale;
+      document in work-directory-conventions next to the dispatch-record pattern.</p>
+  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -252,6 +310,7 @@
       <tr><td>2026-08-11</td><td>Repair: <strong>L34 ID collision</strong> — the devex-review session (unpushed) and the downstream insight clone independently assigned L34 to different findings. The clone's card (onboarding canary + entrypoint/parameterization suites, filed resolved, <code>28c49f0</code>) published first and keeps the ID; the devex review's "context-budget minimal mode" card is renumbered <strong>L34 → L35</strong> (references in the review header and <code>work/devex-review/decisions.md</code> updated; session-1/2 handoff history keeps the old ID and is explained by this row). Scorecard unchanged. Lesson for concurrent clones: an ID is only claimed once pushed.</td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>M25 + L33 + L32</strong> (devex-review fix package (d) — archived): <strong>session-mechanics reliability</strong>. M25: <code>rollover-prep.sh</code> splits root resolution — tracked work files (handoff rotation, git summary) now target the invoking checkout (<code>$PWD</code>'s toplevel, adopted only when it shares this repo's git common dir), untracked coordination state (<code>.session-seq</code>, <code>.rollover-options</code>) stays on the main checkout; sibling audit confirmed <code>capture-rollover-options.sh</code>/<code>context-budget.sh</code>/<code>launch-next-session.sh</code> touch only coordination state, so their main-checkout convergence is correct by design; worktree regression test T10. L33: mechanical stale-launcher guard in <code>launch-next-session.sh</code> — refuses to launch when any local/remote ref carries a <code>next-session.md</code>-touching commit not reachable from HEAD (reachability, not timestamps); <code>--skip-freshness</code> overrides; tests F1–F4. L32: claude hook keys throttle/escalation state per (session, chain) via transcript basename, so a sidechain firing can't swallow the parent's WARN; test T12. Suites green: 38+94+54 asserts. Scorecard now 3/61/4/0/6.</td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>M23 + L35</strong> (devex-review fix package (e), the program's final package — archived): <strong>non-engineer surfaces</strong>. M23: new <code>docs/for-non-engineers.md</code> (status / decisions / contributing routes + the six-term glossary, agent-prompt fallbacks for the optional to-spec/to-tickets toolchain); new <code>work/README.md</code> status index (one row + status per work item, refreshed at checkpoint/rollover) with a 60-second work-directory reading key; <em>(anyone)</em> audience tags on create-work-item/decision-log/to-spec in CONTEXT.md's skills list plus a human-redirect line atop CONTEXT.md; discoverability rows in <code>docs/README.md</code> (top-of-table non-engineer row; rendered backlog URL on the findings row) and a README.md pointer. L35: "Minimal mode" statement at the top of <code>docs/context-budget.md</code> (solo loop = register + record + session-rollover) with the fleet-only sections tagged in the section index. Doc-only change; no suites affected. Scorecard now 1/63/4/0/6 — remaining open card: M16.</td></tr>
+      <tr><td>2026-08-12</td><td>New findings <strong>M26 + L36 + L37</strong> filed from an evidence pass over a real non-code instantiation (personal house-sale workspace, 8 sessions, no product code): the process core (launcher/ledger, decisions.md, measured rollovers) worked unmodified, surfacing three gaps — no-git privacy mode is real but unsupported (M26), instantiation pruning leaves template-development artifacts behind (L36), and the hand-invented "portable agent brief" export pattern has no convention (L37). Scorecard now 4/63/4/0/6.</td></tr>
     </tbody>
   </table>
 
