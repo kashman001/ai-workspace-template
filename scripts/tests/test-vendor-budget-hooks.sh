@@ -208,4 +208,21 @@ out=$(echo "$vs_fresh" | CHECK_EVERY=0 FAKE_STATUS=STOP FAKE_TOKENS=151000 \
 assert_eq "T11k: missing chatSessions file -> exit 0 (fail-open)" "$rc" "0"
 assert_empty "T11l: missing chatSessions file silent" "$out"
 
+echo "T12: sidechain firing does not consume the parent's WARN slot (L32)"
+reset_state
+touch "$TMP/s12.jsonl" "$TMP/side-abc.jsonl"
+side="{\"session_id\":\"s12\",\"transcript_path\":\"$TMP/side-abc.jsonl\"}"
+main="{\"session_id\":\"s12\",\"transcript_path\":\"$TMP/s12.jsonl\"}"
+err=$(echo "$side" | CHECK_EVERY=9999 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-claude-hook.sh" 2>&1 >/dev/null); rc=$?
+assert_eq "T12a: sidechain WARN exits 2 (child notified)" "$rc" "2"
+err=$(echo "$main" | CHECK_EVERY=9999 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
+      "$HOOKS/context-budget-claude-hook.sh" 2>&1 >/dev/null); rc=$?
+assert_eq "T12b: parent WARN still delivered after sidechain won the race" "$rc" "2"
+assert_contains "T12c: parent WARN text" "$err" "CONTEXT BUDGET WARN"
+[ -f "$TMP/.context-budget/hook-claude-s12.status" ] \
+  && ok "T12d: parent state keyed plain" || bad "T12d: parent state file missing"
+[ -f "$TMP/.context-budget/hook-claude-s12-sidechain.status" ] \
+  && ok "T12e: sidechain state keyed separately" || bad "T12e: sidechain state file missing"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

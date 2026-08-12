@@ -122,7 +122,10 @@ exchanges so STOP can't pass unnoticed.
    auto-generated from early content). Honor `ROLLOVER_RELAUNCH` via
    `scripts/launch-next-session.sh <project>` — it builds exactly this prompt,
    tracks N, and owns all vendor launch specifics. Script absent or knob `off`:
-   the pasted prompt is the whole handoff.
+   the pasted prompt is the whole handoff. The script refuses to launch when a
+   newer committed `next-session.md` exists on a ref outside the launching
+   checkout's history (stale-launcher guard, backlog L33) — merge/pull first;
+   `--skip-freshness` overrides.
 
 7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 

@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">6</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">58</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">61</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -168,54 +168,8 @@
       + ~6-term glossary); <code>work/README.md</code> status index; audience tags on skills.</p>
   </div>
 
-  <div class="find med">
-    <h3><span class="id">M25</span> <code>rollover-prep.sh</code> operates on the workspace root, not the invoking worktree
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/rollover-prep.sh</span></h3>
-    <p><span class="k">Evidence</span> — devex-review sessions 3 and 4 (2026-08-11): invoked from a background-job
-      worktree, prep printed the MAIN checkout's git status and rotated the main checkout's
-      <code>work/&lt;proj&gt;/handoff.md</code> → <code>handoff-archive.md</code> (uncommitted), while the worktree's
-      copies — the ones that get committed and merged — were untouched. Session 3 misdiagnosed this as "rotated only
-      1 of 2 blocks"; session 4 reproduced it and traced the cause: the script resolves the workspace root from its
-      own path, not <code>$PWD</code>. Both sessions repaired the ledgers by hand. Third strike session 6
-      (2026-08-12): reproduced identically from the package-(b) worktree; repaired by copying the rotated files into
-      the worktree and restoring the root copies from <code>git show HEAD:</code>.</p>
-    <p><span class="k">Impact</span> — every worktree-isolated rollover dirties the user's checkout and leaves the
-      committed ledger un-rotated, setting up merge conflicts on the handoff files and breaking the ≤2-block
-      verification contract.</p>
-    <p><span class="k">Fix</span> — resolve the root from <code>$PWD</code> (<code>git rev-parse --show-toplevel</code>)
-      instead of the script location (audit the sibling context-budget scripts for the same pattern), or refuse with
-      a warning when <code>$PWD</code> belongs to a different checkout; cover with a worktree-based test.</p>
-  </div>
-
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L32</span> In-band WARN push swallowed when a busy child wins the throttle race
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/hooks/ (claude runtime)</span></h3>
-    <p><span class="k">Evidence</span> — change-log finding 2026-08-06 (session 24, ticket 06 empirical run),
-      previously un-carded: the hook throttle key is shared, so a subagent's hook firing can consume the
-      escalation-once slot under the parent session id and the parent never sees the WARN push.</p>
-    <p><span class="k">Impact</span> — a session can cross WARN unnotified and drift toward STOP/auto-compaction
-      territory; defeats the consent-point design.</p>
-    <p><span class="k">Fix</span> — key the throttle/escalation state per (session-id, main-vs-sidechain) instead of
-      per session id alone; cover with a vendor-hook test that fires a sidechain event first.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L33</span> Launcher staleness race: successor trusts a stale <code>next-session.md</code> when the checkout lags origin
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/session-rollover · scripts/launch-next-session.sh</span></h3>
-    <p><span class="k">Evidence</span> — change-log finding 2026-08-06, previously un-carded: a successor session read
-      a stale launcher because the local checkout lagged origin/main; mitigation is prose-only. Same shape recurred
-      2026-08-08 session 2: a fresh worktree branched from origin/main, which lagged local main by the session-1
-      commit — caught only because the work files were visibly missing. Third strike 2026-08-12 (devex-review
-      session 5): launched from main's stale launcher while session 4's branch was unmerged, so the launcher
-      pointed at already-done work (M24); a full redo was averted only because EnterWorktree resumed session 4's
-      worktree and its commits were noticed.</p>
-    <p><span class="k">Impact</span> — successor resumes from an outdated plan; wasted work or conflicting edits.</p>
-    <p><span class="k">Fix</span> — cheap freshness guard at bootstrap: compare the launcher's last-commit sha against
-      origin (and against local main when branching a worktree); warn and stop if behind.</p>
-  </div>
 
   <div class="find low">
     <h3><span class="id">L35</span> Context-budget system conceptually overloaded — no "minimal mode" statement
@@ -320,6 +274,7 @@
       <tr><td>2026-08-11</td><td>Fix <strong>M18</strong> (new card, resolved on filing — archived): <strong>rollover-cost optimization</strong>, from the cross-deployment question "the rollover itself costs ~20K — why, and how do we cut it". Analysis (<code>work/context-decay/rollover-cost-analysis-2026-08-11.md</code>): local cost tripled July→Aug (median ~4.6K → ~11K over 36 ledger deltas) tracking <code>session-rollover/SKILL.md</code> growth 4.6KB→12.1KB; floor ~8–10K mechanical + 0–25K deferred bookkeeping. Applied R1–R5: new <code>scripts/rollover-prep.sh</code> one-shot prep (start record, git summary, verified-lossless handoff→archive rotation, top block, <code>.session-seq</code>, options capture; 28-assert test suite), skill slimmed 12,074→9,222 bytes (mechanics disclosed to scripts), write-ahead promoted to standing discipline, ≤40-line handoff-block cap, self-sufficiency note (no <code>context-budget.md</code> load mid-rollover). First live run also caught up 4 unarchived blocks in <code>work/context-decay/handoff.md</code>. Scorecard now 3/52/4/0/6.</td></tr>
       <tr><td>2026-08-11</td><td>Fix <strong>M19</strong> (devex-review fix package (a) — archived): <strong>clean day-1 state</strong>. Telemetry ledger moved <code>work/context-decay/context-ledger.jsonl</code> → <code>.context-budget/context-ledger.jsonl</code> with a self-cleaning migration shim (any legacy ledger is folded in at script load; G3a–c regression asserts). Prune-<code>work/</code> guidance added as <code>template-usage.md</code> §5 (+ step-4 bullet in <code>setup-guide.html</code>): <code>work/</code> is a worked example, not machinery. Doc-worthy research promoted to <code>docs/archive/</code> (<code>ledger-analysis.md</code>, <code>ledger-analysis-heavy-deployment-2026-08-11.md</code>, <code>rollover-cost-analysis-2026-08-11.md</code>, <code>design.html</code> → <code>context-budget-design.html</code>) and every shipped-artifact citation repointed (<code>session-rollover/SKILL.md</code>, <code>context-budget.sh</code>, copilot-vscode hook, <code>context-inspect.sh</code>, <code>docs/context-budget.md</code> — whose pointer to the never-imported <code>copilot-vscode-hook-research-findings.md</code> was dropped as already dangling). All 10 suites green (402 asserts). Scorecard now 9 open / 54 resolved.</td></tr>
       <tr><td>2026-08-11</td><td>Repair: <strong>L34 ID collision</strong> — the devex-review session (unpushed) and the downstream insight clone independently assigned L34 to different findings. The clone's card (onboarding canary + entrypoint/parameterization suites, filed resolved, <code>28c49f0</code>) published first and keeps the ID; the devex review's "context-budget minimal mode" card is renumbered <strong>L34 → L35</strong> (references in the review header and <code>work/devex-review/decisions.md</code> updated; session-1/2 handoff history keeps the old ID and is explained by this row). Scorecard unchanged. Lesson for concurrent clones: an ID is only claimed once pushed.</td></tr>
+      <tr><td>2026-08-12</td><td>Fix <strong>M25 + L33 + L32</strong> (devex-review fix package (d) — archived): <strong>session-mechanics reliability</strong>. M25: <code>rollover-prep.sh</code> splits root resolution — tracked work files (handoff rotation, git summary) now target the invoking checkout (<code>$PWD</code>'s toplevel, adopted only when it shares this repo's git common dir), untracked coordination state (<code>.session-seq</code>, <code>.rollover-options</code>) stays on the main checkout; sibling audit confirmed <code>capture-rollover-options.sh</code>/<code>context-budget.sh</code>/<code>launch-next-session.sh</code> touch only coordination state, so their main-checkout convergence is correct by design; worktree regression test T10. L33: mechanical stale-launcher guard in <code>launch-next-session.sh</code> — refuses to launch when any local/remote ref carries a <code>next-session.md</code>-touching commit not reachable from HEAD (reachability, not timestamps); <code>--skip-freshness</code> overrides; tests F1–F4. L32: claude hook keys throttle/escalation state per (session, chain) via transcript basename, so a sidechain firing can't swallow the parent's WARN; test T12. Suites green: 38+94+54 asserts. Scorecard now 3/61/4/0/6.</td></tr>
     </tbody>
   </table>
 

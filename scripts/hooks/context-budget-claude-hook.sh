@@ -12,7 +12,16 @@ input=$(cat)
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 transcript=$(echo "$input" | jq -r '.transcript_path // empty')
 [ -n "$transcript" ] && [ -f "$transcript" ] || exit 0
-out=$(budget_hook_check claude "$session_id" "$transcript")
+# Sidechain firings share the parent's session_id but must not consume its
+# throttle/escalation slot (backlog L32) — key state per (session, chain).
+# Main transcript basename = session id (docs/context-budget.md → adapters);
+# any other transcript under the same session is a sidechain's.
+chain=""
+case "${transcript##*/}" in
+  "$session_id.jsonl") : ;;
+  *) chain="-sidechain" ;;
+esac
+out=$(budget_hook_check claude "$session_id$chain" "$transcript")
 [ -n "$out" ] || exit 0
 read -r status tokens threshold <<<"$out"
 budget_hook_message "$status" "$tokens" "$threshold" >&2

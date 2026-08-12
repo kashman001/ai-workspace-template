@@ -60,17 +60,18 @@ STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 note() { echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
 
-PROJECT=""; RUNTIME=""; BG=0; DRY=0
+PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --bg) BG=1; shift ;;
     --dry-run) DRY=1; shift ;;
+    --skip-freshness) SKIP_FRESH=1; shift ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--skip-freshness]"
 
 # Worktree-invoked (issue 05): tracked handoff artifacts (launcher/ledger)
 # flow only through git, so before launching make the successor's launch root
@@ -95,6 +96,25 @@ fi
 
 [ -f "$WORKSPACE_ROOT/work/$PROJECT/next-session.md" ] \
   || die "work/$PROJECT/next-session.md not found — run session-rollover first"
+
+# Launcher freshness guard (backlog L33): a successor launched from a stale
+# next-session.md resumes an outdated plan (three strikes logged). Refuse to
+# launch when any local or remote ref carries a newer commit touching the
+# launcher that is not in this checkout's history. Best-effort fetch first so
+# lagging remote-tracking refs are visible; fails open when offline or when
+# the launcher is untracked. Override: --skip-freshness.
+if [ "$SKIP_FRESH" -eq 0 ]; then
+  git -C "$WORKSPACE_ROOT" fetch -q --all 2>/dev/null || true
+  # A launcher-touching commit reachable from some ref but NOT from HEAD =
+  # someone has a launcher edit this checkout lacks (no date comparison —
+  # rapid-fire commits share second-resolution timestamps).
+  NEWER="$(git -C "$WORKSPACE_ROOT" rev-list -1 --all --not HEAD -- "work/$PROJECT/next-session.md" 2>/dev/null)"
+  if [ -n "$NEWER" ]; then
+    refs="$(git -C "$WORKSPACE_ROOT" branch -a --contains "$NEWER" 2>/dev/null \
+      | sed 's/^[* ] //' | head -3 | tr '\n' ' ')"
+    die "stale launcher: a newer work/$PROJECT/next-session.md commit (${NEWER:0:12}) exists on: ${refs:-unknown ref} — merge/pull it into this checkout first, or pass --skip-freshness to launch anyway"
+  fi
+fi
 
 # Relaunch knobs: explicit env > per-item work/$PROJECT/context-budget.env >
 # global context-budget.env > built-in default. Sourced here (not at the top)

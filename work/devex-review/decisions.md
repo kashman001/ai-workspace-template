@@ -2,6 +2,36 @@
 
 Tier-2 decision notes (see CLAUDE.md → Decision Records). Newest on top.
 
+## 2026-08-12 — M25 splits root resolution by file nature, not blanket $PWD
+
+**What:** `rollover-prep.sh` targets the invoking checkout ($PWD's toplevel,
+adopted only when it shares the repo's git common dir) for tracked work files
+(handoff rotation, git summary), while untracked coordination state
+(`.session-seq`, `.rollover-options`) stays on the main checkout.
+
+**Why:** Tracked handoff files flow through git — the worktree's copies get
+committed and merged, so rotating the main checkout's copies dirties it and
+leaves the committed ledger un-rotated (the three-strike M25 failure).
+Coordination state is gitignored and read by `launch-next-session.sh` at the
+main root; moving it to the worktree would strand it when the worktree is
+deleted. **Rejected:** blanket `$PWD` resolution (would break coordination
+reads and misfire when invoked from an unrelated repo); refuse-with-warning
+(pushes the worktree rollover burden back onto the human every time).
+
+## 2026-08-12 — L33 guard uses reachability, not newest-by-date
+
+**What:** The stale-launcher guard refuses when any ref carries a
+`next-session.md`-touching commit not reachable from HEAD
+(`rev-list --all --not HEAD -- <launcher>`), rather than comparing the
+newest commit's sha/date against HEAD's.
+
+**Why:** rev-list date ordering tie-breaks arbitrarily on same-second
+commits (observed in the F1 test: the guard silently passed), and rollover
+commits land in rapid succession. Reachability is exact: "someone has a
+launcher edit you don't have" needs no clock. **Rejected:** date comparison
+(flaky under commit bursts); mandatory fetch failure (guard fails open when
+offline — a launch beats a hang).
+
 ## 2026-08-11 — M19 ledger move ships a migration shim, not a manual move
 
 **What:** `context-budget.sh` folds any legacy

@@ -38,6 +38,33 @@ resolve_workspace_root() {  # same convention as capture-rollover-options.sh
 }
 WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 
+# Tracked work files (handoff.md rotation, git summary) must target the
+# checkout the session is actually working in — from a worktree, that is the
+# worktree, whose copies get committed and merged (backlog M25). Adopt $PWD's
+# toplevel only when it is a checkout of THIS repository (same git common
+# dir); otherwise fall back to the main checkout. Untracked coordination
+# state (.session-seq, .rollover-options) stays on WORKSPACE_ROOT, where
+# launch-next-session.sh reads it.
+canon_common_dir() {  # $1 = dir to query; prints resolved common dir or nothing
+  local common
+  common="$(git -C "$1" rev-parse --git-common-dir 2>/dev/null)" || return 0
+  case "$common" in /*) : ;; *) common="$1/$common" ;; esac  # relative to the queried dir
+  (cd "$common" 2>/dev/null && pwd -P)
+}
+resolve_invoke_root() {
+  local top pcommon scommon
+  top="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" \
+    || { printf '%s' "$WORKSPACE_ROOT"; return; }
+  pcommon="$(canon_common_dir "$PWD")"
+  scommon="$(canon_common_dir "$WORKSPACE_ROOT")"
+  if [ -n "$pcommon" ] && [ "$pcommon" = "$scommon" ]; then
+    printf '%s' "$top"
+  else
+    printf '%s' "$WORKSPACE_ROOT"
+  fi
+}
+INVOKE_ROOT="$(resolve_invoke_root)"
+
 die() { echo "error: $*" >&2; exit 1; }
 
 PROJECT="${1:-}"; shift 2>/dev/null || true
@@ -50,8 +77,11 @@ while [ $# -gt 0 ]; do
     *) die "unknown argument: $1" ;;
   esac
 done
-DIR="$WORKSPACE_ROOT/work/$PROJECT"
+DIR="$INVOKE_ROOT/work/$PROJECT"           # tracked files: invoking checkout
+COORD_DIR="$WORKSPACE_ROOT/work/$PROJECT"  # untracked coordination state
 [ -d "$DIR" ] || die "work/$PROJECT not found"
+[ "$INVOKE_ROOT" != "$WORKSPACE_ROOT" ] \
+  && echo "note: operating on checkout $INVOKE_ROOT (coordination state stays at $WORKSPACE_ROOT)"
 
 MARKER='^# Session Handoff'
 
@@ -77,11 +107,11 @@ rotate_handoff() {
 
 git_summary() {
   local r name total
-  for r in "$WORKSPACE_ROOT" "$WORKSPACE_ROOT"/repos/*/; do
+  for r in "$INVOKE_ROOT" "$INVOKE_ROOT"/repos/*/; do
     [ -e "$r/.git" ] || continue
     case "$r" in
-      "$WORKSPACE_ROOT") name="(workspace root)" ;;
-      *) name="${r#"$WORKSPACE_ROOT"/}" ;;
+      "$INVOKE_ROOT") name="(workspace root)" ;;
+      *) name="${r#"$INVOKE_ROOT"/}" ;;
     esac
     echo "-- $name"
     git -C "$r" status --porcelain=v1 -b 2>/dev/null | sed -n '1,15p'
@@ -112,9 +142,9 @@ else
 fi
 
 echo "== session-seq =="
-if [ -f "$DIR/.session-seq" ]; then cat "$DIR/.session-seq"; else echo "absent"; fi
+if [ -f "$COORD_DIR/.session-seq" ]; then cat "$COORD_DIR/.session-seq"; else echo "absent"; fi
 
 echo "== rollover-options =="
 "$WORKSPACE_ROOT/scripts/capture-rollover-options.sh" "$PROJECT" || true
-[ -f "$DIR/.rollover-options" ] && cat "$DIR/.rollover-options"
+[ -f "$COORD_DIR/.rollover-options" ] && cat "$COORD_DIR/.rollover-options"
 exit 0

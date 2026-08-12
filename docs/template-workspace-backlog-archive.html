@@ -323,6 +323,30 @@
   </div>
 
   <div class="find med resolved">
+    <h3><span class="id">M25</span> <code>rollover-prep.sh</code> operates on the workspace root, not the invoking worktree
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/rollover-prep.sh</span></h3>
+    <p><span class="k">Evidence</span> — devex-review sessions 3 and 4 (2026-08-11): invoked from a background-job
+      worktree, prep printed the MAIN checkout's git status and rotated the main checkout's
+      <code>work/&lt;proj&gt;/handoff.md</code> → <code>handoff-archive.md</code> (uncommitted), while the worktree's
+      copies — the ones that get committed and merged — were untouched. Session 3 misdiagnosed this as "rotated only
+      1 of 2 blocks"; session 4 reproduced it and traced the cause: the script resolves the workspace root from its
+      own path, not <code>$PWD</code>. Both sessions repaired the ledgers by hand. Third strike session 6
+      (2026-08-12): reproduced identically from the package-(b) worktree; repaired by copying the rotated files into
+      the worktree and restoring the root copies from <code>git show HEAD:</code>.</p>
+    <p><span class="k">Impact</span> — every worktree-isolated rollover dirties the user's checkout and leaves the
+      committed ledger un-rotated, setting up merge conflicts on the handoff files and breaking the ≤2-block
+      verification contract.</p>
+    <p><span class="k">Fixed:</span> (2026-08-12, fix package (d)) root resolution split by file nature: tracked work
+      files (handoff rotation, top-block print, git summary) target the invoking checkout — <code>$PWD</code>'s
+      toplevel, adopted only when it shares this repository's git common dir — while untracked coordination state
+      (<code>.session-seq</code>, <code>.rollover-options</code>) stays on the main checkout, where
+      <code>launch-next-session.sh</code> reads it. Sibling audit: <code>capture-rollover-options.sh</code>,
+      <code>context-budget.sh</code>, <code>launch-next-session.sh</code> touch only coordination state — their
+      main-checkout convergence is correct by design and unchanged. Worktree-based regression test (T10, 9 asserts)
+      proves the worktree's ledger rotates and the main checkout's stays untouched.</p>
+  </div>
+
+  <div class="find med resolved">
     <h3><span class="id">M24</span> Setup correctness + doc-drift papercuts — first documented command fails on a pristine clone
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/check-*.sh · docs/workspace-structure.md · CONTEXT.md template</span></h3>
     <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 1, 3, 4, 5, 12; QA A1, A2, A3, B7): check-before-setup
@@ -780,6 +804,42 @@
       step 6 and the option-inheritance doc. Verified live: capture on the running auto-mode session +
       <code>launch-next-session.sh --dry-run</code> shows <code>--permission-mode auto</code> on the successor
       command.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L32</span> In-band WARN push swallowed when a busy child wins the throttle race
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/hooks/ (claude runtime)</span></h3>
+    <p><span class="k">Evidence</span> — change-log finding 2026-08-06 (session 24, ticket 06 empirical run),
+      previously un-carded: the hook throttle key is shared, so a subagent's hook firing can consume the
+      escalation-once slot under the parent session id and the parent never sees the WARN push.</p>
+    <p><span class="k">Impact</span> — a session can cross WARN unnotified and drift toward STOP/auto-compaction
+      territory; defeats the consent-point design.</p>
+    <p><span class="k">Fixed:</span> (2026-08-12, fix package (d)) the claude wrapper keys throttle/escalation state
+      per (session, chain): a transcript whose basename is not <code>&lt;session_id&gt;.jsonl</code> is a sidechain's
+      (main transcript basename = session id, per <code>docs/context-budget.md</code> adapters) and gets a
+      <code>-sidechain</code> key suffix, so a subagent firing can neither consume the parent's throttle stamp nor
+      write WARN into its escalation state. Vendor-hook test T12 fires the sidechain first and asserts the parent
+      still receives its WARN and both state files exist under distinct keys.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L33</span> Launcher staleness race: successor trusts a stale <code>next-session.md</code> when the checkout lags origin
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/session-rollover · scripts/launch-next-session.sh</span></h3>
+    <p><span class="k">Evidence</span> — change-log finding 2026-08-06, previously un-carded: a successor session read
+      a stale launcher because the local checkout lagged origin/main; mitigation is prose-only. Same shape recurred
+      2026-08-08 session 2: a fresh worktree branched from origin/main, which lagged local main by the session-1
+      commit — caught only because the work files were visibly missing. Third strike 2026-08-12 (devex-review
+      session 5): launched from main's stale launcher while session 4's branch was unmerged, so the launcher
+      pointed at already-done work (M24); a full redo was averted only because EnterWorktree resumed session 4's
+      worktree and its commits were noticed.</p>
+    <p><span class="k">Impact</span> — successor resumes from an outdated plan; wasted work or conflicting edits.</p>
+    <p><span class="k">Fixed:</span> (2026-08-12, fix package (d)) mechanical stale-launcher guard in
+      <code>launch-next-session.sh</code>, after the launcher-exists check: best-effort <code>git fetch</code>, then
+      refuse (exit 3) when any local or remote ref carries a commit touching <code>work/&lt;proj&gt;/next-session.md</code>
+      that is not reachable from the launching checkout's HEAD — reachability, not timestamp comparison, so
+      rapid-fire same-second commits can't fool it; the die names the carrying refs; <code>--skip-freshness</code>
+      overrides. Covers all three strike shapes (lagging origin, worktree off a stale base, unmerged rollover
+      branch). Tests F1–F4; the session-rollover skill's relaunch step documents the guard.</p>
   </div>
 
   <div class="find low resolved">

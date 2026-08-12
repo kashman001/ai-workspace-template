@@ -336,5 +336,34 @@ assert_eq "W5a: exit 0" "$rc" "0"
 assert_not_contains "W5b: no worktree sync attempted" "$out" "worktree-invoked"
 cd "$TMP"
 
+echo "F1: newer launcher on an unmerged local branch — stale-launcher refusal (L33)"
+echo "# launcher v5" > "$GMAIN/wt/work/testproj/next-session.md"
+GITC -C "$GMAIN/wt" commit -qam "rollover v5"
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq       "F1a: exit 3"            "$rc" "3"
+assert_contains "F1b: stale launcher named" "$out" "stale launcher"
+assert_contains "F1c: carrying ref named"   "$out" "session-branch"
+
+echo "F2: --skip-freshness overrides the guard"
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run --skip-freshness 2>&1 </dev/null); rc=$?
+assert_eq       "F2a: exit 0"    "$rc" "0"
+assert_contains "F2b: launches"  "$out" "cmd: claude"
+
+echo "F3: branch merged — guard passes"
+GITC -C "$GMAIN" merge -q session-branch
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq "F3a: exit 0 after merge" "$rc" "0"
+
+echo "F4: origin/main ahead of the local checkout — refusal until pulled"
+echo "# launcher v6" > "$GMAIN/wt/work/testproj/next-session.md"
+GITC -C "$GMAIN/wt" commit -qam "rollover v6"
+git -C "$GMAIN/wt" push -q origin session-branch:main
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq       "F4a: exit 3 while lagging" "$rc" "3"
+assert_contains "F4b: stale launcher named" "$out" "stale launcher"
+git -C "$GMAIN" pull -q --ff-only
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq "F4c: exit 0 after pull" "$rc" "0"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

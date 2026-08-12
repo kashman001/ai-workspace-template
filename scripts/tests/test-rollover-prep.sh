@@ -126,6 +126,29 @@ echo "T9: usage errors"
 "$RP" testproj --bogus >/dev/null 2>&1; assert_eq "T9c: unknown flag -> exit 1" "$?" "1"
 "$RP" testproj --reason >/dev/null 2>&1; assert_eq "T9d: --reason without value -> exit 1 (no hang)" "$?" "1"
 
+echo "T10: invoked from a worktree — rotates the WORKTREE's handoff, not the main checkout's (M25)"
+mk_handoff; rm -f "$AF"
+git -C "$TMP" add -A >/dev/null 2>&1
+git -C "$TMP" -c user.email=t@t -c user.name=t commit -qm seed >/dev/null 2>&1
+WT="$TMP/wt"
+if git -C "$TMP" worktree add -q "$WT" -b t10branch >/dev/null 2>&1; then
+  echo "seq-from-main-checkout" > "$TMP/work/testproj/.session-seq"
+  out="$(cd "$WT" && "$RP" testproj --no-record 2>&1)"; rc=$?
+  assert_eq       "T10a: exit 0" "$rc" "0"
+  assert_contains "T10b: notes divergent checkout" "$out" "note: operating on checkout"
+  assert_contains "T10c: reports rotation" "$out" "rotated 2 block(s)"
+  assert_eq       "T10d: worktree handoff keeps 1 block" \
+    "$(grep -c '^# Session Handoff' "$WT/work/testproj/handoff.md")" "1"
+  assert_eq       "T10e: worktree archive holds 2 blocks" \
+    "$(grep -c '^# Session Handoff' "$WT/work/testproj/handoff-archive.md")" "2"
+  assert_eq       "T10f: main handoff untouched (3 blocks)" "$(grep -c '^# Session Handoff' "$HF")" "3"
+  assert_eq       "T10g: no archive created in main" "$([ -f "$AF" ] && echo yes || echo no)" "no"
+  assert_contains "T10h: session-seq read from main coordination state" "$out" "seq-from-main-checkout"
+  assert_contains "T10i: git summary shows the worktree" "$out" "(workspace root)"
+else
+  bad "T10: could not create worktree"
+fi
+
 echo
 echo "pass=$PASS fail=$FAIL"
 [ "$FAIL" -eq 0 ]
