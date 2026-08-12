@@ -28,10 +28,9 @@ mission's scope; take it only if the user asks.
 
 ## State snapshot
 
-- Session #5 work sits on branch `worktree-template-maintenance-s5-l37`
-  (worktree, NOT merged to main — user merges). Local main is also **ahead
-  of origin** (M26/L36 commits + session-4 rollover) — push when the user
-  wants.
+- Session #5 merged to main and pushed to origin (user-approved) — nothing
+  pending. The `worktree-template-maintenance-s5-l37` worktree/branch is
+  merged; safe to delete.
 - Untracked `work/kimi-k3-agent-integration/` on main is another session's
   item — leave it.
 - Backlog: 1 Open (M16) / 66 Resolved.
