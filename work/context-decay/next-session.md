@@ -8,7 +8,7 @@
 ## Mission
 
 **Watch mode: rollover-cost savings validation.** R1–R5 from
-`rollover-cost-analysis-2026-08-11.md` shipped (new `scripts/rollover-prep.sh`
+`docs/archive/rollover-cost-analysis-2026-08-11.md` shipped (new `scripts/rollover-prep.sh`
 + slimmed `skills/session-rollover/SKILL.md`). Predicted mechanical floor
 ~10K → ~6–7K. Post-change data points so far: session #5's delta ~4.2K,
 session #6's delta (last two ledger entries). When `grep -c 'rollover
@@ -24,12 +24,12 @@ verdict in the analysis doc. No other active mission.
 
 ## Do NOT reload
 
-- `plan-snapshot-tool.md`, `context-decay-spec.md`, `design.html`,
-  `trim-estimates.md` — reference only.
+- `plan-snapshot-tool.md`, `context-decay-spec.md`,
+  `docs/archive/context-budget-design.html`, `trim-estimates.md` — reference only.
 - **Gemini auth on this machine** — settled dead ends
   (`docs/operational-knowledge.md`); do not retry.
-- `ledger-analysis.md` — superseded on rollover cost by
-  `rollover-cost-analysis-2026-08-11.md`; re-read only at the next full pass.
+- `docs/archive/ledger-analysis.md` — superseded on rollover cost by
+  `docs/archive/rollover-cost-analysis-2026-08-11.md`; re-read only at the next full pass.
 - Turn-1/standing-context trims — declined by user 2026-08-07; do not
   re-propose.
 - Security/PII audit — done session #6, workspace clean; yahoo commit email

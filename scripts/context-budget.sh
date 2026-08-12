@@ -14,7 +14,7 @@
 #            [--interval <secs>] [--quiet]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
-# Design notes: D1–D9 in work/context-decay/design.html + docs/context-budget.md.
+# Design notes: D1–D9 in docs/archive/context-budget-design.html + docs/context-budget.md.
 
 set -u
 
@@ -37,7 +37,15 @@ resolve_workspace_root() {  # $1 = script-relative candidate root
 }
 WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
-LEDGER="$WORKSPACE_ROOT/work/context-decay/context-ledger.jsonl"
+LEDGER="$STATE_DIR/context-ledger.jsonl"
+# One-time migration (2026-08-11, backlog M19): the ledger used to live in
+# work/context-decay/ — a research dir adopters prune. Fold any old ledger
+# into the new location so measurement history stays in one file.
+_cb_old_ledger="$WORKSPACE_ROOT/work/context-decay/context-ledger.jsonl"
+if [ -f "$_cb_old_ledger" ]; then
+  mkdir -p "$STATE_DIR"
+  cat "$_cb_old_ledger" >> "$LEDGER" && rm -f "$_cb_old_ledger"
+fi
 
 # Precedence is per-variable: explicit env > context-budget.env > built-in
 # default (same capture/restore pattern as launch-next-session.sh).

@@ -30,7 +30,7 @@ cs="$(dirname "$(dirname "$(dirname "$transcript")")")/chatSessions/$sid.jsonl"
 # fires on the first prompt seconds before VS Code creates the chatSessions
 # token file (3s–49s observed), and `register` handles a missing artifact as
 # method=deferred — gating registration on the file existing caused the s78/s79
-# false negatives (work/context-decay/copilot-vscode-hook-research-findings.md).
+# false negatives (2026-08-11 hook research; conclusions in docs/context-budget.md).
 # The inline VSCODE_TARGET_SESSION_LOG gives the script the same session
 # identity a Copilot terminal would export (the hook process does not inherit
 # it).

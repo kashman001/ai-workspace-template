@@ -6,6 +6,39 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-11 (session 3: fix package (a)/M19 shipped)
+
+Ran as a background job in worktree `worktree-devex-m19-clean-day1`
+(`.claude/worktrees/devex-m19-clean-day1`) — **all work is committed on that
+branch, NOT on main; user must merge** (bg sessions may not merge/push main).
+M19 "clean day-1 state" fully shipped and closed:
+
+- **Ledger moved** to `.context-budget/context-ledger.jsonl`
+  (`context-budget.sh`, statusline script, both test suites, docs,
+  `.gitignore`); self-cleaning migration shim folds legacy ledgers in at
+  script load — see the new decisions.md note (top). New G3a–c asserts.
+- **Prune-`work/` step**: `docs/template-usage.md` §5 (+ step-4 bullet in
+  `setup-guide.html`) — work/ is a worked example, deletable day 1.
+- **Promoted to `docs/archive/`**: ledger-analysis.md,
+  ledger-analysis-heavy-deployment-2026-08-11.md,
+  rollover-cost-analysis-2026-08-11.md, design.html →
+  context-budget-design.html.
+- **Citations repointed** in session-rollover SKILL, context-budget.sh
+  header, copilot-vscode hook, context-inspect.sh, context-budget.md; the
+  `copilot-vscode-hook-research-findings.md` pointer was dangling (file never
+  imported) — dropped, conclusion already inline.
+- **Backlog**: M19 card → Resolved + archived, history row added, scorecard
+  9 open / 53 resolved. All 10 test suites green (402 asserts).
+- Living pointers inside `work/context-decay/` (README, next-session) updated
+  to the new paths; its handoff/spec history left frozen.
+
+Suggested skills for next session: backlog maintenance (M24 card), `tdd` for
+check-script changes, `session-rollover` at WARN/STOP.
+
+Learnings:
+- Claude bg-job worktrees branch from origin/main — with unpushed local commits, `git merge --ff-only main` first or the worktree is stale.
+- `docs/operational-knowledge.md:25` still points at `work/automatic-session-rollover/relaunch-analysis.md` (prunable dir) — sweep candidate for a later package.
+
 # Session Handoff — 2026-08-11 (session 2 close: fix plan agreed, backlog filed)
 
 Session 2 completed the planning mission early (rolled at ~72K, not WARN —

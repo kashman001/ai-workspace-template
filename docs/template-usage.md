@@ -89,7 +89,29 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
   graphify) are documented in `docs/recommended-tooling.md`, including the
   per-repo setup for graphify graphs and Matt Pocock config.
 
-## 5. Reference
+## 5. Prune the maintainer's `work/` history
+
+`work/` ships with the template maintainer's own work directories
+(`context-decay`, `automatic-session-rollover`, `usage-scenarios`, …). They
+are research/session history, kept as a live worked example of the
+work-directory conventions — **not** template machinery. Nothing the scripts
+or skills depend on lives there: runtime state (the context-budget measurement
+ledger, session registrations) lives in the gitignored `.context-budget/`, and
+the doc-worthy conclusions were promoted to `docs/archive/`.
+
+On day 1, delete them wholesale and start clean:
+
+```bash
+git rm -r work/*/ && git commit -m "prune template maintainer work history"
+```
+
+(`work/.gitkeep` keeps the directory.) Two kinds of pointers into the deleted
+dirs remain by design and are safe to leave dangling: ADR `Promoted from:` /
+`Refs:` provenance lines, and history rows in the template backlog — both
+record where a decision came from, not content you need. Keep a `work/` dir
+only if you want its worked example.
+
+## 6. Reference
 
 `docs/workspace-structure.md` is the authoritative map of the whole layout
 and includes step-by-step **Agent Bootstrap Instructions** — point an agent

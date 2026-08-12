@@ -47,7 +47,7 @@ if [ -n "$PROJECT" ]; then
 
   # Context %: newest ledger entry for this session's artifact, if any.
   PCT=""
-  LEDGER="$ROOT/work/context-decay/context-ledger.jsonl"
+  LEDGER="$ROOT/.context-budget/context-ledger.jsonl"
   AF=$(jq -r '.artifact // empty' "$REC" 2>/dev/null)
   if [ -f "$LEDGER" ] && [ -n "$AF" ]; then
     PCT=$(tail -200 "$LEDGER" | jq -rs --arg s "$(basename "$AF")" \

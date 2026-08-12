@@ -17,6 +17,9 @@ references/*
 .mcp.json
 
 # Context-budget runtime state (session registrations, hook throttle stamps)
+# plus the hook-appended measurement ledger (context-ledger.jsonl — same class
+# as .gemini/telemetry.log; not regenerable, so snapshot deliberately if
+# mining it for analysis, never track the live file).
 .context-budget/
 
 # Live-session runtime state under work/ — meaningful only while a session is
@@ -30,10 +33,6 @@ work/*/.agent-dispatch/
 work/*/.rollover-options
 work/*/.session-seq
 
-# Hook-appended measurement telemetry (same class as .gemini/telemetry.log).
-# Not regenerable — snapshot deliberately (dated copy) if mining it for
-# analysis, like subagent-rollover-stats.md did; don't track the live file.
-work/context-decay/context-ledger.jsonl
 
 # Gemini CLI local telemetry (token counts for context-budget; grows per session)
 .gemini/telemetry.log

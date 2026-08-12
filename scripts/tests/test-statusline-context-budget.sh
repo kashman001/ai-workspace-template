@@ -6,7 +6,7 @@
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-mkdir -p "$TMP/scripts" "$TMP/work/testproj" "$TMP/work/context-decay" \
+mkdir -p "$TMP/scripts" "$TMP/work/testproj" \
   "$TMP/.context-budget/sessions" "$TMP/home/.claude"
 export HOME="$TMP/home"   # isolate from the real user's global statusLine
 cp "$SRC_ROOT/scripts/statusline-context-budget.sh" "$TMP/scripts/" 2>/dev/null || true
@@ -68,7 +68,7 @@ printf '%s\n' \
   '{"ts":"2026-08-06T00:00:00Z","session":"artifact-sid-aaa.jsonl","tokens":45000,"threshold":150000}' \
   '{"ts":"2026-08-06T01:00:00Z","session":"artifact-sid-aaa.jsonl","tokens":97500,"threshold":150000}' \
   '{"ts":"2026-08-06T01:00:00Z","session":"other.jsonl","tokens":30000,"threshold":150000}' \
-  > "$TMP/work/context-decay/context-ledger.jsonl"
+  > "$TMP/.context-budget/context-ledger.jsonl"
 out=$(sl_input sid-aaa | bash "$SL")
 assert_contains "T6a: newest own entry pct" "$out" "65%"
 

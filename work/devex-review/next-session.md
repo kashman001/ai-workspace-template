@@ -1,64 +1,70 @@
-# Catchup prompt — DevEx fix package (a): clean day-1 state (M19)
+# Catchup prompt — DevEx fix package (c): setup correctness (M24)
 
-We're resuming devex-review — now the FIX PROGRAM, not the review. Works in
-any runtime (Claude Code, Codex, Gemini, OpenCode).
+We're resuming devex-review — the FIX PROGRAM. Works in any runtime
+(Claude Code, Codex, Gemini, OpenCode).
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover: what to do next, still-binding constraints, pointers — never
 > session history. Past-tense provenance lives in `handoff.md` (append-only
 > ledger). Convention: docs/work-directory-conventions.md.
 
+## MERGE GATE — check before anything else
+
+Session 3 ran as a background job on branch `worktree-devex-m19-clean-day1`
+(package (a)/M19: ledger move, prune docs, archive promotion, backlog close).
+If `git log --oneline -1` does not show the M19 commit, that branch is
+unmerged — **stop and ask the user to merge it first**; starting (c) on a
+pre-M19 tree will conflict with it.
+
 ## Mission
 
-Execute fix package (a) — backlog card **M19**, "clean day-1 state": the
-template must stop shipping its maintainer's lab notebook. Concretely:
-1. Move the context-budget telemetry ledger out of `work/context-decay/` to
-   `.context-budget/` (it's core plumbing writing into a deletable research
-   dir that silently reappears — see `scripts/context-budget.sh:40` area).
-2. Add a prune-`work/` step to `docs/template-usage.md`.
-3. Promote doc-worthy `work/` research content to `docs/archive/`.
-4. Strip `work/context-decay/*-analysis*.md` evidence pointers from shipped
-   skills (cite conclusions inline or point at the archived copy).
-Close by flipping M19 to Resolved (+ `Fixed:` line) and moving the card to
-`docs/template-workspace-backlog-archive.html` per its maintenance rules.
+Execute fix package (c) — backlog card **M24**, "setup correctness +
+doc-drift papercuts": make the first documented command succeed on a pristine
+clone. Fix list (from the card): runtime-aware hooks check (not
+Claude-Code-only); swap check-before-setup order; align conflicting
+settings-copy targets; fix the `graphifyy` typo; demote the from-scratch
+"Agent Bootstrap" appendix; drop stale literal counts; add the `## Language`
+placeholder to the CONTEXT.md template. Close by flipping M24 to Resolved
+(+ `Fixed:` line), moving the card to the archive per its maintenance rules.
 
 ## Read these, in order
 
-1. `docs/template-workspace-backlog.html` — the M19 card only (grep "M19").
-2. `work/devex-review/decisions.md` — top note: the agreed package sequence.
-3. Raw evidence on demand: `work/devex-review/findings/dev-persona.md`
-   items 8, 9, 10 and `qa-persona.md` A4 — targeted greps, not whole files.
+1. `docs/template-workspace-backlog.html` — the M24 card only (grep "M24").
+2. Raw evidence on demand: `work/devex-review/findings/dev-persona.md`
+   items 1, 3, 4, 5, 12 and `qa-persona.md` A1–A3, B7 — targeted greps.
 
 ## Do NOT reload
 
-- `findings/devex-review.md` in full — its fix list is already carded
-  (M19–M24, L34); the card is the work order.
+- `findings/devex-review.md` in full — fix list already carded.
 - The persona review process — complete; never re-dispatch.
-- Sequencing debate — settled with the user (see decisions.md): after this
-  package comes (c) M24 setup correctness, then (b) M20–M22 spec workflow.
+- Package sequencing — settled (decisions.md): after (c) comes (b) M20–M22
+  spec workflow, a COLLABORATIVE session with the user — don't pull forward.
+- M19 details — done and archived; see handoff.md top block only if needed.
 
 ## Constraints already decided (do not re-litigate)
 
 - One work item for the whole fix program; one package per session.
-- Spec workflow (b) is a collaborative session with the user — don't pull it
-  forward into this one.
-- Template additions must stay agent-agnostic and downloader-ready (project
-  memory); the ledger move must work for all six runtimes' hooks.
-- `ROLLOVER_RELAUNCH=auto` — rollovers auto-launch successors now.
+- Template additions stay agent-agnostic and downloader-ready (project
+  memory).
+- `ROLLOVER_RELAUNCH=auto`; a committed work-item env can override per item.
+- Telemetry ledger now lives at `.context-budget/context-ledger.jsonl` —
+  legacy path references are bugs, not conventions.
 
 ## State snapshot
 
-- Branch `main`, ahead of origin (session-2 commits unpushed); clean except
-  `work/kimi-k3-agent-integration/` (another effort — leave alone).
+- Package (a) work on branch `worktree-devex-m19-clean-day1` (see MERGE
+  GATE); main also carries 4 older unpushed commits — push still pending.
+- `work/kimi-k3-agent-integration/` untracked = other effort, leave alone.
 - No running processes, no open agents.
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project devex-review` (skip if the
-   SessionStart hook already registered — then just add `--project` linkage).
-2. Grep the M19 card; scope the ledger move (find every reader/writer of the
-   `work/context-decay/` telemetry path — `grep -rn 'context-decay' scripts/
-   docs/ skills/ .claude/`), then implement 1–4 above with tests where the
-   plumbing changes.
-3. Pre-flight before any second package: `record`, check headroom; roll over
-   rather than start (c) past ~100K.
+1. `scripts/context-budget.sh register --project devex-review`
+   (skip if the SessionStart hook registered; then just re-run with
+   `--project` for linkage).
+2. Check the MERGE GATE above.
+3. Grep the M24 card; verify each papercut still reproduces on the current
+   tree (several may have drifted since the review); fix with tests where a
+   check script changes (`scripts/tests/`).
+4. Pre-flight before any second package: `record`, check headroom; roll over
+   rather than start (b) past ~100K.

@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">10</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">53</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">9</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">54</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -153,21 +153,6 @@
     <p><span class="k">Fix</span> — re-pin the artifact at <code>record</code> time when the session-id's transcript
       has moved (the session id is stable across the move), or a worktree-entry hook that re-registers; add a
       regression test with a relocated artifact fixture.</p>
-  </div>
-
-  <div class="find med">
-    <h3><span class="id">M19</span> Template ships its maintainer's lab notebook — no clean day-1 state
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">work/ · scripts/context-budget.sh · docs/template-usage.md</span></h3>
-    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 8, 9, 10; QA A4, A8 — <code>work/devex-review/findings/</code>):
-      ~1MB of maintainer research history under <code>work/</code>; <code>context-budget.sh:40</code> writes telemetry
-      into <code>work/context-decay/</code>, a research directory an adopter will delete, which then silently reappears;
-      shipped skills cite <code>work/context-decay/*-analysis*.md</code> as evidence; <code>docs/template-usage.md</code>
-      never says what's prunable.</p>
-    <p><span class="k">Impact</span> — the dev persona called this "the single biggest trust repair": adopters can't tell
-      template from residue, and core plumbing depends on a directory they're meant to remove.</p>
-    <p><span class="k">Fix</span> — move the telemetry ledger to <code>.context-budget/</code>; add a prune-<code>work/</code>
-      step to <code>template-usage.md</code>; promote doc-worthy content to <code>docs/archive/</code>; strip maintainer
-      evidence pointers from shipped skills.</p>
   </div>
 
   <div class="find med">
@@ -369,6 +354,7 @@
       <tr><td>2026-08-10</td><td>Fix <strong>M17</strong> (new card, resolved on filing — archived): <strong>Copilot folder-trust seeding</strong> — closes the <code>work/usage-scenarios/</code> gap "trustedFolders step is checked by NO check script". <code>scripts/setup.sh</code> step 3b seeds <code>~/.copilot/config.json</code> <code>trustedFolders</code> idempotently (JSONC-aware: <code>//</code> comment lines stripped before <code>jq</code>, preserved on rewrite; already-trusted fast path; skip-with-note until Copilot's first run creates <code>~/.copilot/</code>; warn-not-fail on missing jq / unparseable config); <code>scripts/check-dependencies.sh</code> gains the verify-only advisory (trusts / does-NOT-trust with the silent-no-op warning); <code>docs/context-budget.md</code> vendor-table friction cell updated. <code>test-template-instantiation.sh</code> now sandboxes <code>$HOME</code> around <code>setup.sh</code> runs and adds a T7 seed/comment-preservation/idempotency block. Ported from the downstream insight workspace. Scorecard now 3/51/4/0/6.</td></tr>
       <tr><td>2026-08-11</td><td>Fix: <strong>Copilot VS Code hook auto-registration</strong> (<code>6a6f1fa</code>, ported from the downstream insight workspace): the SessionStart/Stop hook script now registers <em>before</em> its <code>[ -f "$cs" ]</code> measurement guard — SessionStart fires seconds before VS Code creates <code>chatSessions/&lt;sid&gt;.jsonl</code>, so guard-first skipped registration on every fresh session and produced false "hook is a dead end" verdicts downstream; <code>register</code> handles the missing artifact as <code>method=deferred</code>. Live-verified on a fresh Copilot VS Code session (auto-registered in 1s, zero manual steps; VS Code 1.132.0, <code>.github/hooks/</code> confirmed a default <code>chat.hookFilesLocations</code> location). Also ported: Guard C in <code>context-budget.sh</code> (<code>register</code> dies rather than pinning a sibling when several Copilot sessions are active and <code>$VSCODE_TARGET_SESSION_LOG</code> is unset), <code>chat.useHooks</code> in <code>.vscode/settings.json</code>, docs/CONTEXT.md updates (auto-register primary, manual prefixed register demoted to hook-less fallback), and a ledger-evidence tightening of the <code>session-rollover</code> trigger policy (WARN = one small closing unit; pre-flight headroom check before major units) backed by the imported heavy-deployment analysis <code>work/context-decay/ledger-analysis-heavy-deployment-2026-08-11.md</code>. No scorecard change.</td></tr>
       <tr><td>2026-08-11</td><td>Fix <strong>M18</strong> (new card, resolved on filing — archived): <strong>rollover-cost optimization</strong>, from the cross-deployment question "the rollover itself costs ~20K — why, and how do we cut it". Analysis (<code>work/context-decay/rollover-cost-analysis-2026-08-11.md</code>): local cost tripled July→Aug (median ~4.6K → ~11K over 36 ledger deltas) tracking <code>session-rollover/SKILL.md</code> growth 4.6KB→12.1KB; floor ~8–10K mechanical + 0–25K deferred bookkeeping. Applied R1–R5: new <code>scripts/rollover-prep.sh</code> one-shot prep (start record, git summary, verified-lossless handoff→archive rotation, top block, <code>.session-seq</code>, options capture; 28-assert test suite), skill slimmed 12,074→9,222 bytes (mechanics disclosed to scripts), write-ahead promoted to standing discipline, ≤40-line handoff-block cap, self-sufficiency note (no <code>context-budget.md</code> load mid-rollover). First live run also caught up 4 unarchived blocks in <code>work/context-decay/handoff.md</code>. Scorecard now 3/52/4/0/6.</td></tr>
+      <tr><td>2026-08-11</td><td>Fix <strong>M19</strong> (devex-review fix package (a) — archived): <strong>clean day-1 state</strong>. Telemetry ledger moved <code>work/context-decay/context-ledger.jsonl</code> → <code>.context-budget/context-ledger.jsonl</code> with a self-cleaning migration shim (any legacy ledger is folded in at script load; G3a–c regression asserts). Prune-<code>work/</code> guidance added as <code>template-usage.md</code> §5 (+ step-4 bullet in <code>setup-guide.html</code>): <code>work/</code> is a worked example, not machinery. Doc-worthy research promoted to <code>docs/archive/</code> (<code>ledger-analysis.md</code>, <code>ledger-analysis-heavy-deployment-2026-08-11.md</code>, <code>rollover-cost-analysis-2026-08-11.md</code>, <code>design.html</code> → <code>context-budget-design.html</code>) and every shipped-artifact citation repointed (<code>session-rollover/SKILL.md</code>, <code>context-budget.sh</code>, copilot-vscode hook, <code>context-inspect.sh</code>, <code>docs/context-budget.md</code> — whose pointer to the never-imported <code>copilot-vscode-hook-research-findings.md</code> was dropped as already dangling). All 10 suites green (402 asserts). Scorecard now 9 open / 54 resolved.</td></tr>
     </tbody>
   </table>
 

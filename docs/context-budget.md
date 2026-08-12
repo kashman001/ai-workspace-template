@@ -10,7 +10,7 @@ Pieces: `scripts/context-budget.sh` (measurement core) ·
 `scripts/hooks/context-budget-claude-hook.sh` (in-band Claude Code warning) ·
 `skills/session-rollover/SKILL.md` (rollover workflow) · `context-budget.env`
 (thresholds + relaunch knobs) · `scripts/launch-next-session.sh` (successor
-relaunch) · `work/context-decay/context-ledger.jsonl` (measurement ledger).
+relaunch) · `.context-budget/context-ledger.jsonl` (measurement ledger).
 
 > **Agents — don't read this file whole (~10K tokens).** Pick your section from
 > the index below, `grep -n '^## '` for its header, and Read with
@@ -76,8 +76,7 @@ VS Code creates the `chatSessions/<sid>.jsonl` token file. Fixed by moving the
 registration block above the measurement guard (`register` handles a missing
 artifact as `method=deferred`). Manual registration (fix-B prefixed form below)
 is retained only as a fallback for hook-less contexts (e.g. hooks disabled by
-enterprise policy). Full evidence:
-`work/context-decay/copilot-vscode-hook-research-findings.md`.
+enterprise policy).
 Unregistered sessions still measure — `check` falls back to
 newest-mtime discovery — but only registration pins the exact artifact, which
 is what keeps concurrent sessions from reading each other's counts.
@@ -580,7 +579,7 @@ is added to the session context).
 ## Ledger
 
 `record` appends one JSON line per measurement to
-`work/context-decay/context-ledger.jsonl` — the safety net doubles as research
+`.context-budget/context-ledger.jsonl` — the safety net doubles as research
 data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
 
 ```json

@@ -27,7 +27,7 @@ setup/debugging reference for other occasions.
   implement+test+commit unit), then **ask the user** "roll over now?". On yes,
   run this; on no, write ahead through the WARN→STOP grace window (the standing
   discipline below, at every natural pause) so the eventual STOP rollover is
-  cheap. Ledger evidence (`work/context-decay/ledger-analysis*.md`): the
+  cheap. Ledger evidence (`docs/archive/ledger-analysis*.md`): the
   procedure costs ~1–7K in light sessions but ~20K median in heavy workflows —
   the gap is deferred bookkeeping, not handoff writing — so WARN leaves room
   for one small closing unit at most; "finish freely then roll" landed heavy
@@ -46,7 +46,7 @@ learnings and decisions to their disk homes at incident time, and bring the
 ledger/launcher current at each work-unit boundary, so steps 2–3 below are a
 sweep for what slipped, not the primary capture. That discipline is the
 difference between the 1–7K and 20K+ rollovers above
-(`work/context-decay/rollover-cost-analysis-2026-08-11.md`).
+(`docs/archive/rollover-cost-analysis-2026-08-11.md`).
 
 Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migration).
 

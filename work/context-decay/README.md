@@ -14,11 +14,13 @@ shipped system itself lives in `scripts/context-budget.sh`,
 - **Status:** dormant — all backlog findings resolved; remaining items are
   externally gated (see the launcher).
 
-Other files: `context-ledger.jsonl` (measurement ledger, append-only),
-`context-decay-spec.md` + `design.html` (implemented spec/design — do not
-reload), `ledger-analysis.md` (last analysis pass; its "rollover is cheap" finding is
+Other files: `context-decay-spec.md` (implemented spec — do not reload),
+`decisions.md` (Tier-2 decision notes), `research/` (session-pinning research
+with citations). The measurement ledger now lives at
+`.context-budget/context-ledger.jsonl` (moved out of this dir, backlog M19),
+and the analysis passes were promoted to `docs/archive/`:
+`ledger-analysis.md` (last local pass; its "rollover is cheap" finding is
 superseded), `ledger-analysis-heavy-deployment-2026-08-11.md` (imported
 cross-deployment evidence), `rollover-cost-analysis-2026-08-11.md` (where the
-rollover's ~10–20K goes + optimization recommendations), `decisions.md`
-(Tier-2 decision notes), `research/` (session-pinning research with
-citations).
+rollover's ~10–20K goes + optimization recommendations), and the design doc
+as `context-budget-design.html`.

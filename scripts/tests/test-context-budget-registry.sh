@@ -247,11 +247,11 @@ run_as new1 release --project testproj --quiet >/dev/null
 echo "G1: register from a git worktree lands lock/record in the shared root"
 GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
 trap 'rm -rf "$TMP" "$GW"' EXIT
-mkdir -p "$GW/scripts" "$GW/work/testproj" "$GW/work/context-decay"
+mkdir -p "$GW/scripts" "$GW/work/testproj"
 cp "$SRC_ROOT/scripts/context-budget.sh" "$GW/scripts/"
 printf 'CONTEXT_DUMB_ZONE_TOKENS=150000\nCONTEXT_DUMB_ZONE_WARN_TOKENS=120000\n' \
   > "$GW/context-budget.env"
-touch "$GW/work/testproj/.gitkeep" "$GW/work/context-decay/.gitkeep"
+touch "$GW/work/testproj/.gitkeep"
 git -C "$GW" init -q -b main
 git -C "$GW" -c user.email=t@t -c user.name=t add -A >/dev/null
 git -C "$GW" -c user.email=t@t -c user.name=t commit -qm init
@@ -278,10 +278,24 @@ assert_eq "G1a: lock lands in main-root work/testproj" \
 echo "G2: record from the worktree appends to the main-root ledger"
 CLAUDE_CODE_SESSION_ID=ggg "$GW/wt/scripts/context-budget.sh" \
   record --label "wt-unit" --runtime claude --quiet >/dev/null 2>&1
-grep -q "wt-unit" "$GW/work/context-decay/context-ledger.jsonl" 2>/dev/null \
+grep -q "wt-unit" "$GW/.context-budget/context-ledger.jsonl" 2>/dev/null \
   && ok "G2a: ledger line in main root" || bad "G2a: no main-root ledger line"
-[ ! -e "$GW/wt/work/context-decay/context-ledger.jsonl" ] \
+[ ! -e "$GW/wt/.context-budget/context-ledger.jsonl" ] \
   && ok "G2b: no ledger in the worktree" || bad "G2b: worktree ledger written"
+
+echo "G3: legacy work/context-decay ledger is folded into .context-budget (M19)"
+mkdir -p "$GW/work/context-decay"
+printf '%s\n' '{"ts":"old","session":"legacy.jsonl","tokens":1,"threshold":150000,"label":"legacy-line"}' \
+  > "$GW/work/context-decay/context-ledger.jsonl"
+CLAUDE_CODE_SESSION_ID=ggg "$GW/wt/scripts/context-budget.sh" \
+  record --label "post-migrate" --runtime claude --quiet >/dev/null 2>&1
+grep -q "legacy-line" "$GW/.context-budget/context-ledger.jsonl" 2>/dev/null \
+  && ok "G3a: legacy lines folded into the new ledger" \
+  || bad "G3a: legacy ledger lines lost"
+[ ! -e "$GW/work/context-decay/context-ledger.jsonl" ] \
+  && ok "G3b: legacy ledger file removed" || bad "G3b: legacy ledger file remains"
+grep -q "post-migrate" "$GW/.context-budget/context-ledger.jsonl" 2>/dev/null \
+  && ok "G3c: new records append after migration" || bad "G3c: post-migration record missing"
 CLAUDE_CODE_SESSION_ID=ggg "$GW/wt/scripts/context-budget.sh" \
   release --project testproj --runtime claude --quiet >/dev/null 2>&1
 cd "$TMP"

@@ -128,7 +128,7 @@ fi
 echo "harness attachments recorded in the transcript (est tokens = chars/4):"
 # hook_success records are attributed at .content length only: stdout/stderr/
 # command are transcript-only and never enter model context (residual analysis
-# 2026-08-07, work/context-decay — whole-JSON attribution went ~190 tok/turn
+# 2026-08-07 — whole-JSON attribution went ~190 tok/turn
 # negative on Warp-plugin sessions).
 att_stream() {
   jq -r 'if .type=="assistant" then "A"
