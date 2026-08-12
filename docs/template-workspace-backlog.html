@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">10</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">53</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -93,7 +93,9 @@
     in the same pass; a further re-review of the new <code>usage-scenarios.html</code> added <strong>L9</strong>, also fixed. The two High items — non-functional bootstrap scripts and a non-portable Gemini hook — are fixed;
     the template now behaves on a clean machine as the docs describe, carries a LICENSE, ships VS Code config, checks
     dependencies, has an auth phase with agent runbooks, and documents a no-agent-context fallback. Each item below
-    records what changed. New issues get appended here per the <a href="#maintaining">maintenance convention</a>.</p>
+    records what changed. New issues get appended here per the <a href="#maintaining">maintenance convention</a>.
+    A three-persona DevEx review (2026-08-11, <code>work/devex-review/findings/</code>) added <strong>M19–M24, L34</strong> —
+    seven consolidated cards covering its prioritized fix list.</p>
   </div>
 
   <!-- ========================= MAINTAINING ========================= -->
@@ -153,6 +155,92 @@
       regression test with a relocated artifact fixture.</p>
   </div>
 
+  <div class="find med">
+    <h3><span class="id">M19</span> Template ships its maintainer's lab notebook — no clean day-1 state
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">work/ · scripts/context-budget.sh · docs/template-usage.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 8, 9, 10; QA A4, A8 — <code>work/devex-review/findings/</code>):
+      ~1MB of maintainer research history under <code>work/</code>; <code>context-budget.sh:40</code> writes telemetry
+      into <code>work/context-decay/</code>, a research directory an adopter will delete, which then silently reappears;
+      shipped skills cite <code>work/context-decay/*-analysis*.md</code> as evidence; <code>docs/template-usage.md</code>
+      never says what's prunable.</p>
+    <p><span class="k">Impact</span> — the dev persona called this "the single biggest trust repair": adopters can't tell
+      template from residue, and core plumbing depends on a directory they're meant to remove.</p>
+    <p><span class="k">Fix</span> — move the telemetry ledger to <code>.context-budget/</code>; add a prune-<code>work/</code>
+      step to <code>template-usage.md</code>; promote doc-worthy content to <code>docs/archive/</code>; strip maintainer
+      evidence pointers from shipped skills.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M20</span> Spec workflow is the least-built lifecycle stage — no format, no collaboration surface, no traceability
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md · skills/create-work-item</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev S1–S5; QA B2–B4; PM 4.1 — all three personas
+      converged independently): <code>work/&lt;effort&gt;/spec.md</code> has a path convention but no committed template;
+      single author baked in everywhere (no draft/in-review/approved state, no sign-off); no <code>Spec:</code>/<code>Covers:</code>
+      ticket fields or stable spec-item IDs; spec is just "Optional" with no required-when rule; name collision with root
+      <code>SPEC.md</code>.</p>
+    <p><span class="k">Impact</span> — specs are load-bearing for QA test plans and are a PM+dev collaboration (user
+      directives), yet the workflow supports neither; success criteria live in conversation and archive away.</p>
+    <p><span class="k">Fix</span> — commit a <code>spec.md</code> skeleton (numbered stories, <code>Status:</code> +
+      <code>Approved-by:</code> header); document the git-branch PM-review loop; add <code>Spec:</code>/<code>Covers:</code>
+      to ticket conventions; add the "when a spec is required" rule to <code>create-work-item</code>; disambiguate from
+      root <code>SPEC.md</code>.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M21</span> Verification evidence has no durable home — no QA seat in the conventions
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (QA B5, B6): "test plan", "test result", and "QA"
+      appear zero times across all docs and skills; decisions get <code>decisions.md</code> and sessions get
+      <code>handoff.md</code>, but there is no equivalent for "capture the evidence behind done".</p>
+    <p><span class="k">Impact</span> — verification evidence is structurally ephemeral; a QA role has nothing to
+      write to or read from.</p>
+    <p><span class="k">Fix</span> — add <code>test-plan.md</code> / <code>verification.md</code> rows to the
+      optional-files table; severity/repro fields in issue conventions; a "no spec → success criteria in README.md" rule.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M22</span> Advertised skill chain isn't in the box — conventions route to skills that don't ship
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">skills/ · docs/agents/issue-tracker.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev S2, 13; QA B1; PM 4.1): <code>to-spec</code>,
+      <code>to-tickets</code>, <code>triage</code>, <code>diagnosing-bugs</code>, <code>tdd</code> are the workflows the
+      conventions route to, and none ship with the template — they're the maintainer's optional global toolchain.
+      <code>docs/agents/issue-tracker.md</code> configures skills adopters don't have.</p>
+    <p><span class="k">Impact</span> — violates the workspace's own recorded principle (integrations must work for
+      downloaders, agent-agnostically); the right pattern already exists in-repo (<code>wayfinder</code> is vendored
+      with provenance) but wasn't applied to the rest of the chain.</p>
+    <p><span class="k">Fix</span> — vendor <code>to-spec</code>/<code>to-tickets</code> (ideally <code>triage</code>)
+      beside <code>wayfinder</code> with provenance, or declare them prerequisites explicitly where conventions depend
+      on them.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M23</span> No PM-facing entry point — content is PM-capable, surfaces are not
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (PM 1.1, 2.2, 2.3, 4.2, 5.1): "product manager"
+      appears nowhere; yet ADRs are highly readable, work READMEs are real status reports, and
+      <code>/create-work-item</code> + <code>/decision</code> are usable by non-engineers but unadvertised; the PM
+      persona needed ~6 terms but was presented dozens, with no glossary.</p>
+    <p><span class="k">Impact</span> — a non-engineer stakeholder can't find status, decisions, or a way to contribute
+      despite the repo already carrying all three.</p>
+    <p><span class="k">Fix</span> — one-page <code>docs/for-non-engineers.md</code> (status / decisions / contributing
+      + ~6-term glossary); <code>work/README.md</code> status index; audience tags on skills.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M24</span> Setup correctness + doc-drift papercuts — first documented command fails on a pristine clone
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/check-*.sh · docs/workspace-structure.md · CONTEXT.md template</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 1, 3, 4, 5, 12; QA A1, A2, A3, B7): check-before-setup
+      order fails on a pristine clone; required-hooks check is Claude-Code-only despite the agent-agnostic promise; the
+      from-scratch "Agent Bootstrap" appendix scaffolds a degraded workspace; three self-describing counts stale;
+      conflicting settings-copy targets; <code>graphifyy</code> typo in a copy-pastable fix hint; promised
+      <code>## Language</code> section missing from the CONTEXT.md template.</p>
+    <p><span class="k">Impact</span> — a new adopter's first minutes hit failures the docs don't predict; drift erodes
+      the template's otherwise QA-verified reference integrity.</p>
+    <p><span class="k">Fix</span> — runtime-aware hooks check; swap check/setup order; align settings-copy targets; fix
+      <code>graphifyy</code>; demote the bootstrap appendix; drop literal counts; add the <code>## Language</code>
+      placeholder.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
 
@@ -178,6 +266,17 @@
     <p><span class="k">Impact</span> — successor resumes from an outdated plan; wasted work or conflicting edits.</p>
     <p><span class="k">Fix</span> — cheap freshness guard at bootstrap: compare the launcher's last-commit sha against
       origin (and against local main when branching a worktree); warn and stop if behind.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L34</span> Context-budget system conceptually overloaded — no "minimal mode" statement
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 11; PM 5.1): the daily loop is three commands,
+      but trusting the system requires absorbing session roles, locks, dispatch generations, and a six-runtime hook
+      matrix.</p>
+    <p><span class="k">Impact</span> — solo adopters bounce off machinery that's only load-bearing for fleets.</p>
+    <p><span class="k">Fix</span> — top-of-doc "Minimal mode" statement of the 3-command solo subset in
+      <code>docs/context-budget.md</code>; label everything else fleet-only.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
