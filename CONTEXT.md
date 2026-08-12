@@ -117,6 +117,13 @@ profile vs. runbook, plus the two wiring steps): `docs/workspace-structure.md`
 - **rlm** — answer a query over a context too large to read into chat
   (persistent Python REPL + cheap leaf LLM over slices; good for counting,
   per-item classification, whole-corpus summaries). `/rlm context=<path> query=<question>`
+- **to-spec** — synthesize the current conversation into an effort spec at
+  `work/<effort>/spec.md`, per the spec conventions
+  (`docs/agents/issue-tracker.md`). `/to-spec [effort]`
+- **to-tickets** — break a plan/spec/conversation into tracer-bullet tickets
+  with blocking edges under `work/<effort>/issues/`. `/to-tickets [source]`
+- **triage** — move issues through the triage state machine: categorise,
+  verify, write agent-ready briefs. `/triage [request]`
 - **wayfinder** — plan work too big for one session as a map of decision
   tickets, resolved one per session. User-invoked only. `/wayfinder [map path or ticket]`
 - **writing-for-agents** — style guide for any document an agent consumes;

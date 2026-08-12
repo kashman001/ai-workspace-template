@@ -40,6 +40,14 @@ agent-neutral state on disk.
    (`work/<project-name>/`). Ask the user for the governing skill(s) if any
    workflow skill applies; use `—` if none.
 
+   **Ask whether the effort needs a spec.** Rule of thumb: a spec is required
+   when success criteria can't fit the README's one-line goal — multi-feature
+   work, user-facing behaviour, anything where "done" is genuinely debatable.
+   Ops-flavoured efforts skip it. An external tracker ticket (JIRA, GitHub
+   issue) with real acceptance criteria can *be* the spec of record. Skeleton
+   and full rules: `docs/agents/issue-tracker.md` → "Spec conventions".
+   **If no spec: the README's `## Success criteria` section is required.**
+
 2. **Create the directory and the three backbone files** below. Substitute
    `<project>`, a one-line description, the governing skill(s), and the first
    objective. Use the canonical names `next-session.md` (launcher) and
@@ -58,6 +66,12 @@ agent-neutral state on disk.
    ## What this is
 
    <2–4 sentences: goal, scope, why it exists.>
+
+   ## Success criteria
+
+   <!-- Required when the effort has no spec.md; delete if spec.md exists. -->
+
+   <How we'll know this effort is done — verifiable, not "make it work".>
 
    ## Files
 
@@ -116,7 +130,10 @@ agent-neutral state on disk.
    - `STATUS.md` — shareable status snapshot.
    - `glossary.md` — project-scoped terms.
    - `decisions.md` / `docs/adr/*` — per `skills/decision-log/SKILL.md`.
-   - `spec.md` — the effort's spec, if one exists.
+   - `spec.md` — required per the rule in step 1; skeleton:
+     `docs/agents/issue-tracker.md` → "Spec conventions".
+   - `verification.md` — test plan + evidence behind "done"; skeleton:
+     `docs/work-directory-conventions.md` → "Verification evidence".
    - `map.md` + `issues/NN-<slug>.md` — for a wayfinder or tracker-backed
      effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations".
 

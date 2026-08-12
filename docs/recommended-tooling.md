@@ -180,12 +180,12 @@ A suite of repeatable engineering workflows from
 | `diagnosing-bugs` | Reproduce → minimise → fix a hard bug or perf regression |
 | `resolving-merge-conflicts` | Work an in-progress merge/rebase conflict hunk-by-hunk by intent (never `--abort`) |
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
-| `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
+| `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges — **also vendored in this repo** (see below) |
 | `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time — **also vendored in this repo** (see below) |
 | `wizard` | Generate an interactive bash wizard walking a human through steps only they can do (credentials, dashboards, one-off migrations) — pairs with `docs/runbooks/` |
 | `to-questionnaire` | Turn a decision you can't fully answer into a questionnaire for someone else — pairs with wayfinder's HITL decision tickets |
 | `wait-what` | Stop — that last message didn't land; re-pitch it |
-| `triage` | Move incoming issues through a triage state machine |
+| `triage` | Move incoming issues through a triage state machine — **also vendored in this repo** (see below) |
 | `handoff` | Compact a session into a pickup doc |
 | `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
 | `writing-for-agents` | Reference for writing any document an agent consumes — skills, `AGENTS.md`/`CLAUDE.md`, pointed-to docs (formerly `writing-great-skills`) |
@@ -228,15 +228,18 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > by hand as above. Mind the buckets when linking manually: e.g. `teach` lives
 > under `skills/productivity/`, not `engineering/`.
 
-> **Two skills are vendored into this repo** — `wayfinder` at `skills/wayfinder/`
-> (with this workspace's tracker wiring in `docs/agents/issue-tracker.md`) and
-> `writing-for-agents` at `skills/writing-for-agents/` (incl. its
-> `SKILL-MECHANICS.md` reference) — each pinned to an upstream commit in its
-> provenance comment, so Copilot users and template downloaders get them with
-> zero global setup. On a machine that *also* has the global symlink install,
-> Claude Code sees both copies of each — same content; prefer the project copy
-> here (for `wayfinder`, the `/wayfinder` command loads the workspace tracker
-> conventions). The other skills stay global-only.
+> **Five skills are vendored into this repo** — the spec chain `to-spec`,
+> `to-tickets`, `triage`, and `wayfinder` (with this workspace's tracker +
+> spec wiring in `docs/agents/issue-tracker.md`), plus `writing-for-agents`
+> (incl. its `SKILL-MECHANICS.md` reference) — each at `skills/<name>/`,
+> pinned to an upstream commit in its provenance comment, so Copilot users
+> and template downloaders get them with zero global setup. On a machine that
+> *also* has the global symlink install, Claude Code sees both copies of each
+> — same content; prefer the project copy here (its `/`-commands load the
+> workspace tracker conventions). The other skills — including the
+> engineering-practice ones the spec chain pairs with (`tdd`,
+> `diagnosing-bugs`, `grilling`, `domain-modeling`) — stay global-only:
+> install per this doc.
 
 > **Newer upstream skills worth watching** (under `skills/in-progress/`
 > upstream — expect churn; note `agent-context-sync` scans only the
@@ -276,6 +279,12 @@ skill once in the repo. It interviews you and scaffolds:
 
 > In this workspace, `CONTEXT.md` is the symlink target — the `## Agent
 > skills` block lands there and all agents read it.
+
+> **This template already ships the tracker config** —
+> `docs/agents/issue-tracker.md` (local markdown under `work/`, labels
+> verbatim) — so the vendored `to-spec`/`to-tickets`/`triage`/`wayfinder`
+> work out of the box. Run `setup-matt-pocock-skills` only to switch to a
+> real tracker (GitHub/GitLab) or before `improve-codebase-architecture`.
 
 ---
 

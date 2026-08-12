@@ -61,3 +61,29 @@ Claude-only grep broke the template's agent-agnostic promise (dev 4).
 **Rejected:** (1) keeping the hard Claude-only requirement — the bug itself;
 (2) requiring every installed runtime's wiring — hard to detect installs
 portably, and committed wiring already covers the non-Claude runtimes.
+
+## 2026-08-12 — Spec workflow conventions (M20–M22, grilled with user)
+
+**What:** (1) Minimal spec.md skeleton — Status/Approved-by header, stable
+S<n> IDs, non-goals — in docs/agents/issue-tracker.md "Spec conventions".
+(2) In-file approval default; branch-review loop documented for multi-person
+specs. (3) Spec required when "done" is debatable + create-work-item asks at
+scaffold time; an external tracker ticket with real acceptance criteria can
+be the spec of record (referenced, mirrored read-only when agents lack
+tracker access). (4) Both SPEC.md names kept, cross-referenced. (5)
+Spec:/Covers: ticket fields, advisory. (6) One verification.md (plan +
+evidence), Severity:/Repro: on bugs, no-spec → README ## Success criteria.
+(7) to-spec/to-tickets/triage vendored at upstream 8b36d4f (MIT);
+tdd/diagnosing-bugs/grilling/domain-modeling stay global-only with
+point-of-use pointers.
+
+**Why:** User decisions from the package-(b) grilling session (Q1–Q7); the
+dependency line drawn: skills the conventions route through must ship;
+engineering-practice skills are personal toolchain.
+
+**Rejected:** full-PRD skeleton (empty-heading filler); mandatory branch/PR
+approval (ceremony for single-human efforts); always-require-spec (ceremony
+for ops work); renaming either spec file (churn, paths already
+disambiguate); mandatory traceability fields (no enforcement mechanism);
+separate test-plan.md + verification.md (doubles the skip chance); vendoring
+all five skills / declaring all as prerequisites.

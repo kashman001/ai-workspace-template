@@ -423,6 +423,76 @@
       Ported from the downstream insight workspace's implementation.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M20</span> Spec workflow is the least-built lifecycle stage — no format, no collaboration surface, no traceability
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs/work-directory-conventions.md · skills/create-work-item</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev S1–S5; QA B2–B4; PM 4.1 — all three personas
+      converged independently): <code>work/&lt;effort&gt;/spec.md</code> has a path convention but no committed template;
+      single author baked in everywhere (no draft/in-review/approved state, no sign-off); no <code>Spec:</code>/<code>Covers:</code>
+      ticket fields or stable spec-item IDs; spec is just "Optional" with no required-when rule; name collision with root
+      <code>SPEC.md</code>.</p>
+    <p><span class="k">Impact</span> — specs are load-bearing for QA test plans and are a PM+dev collaboration (user
+      directives), yet the workflow supports neither; success criteria live in conversation and archive away.</p>
+    <p><span class="k">Fix</span> — commit a <code>spec.md</code> skeleton (numbered stories, <code>Status:</code> +
+      <code>Approved-by:</code> header); document the git-branch PM-review loop; add <code>Spec:</code>/<code>Covers:</code>
+      to ticket conventions; add the "when a spec is required" rule to <code>create-work-item</code>; disambiguate from
+      root <code>SPEC.md</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-08-12 (fix package (b), session 6 — conventions grilled with the user
+      first) — new "Spec conventions" section in <code>docs/agents/issue-tracker.md</code>: minimal skeleton
+      (<code>Status:</code>/<code>Approved-by:</code>/<code>Spec-of-record:</code> header, stable <code>S&lt;n&gt;</code>
+      requirement IDs, non-goals), in-file approval as default with the branch-review loop documented for multi-person
+      specs, a when-required judgement rule ("done" genuinely debatable), and an external spec-of-record clause
+      (a JIRA/GitHub ticket with real acceptance criteria <em>is</em> the spec — reference it, mirror read-only when
+      agents lack tracker access). <code>Spec:</code>/<code>Covers:</code> advisory fields added to ticket conventions;
+      <code>create-work-item</code> asks the spec question at scaffold time and its README template gained
+      <code>## Success criteria</code>; conventions-table row updated; root <code>SPEC.md</code> and the skeleton
+      cross-reference each other.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M21</span> Verification evidence has no durable home — no QA seat in the conventions
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs/work-directory-conventions.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (QA B5, B6): "test plan", "test result", and "QA"
+      appear zero times across all docs and skills; decisions get <code>decisions.md</code> and sessions get
+      <code>handoff.md</code>, but there is no equivalent for "capture the evidence behind done".</p>
+    <p><span class="k">Impact</span> — verification evidence is structurally ephemeral; a QA role has nothing to
+      write to or read from.</p>
+    <p><span class="k">Fix</span> — add <code>test-plan.md</code> / <code>verification.md</code> rows to the
+      optional-files table; severity/repro fields in issue conventions; a "no spec → success criteria in README.md" rule.</p>
+    <p><span class="fix">Fixed:</span> 2026-08-12 (fix package (b), session 6) — single <code>verification.md</code>
+      (user pick over two files: plan section written before, evidence section filled as checks run, top-level
+      <code>Covers:</code> line) added to <code>docs/work-directory-conventions.md</code> with skeleton + table row;
+      <code>Severity:</code>/<code>Repro:</code> fields added to bug-ticket conventions in
+      <code>docs/agents/issue-tracker.md</code>; the "no spec → <code>## Success criteria</code> in README.md" rule
+      landed in the conventions table, the spec-conventions section, and <code>create-work-item</code>.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M22</span> Advertised skill chain isn't in the box — conventions route to skills that don't ship
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">skills/ · docs/agents/issue-tracker.md</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev S2, 13; QA B1; PM 4.1): <code>to-spec</code>,
+      <code>to-tickets</code>, <code>triage</code>, <code>diagnosing-bugs</code>, <code>tdd</code> are the workflows the
+      conventions route to, and none ship with the template — they're the maintainer's optional global toolchain.
+      <code>docs/agents/issue-tracker.md</code> configures skills adopters don't have.</p>
+    <p><span class="k">Impact</span> — violates the workspace's own recorded principle (integrations must work for
+      downloaders, agent-agnostically); the right pattern already exists in-repo (<code>wayfinder</code> is vendored
+      with provenance) but wasn't applied to the rest of the chain.</p>
+    <p><span class="k">Fix</span> — vendor <code>to-spec</code>/<code>to-tickets</code>/<code>triage</code>
+      beside <code>wayfinder</code> with provenance, or declare them prerequisites explicitly where conventions depend
+      on them.</p>
+    <p><span class="fix">Fixed:</span> 2026-08-12 (fix package (b), session 6) — <code>to-spec</code>,
+      <code>to-tickets</code>, <code>triage</code> vendored (upstream MIT) at <code>skills/&lt;name&gt;/</code>, pinned
+      to upstream commit <code>8b36d4f</code> with wayfinder-pattern provenance comments carrying the workspace wiring
+      (tickets under <code>work/&lt;effort&gt;/issues/</code> not <code>.scratch/</code>; label names verbatim;
+      triage's <code>grilling</code>/<code>domain-modeling</code> step marked optional-toolchain).
+      <code>/to-spec</code>, <code>/to-tickets</code>, <code>/triage</code> commands added under
+      <code>.claude/commands/</code>; CONTEXT.md skills list extended; <code>docs/recommended-tooling.md</code> updated
+      (five-skills-vendored note, tracker-config-ships-in-box note). The dependency line user-drawn per the grilling:
+      the spec chain is vendored, engineering-practice skills (<code>tdd</code>, <code>diagnosing-bugs</code>,
+      <code>grilling</code>, <code>domain-modeling</code>) stay global-only with a point-of-use pointer in
+      <code>issue-tracker.md</code> → recommended-tooling.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

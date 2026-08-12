@@ -94,10 +94,36 @@ the latest. Either pattern is acceptable; pick one per project and be consistent
 | `STATUS.md` | Optional | Shareable program/status snapshot (per-area state, blockers). Distinct from the launcher: STATUS is for humans reviewing progress; the launcher is for an agent resuming work. |
 | `glossary.md` | Optional | Project-scoped terms/acronyms. |
 | `map.md` + `issues/NN-<slug>.md` | Optional | Wayfinder map + decision tickets for the effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations" (governing skill: `skills/wayfinder/SKILL.md`). |
-| `spec.md` | Optional | The effort's spec/PRD, per `docs/agents/issue-tracker.md`. |
+| `spec.md` | Required when "done" is debatable | The effort's spec/PRD — skeleton, when-required rule, approval flow, and external-tracker (spec-of-record) handling: `docs/agents/issue-tracker.md` → "Spec conventions". Distinct from root `SPEC.md` (product-level Z0). **No spec → success criteria go in a `## Success criteria` section of `README.md`.** |
+| `verification.md` | Recommended when there's anything to verify | The evidence behind "done": test plan (before) + results (after) in one file (skeleton below). |
 
 Keep everything else (state trackers, registries, run logs, specs) named for
 what it is; the governing skill owns the full file-level detail.
+
+## Verification evidence (`verification.md`)
+
+Decisions get `decisions.md`, sessions get `handoff.md` — `verification.md`
+is the equivalent for **the evidence behind "done"**. Without it,
+verification lives in conversation ("tests pass") and archives away. One file
+holds both halves so gaps are visible (planned 6 checks, ran 4):
+
+```markdown
+# Verification — <effort>
+
+Covers: S1–S4   <!-- spec items this evidence covers, when a spec exists -->
+
+## Plan
+<!-- written BEFORE implementing: what will prove this works -->
+
+- [ ] V1 — <check> (covers S1)
+- [ ] V2 — …
+
+## Evidence
+<!-- filled as checks run: date, command/action, observed result (or a
+     pointer to CI run / transcript) -->
+
+- V1 — PASS 2026-01-15 — `<command>` → <observed result>
+```
 
 **Tracked vs. untracked:** everything a *future session* must read to continue
 the work is committed (the whole table above, plus a per-item

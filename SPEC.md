@@ -1,6 +1,8 @@
 <!--
 File: SPEC.md
 Purpose: Product intent and requirements — the Z0 (product-level) "what and why".
+         NOT an effort-level spec: those live at work/<effort>/spec.md, per
+         docs/agents/issue-tracker.md → "Spec conventions".
 Fill in: from the Z0 product interview (docs/workspace-structure.md → "Z0 product interview").
 Delete this file if the workspace is a pure multi-repo coordination layer.
 See: docs/workspace-structure.md → "Recommended CONTEXT.md Sections"

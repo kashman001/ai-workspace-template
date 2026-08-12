@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-11 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-12 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">9</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">55</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">6</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">58</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -153,49 +153,6 @@
     <p><span class="k">Fix</span> — re-pin the artifact at <code>record</code> time when the session-id's transcript
       has moved (the session id is stable across the move), or a worktree-entry hook that re-registers; add a
       regression test with a relocated artifact fixture.</p>
-  </div>
-
-  <div class="find med">
-    <h3><span class="id">M20</span> Spec workflow is the least-built lifecycle stage — no format, no collaboration surface, no traceability
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md · skills/create-work-item</span></h3>
-    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev S1–S5; QA B2–B4; PM 4.1 — all three personas
-      converged independently): <code>work/&lt;effort&gt;/spec.md</code> has a path convention but no committed template;
-      single author baked in everywhere (no draft/in-review/approved state, no sign-off); no <code>Spec:</code>/<code>Covers:</code>
-      ticket fields or stable spec-item IDs; spec is just "Optional" with no required-when rule; name collision with root
-      <code>SPEC.md</code>.</p>
-    <p><span class="k">Impact</span> — specs are load-bearing for QA test plans and are a PM+dev collaboration (user
-      directives), yet the workflow supports neither; success criteria live in conversation and archive away.</p>
-    <p><span class="k">Fix</span> — commit a <code>spec.md</code> skeleton (numbered stories, <code>Status:</code> +
-      <code>Approved-by:</code> header); document the git-branch PM-review loop; add <code>Spec:</code>/<code>Covers:</code>
-      to ticket conventions; add the "when a spec is required" rule to <code>create-work-item</code>; disambiguate from
-      root <code>SPEC.md</code>.</p>
-  </div>
-
-  <div class="find med">
-    <h3><span class="id">M21</span> Verification evidence has no durable home — no QA seat in the conventions
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md</span></h3>
-    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (QA B5, B6): "test plan", "test result", and "QA"
-      appear zero times across all docs and skills; decisions get <code>decisions.md</code> and sessions get
-      <code>handoff.md</code>, but there is no equivalent for "capture the evidence behind done".</p>
-    <p><span class="k">Impact</span> — verification evidence is structurally ephemeral; a QA role has nothing to
-      write to or read from.</p>
-    <p><span class="k">Fix</span> — add <code>test-plan.md</code> / <code>verification.md</code> rows to the
-      optional-files table; severity/repro fields in issue conventions; a "no spec → success criteria in README.md" rule.</p>
-  </div>
-
-  <div class="find med">
-    <h3><span class="id">M22</span> Advertised skill chain isn't in the box — conventions route to skills that don't ship
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">skills/ · docs/agents/issue-tracker.md</span></h3>
-    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev S2, 13; QA B1; PM 4.1): <code>to-spec</code>,
-      <code>to-tickets</code>, <code>triage</code>, <code>diagnosing-bugs</code>, <code>tdd</code> are the workflows the
-      conventions route to, and none ship with the template — they're the maintainer's optional global toolchain.
-      <code>docs/agents/issue-tracker.md</code> configures skills adopters don't have.</p>
-    <p><span class="k">Impact</span> — violates the workspace's own recorded principle (integrations must work for
-      downloaders, agent-agnostically); the right pattern already exists in-repo (<code>wayfinder</code> is vendored
-      with provenance) but wasn't applied to the rest of the chain.</p>
-    <p><span class="k">Fix</span> — vendor <code>to-spec</code>/<code>to-tickets</code> (ideally <code>triage</code>)
-      beside <code>wayfinder</code> with provenance, or declare them prerequisites explicitly where conventions depend
-      on them.</p>
   </div>
 
   <div class="find med">
