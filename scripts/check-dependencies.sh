@@ -38,18 +38,29 @@ req git "core — clone/symlinks/registry"
 req gh  "GitHub CLI — the workspace's GitHub path (auth, PRs, API)"
 req jq  "context-budget accounting (scripts/context-budget.sh) — every session runs it"
 
-# Wiring, not a binary: the context-budget hooks must be wired into Claude Code's
-# project-level gitignored settings (scripts/setup.sh copies .claude/settings.json.example there).
-if grep -qs 'context-budget-claude-hook' .claude/settings.json .claude/settings.local.json 2>/dev/null; then
-  printf '  \033[32m✓\033[0m %-8s context-budget hooks wired (.claude/settings*.json)\n' "hooks"
+# Wiring, not a binary: context-budget hooks per runtime. Codex/Gemini/OpenCode/
+# Copilot wiring ships committed with the repo; Claude Code's is gitignored and
+# materialized by scripts/setup.sh, so it is required only when claude is installed.
+hooks_wired=""
+grep -qs 'context-budget-claude-hook' .claude/settings.json .claude/settings.local.json 2>/dev/null && hooks_wired="$hooks_wired claude"
+grep -qs 'context-budget-codex-hook' .codex/config.toml 2>/dev/null && hooks_wired="$hooks_wired codex"
+grep -qs 'context-budget-gemini-hook' .gemini/settings.json 2>/dev/null && hooks_wired="$hooks_wired gemini"
+[ -f .opencode/plugins/context-budget.js ] && hooks_wired="$hooks_wired opencode"
+ls .github/hooks/context-budget*.json >/dev/null 2>&1 && hooks_wired="$hooks_wired copilot"
+
+if have claude && [[ "$hooks_wired" != *claude* ]]; then
+  printf '  \033[31m✗\033[0m %-8s MISSING (required) — claude is installed but its context-budget hooks are not wired; run scripts/setup.sh (copies .claude/settings.json.example → .claude/settings.local.json)\n' "hooks" >&2
+  missing_required=1
+elif [ -n "$hooks_wired" ]; then
+  printf '  \033[32m✓\033[0m %-8s context-budget hooks wired:%s\n' "hooks" "$hooks_wired"
 else
-  printf '  \033[31m✗\033[0m %-8s MISSING (required) — context-budget hooks not wired; run scripts/setup.sh (copies .claude/settings.json.example → .claude/settings.local.json)\n' "hooks" >&2
+  printf '  \033[31m✗\033[0m %-8s MISSING (required) — no runtime has context-budget hooks wired; run scripts/setup.sh\n' "hooks" >&2
   missing_required=1
 fi
 
 echo "Recommended (install the ones whose features you use):"
 rec node    "Claude Code status line (npx ccstatusline)"
-rec uv      "graphify install (uv tool install graphifyy)"
+rec uv      "graphify install (uv tool install graphify)"
 rec python3 "graphify runtime / general tooling"
 rec yt-dlp  "workspace-local YouTube transcript MCP server"
 rec graphify "per-repo knowledge graph (optional)"

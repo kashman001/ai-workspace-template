@@ -62,12 +62,13 @@ In". Tracked files arrive with the clone; you create the local/secret ones.
 # 1. Clone
 git clone <clone-url> <workspace-dir> && cd <workspace-dir>
 
-# 2. Dependencies — check, then install anything missing per the runbook.
-./scripts/check-dependencies.sh                   # → docs/runbooks/dependencies.md
-
-# 3. Bootstrap: dep preflight + entrypoint symlinks + repos/README.md + the
+# 2. Bootstrap: dep preflight + entrypoint symlinks + repos/README.md + the
 #    per-user config copies (.env, .mcp.json, .claude/settings.local.json).
 ./scripts/setup.sh            # add --clone-repos for a multi-repo workspace
+
+# 3. Dependencies — check, then install anything missing per the runbook.
+#    (After setup.sh, so the hooks check sees the settings copy it creates.)
+./scripts/check-dependencies.sh                   # → docs/runbooks/dependencies.md
 
 # 4. Authentication — check, then follow the runbook for anything missing.
 ./scripts/check-service-access.sh                 # → docs/runbooks/authentication.md

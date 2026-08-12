@@ -24,7 +24,7 @@ Act only on items the check reports as missing. Re-run after each install.
 | `git` | **required** | clone, symlinks, registry |
 | `gh` | **required** | GitHub CLI — the workspace's GitHub path (auth, PRs, API) |
 | `jq` | **required** | context-budget accounting (`scripts/context-budget.sh`) |
-| context-budget hooks | **required** | wiring, not a binary — `scripts/setup.sh` copies `.claude/settings.json.example` → `.claude/settings.local.json` |
+| context-budget hooks | **required** | wiring, not a binary — Codex/Gemini/OpenCode/Copilot wiring ships committed; the Claude Code copy (`scripts/setup.sh` copies `.claude/settings.json.example` → `.claude/settings.local.json`) is required only when `claude` is installed |
 | `node` / `npx` | recommended | Claude Code status line (`ccstatusline`) |
 | `uv` | recommended | graphify install (`uv tool install "graphifyy[mcp]"`) |
 | `python3` | recommended | graphify runtime / general tooling |

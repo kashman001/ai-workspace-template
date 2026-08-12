@@ -323,6 +323,34 @@
   </div>
 
   <div class="find med resolved">
+    <h3><span class="id">M24</span> Setup correctness + doc-drift papercuts — first documented command fails on a pristine clone
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/check-*.sh · docs/workspace-structure.md · CONTEXT.md template</span></h3>
+    <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 1, 3, 4, 5, 12; QA A1, A2, A3, B7): check-before-setup
+      order fails on a pristine clone; required-hooks check is Claude-Code-only despite the agent-agnostic promise; the
+      from-scratch "Agent Bootstrap" appendix scaffolds a degraded workspace; three self-describing counts stale;
+      conflicting settings-copy targets; <code>graphifyy</code> typo in a copy-pastable fix hint; promised
+      <code>## Language</code> section missing from the CONTEXT.md template.</p>
+    <p><span class="k">Impact</span> — a new adopter's first minutes hit failures the docs don't predict; drift erodes
+      the template's otherwise QA-verified reference integrity.</p>
+    <p><span class="k">Fix</span> — runtime-aware hooks check; swap check/setup order; align settings-copy targets; fix
+      <code>graphifyy</code>; demote the bootstrap appendix; drop literal counts; add the <code>## Language</code>
+      placeholder.</p>
+    <p><span class="fix">Fixed:</span> 2026-08-11 (fix package (c), session 4) — <code>check-dependencies.sh</code>
+      hooks check is now runtime-aware: committed Codex/Gemini/OpenCode/Copilot wiring satisfies it, and the Claude
+      Code settings copy is required only when <code>claude</code> is installed (new suite
+      <code>scripts/tests/test-check-dependencies.sh</code>, 5 asserts). Quick-start order in
+      <code>workspace-setup.md</code> swapped to setup-before-check; settings-copy target aligned on
+      <code>.claude/settings.local.json</code> (example <code>_comment</code>, <code>docs/context-budget.md</code> ×2,
+      dependencies runbook); <code>graphifyy</code> typo fixed; the from-scratch bootstrap section demoted to an
+      end-of-doc "Appendix: Agent Bootstrap Instructions (degraded path)" with a prefer-cloning banner and a
+      conditional opener (HTML regenerated); literal counts dropped (<code>template-usage.md</code> skills,
+      <code>docs/README.md</code> suites) and the <code>workspace-structure.md</code> scripts tree completed (six
+      missing scripts added, <code>hooks/</code> summarized); <code>CONTEXT.md</code> gained the promised
+      <code>## Language</code> placeholder and its hook-wiring claim now notes the Claude copy is
+      setup-materialized.</p>
+  </div>
+
+  <div class="find med resolved">
     <h3><span class="id">M19</span> Template ships its maintainer's lab notebook — no clean day-1 state
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">work/ · scripts/context-budget.sh · docs/template-usage.md</span></h3>
     <p><span class="k">Evidence</span> — DevEx review 2026-08-11 (dev 8, 9, 10; QA A4, A8 — <code>work/devex-review/findings/</code>):

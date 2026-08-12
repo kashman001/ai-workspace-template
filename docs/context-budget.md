@@ -518,8 +518,8 @@ No single mechanism covers every runtime, so four layers overlap:
    (one WARN + one STOP per session), throttled to one check/minute, fails
    open — any hook error exits 0 (or emits the vendor's silent-JSON shape) so
    it can never block real work. Claude Code's wiring lives in
-   `.claude/settings.json` (gitignored — copy the `hooks` block from
-   `.claude/settings.json.example`); the others ship committed. Full
+   `.claude/settings.local.json` (gitignored — `scripts/setup.sh` copies it
+   from `.claude/settings.json.example`); the others ship committed. Full
    per-runtime wiring/channel/friction breakdown: "Vendor hook deployments"
    below.
 2. **Mandatory checkpoints in long-running skills (all runtimes):** `onboard-repo`
@@ -542,7 +542,7 @@ into the shared lib for the actual check and message text.
 
 | Runtime | Wiring file | Event | In-band channel | Friction gate |
 | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/settings.json` (gitignored; copy from `.claude/settings.json.example`) → `scripts/hooks/context-budget-claude-hook.sh` | `PostToolUse` | stderr text + `exit 2` (Claude Code surfaces stderr as an interrupting message on a non-zero exit) | None beyond the local settings copy — no vendor-side trust gate. |
+| Claude Code | `.claude/settings.local.json` (gitignored; `scripts/setup.sh` copies from `.claude/settings.json.example`) → `scripts/hooks/context-budget-claude-hook.sh` | `PostToolUse` | stderr text + `exit 2` (Claude Code surfaces stderr as an interrupting message on a non-zero exit) | None beyond the local settings copy — no vendor-side trust gate. |
 | Codex | `.codex/config.toml` `[[hooks.UserPromptSubmit]]` → `context-budget-codex-hook.sh` | `UserPromptSubmit` | `hookSpecificOutput` JSON on stdout (`{hookSpecificOutput:{hookEventName,additionalContext}}`), `exit 0` | **Hash-based hook trust:** the first run of the hook in a repo prompts the human to approve it (hash recorded; editing the script re-prompts). Automation/CI must pass `--dangerously-bypass-hook-trust`. |
 | Gemini CLI | `.gemini/settings.json` `hooks.BeforeAgent` → `context-budget-gemini-hook.sh` | `BeforeAgent` | JSON-only stdout — gemini hooks require valid JSON on every invocation; the wrapper emits `{}` when silent (no jq, no escalation) and `{hookSpecificOutput:{additionalContext}}` on WARN/STOP | Measurement reads the workspace `.gemini/telemetry.log`, not the payload's `transcript_path` (the chat transcript carries no token counts) — exact only once the telemetry log has an entry for this session. **Known limitation:** the telemetry log is shared and append-only across sessions in the workspace, so a successor gemini session's *first-turn* `BeforeAgent` check can read the predecessor's last (large) entry before its own first response lands, and spuriously report STOP on turn one. Accepted — gemini chains are human-launched anyway (see "Chained rollovers & re-attach" above), so a spurious first-turn STOP is caught by a human before it matters. |
 | opencode | `.opencode/opencode.json` `"plugin"` array → `.opencode/plugins/context-budget.js`, which shells out to `context-budget-opencode-hook.sh <sessionID>` | `chat.message` | the plugin `push`es a message `Part` (`output.parts.push(...)`) | opencode's Part schema is strict: a bare `{type,text}` part fails validation and kills the turn — every part needs `id`, `sessionID`, and `messageID`. Also: `.opencode/plugins/*.js` is **not** auto-discovered in this repo (empirically verified) — a plugin must be explicitly listed in `opencode.json`'s `plugin` array or it never runs. Measurement is a sqlite read from `~/.local/share/opencode/opencode.db` (`message.data` per-turn `tokens.total`, with a session-column sum fallback; no size-estimate fallback, since the db is shared across all sessions). |

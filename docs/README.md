@@ -38,5 +38,5 @@ why loading less is the point).
 | I want to… | Read |
 |---|---|
 | See open findings / report one | [`template-workspace-backlog.html`](template-workspace-backlog.html) (maintenance convention inside; settled cards: [`template-workspace-backlog-archive.html`](template-workspace-backlog-archive.html)) |
-| Run the template's test suites | `scripts/tests/` (twelve suites; `test-template-instantiation.sh` clones committed state — commit first) |
+| Run the template's test suites | `scripts/tests/` (`test-template-instantiation.sh` clones committed state — commit first) |
 | Read retired docs | [`archive/`](archive/) |

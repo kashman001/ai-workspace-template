@@ -28,245 +28,7 @@ when you need to bring several related repos under a single agent-aware roof.
 - [Gitignored vs. Checked In](#gitignored-vs-checked-in)
 - [Recommended `CONTEXT.md` Sections](#recommended-contextmd-sections)
 - [Bootstrapping Your Own Workspace](#bootstrapping-your-own-workspace)
-- [Agent Bootstrap Instructions](#agent-bootstrap-instructions)
-
----
-
-## Agent Bootstrap Instructions
-
-**If you are an AI agent reading this file, follow these steps to scaffold
-a new workspace from scratch.** A human invoked you with something like
-"set up a dev-ai workspace for project X using this template." Treat the
-rest of this document as the *specification* for what you are building.
-
-### Preconditions to confirm with the user
-
-Before creating any files, ask the user for:
-
-1. **Workspace name** — typically `<project>-dev-ai-workspace`.
-2. **Workspace location** — absolute path on disk where the workspace
-   directory should be created.
-3. **Product repos** — name, clone URL, host, default branch, and one-line
-   purpose for each. Mark each as **primary** (auto-cloned) or **optional**.
-4. **Editor(s) and agent runtime(s)** in use — VS Code, JetBrains, Neovim;
-   Claude Code, Codex, Copilot, Gemini. Determines which IDE/agent config
-   files to scaffold.
-5. **External services** the workspace will integrate with (Jira,
-   Confluence, GitHub, Postgres, cloud CLIs, etc.). Determines `.env`
-   variables and `service-access.md` entries.
-6. **Whether to clone repos now** or only scaffold the registry.
-
-If any answer is unclear, stop and ask — do not guess. Do not invent repo
-names or clone URLs.
-
-### Z0 product interview — turn the answers into product-level docs
-
-The preconditions above gather facts; these questions produce the Z0
-(product-level) docs. Ask them in the same sitting and write the answers
-into the named files — `SPEC.md` and `docs/system-design.md` ship as
-fillable templates for exactly this:
-
-1. **What is the product, who uses it, and what must it do?**
-   → `SPEC.md` (intent, core requirements, constraints, out of scope).
-2. **What are the major components or services, and which repo owns
-   each?** → `docs/system-design.md` components table +
-   `docs/repos-registry.md`.
-3. **How do the components talk** (APIs, queues, shared stores)?
-   → `docs/system-design.md` communication section.
-4. **How is each component built, run, and debugged locally** — the
-   actual entry-point commands? → `docs/system-design.md` entry-points
-   table.
-5. **Which decisions are already settled, and why?** → `docs/adr/`
-   (one record per settled decision worth keeping).
-
-The workspace has its Z0 pane when `SPEC.md` and `docs/system-design.md`
-no longer contain their `TODO` fill-in markers.
-
-### Execution rules
-
-- **Create empty, instruction-bearing stub files** for everything listed in
-  the structure below. Each stub must contain a short header comment
-  explaining what the file is for, what to fill in, and a link back to the
-  section of this template that describes it (e.g.,
-  `See docs/workspace-structure.md → "skills/ — Agent Skills"`).
-- **`CONTEXT.md` is *not* a bare stub.** Populate it with a working
-  starting skeleton:
-  1. Workspace name and one-paragraph purpose (from preconditions).
-  2. A "Repository layout" pointer: `repos/` for clones,
-     `docs/repos-registry.md` for the canonical registry.
-  3. A "Workspace structure" pointer to `docs/workspace-structure.md`.
-  4. An empty "Workspace Skills" section with a TODO note.
-  5. The two sections from
-     [Recommended `CONTEXT.md` Sections](#recommended-contextmd-sections),
-     copied verbatim ("Agent Coding Principles" and "Agent Context
-     Discipline").
-     This ensures day-1 agents in the new workspace have real behavioral
-     guidance instead of an empty file.
-- **Do not fabricate content** for repo context docs or skills beyond the
-  stub header. Those require human input or a separate generation pass.
-- **Copy this template's contents verbatim** to
-  `<workspace-root>/docs/workspace-structure.md`. Do not paraphrase or
-  trim. The destination file (named `workspace-structure.md`, *not*
-  `workspace-structure-template.md`) becomes the authoritative map for the
-  new workspace; the original template can be discarded by the user.
-- **Use symlinks** for agent entrypoints (`CLAUDE.md`, `AGENTS.md` →
-  `CONTEXT.md`). Verify each symlink resolves after creation.
-- **Make `scripts/setup.sh` and `scripts/check-workspace-structure.sh`
-  executable** (`chmod +x`).
-- **`skills/` starts empty.** This bootstrap does *not* install any
-  generic skills (`handoff`, `diagnosing-bugs`, etc.). Mention in the final
-  summary that the user should add skills as separate next steps.
-- **`.env.example` gets seeded placeholders.** For each service named in
-  preconditions, add a commented placeholder line (e.g., `# DB_HOST=`,
-  `# AWS_PROFILE=`, `# ATLASSIAN_USER=`). Do not invent variables for
-  services the user didn't name.
-- **Do not commit anything.** Initialize the git repo (`git init`) and
-  leave staging to the user.
-- **Print a summary** at the end listing every file created, every symlink
-  established, and the next manual steps the user must take (add skills,
-  fill in repo context docs, set up MCP, clone repos if deferred, etc.).
-
-### Files and directories to create
-
-Create the following tree. Files marked **(stub)** should be created with
-the header comment described above; files marked **(template copy)** are
-copied from this template's content; files marked **(symlink)** are
-symlinks; directories are created with a `.gitkeep` if otherwise empty.
-
-```
-<workspace-root>/
-├── CONTEXT.md                              (populated — see "Execution rules")
-├── CLAUDE.md                               (symlink → CONTEXT.md)
-├── AGENTS.md                               (symlink → CONTEXT.md)
-├── .gitignore                              (working file — see content below)
-├── .env.example                            (stub with seeded service placeholders)
-├── README.md                               (stub — one-line pitch + pointer to CONTEXT.md)
-│
-├── docs/
-│   ├── workspace-structure.md              (template copy — this file)
-│   ├── workspace-setup.md                  (stub)
-│   ├── repos-registry.md                   (stub — pre-populate with repos from preconditions)
-│   ├── system-design.md                    (stub)
-│   ├── operational-knowledge.md            (stub)
-│   ├── service-access.md                   (stub — one section per service from preconditions)
-│   ├── mcp-setup.md                        (stub, only if MCP is in use)
-│   └── repo-context/
-│       ├── README.md                       (stub — index of covered repos)
-│       └── <repo>/                         (one folder per covered repo)
-│           ├── code-structure.md           (stub)
-│           └── design.md                   (stub)
-│
-├── skills/
-│   └── .gitkeep                            (skills are added later by the user)
-│
-├── work/
-│   └── .gitkeep
-│
-├── prompt-library/
-│   └── .gitkeep
-│
-├── references/
-│   └── README.md                           (stub — registry of external repos; keeps dir tracked)
-│
-├── repos/
-│   └── README.md                           (symlink → ../docs/repos-registry.md)
-│
-└── scripts/
-    ├── setup.sh                            (stub, executable)
-    ├── check-workspace-structure.sh        (stub, executable)
-    └── check-service-access.sh             (stub, executable; only if services exist)
-```
-
-Add editor/agent-specific scaffolding **only** for tools the user named in
-preconditions:
-
-```
-.vscode/
-├── settings.json                           (stub — shared IDE settings)
-├── mcp.json.example                        (stub — MCP server template)
-└── (mcp.json is user-specific, do NOT create)
-
-.claude/
-└── (settings.json is user-specific, do NOT create; mention in README)
-
-<Project>.code-workspace                    (stub — multi-root workspace, only if VS Code)
-```
-
-### Stub header template
-
-Every stub file must begin with a comment block in the file's native
-comment syntax. Example for Markdown:
-
-```markdown
-<!--
-File: <path-from-workspace-root>
-Purpose: <one-line description>
-Fill in: <what the human or a follow-up agent should put here>
-See: docs/workspace-structure.md → "<section name>"
--->
-```
-
-For shell scripts:
-
-```bash
-#!/usr/bin/env bash
-# File: scripts/setup.sh
-# Purpose: Bootstrap the workspace (create .env, symlinks, optional repo clones).
-# Fill in: implementation. Must support --clone-repos flag.
-# See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"
-set -euo pipefail
-
-echo "TODO: implement workspace setup" >&2
-exit 1
-```
-
-For `.gitignore`, write a working file (not a stub) with at minimum:
-
-```gitignore
-# Cloned product repos (registry symlink kept)
-repos/*
-!repos/README.md
-
-# Cloned external references
-references/*
-!references/README.md
-
-# Environment and credentials
-.env
-.service-access.local.json
-
-# User-specific agent / IDE config
-.vscode/mcp.json
-.claude/settings.json
-
-# Scratch
-temp/
-tmp/
-
-# OS cruft
-.DS_Store
-
-# Stack-specific — include only the entries that apply to your workspace
-# .venv/           # Python virtualenv
-# node_modules/    # Node deps
-# .idea/           # JetBrains IDE files
-```
-
-### Post-scaffold verification
-
-After creating everything, run these checks and report results:
-
-1. Every symlink resolves (`readlink` each one; the targets exist).
-2. Every script in `scripts/` is executable (`test -x`).
-3. `git status` shows every scaffolded file as untracked, `repos/README.md`
-   appears tracked (it's a symlink to a tracked target), and no scaffolded
-   file is unexpectedly ignored. Confirm with
-   `git check-ignore -v <path>` for any file you're unsure about.
-4. The `.gitignore` correctly excludes `repos/*` while keeping
-   `repos/README.md` visible to git (`git check-ignore -v repos/README.md`
-   returns nothing).
-
-If any check fails, fix it before declaring the bootstrap complete.
+- [Appendix: Agent Bootstrap Instructions (degraded path)](#appendix-agent-bootstrap-instructions-degraded-path)
 
 ---
 
@@ -746,15 +508,20 @@ scripts/
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── context-inspect.sh             # Break down what fills a session's context window
+├── context-experiment.sh          # Reproducible headless context experiment harness
+├── rollover-prep.sh               # One-shot mechanical prep for a session rollover
+├── capture-rollover-options.sh    # Capture the session's launch options for replay
 ├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt
+├── attach-session.sh              # Re-attach a chained rollover successor to its work item
+├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
 ├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
-├── hooks/                         # Agent-runtime hook scripts
-│   └── context-budget-claude-hook.sh  # Claude Code in-band WARN/STOP hook
+├── hooks/                         # Per-runtime in-band WARN/STOP hooks
+│   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
 ├── mcp/                           # Workspace-local MCP servers
 │   ├── youtube-transcript.sh      #   YouTube MCP launcher
 │   └── youtube_transcript_mcp.py  #   YouTube metadata/caption server
-└── tests/                         # Automated workspace tests
-    └── test-context-budget-registry.sh  # Session-keyed registry + lock regression tests (M13)
+└── tests/                         # Automated workspace tests (one suite per feature area — see ls)
 ```
 
 **Required scripts** (start with these):
@@ -937,11 +704,12 @@ Rules for keeping the LLM context window healthy across long sessions:
 
 ## Bootstrapping Your Own Workspace
 
-The authoritative bootstrap procedure is the
-[Agent Bootstrap Instructions](#agent-bootstrap-instructions) section above.
-Whether you delegate to an AI agent or perform the steps manually, follow
-that section — it lists every file and symlink to create, the stub header
-format, and the post-scaffold verification checks.
+The supported way to instantiate this template is cloning it —
+`docs/template-usage.md`. If cloning is impossible, the
+[Appendix: Agent Bootstrap Instructions](#appendix-agent-bootstrap-instructions-degraded-path)
+below scaffolds a minimal workspace from scratch — it lists every file and
+symlink to create, the stub header format, and the post-scaffold
+verification checks.
 
 After the initial scaffold, iterate by:
 
@@ -951,3 +719,251 @@ After the initial scaffold, iterate by:
 - Adding `docs/service-access.md` entries as you integrate new external
   services.
 - Refreshing repo context docs when repos change significantly.
+
+---
+
+## Appendix: Agent Bootstrap Instructions (degraded path)
+
+> **Prefer cloning — this path is degraded.** The supported way to
+> instantiate this template is `docs/template-usage.md` (clone / "Use this
+> template"), which arrives with every shipped script, skill, and the
+> context-budget machinery intact. The from-scratch scaffold below produces
+> stubs instead (`skills/` starts empty, `setup.sh` is a TODO), and its file
+> lists deliberately describe that minimal scaffold, not the fuller set the
+> template now ships. Use it only when cloning is impossible.
+
+**Follow these steps only if you are an AI agent explicitly asked to
+scaffold a new workspace from scratch instead of cloning.** A human invoked
+you with something like "set up a dev-ai workspace for project X using this
+template, without cloning it." Treat this document as the *specification*
+for what you are building.
+
+### Preconditions to confirm with the user
+
+Before creating any files, ask the user for:
+
+1. **Workspace name** — typically `<project>-dev-ai-workspace`.
+2. **Workspace location** — absolute path on disk where the workspace
+   directory should be created.
+3. **Product repos** — name, clone URL, host, default branch, and one-line
+   purpose for each. Mark each as **primary** (auto-cloned) or **optional**.
+4. **Editor(s) and agent runtime(s)** in use — VS Code, JetBrains, Neovim;
+   Claude Code, Codex, Copilot, Gemini. Determines which IDE/agent config
+   files to scaffold.
+5. **External services** the workspace will integrate with (Jira,
+   Confluence, GitHub, Postgres, cloud CLIs, etc.). Determines `.env`
+   variables and `service-access.md` entries.
+6. **Whether to clone repos now** or only scaffold the registry.
+
+If any answer is unclear, stop and ask — do not guess. Do not invent repo
+names or clone URLs.
+
+### Z0 product interview — turn the answers into product-level docs
+
+The preconditions above gather facts; these questions produce the Z0
+(product-level) docs. Ask them in the same sitting and write the answers
+into the named files — `SPEC.md` and `docs/system-design.md` ship as
+fillable templates for exactly this:
+
+1. **What is the product, who uses it, and what must it do?**
+   → `SPEC.md` (intent, core requirements, constraints, out of scope).
+2. **What are the major components or services, and which repo owns
+   each?** → `docs/system-design.md` components table +
+   `docs/repos-registry.md`.
+3. **How do the components talk** (APIs, queues, shared stores)?
+   → `docs/system-design.md` communication section.
+4. **How is each component built, run, and debugged locally** — the
+   actual entry-point commands? → `docs/system-design.md` entry-points
+   table.
+5. **Which decisions are already settled, and why?** → `docs/adr/`
+   (one record per settled decision worth keeping).
+
+The workspace has its Z0 pane when `SPEC.md` and `docs/system-design.md`
+no longer contain their `TODO` fill-in markers.
+
+### Execution rules
+
+- **Create empty, instruction-bearing stub files** for everything listed in
+  the structure below. Each stub must contain a short header comment
+  explaining what the file is for, what to fill in, and a link back to the
+  section of this template that describes it (e.g.,
+  `See docs/workspace-structure.md → "skills/ — Agent Skills"`).
+- **`CONTEXT.md` is *not* a bare stub.** Populate it with a working
+  starting skeleton:
+  1. Workspace name and one-paragraph purpose (from preconditions).
+  2. A "Repository layout" pointer: `repos/` for clones,
+     `docs/repos-registry.md` for the canonical registry.
+  3. A "Workspace structure" pointer to `docs/workspace-structure.md`.
+  4. An empty "Workspace Skills" section with a TODO note.
+  5. The two sections from
+     [Recommended `CONTEXT.md` Sections](#recommended-contextmd-sections),
+     copied verbatim ("Agent Coding Principles" and "Agent Context
+     Discipline").
+     This ensures day-1 agents in the new workspace have real behavioral
+     guidance instead of an empty file.
+- **Do not fabricate content** for repo context docs or skills beyond the
+  stub header. Those require human input or a separate generation pass.
+- **Copy this template's contents verbatim** to
+  `<workspace-root>/docs/workspace-structure.md`. Do not paraphrase or
+  trim. The destination file (named `workspace-structure.md`, *not*
+  `workspace-structure-template.md`) becomes the authoritative map for the
+  new workspace; the original template can be discarded by the user.
+- **Use symlinks** for agent entrypoints (`CLAUDE.md`, `AGENTS.md` →
+  `CONTEXT.md`). Verify each symlink resolves after creation.
+- **Make `scripts/setup.sh` and `scripts/check-workspace-structure.sh`
+  executable** (`chmod +x`).
+- **`skills/` starts empty.** This bootstrap does *not* install any
+  generic skills (`handoff`, `diagnosing-bugs`, etc.). Mention in the final
+  summary that the user should add skills as separate next steps.
+- **`.env.example` gets seeded placeholders.** For each service named in
+  preconditions, add a commented placeholder line (e.g., `# DB_HOST=`,
+  `# AWS_PROFILE=`, `# ATLASSIAN_USER=`). Do not invent variables for
+  services the user didn't name.
+- **Do not commit anything.** Initialize the git repo (`git init`) and
+  leave staging to the user.
+- **Print a summary** at the end listing every file created, every symlink
+  established, and the next manual steps the user must take (add skills,
+  fill in repo context docs, set up MCP, clone repos if deferred, etc.).
+
+### Files and directories to create
+
+Create the following tree. Files marked **(stub)** should be created with
+the header comment described above; files marked **(template copy)** are
+copied from this template's content; files marked **(symlink)** are
+symlinks; directories are created with a `.gitkeep` if otherwise empty.
+
+```
+<workspace-root>/
+├── CONTEXT.md                              (populated — see "Execution rules")
+├── CLAUDE.md                               (symlink → CONTEXT.md)
+├── AGENTS.md                               (symlink → CONTEXT.md)
+├── .gitignore                              (working file — see content below)
+├── .env.example                            (stub with seeded service placeholders)
+├── README.md                               (stub — one-line pitch + pointer to CONTEXT.md)
+│
+├── docs/
+│   ├── workspace-structure.md              (template copy — this file)
+│   ├── workspace-setup.md                  (stub)
+│   ├── repos-registry.md                   (stub — pre-populate with repos from preconditions)
+│   ├── system-design.md                    (stub)
+│   ├── operational-knowledge.md            (stub)
+│   ├── service-access.md                   (stub — one section per service from preconditions)
+│   ├── mcp-setup.md                        (stub, only if MCP is in use)
+│   └── repo-context/
+│       ├── README.md                       (stub — index of covered repos)
+│       └── <repo>/                         (one folder per covered repo)
+│           ├── code-structure.md           (stub)
+│           └── design.md                   (stub)
+│
+├── skills/
+│   └── .gitkeep                            (skills are added later by the user)
+│
+├── work/
+│   └── .gitkeep
+│
+├── prompt-library/
+│   └── .gitkeep
+│
+├── references/
+│   └── README.md                           (stub — registry of external repos; keeps dir tracked)
+│
+├── repos/
+│   └── README.md                           (symlink → ../docs/repos-registry.md)
+│
+└── scripts/
+    ├── setup.sh                            (stub, executable)
+    ├── check-workspace-structure.sh        (stub, executable)
+    └── check-service-access.sh             (stub, executable; only if services exist)
+```
+
+Add editor/agent-specific scaffolding **only** for tools the user named in
+preconditions:
+
+```
+.vscode/
+├── settings.json                           (stub — shared IDE settings)
+├── mcp.json.example                        (stub — MCP server template)
+└── (mcp.json is user-specific, do NOT create)
+
+.claude/
+└── (settings.json is user-specific, do NOT create; mention in README)
+
+<Project>.code-workspace                    (stub — multi-root workspace, only if VS Code)
+```
+
+### Stub header template
+
+Every stub file must begin with a comment block in the file's native
+comment syntax. Example for Markdown:
+
+```markdown
+<!--
+File: <path-from-workspace-root>
+Purpose: <one-line description>
+Fill in: <what the human or a follow-up agent should put here>
+See: docs/workspace-structure.md → "<section name>"
+-->
+```
+
+For shell scripts:
+
+```bash
+#!/usr/bin/env bash
+# File: scripts/setup.sh
+# Purpose: Bootstrap the workspace (create .env, symlinks, optional repo clones).
+# Fill in: implementation. Must support --clone-repos flag.
+# See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"
+set -euo pipefail
+
+echo "TODO: implement workspace setup" >&2
+exit 1
+```
+
+For `.gitignore`, write a working file (not a stub) with at minimum:
+
+```gitignore
+# Cloned product repos (registry symlink kept)
+repos/*
+!repos/README.md
+
+# Cloned external references
+references/*
+!references/README.md
+
+# Environment and credentials
+.env
+.service-access.local.json
+
+# User-specific agent / IDE config
+.vscode/mcp.json
+.claude/settings.json
+
+# Scratch
+temp/
+tmp/
+
+# OS cruft
+.DS_Store
+
+# Stack-specific — include only the entries that apply to your workspace
+# .venv/           # Python virtualenv
+# node_modules/    # Node deps
+# .idea/           # JetBrains IDE files
+```
+
+### Post-scaffold verification
+
+After creating everything, run these checks and report results:
+
+1. Every symlink resolves (`readlink` each one; the targets exist).
+2. Every script in `scripts/` is executable (`test -x`).
+3. `git status` shows every scaffolded file as untracked, `repos/README.md`
+   appears tracked (it's a symlink to a tracked target), and no scaffolded
+   file is unexpectedly ignored. Confirm with
+   `git check-ignore -v <path>` for any file you're unsure about.
+4. The `.gitignore` correctly excludes `repos/*` while keeping
+   `repos/README.md` visible to git (`git check-ignore -v repos/README.md`
+   returns nothing).
+
+If any check fails, fix it before declaring the bootstrap complete.
+

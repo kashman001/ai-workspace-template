@@ -71,7 +71,8 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
 - **graphify** — wired by default (`.gemini/settings.json`,
   `.opencode/plugins/graphify.js`, the `CONTEXT.md` graphify section). If you
   don't use it, delete those and the `.opencode/opencode.json` plugin entry.
-- **Skills** — `skills/` ships with five reusable workflows: **checkpoint**
+- **Skills** — `skills/` ships with reusable workflows (authoritative list:
+  `CONTEXT.md` → "Workspace Skills"), among them **checkpoint**
   (session-boundary wrap-up), **onboard-repo** (bring a repo into the workspace),
   **rlm** (Recursive Language Model loop for querying contexts too large to
   read into chat), **decision-log** (capture the *why* behind a decision as a
