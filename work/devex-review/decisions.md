@@ -22,10 +22,10 @@ a doc burden that outlives its usefulness.
 
 ## 2026-08-11 — Fix program: one work item, day-1 state first
 
-**What:** The 7 filed fix cards (M19–M24, L34) run as sequenced work packages
+**What:** The 7 filed fix cards (M19–M24, L35 — filed as L34, renumbered after an ID collision with the insight clone) run as sequenced work packages
 inside `work/devex-review/`, one package per session, ordered:
 (a) clean day-1 state M19 → (c) setup correctness M24 → (b) spec workflow +
-QA seat M20–M22 → (d) PM entry point M23 → (e) minimal mode L34.
+QA seat M20–M22 → (d) PM entry point M23 → (e) minimal mode L35.
 Toolchain vendoring (M22) folds into package (b).
 
 **Why:** Most packages are mechanical execution, not open design decisions —
