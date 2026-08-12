@@ -1124,6 +1124,37 @@
       GitHub now rides <code>gh auth login</code> + the gh CLI in every runtime.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L36</span> Instantiation pruning leaves template-development artifacts in instances
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/template-usage.md §5 · scripts/setup.sh</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-08-12 — <code>template-usage.md</code> §5 broadened from
+      <code>work/</code>-only to a full template-development-artifact prune: backlog pair (+ the CONTEXT.md
+      "Template Backlog" section), <code>template-usage.md</code> itself, unused <code>mcp-fragments/</code>,
+      LICENSE swap, the pruned files' <code>docs/README.md</code> index rows, and a build/CI trim of
+      <code>operational-knowledge.md</code> for non-code instances; empty scaffolding dirs
+      (<code>prompt-library/</code>, <code>references/</code>) stay by default —
+      <code>check-workspace-structure.sh</code> expects both. One-command wholesale prune, no-git variant noted.
+      <code>scripts/setup.sh</code> now prints a prune reminder while the backlog pair is present (regression
+      T1c in <code>test-template-instantiation.sh</code>). M19 ledger-migration verified: the shim runs at
+      script load before command dispatch, and regression G3 (fresh script + legacy
+      <code>work/context-decay/</code> ledger → folded into <code>.context-budget/</code>, old file removed,
+      appends continue) passes — an updated instance converges on its first context-budget invocation.</p>
+    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12: a personal house-sale workspace still
+      carries the template's own backlog HTML pair, <code>docs/template-usage.md</code>, the template LICENSE, a
+      GitHub MCP fragment, build/CI content in <code>operational-knowledge.md</code>, and empty
+      <code>repos/</code>/<code>references/</code>/<code>prompt-library/</code> scaffolding. The instance predates
+      M19's prune-<code>work/</code> guidance and, after a 2026-08-07 template update
+      (<code>.template-update-backup-2026-08-07</code> present), its context ledger still sits at the legacy
+      <code>work/context-decay/context-ledger.jsonl</code> path.</p>
+    <p><span class="k">Impact</span> — engineering vestige confuses non-code instances, bloats the always-on doc
+      surface, and legacy state paths persist through updates.</p>
+    <p><span class="k">Fix</span> — extend the template-usage §5 prune list beyond <code>work/</code> to template-only
+      files (backlog pair, template-usage itself, unused mcp-fragments, LICENSE swap); have
+      <code>scripts/setup.sh</code> or an instantiation checklist offer the prune interactively; verify the
+      template-update flow triggers the M19 ledger-migration shim (it runs at script load — confirm an updated
+      instance actually converges on <code>.context-budget/</code>).</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

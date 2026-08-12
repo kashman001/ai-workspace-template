@@ -133,27 +133,55 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
   graphify) are documented in `docs/recommended-tooling.md`, including the
   per-repo setup for graphify graphs and Matt Pocock config.
 
-## 5. Prune the maintainer's `work/` history
+## 5. Prune the template-development artifacts
 
-`work/` ships with the template maintainer's own work directories
-(`context-decay`, `automatic-session-rollover`, `usage-scenarios`, …). They
-are research/session history, kept as a live worked example of the
+The box ships with residue from developing the template itself. Prune it on
+day 1 — instances that skip this carry the template's own issue tracker and
+engineering history around indefinitely.
+
+**The maintainer's `work/` history.** `work/` ships with the template
+maintainer's own work directories (`context-decay`,
+`automatic-session-rollover`, `usage-scenarios`, …). They are
+research/session history, kept as a live worked example of the
 work-directory conventions — **not** template machinery. Nothing the scripts
 or skills depend on lives there: runtime state (the context-budget measurement
 ledger, session registrations) lives in the gitignored `.context-budget/`, and
-the doc-worthy conclusions were promoted to `docs/archive/`.
+the doc-worthy conclusions were promoted to `docs/archive/`. Keep a `work/`
+dir only if you want its worked example.
 
-On day 1, delete them wholesale and start clean:
+**Template-only files** — these document the template, not your project:
+
+- `docs/template-workspace-backlog.html` + `…-backlog-archive.html` — the
+  template's own issue tracker. Also delete the "Template Backlog" section
+  of `CONTEXT.md` that maintains it.
+- `docs/template-usage.md` — this file; it has done its job once you finish
+  this checklist. (`docs/workspace-structure.md` stays — it describes your
+  workspace, not the template.)
+- `mcp-fragments/*.json` you don't use.
+- `LICENSE` — the template's license; swap in your project's own (or delete
+  it in a private workspace).
+- After pruning, drop the deleted files' rows from `docs/README.md`'s index.
+- `prompt-library/` and `references/` are near-zero-cost empty scaffolding —
+  keep them when in doubt; `scripts/check-workspace-structure.sh` expects
+  both, so deleting them means removing them from that script's dir list too.
+- Non-code instance? Also trim the build/CI sections of
+  `docs/operational-knowledge.md`.
+
+The wholesale part in one commit (no-git mode: `rm -r`, no commit):
 
 ```bash
-git rm -r work/*/ && git commit -m "prune template maintainer work history"
+git rm -r work/*/ docs/template-workspace-backlog*.html
+git commit -m "prune template-development artifacts"
 ```
 
-(`work/.gitkeep` keeps the directory.) Two kinds of pointers into the deleted
+(`work/.gitkeep` keeps the directory; delete `docs/template-usage.md` last,
+once you're done with it.) Two kinds of pointers into the deleted `work/`
 dirs remain by design and are safe to leave dangling: ADR `Promoted from:` /
 `Refs:` provenance lines, and history rows in the template backlog — both
-record where a decision came from, not content you need. Keep a `work/` dir
-only if you want its worked example.
+record where a decision came from, not content you need.
+
+`scripts/setup.sh` reminds you about this section while the backlog pair is
+still present.
 
 ## 6. Reference
 

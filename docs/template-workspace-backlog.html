@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">64</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">2</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">65</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -157,25 +157,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L36</span> Instantiation pruning leaves template-development artifacts in instances
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/template-usage.md §5 · scripts/setup.sh</span></h3>
-    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12: a personal house-sale workspace still
-      carries the template's own backlog HTML pair, <code>docs/template-usage.md</code>, the template LICENSE, a
-      GitHub MCP fragment, build/CI content in <code>operational-knowledge.md</code>, and empty
-      <code>repos/</code>/<code>references/</code>/<code>prompt-library/</code> scaffolding. The instance predates
-      M19's prune-<code>work/</code> guidance and, after a 2026-08-07 template update
-      (<code>.template-update-backup-2026-08-07</code> present), its context ledger still sits at the legacy
-      <code>work/context-decay/context-ledger.jsonl</code> path.</p>
-    <p><span class="k">Impact</span> — engineering vestige confuses non-code instances, bloats the always-on doc
-      surface, and legacy state paths persist through updates.</p>
-    <p><span class="k">Fix</span> — extend the template-usage §5 prune list beyond <code>work/</code> to template-only
-      files (backlog pair, template-usage itself, unused mcp-fragments, LICENSE swap); have
-      <code>scripts/setup.sh</code> or an instantiation checklist offer the prune interactively; verify the
-      template-update flow triggers the M19 ledger-migration shim (it runs at script load — confirm an updated
-      instance actually converges on <code>.context-budget/</code>).</p>
-  </div>
 
   <div class="find low">
     <h3><span class="id">L37</span> Portable agent brief — exporting workspace state to an out-of-workspace agent is an unrecognized pattern

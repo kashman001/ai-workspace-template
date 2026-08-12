@@ -26,6 +26,7 @@ cd "$TMP/ws"
 out=$(HOME="$SANDBOX_HOME" scripts/setup.sh 2>&1); rc=$?
 assert_eq "T1a: setup.sh exit 0" "$rc" "0"
 assert_contains "T1b: copilot trust seed skipped (no ~/.copilot)" "$out" "skipping trust seed"
+assert_contains "T1c: prune reminder while backlog pair present (L36)" "$out" "template-usage.md §5"
 for f in .env .mcp.json .claude/settings.local.json; do
   [ -f "$f" ] && ok "T1: created $f" || bad "T1: missing $f"
 done

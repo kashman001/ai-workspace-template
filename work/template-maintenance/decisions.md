@@ -56,3 +56,10 @@
 **Rejected:** Shipping a full optional "Privacy Posture" section inside the CONTEXT.md template itself (marked delete-if-git) — burdens every git-using instance's always-loaded front door until pruned, for a mode most instances don't take; the paste-in block gives no-git instances the same end state.
 **Blast radius:** docs/template-usage.md §1, CONTEXT.md Decision Records, skills/{decision-log,checkpoint,session-rollover}/SKILL.md, both backlog HTML files.
 **Promote?:** no (documentation labeling; reversible)
+
+## 2026-08-12 — L36 prune offer: setup.sh reminder + doc checklist over a destructive prune flag
+**Chose:** `scripts/setup.sh` prints a one-line prune reminder (gated on the backlog pair being present — the template-development marker) pointing at the broadened `template-usage.md` §5 checklist; the deletions themselves stay copy-paste commands in the doc.
+**Because:** setup.sh is an idempotent bootstrap script every runtime and CI test runs — deletion logic there needs git/no-git handling, an interactivity story agents can't answer, and test surface; a reminder is 4 lines, safe, and the checklist carries judgment calls (LICENSE swap, non-code trims) a script can't make.
+**Rejected:** `--prune-template` flag or interactive TTY prompt in setup.sh performing the deletions — destructive code in the bootstrap path for a once-per-instance action; the card's "offer the prune interactively" is satisfied by the unmissable reminder at the moment of instantiation.
+**Blast radius:** scripts/setup.sh, docs/template-usage.md §5, scripts/tests/test-template-instantiation.sh (T1c), both backlog HTML files.
+**Promote?:** no
