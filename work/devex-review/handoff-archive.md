@@ -1,3 +1,30 @@
+# Session Handoff — 2026-08-12 (session 5: M24 verified, merged, cleaned up)
+
+Launched as a background job from main's **stale** launcher (still pointing at
+package (c)/M24 because session 4's branch was unmerged — L33 third strike,
+card updated). EnterWorktree resumed session 4's worktree, surfaced its
+commits, and a redo was averted: instead of re-executing M24 this session
+**verified** session 4's work (all seven fixes spot-checked on the branch;
+`scripts/tests/test-check-dependencies.sh` 5/5) and reported.
+
+User then went interactive and directed:
+- Fast-forward merge of `worktree-devex-m24-setup-correctness` into main
+  (`cf502d9..75fa589`, 17 files) and push of main to origin (including the
+  4 older unpushed commits).
+- Removal of the local worktree + branch and the remote branch — M24 work is
+  now fully consolidated on pushed main; no side branches remain.
+
+No new template changes this session beyond the L33 evidence line in the
+backlog. Rollover requested by the user to start package (b) fresh.
+
+Suggested skills for next session: `grilling` for the M20–M22 convention
+design (collaborative); `session-rollover` at WARN/STOP.
+
+Learnings:
+- L33 (launcher staleness) third strike — now recorded on the card itself;
+  a background-job successor should treat "worktree resume with unexpected
+  commits" as a stop-and-verify signal, which worked here.
+
 # Session Handoff — 2026-08-11 (session 4: fix package (c)/M24 shipped)
 
 Ran as a background job in worktree `worktree-devex-m24-setup-correctness`

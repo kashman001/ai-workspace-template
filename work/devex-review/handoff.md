@@ -6,6 +6,40 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-12 (session 7: fix package (d) M25+L33+L32 shipped)
+
+User picked the reliability package (M25+L33+L32) from the proposed split.
+All three fixed in commit `d9c1382` on branch `worktree-devex-fix-package-d`
+(pushed, NOT merged — user must merge; the new L33 guard now REFUSES relaunch
+until merged, by design).
+
+Shipped:
+- M25: rollover-prep.sh splits root resolution — tracked files (handoff
+  rotation, git summary) target $PWD's checkout (same-common-dir guard);
+  coordination state (.session-seq, .rollover-options) stays on main root.
+  Test T10. Sibling scripts audited: coordination-only, correctly unchanged.
+- L33: launch-next-session.sh stale-launcher guard — dies when any ref has a
+  next-session.md commit unreachable from HEAD (reachability, not dates);
+  --skip-freshness overrides. Tests F1–F4. SKILL.md notes the guard.
+- L32: claude hook keys throttle/escalation per (session, chain) via
+  transcript basename; sidechain can't swallow parent WARN. Test T12.
+- Backlog: 3 cards → archive with Fixed: notes; scorecard 3/61/4/0/6;
+  changelog row added. Two Tier-2 decision notes in decisions.md.
+
+Suites green: rollover-prep 38, launch-next-session 94, vendor-hooks 54.
+
+Rollover at STOP (152K). Live validation during this rollover: prep operated
+on the worktree's ledger and left the root checkout clean — M25 confirmed
+fixed in production use.
+
+Learnings:
+- rev-list newest-by-date tie-breaks arbitrarily on same-second commits —
+  caught only because the F1 test failed first (guard v1 used merge-base on
+  the newest sha); reachability (`--all --not HEAD`) is the exact semantic.
+- The launch script's lock release happens AFTER the freshness guard, so a
+  guard refusal leaves the work-item lock held — released manually this
+  session (`context-budget.sh release`).
+
 # Session Handoff — 2026-08-12 (session 6: fix package (b) M20–M22 shipped)
 
 Collaborative session as planned: grilled the user through seven spec-workflow
@@ -41,31 +75,4 @@ Learnings:
 - This harness blocks `git -C <outside-path>` from a worktree-isolated
   session; read `.git/HEAD`/refs as files when a fact about another repo is
   needed.
-
-# Session Handoff — 2026-08-12 (session 5: M24 verified, merged, cleaned up)
-
-Launched as a background job from main's **stale** launcher (still pointing at
-package (c)/M24 because session 4's branch was unmerged — L33 third strike,
-card updated). EnterWorktree resumed session 4's worktree, surfaced its
-commits, and a redo was averted: instead of re-executing M24 this session
-**verified** session 4's work (all seven fixes spot-checked on the branch;
-`scripts/tests/test-check-dependencies.sh` 5/5) and reported.
-
-User then went interactive and directed:
-- Fast-forward merge of `worktree-devex-m24-setup-correctness` into main
-  (`cf502d9..75fa589`, 17 files) and push of main to origin (including the
-  4 older unpushed commits).
-- Removal of the local worktree + branch and the remote branch — M24 work is
-  now fully consolidated on pushed main; no side branches remain.
-
-No new template changes this session beyond the L33 evidence line in the
-backlog. Rollover requested by the user to start package (b) fresh.
-
-Suggested skills for next session: `grilling` for the M20–M22 convention
-design (collaborative); `session-rollover` at WARN/STOP.
-
-Learnings:
-- L33 (launcher staleness) third strike — now recorded on the card itself;
-  a background-job successor should treat "worktree resume with unexpected
-  commits" as a stop-and-verify signal, which worked here.
 
