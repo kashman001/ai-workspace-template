@@ -68,6 +68,7 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
 
 3. **Confirm repo/branch state** is clean and recorded: current branch, working tree clean,
    merged branches tidied or noted. If the project deploys, record the live deployment versions.
+   (No-git workspace: skip — record instead that all state files under `work/` are current.)
 
 4. **Emit a ready-to-paste catch-up prompt** (for the next session, after context is
    compacted/cleared) in a fenced block — it must name the hand-off doc path and tell the next

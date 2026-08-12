@@ -29,8 +29,51 @@ point the rest of the docs depend on:
   follows the fresh-clone path in `docs/workspace-setup.md`, which assumes
   this variant.
 
+- **No-git ("private")** — the workspace holds content that must never reach
+  a remote (personal, legal, financial). Clone, then remove git entirely and
+  don't re-init:
+
+  ```bash
+  git clone https://github.com/<you>/ai-workspace-template.git <your-project>-workspace
+  cd <your-project>-workspace
+  rm -rf .git
+  ```
+
+  See "No-git mode" below for what changes.
+
 Starting local-only and publishing later is fine
 (`git remote add origin <url> && git push -u origin main`).
+
+### No-git mode
+
+The core loop — launcher/ledger under `work/`, `decisions.md`, the context
+budget — is git-free and works unchanged. What changes:
+
+**Paste a privacy posture into `CONTEXT.md`** (top-level section), so every
+agent session inherits it:
+
+```markdown
+## Privacy Posture
+
+This workspace deliberately has NO git repository. Do not run `git init`,
+do not commit, never push or upload the contents of this workspace
+(especially `work/` and documents) to any external service.
+```
+
+**Decision capture starts at Tier 2.** There are no commits, so the Tier-1
+`Decision:` trailer is N/A. Capture every decision as a dated line in
+`work/<project>/decisions.md`; promotion to an ADR still works (ADRs are
+just files).
+
+**Git-dependent machinery is N/A** — skip it; nothing else breaks:
+
+- `checkpoint`'s confirm-branch-state step and `git status` verification.
+- `session-rollover`'s commit-per-convention flush; note file state in the
+  handoff instead. The `launch-next-session.sh` freshness guard passes
+  automatically (the launcher is untracked), and worktree-invoked relaunch
+  doesn't apply.
+- Worktree isolation, `scripts/diff-review.sh`, and git-guardrails hooks.
+- §5's prune command: use `rm -r work/*/` instead of `git rm`.
 
 ## 2. Fill in the placeholders
 

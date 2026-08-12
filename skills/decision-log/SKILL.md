@@ -45,6 +45,8 @@ Tier 1  Commit trailer git commit message            permanent · in-repo · mac
 Default policy — deliberately light, so it doesn't die of ceremony:
 
 - **Tier 1 — always.** Every non-trivial commit carries a one-line `Decision:` reason.
+  (No-git workspace — no commits by design: Tier 1 is N/A; the wide net starts at
+  Tier 2 — date every note.)
 - **Tier 2 — for any choice with a rejected alternative.** If there was a real fork,
   append a note. This is the wide net: cheap, append-only, lives beside the work.
 - **Tier 3 — only on promotion.** An ADR is earned, not automatic. Promote only when

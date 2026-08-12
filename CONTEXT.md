@@ -83,7 +83,8 @@ Capture the **why** behind decisions — code records *what* exists, not *how it
 got there*; intent is unrecoverable after the fact unless written down as you
 decide. Three tiers by permanence, captured cheap and promoted upward:
 
-- **Tier 1 — commit trailer** (always): a one-line `Decision:` reason in the commit body.
+- **Tier 1 — commit trailer** (always; no-git workspaces: N/A — capture starts at
+  Tier 2, dated): a one-line `Decision:` reason in the commit body.
 - **Tier 2 — decision note** (for any choice with a rejected alternative): appended to
   `work/<project-name>/decisions.md`. Ephemeral, per-project, cheap — the wide net.
 - **Tier 3 — ADR** (only for lasting-weight decisions): a committed record under `docs/adr/`,

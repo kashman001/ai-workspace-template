@@ -89,6 +89,7 @@ exchanges so STOP can't pass unnoticed.
    maintaining; commit per convention or explicitly note uncommitted work in the
    handoff (the prep output's git summary shows what's dirty); verify any
    sub-agent-claimed outputs actually exist on disk (summaries are hints, not facts).
+   (No-git workspace: saving the files IS the flush; the git summary is empty.)
 
 4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
    directly below the PURPOSE comment, above the single block prep left behind.

@@ -49,3 +49,10 @@
 **Rejected:** Switching `context-budget.env` to default-only assignments (`: "${VAR:=…}"`) — fixes all consumers in one place but inverts the per-item `work/<proj>/context-budget.env` override chain in `launch-next-session.sh` (global sourced first would win over per-item), and per-item env files are user-authored plain assignments.
 **Blast radius:** scripts/context-budget.sh lines 42–52; scripts/tests/test-context-budget-registry.sh (T16).
 **Promote?:** no
+
+## 2026-08-12 — M26 no-git mode: paste-in posture block over an optional CONTEXT.md section
+**Chose:** Document no-git ("private") mode as a third instantiation variant in `docs/template-usage.md` §1 with a "No-git mode" subsection carrying a ready-to-paste Privacy Posture block for CONTEXT.md, the Tier-1→Tier-2 decision-capture rewrite, and the N/A list; one-line N/A notes at each point of use (CONTEXT.md Tier-1 bullet, decision-log/checkpoint/session-rollover SKILL.md). No code changes.
+**Because:** The card's own evidence shows the core loop is already git-free — the fix is labeling. Point-of-use one-liners keep the always-loaded context cost near zero while the full variant doc lives at the instantiation choice point, which is when it's actually read.
+**Rejected:** Shipping a full optional "Privacy Posture" section inside the CONTEXT.md template itself (marked delete-if-git) — burdens every git-using instance's always-loaded front door until pruned, for a mode most instances don't take; the paste-in block gives no-git instances the same end state.
+**Blast radius:** docs/template-usage.md §1, CONTEXT.md Decision Records, skills/{decision-log,checkpoint,session-rollover}/SKILL.md, both backlog HTML files.
+**Promote?:** no (documentation labeling; reversible)

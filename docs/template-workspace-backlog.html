@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">4</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">63</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">64</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -153,28 +153,6 @@
     <p><span class="k">Fix</span> — re-pin the artifact at <code>record</code> time when the session-id's transcript
       has moved (the session id is stable across the move), or a worktree-entry hook that re-registers; add a
       regression test with a relocated artifact fixture.</p>
-  </div>
-
-  <div class="find med">
-    <h3><span class="id">M26</span> No-git ("private") workspace mode is real but unsupported
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">CONTEXT.md template · docs/template-usage.md · git-assuming scripts/skills</span></h3>
-    <p><span class="k">Evidence</span> — house-sale instance review 2026-08-12 (a real 8-session, non-code personal
-      instantiation at <code>~/projects/Personal/house-sale</code>): the workspace deliberately runs with NO git
-      repository for privacy (personal financial documents), enforced only by a hand-written PRIVACY block in its
-      CONTEXT.md ("do not run git init, do not commit, never push/upload"). Meanwhile the inherited template text
-      still mandates Tier-1 decision capture as a commit trailer "(always)", <code>checkpoint</code> expects clean
-      branch state, and the package-(d) stale-launcher/freshness guards are git-reachability checks that cannot run
-      at all. The instance degraded gracefully only because every collision was hand-patched; the launcher/ledger,
-      decisions.md, and context-budget loop (19 measured rollover records) all worked fine without git.</p>
-    <p><span class="k">Impact</span> — privacy-sensitive instantiations (personal, legal, financial) must discover
-      and hand-patch the git assumptions themselves; git-dependent machinery silently no-ops or gives misleading
-      instructions (an "always" rule that is impossible to follow).</p>
-    <p><span class="k">Fix</span> — document a supported no-git variant: an instantiation choice that (1) states the
-      privacy posture in CONTEXT.md template text (no init, no push, no external upload of <code>work/</code>);
-      (2) rewrites Tier-1 decision capture to a dated ledger/decisions.md line when there are no commits;
-      (3) marks git-dependent pieces (checkpoint branch checks, launch-next-session freshness guard, worktree
-      isolation, diff-review) as N/A in this mode. The core loop (launcher/ledger, decisions, context budget) is
-      already git-free — the fix is labeling, not new machinery.</p>
   </div>
 
   <!-- ========================= LOW ========================= -->
