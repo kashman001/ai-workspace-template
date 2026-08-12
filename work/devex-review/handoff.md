@@ -6,6 +6,40 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-12 (session 8: fix package (e) M23+L35 shipped — PROGRAM COMPLETE)
+
+Final package executed autonomously (background job) per the launcher's
+pre-agreed scope. Freshness check passed on local main; the worktree branched
+from origin/main (2 commits behind local main) and was fast-forwarded to
+`e8f031b` before backlog edits — origin lags local, push pending.
+
+Shipped (commit `6164366` on branch `worktree-devex-fix-package-e`,
+NOT merged — user must merge):
+- M23: `docs/for-non-engineers.md` (status/decisions/contributing + 6-term
+  glossary + agent-prompt fallbacks); `work/README.md` status index (committed
+  items only — decision note) + 60-second reading key; *(anyone)* tags on
+  create-work-item/decision-log/to-spec in CONTEXT.md + human redirect line;
+  rows in docs/README.md (non-engineer row, rendered-backlog URL) + README.md
+  pointer.
+- L35: "Minimal mode" blockquote atop docs/context-budget.md (solo loop =
+  register + record + session-rollover); fleet-only tags on the section-index
+  entries (multi-session, worktrees, per-child sweep, dispatching children).
+- Backlog: both cards → archive with Fixed: notes; scorecard 1/63/4/0/6;
+  changelog row. Sole remaining open card: **M16** (pre-review finding, not
+  part of this program).
+
+Doc-only change; entrypoint (8) + parameterization suites green.
+
+**The devex-review fix program is COMPLETE**: all 10 review-born cards
+(M19–M25, L32, L33, L35) fixed across packages (a)–(e). Future findings go
+through template-maintenance.
+
+Learnings:
+- EnterWorktree branches from origin/main (baseRef=fresh), not local HEAD —
+  when local main is ahead, ff the worktree branch to local main before
+  editing files the unpushed commits touched (backlog HTML here), or the
+  merge conflicts.
+
 # Session Handoff — 2026-08-12 (session 7: fix package (d) M25+L33+L32 shipped)
 
 User picked the reliability package (M25+L33+L32) from the proposed split.
@@ -39,40 +73,4 @@ Learnings:
 - The launch script's lock release happens AFTER the freshness guard, so a
   guard refusal leaves the work-item lock held — released manually this
   session (`context-budget.sh release`).
-
-# Session Handoff — 2026-08-12 (session 6: fix package (b) M20–M22 shipped)
-
-Collaborative session as planned: grilled the user through seven spec-workflow
-decisions (Q1–Q7, all recorded in `work/devex-review/decisions.md` 2026-08-12
-entry), then implemented and closed M20, M21, M22 in one commit.
-
-Shipped (commit `bb0388e` on branch `worktree-devex-fix-package-b`, pushed,
-**NOT merged to main** — user must merge):
-- M20: "Spec conventions" in `docs/agents/issue-tracker.md` (skeleton with
-  Status/Approved-by + stable S-IDs; in-file approval default, branch loop
-  optional; when-required rule; external spec-of-record clause);
-  Spec:/Covers: advisory ticket fields; create-work-item scaffold-time ask;
-  SPEC.md ↔ spec.md cross-references.
-- M21: `verification.md` skeleton + row in work-directory-conventions.md;
-  Severity:/Repro: on bug tickets; no-spec → README `## Success criteria`.
-- M22: to-spec/to-tickets/triage vendored (MIT, upstream 8b36d4f) with
-  provenance + wiring comments; three `.claude/commands/`; CONTEXT.md list +
-  recommended-tooling.md updated; tdd/diagnosing-bugs stay global-only with
-  point-of-use pointers.
-- Backlog: M20–M22 → archive; scorecard 6 open / 58 resolved; M25 third
-  strike noted on the card.
-
-Rollover at WARN (134K, then 137K at prep). The session-6 rollover edits
-(this block, launcher, M25 evidence line) are committed on the same branch.
-
-Suggested skills for next session: none mandatory; `session-rollover` at
-WARN/STOP.
-
-Learnings:
-- M25 struck again exactly as carded (prep rotated the root checkout's
-  ledger from a worktree session); repaired via cp into worktree +
-  `git show HEAD:` restore of root.
-- This harness blocks `git -C <outside-path>` from a worktree-isolated
-  session; read `.git/HEAD`/refs as files when a fact about another repo is
-  needed.
 
