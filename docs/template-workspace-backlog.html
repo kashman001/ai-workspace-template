@@ -249,7 +249,10 @@
     <p><span class="k">Evidence</span> — change-log finding 2026-08-06, previously un-carded: a successor session read
       a stale launcher because the local checkout lagged origin/main; mitigation is prose-only. Same shape recurred
       2026-08-08 session 2: a fresh worktree branched from origin/main, which lagged local main by the session-1
-      commit — caught only because the work files were visibly missing.</p>
+      commit — caught only because the work files were visibly missing. Third strike 2026-08-12 (devex-review
+      session 5): launched from main's stale launcher while session 4's branch was unmerged, so the launcher
+      pointed at already-done work (M24); a full redo was averted only because EnterWorktree resumed session 4's
+      worktree and its commits were noticed.</p>
     <p><span class="k">Impact</span> — successor resumes from an outdated plan; wasted work or conflicting edits.</p>
     <p><span class="k">Fix</span> — cheap freshness guard at bootstrap: compare the launcher's last-commit sha against
       origin (and against local main when branching a worktree); warn and stop if behind.</p>

@@ -8,16 +8,13 @@ We're resuming devex-review — the FIX PROGRAM. Works in any runtime
 > session history. Past-tense provenance lives in `handoff.md` (append-only
 > ledger). Convention: docs/work-directory-conventions.md.
 
-## MERGE GATE — check before anything else
+## Freshness check — before anything else
 
-Session 4 ran as a background job on branch
-`worktree-devex-m24-setup-correctness` (package (c)/M24, commit `a7efb94`).
-If `git log --oneline -5` does not show that commit, the branch is unmerged —
-**stop and ask the user to merge it first**. Merge note: main may carry
-uncommitted changes to `work/devex-review/handoff*.md` (a `rollover-prep.sh`
-bug rotated main's ledger from the worktree — card M25); they duplicate what
-the branch carries, so discard them first:
-`git checkout -- work/devex-review/` in main.
+This launcher was written at session-5 rollover with main at the session-5
+rollover commit, fully merged and pushed (packages (a)/M19 and (c)/M24 both
+on main; no side branches). If `git log --oneline -3` does not show a
+"session-5 rollover" commit, your checkout is stale — pull/merge before
+trusting this file (backlog card L33 is exactly this trap).
 
 ## Mission
 
@@ -37,10 +34,10 @@ and agree before writing. Do not run it as an autonomous background job.
 
 - `findings/devex-review.md` in full — fix lists already carded.
 - The persona review process — complete; never re-dispatch.
-- Packages (a)/M19 and (c)/M24 — done and archived; handoff.md top block
-  only if needed.
+- Packages (a)/M19 and (c)/M24 — done, merged, archived; handoff.md top
+  blocks only if needed.
 - Package sequencing — settled (decisions.md); after (b), remaining open:
-  M23, L32, L33, L35.
+  M23, M25, L32, L33, L35.
 - Hooks-check design — settled (decisions.md, 2026-08-11 M24 note).
 
 ## Constraints already decided (do not re-litigate)
@@ -53,8 +50,8 @@ and agree before writing. Do not run it as an autonomous background job.
 
 ## State snapshot
 
-- Package (c) on branch `worktree-devex-m24-setup-correctness`, pushed (see
-  MERGE GATE); main was in sync with origin at session-4 start.
+- main fully merged and pushed at session-5 rollover; no devex side branches
+  or worktrees remain (M24 branch deleted local + remote).
 - `work/kimi-k3-agent-integration/` untracked = other effort, leave alone.
 - No running processes, no open agents.
 
@@ -62,7 +59,7 @@ and agree before writing. Do not run it as an autonomous background job.
 
 1. `scripts/context-budget.sh register --project devex-review` (skip if the
    SessionStart hook registered; re-run with `--project` for linkage).
-2. Check the MERGE GATE above.
+2. Run the Freshness check above.
 3. Confirm the user is present — package (b) is collaborative; if running
    unattended, stop and ask how to proceed.
 4. Grep the M20–M22 cards; grill the user on the conventions; implement the
