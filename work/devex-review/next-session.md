@@ -1,55 +1,64 @@
-# Catchup prompt — DevEx Review (paste into a new agent session)
+# Catchup prompt — DevEx fix package (a): clean day-1 state (M19)
 
-We're resuming devex-review. Works in any runtime (Claude Code, Codex, Gemini,
-OpenCode) — all read `CONTEXT.md` via their entrypoint.
+We're resuming devex-review — now the FIX PROGRAM, not the review. Works in
+any runtime (Claude Code, Codex, Gemini, OpenCode).
 
-> **This file is the LAUNCHER (catch-up prompt).** Forward-only, and REPLACED
-> at each rollover: it holds what to do next, still-binding constraints, and
-> pointers — never session history. Past-tense provenance lives in
-> `handoff.md` (the append-only ledger). Convention:
-> docs/work-directory-conventions.md.
+> **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
+> each rollover: what to do next, still-binding constraints, pointers — never
+> session history. Past-tense provenance lives in `handoff.md` (append-only
+> ledger). Convention: docs/work-directory-conventions.md.
 
 ## Mission
 
-The DevEx review is done (session 1); this session PLANS THE FIX WORK with the
-user. Turn the review's prioritized fix list into an agreed, sequenced plan —
-what to fix, in what order, at what scope — and file the backlog candidates.
+Execute fix package (a) — backlog card **M19**, "clean day-1 state": the
+template must stop shipping its maintainer's lab notebook. Concretely:
+1. Move the context-budget telemetry ledger out of `work/context-decay/` to
+   `.context-budget/` (it's core plumbing writing into a deletable research
+   dir that silently reappears — see `scripts/context-budget.sh:40` area).
+2. Add a prune-`work/` step to `docs/template-usage.md`.
+3. Promote doc-worthy `work/` research content to `docs/archive/`.
+4. Strip `work/context-decay/*-analysis*.md` evidence pointers from shipped
+   skills (cite conclusions inline or point at the archived copy).
+Close by flipping M19 to Resolved (+ `Fixed:` line) and moving the card to
+`docs/template-workspace-backlog-archive.html` per its maintenance rules.
 
 ## Read these, in order
 
-1. `work/devex-review/findings/devex-review.md` — the synthesis: 6 themes,
-   prioritized 7-item fix list, backlog-card candidates (bottom section).
-2. `work/devex-review/handoff.md` (top block only).
-3. Raw persona reports (`findings/dev-persona.md`, `pm-persona.md`,
-   `qa-persona.md`) — demand-load per finding while planning; do NOT read whole
-   up front.
+1. `docs/template-workspace-backlog.html` — the M19 card only (grep "M19").
+2. `work/devex-review/decisions.md` — top note: the agreed package sequence.
+3. Raw evidence on demand: `work/devex-review/findings/dev-persona.md`
+   items 8, 9, 10 and `qa-persona.md` A4 — targeted greps, not whole files.
 
 ## Do NOT reload
 
-- The persona review process/prompts — reviews are complete; never re-dispatch.
-- `docs/context-budget.md`, `docs/workspace-structure.md` in full — the review
-  already extracted what matters; findings cite exact lines.
+- `findings/devex-review.md` in full — its fix list is already carded
+  (M19–M24, L34); the card is the work order.
+- The persona review process — complete; never re-dispatch.
+- Sequencing debate — settled with the user (see decisions.md): after this
+  package comes (c) M24 setup correctness, then (b) M20–M22 spec workflow.
 
 ## Constraints already decided (do not re-litigate)
 
-- Specs are load-bearing for QA — test plans depend on them (user directive).
-- Specs for major initiatives are a PM+dev collaboration, mix varying by
-  project (user directive) — spec-workflow fixes must support this.
-- Review scope was read-only; fixes were deliberately deferred to planning.
+- One work item for the whole fix program; one package per session.
+- Spec workflow (b) is a collaborative session with the user — don't pull it
+  forward into this one.
+- Template additions must stay agent-agnostic and downloader-ready (project
+  memory); the ledger move must work for all six runtimes' hooks.
+- `ROLLOVER_RELAUNCH=auto` — rollovers auto-launch successors now.
 
 ## State snapshot
 
-- Branch: `main`, clean except `work/kimi-k3-agent-integration/` (another
-  effort's untracked item — leave it alone).
-- `work/devex-review/` committed. No running processes, no open agents.
+- Branch `main`, ahead of origin (session-2 commits unpushed); clean except
+  `work/kimi-k3-agent-integration/` (another effort — leave alone).
+- No running processes, no open agents.
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project devex-review`
-2. File backlog candidates from `findings/devex-review.md` (bottom section)
-   into `docs/template-workspace-backlog.html` per its "Maintaining this
-   backlog" section (targeted edits — grep IDs, never load whole).
-3. With the user, sequence the 7-item fix list into work packages (candidate
-   split: (a) clean day-1 state, (b) spec workflow + QA seat, (c) setup
-   correctness pass, (d) PM entry point, (e) minimal-mode docs). Decide
-   whether this stays one work item or spawns a wayfinder map.
+1. `scripts/context-budget.sh register --project devex-review` (skip if the
+   SessionStart hook already registered — then just add `--project` linkage).
+2. Grep the M19 card; scope the ledger move (find every reader/writer of the
+   `work/context-decay/` telemetry path — `grep -rn 'context-decay' scripts/
+   docs/ skills/ .claude/`), then implement 1–4 above with tests where the
+   plumbing changes.
+3. Pre-flight before any second package: `record`, check headroom; roll over
+   rather than start (c) past ~100K.
