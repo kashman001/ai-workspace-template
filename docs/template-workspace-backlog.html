@@ -176,7 +176,9 @@
       <code>work/&lt;proj&gt;/handoff.md</code> → <code>handoff-archive.md</code> (uncommitted), while the worktree's
       copies — the ones that get committed and merged — were untouched. Session 3 misdiagnosed this as "rotated only
       1 of 2 blocks"; session 4 reproduced it and traced the cause: the script resolves the workspace root from its
-      own path, not <code>$PWD</code>. Both sessions repaired the ledgers by hand.</p>
+      own path, not <code>$PWD</code>. Both sessions repaired the ledgers by hand. Third strike session 6
+      (2026-08-12): reproduced identically from the package-(b) worktree; repaired by copying the rotated files into
+      the worktree and restoring the root copies from <code>git show HEAD:</code>.</p>
     <p><span class="k">Impact</span> — every worktree-isolated rollover dirties the user's checkout and leaves the
       committed ledger un-rotated, setting up merge conflicts on the handoff files and breaking the ≤2-block
       verification contract.</p>

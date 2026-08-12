@@ -6,6 +6,42 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-12 (session 6: fix package (b) M20–M22 shipped)
+
+Collaborative session as planned: grilled the user through seven spec-workflow
+decisions (Q1–Q7, all recorded in `work/devex-review/decisions.md` 2026-08-12
+entry), then implemented and closed M20, M21, M22 in one commit.
+
+Shipped (commit `bb0388e` on branch `worktree-devex-fix-package-b`, pushed,
+**NOT merged to main** — user must merge):
+- M20: "Spec conventions" in `docs/agents/issue-tracker.md` (skeleton with
+  Status/Approved-by + stable S-IDs; in-file approval default, branch loop
+  optional; when-required rule; external spec-of-record clause);
+  Spec:/Covers: advisory ticket fields; create-work-item scaffold-time ask;
+  SPEC.md ↔ spec.md cross-references.
+- M21: `verification.md` skeleton + row in work-directory-conventions.md;
+  Severity:/Repro: on bug tickets; no-spec → README `## Success criteria`.
+- M22: to-spec/to-tickets/triage vendored (MIT, upstream 8b36d4f) with
+  provenance + wiring comments; three `.claude/commands/`; CONTEXT.md list +
+  recommended-tooling.md updated; tdd/diagnosing-bugs stay global-only with
+  point-of-use pointers.
+- Backlog: M20–M22 → archive; scorecard 6 open / 58 resolved; M25 third
+  strike noted on the card.
+
+Rollover at WARN (134K, then 137K at prep). The session-6 rollover edits
+(this block, launcher, M25 evidence line) are committed on the same branch.
+
+Suggested skills for next session: none mandatory; `session-rollover` at
+WARN/STOP.
+
+Learnings:
+- M25 struck again exactly as carded (prep rotated the root checkout's
+  ledger from a worktree session); repaired via cp into worktree +
+  `git show HEAD:` restore of root.
+- This harness blocks `git -C <outside-path>` from a worktree-isolated
+  session; read `.git/HEAD`/refs as files when a fact about another repo is
+  needed.
+
 # Session Handoff — 2026-08-12 (session 5: M24 verified, merged, cleaned up)
 
 Launched as a background job from main's **stale** launcher (still pointing at
@@ -32,43 +68,4 @@ Learnings:
 - L33 (launcher staleness) third strike — now recorded on the card itself;
   a background-job successor should treat "worktree resume with unexpected
   commits" as a stop-and-verify signal, which worked here.
-
-# Session Handoff — 2026-08-11 (session 4: fix package (c)/M24 shipped)
-
-Ran as a background job in worktree `worktree-devex-m24-setup-correctness`
-(`.claude/worktrees/devex-m24-setup-correctness`) — **all work committed on
-that branch as `a7efb94` "Fix M24: …", NOT on main; user must merge.** The
-session-3 branch WAS merged before this session started (merge gate passed).
-M24 "setup correctness + doc-drift papercuts" fully shipped and closed; all
-seven papercuts re-verified on the current tree before fixing:
-
-- **Runtime-aware hooks check** in `scripts/check-dependencies.sh`:
-  committed codex/gemini/opencode/copilot wiring satisfies it; the Claude
-  settings copy required only when `claude` is installed. New suite
-  `scripts/tests/test-check-dependencies.sh` (5 asserts, sandboxed PATH).
-  Decision note appended to decisions.md.
-- **Order swapped** in `docs/workspace-setup.md` (setup.sh before
-  check-dependencies.sh); dependencies runbook hooks row updated.
-- **Settings-copy target aligned** on `.claude/settings.local.json`:
-  example `_comment`, `docs/context-budget.md` ×2.
-- **`graphifyy` typo** fixed.
-- **Agent Bootstrap demoted**: moved to end-of-doc "Appendix … (degraded
-  path)" in `docs/workspace-structure.md` with prefer-cloning banner +
-  conditional opener; TOC/cross-refs updated; HTML regenerated.
-- **Counts de-drifted**: template-usage.md skills list uncounted,
-  docs/README.md suite count dropped, scripts tree completed (6 missing
-  scripts, hooks/ summarized).
-- **CONTEXT.md**: `## Language` placeholder added; hook-wiring claim
-  qualified (Claude copy is setup-materialized).
-- **Backlog**: M24 → Resolved + archived (before M19), scorecard 8/55.
-  Tests green: new suite 5/5, agent-entrypoints 8/8, structure check,
-  parameterization.
-
-Suggested skills for next session: none mechanical — package (b) is
-collaborative (`grilling`/spec work with the user); `session-rollover` at
-WARN/STOP.
-
-Learnings:
-- `docs/operational-knowledge.md:25` still points at `work/automatic-session-rollover/relaunch-analysis.md` (prunable dir) — carried from s3; sweep candidate for a later package.
-- Worktree bash guard rejects compound commands mixing loops/redirects with repo paths — keep worktree commands single-purpose; split extract/assemble steps.
 
