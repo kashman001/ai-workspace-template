@@ -5,54 +5,49 @@
 
 ## Mission
 
-**Work the house-sale-derived backlog cards, in order: M26 → L36 → L37**
-(filed 2026-08-12 from the house-sale instance evidence pass, commit
-`bc0f682`; cards in `docs/template-workspace-backlog.html`):
-
-- **M26** — document a supported no-git ("private") workspace mode: privacy
-  posture in CONTEXT.md template text, Tier-1 decision capture fallback
-  (dated decisions.md line when no commits), mark git-dependent machinery
-  N/A in this mode. Labeling, not new machinery.
-- **L36** — extend template-usage §5 prune list beyond `work/` to
-  template-only files; consider interactive prune in `scripts/setup.sh`;
-  verify template-update flow triggers the M19 ledger-migration shim.
-- **L37** — portable agent brief: lightweight convention (or small skill)
-  for sealed, dated, self-contained briefs to out-of-workspace agents, with
-  supersession header + never-reveal section; document next to the
-  dispatch-record pattern in work-directory-conventions.
-
-Resolve each card with a `Fixed:` note (card moves to the archive pair) per
-the backlog's "Maintaining this backlog" section.
-
-One optional thread from the 2026-08-06 context audit, awaiting user appetite:
-trim the remaining empty-session floor — workspace-level GitHub MCP was
-removed 2026-08-07 (L30, commit `2ba9f11`). Still open, both user-global:
-claude.ai connectors (~410 tokens, claude.ai settings) and the superpowers
-plugin (~1.8K). Numbers: `handoff.md` (2026-08-06 block), Learnings.
+**Fix L37 — portable agent brief** (last card of the house-sale mission;
+M26 and L36 shipped in session #4). Card: grep `id">L37` in
+`docs/template-workspace-backlog.html`. Shape per the card's Fix line: a
+lightweight convention (or a small `portable-brief` skill) for exporting
+workspace state to an out-of-workspace agent — a sealed, dated,
+self-contained brief with a supersession header, an explicit
+never-reveal/redaction section, and a ledger note recording when a brief was
+issued and when it went stale; documented in
+`docs/work-directory-conventions.md` next to the dispatch-record pattern.
+Convention-vs-skill is an open design call — default to the leaner
+convention-only form (simplicity-first; a skill can be promoted later if the
+pattern recurs), record a Tier-2 note either way. Resolve the card with a `Fixed:` note → archive (Low section,
+before `<h2>Decisions</h2>`), scorecard 2→1 Open / 65→66 Resolved.
 
 ## Read these, in order
 
-1. `work/template-maintenance/handoff.md` (top block) — what last shipped.
+1. `work/template-maintenance/handoff.md` (top block) — what session #4 shipped.
+2. The L37 card (targeted grep, never the whole backlog file).
+3. `docs/work-directory-conventions.md` — the dispatch-record section the
+   convention slots next to.
+4. `skills/writing-for-agents` (or the global copy) before authoring the text.
 
 ## Do NOT reload
 
-- The 2026-08-06 context-audit methodology — settled; the durable gotchas are
-  in `docs/operational-knowledge.md` (/context under-report; concurrent
-  registry clobber).
-- L17/L18 and L25–L30 details — resolved cards in
-  `docs/template-workspace-backlog-archive.html`; don't re-open.
-- `docs/context-budget.md` whole-file — it has a section index; grep the
-  header you need.
+- M26/L36 details — resolved cards in the backlog archive; don't re-open.
+- The house-sale evidence pass — its conclusions are the three filed cards;
+  the pass itself lives in devex-review history.
+- The 2026-08-06 context-audit thread (optional empty-session-floor trim) —
+  parked, awaiting user appetite; numbers in `handoff-archive.md`.
+- `docs/context-budget.md` whole-file — grep the section header you need.
 
 ## State snapshot
 
-- Branch `main`, clean, pushed through `b366240` (L17+L18 merged
-  2026-08-07 at user direction; the feature branch is deleted).
-- Vendored skill pins: `wayfinder` and `writing-for-agents` at upstream
-  `8b36d4f` (clone: `~/Developer/references/mattpocock-skills`).
+- Branch `main`, clean except untracked `work/kimi-k3-agent-integration/`
+  (another session's item — leave it). Local main is **ahead of origin**
+  (M26 `208a228`, L36 `405810b`, plus the session-4 rollover commit) — push
+  when the user wants.
+- Backlog: 2 Open — M16 (out of mission scope), L37.
+- Vendored skill pins unchanged: `wayfinder`/`writing-for-agents` at
+  upstream `8b36d4f`.
 
 ## First actions
 
-1. `scripts/context-budget.sh register` (skip if the Claude Code SessionStart
-   hook already ran it).
-2. Ask the user (or run a fresh evidence pass) for the next task.
+1. `scripts/context-budget.sh register` (skip if the Claude Code
+   SessionStart hook already ran it).
+2. Work L37 per the Mission above.
