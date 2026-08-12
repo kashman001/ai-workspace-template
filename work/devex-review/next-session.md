@@ -1,4 +1,4 @@
-# Catchup prompt — DevEx fix package (c): setup correctness (M24)
+# Catchup prompt — DevEx fix package (b): spec workflow (M20–M22)
 
 We're resuming devex-review — the FIX PROGRAM. Works in any runtime
 (Claude Code, Codex, Gemini, OpenCode).
@@ -10,36 +10,34 @@ We're resuming devex-review — the FIX PROGRAM. Works in any runtime
 
 ## MERGE GATE — check before anything else
 
-Session 3 ran as a background job on branch `worktree-devex-m19-clean-day1`
-(package (a)/M19: ledger move, prune docs, archive promotion, backlog close).
-If `git log --oneline -1` does not show the M19 commit, that branch is
-unmerged — **stop and ask the user to merge it first**; starting (c) on a
-pre-M19 tree will conflict with it.
+Session 4 ran as a background job on branch
+`worktree-devex-m24-setup-correctness` (package (c)/M24, commit `a7efb94`).
+If `git log --oneline -5` does not show that commit, the branch is unmerged —
+**stop and ask the user to merge it first**.
 
 ## Mission
 
-Execute fix package (c) — backlog card **M24**, "setup correctness +
-doc-drift papercuts": make the first documented command succeed on a pristine
-clone. Fix list (from the card): runtime-aware hooks check (not
-Claude-Code-only); swap check-before-setup order; align conflicting
-settings-copy targets; fix the `graphifyy` typo; demote the from-scratch
-"Agent Bootstrap" appendix; drop stale literal counts; add the `## Language`
-placeholder to the CONTEXT.md template. Close by flipping M24 to Resolved
-(+ `Fixed:` line), moving the card to the archive per its maintenance rules.
+Execute fix package (b) — backlog cards **M20–M22** (spec workflow). This is
+a **COLLABORATIVE session**: the fixes define team conventions (spec format,
+traceability, verification evidence) that need the user's judgement — grill
+and agree before writing. Do not run it as an autonomous background job.
 
 ## Read these, in order
 
-1. `docs/template-workspace-backlog.html` — the M24 card only (grep "M24").
-2. Raw evidence on demand: `work/devex-review/findings/dev-persona.md`
-   items 1, 3, 4, 5, 12 and `qa-persona.md` A1–A3, B7 — targeted greps.
+1. `docs/template-workspace-backlog.html` — the M20, M21, M22 cards (grep
+   each ID).
+2. Raw evidence on demand: `work/devex-review/findings/qa-persona.md` hat B
+   (B1–B6) and `dev-persona.md` "Addendum — Spec Workflow" — targeted greps.
 
 ## Do NOT reload
 
-- `findings/devex-review.md` in full — fix list already carded.
+- `findings/devex-review.md` in full — fix lists already carded.
 - The persona review process — complete; never re-dispatch.
-- Package sequencing — settled (decisions.md): after (c) comes (b) M20–M22
-  spec workflow, a COLLABORATIVE session with the user — don't pull forward.
-- M19 details — done and archived; see handoff.md top block only if needed.
+- Packages (a)/M19 and (c)/M24 — done and archived; handoff.md top block
+  only if needed.
+- Package sequencing — settled (decisions.md); after (b), remaining open:
+  M23, L32, L33, L35.
+- Hooks-check design — settled (decisions.md, 2026-08-11 M24 note).
 
 ## Constraints already decided (do not re-litigate)
 
@@ -47,24 +45,23 @@ placeholder to the CONTEXT.md template. Close by flipping M24 to Resolved
 - Template additions stay agent-agnostic and downloader-ready (project
   memory).
 - `ROLLOVER_RELAUNCH=auto`; a committed work-item env can override per item.
-- Telemetry ledger now lives at `.context-budget/context-ledger.jsonl` —
-  legacy path references are bugs, not conventions.
+- Telemetry ledger lives at `.context-budget/context-ledger.jsonl`.
 
 ## State snapshot
 
-- Package (a) work on branch `worktree-devex-m19-clean-day1` (see MERGE
-  GATE); main also carries 4 older unpushed commits — push still pending.
+- Package (c) on branch `worktree-devex-m24-setup-correctness`, pushed (see
+  MERGE GATE); main was in sync with origin at session-4 start.
 - `work/kimi-k3-agent-integration/` untracked = other effort, leave alone.
 - No running processes, no open agents.
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project devex-review`
-   (skip if the SessionStart hook registered; then just re-run with
-   `--project` for linkage).
+1. `scripts/context-budget.sh register --project devex-review` (skip if the
+   SessionStart hook registered; re-run with `--project` for linkage).
 2. Check the MERGE GATE above.
-3. Grep the M24 card; verify each papercut still reproduces on the current
-   tree (several may have drifted since the review); fix with tests where a
-   check script changes (`scripts/tests/`).
-4. Pre-flight before any second package: `record`, check headroom; roll over
-   rather than start (b) past ~100K.
+3. Confirm the user is present — package (b) is collaborative; if running
+   unattended, stop and ask how to proceed.
+4. Grep the M20–M22 cards; grill the user on the conventions; implement the
+   agreed fixes; close cards per backlog maintenance rules.
+5. Pre-flight before any second package: `record`, check headroom; roll over
+   rather than continue past WARN.

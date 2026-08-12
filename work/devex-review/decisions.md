@@ -47,3 +47,17 @@ background-launch at rollover without a consent ask.
 **Why:** User directive: "Going forward make the session roll over automatic."
 
 **Rejected:** staying `manual` (consent-gated) — explicitly superseded.
+
+## 2026-08-11 — Hooks dependency check: committed wiring satisfies it (M24)
+
+**What:** `check-dependencies.sh`'s required "hooks" item now passes when any
+runtime's context-budget wiring is present (committed Codex/Gemini/OpenCode/
+Copilot files count); the Claude Code settings copy is required only when
+`claude` is on PATH.
+
+**Why:** A pristine clone's first documented command must succeed; the old
+Claude-only grep broke the template's agent-agnostic promise (dev 4).
+
+**Rejected:** (1) keeping the hard Claude-only requirement — the bug itself;
+(2) requiring every installed runtime's wiring — hard to detect installs
+portably, and committed wiring already covers the non-Claude runtimes.
