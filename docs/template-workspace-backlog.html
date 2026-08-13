@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">5</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">6</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">66</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -211,6 +211,20 @@
       resolve there or here, not both.</p>
   </div>
 
+  <div class="find low">
+    <h3><span class="id">L39</span> No generic backlog convention ships
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs · conventions (N8)</span></h3>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G9</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N8 entry, surfaced by review-2 finding F10): the map's N8 entry claimed "backlog conventions (native)", but the
+      only backlog practice is the template repo's own (CLAUDE.md "Template Backlog" section + this file's maintenance
+      rules), which adopters are told to delete on instantiation. Nothing generic ships.</p>
+    <p><span class="k">Impact</span> — adopters wanting a lightweight self-tracked backlog (severity-scoped IDs,
+      status badges, archive rotation, scorecard) must reverse-engineer it from template-repo artifacts slated for
+      deletion; the issue-tracker conventions cover tickets, not a standing findings backlog.</p>
+    <p><span class="k">Fix</span> — extract the practice into a generic convention (doc section or scaffold) that
+      survives instantiation, or explicitly document "bring your own tracker" as the decided posture.</p>
+  </div>
+
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
 
@@ -309,6 +323,7 @@
       <tr><td>2026-08-12</td><td>Fix <strong>M26 + L36</strong> (house-sale mission, cards 1–2 — archived): M26: <code>docs/template-usage.md</code> §1 gains a third, no-git ("private") instantiation variant + a "No-git mode" subsection — paste-in Privacy Posture block for <code>CONTEXT.md</code>, Tier-1→Tier-2 decision-capture rewrite, N/A list for git-dependent machinery — with one-line N/A notes at each point of use (CONTEXT.md Tier-1 bullet; decision-log / checkpoint / session-rollover skills); no code change (<code>launch-next-session.sh</code> already degrades without git). L36: §5 broadened to the full template-development prune list (backlog pair, template-usage itself, unused mcp-fragments, LICENSE swap, README index rows, operational-knowledge trim; scaffolding dirs stay), <code>setup.sh</code> prune reminder gated on the backlog pair (regression T1c), M19 ledger-migration shim verified via registry G3. Suites: 72/72 registry, 28/28 instantiation. Scorecard now 2/65/4/0/6. <em>(Row added retroactively by session 5 — the delivering session omitted it.)</em></td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>L37</strong> (house-sale mission, final card — archived): portable-agent-brief convention documented in <code>docs/work-directory-conventions.md</code> — new "Portable agent brief" section (one sealed file per version under <code>work/&lt;proj&gt;/briefs/&lt;audience&gt;-vN.md</code>, supersession header with the discard line, explicit never-reveal section, ledger notes at issue and at staleness, skeleton included) plus an optional-files-table row; contrasted with dispatch records (same-machine children). Kept convention-only per simplicity-first — a skill is promotable if the pattern recurs (Tier-2 note). Scorecard now 1/66/4/0/6.</td></tr>
       <tr><td>2026-08-13</td><td>New findings <strong>M27 + M28 + M29 + L38</strong> filed from the SDLC map's gap register (<code>work/sdlc-ai-mapping/sdlc-map.md</code>, dispositions agreed 2026-08-13): design-time testability prompt (G4→M27), UAT/beta coordination (G5→M28), postmortem convention (G6→M29), dependency/test-suite health (G8→L38). The two High-severity gaps became work items instead (<code>work/feedback-intake/</code> for G1, <code>work/quality-gates/</code> for G2+G3); G7 (release engineering) was scoped out deliberately. Scorecard now 5/66/4/0/6.</td></tr>
+      <tr><td>2026-08-13</td><td>New finding <strong>L39</strong> filed from the SDLC map's round-2 review fix pass (finding F10, <code>work/sdlc-ai-mapping/review2-findings.md</code>): the map's N8 "backlog conventions (native)" claim covered an unshipped capability — the template repo's own backlog practice is template-repo-only and deleted on adoption. Map rescoped to the issue-tracker conventions that do ship; the generic-backlog-convention gap is now G9 in the map's gap register → this card. Scorecard now 6/66/4/0/6.</td></tr>
     </tbody>
   </table>
 

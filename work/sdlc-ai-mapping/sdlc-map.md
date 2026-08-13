@@ -441,7 +441,10 @@ Invest where AI stresses the seams: AI raises change volume and speed, so
 the joints between stages — intake, gates, review, feedback routing — get
 *more* load-bearing, not less. This register is that investment list.
 
-Dispositions settled 2026-08-13 with the user (notes: `decisions.md`).
+Dispositions settled 2026-08-13 with the workspace owner (notes:
+`decisions.md`). Dispositions are maintainer-facing: they route each gap
+to a landing place inside the template repo — backlog cards (M/L numbers)
+live in `docs/template-workspace-backlog.html`, work items under `work/`.
 
 | # | Gap | Node/lane | Severity | Disposition |
 |---|-----|-----------|----------|-------------|
@@ -453,6 +456,12 @@ Dispositions settled 2026-08-13 with the user (notes: `decisions.md`).
 | G6 | No postmortem convention; incident learnings evaporate | N7 | Medium | Backlog card **M29** (added 2026-08-13) |
 | G7 | Release engineering absent | N6 | Low | **Out of scope, deliberately** — the template doesn't own deploy machinery; runbooks + `wizard` are the escape hatch |
 | G8 | Dependency upgrades & test-suite health unowned | N8 | Low | Backlog card **L38** (added 2026-08-13) |
+| G9 | No generic backlog convention ships — the template repo's own backlog practice is template-repo-only, deleted on adoption | N8 | Low | Backlog card **L39** (added 2026-08-13) |
+
+**Next up:** G1 (`work/feedback-intake/`) — the steady-state loop's first
+edge — then G2 (`work/quality-gates/`). Dispositions record *routing* as of
+their date, not current state; current state lives in each work item's
+ledger (`handoff.md`).
 
 ## Settled structural questions
 
