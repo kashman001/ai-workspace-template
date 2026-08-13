@@ -1,41 +1,46 @@
-# sdlc-ai-mapping — CLOSED (no next session planned)
+# sdlc-ai-mapping — CLOSED again (no next session required)
 
-> **This file is the LAUNCHER.** The work item was re-closed on 2026-08-13
-> (session 9). Everything is built and merged: map (PR #4/#6/#7/#8),
-> map learnings (PR #10), deck v3 repo copy (PR #11), session-8 rollover
-> bookkeeping (PR #12). Round-2 Minors stay won't-do. Provenance:
-> `handoff.md` (top block) and `decisions.md`.
+> **This file is the LAUNCHER.** The item was briefly reopened on
+> 2026-08-13 (session 10) to produce a workspace-independent map, then
+> re-closed at the session-10 rollover. Everything is merged
+> (PR #16, plus #4–#12 from the original run). Provenance: `handoff.md`
+> (top two blocks) and `decisions.md`. Nothing is pending — no worktree
+> or branch cleanup either (the old s9-close leftover merged via a
+> concurrent session).
 
-## Cleanup — completed 2026-08-13
+## Mission (if a session #11 starts)
 
-The s6-close and s8-deck-v3 worktrees (deferred at close, locked by live
-sessions) were removed later the same day and their branches deleted,
-local + remote. Only the s9-close worktree/branch remained, torn down
-when its session ended. Nothing is pending.
+There is no queued build work. The likely reason to be here is the
+**AI-in-SDLC discussion** the standalone map was made for — supporting
+edits, republishing, or a formal review of that doc.
 
-## If this item is ever reopened
+## Read these, in order
+
+1. `handoff.md` — top block (closing state), second block (what session
+   10 built and why).
+2. `sdlc-map-standalone.md` — only if the task touches its content.
+
+## Do NOT reload
+
+- `sdlc-map.md` review history / round-2 Minors — won't-do by user
+  decision; re-litigate only with a fresh reason.
+- `research-modern-qa.md` — evidence base is settled; deck numbers are
+  verified against it, don't soften them.
+- `handoff-archive.md` — sessions 1–9 provenance, not needed for new work.
+
+## State snapshot
+
+- Branch: `main`, clean, == `origin/main` (`90d32d3` at rollover; the
+  rollover-bookkeeping commit lands after).
+- Published artifacts (republish only **with the URL as `url`**):
+  - standalone map: https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204
+  - deck v3: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+- Follow-on efforts live elsewhere: `work/feedback-intake/` (G1),
+  `work/quality-gates/` (G2/G3), backlog cards M27–M29 + L38/L39.
+
+## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Read `handoff.md` top block, then `README.md` for the item's shape.
-3. Deliverables on main: `sdlc-map.md` (map + deck formulations),
-   `sdlc-map-standalone.md` (workspace-independent map, three-view
-   framing; session 10), and `slides/where-ai-actually-helps.html`
-   (deck v3). Published artifacts — republish only **with the URL as
-   `url`** to avoid duplicates:
-   deck: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
-   standalone map: https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204
-
-## Still-binding constraints (if reopened)
-
-- The map must be consumable independent of the workspace.
-- Round-2 Minors: won't-do; deck "asks" slide not ported — both by user
-  decision, re-litigate only with a fresh reason.
-- Deck numbers are verified against `research-modern-qa.md` — don't
-  soften or embellish.
-- Gap G9 → backlog card L39 is a template-backlog item, not this item's job.
-
-## Follow-on work (separate efforts, not this item)
-
-- `work/feedback-intake/` (G1), `work/quality-gates/` (G2/G3),
-  backlog cards M27–M29 + L38/L39.
-- `work/kimi-k3-agent-integration/` is another effort's dir — leave it.
+2. Read `handoff.md` top block.
+3. Take direction from the user — with no user request, there is nothing
+   to do; do not invent work.
