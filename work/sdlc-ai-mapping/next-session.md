@@ -6,21 +6,12 @@
 > bookkeeping (PR #12). Round-2 Minors stay won't-do. Provenance:
 > `handoff.md` (top block) and `decisions.md`.
 
-## Deferred cleanup (mechanical, any session or the user)
+## Cleanup — completed 2026-08-13
 
-Two worktrees could not be removed at close — each was still locked by a
-live Claude session (s6-close: pid 94056; s8-deck-v3: pid 78591). Both
-their branches are **verified merged into main**. Once those sessions
-have ended:
-
-```sh
-git worktree remove .claude/worktrees/sdlc-ai-mapping-s6-close   # if refused: git worktree unlock <path> first
-git worktree remove .claude/worktrees/sdlc-ai-mapping-s8-deck-v3
-git branch -d worktree-sdlc-ai-mapping-s6-close worktree-sdlc-ai-mapping-s8-rollover
-```
-
-(The s9-close worktree/branch carrying this commit gets the same
-treatment after its PR merges.)
+The s6-close and s8-deck-v3 worktrees (deferred at close, locked by live
+sessions) were removed later the same day and their branches deleted,
+local + remote. Only the s9-close worktree/branch remained, torn down
+when its session ended. Nothing is pending.
 
 ## If this item is ever reopened
 
