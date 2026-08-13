@@ -1,6 +1,6 @@
 # SDLC Map — AI & Template Overlay
 
-**Status: nodes filled in — under review.**
+**Status: seven-persona review fixes applied (P1–P3, 2026-08-13) — stable.**
 Evidence base: `research-modern-qa.md` (citations live there, not here).
 Structural decisions (which stages get node status; overlay granularity):
 `decisions.md`.
