@@ -6,6 +6,28 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 8: deck repo copy synced to v3 as PR #11 — both PRs open, awaiting user)
+
+Background session. One unit shipped, one blocked, one deferred:
+
+**1. Deck repo copy v2 → v3 — PR #11 (OPEN):** branch
+`worktree-sdlc-ai-mapping-s8-deck-v3` (commit `0bb3e8d`). The v3 source
+was extracted **verbatim** from the published artifact (live version
+`1786633261-5406`, label `v3-five-fixes`) and the v2→v3 diff verified to
+contain exactly the five session-7 review fixes, nothing else. Method
+worth remembering: WebFetch on an owned claude.ai artifact URL saves the
+full raw HTML to a file under the session's tool-results dir — no
+browser gymnastics needed (direct fetches of the claudeusercontent
+frame origin are CORS/redirect-blocked). This ledger block + the new
+launcher ride on the same PR.
+
+**2. PR #10 (map learnings): still OPEN** — merge/review is the user's
+call; nothing changed there this session.
+
+**3. s6-close worktree NOT removed:** still locked by a live Claude
+session (pid 94056, cwd inside the worktree, started 13:54). Removal
+stays deferred until that session ends.
+
 # Session Handoff — 2026-08-13 (session 7: deck reviewed + fixed, four deck learnings ported to map as PR #10 — ITEM REOPENED pending merge)
 
 Item reopened with a fresh reason (user walkthrough of the presentation
