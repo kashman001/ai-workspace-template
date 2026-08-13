@@ -66,3 +66,10 @@
 **Rejected:** PPTX-first — generated PPTX looks generic and slows each revision cycle; can still be produced as a plainer translation once content is final.
 **Blast radius:** work/sdlc-ai-mapping/slides/ only
 **Promote?:** no
+
+## 2026-08-13 — Deck-v3 formulations folded back into the map
+**Chose:** Re-integrate four formulations that building the presentation deck ("Where AI Actually Helps", v3) sharpened: (1) claim 4 gains the causal mechanism (AI trades writing time for review time; bottleneck moves to human checkpoints); (2) claim 2 recast as the if/then rule (machine-checkable → AI leads; judgment/authority → AI drafts, human decides); (3) a three-sentence refrain closes "If you read nothing else"; (4) the gap register notes both High-severity gaps are seams, not stages. User decision, session 7 — the deck walkthrough is the "fresh reason" the closure note required.
+**Because:** The deck forced compressions the ~640-line map never produced; porting them back makes the map's front matter carry the same punch standalone.
+**Rejected:** Porting the deck's "asks" slide (approval bars, funding decisions) — pitch material, not map material; would blur the document's role.
+**Blast radius:** sdlc-map.md front matter + gap-register intro only; no node entries, tags, or appendix touched
+**Promote?:** no

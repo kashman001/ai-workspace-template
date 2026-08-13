@@ -34,9 +34,10 @@ Four headline claims:
 1. For a live product the dominant delivery loop is
    operate → maintain → plan → build → ship, with discovery running
    *continuously in parallel* — not a front-to-back pipeline.
-2. AI is strongest where output is *checkable* (code, tests, contracts,
-   coverage diffs, triage) and assistive-only where the artifact encodes
-   judgment or authority (priorities, go/no-go, UAT verdicts). The two
+2. If a machine can check the output (code, tests, contracts, coverage
+   diffs, triage), AI can lead; where the artifact encodes judgment or
+   authority (priorities, go/no-go, UAT verdicts), AI drafts — a human
+   decides. The two
    loudest vendor pitches — self-healing tests and autonomous test agents —
    carry no independent evidence [hype].
 3. Only Build-stage *techniques* carry [measured]-tier evidence (gated
@@ -45,7 +46,13 @@ Four headline claims:
    other tier rests on practice patterns or author judgment.
 4. DORA 2024 caution: AI adoption *amplifies* existing strengths and
    dysfunctions — its data associated more AI use with worse throughput and
-   stability (survey-based, correlational).
+   stability (survey-based, correlational). The mechanism: AI trades
+   writing time for review time, so the bottleneck moves to the human
+   checkpoints — review capacity and the test pipeline, not how fast code
+   gets written.
+
+Three sentences to keep: ask for the evidence tier; if a machine can check
+it, AI can lead; fix the system before you accelerate it.
 
 ## Shape of the model
 
@@ -439,7 +446,9 @@ node of its own here by design.
 
 Invest where AI stresses the seams: AI raises change volume and speed, so
 the joints between stages — intake, gates, review, feedback routing — get
-*more* load-bearing, not less. This register is that investment list.
+*more* load-bearing, not less. This register is that investment list — and
+it confirms its own thesis: both High-severity gaps (G1 intake, G2 gate
+policy) are seams, not stages.
 
 Dispositions settled 2026-08-13 with the workspace owner (notes:
 `decisions.md`). Dispositions are maintainer-facing: they route each gap
