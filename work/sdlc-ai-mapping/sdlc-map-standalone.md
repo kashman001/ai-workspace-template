@@ -123,33 +123,47 @@ gets concrete. None replaces the others.
 
 ### View 2 — the graph (the system of changes)
 
-Solid arrows are flow; the dotted arrow is a *correspondence*, not a flow —
-explained under Traceability below.
+The story first — the steady state of a live product:
 
 ```mermaid
 flowchart LR
-    N1["N1 Discovery and requirements"] --> N2["N2 Planning"]
+    N7["N7 Operate"] --> N8["N8 Maintain"]
+    N8 --> N2["N2 Plan"]
+    N2 --> N4["N4 Build"]
+    N4 --> N5["N5 Verify"]
+    N5 --> N6["N6 Release"]
+    N6 --> N7
+    N7 -. "signal" .-> N1(["N1 Discover"])
+    N1 -. "new work" .-> N2
+```
+
+*Operate → maintain → plan → build → verify → release, around again.
+Discovery (N1) runs continuously alongside, fed by telemetry,
+experiments, and user research. Design (N3) folds into build at this
+altitude; the full graph below keeps it distinct.*
+
+Then the structure — the graph, curated to the edges that carry the
+story:
+
+```mermaid
+flowchart LR
+    N1["N1 Discover"] --> N2["N2 Plan"]
     N2 --> N3["N3 Design"]
     N3 --> N4["N4 Build"]
-    N4 --> N5["N5 Pre-release V&V"]
+    N4 --> N5["N5 Verify"]
     N5 --> N6["N6 Release"]
     N6 --> N7["N7 Operate"]
     N7 --> N8["N8 Maintain"]
-
-    N7 -- "telemetry / experiments / qualitative signal" --> N1
+    N5 -- "failures" --> N4
+    N7 -- "rollback" --> N6
     N8 -- "triaged work" --> N2
-    N8 -- "request-shaped feedback" --> N1
-    N5 -- "V&V failures" --> N4
-    N5 -- "criteria gaps" --> N1
-    N5 -- "design-scenario gaps" --> N3
-    N6 -- "canary failure: fix the code" --> N4
-    N7 -- "rollback: revert the release" --> N6
-    N4 -- "implementation discoveries" --> N3
-    N3 -- "design revises scope / estimates" --> N2
-    N2 -- "requirement gaps" --> N1
-
-    N1 -. "traceability: acceptance criteria are the test basis" .-> N5
+    N7 -- "telemetry & user signal" --> N1
+    N1 -. "acceptance criteria are the test basis" .-> N5
 ```
+
+*Solid arrows are flow; the dotted arrow is a correspondence, not a
+flow — explained under Traceability below. Four representative feedback
+edges shown; the complete census of eleven is the edge table below.*
 
 **Edges beyond the forward path** (N7→N8 doubles as a backbone step):
 
@@ -166,6 +180,33 @@ flowchart LR
 | N4 → N3 | Implementation discoveries revise design |
 | N3 → N2 | Design revises scope and estimates |
 | N2 → N1 | Planning exposes requirement gaps |
+
+```mermaid
+flowchart LR
+    N1["N1 Discover"] --> N2["N2 Plan"]
+    N2 --> N3["N3 Design"]
+    N3 --> N4["N4 Build"]
+    N4 --> N5["N5 Verify"]
+    N5 --> N6["N6 Release"]
+    N6 --> N7["N7 Operate"]
+    N7 --> N8["N8 Maintain"]
+    N7 --> N1
+    N8 --> N2
+    N8 --> N1
+    N5 --> N4
+    N5 --> N1
+    N5 --> N3
+    N6 --> N4
+    N7 --> N6
+    N4 --> N3
+    N3 --> N2
+    N2 --> N1
+    N1 -.-> N5
+```
+
+*Every edge in the model in one picture — the meanings are the rows of
+the table above. This is the visual proof that the SDLC is a graph, not
+a pipeline; the two diagrams above carry the story.*
 
 #### Traceability (correspondence, not flow)
 
