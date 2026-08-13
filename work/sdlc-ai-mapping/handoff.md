@@ -6,6 +6,26 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 9: item RE-CLOSED — worktree cleanup deferred, both held by live sessions)
+
+Background session, bookkeeping only, per the session-9 launcher:
+
+- Pulled main: already current at `d264ee2` (PR #12 merge — the session-8
+  rollover bookkeeping had landed as its own PR since the launcher was
+  written).
+- Verified both leftover branches (`worktree-sdlc-ai-mapping-s6-close`,
+  `worktree-sdlc-ai-mapping-s8-rollover`) are merged into main.
+- **Worktree removal deferred again — both locked by live Claude
+  sessions** (s6-close: pid 94056, the same session as at session-8
+  close; s8-deck-v3: pid 78591 with an active `caffeinate`, now holding
+  the s8-rollover branch). Removing a worktree under a live process was
+  judged unsafe; exact removal commands are in the CLOSED launcher's
+  "Deferred cleanup" section for whoever gets there first.
+- Replaced the launcher with a CLOSED launcher (session-6 `40d2451`
+  precedent, updated for PRs #9–#12 and the deferred cleanup).
+
+No content changes anywhere — item closed.
+
 # Session Handoff — 2026-08-13 (session 8 close: PRs #10 + #11 MERGED, branches deleted — only cleanup + re-close remain)
 
 Continuation of the session-8 background job, user in the loop. Shipped:
