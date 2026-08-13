@@ -4,6 +4,30 @@
 Evidence base: `research-modern-qa.md` (citations live there, not here).
 Structural decisions (N5/N8 node status, overlay granularity): `decisions.md`.
 
+## If you read nothing else
+
+**What this is:** a map of the software development lifecycle (SDLC) as
+eight stages in a graph, with two overlays per stage — where AI genuinely
+helps (evidence-tiered) and what this template ships for it. **Audience:**
+anyone deciding where to point AI or template investment, from leadership
+skimming the claims to engineers working inside one stage. **How to read
+it:** View 1 is the narrative, View 2 the structure; then jump to your
+node's entry. Unfamiliar terms are glossed in the Glossary at the end.
+
+Four headline claims:
+
+1. For a live product the dominant delivery loop is
+   operate → maintain → plan → build → ship, with discovery running
+   *continuously in parallel* — not a front-to-back pipeline.
+2. AI is strongest where output is *checkable* (code, tests, contracts,
+   coverage diffs, triage) and assistive-only where the artifact encodes
+   judgment or authority (priorities, go/no-go, UAT verdicts).
+3. Only N4 (Build) carries [measured]-tier evidence in the per-node AI
+   overlays; every other tier rests on practice patterns or author judgment.
+4. DORA 2024 caution: AI adoption *amplifies* existing strengths and
+   dysfunctions — its data associated more AI use with worse throughput and
+   stability (survey-based, correlational).
+
 ## Shape of the model
 
 The SDLC is **not a serial pipeline; it is a graph**: a backbone of stages a
@@ -96,9 +120,11 @@ can know (failure modes, non-functional targets); **mechanized at N4** into
 executable tests; **spent at N5** against the release candidate — N5 plans
 nothing new, and scenario gaps discovered there are feedback edges.
 
-**Steady state:** for a live product the dominant cycle is
-N7 → N8 → N2 → (N3) → N4 → N5 → N6 → N7 — discovery-led passes (N1-first)
-become the exception, not the rule.
+**Steady state:** for a live product the dominant *delivery* cycle is
+N7 → N8 → N2 → (N3) → N4 → N5 → N6 → N7, while discovery (N1) runs
+continuously in parallel — fed by telemetry, experiments, and user research
+rather than fronting the pipeline. Big-bang N1-first passes become the
+exception; discovery itself does not.
 
 ## Cross-cutting lanes (touch every node)
 
@@ -113,11 +139,15 @@ become the exception, not the rule.
 
 Legend for the two overlays:
 
-- **AI helps** — each item carries an evidence tier from
-  `research-modern-qa.md`: **[measured]** (published deployment results),
-  **[established]** (widely practiced pattern, tooling claims vary),
-  **[heuristic]** (usable, known failure modes), **[hype]** (vendor-claimed,
-  no independent evidence).
+- **AI helps** — each item carries one of four evidence tiers:
+  **[measured]** (published deployment results), **[established]** (widely
+  practiced pattern, tooling claims vary), **[heuristic]** (usable, known
+  failure modes), **[hype]** (vendor-claimed, no independent evidence).
+  Scope honesty: the QA/testing tiers are research-sourced
+  (`research-modern-qa.md`); product, AIOps, and other non-QA tiers are
+  author judgment applied under the same rubric. Tags are always one of the
+  four bare tokens — qualifiers and sources appear in parentheses after the
+  tag, not inside it.
 - **Template support** — **(native)** = skill/doc/convention shipped in this
   template; **(toolchain)** = external capability the template documents in
   `docs/recommended-tooling.md` or that ships with a runtime; **GAP** =
@@ -127,16 +157,19 @@ Legend for the two overlays:
 
 ### N1 — Discovery & requirements
 
-- **Activities:** problem framing, user research, competitive analysis,
-  PRD/spec writing.
+- **Activities:** problem framing, opportunity assessment, user research,
+  competitive analysis, assumption testing, problem-vs-solution validation,
+  PRD/spec writing. Output: a *validated opportunity* plus the PRD — not a
+  document alone.
 - **Quality:** acceptance criteria / executable examples drafted with the
   PRD — the test basis for N5 [verification]; success criteria — "how will
-  we know it works for users" [validation]; requirements review for
-  ambiguity and testability [verification].
+  we know it works for users" [validation]; assumption/demand testing with
+  users [validation]; requirements review for ambiguity and testability
+  [verification].
 - **AI helps:** synthesizing research corpora (interviews, tickets,
   feedback) [established]; drafting specs/PRDs from conversation
   [established]; drafting Given/When/Then scenarios from a PRD
-  [established pattern, tooling effectiveness unverified]; adversarial
+  [established] (pattern; tooling effectiveness unverified); adversarial
   critique of the plan [heuristic].
 - **Template support:** `to-spec` (native) — conversation → spec with
   acceptance criteria per the spec conventions; success-criteria
@@ -148,14 +181,18 @@ Legend for the two overlays:
 
 ### N2 — Planning & prioritization
 
-- **Activities:** roadmap, prioritization, estimation, decomposition into
-  tickets, sequencing and dependency management.
+- **Activities:** roadmap, prioritization — trade-offs under constraint,
+  kill/defer decisions, stakeholder negotiation, outcome-over-output focus —
+  estimation, decomposition into tickets, sequencing and dependency
+  management.
 - **Quality:** definition-of-done per ticket [verification]; risk-based
   prioritization of test effort [verification]; tracer-bullet slicing so
   each ticket is independently verifiable [verification].
 - **AI helps:** decomposing specs into tickets with dependency edges
   [established]; backlog grooming and duplicate detection [established];
-  estimation [heuristic — weak evidence].
+  synthesizing prioritization inputs (usage data, feedback themes,
+  capacity) [established]; estimation [heuristic] (weak evidence).
+  Prioritization decisions themselves stay human.
 - **Template support:** strongest node for the template. `to-tickets`
   (native) — tracer-bullet tickets with blocking edges; `wayfinder`
   (native) — work too big for one session as a map of decision tickets;
@@ -188,12 +225,13 @@ Legend for the two overlays:
 - **Quality:** TDD / tests-with-the-change [verification]; code review
   [verification]; static analysis and linting [verification]; CI quality
   gates [verification]; flaky-test discipline [verification].
-- **AI helps:** agentic coding [established — the premise of this
-  workspace]; unit-test generation gated by objective filters (build,
-  pass, coverage-increase) [measured — Meta TestGen-LLM]; AI-boosted
-  fuzzing [measured — Google OSS-Fuzz]; code-review assist [established];
+- **AI helps:** agentic coding [established] (the premise of this
+  workspace); unit-test generation gated by objective filters (build,
+  pass, coverage-increase) [measured] (Meta TestGen-LLM — measured
+  coverage and acceptance rates, not defect outcomes); AI-boosted
+  fuzzing [measured] (Google OSS-Fuzz); code-review assist [established];
   the DORA caveat applies here hardest: AI raises change volume, so gates
-  matter *more* [measured].
+  matter *more* [measured] (DORA — survey-based, correlational).
 - **Template support:** Agent Coding Principles + Context Discipline in
   CONTEXT.md (native); context budget machinery (native) — keeps the
   *agent* inside its quality envelope while building; work-dir
@@ -212,10 +250,11 @@ Legend for the two overlays:
 - **Quality:** executing N1's acceptance criteria [verification];
   exploratory testing [validation]; UAT/beta with real users [validation];
   security review [verification]; sign-off with recorded evidence.
-- **AI helps:** E2E scenario drafting [heuristic]; LLM-as-judge for
-  natural-language acceptance checks [heuristic — known biases, needs
-  human override]; security review assist [established]; self-healing
-  tests [hype]; autonomous test agents [hype].
+- **AI helps:** E2E scenario drafting [established] (pattern; tooling
+  effectiveness unverified — same lineage as N1 scenario drafting);
+  LLM-as-judge for natural-language acceptance checks [heuristic] (known
+  biases, needs human override); security review assist [heuristic];
+  self-healing tests [hype]; autonomous test agents [hype].
 - **Template support:** `verification.md` convention (native) is a direct
   hit — plan-before/evidence-after in one file, and its `Covers: S1–S4`
   header *is* the N1⇢N5 traceability edge in file form; spec conventions
@@ -295,22 +334,22 @@ vendor-claimed. Where a human is irreplaceable, the row says so.
 | Node | Artifact | Key contents | AI overlay |
 |------|----------|--------------|------------|
 | N1 | **PRD / product spec** | Problem statement; target users; goals & non-goals; functional + non-functional requirements; success metrics; open questions. *(template: `work/<effort>/spec.md` per spec conventions)* | Drafts from conversation/notes; critiques for ambiguity and untestable requirements [established]. Goals and priorities stay human. |
-| N1 | **Acceptance criteria / scenario drafts** | Given/When/Then per behavior; edge cases; the numbered items (S1…Sn) that N5 traces back to. Often a section of the PRD rather than a separate file. | Drafts scenarios from the PRD; proposes edge cases humans miss [established pattern, tooling effectiveness unverified]. Human review non-negotiable — these become the release gate. |
+| N1 | **Acceptance criteria / scenario drafts** | Given/When/Then per behavior; edge cases; the numbered items (S1…Sn) that N5 traces back to. Often a section of the PRD rather than a separate file. | Drafts scenarios from the PRD; proposes edge cases humans miss [established] (pattern; tooling effectiveness unverified). Human review non-negotiable — these become the release gate. |
 | N1 | **Research / evidence pack** | Interview findings, telemetry insights, competitive analysis — the evidence behind the PRD's claims. | Synthesizes large corpora (interviews, tickets, reviews) into themes [established]; per-item classification over big inputs (RLM-style) [established]. |
 | N2 | **Roadmap / milestone plan** | Sequenced outcomes, horizons, dependencies between efforts. | Suggests sequencing and surfaces cross-effort dependencies [heuristic]. Prioritization is a value judgment — human. |
-| N2 | **Tickets** | Per-ticket scope, definition-of-done, blocking edges, estimate. *(template: `work/<effort>/issues/NN-slug.md` + `map.md`)* | Decomposes a spec into tracer-bullet tickets with blocking edges and drafts DoD [established]. Estimation [heuristic — weak evidence]. |
-| N2 | **Test plan (formal, where required)** | Scope & risk assessment; depth per area; environments; entry/exit criteria; responsibilities. Agile-native teams fold this into tickets + acceptance criteria instead. | Drafts a risk-based plan from PRD + design; checks coverage against the requirement list [established pattern, unverified tooling]. Risk weighting reviewed by humans. |
+| N2 | **Tickets** | Per-ticket scope, definition-of-done, blocking edges, estimate. *(template: `work/<effort>/issues/NN-slug.md` + `map.md`)* | Decomposes a spec into tracer-bullet tickets with blocking edges and drafts DoD [established]. Estimation [heuristic] (weak evidence). |
+| N2 | **Test plan (formal, where required)** | Scope & risk assessment; depth per area; environments; entry/exit criteria; responsibilities. Agile-native teams fold this into tickets + acceptance criteria instead. | Drafts a risk-based plan from PRD + design; checks coverage against the requirement list [established] (pattern; tooling effectiveness unverified). Risk weighting reviewed by humans. |
 | N3 | **Design / architecture doc** | Context & constraints; chosen approach; alternatives considered; failure modes; non-functional targets (perf, security, scale). | Generates and critiques alternatives; failure-mode brainstorming (pre-mortem prompts) [heuristic]; drafts the doc from a design discussion [established]. |
 | N3 | **ADRs / decision notes** | One decision each: what was chosen, why, rejected alternatives, consequences. *(template: `decisions.md` → `docs/adr/`)* | Near-free with an agent in the loop: drafts the note at the moment of deciding, while reasoning is fresh [established]. Biggest AI win per unit effort on this table. |
-| N3 | **API contracts / interface specs** | Endpoints/schemas, error semantics, versioning rules — the machine-checkable half of design. | Drafts schemas from requirements; consistency and breaking-change checks [established — machine-checkable, so AI output is verifiable]. |
+| N3 | **API contracts / interface specs** | Endpoints/schemas, error semantics, versioning rules — the machine-checkable half of design. | Drafts schemas from requirements; consistency and breaking-change checks [established] (machine-checkable, so AI output is verifiable). |
 | N3 | **Domain model / glossary updates** | Resolved terms, aliases to avoid. *(template: `## Language` in CONTEXT.md)* | Extracts candidate terms and inconsistent aliases from conversations/docs [established]. Term resolution is a team agreement — human. |
 | N3 | **UX artifacts** | Wireframes, user flows, throwaway prototypes answering design questions. | Generates working throwaway prototypes fast — collapses the cost of exploring variants [established]. Design judgment on the variants stays human. |
-| N4 | **Source code + test suite** | The tests are N1's scenarios mechanized — the executable form of the spec. | Agentic coding [established — this workspace's premise]; unit-test generation gated by objective filters [measured — Meta TestGen-LLM]; fuzz-target generation [measured — Google OSS-Fuzz]. |
+| N4 | **Source code + test suite** | The tests are N1's scenarios mechanized — the executable form of the spec. | Agentic coding [established] (this workspace's premise); unit-test generation gated by objective filters [measured] (Meta TestGen-LLM); fuzz-target generation [measured] (Google OSS-Fuzz). |
 | N4 | **CI configuration** | The quality gates as code: which checks block merge, flake policy. | Drafts pipelines and gate configs [established]; triages/clusters CI failures [established]. Gate *policy* (what blocks merge) is human. |
 | N4 | **PR / review records** | Diff, review discussion, approvals — the verification trail for each change. | First-pass review: bugs, standards, spec-match [established]. Approval authority stays human — reviewer of last resort. |
 | N4 | **Commit messages** | What + why per change. *(template: `Decision:`/`Refs:` trailers)* | Written by the agent that made the change, decision trailers included [established] — another near-free capture point. |
 | N5 | **Verification evidence / test report** | Plan (before) + results (after) in one place; coverage against the S-numbers; gaps visible. *(template: `verification.md`, `Covers: S1–S4`)* | Runs checks, records evidence, and diffs coverage against the S-numbers [established] — the traceability check is mechanical, ideal agent work. |
-| N5 | **UAT / beta feedback report** | Real-user findings, severity, sign-off or objections — the validation half. | Clusters and summarizes raw feedback [established]; LLM-as-judge as a *pre-filter* for NL acceptance checks [heuristic — documented biases, human override required]. The UAT judgment itself is irreducibly human. |
+| N5 | **UAT / beta feedback report** | Real-user findings, severity, sign-off or objections — the validation half. | Clusters and summarizes raw feedback [established]; LLM-as-judge as a *pre-filter* for NL acceptance checks [heuristic] (documented biases, human override required). The UAT judgment itself is irreducibly human. |
 | N5 | **Release-readiness record** | Go/no-go decision, known issues shipped with waivers, who signed. | Compiles the evidence into a go/no-go brief [established]. The decision and the signature are human. |
 | N6 | **Release notes / changelog** | User-facing changes, breaking changes, upgrade steps. | Generated from commits/PRs — the most automatable artifact on this table [established]. |
 | N6 | **Rollout plan** | Ring/canary sequence, gate metrics per ring, rollback criteria and procedure. | Drafts from prior rollouts + change-risk profile [heuristic]. Rollback criteria reviewed by humans — this is the blast-radius control. |
@@ -320,7 +359,7 @@ vendor-claimed. Where a human is irreplaceable, the row says so.
 | N7 | **Incident postmortems** | Timeline, impact, contributing causes, action items — feeds N8 fixes and N1 insight. | Assembles the timeline from logs/chat/deploy records [established] — removes the tedious half. Causal analysis and blameless framing stay human-led. |
 | N7 | **Experiment reports** | Hypothesis, variant results, decision taken — the N7→N1 edge in document form. | Summarizes results and sanity-checks stats (power, peeking) [heuristic]. Ship/kill decisions human. |
 | N8 | **Triaged issue records** | Repro, severity, category, agent-ready brief. *(template: `triage` skill output)* | Categorizes, dedups, attempts repro, writes the agent-ready brief [established] — among the highest-leverage AI applications on this table. |
-| N8 | **Fix PRs with regression tests** | Each fix carries the test that would have caught it. | Diagnoses and fixes with the regression test attached [established]; the test half benefits from the gated-generation pattern [measured — TestGen-LLM]. |
+| N8 | **Fix PRs with regression tests** | Each fix carries the test that would have caught it. | Diagnoses and fixes with the regression test attached [established]; the test half benefits from the gated-generation pattern [measured] (TestGen-LLM). |
 | N8 | **Upgrade / migration notes** | Dependency changes, breaking-change handling, verification performed. | Drives upgrade PRs and summarizes breaking changes from changelogs [established]. |
 | N8 | **Refreshed repo docs** | Code-structure/design/api docs kept current. *(template: `onboard-repo` outputs)* | Regenerates docs from code — the docs-rot countermeasure [established]. |
 
@@ -340,6 +379,10 @@ AI-drafted artifacts raise volume, so the human review points get more
 load-bearing, not less.
 
 ## Gap register (candidate work items / backlog entries)
+
+Invest where AI stresses the seams: AI raises change volume and speed, so
+the joints between stages — intake, gates, review, feedback routing — get
+*more* load-bearing, not less. This register is that investment list.
 
 Dispositions settled 2026-08-13 with the user (notes: `decisions.md`).
 
