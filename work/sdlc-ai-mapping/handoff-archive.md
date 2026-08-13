@@ -1,3 +1,25 @@
+# Session Handoff — 2026-08-13 (session 10: item briefly reopened — standalone map built, published, both maps reframed to three views)
+
+Interactive session, user-driven. Shipped:
+
+- **`sdlc-map-standalone.md` (new):** workspace-independent version of the
+  map for discussing AI in the SDLC outside this workspace — template
+  overlay, gap register, and template glossary terms stripped; evidence
+  sources (DORA, TestGen-LLM, OSS-Fuzz) named inline so tiers stand alone.
+- **Both maps reframed to three views** (user decision): legend hoisted to
+  the top, "Two views" → "Three views", View 1 renamed "the phases", the
+  artifacts appendix promoted to View 3 right after the graph, all
+  per-node "Appendix → Nx rows" pointers → "View 3 → Nx rows".
+  `sdlc-map.md` keeps all template content unchanged, just reordered.
+- **Standalone published as a NEW artifact** (separate from the deck):
+  https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204
+- Consistency-checked both docs (no stale refs, equal row/pointer counts,
+  companions nested under View 2 in both). README files list updated.
+
+Leftover from before this session: the s9-close worktree still holds
+unmerged commit `b1eebdc` (launcher cleanup note) — unrelated to this
+session's changes.
+
 # Session Handoff — 2026-08-13 (session 9: item RE-CLOSED — worktree cleanup deferred, both held by live sessions)
 
 Background session, bookkeeping only, per the session-9 launcher:
