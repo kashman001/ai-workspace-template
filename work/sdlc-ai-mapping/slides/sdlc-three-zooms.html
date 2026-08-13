@@ -1,0 +1,644 @@
+<title>The SDLC in Three Zooms</title>
+
+<style>
+  :root {
+    --paper: #F6F8F5;
+    --card: #FFFFFF;
+    --ink: #1C2A26;
+    --muted: #5B6B64;
+    --rule: #DAE1DB;
+    --accent: #0E6B54;
+    --pill-text: #F6F8F5;
+    --measured: #0E6B54;
+    --established: #29618F;
+    --heuristic: #7E520B;
+    --measured-bg: #E3EFEA;
+    --established-bg: #E4ECF4;
+    --heuristic-bg: #F3ECDD;
+
+    --display: "Avenir Next", "Futura", "Century Gothic", "Segoe UI", system-ui, sans-serif;
+    --body: "Charter", "Iowan Old Style", "Georgia", serif;
+    --mono: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #131B18;
+      --card: #1B2622;
+      --ink: #E7EDE9;
+      --muted: #93A39B;
+      --rule: #2C3833;
+      --accent: #45B392;
+      --pill-text: #0F1613;
+      --measured: #4CBF9C;
+      --established: #82B1DE;
+      --heuristic: #D9A94E;
+      --measured-bg: #1B322B;
+      --established-bg: #1D2B3A;
+      --heuristic-bg: #33290F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #131B18;
+    --card: #1B2622;
+    --ink: #E7EDE9;
+    --muted: #93A39B;
+    --rule: #2C3833;
+    --accent: #45B392;
+    --pill-text: #0F1613;
+    --measured: #4CBF9C;
+    --established: #82B1DE;
+    --heuristic: #D9A94E;
+    --measured-bg: #1B322B;
+    --established-bg: #1D2B3A;
+    --heuristic-bg: #33290F;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .app { height: 100dvh; display: flex; flex-direction: column; }
+
+  header {
+    flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    padding: 14px clamp(16px, 4vw, 48px) 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 2px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+    letter-spacing: -0.01em; margin: 0; line-height: 1.1;
+  }
+
+  .levels { display: flex; gap: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .levels button {
+    font-family: var(--display); font-weight: 600; font-size: 13px;
+    color: var(--muted); background: var(--card);
+    border: none; border-right: 1px solid var(--rule);
+    padding: 8px 14px; cursor: pointer;
+  }
+  .levels button:last-child { border-right: none; }
+  .levels button .k {
+    font-family: var(--mono); font-weight: 400; font-size: 11px;
+    color: var(--muted); margin-right: 6px;
+  }
+  .levels button[aria-pressed="true"] { background: var(--accent); color: var(--pill-text); }
+  .levels button[aria-pressed="true"] .k { color: var(--pill-text); opacity: 0.75; }
+  .levels button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .stage { flex: 1; min-height: 0; position: relative; }
+  .stage svg { width: 100%; height: 100%; display: block; }
+
+  #status {
+    position: absolute; left: clamp(16px, 4vw, 48px); bottom: 10px;
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    max-width: 60%; pointer-events: none; min-height: 1.2em;
+  }
+
+  /* Detail card (level 3) */
+  #panel {
+    position: absolute; right: clamp(12px, 3vw, 40px); bottom: 14px;
+    width: min(400px, calc(100vw - 48px));
+    background: var(--card); border: 1px solid var(--rule); border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    padding: 14px 16px 16px;
+    display: none;
+  }
+  #panel.open { display: block; }
+  #panel .stagekey {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  #panel h3 { font-family: var(--display); font-weight: 600; font-size: 1.05em; margin: 2px 0 8px; }
+  #panel p { margin: 0 0 8px; font-size: 0.86em; }
+  #panel p:last-child { margin-bottom: 0; }
+  #panel .lbl {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 1px;
+  }
+  #panel .human { color: var(--muted); font-size: 0.82em; font-style: italic; }
+  #panel button {
+    position: absolute; top: 8px; right: 8px;
+    font: 14px var(--mono); color: var(--muted);
+    background: none; border: none; cursor: pointer; padding: 4px 8px;
+  }
+  #panel button:hover, #panel button:focus-visible { color: var(--ink); outline: none; }
+
+  .tag {
+    font-family: var(--mono); font-size: 0.82em;
+    padding: 0.1em 0.4em; border-radius: 3px; white-space: nowrap;
+  }
+  .tag.measured    { color: var(--measured);    background: var(--measured-bg); }
+  .tag.established { color: var(--established); background: var(--established-bg); }
+  .tag.heuristic   { color: var(--heuristic);   background: var(--heuristic-bg); }
+
+  footer {
+    flex: none;
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 18px; flex-wrap: wrap;
+    padding: 10px clamp(16px, 4vw, 48px) 14px;
+    border-top: 1px solid var(--rule);
+  }
+  #caption { font-size: 0.85em; color: var(--muted); max-width: 62em; margin: 0; }
+  #caption strong { color: var(--ink); font-weight: 600; }
+  .legend {
+    display: flex; gap: 14px; align-items: center; flex: none;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: baseline; }
+  .legend .dot.measured { background: var(--measured); }
+  .legend .dot.established { background: var(--established); }
+  .legend .dot.heuristic { background: var(--heuristic); }
+
+  /* ---- SVG level choreography ---- */
+  #camera { transform-origin: 560px 440px; transition: transform 0.7s ease; }
+  .node, .lv-fade { transition: transform 0.65s ease, opacity 0.55s ease; }
+  .edge path, .chip { transition: opacity 0.55s ease; }
+
+  svg[data-level="1"] .only23 { opacity: 0; pointer-events: none; }
+  svg[data-level="2"] .only1,
+  svg[data-level="3"] .only1 { opacity: 0; pointer-events: none; }
+  svg[data-level="1"] .only3,
+  svg[data-level="2"] .only3 { opacity: 0; pointer-events: none; }
+  svg[data-level="3"] .edge { opacity: 0.16; pointer-events: none; }
+  svg[data-level="3"] #ring2 .edge { opacity: 0.16; }
+
+  .edge .vis { fill: none; stroke-width: 2; }
+  .edge .hit { fill: none; stroke: transparent; stroke-width: 16; cursor: pointer; }
+  .edge.fwd .vis { stroke: var(--ink); }
+  .edge.fb .vis { stroke: var(--accent); }
+  .edge.trace .vis { stroke: var(--ink); stroke-dasharray: 3 5; }
+  .edge.dash .vis { stroke: var(--accent); stroke-dasharray: 4 4; }
+  .edge:hover .vis { stroke-width: 3.25; }
+
+  .node rect { fill: var(--card); stroke: var(--ink); stroke-width: 1.6; }
+  .node text {
+    font-family: var(--display); font-weight: 600; font-size: 15px;
+    fill: var(--ink);
+  }
+  .node.pill rect { fill: var(--accent); stroke: none; }
+  .node.pill text { fill: var(--pill-text); }
+
+  .edgelabel {
+    font-family: var(--mono); font-size: 13px; fill: var(--accent);
+  }
+
+  .chip { cursor: pointer; }
+  .chip rect { fill: var(--card); stroke: var(--rule); stroke-width: 1; }
+  .chip:hover rect { stroke: var(--muted); }
+  .chip.sel rect { stroke: var(--accent); stroke-width: 1.6; }
+  .chip text { font-family: var(--display); font-weight: 500; font-size: 11.5px; fill: var(--ink); }
+  .chip .hmark { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    #camera, .node, .lv-fade, .edge path, .chip { transition: none; }
+  }
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <p class="eyebrow">Field map · software lifecycle × AI</p>
+      <h1>The SDLC in Three Zooms</h1>
+    </div>
+    <nav class="levels" aria-label="Zoom level">
+      <button id="b1" aria-pressed="true"><span class="k">1</span>The loop</button>
+      <button id="b2" aria-pressed="false"><span class="k">2</span>The graph</button>
+      <button id="b3" aria-pressed="false"><span class="k">3</span>The artifacts</button>
+    </nav>
+  </header>
+
+  <div class="stage">
+    <svg id="map" viewBox="0 0 1120 880" data-level="1" role="img"
+         aria-label="The software lifecycle at three zoom levels: a steady-state loop of six stages around a central Discover node; the full eight-stage graph with all feedback edges; and the artifacts each stage produces, tagged by AI evidence tier.">
+      <defs>
+        <marker id="mInk" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8.5" markerHeight="8.5" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--ink)"/>
+        </marker>
+        <marker id="mAcc" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8.5" markerHeight="8.5" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+      <g id="camera"></g>
+    </svg>
+    <div id="status" aria-live="polite"></div>
+    <aside id="panel" aria-live="polite">
+      <button id="pclose" aria-label="Close details">✕</button>
+      <span class="stagekey" id="pstage"></span>
+      <h3 id="pname"></h3>
+      <p><span class="lbl">What it is</span><span id="pwhat"></span></p>
+      <p><span class="lbl">AI overlay</span><span id="pai"></span></p>
+      <p class="human" id="phuman"></p>
+    </aside>
+  </div>
+
+  <footer>
+    <p id="caption"></p>
+    <div class="legend">
+      <span><span class="dot measured"></span>measured</span>
+      <span><span class="dot established"></span>established</span>
+      <span><span class="dot heuristic"></span>heuristic</span>
+      <span>◇ human holds the pen</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const CX = 560, CY = 440;
+  const svg = document.getElementById('map');
+  const camera = document.getElementById('camera');
+  const D = Math.PI / 180;
+
+  const pt = (a, r) => [CX + r * Math.cos(a * D), CY + r * Math.sin(a * D)];
+
+  // ---------- model ----------
+  const STAGES = {
+    N1: { name: 'Discover', pill: true },
+    N2: { name: 'Plan' },
+    N3: { name: 'Design' },
+    N4: { name: 'Build' },
+    N5: { name: 'Verify' },
+    N6: { name: 'Release' },
+    N7: { name: 'Operate' },
+    N8: { name: 'Maintain' },
+  };
+
+  // Level-1 ring: steady-state loop, Design folded into Build, Discover center.
+  const RING1 = ['N7', 'N8', 'N2', 'N4', 'N5', 'N6'];
+  const R1 = 210;
+  // Levels 2–3 ring: Design joins between Plan and Build.
+  const RING2 = ['N7', 'N8', 'N2', 'N3', 'N4', 'N5', 'N6'];
+  const R2 = 240;
+
+  const pos1 = { N1: [CX, CY] };
+  RING1.forEach((id, i) => { pos1[id] = pt(-90 + i * 60, R1); });
+  pos1.N3 = null; // hidden at level 1
+  const pos2 = { N1: [CX, CY] };
+  RING2.forEach((id, i) => { pos2[id] = pt(-90 + i * 360 / 7, R2); });
+
+  const NODE_RX = 64, NODE_RY = 26;   // rect boundary approximated as ellipse
+  const PILL_RX = 68, PILL_RY = 27;
+
+  // Feedback + forward edges beyond the level-2 ring arcs (labels from the map docs).
+  const EDGES = [
+    { f: 'N7', t: 'N1', type: 'fb', label: 'N7 → N1 — telemetry, experiments & qualitative signal feed discovery' },
+    { f: 'N8', t: 'N1', type: 'fb', label: 'N8 → N1 — request-shaped feedback graduates into discovery' },
+    { f: 'N5', t: 'N1', type: 'fb', off: -11, label: 'N5 → N1 — criteria gaps re-enter discovery' },
+    { f: 'N2', t: 'N1', type: 'fb', off: -11, label: 'N2 → N1 — planning exposes requirement gaps' },
+    { f: 'N1', t: 'N2', type: 'fwd', off: 11, label: 'N1 → N2 — new work enters planning' },
+    { f: 'N1', t: 'N5', type: 'trace', off: 11, label: 'N1 ⇢ N5 — traceability: acceptance criteria are the test basis Verify executes' },
+    { f: 'N5', t: 'N4', type: 'fb', pull: 0.72, label: 'N5 → N4 — V&V failures loop back to build' },
+    { f: 'N7', t: 'N6', type: 'fb', pull: 0.72, label: 'N7 → N6 — rollback: reverting the release, distinct from fixing the code' },
+    { f: 'N4', t: 'N3', type: 'fb', pull: 0.72, label: 'N4 → N3 — implementation discoveries revise design' },
+    { f: 'N3', t: 'N2', type: 'fb', pull: 0.72, label: 'N3 → N2 — design revises scope & estimates' },
+    { f: 'N6', t: 'N4', type: 'fb', pull: 0.48, label: 'N6 → N4 — canary failure: fix the code' },
+    { f: 'N5', t: 'N3', type: 'fb', pull: 0.48, label: 'N5 → N3 — design-scenario gaps re-enter design' },
+  ];
+
+  const RING2_ARCS = [
+    { f: 'N7', t: 'N8', type: 'fwd', label: 'N7 → N8 — incidents & production bugs enter maintenance (backbone step)' },
+    { f: 'N8', t: 'N2', type: 'fb', label: 'N8 → N2 — triaged work re-enters planning (the steady-state loop)' },
+    { f: 'N2', t: 'N3', type: 'fwd', label: 'N2 → N3 — forward path' },
+    { f: 'N3', t: 'N4', type: 'fwd', label: 'N3 → N4 — forward path' },
+    { f: 'N4', t: 'N5', type: 'fwd', label: 'N4 → N5 — forward path' },
+    { f: 'N5', t: 'N6', type: 'fwd', label: 'N5 → N6 — forward path' },
+    { f: 'N6', t: 'N7', type: 'fwd', label: 'N6 → N7 — forward path' },
+  ];
+
+  // Artifacts (View 3 of the map), tier = strongest evidence tag on the row.
+  const ARTIFACTS = [
+    { s: 'N1', n: 'Opportunity assessment', tier: 'established', h: true,
+      what: 'Problem/opportunity sizing, evidence for demand, go/no-go recommendation — the validated-opportunity half of Discover’s output.',
+      ai: 'Synthesizes the evidence base and drafts the assessment [established]. The go/no-go call is human.' },
+    { s: 'N1', n: 'PRD / product spec', tier: 'established', h: true,
+      what: 'Problem statement; target users; goals & non-goals; functional + non-functional requirements; success metrics; open questions.',
+      ai: 'Drafts from conversation and notes; critiques for ambiguity and untestable requirements [established]. Goals and priorities stay human.' },
+    { s: 'N1', n: 'Acceptance criteria', tier: 'established', h: true,
+      what: 'Given/When/Then per behavior; edge cases; the numbered criteria that Verify traces back to.',
+      ai: 'Drafts scenarios from the PRD; proposes edge cases humans miss [established]. Human review non-negotiable — these become the release gate.' },
+    { s: 'N1', n: 'Research pack', tier: 'established', h: false,
+      what: 'Interview findings, telemetry insights, competitive analysis — the evidence behind the PRD’s claims.',
+      ai: 'Synthesizes large corpora (interviews, tickets, reviews) into themes; per-item classification over big inputs [established].' },
+
+    { s: 'N2', n: 'Roadmap', tier: 'heuristic', h: true,
+      what: 'Sequenced outcomes, horizons, dependencies between efforts.',
+      ai: 'Suggests sequencing and surfaces cross-effort dependencies [heuristic]. Prioritization is a value judgment — human.' },
+    { s: 'N2', n: 'Tickets', tier: 'established', h: false,
+      what: 'Per-ticket scope, definition-of-done, blocking edges, estimate.',
+      ai: 'Decomposes a spec into tracer-bullet tickets with blocking edges and drafts definition-of-done [established]. Estimation [heuristic].' },
+    { s: 'N2', n: 'Test plan', tier: 'established', h: true,
+      what: 'Scope & risk assessment; depth per area; environments; entry/exit criteria. Agile-native teams fold this into tickets + acceptance criteria.',
+      ai: 'Drafts a risk-based plan from PRD + design; checks coverage against the requirement list [established]. Risk weighting reviewed by humans.' },
+
+    { s: 'N3', n: 'Design doc', tier: 'established', h: false,
+      what: 'Context & constraints; chosen approach; alternatives considered; failure modes; non-functional targets.',
+      ai: 'Drafts the doc from a design discussion [established]; generates and critiques alternatives, failure-mode brainstorming [heuristic].' },
+    { s: 'N3', n: 'ADRs / decision notes', tier: 'established', h: false,
+      what: 'One decision each: what was chosen, why, rejected alternatives, consequences.',
+      ai: 'Near-free with an agent in the loop: drafts the note at the moment of deciding, while reasoning is fresh [established]. Biggest AI win per unit effort.' },
+    { s: 'N3', n: 'API contracts', tier: 'established', h: false,
+      what: 'Endpoints/schemas, error semantics, versioning rules — the machine-checkable half of design.',
+      ai: 'Drafts schemas from requirements; consistency and breaking-change checks [established] — machine-checkable, so AI output is verifiable.' },
+    { s: 'N3', n: 'Domain glossary', tier: 'established', h: true,
+      what: 'Resolved terms, aliases to avoid.',
+      ai: 'Extracts candidate terms and inconsistent aliases from conversations and docs [established]. Term resolution is a team agreement — human.' },
+    { s: 'N3', n: 'UX prototypes', tier: 'established', h: true,
+      what: 'Wireframes, user flows, throwaway prototypes answering design questions.',
+      ai: 'Generates working throwaway prototypes fast — collapses the cost of exploring variants [established]. Design judgment on the variants stays human.' },
+
+    { s: 'N4', n: 'Code + tests', tier: 'measured', h: false,
+      what: 'The tests are Discover’s scenarios mechanized — the executable form of the spec.',
+      ai: 'Agentic coding [established]; unit-test generation gated by objective filters [measured] (Meta TestGen-LLM); fuzz-target generation [measured] (Google OSS-Fuzz).' },
+    { s: 'N4', n: 'CI config', tier: 'established', h: true,
+      what: 'The quality gates as code: which checks block merge, flake policy.',
+      ai: 'Drafts pipelines and gate configs; triages and clusters CI failures [established]. Gate policy — what blocks merge — is human.' },
+    { s: 'N4', n: 'PR / review records', tier: 'established', h: true,
+      what: 'Diff, review discussion, approvals — the verification trail for each change.',
+      ai: 'First-pass review: bugs, standards, spec-match [established]. Approval authority stays human — reviewer of last resort.' },
+    { s: 'N4', n: 'Commit messages', tier: 'established', h: false,
+      what: 'What + why per change.',
+      ai: 'Written by the agent that made the change, decision rationale included [established] — another near-free capture point.' },
+
+    { s: 'N5', n: 'Verification evidence', tier: 'established', h: false,
+      what: 'Plan + results in one place, perf/security included; coverage against the numbered acceptance criteria; gaps visible.',
+      ai: 'Runs checks, records evidence, and diffs coverage against the acceptance criteria [established] — the traceability check is mechanical, ideal agent work.' },
+    { s: 'N5', n: 'UAT / beta report', tier: 'heuristic', h: true,
+      what: 'Real-user findings, severity, sign-off or objections — the validation half.',
+      ai: 'Clusters and summarizes raw feedback [established]; LLM-as-judge as a pre-filter [heuristic] — documented biases, human override required. The UAT judgment itself is irreducibly human.' },
+    { s: 'N5', n: 'Release-readiness record', tier: 'established', h: true,
+      what: 'Go/no-go decision, known issues shipped with waivers, who signed.',
+      ai: 'Compiles the evidence into a go/no-go brief [established]. The decision and the signature are human.' },
+
+    { s: 'N6', n: 'Release notes', tier: 'established', h: false,
+      what: 'User-facing changes, breaking changes, upgrade steps.',
+      ai: 'Generated from commits and PRs — the most automatable artifact on the map [established].' },
+    { s: 'N6', n: 'Rollout plan', tier: 'heuristic', h: true,
+      what: 'Ring/canary sequence, gate metrics per ring, rollback criteria and procedure.',
+      ai: 'Drafts from prior rollouts + change-risk profile [heuristic]. Rollback criteria reviewed by humans — the blast-radius control.' },
+    { s: 'N6', n: 'Release record + smoke', tier: 'heuristic', h: false,
+      what: 'Tag, build provenance, post-deploy smoke outcome.',
+      ai: 'Plain automation territory; AI adds only anomaly flagging on smoke output [heuristic].' },
+
+    { s: 'N7', n: 'SLOs + dashboards', tier: 'heuristic', h: true,
+      what: 'SLIs, targets, error-budget policy — the production quality contract.',
+      ai: 'Suggests candidate SLIs from traffic patterns; drafts dashboards [heuristic]. Targets encode business tolerance — human.' },
+    { s: 'N7', n: 'Runbooks + alerts', tier: 'established', h: false,
+      what: 'Symptom → diagnosis → remediation per known failure mode.',
+      ai: 'Drafts runbooks from incident history; clusters alert noise to cut false pages [established].' },
+    { s: 'N7', n: 'Postmortems', tier: 'established', h: true,
+      what: 'Timeline, impact, contributing causes, action items — feeds Maintain fixes and Discover insight.',
+      ai: 'Assembles the timeline from logs, chat, and deploy records [established] — removes the tedious half. Causal analysis and blameless framing stay human-led.' },
+    { s: 'N7', n: 'Experiment reports', tier: 'heuristic', h: true,
+      what: 'Hypothesis, variant results, decision taken — the Operate → Discover edge in document form.',
+      ai: 'Summarizes results and sanity-checks stats (power, peeking) [heuristic]. Ship/kill decisions human.' },
+
+    { s: 'N8', n: 'Triaged issues', tier: 'established', h: false,
+      what: 'Repro, severity, category, agent-ready brief.',
+      ai: 'Categorizes, dedups, attempts repro, writes the agent-ready brief [established] — among the highest-leverage AI applications on the map.' },
+    { s: 'N8', n: 'Fix PRs + regression tests', tier: 'measured', h: false,
+      what: 'Each fix carries the test that would have caught it.',
+      ai: 'Diagnoses and fixes with the regression test attached [established]; the test half benefits from the gated-generation pattern [measured] (TestGen-LLM).' },
+    { s: 'N8', n: 'Upgrade notes', tier: 'established', h: false,
+      what: 'Dependency changes, breaking-change handling, verification performed.',
+      ai: 'Drives upgrade PRs and summarizes breaking changes from changelogs [established].' },
+    { s: 'N8', n: 'Refreshed docs', tier: 'established', h: false,
+      what: 'Code-structure / design / API docs kept current.',
+      ai: 'Regenerates docs from code — the docs-rot countermeasure [established].' },
+  ];
+
+  const CAPTIONS = {
+    1: '<strong>Zoom 1 — the steady state of a live product:</strong> operate → maintain → plan → build → verify → release, around again. Discovery runs continuously in the middle, fed by telemetry, experiments, and user research. Design folds into Build at this altitude.',
+    2: '<strong>Zoom 2 — the full graph:</strong> Design takes its own seat and every feedback edge appears. Ink arrows are the forward path, green are feedback, and the dotted arrow is a correspondence — acceptance criteria written at Discover are the test basis Verify executes. Hover any edge for its meaning.',
+    3: '<strong>Zoom 3 — the artifacts:</strong> what each stage produces — the payload of the graph’s edges. The dot is the strongest AI evidence tier on that artifact; ◇ marks where a human holds the pen. Click an artifact for its contents and AI overlay.',
+  };
+
+  const STATUS_DEFAULT = {
+    1: '',
+    2: 'hover an edge for its meaning',
+    3: 'click an artifact for details',
+  };
+
+  // ---------- helpers ----------
+  function el(name, attrs, parent) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function norm(dx, dy) { const l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }
+  // point on the ellipse boundary of node at c, heading toward target t, plus margin
+  function boundary(c, t, rx, ry, margin) {
+    const [ux, uy] = norm(t[0] - c[0], t[1] - c[1]);
+    const k = 1 / Math.sqrt((ux / rx) ** 2 + (uy / ry) ** 2);
+    return [c[0] + ux * (k + margin), c[1] + uy * (k + margin)];
+  }
+  function radii(id) { return STAGES[id].pill ? [PILL_RX, PILL_RY] : [NODE_RX, NODE_RY]; }
+
+  const statusEl = document.getElementById('status');
+  function wireHover(group, label) {
+    group.addEventListener('mouseenter', () => { statusEl.textContent = label; });
+    group.addEventListener('mouseleave', () => { statusEl.textContent = STATUS_DEFAULT[level] || ''; });
+  }
+
+  // ---------- level-1 ring (its own geometry) ----------
+  const g1 = el('g', { class: 'only1 lv-fade' }, camera);
+  const GAP1 = 17;
+  RING1.forEach((id, i) => {
+    const a1 = -90 + i * 60 + GAP1, a2 = -90 + (i + 1) * 60 - GAP1;
+    const [x1, y1] = pt(a1, R1), [x2, y2] = pt(a2, R1);
+    const grp = el('g', { class: 'edge fwd' }, g1);
+    el('path', { class: 'vis', d: `M ${x1} ${y1} A ${R1} ${R1} 0 0 1 ${x2} ${y2}`, 'marker-end': 'url(#mInk)' }, grp);
+  });
+  // dashed center edges: signal in, new work out
+  (function () {
+    const sTop = [CX, CY - R1 + NODE_RY + 6];
+    const sBot = [CX, CY - PILL_RY - 7];
+    const gSig = el('g', { class: 'edge dash' }, g1);
+    el('path', { class: 'vis', d: `M ${sTop[0]} ${sTop[1]} L ${sBot[0]} ${sBot[1]}`, 'marker-end': 'url(#mAcc)' }, gSig);
+    el('text', { class: 'edgelabel', x: CX + 12, y: (sTop[1] + sBot[1]) / 2 }, gSig).textContent = 'signal';
+
+    const nA = boundary([CX, CY], pos1.N2, PILL_RX, PILL_RY, 7);
+    const nB = boundary(pos1.N2, [CX, CY], NODE_RX, NODE_RY, 7);
+    const gNw = el('g', { class: 'edge dash' }, g1);
+    el('path', { class: 'vis', d: `M ${nA[0]} ${nA[1]} L ${nB[0]} ${nB[1]}`, 'marker-end': 'url(#mAcc)' }, gNw);
+    el('text', { class: 'edgelabel', x: (nA[0] + nB[0]) / 2 + 10, y: (nA[1] + nB[1]) / 2 - 10 }, gNw).textContent = 'new work';
+  })();
+
+  // ---------- level-2 ring arcs + edges (levels 2 and 3) ----------
+  const g2 = el('g', { class: 'only23 lv-fade', id: 'ring2' }, camera);
+  const GAP2 = 15.5, STEP = 360 / 7;
+  RING2_ARCS.forEach((e, i) => {
+    const a1 = -90 + i * STEP + GAP2, a2 = -90 + (i + 1) * STEP - GAP2;
+    const [x1, y1] = pt(a1, R2), [x2, y2] = pt(a2, R2);
+    const grp = el('g', { class: 'edge ' + e.type }, g2);
+    const d = `M ${x1} ${y1} A ${R2} ${R2} 0 0 1 ${x2} ${y2}`;
+    el('path', { class: 'vis', d, 'marker-end': e.type === 'fb' ? 'url(#mAcc)' : 'url(#mInk)' }, grp);
+    el('path', { class: 'hit', d }, grp);
+    wireHover(grp, e.label);
+  });
+
+  EDGES.forEach((e) => {
+    const A = pos2[e.f], B = pos2[e.t];
+    const [arx, ary] = radii(e.f), [brx, bry] = radii(e.t);
+    let a = boundary(A, B, arx, ary, 5), b = boundary(B, A, brx, bry, 7);
+    let d;
+    if (e.pull) {
+      const mid = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+      const ctrl = [CX + (mid[0] - CX) * e.pull, CY + (mid[1] - CY) * e.pull];
+      a = boundary(A, ctrl, arx, ary, 5); b = boundary(B, ctrl, brx, bry, 7);
+      d = `M ${a[0]} ${a[1]} Q ${ctrl[0]} ${ctrl[1]} ${b[0]} ${b[1]}`;
+    } else {
+      if (e.off) {
+        const [ux, uy] = norm(B[0] - A[0], B[1] - A[1]);
+        const px = -uy * e.off, py = ux * e.off;
+        a = [a[0] + px, a[1] + py]; b = [b[0] + px, b[1] + py];
+      }
+      d = `M ${a[0]} ${a[1]} L ${b[0]} ${b[1]}`;
+    }
+    const grp = el('g', { class: 'edge ' + e.type }, g2);
+    el('path', { class: 'vis', d, 'marker-end': e.type === 'fb' ? 'url(#mAcc)' : 'url(#mInk)' }, grp);
+    el('path', { class: 'hit', d }, grp);
+    wireHover(grp, e.label);
+  });
+
+  // ---------- nodes (shared, morph between layouts) ----------
+  const nodeEls = {};
+  Object.keys(STAGES).forEach((id) => {
+    const s = STAGES[id];
+    const grp = el('g', { class: 'node' + (s.pill ? ' pill' : '') + (id === 'N3' ? ' only23' : '') }, camera);
+    const w = s.pill ? 128 : 118, h = s.pill ? 44 : 40;
+    el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: s.pill ? h / 2 : 5 }, grp);
+    const t = el('text', { x: 0, y: 5, 'text-anchor': 'middle' }, grp);
+    t.textContent = id + ' ' + s.name;
+    nodeEls[id] = grp;
+  });
+  function placeNodes(level) {
+    const P = level === 1 ? pos1 : pos2;
+    Object.keys(nodeEls).forEach((id) => {
+      const p = P[id] || pos2[id];
+      nodeEls[id].style.transform = `translate(${p[0]}px, ${p[1]}px)`;
+    });
+  }
+
+  // ---------- level-3 artifact chips ----------
+  const g3 = el('g', { class: 'only3 lv-fade' }, camera);
+  const TIER_VAR = { measured: 'var(--measured)', established: 'var(--established)', heuristic: 'var(--heuristic)' };
+  const byStage = {};
+  ARTIFACTS.forEach((a) => { (byStage[a.s] = byStage[a.s] || []).push(a); });
+
+  const panel = document.getElementById('panel');
+  let selChip = null;
+  function openPanel(a, chip) {
+    if (selChip) selChip.classList.remove('sel');
+    selChip = chip; chip.classList.add('sel');
+    document.getElementById('pstage').textContent = a.s + ' · ' + STAGES[a.s].name;
+    document.getElementById('pname').textContent = a.n;
+    document.getElementById('pwhat').textContent = a.what;
+    document.getElementById('pai').innerHTML = a.ai.replace(/\[(measured|established|heuristic)\]/g,
+      (m, t) => `<span class="tag ${t}">[${t}]</span>`);
+    document.getElementById('phuman').textContent = a.h ? '◇ A human holds the pen on this artifact’s judgment call.' : '';
+    panel.classList.add('open');
+  }
+  function closePanel() {
+    panel.classList.remove('open');
+    if (selChip) { selChip.classList.remove('sel'); selChip = null; }
+  }
+  document.getElementById('pclose').addEventListener('click', closePanel);
+
+  const CHIP_H = 22, PITCH = 27, CLUSTER_R = 320;
+  function buildChip(a, parent) {
+    const grp = el('g', { class: 'chip', tabindex: '0', role: 'button', 'aria-label': a.n + ', ' + STAGES[a.s].name }, parent);
+    const rect = el('rect', { x: 0, y: 0, width: 40, height: CHIP_H, rx: 4 }, grp);
+    el('circle', { cx: 12, cy: CHIP_H / 2, r: 4, fill: TIER_VAR[a.tier] }, grp);
+    const txt = el('text', { x: 22, y: CHIP_H / 2 + 4 }, grp);
+    txt.textContent = a.n;
+    let hm = null;
+    if (a.h) hm = el('text', { class: 'hmark', y: CHIP_H / 2 + 3.5 }, grp);
+    if (hm) hm.textContent = '◇';
+    grp.addEventListener('click', () => openPanel(a, grp));
+    grp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openPanel(a, grp); } });
+    return { grp, rect, txt, hm };
+  }
+  const pending = [];
+  RING2.forEach((id, i) => {
+    const a = -90 + i * STEP;
+    const anchor = pt(a, CLUSTER_R);
+    const items = byStage[id] || [];
+    const cos = Math.cos(a * D), sin = Math.sin(a * D);
+    const align = cos > 0.35 ? 'start' : (cos < -0.35 ? 'end' : 'middle');
+    let y0;
+    if (sin < -0.35) y0 = anchor[1] - (items.length - 1) * PITCH - CHIP_H;
+    else if (sin > 0.35) y0 = anchor[1];
+    else y0 = anchor[1] - ((items.length - 1) * PITCH + CHIP_H) / 2;
+    items.forEach((art, j) => {
+      const c = buildChip(art, g3);
+      pending.push({ c, x: anchor[0], y: y0 + j * PITCH, align });
+    });
+  });
+  // Discover's artifacts sit under the center pill
+  (function () {
+    const items = byStage.N1 || [];
+    items.forEach((art, j) => {
+      const c = buildChip(art, g3);
+      pending.push({ c, x: CX, y: CY + PILL_RY + 18 + j * PITCH, align: 'middle' });
+    });
+  })();
+  // size chips to their text, then position clusters
+  requestAnimationFrame(() => {
+    pending.forEach(({ c, x, y, align }) => {
+      let tl = 60;
+      try { tl = c.txt.getComputedTextLength(); } catch (e) { /* keep estimate */ }
+      const w = 22 + tl + (c.hm ? 16 : 8);
+      c.rect.setAttribute('width', w);
+      if (c.hm) c.hm.setAttribute('x', 22 + tl + 4);
+      const dx = align === 'start' ? 0 : (align === 'end' ? -w : -w / 2);
+      c.grp.style.transform = `translate(${x + dx}px, ${y}px)`;
+    });
+  });
+
+  // ---------- level switching ----------
+  const SCALE = { 1: 1.42, 2: 1.26, 3: 0.95 };
+  const btns = { 1: document.getElementById('b1'), 2: document.getElementById('b2'), 3: document.getElementById('b3') };
+  const captionEl = document.getElementById('caption');
+  let level = 1;
+
+  function setLevel(n) {
+    level = Math.max(1, Math.min(3, n));
+    svg.setAttribute('data-level', level);
+    camera.style.transform = `scale(${SCALE[level]})`;
+    placeNodes(level);
+    captionEl.innerHTML = CAPTIONS[level];
+    statusEl.textContent = STATUS_DEFAULT[level] || '';
+    Object.keys(btns).forEach((k) => btns[k].setAttribute('aria-pressed', String(+k === level)));
+    if (level !== 3) closePanel();
+  }
+  btns[1].addEventListener('click', () => setLevel(1));
+  btns[2].addEventListener('click', () => setLevel(2));
+  btns[3].addEventListener('click', () => setLevel(3));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '1') setLevel(1);
+    else if (e.key === '2') setLevel(2);
+    else if (e.key === '3') setLevel(3);
+    else if (e.key === 'ArrowRight' || e.key === '+') setLevel(level + 1);
+    else if (e.key === 'ArrowLeft' || e.key === '-') setLevel(level - 1);
+    else if (e.key === 'Escape') closePanel();
+  });
+
+  setLevel(1);
+})();
+</script>

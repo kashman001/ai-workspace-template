@@ -73,3 +73,10 @@
 **Rejected:** Porting the deck's "asks" slide (approval bars, funding decisions) — pitch material, not map material; would blur the document's role.
 **Blast radius:** sdlc-map.md front matter + gap-register intro only; no node entries, tags, or appendix touched
 **Promote?:** no
+
+## 2026-08-13 — Deck diagrams enter the docs as mermaid recreations; interactive zoom map ships as HTML companion
+**Chose:** (a) If the map docs adopt the deck's cleaner diagrams, they do it as mermaid recreations (steady-state loop + curated 4-edge graph, optional label-free full census demoted beside the edge table) — drafts at https://claude.ai/code/artifact/abd83fc6-eaa0-4b57-97fd-b43b09bfeabc, doc edit NOT yet approved. (b) The three-zoom interactive map is a separate HTML companion (`slides/sdlc-three-zooms.html`, artifact 181a3593, PR #18) using radial geometry; markdown maps stay canonical.
+**Because:** Mermaid is the only diagram format rendering both on GitHub and in published artifacts; the edge table already carries the full census, so curating the diagram loses no information. Radial chords/radials keep all 11 feedback edges readable where dagre spaghetti failed.
+**Rejected:** Embedding the deck SVGs in the markdown (GitHub sanitizes inline SVG; self-contained artifacts can't reference repo image files; data-URIs blocked on GitHub); replacing the docs with the interactive page (not greppable/reviewable/canonical).
+**Blast radius:** sdlc-map.md + sdlc-map-standalone.md View 2 (if approved); slides/ directory
+**Promote?:** no
