@@ -1,55 +1,47 @@
-# sdlc-ai-mapping — session 12 launcher
+# sdlc-ai-mapping — session 13 launcher
 
 > **This file is the LAUNCHER** (forward-looking, replaced each rollover).
-> Provenance: `handoff.md` top block (session 11).
+> Provenance: `handoff.md` top block (session 12).
 
 ## Mission
 
-Close out the diagram work: get PR #18 (three-zoom interactive map)
-merged, and get the user's decision on editing the drafted mermaid
-diagrams into the two map documents — then execute it if approved.
+Land the session-12 PR (View 2 mermaid diagrams in both maps + three-zoom
+charset/layout fixes), then close the work item — no further work is
+queued.
 
 ## Read these, in order
 
-1. `handoff.md` — top block only (session 11: what shipped, what's open).
-2. `decisions.md` — last note (mermaid-recreation decision + rejected
-   alternatives). Only if touching the diagrams.
-3. `sdlc-map-standalone.md` View 2 (lines ~97–200) — only when actually
-   editing; `sdlc-map.md` View 2 is line-for-line identical.
+1. `handoff.md` — top block only (session 12: what shipped, the one
+   open user action).
+2. Nothing else unless the user asks for changes to the diagrams.
 
 ## Do NOT reload
 
-- The session-11 trade-off analysis — settled; conclusion is in
-  `decisions.md`. Re-litigate only with a fresh reason.
-- `research-modern-qa.md`, review history, round-2 Minors — settled
-  (user won't-do); unchanged from prior sessions.
+- The diagram trade-off analysis, drafts artifact, review history —
+  all settled and executed; `decisions.md` has the record.
 - `handoff-archive.md` — sessions 1–10 provenance.
-- The deck HTML (`slides/where-ai-actually-helps.html`) — only its two
-  SVG figures matter for diagram work, and the mermaid drafts already
-  encode them.
+- The deck HTML — unchanged.
 
 ## State snapshot
 
-- **PR #18 open, unmerged**: branch `worktree-sdlc-three-zooms-html`
-  (adds `slides/sdlc-three-zooms.html` + this rollover bookkeeping).
-  Merging is the user's call.
-- Published artifacts (republish only **with the URL as `url`**):
-  - three-zoom map: https://claude.ai/code/artifact/181a3593-985f-427e-a889-0fb71776ff7d
+- **PR open** from branch `worktree-sdlc-map-mermaid-diagrams`
+  (commits `0c40da1` map diagrams, `10d7875` three-zoom fixes) —
+  merging is the user's call. PR #18 merged before this branch.
+- Zoom-3 verdict: no chip overlaps (measured); the fixes were charset +
+  a layout-timing guard, both verified.
+- Published artifacts (republish only **with the URL as `url`**, after
+  WebFetch of that URL in the same session):
+  - standalone map: https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204 (favicon 🗺️)
+  - three-zoom map: https://claude.ai/code/artifact/181a3593-985f-427e-a889-0fb71776ff7d (favicon 🔍)
   - mermaid drafts: https://claude.ai/code/artifact/abd83fc6-eaa0-4b57-97fd-b43b09bfeabc
-  - standalone map: https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204
   - deck v3: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
-- Draft mermaid source + three-zoom HTML source also live in job
-  7a776e24's tmp dir (ephemeral; committed copy of the HTML is in PR #18).
-- Open user decisions: (1) merge PR #18; (2) approve/decline the mermaid
-  diagram edit to both maps (incl. whether to keep the demoted full-census
-  diagram — recommended: yes, label-free, beside the edge table);
-  (3) any zoom-3 chip-overlap fixes the user reports.
+- **Open user actions:** (1) merge the session-12 PR; (2) the three-zoom
+  artifact's share pin still shows the pre-fix version to link viewers —
+  move the pin from the artifact page's share menu.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
 2. Read `handoff.md` top block.
-3. Ask the user for the pending decisions above (or take direction);
-   if the map edit is approved: apply the drafts to both View 2 sections
-   identically, keep the edge table untouched, republish the standalone
-   artifact with its URL, and open a PR.
+3. Confirm the PR merged (or merge on the user's instruction), remind
+   the user about the share pin, and close the item (CLOSED launcher).
