@@ -1,19 +1,33 @@
 # SDLC Map — AI & Template Overlay
 
-**Status: seven-persona review fixes applied (P1–P3, 2026-08-13) — stable.**
-Evidence base: `research-modern-qa.md` (citations live there, not here).
-Structural decisions (which stages get node status; overlay granularity):
-`decisions.md`.
+**Status: stable** (reviewed 2026-08-13; review history in `decisions.md`).
+Evidence base: `research-modern-qa.md` (citations live there, not here);
+structural decisions (which stages get node status; overlay granularity):
+`decisions.md`. Both are sibling files in this map's work directory,
+`work/sdlc-ai-mapping/` in the template repo.
 
 ## If you read nothing else
 
 **What this is:** a map of the software development lifecycle (SDLC) as
 eight stages in a graph, with two overlays per stage — where AI genuinely
-helps (evidence-tiered) and what this template ships for it. **Audience:**
-anyone deciding where to point AI or template investment, from leadership
-skimming the claims to engineers working inside one stage. **How to read
-it:** View 1 is the narrative, View 2 the structure; then jump to your
-node's entry. Unfamiliar terms are glossed in the Glossary at the end.
+helps (evidence-tiered) and what this template ships for it. **"The
+template"** throughout means `ai-workspace-template`, the AI-workspace
+template repository this file lives in — it ships skills, docs, and
+conventions for agent-driven development work. **Audience:** anyone
+deciding where to point AI or template investment, from leadership
+skimming the claims to engineers working inside one stage. **Investment
+implication:** AI raises change volume and speed, so the seams between
+stages — intake, gates, review, feedback routing — get *more* load-bearing,
+not less; invest there. **How to read it:** View 1 is the narrative, View 2
+the structure; then jump to your node's entry, and read its Appendix rows
+too — the per-artifact human-override guardrails live there. Leadership:
+the four claims below plus the gap register's severity column. Engineers
+and architects outside the template: your node's **AI helps** line plus the
+tag legend; **Template support** bullets are internal to the template and
+safe to skip. Template maintainers: the Template support lines and the
+gap-register dispositions are yours. Testing is deliberately spread across
+N4 + N5 + the Quality lanes — there is no single "testing" section.
+Unfamiliar terms are glossed in the Glossary at the end.
 
 Four headline claims:
 
@@ -22,9 +36,13 @@ Four headline claims:
    *continuously in parallel* — not a front-to-back pipeline.
 2. AI is strongest where output is *checkable* (code, tests, contracts,
    coverage diffs, triage) and assistive-only where the artifact encodes
-   judgment or authority (priorities, go/no-go, UAT verdicts).
-3. Only N4 (Build) carries [measured]-tier evidence in the per-node AI
-   overlays; every other tier rests on practice patterns or author judgment.
+   judgment or authority (priorities, go/no-go, UAT verdicts). The two
+   loudest vendor pitches — self-healing tests and autonomous test agents —
+   carry no independent evidence [hype].
+3. Only Build-stage *techniques* carry [measured]-tier evidence (gated
+   unit-test generation, AI-boosted fuzzing); where a technique reappears
+   downstream, the tag travels with the technique, not the stage. Every
+   other tier rests on practice patterns or author judgment.
 4. DORA 2024 caution: AI adoption *amplifies* existing strengths and
    dysfunctions — its data associated more AI use with worse throughput and
    stability (survey-based, correlational).
