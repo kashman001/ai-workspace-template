@@ -139,9 +139,24 @@ directly, skipping planning — the fix still exits through V&V and release.
 | Lane | What it is |
 |------|-----------|
 | **Quality (feature-team-owned)** | The V/V-tagged activity at each node — criteria at N1, testability at N3, TDD/review at N4, regression/UAT at N5, canary/SLO at N6–N7, regression-per-fix at N8 |
-| **Quality enablement** | Test infrastructure, coaching, risk analysis — where modern dedicated-QA sits (Google SETI/TE, Atlassian QA); natural anchor for AI test tooling |
+| **Quality enablement** | Test infrastructure, test environments & test data, coaching, risk analysis — where modern dedicated-QA sits (Google SETI/TE, Atlassian QA); natural anchor for AI test tooling |
 | **Knowledge & decision capture** | Specs, ADRs, decision trailers, docs — where this template most obviously lives today |
 | **Coordination** | Tickets, handoffs, session/agent orchestration, multi-agent workflows |
+
+**Boundary rule:** lanes own the *practice and shared infrastructure*;
+nodes own the *instances*. The non-Quality lanes mostly manifest through
+shared infrastructure rather than per-node line items, but each does sweep
+N1…N8: enablement — corpus tooling at N1, risk models at N2, testability
+coaching at N3, CI/test infra at N4, environments & test data at N5,
+pipeline health at N6, observability tooling at N7, suite health at N8;
+knowledge — spec at N1, plans at N2, ADRs at N3, commit trailers at N4,
+verification evidence at N5, changelogs at N6, postmortems at N7, refreshed
+docs at N8; coordination — intake at N1, tickets at N2 and onward,
+handoffs/briefs at every node. Some artifacts are dual-homed: tickets are
+coordination-lane artifacts instantiated at N2; ADRs are knowledge-lane
+artifacts instantiated at N3. Platform/environment engineering lives in the
+enablement lane (surfacing at N5 as environment/data readiness) — it has no
+node of its own here by design.
 
 ## Per-node entries
 
@@ -257,7 +272,7 @@ Legend for the two overlays:
 ### N5 — Pre-release V&V checkpoint
 
 - **Activities:** regression suite, E2E, performance/security testing,
-  UAT/beta, release sign-off. (Strong-CI teams may collapse this into
+  test-environment and test-data readiness, UAT/beta, release sign-off. (Strong-CI teams may collapse this into
   N4/N6 — kept as a node for the contexts where it can't be.)
 - **Quality:** executing N1's acceptance criteria [verification];
   exploratory testing [validation] (validation in intent — in practice it
@@ -382,6 +397,7 @@ vendor-claimed. Where a human is irreplaceable, the row says so.
 
 Cross-cutting lane artifacts (produced at *every* node): decision notes/ADRs
 (knowledge lane), work-item launcher/ledger and briefs (coordination lane),
+test-infrastructure and environment configs (enablement lane),
 and the backlog itself. AI makes these near-free — an agent in the loop can
 capture decisions, ledger entries, and backlog updates as by-products of the
 work, which is precisely this template's operating premise.
