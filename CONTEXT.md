@@ -118,6 +118,9 @@ untagged skills assume an engineering operator.
 - **decision-log** *(anyone)* — capture the *why* behind a decision per the
   three-tier scheme above. `/decision <what + why + rejected>` (or
   `/decision promote <note>`)
+- **doc-review** *(anyone)* — multi-perspective review of a technical
+  document: audience gate first, six independent reviewer subagents, findings
+  synthesized into prioritized recommendations. `/doc-review <path>`
 - **onboard-repo** — bring a repo into the workspace: registry entry, graphify
   index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
 - **rlm** — answer a query over a context too large to read into chat
