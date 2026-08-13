@@ -67,7 +67,8 @@ included. Neither replaces the other.
 3. **Design** — decide how: architecture, domain model, UX, testability.
 4. **Build** — implement it, verified as it's made (TDD, review, CI).
 5. **Pre-release V&V** — prove it: execute the criteria written in step 1;
-   UAT/beta for the human-judgment half.
+   UAT/beta for the human-judgment half (often folded into steps 4/6 by
+   continuous-CI teams).
 6. **Release** — ship progressively (canary, flags, rings, smoke tests).
 7. **Operate** — run it; validation continues against real users
    (SLOs, experiments, telemetry).
@@ -277,8 +278,11 @@ Legend for the two overlays:
 ### N5 — Pre-release V&V checkpoint
 
 - **Activities:** regression suite, E2E, performance/security testing,
-  test-environment and test-data readiness, UAT/beta, release sign-off. (Strong-CI teams may collapse this into
-  N4/N6 — kept as a node for the contexts where it can't be.)
+  test-environment and test-data readiness, UAT/beta, release sign-off.
+  (Running these inside N4/N6's continuous pipelines is the norm — the
+  regression suite usually *is* the CI suite; a standalone N5 stage is the
+  sign-off/regulated case. Either way the activities exist, which is why
+  it stays a node.)
 - **Quality:** executing N1's acceptance criteria [verification];
   exploratory testing [validation] (validation in intent — in practice it
   surfaces verification findings too); UAT/beta with real users [validation];
@@ -298,8 +302,9 @@ Legend for the two overlays:
 
 ### N6 — Release
 
-- **Activities:** CI/CD pipelines, versioning, changelogs, progressive
-  rollout (canary/flags/rings), smoke tests, rollback.
+- **Activities:** CD / deploy automation, versioning, changelogs,
+  progressive rollout (canary/flags/rings), smoke tests, rollback. Deploy ≠
+  release: flags decouple shipping the code from exposing it to users.
 - **Quality:** smoke tests [verification]; canary analysis against
   baseline [verification] (checks the change against expected metrics —
   validation comes later from real-user signal at N7); release gates and
@@ -307,7 +312,7 @@ Legend for the two overlays:
   premise).
 - **AI helps:** changelog/release-notes drafting [established]; deployment
   risk assessment [heuristic]; canary metric analysis [heuristic];
-  rollback decisions stay human.
+  rollback criteria stay human-owned; execution is increasingly automated.
 - **Template support:** thinnest node. `wizard` (toolchain) fits cutover/
   migration runbooks; the `docs/runbooks/` pattern (native) exists but only
   covers workspace setup today; `checkpoint` (native) is a session
