@@ -1,45 +1,47 @@
-# sdlc-ai-mapping — session 9 launcher
+# sdlc-ai-mapping — CLOSED (no next session planned)
 
-> **This file is the LAUNCHER** (forward-looking, replaced each rollover).
-> What happened is in `handoff.md` (top block — session 8 close).
+> **This file is the LAUNCHER.** The work item was re-closed on 2026-08-13
+> (session 9). Everything is built and merged: map (PR #4/#6/#7/#8),
+> map learnings (PR #10), deck v3 repo copy (PR #11), session-8 rollover
+> bookkeeping (PR #12). Round-2 Minors stay won't-do. Provenance:
+> `handoff.md` (top block) and `decisions.md`.
 
-## Mission
+## Deferred cleanup (mechanical, any session or the user)
 
-Everything is built and merged (PRs #9–#11 all on main). This session is
-bookkeeping only: remove leftover worktrees/branches, then re-close the
-item with a CLOSED launcher (session-6 precedent). Small session by
-design.
+Two worktrees could not be removed at close — each was still locked by a
+live Claude session (s6-close: pid 94056; s8-deck-v3: pid 78591). Both
+their branches are **verified merged into main**. Once those sessions
+have ended:
 
-## Constraints already decided (do not re-litigate)
+```sh
+git worktree remove .claude/worktrees/sdlc-ai-mapping-s6-close   # if refused: git worktree unlock <path> first
+git worktree remove .claude/worktrees/sdlc-ai-mapping-s8-deck-v3
+git branch -d worktree-sdlc-ai-mapping-s6-close worktree-sdlc-ai-mapping-s8-rollover
+```
 
-- Deck v3 + map formulations are final and merged — no content edits.
-- Round-2 Minors won't-do; deck "asks" slide not ported; G9→L39 is
-  template-backlog work.
+(The s9-close worktree/branch carrying this commit gets the same
+treatment after its PR merges.)
 
-## Read these, in order
+## If this item is ever reopened
 
-1. `handoff.md` — top block only.
-2. Nothing else. Do not open sdlc-map.md, the deck HTML, or any
-   review/findings docs — all settled and merged.
+1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
+2. Read `handoff.md` top block, then `README.md` for the item's shape.
+3. Deliverables on main: `sdlc-map.md` (map + deck formulations) and
+   `slides/where-ai-actually-helps.html` (deck v3). Published artifact:
+   https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+   — republish only **with that URL as `url`** to avoid a duplicate.
 
-## State snapshot
+## Still-binding constraints (if reopened)
 
-- main = `24f0919` (PR #10 merge). All sdlc-ai-mapping remote branches
-  deleted; remaining remote branches (`devex-*`) are another effort's.
-- `.claude/worktrees/sdlc-ai-mapping-s6-close`: fully merged (PR #9),
-  branch local-only; was LOCKED by live claude pid 94056 at session-8
-  close. Remove worktree (unlock first) + `git branch -d` once free.
-- `.claude/worktrees/sdlc-ai-mapping-s8-deck-v3`: detached at `24f0919`,
-  its branch already deleted; remove if the s8 session's exit didn't.
-- Artifact (v3 live): https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+- The map must be consumable independent of the workspace.
+- Round-2 Minors: won't-do; deck "asks" slide not ported — both by user
+  decision, re-litigate only with a fresh reason.
+- Deck numbers are verified against `research-modern-qa.md` — don't
+  soften or embellish.
+- Gap G9 → backlog card L39 is a template-backlog item, not this item's job.
+
+## Follow-on work (separate efforts, not this item)
+
+- `work/feedback-intake/` (G1), `work/quality-gates/` (G2/G3),
+  backlog cards M27–M29 + L38/L39.
 - `work/kimi-k3-agent-integration/` is another effort's dir — leave it.
-
-## First actions
-
-1. `git pull --ff-only` (main checkout may be behind after the rollover
-   PR), then `scripts/context-budget.sh register --project sdlc-ai-mapping`.
-2. Worktree cleanup per State snapshot (verify merged + lock-free before
-   each removal; skip s6-close if pid 94056 still holds it and note that
-   in the CLOSED launcher).
-3. Re-close: replace this launcher with a CLOSED launcher, append the
-   closing ledger block, commit + push per convention (PR if required).
