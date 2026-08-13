@@ -52,3 +52,10 @@
 **Rejected:** Splitting into a portable map + workspace overlay — interleaving is the doc's value for the maintainer; a self-identification preamble plus glosses achieves standalone consumability without the drift risk of two documents (revisit only if published externally).
 **Blast radius:** sdlc-map.md (summary block, glossary, register intro); all future review fences
 **Promote?:** maybe — becomes ADR-worthy if the map is published outside the repo
+
+## 2026-08-13 — Round-2 Minors closed as won't-do; work item closed
+**Chose:** Close the remaining round-2 Minors (review2-findings.md §3 leftovers listed in the session-5 handoff block, plus Sourcery's two advisory PR-#7 comments: routing-paragraph density, GAP cross-ref wording consistency) as won't-do, and close the sdlc-ai-mapping work item. User decision, session 6.
+**Because:** PR #7 delivered the Blocker + all Majors; the Minors are polish with no accuracy or consumability impact, and the map is already merged and in use.
+**Rejected:** A short Minors pass — cost (another review/PR cycle on a ~640-line doc) outweighs the polish gain; reopen only with a fresh reason.
+**Blast radius:** none to sdlc-map.md (no edits); work/sdlc-ai-mapping/ ledger + launcher record the closure
+**Promote?:** no
