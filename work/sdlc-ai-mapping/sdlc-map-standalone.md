@@ -1,34 +1,24 @@
-# SDLC Map — AI & Template Overlay
+# The SDLC and Where AI Actually Helps
 
-**Status: stable** (reviewed 2026-08-13; review history in `decisions.md`).
-Evidence base: `research-modern-qa.md` (citations live there, not here);
-structural decisions (which stages get node status; overlay granularity):
-`decisions.md`. Both are sibling files in this map's work directory,
-`work/sdlc-ai-mapping/` in the template repo.
+A standalone map of the software development lifecycle (SDLC) with one
+overlay: where AI genuinely helps at each stage, tiered by evidence. It is
+self-contained — no tooling, template, or workspace context is assumed —
+and written to anchor a discussion about AI in the SDLC.
 
 ## If you read nothing else
 
-**What this is:** a map of the software development lifecycle (SDLC) as
-eight stages in a graph, with two overlays per stage — where AI genuinely
-helps (evidence-tiered) and what this template ships for it. **"The
-template"** throughout means `ai-workspace-template`, the AI-workspace
-template repository this file lives in — it ships skills, docs, and
-conventions for agent-driven development work. **Audience:** anyone
-deciding where to point AI or template investment, from leadership
-skimming the claims to engineers working inside one stage. **Investment
-implication:** AI raises change volume and speed, so the seams between
-stages — intake, gates, review, feedback routing — get *more* load-bearing,
-not less; invest there. **How to read it:** View 1 is the narrative, View 2
-the structure, View 3 the artifacts; then jump to your node's entry, and
-read its View 3 rows too — the per-artifact human-override guardrails
-live there. Leadership:
-the four claims below plus the gap register's severity column. Engineers
-and architects outside the template: your node's **AI helps** line plus the
-tag legend; **Template support** bullets are internal to the template and
-safe to skip. Template maintainers: the Template support lines and the
-gap-register dispositions are yours. Testing is deliberately spread across
-N4 + N5 + the Quality lanes — there is no single "testing" section.
-Unfamiliar terms are glossed in the Glossary at the end.
+**What this is:** the SDLC as eight stages in a graph — not a pipeline —
+with an evidence-tiered "where AI helps" overlay per stage. **Audience:**
+anyone deciding where to point AI investment, from leadership skimming the
+claims to engineers working inside one stage. **Investment implication:**
+AI raises change volume and speed, so the seams between stages — intake,
+gates, review, feedback routing — get *more* load-bearing, not less;
+invest there. **How to read it:** View 1 is the narrative, View 2 the
+structure, View 3 the artifacts; then jump to your stage's entry and its
+View 3 rows — the per-artifact human-override guardrails live there. Testing is
+deliberately spread across Build, Pre-release V&V, and the Quality lanes —
+there is no single "testing" section. Unfamiliar terms are glossed in the
+Glossary at the end.
 
 Four headline claims:
 
@@ -38,9 +28,8 @@ Four headline claims:
 2. If a machine can check the output (code, tests, contracts, coverage
    diffs, triage), AI can lead; where the artifact encodes judgment or
    authority (priorities, go/no-go, UAT verdicts), AI drafts — a human
-   decides. The two
-   loudest vendor pitches — self-healing tests and autonomous test agents —
-   carry no independent evidence [hype].
+   decides. The two loudest vendor pitches — self-healing tests and
+   autonomous test agents — carry no independent evidence [hype].
 3. Only Build-stage *techniques* carry [measured]-tier evidence (gated
    unit-test generation, AI-boosted fuzzing); where a technique reappears
    downstream, the tag travels with the technique, not the stage. Every
@@ -59,8 +48,7 @@ it, AI can lead; fix the system before you accelerate it.
 
 The SDLC is **not a serial pipeline; it is a graph**: a backbone of stages a
 *change* flows through, plus feedback edges that make it cyclic, plus
-cross-cutting lanes that touch every node. Three structural commitments,
-each grounded in the research:
+cross-cutting lanes that touch every node. Three structural commitments:
 
 1. **Stages are states, not calendar phases.** Many changes (features,
    fixes) are in flight concurrently, each at a different node. The graph
@@ -70,14 +58,21 @@ each grounded in the research:
    rather than a stage of its own, owned by the feature team both earlier
    than coding (shift-left) and out into production (shift-right), with one
    named pre-release V&V (verification & validation) checkpoint for the
-   genuinely phase-like activities (regression, UAT,
-   sign-off). Verification vs validation kept as distinct tags:
-   verification clusters left (CI, review, tests-against-spec); much of
-   validation moved right into production (experiments, telemetry).
+   genuinely phase-like activities (regression, UAT, sign-off).
+   Verification vs validation kept as distinct tags: verification clusters
+   left (CI, review, tests-against-spec); much of validation moved right
+   into production (experiments, telemetry).
 3. **Feedback edges are first-class.** Production telemetry feeding
    discovery, incidents feeding maintenance, triaged bugs re-entering
    planning — these edges are where a product *lives* after v1; a map
    without them describes only greenfield.
+
+Two structural choices worth making explicit, since teams argue about both:
+the pre-release V&V checkpoint is kept as a **real node** (the home for
+phase-like V&V and the traceability target, even though strong-CI teams
+collapse it into their pipelines in practice), and maintenance keeps **node
+status** (distinct activities with their own AI story, and the dominant
+entry point for a live product).
 
 ## Legend — tags used throughout
 
@@ -88,21 +83,16 @@ each grounded in the research:
   **[heuristic]** (usable, known failure modes — pilot with a human
   override in place), **[hype]** (vendor-claimed, no independent evidence —
   avoid until independent evidence appears).
-  Scope honesty: the QA/testing tiers are research-sourced
-  (`research-modern-qa.md`); product, AIOps, and other non-QA tiers are
-  author judgment applied under the same rubric. Tags are always one of the
-  four bare tokens — qualifiers and sources appear in parentheses after the
-  tag, not inside it.
+  Scope honesty: the QA/testing tiers are research-sourced; product,
+  AIOps, and other non-QA tiers are author judgment applied under the same
+  rubric. Tags are always one of the four bare tokens — qualifiers and
+  sources appear in parentheses after the tag, not inside it.
 - **Quality** — activities carry **[verification]** (does it meet the spec —
   built the product *right*) or **[validation]** (does it meet user needs —
   built the *right* product); see V&V in the Glossary.
 - **Product presence** — where product-role judgment stays in the loop
   during the stage; called out (N4–N6) where it is most at risk of being
   assumed away.
-- **Template support** — **(native)** = skill/doc/convention shipped in this
-  template; **(toolchain)** = external capability the template documents in
-  `docs/recommended-tooling.md` or that ships with a runtime; **GAP** =
-  no support today (collected in the gap register below).
 
 ## Three views of the same reality
 
@@ -179,22 +169,21 @@ flowchart LR
 
 #### Traceability (correspondence, not flow)
 
-N1 ⇢ N5 — acceptance criteria
-written at discovery are the test basis executed at the V&V checkpoint.
-The criteria are *maintained* as scope evolves along the way; a stale
-criterion silently invalidates the trace.
+N1 ⇢ N5 — acceptance criteria written at discovery are the test basis
+executed at the V&V checkpoint. The criteria are *maintained* as scope
+evolves along the way; a stale criterion silently invalidates the trace.
 
 #### Where the test plan is produced
 
-Unpacking the dotted N1⇢N5 edge —
-detail a first read can skim: no single stage — it accretes along
-the N1⇢N5 edge and is *executed* at N5. Scenarios are **drafted at N1**
-from the PRD (the shift-left move; BDD/SbE lineage); **scoped at N2**
-(risk-based depth, definition-of-done; a formal test-plan document, where
-required, is assembled here); **enriched at N3** with scenarios only design
-can know (failure modes, non-functional targets); **mechanized at N4** into
-executable tests; **spent at N5** against the release candidate — N5 plans
-nothing new, and scenario gaps discovered there are feedback edges.
+Unpacking the dotted N1⇢N5 edge — detail a first read can skim: no single
+stage — it accretes along the N1⇢N5 edge and is *executed* at N5. Scenarios
+are **drafted at N1** from the PRD (the shift-left move; BDD/SbE lineage);
+**scoped at N2** (risk-based depth, definition-of-done; a formal test-plan
+document, where required, is assembled here); **enriched at N3** with
+scenarios only design can know (failure modes, non-functional targets);
+**mechanized at N4** into executable tests; **spent at N5** against the
+release candidate — N5 plans nothing new, and scenario gaps discovered
+there are feedback edges.
 
 #### Steady state
 
@@ -210,13 +199,12 @@ directly, skipping planning — the fix still exits through V&V and release.
 Artifacts are the payload of the graph's edges: each stage's output is a
 later stage's input (the PRD is N5's test basis; verification evidence is
 N6's go/no-go input; postmortems and experiment reports are N1's raw
-material). Template-covered artifacts are marked; the rest are
-product-repo/tooling artifacts the map only locates.
+material).
 
 **Pattern across the AI column** (the table in one breath): AI is
 strongest where the artifact is *checkable* (code, tests, contracts,
 release notes, coverage diffs, triage) and where capture is a by-product
-of agent work (ADRs, commits, ledgers); it is assistive-only where the
+of agent work (ADRs, commits, work logs); it is assistive-only where the
 artifact encodes judgment or authority (priorities, go/no-go, SLO targets,
 UAT verdicts, rollback criteria — the rows where "human" appears). The
 DORA amplifier caveat applies table-wide: AI-drafted artifacts raise
@@ -228,22 +216,22 @@ above. Where a human is irreplaceable, the row says so.
 | Node | Artifact | Key contents | AI overlay |
 |------|----------|--------------|------------|
 | N1 | **Opportunity assessment** | Problem/opportunity sizing, evidence for demand, go/no-go recommendation — the validated-opportunity half of N1's output. | Synthesizes the evidence base and drafts the assessment [established]. The go/no-go call is human. |
-| N1 | **PRD / product spec** | Problem statement; target users; goals & non-goals; functional + non-functional requirements; success metrics; open questions. *(template: `work/<effort>/spec.md` per spec conventions)* | Drafts from conversation/notes; critiques for ambiguity and untestable requirements [established]. Goals and priorities stay human. |
-| N1 | **Acceptance criteria / scenario drafts** | Given/When/Then per behavior; edge cases; the numbered items (S1…Sn) that N5 traces back to. Often a section of the PRD rather than a separate file. | Drafts scenarios from the PRD; proposes edge cases humans miss [established] (pattern; tooling effectiveness unverified). Human review non-negotiable — these become the release gate. |
-| N1 | **Research / evidence pack** | Interview findings, telemetry insights, competitive analysis — the evidence behind the PRD's claims. | Synthesizes large corpora (interviews, tickets, reviews) into themes [established]; per-item classification over big inputs (RLM-style) [established]. |
+| N1 | **PRD / product spec** | Problem statement; target users; goals & non-goals; functional + non-functional requirements; success metrics; open questions. | Drafts from conversation/notes; critiques for ambiguity and untestable requirements [established]. Goals and priorities stay human. |
+| N1 | **Acceptance criteria / scenario drafts** | Given/When/Then per behavior; edge cases; the numbered criteria that N5 traces back to. Often a section of the PRD rather than a separate file. | Drafts scenarios from the PRD; proposes edge cases humans miss [established] (pattern; tooling effectiveness unverified). Human review non-negotiable — these become the release gate. |
+| N1 | **Research / evidence pack** | Interview findings, telemetry insights, competitive analysis — the evidence behind the PRD's claims. | Synthesizes large corpora (interviews, tickets, reviews) into themes [established]; per-item classification over big inputs [established]. |
 | N2 | **Roadmap / milestone plan** | Sequenced outcomes, horizons, dependencies between efforts. | Suggests sequencing and surfaces cross-effort dependencies [heuristic]. Prioritization is a value judgment — human. |
-| N2 | **Tickets** | Per-ticket scope, definition-of-done, blocking edges, estimate. *(template: `work/<effort>/issues/NN-slug.md` + `map.md`)* | Decomposes a spec into tracer-bullet tickets with blocking edges and drafts DoD [established]. Estimation [heuristic] (weak evidence). |
+| N2 | **Tickets** | Per-ticket scope, definition-of-done, blocking edges, estimate. | Decomposes a spec into tracer-bullet tickets with blocking edges and drafts DoD [established]. Estimation [heuristic] (weak evidence). |
 | N2 | **Test plan (formal, where required)** | Scope & risk assessment; depth per area; environments; entry/exit criteria; responsibilities. Agile-native teams fold this into tickets + acceptance criteria instead. | Drafts a risk-based plan from PRD + design; checks coverage against the requirement list [established] (pattern; tooling effectiveness unverified). Risk weighting reviewed by humans. |
 | N3 | **Design / architecture doc** (where warranted — many changes need only an ADR) | Context & constraints; chosen approach; alternatives considered; failure modes; non-functional targets (perf, security, scale). | Generates and critiques alternatives; failure-mode brainstorming (pre-mortem prompts) [heuristic]; drafts the doc from a design discussion [established]. |
-| N3 | **ADRs / decision notes** | One decision each: what was chosen, why, rejected alternatives, consequences. *(template: `decisions.md` → `docs/adr/`)* | Near-free with an agent in the loop: drafts the note at the moment of deciding, while reasoning is fresh [established]. Biggest AI win per unit effort on this table. |
+| N3 | **ADRs / decision notes** | One decision each: what was chosen, why, rejected alternatives, consequences. | Near-free with an agent in the loop: drafts the note at the moment of deciding, while reasoning is fresh [established]. Biggest AI win per unit effort on this table. |
 | N3 | **API contracts / interface specs** | Endpoints/schemas, error semantics, versioning rules — the machine-checkable half of design. | Drafts schemas from requirements; consistency and breaking-change checks [established] (machine-checkable, so AI output is verifiable). |
-| N3 | **Domain model / glossary updates** | Resolved terms, aliases to avoid. *(template: `## Language` in CONTEXT.md)* | Extracts candidate terms and inconsistent aliases from conversations/docs [established]. Term resolution is a team agreement — human. |
+| N3 | **Domain model / glossary updates** | Resolved terms, aliases to avoid. | Extracts candidate terms and inconsistent aliases from conversations/docs [established]. Term resolution is a team agreement — human. |
 | N3 | **UX artifacts** | Wireframes, user flows, throwaway prototypes answering design questions. | Generates working throwaway prototypes fast — collapses the cost of exploring variants [established]. Design judgment on the variants stays human. |
-| N4 | **Source code + test suite** | The tests are N1's scenarios mechanized — the executable form of the spec. | Agentic coding [established] (this template's premise); unit-test generation gated by objective filters [measured] (Meta TestGen-LLM); fuzz-target generation [measured] (Google OSS-Fuzz). |
+| N4 | **Source code + test suite** | The tests are N1's scenarios mechanized — the executable form of the spec. | Agentic coding [established]; unit-test generation gated by objective filters [measured] (Meta TestGen-LLM); fuzz-target generation [measured] (Google OSS-Fuzz). |
 | N4 | **CI configuration** | The quality gates as code: which checks block merge, flake policy. | Drafts pipelines and gate configs [established]; triages/clusters CI failures [established]. Gate *policy* (what blocks merge) is human. |
 | N4 | **PR / review records** | Diff, review discussion, approvals — the verification trail for each change. | First-pass review: bugs, standards, spec-match [established]. Approval authority stays human — reviewer of last resort. |
-| N4 | **Commit messages** | What + why per change. *(template: `Decision:`/`Refs:` trailers)* | Written by the agent that made the change, decision trailers included [established] — another near-free capture point. |
-| N5 | **Verification evidence / test report** | Plan (before) + results (after) in one place, perf/security results included; coverage against the S-numbers; gaps visible. *(template: `verification.md`, `Covers: S1–S4`)* | Runs checks, records evidence, and diffs coverage against the S-numbers [established] — the traceability check is mechanical, ideal agent work. |
+| N4 | **Commit messages** | What + why per change. | Written by the agent that made the change, decision rationale included [established] — another near-free capture point. |
+| N5 | **Verification evidence / test report** | Plan (before) + results (after) in one place, perf/security results included; coverage against the numbered acceptance criteria; gaps visible. | Runs checks, records evidence, and diffs coverage against the acceptance criteria [established] — the traceability check is mechanical, ideal agent work. |
 | N5 | **UAT / beta feedback report** | Real-user findings, severity, sign-off or objections — the validation half. | Clusters and summarizes raw feedback [established]; LLM-as-judge as a *pre-filter* for natural-language acceptance checks [heuristic] (documented biases, human override required). The UAT judgment itself is irreducibly human. |
 | N5 | **Release-readiness record** | Go/no-go decision, known issues shipped with waivers, who signed. | Compiles the evidence into a go/no-go brief [established]. The decision and the signature are human. |
 | N6 | **Release notes / changelog** | User-facing changes, breaking changes, upgrade steps. | Generated from commits/PRs — the most automatable artifact on this table [established]. |
@@ -253,17 +241,16 @@ above. Where a human is irreplaceable, the row says so.
 | N7 | **On-call runbooks + alert definitions** | Symptom → diagnosis → remediation per known failure mode. | Drafts runbooks from incident history; clusters alert noise to cut false pages [established]. |
 | N7 | **Incident postmortems** | Timeline, impact, contributing causes, action items — feeds N8 fixes and N1 insight. | Assembles the timeline from logs/chat/deploy records [established] — removes the tedious half. Causal analysis and blameless framing stay human-led. |
 | N7 | **Experiment reports** | Hypothesis, variant results, decision taken — the N7→N1 edge in document form. | Summarizes results and sanity-checks stats (power, peeking) [heuristic]. Ship/kill decisions human. |
-| N8 | **Triaged issue records** | Repro, severity, category, agent-ready brief. *(template: `triage` skill output)* | Categorizes, dedups, attempts repro, writes the agent-ready brief [established] — among the highest-leverage AI applications on this table. |
+| N8 | **Triaged issue records** | Repro, severity, category, agent-ready brief. | Categorizes, dedups, attempts repro, writes the agent-ready brief [established] — among the highest-leverage AI applications on this table. |
 | N8 | **Fix PRs with regression tests** | Each fix carries the test that would have caught it. | Diagnoses and fixes with the regression test attached [established]; the test half benefits from the gated-generation pattern [measured] (TestGen-LLM). |
 | N8 | **Upgrade / migration notes** | Dependency changes, breaking-change handling, verification performed. | Drives upgrade PRs and summarizes breaking changes from changelogs [established]. |
-| N8 | **Refreshed repo docs** | Code-structure/design/api docs kept current. *(template: `onboard-repo` outputs)* | Regenerates docs from code — the docs-rot countermeasure [established]. |
+| N8 | **Refreshed repo docs** | Code-structure/design/api docs kept current. | Regenerates docs from code — the docs-rot countermeasure [established]. |
 
 Cross-cutting lane artifacts (produced at *every* node): decision notes/ADRs
-(knowledge lane), work-item launcher/ledger and briefs (coordination lane),
-test-infrastructure and environment configs (enablement lane),
-and the backlog itself. AI makes these near-free — an agent in the loop can
-capture decisions, ledger entries, and backlog updates as by-products of the
-work, which is precisely this template's operating premise.
+(knowledge lane), work logs and handoff briefs (coordination lane),
+test-infrastructure and environment configs (enablement lane), and the
+backlog itself. AI makes these near-free — an agent in the loop can capture
+decisions, logs, and backlog updates as by-products of the work.
 
 ## Cross-cutting lanes (touch every node)
 
@@ -271,8 +258,8 @@ work, which is precisely this template's operating premise.
 |------|-----------|
 | **Quality (feature-team-owned)** | The V/V-tagged activity at each node — criteria at N1, testability at N3, TDD/review at N4, regression/UAT at N5, canary/SLO at N6–N7, regression-per-fix at N8 |
 | **Quality enablement** | Test infrastructure, test environments & test data, coaching, risk analysis — where modern dedicated-QA sits (Google's SETI/TE — software engineers building test infrastructure/tooling rather than testing by hand — and Atlassian's QA-as-coaching model); natural anchor for AI test tooling |
-| **Knowledge & decision capture** | Specs, ADRs, decision trailers, docs — where this template most obviously lives today |
-| **Coordination** | Tickets, handoffs, session/agent orchestration, multi-agent workflows |
+| **Knowledge & decision capture** | Specs, ADRs, decision trailers, docs — the *why* behind the code, written down as it's decided |
+| **Coordination** | Tickets, handoffs, agent orchestration, multi-agent workflows |
 
 **Boundary rule:** lanes own the *practice and shared infrastructure*;
 nodes own the *instances*. The non-Quality lanes mostly manifest through
@@ -285,18 +272,17 @@ N1…N8:
 | Knowledge & decision capture | spec (N1), plans (N2), ADRs (N3), commit trailers (N4), verification evidence (N5), changelogs (N6), postmortems (N7), refreshed docs (N8) |
 | Coordination | intake (N1), tickets (N2 and onward), handoffs/briefs at every node |
 
-Some artifacts are dual-homed: tickets are
-coordination-lane artifacts instantiated at N2; ADRs are knowledge-lane
-artifacts instantiated at N3. Platform/environment engineering lives in the
-enablement lane (surfacing at N5 as environment/data readiness) — it has no
-node of its own here by design.
+Some artifacts are dual-homed: tickets are coordination-lane artifacts
+instantiated at N2; ADRs are knowledge-lane artifacts instantiated at N3.
+Platform/environment engineering lives in the enablement lane (surfacing
+at N5 as environment/data readiness) — it has no node of its own here by
+design.
 
 ## Per-node entries
 
 Tags used below — the evidence tiers on **AI helps** items,
-[verification]/[validation] on **Quality** items, **(native)**/
-**(toolchain)**/**GAP** on **Template support** items — are defined in
-the Legend near the top.
+[verification]/[validation] on **Quality** items — are defined in the
+Legend near the top.
 
 ---
 
@@ -316,16 +302,6 @@ the Legend near the top.
   [established]; drafting Given/When/Then scenarios from a PRD
   [established] (pattern; tooling effectiveness unverified); adversarial
   critique of the plan [heuristic].
-- **Template support:** `to-spec` (native) — conversation → spec with
-  acceptance criteria per the spec conventions; success-criteria
-  requirement in work-item READMEs (native); `## Language` domain glossary
-  in CONTEXT.md (native); `rlm` (native) — a query loop over
-  corpora too large to read into chat — for analyzing large feedback
-  corpora; `grilling`/`grill-with-docs` (toolchain) for plan interrogation;
-  `research` skill (toolchain). **GAP (G1 → work item
-  `work/feedback-intake/`):** no user-research/feedback *intake*
-  convention — nothing routes real user signal into the workspace the
-  template scaffolds.
 - **Artifacts & guardrails:** View 3 → N1 rows.
 
 ### N2 — Planning & prioritization
@@ -342,11 +318,6 @@ the Legend near the top.
   synthesizing prioritization inputs (usage data, feedback themes,
   capacity) [established]; estimation [heuristic] (weak evidence).
   Prioritization decisions themselves stay human.
-- **Template support:** strongest node for the template. `to-tickets`
-  (native) — tracer-bullet tickets with blocking edges; `wayfinder`
-  (native) — work too big for one session as a map of decision tickets;
-  `triage` (native) — the intake side; issue-tracker conventions
-  (`docs/agents/issue-tracker.md`, native). No significant gap.
 - **Artifacts & guardrails:** View 3 → N2 rows.
 
 ### N3 — Design
@@ -360,14 +331,6 @@ the Legend near the top.
   throwaway prototypes to answer design questions [established]; domain
   modeling and terminology sharpening [established]; architecture queries
   over an existing codebase [established].
-- **Template support:** decision capture is the template's core strength
-  here — `decision-log` (native), ADRs under `docs/adr/` (native),
-  `Decision:` commit trailers (native); graphify (toolchain, wired
-  natively) answers "why is it this way" via code→commit→ADR edges;
-  `domain-modeling`, `codebase-design`, `prototype`,
-  `grill-with-docs` (all toolchain). **GAP (G4 → backlog M27):**
-  testability/failure-mode analysis has no prompt or checklist anywhere —
-  the quality lane's design station is unmanned.
 - **Artifacts & guardrails:** View 3 → N3 rows.
 
 ### N4 — Build
@@ -378,12 +341,12 @@ the Legend near the top.
   [verification]; static analysis and linting [verification]; CI quality
   gates [verification]; flaky-test discipline (enablement hygiene — it
   protects gate trust rather than verifying the product).
-- **AI helps:** agentic coding [established] (the premise of this
-  template); unit-test generation gated by objective filters (build,
-  pass, coverage-increase) [measured] (Meta TestGen-LLM — measured
-  coverage and acceptance rates, not defect outcomes); AI-boosted
-  fuzzing, where fuzzing applies (systems/security-critical code)
-  [measured] (Google OSS-Fuzz); code-review assist [established].
+- **AI helps:** agentic coding [established]; unit-test generation gated
+  by objective filters (build, pass, coverage-increase) [measured] (Meta
+  TestGen-LLM — measured coverage and acceptance rates, not defect
+  outcomes); AI-boosted fuzzing, where fuzzing applies
+  (systems/security-critical code) [measured] (Google OSS-Fuzz);
+  code-review assist [established].
 - **Costs:** the *verification tax* — agentic output trades writing time
   for review time and can be net-negative on some tasks; and under
   AI-raised volume the constraint moves to the human bottlenecks — review
@@ -392,17 +355,6 @@ the Legend near the top.
   correlational).
 - **Product presence:** scope questions and trade-off calls keep arriving
   during build — product doesn't hand off at N2.
-- **Template support:** Agent Coding Principles + Context Discipline in
-  CONTEXT.md (native); context budget machinery (native) — keeps the
-  *agent* inside its quality envelope while building; work-dir
-  launcher/ledger (native) for state that survives sessions; worktree
-  isolation for concurrent agents (native);
-  `docs/operational-knowledge.md` (native) for build/CI gotchas; `tdd`,
-  `code-review`, superpowers TDD/debugging (toolchain); graphify update
-  after changes (toolchain, wired natively). **GAP (G3, merged into G2 →
-  work item `work/quality-gates/`):** no CI quality-gate guidance — the
-  template assumes gates exist but says nothing about them (which gates,
-  AI-triage of failures, flake policy).
 - **Artifacts & guardrails:** View 3 → N4 rows (incl. CI-failure triage).
 
 ### N5 — Pre-release V&V checkpoint
@@ -424,14 +376,6 @@ the Legend near the top.
   **self-healing tests [hype]**; **autonomous test agents [hype]**.
 - **Product presence:** product owns the UAT judgment and is a go/no-go
   voice at sign-off.
-- **Template support:** `verification.md` convention (native) is a direct
-  hit — plan-before/evidence-after in one file, and its `Covers: S1–S4`
-  header *is* the N1⇢N5 traceability edge in file form; spec conventions
-  supply the S-numbers (native) — the numbered acceptance criteria S1…Sn
-  from the spec; `S1–S4` above is an example; `security-review` (toolchain,
-  Claude Code built-in). **GAP (G5 → backlog M28):** no UAT/beta
-  coordination support — the validation half of this node (real humans
-  judging the real thing) has no template story.
 - **Artifacts & guardrails:** View 3 → N5 rows.
 
 ### N6 — Release
@@ -451,14 +395,6 @@ the Legend near the top.
   rollback criteria stay human-owned; execution is increasingly automated.
 - **Product presence:** exposure decisions — which users see the change,
   and when flags/rings widen — are product calls.
-- **Template support:** thinnest node. `wizard` (toolchain) — generates an
-  interactive walkthrough for steps only a human can perform — fits
-  cutover/migration runbooks; the `docs/runbooks/` pattern (native) exists but only
-  covers workspace setup today; `checkpoint` (native) is a session
-  boundary, not a release boundary. **GAP (G7 → out of scope,
-  deliberately):** release engineering has no template story — settled as
-  out of scope for a coordination template (runbooks + `wizard` are the
-  escape hatch); stated here so the omission is explicit.
 - **Artifacts & guardrails:** View 3 → N6 rows.
 
 ### N7 — Operate
@@ -473,13 +409,6 @@ the Legend near the top.
 - **AI helps:** log/telemetry analysis and anomaly triage [established];
   incident diagnosis assist [heuristic]; postmortem drafting from timelines
   [established]; experiment analysis [heuristic].
-- **Template support:** `diagnosing-bugs` / `systematic-debugging`
-  (toolchain) transfer to incident work; `docs/operational-knowledge.md`
-  (native) is the right home for hard-won operational gotchas; runbook
-  pattern (native) extends naturally to operational runbooks. **GAP (G1 +
-  G6 → work item `work/feedback-intake/`, backlog M29):** the N7→N1 edge
-  is unsupported — no convention routes telemetry, experiment results, or
-  incident learnings back into discovery; no postmortem convention either.
 - **Artifacts & guardrails:** View 3 → N7 rows.
 
 ### N8 — Maintain
@@ -494,66 +423,11 @@ the Legend near the top.
   diagnosis [established]; small-scope refactoring and dead-code cleanup
   [established]; large-scale refactoring [heuristic]; dependency-upgrade
   PRs [established]; docs regeneration [established].
-- **Template support:** `triage` (native) — the state machine and
-  agent-ready briefs are exactly this node's front door; issue-tracker
-  conventions (`docs/agents/issue-tracker.md`, native) cover ticket-state
-  hygiene — a *generic* backlog convention does not ship; the template
-  repo's own backlog practice is template-repo-only and removed on
-  adoption (see G9); the work-dir launcher/ledger pattern fits
-  long-running breaking-change migrations (native); `onboard-repo` re-runs
-  keep repo docs fresh (native);
-  `improve-codebase-architecture`, `diagnosing-bugs` (toolchain); graphify
-  update keeps the graph honest (toolchain, wired natively). **GAP (G8 →
-  backlog L38):** dependency upgrades and test-suite-health monitoring
-  have no convention.
 - **Artifacts & guardrails:** View 3 → N8 rows.
 
 ---
 
-## Gap register (candidate work items / backlog entries)
-
-Invest where AI stresses the seams: AI raises change volume and speed, so
-the joints between stages — intake, gates, review, feedback routing — get
-*more* load-bearing, not less. This register is that investment list — and
-it confirms its own thesis: both High-severity gaps (G1 intake, G2 gate
-policy) are seams, not stages.
-
-Dispositions settled 2026-08-13 with the workspace owner (notes:
-`decisions.md`). Dispositions are maintainer-facing: they route each gap
-to a landing place inside the template repo — backlog cards (M/L numbers)
-live in `docs/template-workspace-backlog.html`, work items under `work/`.
-
-| # | Gap | Node/lane | Severity | Disposition |
-|---|-----|-----------|----------|-------------|
-| G1 | No user-research / production-feedback intake convention (the N7→N1 edge, and N1's inbound signal) | N1, N7 | High — it's the steady-state loop's first edge | **Work item:** `work/feedback-intake/` (scaffolded 2026-08-13) |
-| G2 | Quality-enablement lane unmanned: no guidance on test infrastructure, AI test tooling adoption, or gate policy | lane | High — research says this lane gets *more* load-bearing under AI | **Work item:** `work/quality-gates/` (scaffolded 2026-08-13; absorbs G3) |
-| G3 | No CI quality-gate guidance (which gates, AI failure-triage, flake policy) | N4 | Medium | Merged into G2 — gate policy is quality-enablement's first deliverable |
-| G4 | No testability / failure-mode-analysis prompt at design time | N3 | Medium | Backlog card **M27** (added 2026-08-13) |
-| G5 | No UAT/beta coordination support (validation half of N5) | N5 | Medium | Backlog card **M28** (added 2026-08-13) |
-| G6 | No postmortem convention; incident learnings evaporate | N7 | Medium | Backlog card **M29** (added 2026-08-13) |
-| G7 | Release engineering absent | N6 | Low | **Out of scope, deliberately** — the template doesn't own deploy machinery; runbooks + `wizard` are the escape hatch |
-| G8 | Dependency upgrades & test-suite health unowned | N8 | Low | Backlog card **L38** (added 2026-08-13) |
-| G9 | No generic backlog convention ships — the template repo's own backlog practice is template-repo-only, deleted on adoption | N8 | Low | Backlog card **L39** (added 2026-08-13) |
-
-**Next up:** G1 (`work/feedback-intake/`) — the steady-state loop's first
-edge — then G2 (`work/quality-gates/`). Dispositions record *routing* as of
-their date, not current state; current state lives in each work item's
-ledger (`handoff.md`).
-
-## Settled structural questions
-
-Resolved 2026-08-12 (full notes with rejected alternatives: `decisions.md`):
-
-1. **N5 is a real node** — home for phase-like V&V and the traceability
-   target; strong-CI teams may collapse it in practice.
-2. **N8 keeps node status** — distinct activities with their own
-   AI/template story, and the dominant entry point for a live product.
-3. **Overlay granularity: per node, lanes tagged inline** — no 8×4 matrix.
-
 ## Glossary
-
-Terms used in this document; sources and evidence in
-`research-modern-qa.md`.
 
 - **ADR (Architecture Decision Record)** — a short committed document
   capturing one decision: context, choice, rejected alternatives,
@@ -571,9 +445,6 @@ Terms used in this document; sources and evidence in
 - **CI/CD** — continuous integration (every change merged and
   automatically tested) / continuous delivery-deployment (every change
   releasable, or released, automatically).
-- **CONTEXT.md** — the template's root agent-context file, read by every
-  agent runtime (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md` are symlinks to
-  it); carries the workspace purpose, domain glossary, and conventions.
 - **DoD (Definition of Done)** — the per-ticket checklist that must hold
   before work counts as complete.
 - **DORA (DevOps Research and Assessment)** — the research program
@@ -581,8 +452,7 @@ Terms used in this document; sources and evidence in
   deployment frequency, lead time for changes, change failure rate, time
   to restore — and the book *Accelerate*; links engineering practices to
   delivery performance via large annual surveys. Cited here for the
-  AI-amplifier caution (headline claim 4); findings and caveats in
-  `research-modern-qa.md`.
+  AI-amplifier caution (headline claim 4).
 - **E2E (end-to-end) test** — exercises the whole deployed system through
   its real interface, as a user would.
 - **Error budget** — the amount of unreliability an SLO permits; spent
@@ -593,13 +463,6 @@ Terms used in this document; sources and evidence in
   the same code; corrosive to gate trust.
 - **Given/When/Then** — the BDD scenario format: precondition / action /
   expected outcome.
-- **graphify** — a knowledge-graph tool wired into the template: indexes a
-  repo (code, commits, ADRs) into a queryable graph so agents can answer
-  "why is it this way", not just "what is there".
-- **Launcher / ledger** — the template's work-directory pair:
-  `next-session.md` (the launcher — what to do next, replaced at each
-  session boundary) and `handoff.md` (the ledger — append-only history of
-  what happened).
 - **LLM-as-judge** — using a language model to evaluate outputs against
   criteria; useful pre-filter with documented biases (position,
   verbosity, self-preference).
@@ -621,10 +484,6 @@ Terms used in this document; sources and evidence in
   collapsing the two is a classic discovery failure.
 - **Ring deployment** — staged rollout through widening audiences
   (team → beta → world), gated on metrics per ring.
-- **RLM (recursive language model loop)** — the template's skill for
-  querying a corpus too large to read into an agent's context: a
-  persistent loop feeds slices to a cheap model and aggregates the
-  answers.
 - **SbE (Specification by Example)** — collaboratively refining
   requirements into concrete examples that become executable tests /
   living documentation (Adzic).
@@ -638,13 +497,8 @@ Terms used in this document; sources and evidence in
   accepting behavior changes; no independent evidence (hence [hype] here).
 - **Smoke test** — a fast, shallow post-deploy check that the system is
   basically alive.
-- **S-numbers** — the numbered acceptance criteria (S1…Sn) in a spec;
-  verification evidence traces back to them (e.g. `Covers: S1–S4`).
 - **Spike (technical)** — a short, timeboxed investigation — often
   throwaway code — to de-risk an unknown before committing to a design.
-- **superpowers** — a third-party Claude Code plugin of process skills
-  (TDD, systematic debugging, brainstorming) included in the template's
-  recommended toolchain.
 - **TDD (Test-Driven Development)** — red-green-refactor: write the
   failing test first, then the code that passes it.
 - **Test basis** — whatever tests are designed *from* — here, the PRD and
@@ -653,7 +507,8 @@ Terms used in this document; sources and evidence in
   objective filters (builds, passes, raises coverage); the reference
   point for [measured] AI test generation.
 - **Traceability** — the maintained correspondence from requirement to
-  test to evidence (S-numbers → scenarios → verification results).
+  test to evidence (numbered acceptance criteria → scenarios →
+  verification results).
 - **Tracer-bullet ticket** — a thin end-to-end slice proving the whole
   path works, rather than a horizontal layer.
 - **UAT (User Acceptance Testing)** — real users judging the built thing
@@ -661,3 +516,10 @@ Terms used in this document; sources and evidence in
 - **V&V (Verification & Validation)** — verification: built the product
   *right* (against spec); validation: built the *right* product (against
   user needs) — IEEE/ISO distinction used as tags throughout this map.
+
+---
+
+*Provenance: distilled from a workspace-internal SDLC map (which adds a
+tooling overlay per stage); evidence tiers there are sourced from a
+research review of modern QA/AI-testing literature. This copy is
+self-contained by design.*

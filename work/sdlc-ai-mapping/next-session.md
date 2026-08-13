@@ -17,10 +17,13 @@ when its session ended. Nothing is pending.
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
 2. Read `handoff.md` top block, then `README.md` for the item's shape.
-3. Deliverables on main: `sdlc-map.md` (map + deck formulations) and
-   `slides/where-ai-actually-helps.html` (deck v3). Published artifact:
-   https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
-   — republish only **with that URL as `url`** to avoid a duplicate.
+3. Deliverables on main: `sdlc-map.md` (map + deck formulations),
+   `sdlc-map-standalone.md` (workspace-independent map, three-view
+   framing; session 10), and `slides/where-ai-actually-helps.html`
+   (deck v3). Published artifacts — republish only **with the URL as
+   `url`** to avoid duplicates:
+   deck: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+   standalone map: https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204
 
 ## Still-binding constraints (if reopened)
 

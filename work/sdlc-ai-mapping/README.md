@@ -32,4 +32,10 @@ capabilities.
 - `next-session.md` — forward launcher (what to do next). REPLACED each rollover.
 - `handoff.md` — session ledger (what happened). APPEND newest-on-top; archive
   to `handoff-archive.md` when it exceeds the two most recent sessions.
-- (planned) `sdlc-map.md` — the SDLC map itself, once the conversation produces it.
+- `sdlc-map.md` — the SDLC map itself (with the template overlay).
+- `sdlc-map-standalone.md` — workspace-independent version of the map (no
+  template overlay, no gap register; three views — phases, graph,
+  artifacts) — for sharing/discussing AI in the SDLC outside this
+  workspace. Published artifact:
+  https://claude.ai/code/artifact/f86be94e-2362-4342-bddf-0105f395a204
+  — republish only **with that URL as `url`** to avoid a duplicate.
