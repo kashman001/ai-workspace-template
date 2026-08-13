@@ -9,12 +9,11 @@
 Land the two open threads, then re-close the item:
 1. **PR #10** (four deck-v3 formulations ported into `sdlc-map.md`) —
    open, awaiting user merge/review.
-2. **Deck source into the repo** — v2 HTML is committed LOCAL-ONLY on
-   branch `worktree-sdlc-ai-mapping-s6-close`
-   (`slides/where-ai-actually-helps.html`); the live artifact is already
-   **v3** (five review fixes, session-7 handoff block lists them). Update
-   the file to v3 (WebFetch the artifact), push a fresh branch, PR.
-   Optional: offer the plainer PPTX translation (decided: HTML first).
+2. **Deck repo copy v2 → v3** — `slides/where-ai-actually-helps.html`
+   is on main (landed via PR #9) but still v2; the live artifact is v3
+   (five review fixes, session-7 handoff block lists them). WebFetch the
+   artifact, update the file on a fresh branch, PR. Optional: offer the
+   plainer PPTX translation (decided: HTML first).
 
 ## Constraints already decided (do not re-litigate)
 
@@ -54,10 +53,10 @@ Land the two open threads, then re-close the item:
 ## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. `git status` — if the session-7 rebase didn't complete, finish it and
-   push main first.
-3. `gh pr view 10 --json state` — merged? pull main + delete the s7
+2. `gh pr view 10 --json state` — merged? pull main + delete the s7
    branch. Open? ask the user: merge or review.
-4. Deck-source thread (Mission item 2): update to v3, fresh branch, PR.
-5. After both PRs land: delete s6-close worktree + branch, re-close the
-   item (CLOSED launcher per session-6 precedent).
+3. Deck thread (Mission item 2): update repo copy to v3, fresh branch, PR.
+4. Cleanup: remove s6-close worktree (unlock first) + branch once the
+   user is out of it.
+5. After everything lands: re-close the item (CLOSED launcher per
+   session-6 precedent).

@@ -22,8 +22,8 @@ card→callout on the hype slide; DORA note links dora.dev + 2024/2025
 reports; progress/counter exclude the 2 backup slides (now "1 / 12" +
 "backup n / 2") and arrow-key scrolling fixed (slides take focus;
 appendix table focusable). v3 source: the artifact (WebFetch it) — the
-repo copy `slides/where-ai-actually-helps.html` on branch
-`worktree-sdlc-ai-mapping-s6-close` is still v2, local-only.
+repo copy `work/sdlc-ai-mapping/slides/where-ai-actually-helps.html` on
+main is still v2 (landed via PR #9); update it to v3.
 
 **2. Four deck learnings ported back to sdlc-map.md — PR #10 (OPEN,
 awaiting user merge):** branch `worktree-sdlc-ai-mapping-s7-deck-learnings`
@@ -34,10 +34,11 @@ High-severity gaps are seams, not stages. Rejected: porting the "asks"
 slide (pitch, not map) — decision note in `decisions.md`. Touches only
 front matter + gap-register intro.
 
-**Not done / CORRECTION:** the `s6-close` worktree holds the deck's v2
-source commits, LOCAL-ONLY (predecessor ledger block below) — do NOT
-remove it until the slides land on a fresh branch + PR; the user's
-"fully merged" was inaccurate for the slides commits.
+**Worktree status (verified end of session):** PR #9 (merged during
+session 7, `a6880aa`) landed the s6-close branch — slides v2 + the
+predecessor rollover are on main; `828e850` is an ancestor of main. The
+`s6-close` worktree/branch are fully merged and safe to remove once the
+user exits the worktree.
 
 Suggested skills next session: none beyond session-rollover bookkeeping;
 `code-review` only if the user wants PR #10 reviewed before merge.
