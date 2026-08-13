@@ -38,3 +38,17 @@
 **Rejected:** Separate EVP/VP and PM/PM-leadership personas — same questions at this altitude; security/compliance persona — overkill outside regulated context; support/CS persona — feedback-intake work item owns that concern.
 **Blast radius:** work/sdlc-ai-mapping/review-findings.md, sdlc-map.md (successor session's edits)
 **Promote?:** no
+
+## 2026-08-13 — Round-2 review method: doc-review-orchestrator, agent-supplied audience model
+**Chose:** Ran the user-provided `doc-review-orchestrator.md` (10 agents: Diátaxis structure, 5 audience-fit instances, task walkthrough, language, accuracy-vs-repo, skim/forward test) with the Phase-0 audience model supplied by the orchestrating agent from work-item context (user delegated it). Segments S1 leadership / S2 maintainer / S3 external eng lead / S4 stage engineer / S5 cold reader. Synthesis at `review2-findings.md`.
+**Because:** The orchestrator's fixed lens set (structure, task-completion, skim divergence) covers dimensions the round-1 persona panel didn't, and the user explicitly directed this method.
+**Rejected:** Another free-form persona round — overlaps round 1; asking the user the Phase-0 questionnaire — user delegated the answers.
+**Blast radius:** work/sdlc-ai-mapping/review2-findings.md; sdlc-map.md (future fix pass)
+**Promote?:** no
+
+## 2026-08-13 — Constraint: sdlc-map.md must be consumable independent of the workspace
+**Chose:** Standalone consumability is a binding requirement — a reader with no access to this workspace (S3/S5) must be able to use the map, including understanding what "the template" is and resolving every reference the doc makes. Stated by the user mid-round-2 review; upgrades the implicit-context findings (F1–F3 in review2-findings.md) to Blocker/Major.
+**Because:** The map's value extends beyond template maintenance; workspace-internal referents silently exclude every outside reader.
+**Rejected:** Splitting into a portable map + workspace overlay — interleaving is the doc's value for the maintainer; a self-identification preamble plus glosses achieves standalone consumability without the drift risk of two documents (revisit only if published externally).
+**Blast radius:** sdlc-map.md (summary block, glossary, register intro); all future review fences
+**Promote?:** maybe — becomes ADR-worthy if the map is published outside the repo
