@@ -6,6 +6,16 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 13: item CLOSED)
+
+Close-out session, no product work queued or done. All session-12 work
+was already merged to main (PR #19, `64de5fe`; ledger close via PR #20,
+`2155f8d`). Replaced the launcher with a CLOSED notice carrying the
+artifact URLs and the one outstanding user action: move the three-zoom
+artifact's share pin to the fixed version (still pending at close unless
+the user has since done it). Ran as auxiliary (another session held the
+work-item lock at register time).
+
 # Session Handoff — 2026-08-13 (session 12: mermaid diagrams into both maps, three-zoom fixes; merged via PR #19)
 
 Rollover at context-budget STOP (~152K). Ran as auxiliary (another session
