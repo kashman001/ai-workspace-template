@@ -1,51 +1,45 @@
 # sdlc-ai-mapping — session 9 launcher
 
 > **This file is the LAUNCHER** (forward-looking, replaced each rollover).
-> What happened is in `handoff.md` (top block — session 8).
+> What happened is in `handoff.md` (top block — session 8 close).
 
 ## Mission
 
-Everything is built; only landing + cleanup remain, then re-close:
-1. **PR #10** (four deck-v3 formulations in `sdlc-map.md`) — open,
-   user's merge/review call.
-2. **PR #11** (deck repo copy synced to artifact v3, plus the session-8
-   ledger/launcher update) — open, user's merge call.
-3. After both merge: cleanup, then re-close the item (CLOSED launcher
-   per session-6 precedent).
+Everything is built and merged (PRs #9–#11 all on main). This session is
+bookkeeping only: remove leftover worktrees/branches, then re-close the
+item with a CLOSED launcher (session-6 precedent). Small session by
+design.
 
 ## Constraints already decided (do not re-litigate)
 
-- Deck: HTML artifact, mixed room, essentials-only; numbers verified
-  against `research-modern-qa.md`.
-- Map: standalone consumability; round-2 Minors won't-do; G9→L39 is
+- Deck v3 + map formulations are final and merged — no content edits.
+- Round-2 Minors won't-do; deck "asks" slide not ported; G9→L39 is
   template-backlog work.
-- Deck "asks" slide NOT ported to the map (decisions.md, session 7).
-- Deck v3 port was byte-exact from the artifact — do not re-derive or
-  "improve" it.
+
+## Read these, in order
+
+1. `handoff.md` — top block only.
+2. Nothing else. Do not open sdlc-map.md, the deck HTML, or any
+   review/findings docs — all settled and merged.
 
 ## State snapshot
 
-- PR #10: branch `worktree-sdlc-ai-mapping-s7-deck-learnings` (`09153e0`).
-- PR #11: branch `worktree-sdlc-ai-mapping-s8-deck-v3` (`0bb3e8d` + ledger
-  commit).
-- Artifact (v3 live, label `v3-five-fixes`, version `1786633261-5406`):
-  https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
-- `.claude/worktrees/sdlc-ai-mapping-s6-close` + branch: fully merged via
-  PR #9 — was still locked by a live session (pid 94056) at end of
-  session 8; remove worktree (unlock first) + branch once free.
-- `.claude/worktrees/sdlc-ai-mapping-s8-deck-v3` + branch: remove after
-  PR #11 merges.
+- main = `24f0919` (PR #10 merge). All sdlc-ai-mapping remote branches
+  deleted; remaining remote branches (`devex-*`) are another effort's.
+- `.claude/worktrees/sdlc-ai-mapping-s6-close`: fully merged (PR #9),
+  branch local-only; was LOCKED by live claude pid 94056 at session-8
+  close. Remove worktree (unlock first) + `git branch -d` once free.
+- `.claude/worktrees/sdlc-ai-mapping-s8-deck-v3`: detached at `24f0919`,
+  its branch already deleted; remove if the s8 session's exit didn't.
+- Artifact (v3 live): https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
 - `work/kimi-k3-agent-integration/` is another effort's dir — leave it.
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. `gh pr view 10 --json state` / `gh pr view 11 --json state` — merged?
-   pull main, delete the merged branches. Open? ask the user.
-3. Cleanup worktrees per State snapshot (verify merged + unlocked first).
-4. Re-close the item: CLOSED launcher, final ledger block.
-
-## Do NOT reload
-
-- `sdlc-map.md`, the deck HTML, review findings — all settled; read PR
-  diffs only if reviewing.
+1. `git pull --ff-only` (main checkout may be behind after the rollover
+   PR), then `scripts/context-budget.sh register --project sdlc-ai-mapping`.
+2. Worktree cleanup per State snapshot (verify merged + lock-free before
+   each removal; skip s6-close if pid 94056 still holds it and note that
+   in the CLOSED launcher).
+3. Re-close: replace this launcher with a CLOSED launcher, append the
+   closing ledger block, commit + push per convention (PR if required).
