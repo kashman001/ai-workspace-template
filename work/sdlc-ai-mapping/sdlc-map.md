@@ -481,6 +481,11 @@ Terms used in this document; sources and evidence in
 - **ADR (Architecture Decision Record)** — a short committed document
   capturing one decision: context, choice, rejected alternatives,
   consequences.
+- **AIOps** — AI applied to IT operations: anomaly detection, alert
+  clustering, and incident triage over telemetry and logs.
+- **Autonomous test agents** — vendor category: agents claimed to explore
+  an application and design/execute tests end-to-end without human test
+  design; no independent evidence of efficacy (hence [hype] here).
 - **BDD (Behavior-Driven Development)** — specifying behavior as
   executable Given/When/Then scenarios derived from requirements before
   code (Dan North, 2006).
@@ -489,19 +494,18 @@ Terms used in this document; sources and evidence in
 - **CI/CD** — continuous integration (every change merged and
   automatically tested) / continuous delivery-deployment (every change
   releasable, or released, automatically).
+- **CONTEXT.md** — the template's root agent-context file, read by every
+  agent runtime (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md` are symlinks to
+  it); carries the workspace purpose, domain glossary, and conventions.
 - **DoD (Definition of Done)** — the per-ticket checklist that must hold
   before work counts as complete.
-- **DORA (DevOps Research and Assessment)** — a research program (founded
-  by Forsgren, Humble, Kim; run by Google Cloud since 2018; dora.dev)
-  that links engineering practices to delivery performance via large
-  annual surveys. Known for the four key metrics — deployment frequency,
-  lead time for changes, change failure rate, time to restore — and the
-  book *Accelerate* (2018). Cited here for two findings: developer-owned
-  continuous testing predicts delivery performance, and (2024–2025) AI
-  adoption *amplifies* existing strengths and dysfunctions — its 2024
-  data associated more AI use with worse throughput and stability.
-  Caveat: survey-based, correlational — strong on "travels together",
-  weak on causation.
+- **DORA (DevOps Research and Assessment)** — the research program
+  (dora.dev, run by Google Cloud) behind the four key delivery metrics —
+  deployment frequency, lead time for changes, change failure rate, time
+  to restore — and the book *Accelerate*; links engineering practices to
+  delivery performance via large annual surveys. Cited here for the
+  AI-amplifier caution (headline claim 4); findings and caveats in
+  `research-modern-qa.md`.
 - **E2E (end-to-end) test** — exercises the whole deployed system through
   its real interface, as a user would.
 - **Error budget** — the amount of unreliability an SLO permits; spent
@@ -512,6 +516,13 @@ Terms used in this document; sources and evidence in
   the same code; corrosive to gate trust.
 - **Given/When/Then** — the BDD scenario format: precondition / action /
   expected outcome.
+- **graphify** — a knowledge-graph tool wired into the template: indexes a
+  repo (code, commits, ADRs) into a queryable graph so agents can answer
+  "why is it this way", not just "what is there".
+- **Launcher / ledger** — the template's work-directory pair:
+  `next-session.md` (the launcher — what to do next, replaced at each
+  session boundary) and `handoff.md` (the ledger — append-only history of
+  what happened).
 - **LLM-as-judge** — using a language model to evaluate outputs against
   criteria; useful pre-filter with documented biases (position,
   verbosity, self-preference).
@@ -533,6 +544,10 @@ Terms used in this document; sources and evidence in
   collapsing the two is a classic discovery failure.
 - **Ring deployment** — staged rollout through widening audiences
   (team → beta → world), gated on metrics per ring.
+- **RLM (recursive language model loop)** — the template's skill for
+  querying a corpus too large to read into an agent's context: a
+  persistent loop feeds slices to a cheap model and aggregates the
+  answers.
 - **SbE (Specification by Example)** — collaboratively refining
   requirements into concrete examples that become executable tests /
   living documentation (Adzic).
@@ -541,10 +556,18 @@ Terms used in this document; sources and evidence in
   production (canaries, flags, chaos, SLOs, experiments).
 - **SLI / SLO** — Service Level Indicator: the measured signal (e.g.
   p99 latency); Service Level Objective: the target it must meet.
+- **Self-healing tests** — vendor category: UI tests that auto-repair
+  their selectors/assertions when the application changes; risks silently
+  accepting behavior changes; no independent evidence (hence [hype] here).
 - **Smoke test** — a fast, shallow post-deploy check that the system is
   basically alive.
+- **S-numbers** — the numbered acceptance criteria (S1…Sn) in a spec;
+  verification evidence traces back to them (e.g. `Covers: S1–S4`).
 - **Spike (technical)** — a short, timeboxed investigation — often
   throwaway code — to de-risk an unknown before committing to a design.
+- **superpowers** — a third-party Claude Code plugin of process skills
+  (TDD, systematic debugging, brainstorming) included in the template's
+  recommended toolchain.
 - **TDD (Test-Driven Development)** — red-green-refactor: write the
   failing test first, then the code that passes it.
 - **Test basis** — whatever tests are designed *from* — here, the PRD and
@@ -596,12 +619,12 @@ legend. Where a human is irreplaceable, the row says so.
 | N3 | **API contracts / interface specs** | Endpoints/schemas, error semantics, versioning rules — the machine-checkable half of design. | Drafts schemas from requirements; consistency and breaking-change checks [established] (machine-checkable, so AI output is verifiable). |
 | N3 | **Domain model / glossary updates** | Resolved terms, aliases to avoid. *(template: `## Language` in CONTEXT.md)* | Extracts candidate terms and inconsistent aliases from conversations/docs [established]. Term resolution is a team agreement — human. |
 | N3 | **UX artifacts** | Wireframes, user flows, throwaway prototypes answering design questions. | Generates working throwaway prototypes fast — collapses the cost of exploring variants [established]. Design judgment on the variants stays human. |
-| N4 | **Source code + test suite** | The tests are N1's scenarios mechanized — the executable form of the spec. | Agentic coding [established] (this workspace's premise); unit-test generation gated by objective filters [measured] (Meta TestGen-LLM); fuzz-target generation [measured] (Google OSS-Fuzz). |
+| N4 | **Source code + test suite** | The tests are N1's scenarios mechanized — the executable form of the spec. | Agentic coding [established] (this template's premise); unit-test generation gated by objective filters [measured] (Meta TestGen-LLM); fuzz-target generation [measured] (Google OSS-Fuzz). |
 | N4 | **CI configuration** | The quality gates as code: which checks block merge, flake policy. | Drafts pipelines and gate configs [established]; triages/clusters CI failures [established]. Gate *policy* (what blocks merge) is human. |
 | N4 | **PR / review records** | Diff, review discussion, approvals — the verification trail for each change. | First-pass review: bugs, standards, spec-match [established]. Approval authority stays human — reviewer of last resort. |
 | N4 | **Commit messages** | What + why per change. *(template: `Decision:`/`Refs:` trailers)* | Written by the agent that made the change, decision trailers included [established] — another near-free capture point. |
 | N5 | **Verification evidence / test report** | Plan (before) + results (after) in one place, perf/security results included; coverage against the S-numbers; gaps visible. *(template: `verification.md`, `Covers: S1–S4`)* | Runs checks, records evidence, and diffs coverage against the S-numbers [established] — the traceability check is mechanical, ideal agent work. |
-| N5 | **UAT / beta feedback report** | Real-user findings, severity, sign-off or objections — the validation half. | Clusters and summarizes raw feedback [established]; LLM-as-judge as a *pre-filter* for NL acceptance checks [heuristic] (documented biases, human override required). The UAT judgment itself is irreducibly human. |
+| N5 | **UAT / beta feedback report** | Real-user findings, severity, sign-off or objections — the validation half. | Clusters and summarizes raw feedback [established]; LLM-as-judge as a *pre-filter* for natural-language acceptance checks [heuristic] (documented biases, human override required). The UAT judgment itself is irreducibly human. |
 | N5 | **Release-readiness record** | Go/no-go decision, known issues shipped with waivers, who signed. | Compiles the evidence into a go/no-go brief [established]. The decision and the signature are human. |
 | N6 | **Release notes / changelog** | User-facing changes, breaking changes, upgrade steps. | Generated from commits/PRs — the most automatable artifact on this table [established]. |
 | N6 | **Rollout plan** | Ring/canary sequence, gate metrics per ring, rollback criteria and procedure. | Drafts from prior rollouts + change-risk profile [heuristic]. Rollback criteria reviewed by humans — this is the blast-radius control. |
