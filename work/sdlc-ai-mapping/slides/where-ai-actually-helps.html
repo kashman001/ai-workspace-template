@@ -1,0 +1,748 @@
+<title>Where AI Actually Helps</title>
+
+<style>
+  :root {
+    --paper: #F6F8F5;
+    --paper-raised: #FFFFFF;
+    --ink: #1C2A26;
+    --muted: #5B6B64;
+    --rule: #DAE1DB;
+    --accent: #0E6B54;
+    --measured: #0E6B54;
+    --established: #29618F;
+    --heuristic: #7E520B;
+    --hype: #A93638;
+    --measured-bg: #E3EFEA;
+    --established-bg: #E4ECF4;
+    --heuristic-bg: #F3ECDD;
+    --hype-bg: #F4E4E4;
+
+    --display: "Avenir Next", "Futura", "Century Gothic", "Segoe UI", system-ui, sans-serif;
+    --body: "Charter", "Iowan Old Style", "Georgia", serif;
+    --mono: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+  }
+
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: clamp(16px, 1.6vw, 20px);
+    line-height: 1.5;
+    overflow: hidden;
+  }
+
+  .deck { height: 100dvh; display: flex; flex-direction: column; }
+
+  .progress {
+    height: 3px; background: var(--rule); flex: none;
+  }
+  .progress > div {
+    height: 100%; background: var(--accent); width: 0%;
+    transition: width 240ms ease;
+  }
+
+  .stage { flex: 1; min-height: 0; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    overflow-y: auto;
+    padding: clamp(24px, 5vh, 56px) clamp(24px, 7vw, 96px);
+  }
+  .slide.current { display: block; }
+  .slide:focus { outline: none; }
+  .slide-inner {
+    max-width: 1040px; margin: 0 auto;
+    min-height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: clamp(14px, 2.4vh, 26px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .slide.current .slide-inner { animation: rise 320ms ease both; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.68em;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .eyebrow.backup { color: var(--muted); }
+
+  h1, h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: clamp(2.4rem, 6vw, 4.4rem); letter-spacing: -0.015em; }
+  h2 { font-size: clamp(1.6rem, 3.6vw, 2.6rem); letter-spacing: -0.01em; }
+
+  .lede { font-size: 1.12em; max-width: 34em; color: var(--ink); }
+  .note { color: var(--muted); font-size: 0.85em; max-width: 44em; }
+  .note strong { color: var(--ink); }
+
+  a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  p { margin: 0; }
+
+  /* Hero stats (slide 2) */
+  .stats { display: flex; gap: clamp(28px, 6vw, 72px); flex-wrap: wrap; }
+  .stat .num {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(2.6rem, 6.4vw, 4.6rem); line-height: 1;
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+  }
+  .stat .lab { color: var(--muted); font-size: 0.9em; max-width: 15em; margin-top: 6px; }
+
+  /* Tier tags */
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.72em;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    white-space: nowrap;
+    vertical-align: 0.08em;
+  }
+  .tag.measured    { color: var(--measured);    background: var(--measured-bg); }
+  .tag.established { color: var(--established); background: var(--established-bg); }
+  .tag.heuristic   { color: var(--heuristic);   background: var(--heuristic-bg); }
+  .tag.hype        { color: var(--hype);        background: var(--hype-bg); }
+
+  /* Claims list (slide 3) */
+  .claims { display: grid; gap: clamp(10px, 1.8vh, 18px); max-width: 46em; }
+  .claim { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: baseline; }
+  .claim .k {
+    font-family: var(--display); font-weight: 600;
+    color: var(--accent); font-size: 1.15em;
+    font-variant-numeric: tabular-nums;
+  }
+  .claim b { font-family: var(--display); font-weight: 600; }
+
+  /* Figures */
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure svg { max-width: 100%; width: auto; height: auto; max-height: 52vh; margin: 0 auto; display: block; }
+  figcaption { color: var(--muted); font-size: 0.82em; max-width: 52em; }
+
+  /* Tier ladder (slide 5) */
+  .tiers { display: grid; gap: 10px; max-width: 52em; }
+  .tier {
+    display: grid; grid-template-columns: 9.5em 1fr auto; gap: 18px; align-items: center;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 18px;
+  }
+  .tier .stance {
+    font-family: var(--display); font-weight: 600; font-size: 0.85em;
+    text-align: right; white-space: nowrap;
+  }
+  .tier[data-tier="measured"]    .stance { color: var(--measured); }
+  .tier[data-tier="established"] .stance { color: var(--established); }
+  .tier[data-tier="heuristic"]   .stance { color: var(--heuristic); }
+  .tier[data-tier="hype"]        .stance { color: var(--hype); }
+  .tier .desc { color: var(--muted); font-size: 0.9em; }
+
+  /* Two-column split (slides 6, 10) */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 3vw, 40px); }
+  .col {
+    background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px;
+    padding: clamp(14px, 2.4vh, 24px) clamp(16px, 2vw, 26px);
+    display: grid; gap: 8px; align-content: start;
+  }
+  .col h3 {
+    font-family: var(--display); font-weight: 600; font-size: 1.05em; margin: 0 0 4px;
+  }
+  .col h3 span { display: block; font-size: 0.72em; font-weight: 500; color: var(--muted); font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 0.92em; }
+  .col li { padding-left: 1em; text-indent: -1em; }
+  .col li::before { content: "— "; color: var(--muted); }
+  .col.lead   { border-top: 3px solid var(--accent); }
+  .col.humans { border-top: 3px solid var(--ink); }
+
+  /* Cards (slides 7, 8) */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(14px, 2.4vw, 28px); }
+  .card {
+    background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px;
+    padding: clamp(14px, 2.4vh, 24px) clamp(16px, 2vw, 26px);
+    display: grid; gap: 8px; align-content: start;
+  }
+  .card h3 { font-family: var(--display); font-weight: 600; font-size: 1.1em; margin: 0; }
+  .card p { font-size: 0.92em; color: var(--muted); }
+  .card .src { font-family: var(--mono); font-size: 0.72em; color: var(--ink); }
+  .card.warn { border-top: 3px solid var(--hype); }
+  .card.win  { border-top: 3px solid var(--measured); }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 18px;
+    max-width: 46em;
+    font-size: 1.02em;
+  }
+  .callout b { font-family: var(--display); font-weight: 600; }
+
+  /* Beats (slide 9) */
+  .beats { display: grid; gap: clamp(10px, 1.8vh, 18px); max-width: 46em; counter-reset: beat; }
+  .beat { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: baseline; }
+  .beat::before {
+    counter-increment: beat; content: counter(beat);
+    font-family: var(--display); font-weight: 600; color: var(--accent);
+    font-size: 1.15em; font-variant-numeric: tabular-nums;
+  }
+  .beat b { font-family: var(--display); font-weight: 600; }
+
+  /* Seams (slide 9) */
+  .seams { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .seam {
+    background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 12px 14px; display: grid; gap: 5px; align-content: start;
+  }
+  .seam h3 { font-family: var(--display); font-weight: 600; font-size: 0.95em; margin: 0; }
+  .seam p { font-size: 0.8em; color: var(--muted); }
+
+  /* Refrain (slide 11) */
+  .refrain { display: grid; gap: clamp(14px, 3vh, 28px); }
+  .refrain p {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(1.5rem, 3.8vw, 2.7rem); line-height: 1.15;
+    letter-spacing: -0.01em; text-wrap: balance;
+  }
+  .refrain p:nth-child(2) { color: var(--accent); }
+
+  /* Appendix table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper-raised); }
+  .table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88em; }
+  th, td { text-align: left; padding: 9px 16px; border-bottom: 1px solid var(--rule); }
+  tr:last-child td { border-bottom: none; }
+  th {
+    font-family: var(--mono); font-size: 0.75em; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500;
+  }
+  td:first-child { font-family: var(--display); font-weight: 600; white-space: nowrap; }
+
+  /* Footer */
+  .bar {
+    flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px clamp(24px, 7vw, 96px);
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  .bar .counter { font-variant-numeric: tabular-nums; }
+  .bar .navb { display: flex; gap: 8px; align-items: center; }
+  .bar button {
+    font: inherit; color: var(--ink);
+    background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 3px 12px; cursor: pointer;
+  }
+  .bar button:hover { border-color: var(--accent); color: var(--accent); }
+  .bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .keys { color: var(--muted); }
+
+  @media (max-width: 760px) {
+    .split, .cards, .seams { grid-template-columns: 1fr; }
+    .tier { grid-template-columns: 1fr; gap: 6px; }
+    .tier .stance { text-align: left; }
+    .keys { display: none; }
+  }
+</style>
+
+<div class="deck">
+  <div class="progress"><div id="pbar"></div></div>
+  <div class="stage" id="stage">
+
+    <!-- 1 · Title -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">Field map · software lifecycle × AI</p>
+        <h1>Where AI Actually Helps</h1>
+        <p class="lede">Everyone is adding AI to how they build software.
+        The best research says that alone makes delivery <em>worse</em>.
+        This is a map of where AI genuinely earns its place — with the
+        evidence behind every claim.</p>
+      </div>
+    </section>
+
+    <!-- 2 · The paradox -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">The paradox</p>
+        <h2>More AI, worse delivery?</h2>
+        <div class="stats">
+          <div class="stat">
+            <div class="num">&minus;1.5%</div>
+            <p class="lab">delivery throughput, per 25% increase in AI adoption</p>
+          </div>
+          <div class="stat">
+            <div class="num">&minus;7.2%</div>
+            <p class="lab">delivery stability, per the same increase</p>
+          </div>
+        </div>
+        <p class="note"><a href="https://dora.dev/research/2024/dora-report/">DORA 2024</a> —
+        the largest annual study of software delivery (survey-based, correlational;
+        program home: <a href="https://dora.dev">dora.dev</a>). Its
+        <a href="https://dora.dev/dora-report-2025/">2025 follow-up</a>, with 90% of ~5,000
+        respondents using AI, lands on the explanation: <strong>AI is an amplifier</strong>
+        of existing organizational strengths and dysfunctions.</p>
+        <p class="lede">So where does AI actually earn its place — and what has to
+        be true for it to pay off? That's this map.</p>
+      </div>
+    </section>
+
+    <!-- 3 · Three claims -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">If you take away three things</p>
+        <h2>The whole map in three claims</h2>
+        <div class="claims">
+          <div class="claim"><span class="k">1</span><p><b>AI can lead where a machine can check the output</b> —
+            code, tests, contracts, triage. Where the artifact carries judgment or
+            authority — priorities, go/no-go, sign-off — AI drafts and a human decides.</p></div>
+          <div class="claim"><span class="k">2</span><p><b>Only two techniques have published production results,</b>
+            and both are ways of auto-writing tests behind objective pass/fail filters.
+            Every other AI claim rests on practice patterns or judgment.</p></div>
+          <div class="claim"><span class="k">3</span><p><b>AI amplifies what you already are.</b>
+            It raises change volume and speed, so your human checkpoints carry more
+            load — fix the system before you accelerate it.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · The map -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">The map</p>
+        <h2>The lifecycle is a loop — and discovery never stops</h2>
+        <figure>
+          <svg viewBox="0 0 700 400" role="img" aria-label="Six stages arranged in a ring — operate, maintain, plan, build, verify, release — with arrows running clockwise. Discovery sits in the center: signal flows in from operate, new work flows out to planning.">
+            <defs>
+              <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+              </marker>
+              <marker id="arrg2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#0E6B54"/>
+              </marker>
+            </defs>
+            <!-- center (350,200), ring radius 150; nodes at -90,-30,30,90,150,210 deg -->
+            <g font-family="Avenir Next, Futura, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="currentColor">
+              <!-- ring arcs, clockwise -->
+              <g stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M 393 71.5 A 150 150 0 0 1 451 104" marker-end="url(#arr2)"/>
+                <path d="M 495 143 A 150 150 0 0 1 495 257" marker-end="url(#arr2)"/>
+                <path d="M 451 296 A 150 150 0 0 1 393 328.5" marker-end="url(#arr2)"/>
+                <path d="M 307 328.5 A 150 150 0 0 1 249 296" marker-end="url(#arr2)"/>
+                <path d="M 205 257 A 150 150 0 0 1 205 143" marker-end="url(#arr2)"/>
+                <path d="M 249 104 A 150 150 0 0 1 307 71.5" marker-end="url(#arr2)"/>
+              </g>
+              <!-- nodes: rect 92x36 centered at ring points -->
+              <g>
+                <rect x="304" y="32"  width="92" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="350" y="56" text-anchor="middle">Operate</text>
+
+                <rect x="434" y="107" width="92" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="480" y="131" text-anchor="middle">Maintain</text>
+
+                <rect x="434" y="257" width="92" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="480" y="281" text-anchor="middle">Plan</text>
+
+                <rect x="304" y="332" width="92" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="350" y="356" text-anchor="middle">Build</text>
+
+                <rect x="174" y="257" width="92" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="220" y="281" text-anchor="middle">Verify</text>
+
+                <rect x="174" y="107" width="92" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="220" y="131" text-anchor="middle">Release</text>
+              </g>
+              <!-- center: Discover -->
+              <g>
+                <rect x="296" y="182" width="108" height="38" rx="19" fill="#0E6B54" stroke="none"/>
+                <text x="350" y="207" text-anchor="middle" fill="#F6F8F5">Discover</text>
+              </g>
+              <g stroke="#0E6B54" stroke-width="2" fill="none" stroke-dasharray="4 4">
+                <path d="M 355 68 C 358 105, 356 145, 352 178" marker-end="url(#arrg2)"/>
+                <path d="M 396 214 C 424 226, 448 240, 462 253" marker-end="url(#arrg2)"/>
+              </g>
+              <g fill="#0E6B54" font-size="15" font-family="ui-monospace, SF Mono, Menlo, monospace" font-weight="400">
+                <text x="368" y="128" text-anchor="start">signal</text>
+                <text x="412" y="252" text-anchor="middle">new work</text>
+              </g>
+            </g>
+          </svg>
+          <figcaption>The steady state of a live product: operate → maintain → plan →
+          build → verify → release, around again. Discovery moves to the middle, fed
+          continuously by telemetry, experiments, and user research. Design folds into
+          build at this altitude; the full eight-stage graph, with every feedback edge,
+          is in the backup slides.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 5 · Evidence tiers -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">The rubric</p>
+        <h2>Not all &ldquo;AI helps&rdquo; is equal</h2>
+        <p class="lede">Every AI claim on the map carries one of four evidence tiers —
+        and each tier implies an adoption stance.</p>
+        <div class="tiers">
+          <div class="tier" data-tier="measured">
+            <span class="tag measured">[measured]</span>
+            <span class="desc">Published deployment results from a named engineering org</span>
+            <span class="stance">Adopt where the pattern matches</span>
+          </div>
+          <div class="tier" data-tier="established">
+            <span class="tag established">[established]</span>
+            <span class="desc">Widely practiced pattern; tooling claims vary</span>
+            <span class="stance">Pilot before standardizing</span>
+          </div>
+          <div class="tier" data-tier="heuristic">
+            <span class="tag heuristic">[heuristic]</span>
+            <span class="desc">Usable, with known failure modes</span>
+            <span class="stance">Pilot with a human override</span>
+          </div>
+          <div class="tier" data-tier="hype">
+            <span class="tag hype">[hype]</span>
+            <span class="desc">Vendor-claimed; no independent evidence</span>
+            <span class="stance">Avoid until evidence appears</span>
+          </div>
+        </div>
+        <p class="note"><strong>Scope honesty:</strong> the testing and QA tiers come from
+        published research; product and operations tiers apply the same rubric by
+        author judgment.</p>
+      </div>
+    </section>
+
+    <!-- 6 · The rule -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">The dividing line</p>
+        <h2>One rule decides who leads</h2>
+        <p class="callout"><b>If a machine can check the output, AI can lead.
+        If the artifact carries judgment or authority, AI drafts — a human decides.</b></p>
+        <div class="split">
+          <div class="col lead">
+            <h3>AI can lead <span>output a machine can check</span></h3>
+            <ul>
+              <li>Code with tests, gated by objective pass/fail filters</li>
+              <li>API contracts &amp; breaking-change checks</li>
+              <li>Test-coverage diffs against the acceptance criteria</li>
+              <li>Bug triage &amp; ready-to-work briefs</li>
+              <li>Release notes, changelogs, doc regeneration</li>
+              <li>Decision records — captured as a by-product of the work</li>
+            </ul>
+          </div>
+          <div class="col humans">
+            <h3>Humans hold the pen <span>artifacts that encode judgment or authority</span></h3>
+            <ul>
+              <li>Priorities &amp; roadmaps</li>
+              <li>Go / no-go and release sign-off</li>
+              <li>User-acceptance verdicts</li>
+              <li>Rollback criteria — when to pull a release back</li>
+              <li>Reliability targets — how much failure is acceptable</li>
+              <li>Gate policy — which checks can block a change from shipping</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · Measured wins -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">The strongest evidence</p>
+        <h2>The only measured wins, with numbers</h2>
+        <div class="cards">
+          <div class="card win">
+            <h3>Gated test generation <span class="tag measured">[measured]</span></h3>
+            <p>Every AI-written test must build, pass repeatedly, and measurably
+            increase coverage — the share of code the tests actually exercise —
+            before a human ever sees it.</p>
+            <p class="src">Meta, FSE 2024 · 73% of surfaced tests accepted by engineers;
+            25% of generated tests raised coverage</p>
+          </div>
+          <div class="card win">
+            <h3>AI-boosted fuzzing <span class="tag measured">[measured]</span></h3>
+            <p>Fuzzing bombards code with generated inputs to shake out crashes and
+            security holes. LLM-written fuzz targets reached code human effort
+            never covered.</p>
+            <p class="src">Google OSS-Fuzz · ~30% coverage gains across 300+ projects;
+            26 new vulnerabilities by late 2024, incl. a 20-year-old OpenSSL flaw</p>
+          </div>
+        </div>
+        <p class="callout"><b>The tag travels with the technique, not the stage.</b>
+        Reuse the gated pattern elsewhere — a regression test with every bug fix —
+        and the evidence comes with it. Everything else on the map is
+        <span class="tag established">[established]</span> or below.</p>
+      </div>
+    </section>
+
+    <!-- 8 · Hype watch -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">Where the pitch outruns the proof</p>
+        <h2>Two pitches to resist</h2>
+        <div class="cards">
+          <div class="card warn">
+            <h3>Self-healing tests <span class="tag hype">[hype]</span></h3>
+            <p>UI tests that auto-repair themselves when the app changes. The risk:
+            silently accepting the very behavior changes your tests existed to catch.
+            No independent evidence of efficacy.</p>
+          </div>
+          <div class="card warn">
+            <h3>Autonomous test agents <span class="tag hype">[hype]</span></h3>
+            <p>&ldquo;Point it at your app; it designs and runs the tests.&rdquo;
+            Full autonomy over what gets tested — with no published deployment
+            evidence behind it.</p>
+          </div>
+        </div>
+        <p class="callout"><b>The filter is the rubric:</b> these are the two loudest
+        vendor pitches in the space — ask for independent, published deployment
+        evidence. Both categories have none, which is exactly what the
+        <span class="tag hype">[hype]</span> tag means.</p>
+      </div>
+    </section>
+
+    <!-- 9 · Verification tax -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">Resolving the paradox</p>
+        <h2>Why more AI can mean worse delivery</h2>
+        <div class="beats">
+          <div class="beat"><p><b>AI trades writing time for review time.</b>
+            Generated changes still need human verification — and on some tasks
+            the trade is net-negative.</p></div>
+          <div class="beat"><p><b>The bottleneck moves to the humans.</b>
+            As change volume rises, the constraint becomes review capacity and
+            the test pipeline — not how fast code gets written.</p></div>
+        </div>
+        <p class="lede">Neither is an argument for less AI. They're an argument
+        about where the next investment goes.</p>
+      </div>
+    </section>
+
+    <!-- 10 · The seams -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">Resolving the paradox</p>
+        <h2>Invest in the seams, not just the stages</h2>
+        <p class="lede">The seams between stages carry the extra load — they're
+        where AI-driven volume lands first:</p>
+        <div class="seams">
+          <div class="seam"><h3>Intake</h3><p>How user signal becomes
+            requirements, instead of evaporating.</p></div>
+          <div class="seam"><h3>Gates</h3><p>Which checks can block a change
+            from shipping — and who decides.</p></div>
+          <div class="seam"><h3>Review</h3><p>The human checkpoint AI volume
+            hits first; its latency sets your pace.</p></div>
+          <div class="seam"><h3>Feedback routing</h3><p>Production learnings
+            finding their way back to discovery.</p></div>
+        </div>
+        <p class="callout"><b>One internal audit bears this out:</b> checking our own
+        AI-agent-driven workspace against this map, both high-severity gaps were
+        seams — feedback intake and gate policy — not stages.</p>
+      </div>
+    </section>
+
+    <!-- 11 · The asks -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">What to do with this</p>
+        <h2>The asks</h2>
+        <div class="split">
+          <div class="col">
+            <h3>Leadership — three decisions <span>what this deck is asking you to approve</span></h3>
+            <ul>
+              <li>Make the evidence tier the approval bar for AI tooling —
+                <span class="tag hype">[hype]</span> doesn't get budget</li>
+              <li>Fund one seam alongside codegen seats: review capacity and
+                gate policy first</li>
+              <li>Approve a gated test-generation pilot; judge it on acceptance
+                rate and coverage, the way Meta did</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>Engineers — three operating rules <span>how to apply the map day to day</span></h3>
+            <ul>
+              <li>Adopt the measured patterns; pilot established ones before
+                standardizing on them</li>
+              <li>Keep a human override on anything
+                <span class="tag heuristic">[heuristic]</span></li>
+              <li>Ask vendors for independent evidence before trusting
+                &ldquo;self-healing&rdquo; or &ldquo;autonomous&rdquo; pitches</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · Refrain -->
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">Three sentences to keep</p>
+        <div class="refrain">
+          <p>Ask for the evidence tier.</p>
+          <p>If a machine can check it, AI can lead.</p>
+          <p>Fix the system before you accelerate it.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · Backup: stage table -->
+    <section class="slide backup">
+      <div class="slide-inner">
+        <p class="eyebrow backup">Backup</p>
+        <h2>Strongest AI assist, stage by stage</h2>
+        <div class="table-wrap" tabindex="0">
+          <table>
+            <thead><tr><th>Stage</th><th>Strongest AI assist</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td>Discover</td><td>Synthesizing research corpora; drafting specs and acceptance scenarios</td><td><span class="tag established">[established]</span></td></tr>
+              <tr><td>Plan</td><td>Decomposing specs into tickets with dependency edges</td><td><span class="tag established">[established]</span></td></tr>
+              <tr><td>Design</td><td>Decision records drafted at the moment of deciding — near-free capture</td><td><span class="tag established">[established]</span></td></tr>
+              <tr><td>Build</td><td>Agentic coding; gated unit-test generation; AI-boosted fuzzing</td><td><span class="tag measured">[measured]</span></td></tr>
+              <tr><td>Verify</td><td>Evidence gathering; coverage diffs against acceptance criteria</td><td><span class="tag established">[established]</span></td></tr>
+              <tr><td>Release</td><td>Release notes and changelogs from commits — the most automatable artifact</td><td><span class="tag established">[established]</span></td></tr>
+              <tr><td>Operate</td><td>Telemetry analysis and anomaly triage; postmortem timelines from logs</td><td><span class="tag established">[established]</span></td></tr>
+              <tr><td>Maintain</td><td>Ticket triage, dedup, and agent-ready briefs</td><td><span class="tag established">[established]</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Build's [measured] tier reflects its gated test-generation and
+        fuzzing techniques; agentic coding itself is [established].</p>
+      </div>
+    </section>
+
+    <!-- 14 · Backup: full graph -->
+    <section class="slide backup">
+      <div class="slide-inner">
+        <p class="eyebrow backup">Backup</p>
+        <h2>The full graph: eight stages, feedback included</h2>
+        <figure>
+          <svg viewBox="0 0 960 345" role="img" aria-label="The eight SDLC stages in forward order, with feedback edges looping back: verification failures return to build, rollbacks return to release, triaged work returns to planning, and telemetry returns to discovery. A dotted line links discovery to verification: acceptance criteria become the release test.">
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+              </marker>
+              <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#0E6B54"/>
+              </marker>
+            </defs>
+            <g font-family="ui-monospace, SF Mono, Menlo, monospace" font-size="14" fill="currentColor">
+              <!-- traceability dotted arc above -->
+              <path d="M 78 120 C 78 60, 510 60, 510 120" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="4 5" marker-end="url(#arr)"/>
+              <text x="294" y="64" text-anchor="middle" fill="currentColor">acceptance criteria become the release test</text>
+
+              <!-- backbone nodes: y=124..164; node width 96 gap 12: x = 30 + i*108 -->
+              <g font-family="Avenir Next, Futura, Segoe UI, sans-serif" font-size="15" font-weight="600">
+                <rect x="30"  y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="138" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="246" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="354" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="462" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="570" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="678" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="786" y="124" width="96" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <text x="78"  y="150" text-anchor="middle">Discover</text>
+                <text x="186" y="150" text-anchor="middle">Plan</text>
+                <text x="294" y="150" text-anchor="middle">Design</text>
+                <text x="402" y="150" text-anchor="middle">Build</text>
+                <text x="510" y="150" text-anchor="middle">Verify</text>
+                <text x="618" y="150" text-anchor="middle">Release</text>
+                <text x="726" y="150" text-anchor="middle">Operate</text>
+                <text x="834" y="150" text-anchor="middle">Maintain</text>
+              </g>
+              <!-- forward edges -->
+              <g stroke="currentColor" stroke-width="2">
+                <line x1="126" y1="144" x2="137" y2="144" marker-end="url(#arr)"/>
+                <line x1="234" y1="144" x2="245" y2="144" marker-end="url(#arr)"/>
+                <line x1="342" y1="144" x2="353" y2="144" marker-end="url(#arr)"/>
+                <line x1="450" y1="144" x2="461" y2="144" marker-end="url(#arr)"/>
+                <line x1="558" y1="144" x2="569" y2="144" marker-end="url(#arr)"/>
+                <line x1="666" y1="144" x2="677" y2="144" marker-end="url(#arr)"/>
+                <line x1="774" y1="144" x2="785" y2="144" marker-end="url(#arr)"/>
+              </g>
+
+              <!-- feedback edges below, accent -->
+              <g stroke="#0E6B54" stroke-width="2" fill="none">
+                <path d="M 496 168 C 490 200, 422 200, 410 172" marker-end="url(#arrg)"/>
+                <path d="M 712 168 C 706 200, 638 200, 626 172" marker-end="url(#arrg)"/>
+                <path d="M 826 172 C 790 262, 240 262, 194 172" marker-end="url(#arrg)"/>
+                <path d="M 742 172 C 780 305, 120 305, 82 172" marker-end="url(#arrg)"/>
+              </g>
+              <g fill="#0E6B54" font-size="14">
+                <text x="453" y="217" text-anchor="middle">failures</text>
+                <text x="669" y="217" text-anchor="middle">rollback</text>
+                <text x="510" y="256" text-anchor="middle">triaged work re-enters planning</text>
+                <text x="430" y="298" text-anchor="middle">telemetry, experiments &amp; user signal feed discovery</text>
+              </g>
+            </g>
+          </svg>
+          <figcaption>Solid arrows are flow; the dotted arc is a correspondence — criteria
+          written at discovery are what verification executes, so a stale criterion silently
+          invalidates the release test. The green feedback edges are where a product lives
+          after v1: a map without them describes only greenfield.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="bar">
+    <span>Where AI Actually Helps</span>
+    <span class="keys">← → to navigate</span>
+    <span class="navb">
+      <button id="prev" aria-label="Previous slide">←</button>
+      <span class="counter" id="counter">1 / 12</span>
+      <button id="next" aria-label="Next slide">→</button>
+    </span>
+  </div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const mainCount = slides.filter(s => !s.classList.contains('backup')).length;
+  const counter = document.getElementById('counter');
+  const pbar = document.getElementById('pbar');
+  let i = 0;
+
+  slides.forEach(s => { s.tabIndex = -1; });
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, j) => s.classList.toggle('current', j === i));
+    // backups sit after the main slides: counter and progress track the main deck only
+    counter.textContent = i < mainCount
+      ? (i + 1) + ' / ' + mainCount
+      : 'backup ' + (i + 1 - mainCount) + ' / ' + (slides.length - mainCount);
+    pbar.style.width = (Math.min(i + 1, mainCount) / mainCount * 100) + '%';
+    if (history.replaceState) history.replaceState(null, '', '#' + (i + 1));
+    slides[i].focus({ preventScroll: true });
+  }
+
+  document.getElementById('prev').addEventListener('click', () => show(i - 1));
+  document.getElementById('next').addEventListener('click', () => show(i + 1));
+
+  document.addEventListener('keydown', (e) => {
+    // let a focused scroll region (the appendix table) keep its arrow keys
+    if (e.target instanceof Element && e.target.closest('.table-wrap')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+  });
+
+  const fromHash = parseInt(location.hash.slice(1), 10);
+  show(Number.isFinite(fromHash) ? fromHash - 1 : 0);
+</script>

@@ -60,6 +60,13 @@
 **Blast radius:** none to sdlc-map.md (no edits); work/sdlc-ai-mapping/ ledger + launcher record the closure
 **Promote?:** no
 
+## 2026-08-13 — Slide deck ships as an HTML artifact, not PPTX
+**Chose:** "Where AI Actually Helps" — the map-as-slides for a mixed room — is built as a self-contained HTML slide deck (source `work/sdlc-ai-mapping/slides/where-ai-actually-helps.html`, published at https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f). User decision after tradeoff discussion.
+**Because:** Full design control (typography, SVG diagrams, tier-tag system), fast agent-side iteration, and the expert-review loop works best on HTML; user confirmed no need to self-edit or merge into a corporate template.
+**Rejected:** PPTX-first — generated PPTX looks generic and slows each revision cycle; can still be produced as a plainer translation once content is final.
+**Blast radius:** work/sdlc-ai-mapping/slides/ only
+**Promote?:** no
+
 ## 2026-08-13 — Deck-v3 formulations folded back into the map
 **Chose:** Re-integrate four formulations that building the presentation deck ("Where AI Actually Helps", v3) sharpened: (1) claim 4 gains the causal mechanism (AI trades writing time for review time; bottleneck moves to human checkpoints); (2) claim 2 recast as the if/then rule (machine-checkable → AI leads; judgment/authority → AI drafts, human decides); (3) a three-sentence refrain closes "If you read nothing else"; (4) the gap register notes both High-severity gaps are seams, not stages. User decision, session 7 — the deck walkthrough is the "fresh reason" the closure note required.
 **Because:** The deck forced compressions the ~640-line map never produced; porting them back makes the map's front matter carry the same punch standalone.

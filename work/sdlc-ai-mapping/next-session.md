@@ -1,28 +1,51 @@
-# sdlc-ai-mapping — CLOSED (no next session planned)
+# sdlc-ai-mapping — session 9 launcher
 
-> **This file is the LAUNCHER.** The work item was closed on 2026-08-13
-> (session 6): PR #7 (round-2 fix pass, F1–F11) merged; leftover round-2
-> Minors — including Sourcery's two advisory PR-#7 comments — closed as
-> **won't-do** by the user; all sdlc-ai-mapping worktrees/branches cleaned
-> up. Provenance: `handoff.md` (top block) and `decisions.md`.
+> **This file is the LAUNCHER** (forward-looking, replaced each rollover).
+> What happened is in `handoff.md` (top block — session 8).
 
-## If this item is ever reopened
+## Mission
+
+Everything is built; only landing + cleanup remain, then re-close:
+1. **PR #10** (four deck-v3 formulations in `sdlc-map.md`) — open,
+   user's merge/review call.
+2. **PR #11** (deck repo copy synced to artifact v3, plus the session-8
+   ledger/launcher update) — open, user's merge call.
+3. After both merge: cleanup, then re-close the item (CLOSED launcher
+   per session-6 precedent).
+
+## Constraints already decided (do not re-litigate)
+
+- Deck: HTML artifact, mixed room, essentials-only; numbers verified
+  against `research-modern-qa.md`.
+- Map: standalone consumability; round-2 Minors won't-do; G9→L39 is
+  template-backlog work.
+- Deck "asks" slide NOT ported to the map (decisions.md, session 7).
+- Deck v3 port was byte-exact from the artifact — do not re-derive or
+  "improve" it.
+
+## State snapshot
+
+- PR #10: branch `worktree-sdlc-ai-mapping-s7-deck-learnings` (`09153e0`).
+- PR #11: branch `worktree-sdlc-ai-mapping-s8-deck-v3` (`0bb3e8d` + ledger
+  commit).
+- Artifact (v3 live, label `v3-five-fixes`, version `1786633261-5406`):
+  https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+- `.claude/worktrees/sdlc-ai-mapping-s6-close` + branch: fully merged via
+  PR #9 — was still locked by a live session (pid 94056) at end of
+  session 8; remove worktree (unlock first) + branch once free.
+- `.claude/worktrees/sdlc-ai-mapping-s8-deck-v3` + branch: remove after
+  PR #11 merges.
+- `work/kimi-k3-agent-integration/` is another effort's dir — leave it.
+
+## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Read `handoff.md` top block, then `README.md` for the item's shape.
-3. The deliverable is `sdlc-map.md` on main (~640 lines). The won't-do
-   Minors list lives in the session-5/6 handoff blocks and
-   `review2-findings.md` §3 — re-litigate only with a fresh reason.
+2. `gh pr view 10 --json state` / `gh pr view 11 --json state` — merged?
+   pull main, delete the merged branches. Open? ask the user.
+3. Cleanup worktrees per State snapshot (verify merged + unlocked first).
+4. Re-close the item: CLOSED launcher, final ledger block.
 
-## Still-binding constraints (if reopened)
+## Do NOT reload
 
-- The map must be consumable independent of the workspace.
-- No document split; F1–F11 applied and merged.
-- Tag discipline: tier tags only on AI-capability items; caveats in plain
-  parentheses.
-- Gap G9 → backlog card L39 is a template-backlog item, not this item's job.
-
-## Follow-on work (separate efforts, not this item)
-
-- `work/feedback-intake/` (G1), `work/quality-gates/` (G2/G3),
-  backlog cards M27–M29 + L38/L39.
+- `sdlc-map.md`, the deck HTML, review findings — all settled; read PR
+  diffs only if reviewing.
