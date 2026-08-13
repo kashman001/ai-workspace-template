@@ -345,14 +345,14 @@ Dispositions settled 2026-08-13 with the user (notes: `decisions.md`).
 
 | # | Gap | Node/lane | Severity | Disposition |
 |---|-----|-----------|----------|-------------|
-| G1 | No user-research / production-feedback intake convention (the N7→N1 edge, and N1's inbound signal) | N1, N7 | High — it's the steady-state loop's first edge | **Work item:** `work/feedback-intake/` (to scaffold) |
-| G2 | Quality-enablement lane unmanned: no guidance on test infrastructure, AI test tooling adoption, or gate policy | lane | High — research says this lane gets *more* load-bearing under AI | **Work item:** `work/quality-gates/` (to scaffold; absorbs G3) |
+| G1 | No user-research / production-feedback intake convention (the N7→N1 edge, and N1's inbound signal) | N1, N7 | High — it's the steady-state loop's first edge | **Work item:** `work/feedback-intake/` (scaffolded 2026-08-13) |
+| G2 | Quality-enablement lane unmanned: no guidance on test infrastructure, AI test tooling adoption, or gate policy | lane | High — research says this lane gets *more* load-bearing under AI | **Work item:** `work/quality-gates/` (scaffolded 2026-08-13; absorbs G3) |
 | G3 | No CI quality-gate guidance (which gates, AI failure-triage, flake policy) | N4 | Medium | Merged into G2 — gate policy is quality-enablement's first deliverable |
-| G4 | No testability / failure-mode-analysis prompt at design time | N3 | Medium | Backlog card (to add) |
-| G5 | No UAT/beta coordination support (validation half of N5) | N5 | Medium | Backlog card (to add) |
-| G6 | No postmortem convention; incident learnings evaporate | N7 | Medium | Backlog card (to add) |
+| G4 | No testability / failure-mode-analysis prompt at design time | N3 | Medium | Backlog card **M27** (added 2026-08-13) |
+| G5 | No UAT/beta coordination support (validation half of N5) | N5 | Medium | Backlog card **M28** (added 2026-08-13) |
+| G6 | No postmortem convention; incident learnings evaporate | N7 | Medium | Backlog card **M29** (added 2026-08-13) |
 | G7 | Release engineering absent | N6 | Low | **Out of scope, deliberately** — the template doesn't own deploy machinery; runbooks + `wizard` are the escape hatch |
-| G8 | Dependency upgrades & test-suite health unowned | N8 | Low | Backlog card (to add) |
+| G8 | Dependency upgrades & test-suite health unowned | N8 | Low | Backlog card **L38** (added 2026-08-13) |
 
 ## Settled structural questions
 

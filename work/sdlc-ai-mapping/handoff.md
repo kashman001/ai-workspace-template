@@ -6,6 +6,26 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 2: gap dispositions executed — scaffolds + backlog cards shipped)
+
+All successor tasks from the session-1 rollover completed, in a worktree
+(branch `worktree-sdlc-ai-mapping-s2`):
+
+- Scaffolded `work/feedback-intake/` (G1) and `work/quality-gates/` (G2+G3)
+  via `create-work-item` — README with success criteria, launcher, ledger
+  each; seeded from the map's gap register + N1/N4/N7 entries + lane table.
+- Added backlog cards M27 (G4), M28 (G5), M29 (G6), L38 (G8) to
+  `docs/template-workspace-backlog.html`; scorecard 5 open, change-log row
+  and dates updated per the maintenance convention.
+- Gap-register disposition cells updated to executed state (scaffolded /
+  card IDs); `work/README.md` status index gained rows for the two new
+  items and this one.
+
+State: all three README success criteria are met. Effort is complete
+pending user sign-off — closure proposed in the session report; no
+code/design work remains here. Next step (if signed off): checkpoint/close;
+real work continues in the two new work items.
+
 # Session Handoff — 2026-08-13 (session 1 close: map complete, gap dispositions settled, rollover at WARN)
 
 Continuation of the 2026-08-12 block below (same session, rolled at WARN).
@@ -29,15 +49,3 @@ gap pass.
 Suggested skills next session: `create-work-item` (×2), decision-log for
 any scoping forks; backlog edits per CONTEXT.md "Template Backlog" rules
 (targeted reads, never load the HTML whole).
-
-# Session Handoff — 2026-08-12 (session 1: research + map structure settled + nodes filled)
-
-Scaffolded the work directory via `create-work-item`. QA research completed
-→ `research-modern-qa.md`. Map built at `sdlc-map.md`: graph structure
-(8 nodes, feedback edges, mermaid + numbered-list dual view), quality as a
-cross-cutting lane, three structural questions settled with the user (N5
-node, N8 node, per-node overlay — Tier-2 notes in `decisions.md`), and all
-8 per-node entries filled (activities / quality V&V tags / AI-with-evidence-
-tier / template-native-vs-toolchain-vs-GAP). Gap register G1–G8 drafted.
-Immediate next step: user review of the filled-in nodes and gap register;
-then decide which gaps become backlog/work items.
