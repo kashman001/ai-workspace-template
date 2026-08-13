@@ -156,6 +156,9 @@ Legend for the two overlays:
   author judgment applied under the same rubric. Tags are always one of the
   four bare tokens — qualifiers and sources appear in parentheses after the
   tag, not inside it.
+- **Quality** — activities carry **[verification]** (does it meet the spec —
+  built the product *right*) or **[validation]** (does it meet user needs —
+  built the *right* product); see V&V in the Glossary.
 - **Template support** — **(native)** = skill/doc/convention shipped in this
   template; **(toolchain)** = external capability the template documents in
   `docs/recommended-tooling.md` or that ships with a runtime; **GAP** =
@@ -232,7 +235,8 @@ Legend for the two overlays:
   static analysis; CI.
 - **Quality:** TDD / tests-with-the-change [verification]; code review
   [verification]; static analysis and linting [verification]; CI quality
-  gates [verification]; flaky-test discipline [verification].
+  gates [verification]; flaky-test discipline (enablement hygiene — it
+  protects gate trust rather than verifying the product).
 - **AI helps:** agentic coding [established] (the premise of this
   workspace); unit-test generation gated by objective filters (build,
   pass, coverage-increase) [measured] (Meta TestGen-LLM — measured
@@ -256,7 +260,8 @@ Legend for the two overlays:
   UAT/beta, release sign-off. (Strong-CI teams may collapse this into
   N4/N6 — kept as a node for the contexts where it can't be.)
 - **Quality:** executing N1's acceptance criteria [verification];
-  exploratory testing [validation]; UAT/beta with real users [validation];
+  exploratory testing [validation] (validation in intent — in practice it
+  surfaces verification findings too); UAT/beta with real users [validation];
   security review [verification]; sign-off with recorded evidence.
 - **AI helps:** E2E scenario drafting [established] (pattern; tooling
   effectiveness unverified — same lineage as N1 scenario drafting);
@@ -276,8 +281,10 @@ Legend for the two overlays:
 - **Activities:** CI/CD pipelines, versioning, changelogs, progressive
   rollout (canary/flags/rings), smoke tests, rollback.
 - **Quality:** smoke tests [verification]; canary analysis against
-  baseline [validation]; release gates and rollback criteria; the release
-  *is* a production test (shift-right premise).
+  baseline [verification] (checks the change against expected metrics —
+  validation comes later from real-user signal at N7); release gates and
+  rollback criteria; the release *is* a production test (shift-right
+  premise).
 - **AI helps:** changelog/release-notes drafting [established]; deployment
   risk assessment [heuristic]; canary metric analysis [heuristic];
   rollback decisions stay human.
@@ -294,7 +301,9 @@ Legend for the two overlays:
   on-call, A/B experiments, telemetry review.
 - **Quality:** SLO compliance and error-budget spend [validation]; A/B
   experiment results [validation]; alert quality (signal/noise)
-  [verification of the monitoring itself]; postmortems.
+  [verification] (of the monitoring itself); postmortems (untagged —
+  process learning about how we work, neither verification nor validation
+  of the product).
 - **AI helps:** log/telemetry analysis and anomaly triage [established];
   incident diagnosis assist [heuristic]; postmortem drafting from timelines
   [established]; experiment analysis [heuristic].
