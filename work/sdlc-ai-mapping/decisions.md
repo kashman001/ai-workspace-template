@@ -31,3 +31,10 @@
 **Rejected:** Adding release-runbook coverage now — no concrete demand; silence in the map — omission reads as oversight rather than decision.
 **Blast radius:** work/sdlc-ai-mapping/sdlc-map.md (N6 entry, gap register)
 **Promote?:** maybe — if the template later grows an opinion on N6, this becomes an ADR-worthy scope boundary
+
+## 2026-08-13 — Review method: seven personas, producer/consumer split governs fix buckets
+**Chose:** Seven-persona parallel agent review of sdlc-map.md (leadership, product, architect, quality, engineer, devops, new-reader), each fenced off settled decisions; findings bucketed consumption-layer (A) vs content-accuracy (B) per the user's producer/consumer distinction. Synthesis at review-findings.md; fixes applied P1-first.
+**Because:** Consumers (leadership, new readers) only flagged consumption surfaces; producers flagged model accuracy — the split cleanly partitions fixes so consumer-facing additions never risk producer detail.
+**Rejected:** Separate EVP/VP and PM/PM-leadership personas — same questions at this altitude; security/compliance persona — overkill outside regulated context; support/CS persona — feedback-intake work item owns that concern.
+**Blast radius:** work/sdlc-ai-mapping/review-findings.md, sdlc-map.md (successor session's edits)
+**Promote?:** no

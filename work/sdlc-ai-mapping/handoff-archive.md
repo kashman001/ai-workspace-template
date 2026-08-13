@@ -1,3 +1,26 @@
+# Session Handoff — 2026-08-13 (session 1 close: map complete, gap dispositions settled, rollover at WARN)
+
+Continuation of the 2026-08-12 block below (same session, rolled at WARN).
+What shipped since that block:
+
+- `sdlc-map.md` completed: test-plan lifecycle note on the N1⇢N5 edge;
+  "Artifacts by node" table (~30 artifacts × key contents × per-artifact
+  AI overlay with evidence tiers); Glossary (28 terms, DORA fuller entry);
+  gap register now carries settled dispositions.
+- Gap dispositions agreed with user (Tier-2 notes in `decisions.md`):
+  G1 → new work item `work/feedback-intake/`; G2+G3 merged → new work item
+  `work/quality-gates/`; G4/G5/G6/G8 → template-backlog cards;
+  G7 → out of scope, deliberately (runbooks + wizard escape hatch).
+- Research base: `research-modern-qa.md` (session start, all five threads,
+  primary-source citations).
+
+State: none of the successor tasks (scaffolding, backlog cards) started —
+deliberately left for a fresh session. Map is user-reviewed through the
+gap pass.
+
+Suggested skills next session: `create-work-item` (×2), decision-log for
+any scoping forks; backlog edits per CONTEXT.md "Template Backlog" rules
+(targeted reads, never load the HTML whole).
 <!--
 PURPOSE: Archive of older ledger blocks from handoff.md (same newest-on-top
 ordering). Read on demand only. Convention: docs/work-directory-conventions.md.
