@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>The SDLC in Three Zooms</title>
 
 <style>
@@ -598,8 +599,12 @@
       pending.push({ c, x: CX, y: CY + PILL_RY + 18 + j * PITCH, align: 'middle' });
     });
   })();
-  // size chips to their text, then position clusters
-  requestAnimationFrame(() => {
+  // size chips to their text, then position clusters; re-run on entering
+  // level 3 in case the load-time frame was deferred (prerender/hidden tab)
+  let chipsLaidOut = false;
+  function layoutChips() {
+    if (chipsLaidOut) return;
+    chipsLaidOut = true;
     pending.forEach(({ c, x, y, align }) => {
       let tl = 60;
       try { tl = c.txt.getComputedTextLength(); } catch (e) { /* keep estimate */ }
@@ -609,7 +614,8 @@
       const dx = align === 'start' ? 0 : (align === 'end' ? -w : -w / 2);
       c.grp.style.transform = `translate(${x + dx}px, ${y}px)`;
     });
-  });
+  }
+  requestAnimationFrame(layoutChips);
 
   // ---------- level switching ----------
   const SCALE = { 1: 1.42, 2: 1.26, 3: 0.95 };
@@ -625,6 +631,7 @@
     captionEl.innerHTML = CAPTIONS[level];
     statusEl.textContent = STATUS_DEFAULT[level] || '';
     Object.keys(btns).forEach((k) => btns[k].setAttribute('aria-pressed', String(+k === level)));
+    if (level === 3) layoutChips();
     if (level !== 3) closePanel();
   }
   btns[1].addEventListener('click', () => setLevel(1));
