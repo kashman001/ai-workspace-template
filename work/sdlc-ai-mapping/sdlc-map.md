@@ -246,8 +246,8 @@ Legend for the two overlays:
 
 ### N4 — Build
 
-- **Activities:** implementation; unit/integration tests; code review;
-  static analysis; CI.
+- **Activities:** implementation; debugging; unit/integration tests; code
+  review; static analysis; CI.
 - **Quality:** TDD / tests-with-the-change [verification]; code review
   [verification]; static analysis and linting [verification]; CI quality
   gates [verification]; flaky-test discipline (enablement hygiene — it
@@ -258,11 +258,16 @@ Legend for the two overlays:
   coverage and acceptance rates, not defect outcomes); AI-boosted
   fuzzing [measured] (Google OSS-Fuzz); code-review assist [established];
   the DORA caveat applies here hardest: AI raises change volume, so gates
-  matter *more* [measured] (DORA — survey-based, correlational).
+  matter *more* [measured] (DORA — survey-based, correlational). Two costs
+  come with the wins: the *verification tax* — agentic output trades
+  writing time for review time and can be net-negative on some tasks
+  [heuristic] — and, under AI-raised volume, the constraint moves to the
+  human bottlenecks: review latency and CI throughput.
 - **Template support:** Agent Coding Principles + Context Discipline in
   CONTEXT.md (native); context budget machinery (native) — keeps the
   *agent* inside its quality envelope while building; work-dir
-  launcher/ledger (native) for state that survives sessions;
+  launcher/ledger (native) for state that survives sessions; worktree
+  isolation for concurrent agents (native);
   `operational-knowledge.md` (native) for build/CI gotchas; `tdd`,
   `code-review`, superpowers TDD/debugging (toolchain); graphify update
   after changes (toolchain, wired natively). **GAP:** no CI quality-gate
