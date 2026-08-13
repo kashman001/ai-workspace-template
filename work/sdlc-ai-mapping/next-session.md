@@ -25,12 +25,12 @@ Land the two open threads, then re-close the item:
 
 ## State snapshot
 
-- Main checkout: `main`; session-7 rollover commit being rebased onto
-  `a6880aa` (predecessor's parallel rollover push). PR #10 branch
-  `worktree-sdlc-ai-mapping-s7-deck-learnings` (`09153e0`) pushed.
-- **Do NOT remove** `.claude/worktrees/sdlc-ai-mapping-s6-close` or its
-  branch until the slides commits land — they are local-only there.
-  Remove both only after the deck PR merges.
+- Main checkout: `main` at `792393a` (session-7 rollover + addendum
+  pushed). PR #10 branch `worktree-sdlc-ai-mapping-s7-deck-learnings`
+  (`09153e0`) pushed.
+- `.claude/worktrees/sdlc-ai-mapping-s6-close` + branch: fully merged via
+  PR #9 (verified: `828e850` is ancestor of main) — remove worktree
+  (unlock first) and branch once the user is out of the worktree.
 - Artifact: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
   (favicon 🗺️, title "Where AI Actually Helps", label `v3-five-fixes`).
 - `work/kimi-k3-agent-integration/` is another effort's dir — leave it.
