@@ -1,28 +1,66 @@
-# sdlc-ai-mapping — CLOSED (no next session planned)
+# Catchup prompt — sdlc-ai-mapping (paste into a new agent session)
 
-> **This file is the LAUNCHER.** The work item was closed on 2026-08-13
-> (session 6): PR #7 (round-2 fix pass, F1–F11) merged; leftover round-2
-> Minors — including Sourcery's two advisory PR-#7 comments — closed as
-> **won't-do** by the user; all sdlc-ai-mapping worktrees/branches cleaned
-> up. Provenance: `handoff.md` (top block) and `decisions.md`.
+We're resuming sdlc-ai-mapping. Works in any runtime (Claude Code, Codex,
+Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
-## If this item is ever reopened
+> **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
+> each rollover. History lives in `handoff.md` (ledger). Convention:
+> docs/work-directory-conventions.md.
+
+## Mission
+
+The map work item is **closed** (PR #7 + #8 merged; Minors won't-do). The one
+live thread is the **slide deck**: `slides/where-ai-actually-helps.html`,
+v2 published at https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+after a 3-agent expert-panel revision. **The user has not yet reviewed v2** —
+the promised discussion was interrupted by rollover. Get their feedback,
+iterate, then land the source in the repo.
+
+## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Read `handoff.md` top block, then `README.md` for the item's shape.
-3. The deliverable is `sdlc-map.md` on main (~640 lines). The won't-do
-   Minors list lives in the session-5/6 handoff blocks and
-   `review2-findings.md` §3 — re-litigate only with a fresh reason.
+2. Re-pose to the user: "Deck v2 is published at the artifact link above —
+   walk through it and tell me what to change." Iterate on
+   `work/sdlc-ai-mapping/slides/where-ai-actually-helps.html`; republish via
+   the Artifact tool **with the URL above as `url`** (a bare publish from a
+   new session would create a duplicate artifact).
+3. When the user is happy: push a fresh branch with the slides commit(s) and
+   open a PR (deck source is committed **locally only** on
+   `worktree-sdlc-ai-mapping-s6-close`, whose remote is deleted). Offer the
+   optional plainer PPTX translation (decision note: HTML chosen, PPTX
+   possible later).
 
-## Still-binding constraints (if reopened)
+## Constraints already decided (do not re-litigate)
 
-- The map must be consumable independent of the workspace.
-- No document split; F1–F11 applied and merged.
-- Tag discipline: tier tags only on AI-capability items; caveats in plain
-  parentheses.
-- Gap G9 → backlog card L39 is a template-backlog item, not this item's job.
+- Deck format: **HTML artifact**, not PPTX-first (`decisions.md` 2026-08-13).
+- Deck content: the **map itself** (not the project story), mixed room,
+  essentials-only, expert-reviewed. v2 already applied the panel's feedback —
+  don't re-run the panel unless the user asks.
+- All numbers in the deck are verified against `research-modern-qa.md`
+  (Meta TestGen-LLM, OSS-Fuzz, DORA 2024/2025) — don't soften or embellish.
+- Map/work-item constraints stand (standalone consumability, Minors won't-do,
+  G9→L39 is template-backlog work).
 
-## Follow-on work (separate efforts, not this item)
+## Read these, in order
 
-- `work/feedback-intake/` (G1), `work/quality-gates/` (G2/G3),
-  backlog cards M27–M29 + L38/L39.
+1. `handoff.md` (top block) — deck state + what the panel changed.
+2. `slides/where-ai-actually-helps.html` — only when editing it.
+3. `research-modern-qa.md` — only to verify a number.
+
+## Do NOT reload
+
+- `sdlc-map.md` — deck already distills it; targeted reads only if the user
+  asks for content the deck lacks.
+- `review-findings.md` / `review2-findings.md` — settled review history.
+- `doc-review-orchestrator.md` — not needed.
+
+## State snapshot
+
+- Main: everything merged (PR #4, #6, #7, #8). No open PRs.
+- Worktree `sdlc-ai-mapping-s6-close` on branch
+  `worktree-sdlc-ai-mapping-s6-close` (remote deleted): holds the slides
+  commits + this rollover's bookkeeping, **local only** — do not delete the
+  worktree/branch until the deck source is pushed via a fresh branch.
+- Artifact: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+  (favicon 🗺️, title "Where AI Actually Helps").
+- `work/kimi-k3-agent-integration/` is another effort's dir — leave it.

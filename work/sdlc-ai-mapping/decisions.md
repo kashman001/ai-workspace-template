@@ -59,3 +59,10 @@
 **Rejected:** A short Minors pass — cost (another review/PR cycle on a ~640-line doc) outweighs the polish gain; reopen only with a fresh reason.
 **Blast radius:** none to sdlc-map.md (no edits); work/sdlc-ai-mapping/ ledger + launcher record the closure
 **Promote?:** no
+
+## 2026-08-13 — Slide deck ships as an HTML artifact, not PPTX
+**Chose:** "Where AI Actually Helps" — the map-as-slides for a mixed room — is built as a self-contained HTML slide deck (source `work/sdlc-ai-mapping/slides/where-ai-actually-helps.html`, published at https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f). User decision after tradeoff discussion.
+**Because:** Full design control (typography, SVG diagrams, tier-tag system), fast agent-side iteration, and the expert-review loop works best on HTML; user confirmed no need to self-edit or merge into a corporate template.
+**Rejected:** PPTX-first — generated PPTX looks generic and slows each revision cycle; can still be produced as a plainer translation once content is final.
+**Blast radius:** work/sdlc-ai-mapping/slides/ only
+**Promote?:** no
