@@ -69,13 +69,13 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-12 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-08-13 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">5</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">66</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -155,8 +155,61 @@
       regression test with a relocated artifact fixture.</p>
   </div>
 
+  <div class="find med">
+    <h3><span class="id">M27</span> No testability / failure-mode-analysis prompt at design time
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">skills · docs (design stage)</span></h3>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G4</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N3 entry): design-stage decision capture is strong (decision-log, ADRs, trailers, graphify), but
+      testability/failure-mode analysis has no prompt or checklist anywhere — the quality lane's design station is
+      unmanned.</p>
+    <p><span class="k">Impact</span> — designs reach N4/N5 without anyone having asked "how will we test this /
+      how does it fail", so testability problems surface late, where they're expensive.</p>
+    <p><span class="k">Fix</span> — add a design-time prompt/checklist (skill or doc section) covering testability
+      as a design constraint and failure-mode analysis; wire it where design work already happens
+      (e.g. alongside <code>grill-with-docs</code> / ADR authoring).</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M28</span> No UAT/beta coordination support — the validation half of pre-release V&amp;V
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">skills · conventions (N5)</span></h3>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G5</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N5 entry): <code>verification.md</code> covers the verification half (executing acceptance criteria with
+      evidence), but UAT/beta — real humans judging the real thing — has no template story.</p>
+    <p><span class="k">Impact</span> — validation gets skipped or improvised; a feature can pass every verification
+      gate and still be wrong for users, with no convention for catching that before release.</p>
+    <p><span class="k">Fix</span> — a lightweight UAT/beta coordination convention: who tests, against which
+      success criteria (from the spec), where results land, and how a no-go is recorded.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M29</span> No postmortem convention — incident learnings evaporate
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs · conventions (N7)</span></h3>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G6</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N7 entry): the template has homes for operational gotchas (<code>operational-knowledge.md</code>) and runbooks,
+      but no postmortem convention; incident learnings have nowhere durable to land.</p>
+    <p><span class="k">Impact</span> — the same incident classes recur; the N7→N1 learning edge stays broken even
+      after <code>work/feedback-intake/</code> lands, because there's no postmortem artifact to route.</p>
+    <p><span class="k">Fix</span> — a postmortem template/convention (blameless, timeline + contributing factors +
+      actions), with a defined landing place and a pointer from the feedback-intake convention once that exists.
+      AI assist is [established] for drafting postmortems from timelines per the map's evidence tiers.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L38</span> Dependency upgrades &amp; test-suite health unowned
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs · conventions (N8)</span></h3>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G8</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N8 entry): maintenance is otherwise well covered (<code>triage</code>, backlog conventions,
+      <code>onboard-repo</code> refresh), but dependency upgrades and test-suite-health monitoring (flakiness,
+      runtime) have no convention.</p>
+    <p><span class="k">Impact</span> — dependency rot and suite decay accumulate silently until they block work;
+      AI-generated dependency-upgrade PRs ([established]) have no template guidance on when/how to adopt them.</p>
+    <p><span class="k">Fix</span> — a short maintenance-cadence convention: dependency-upgrade policy (cadence,
+      automation, review bar) and test-suite health checks. Overlaps <code>work/quality-gates/</code> flake policy —
+      resolve there or here, not both.</p>
+  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -255,13 +308,14 @@
       <tr><td>2026-08-12</td><td>New findings <strong>M26 + L36 + L37</strong> filed from an evidence pass over a real non-code instantiation (personal house-sale workspace, 8 sessions, no product code): the process core (launcher/ledger, decisions.md, measured rollovers) worked unmodified, surfacing three gaps — no-git privacy mode is real but unsupported (M26), instantiation pruning leaves template-development artifacts behind (L36), and the hand-invented "portable agent brief" export pattern has no convention (L37). Scorecard now 4/63/4/0/6.</td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>M26 + L36</strong> (house-sale mission, cards 1–2 — archived): M26: <code>docs/template-usage.md</code> §1 gains a third, no-git ("private") instantiation variant + a "No-git mode" subsection — paste-in Privacy Posture block for <code>CONTEXT.md</code>, Tier-1→Tier-2 decision-capture rewrite, N/A list for git-dependent machinery — with one-line N/A notes at each point of use (CONTEXT.md Tier-1 bullet; decision-log / checkpoint / session-rollover skills); no code change (<code>launch-next-session.sh</code> already degrades without git). L36: §5 broadened to the full template-development prune list (backlog pair, template-usage itself, unused mcp-fragments, LICENSE swap, README index rows, operational-knowledge trim; scaffolding dirs stay), <code>setup.sh</code> prune reminder gated on the backlog pair (regression T1c), M19 ledger-migration shim verified via registry G3. Suites: 72/72 registry, 28/28 instantiation. Scorecard now 2/65/4/0/6. <em>(Row added retroactively by session 5 — the delivering session omitted it.)</em></td></tr>
       <tr><td>2026-08-12</td><td>Fix <strong>L37</strong> (house-sale mission, final card — archived): portable-agent-brief convention documented in <code>docs/work-directory-conventions.md</code> — new "Portable agent brief" section (one sealed file per version under <code>work/&lt;proj&gt;/briefs/&lt;audience&gt;-vN.md</code>, supersession header with the discard line, explicit never-reveal section, ledger notes at issue and at staleness, skeleton included) plus an optional-files-table row; contrasted with dispatch records (same-machine children). Kept convention-only per simplicity-first — a skill is promotable if the pattern recurs (Tier-2 note). Scorecard now 1/66/4/0/6.</td></tr>
+      <tr><td>2026-08-13</td><td>New findings <strong>M27 + M28 + M29 + L38</strong> filed from the SDLC map's gap register (<code>work/sdlc-ai-mapping/sdlc-map.md</code>, dispositions agreed 2026-08-13): design-time testability prompt (G4→M27), UAT/beta coordination (G5→M28), postmortem convention (G6→M29), dependency/test-suite health (G8→L38). The two High-severity gaps became work items instead (<code>work/feedback-intake/</code> for G1, <code>work/quality-gates/</code> for G2+G3); G7 (release engineering) was scoped out deliberately. Scorecard now 5/66/4/0/6.</td></tr>
     </tbody>
   </table>
 
 </main>
 
 <footer><div class="wrap">
-  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-12.
+  ai-workspace-template · critical review &amp; living backlog · last updated 2026-08-13.
   Source of truth for template-improvement work — keep it current.
 </div></footer>
 </body>
