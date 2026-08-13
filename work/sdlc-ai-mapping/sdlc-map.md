@@ -142,13 +142,17 @@ flowchart LR
 | N3 → N2 | Design revises scope and estimates |
 | N2 → N1 | Planning exposes requirement gaps |
 
-**Traceability (correspondence, not flow):** N1 ⇢ N5 — acceptance criteria
+#### Traceability (correspondence, not flow)
+
+N1 ⇢ N5 — acceptance criteria
 written at discovery are the test basis executed at the V&V checkpoint.
 The criteria are *maintained* as scope evolves along the way; a stale
 criterion silently invalidates the trace.
 
-**Where the test plan is produced** (unpacking the dotted N1⇢N5 edge —
-detail a first read can skim): no single stage — it accretes along
+#### Where the test plan is produced
+
+Unpacking the dotted N1⇢N5 edge —
+detail a first read can skim: no single stage — it accretes along
 the N1⇢N5 edge and is *executed* at N5. Scenarios are **drafted at N1**
 from the PRD (the shift-left move; BDD/SbE lineage); **scoped at N2**
 (risk-based depth, definition-of-done; a formal test-plan document, where
@@ -157,7 +161,9 @@ can know (failure modes, non-functional targets); **mechanized at N4** into
 executable tests; **spent at N5** against the release candidate — N5 plans
 nothing new, and scenario gaps discovered there are feedback edges.
 
-**Steady state:** for a live product the dominant *delivery* cycle is
+#### Steady state
+
+For a live product the dominant *delivery* cycle is
 N7 → N8 → N2 → (N3) → N4 → N5 → N6 → N7, while discovery (N1) runs
 continuously in parallel — fed by telemetry, experiments, and user research
 rather than fronting the pipeline. Big-bang N1-first passes become the
@@ -176,13 +182,15 @@ directly, skipping planning — the fix still exits through V&V and release.
 **Boundary rule:** lanes own the *practice and shared infrastructure*;
 nodes own the *instances*. The non-Quality lanes mostly manifest through
 shared infrastructure rather than per-node line items, but each does sweep
-N1…N8: enablement — corpus tooling at N1, risk models at N2, testability
-coaching at N3, CI/test infra at N4, environments & test data at N5,
-pipeline health at N6, observability tooling at N7, suite health at N8;
-knowledge — spec at N1, plans at N2, ADRs at N3, commit trailers at N4,
-verification evidence at N5, changelogs at N6, postmortems at N7, refreshed
-docs at N8; coordination — intake at N1, tickets at N2 and onward,
-handoffs/briefs at every node. Some artifacts are dual-homed: tickets are
+N1…N8:
+
+| Lane | Sweep across N1…N8 |
+|------|--------------------|
+| Quality enablement | corpus tooling (N1), risk models (N2), testability coaching (N3), CI/test infra (N4), environments & test data (N5), pipeline health (N6), observability tooling (N7), suite health (N8) |
+| Knowledge & decision capture | spec (N1), plans (N2), ADRs (N3), commit trailers (N4), verification evidence (N5), changelogs (N6), postmortems (N7), refreshed docs (N8) |
+| Coordination | intake (N1), tickets (N2 and onward), handoffs/briefs at every node |
+
+Some artifacts are dual-homed: tickets are
 coordination-lane artifacts instantiated at N2; ADRs are knowledge-lane
 artifacts instantiated at N3. Platform/environment engineering lives in the
 enablement lane (surfacing at N5 as environment/data readiness) — it has no
@@ -190,12 +198,15 @@ node of its own here by design.
 
 ## Per-node entries
 
-Legend for the two overlays:
+### Legend — tags used in every node entry
 
-- **AI helps** — each item carries one of four evidence tiers:
-  **[measured]** (published deployment results), **[established]** (widely
-  practiced pattern, tooling claims vary), **[heuristic]** (usable, known
-  failure modes), **[hype]** (vendor-claimed, no independent evidence).
+- **AI helps** — each item carries one of four evidence tiers, each with a
+  default adoption stance: **[measured]** (published deployment results —
+  adopt where the pattern matches), **[established]** (widely practiced
+  pattern, tooling claims vary — pilot before standardizing),
+  **[heuristic]** (usable, known failure modes — pilot with a human
+  override in place), **[hype]** (vendor-claimed, no independent evidence —
+  avoid until independent evidence appears).
   Scope honesty: the QA/testing tiers are research-sourced
   (`research-modern-qa.md`); product, AIOps, and other non-QA tiers are
   author judgment applied under the same rubric. Tags are always one of the
@@ -204,6 +215,9 @@ Legend for the two overlays:
 - **Quality** — activities carry **[verification]** (does it meet the spec —
   built the product *right*) or **[validation]** (does it meet user needs —
   built the *right* product); see V&V in the Glossary.
+- **Product presence** — where product-role judgment stays in the loop
+  during the stage; called out (N4–N6) where it is most at risk of being
+  assumed away.
 - **Template support** — **(native)** = skill/doc/convention shipped in this
   template; **(toolchain)** = external capability the template documents in
   `docs/recommended-tooling.md` or that ships with a runtime; **GAP** =
