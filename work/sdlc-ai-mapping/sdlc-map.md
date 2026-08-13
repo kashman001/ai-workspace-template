@@ -247,8 +247,11 @@ node of its own here by design.
   in CONTEXT.md (native); `rlm` (native) — a query loop over
   corpora too large to read into chat — for analyzing large feedback
   corpora; `grilling`/`grill-with-docs` (toolchain) for plan interrogation;
-  `research` skill (toolchain). **GAP:** no user-research/feedback *intake*
-  convention — nothing that routes real user signal into the workspace.
+  `research` skill (toolchain). **GAP (G1 → work item
+  `work/feedback-intake/`):** no user-research/feedback *intake*
+  convention — nothing routes real user signal into the workspace the
+  template scaffolds.
+- **Artifacts & guardrails:** Appendix → N1 rows.
 
 ### N2 — Planning & prioritization
 
@@ -269,6 +272,7 @@ node of its own here by design.
   (native) — work too big for one session as a map of decision tickets;
   `triage` (native) — the intake side; issue-tracker conventions
   (`docs/agents/issue-tracker.md`, native). No significant gap.
+- **Artifacts & guardrails:** Appendix → N2 rows.
 
 ### N3 — Design
 
@@ -286,9 +290,10 @@ node of its own here by design.
   `Decision:` commit trailers (native); graphify (toolchain, wired
   natively) answers "why is it this way" via code→commit→ADR edges;
   `domain-modeling`, `codebase-design`, `prototype`,
-  `grill-with-docs` (all toolchain). **GAP:** testability/failure-mode
-  analysis has no prompt or checklist anywhere — the quality lane's design
-  station is unmanned.
+  `grill-with-docs` (all toolchain). **GAP (G4 → backlog M27):**
+  testability/failure-mode analysis has no prompt or checklist anywhere —
+  the quality lane's design station is unmanned.
+- **Artifacts & guardrails:** Appendix → N3 rows.
 
 ### N4 — Build
 
@@ -299,17 +304,17 @@ node of its own here by design.
   gates [verification]; flaky-test discipline (enablement hygiene — it
   protects gate trust rather than verifying the product).
 - **AI helps:** agentic coding [established] (the premise of this
-  workspace); unit-test generation gated by objective filters (build,
+  template); unit-test generation gated by objective filters (build,
   pass, coverage-increase) [measured] (Meta TestGen-LLM — measured
   coverage and acceptance rates, not defect outcomes); AI-boosted
   fuzzing, where fuzzing applies (systems/security-critical code)
-  [measured] (Google OSS-Fuzz); code-review assist [established];
-  the DORA caveat applies here hardest: AI raises change volume, so gates
-  matter *more* [measured] (DORA — survey-based, correlational). Two costs
-  come with the wins: the *verification tax* — agentic output trades
-  writing time for review time and can be net-negative on some tasks
-  [heuristic] — and, under AI-raised volume, the constraint moves to the
-  human bottlenecks: review latency and CI throughput.
+  [measured] (Google OSS-Fuzz); code-review assist [established].
+- **Costs:** the *verification tax* — agentic output trades writing time
+  for review time and can be net-negative on some tasks; and under
+  AI-raised volume the constraint moves to the human bottlenecks — review
+  latency and CI throughput. The DORA caution applies here hardest: AI
+  raises change volume, so gates matter *more* (DORA 2024, survey-based,
+  correlational).
 - **Product presence:** scope questions and trade-off calls keep arriving
   during build — product doesn't hand off at N2.
 - **Template support:** Agent Coding Principles + Context Discipline in
@@ -317,11 +322,13 @@ node of its own here by design.
   *agent* inside its quality envelope while building; work-dir
   launcher/ledger (native) for state that survives sessions; worktree
   isolation for concurrent agents (native);
-  `operational-knowledge.md` (native) for build/CI gotchas; `tdd`,
+  `docs/operational-knowledge.md` (native) for build/CI gotchas; `tdd`,
   `code-review`, superpowers TDD/debugging (toolchain); graphify update
-  after changes (toolchain, wired natively). **GAP:** no CI quality-gate
-  guidance — the template assumes gates exist but says nothing about them
-  (which gates, AI-triage of failures, flake policy).
+  after changes (toolchain, wired natively). **GAP (G3, merged into G2 →
+  work item `work/quality-gates/`):** no CI quality-gate guidance — the
+  template assumes gates exist but says nothing about them (which gates,
+  AI-triage of failures, flake policy).
+- **Artifacts & guardrails:** Appendix → N4 rows (incl. CI-failure triage).
 
 ### N5 — Pre-release V&V checkpoint
 
@@ -339,16 +346,18 @@ node of its own here by design.
   effectiveness unverified — same lineage as N1 scenario drafting);
   LLM-as-judge for natural-language acceptance checks [heuristic] (known
   biases, needs human override); security review assist [heuristic];
-  self-healing tests [hype]; autonomous test agents [hype].
+  **self-healing tests [hype]**; **autonomous test agents [hype]**.
 - **Product presence:** product owns the UAT judgment and is a go/no-go
   voice at sign-off.
 - **Template support:** `verification.md` convention (native) is a direct
   hit — plan-before/evidence-after in one file, and its `Covers: S1–S4`
   header *is* the N1⇢N5 traceability edge in file form; spec conventions
-  supply the S-numbers (native); `security-review` (toolchain, Claude Code
-  built-in). **GAP:** no UAT/beta coordination support — the validation
-  half of this node (real humans judging the real thing) has no template
-  story.
+  supply the S-numbers (native) — the numbered acceptance criteria S1…Sn
+  from the spec; `S1–S4` above is an example; `security-review` (toolchain,
+  Claude Code built-in). **GAP (G5 → backlog M28):** no UAT/beta
+  coordination support — the validation half of this node (real humans
+  judging the real thing) has no template story.
+- **Artifacts & guardrails:** Appendix → N5 rows.
 
 ### N6 — Release
 
@@ -371,9 +380,11 @@ node of its own here by design.
   interactive walkthrough for steps only a human can perform — fits
   cutover/migration runbooks; the `docs/runbooks/` pattern (native) exists but only
   covers workspace setup today; `checkpoint` (native) is a session
-  boundary, not a release boundary. **GAP:** release engineering has no
-  template story — arguably out of scope for a coordination workspace, but
-  the map should say so explicitly rather than by omission.
+  boundary, not a release boundary. **GAP (G7 → out of scope,
+  deliberately):** release engineering has no template story — settled as
+  out of scope for a coordination template (runbooks + `wizard` are the
+  escape hatch); stated here so the omission is explicit.
+- **Artifacts & guardrails:** Appendix → N6 rows.
 
 ### N7 — Operate
 
@@ -388,12 +399,13 @@ node of its own here by design.
   incident diagnosis assist [heuristic]; postmortem drafting from timelines
   [established]; experiment analysis [heuristic].
 - **Template support:** `diagnosing-bugs` / `systematic-debugging`
-  (toolchain) transfer to incident work; `operational-knowledge.md`
+  (toolchain) transfer to incident work; `docs/operational-knowledge.md`
   (native) is the right home for hard-won operational gotchas; runbook
-  pattern (native) extends naturally to operational runbooks. **GAP:** the
-  N7→N1 edge is unsupported — no convention routes telemetry, experiment
-  results, or incident learnings back into discovery; no postmortem
-  convention either.
+  pattern (native) extends naturally to operational runbooks. **GAP (G1 +
+  G6 → work item `work/feedback-intake/`, backlog M29):** the N7→N1 edge
+  is unsupported — no convention routes telemetry, experiment results, or
+  incident learnings back into discovery; no postmortem convention either.
+- **Artifacts & guardrails:** Appendix → N7 rows.
 
 ### N8 — Maintain
 
@@ -408,14 +420,18 @@ node of its own here by design.
   [established]; large-scale refactoring [heuristic]; dependency-upgrade
   PRs [established]; docs regeneration [established].
 - **Template support:** `triage` (native) — the state machine and
-  agent-ready briefs are exactly this node's front door; backlog
-  conventions (native — this template's own backlog practice is the worked
-  example); the work-dir launcher/ledger pattern fits long-running
-  breaking-change migrations (native); `onboard-repo` re-runs keep repo
-  docs fresh (native);
+  agent-ready briefs are exactly this node's front door; issue-tracker
+  conventions (`docs/agents/issue-tracker.md`, native) cover ticket-state
+  hygiene — a *generic* backlog convention does not ship; the template
+  repo's own backlog practice is template-repo-only and removed on
+  adoption (see G9); the work-dir launcher/ledger pattern fits
+  long-running breaking-change migrations (native); `onboard-repo` re-runs
+  keep repo docs fresh (native);
   `improve-codebase-architecture`, `diagnosing-bugs` (toolchain); graphify
-  update keeps the graph honest (toolchain, wired natively). **GAP:**
-  dependency upgrades and test-suite-health monitoring have no convention.
+  update keeps the graph honest (toolchain, wired natively). **GAP (G8 →
+  backlog L38):** dependency upgrades and test-suite-health monitoring
+  have no convention.
+- **Artifacts & guardrails:** Appendix → N8 rows.
 
 ---
 
