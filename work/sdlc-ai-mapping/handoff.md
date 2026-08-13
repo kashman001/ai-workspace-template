@@ -6,6 +6,24 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 3 close: fix pass merged via PR #4; item stays OPEN — user wants more reviews)
+
+Supersedes the block below on one point: closure was proposed but the user
+declined for now. PR #4 (branch `worktree-sdlc-ai-mapping-s2` → main)
+was merged 2026-08-13; the map with all P1–P3 fixes is on main. The work
+item stays open — **the user wants to run more reviews** of `sdlc-map.md`
+(scope/roster not yet specified; successor asks). Rolled over at WARN
+(user-requested) right after the merge.
+
+Suggested skills next session: none required up front; the session-2
+review-method decision note (`decisions.md` 2026-08-13) is the precedent
+if another persona-review round is requested.
+
+Learnings: (1) `cd` inside a compound Bash call persists for later tool
+calls — cost two broken-path retries; use absolute paths. (2) `gh pr ready
+&& gh pr merge` chained: the merge half didn't report — re-run `gh pr
+merge` alone to confirm.
+
 # Session Handoff — 2026-08-13 (session 3: full P1→P2→P3 fix pass applied — closure proposed)
 
 All fixes from `review-findings.md` executed against `sdlc-map.md` in 7
@@ -41,52 +59,4 @@ cleanly, nothing left mid-flight.
 
 State: closure proposed to user — merge `worktree-sdlc-ai-mapping-s2` to
 main (PR) and close the work item. No map work remains.
-
-# Session Handoff — 2026-08-13 (session 2 close: seven-persona review done, synthesis committed, rolled at WARN before fix pass)
-
-Continuation of the session-2 block below (same session, rolled at WARN).
-What happened after the gap-disposition work:
-
-- User requested a full persona review of `sdlc-map.md`; roster negotiated
-  (7 personas; EVP/VP and PM/leadership merged, new-reader added — see
-  decisions.md 2026-08-13 review-method note).
-- Seven parallel review agents ran; all verdicts "yes, with changes";
-  66 findings deduplicated into `review-findings.md` (P1–P3, bucketed
-  consumption-layer vs content-accuracy per the user's producer/consumer
-  distinction — that file is the canonical fix list).
-- Biggest convergent finding: evidence tiers overreach their research base
-  (QA-only) — P1.1. User approved: apply fixes, P1 first.
-- All work committed/pushed on branch `worktree-sdlc-ai-mapping-s2`
-  (scaffolds + backlog cards commit, synthesis commit, this rollover).
-
-State: map is NOT yet edited — review applied nothing. Successor's whole
-job is executing review-findings.md P1→P2→P3 against sdlc-map.md.
-Closure of this work item moved behind the fix pass.
-
-Suggested skills next session: none required; `decision-log` if a fix
-choice forks; backlog rules if any finding graduates to a card.
-
-Learnings: EnterWorktree based the worktree on origin/main, not local
-main — needed `git merge --ff-only main` to see the rollover commit
-(second strike would promote this to operational-knowledge).
-
-# Session Handoff — 2026-08-13 (session 2: gap dispositions executed — scaffolds + backlog cards shipped)
-
-All successor tasks from the session-1 rollover completed, in a worktree
-(branch `worktree-sdlc-ai-mapping-s2`):
-
-- Scaffolded `work/feedback-intake/` (G1) and `work/quality-gates/` (G2+G3)
-  via `create-work-item` — README with success criteria, launcher, ledger
-  each; seeded from the map's gap register + N1/N4/N7 entries + lane table.
-- Added backlog cards M27 (G4), M28 (G5), M29 (G6), L38 (G8) to
-  `docs/template-workspace-backlog.html`; scorecard 5 open, change-log row
-  and dates updated per the maintenance convention.
-- Gap-register disposition cells updated to executed state (scaffolded /
-  card IDs); `work/README.md` status index gained rows for the two new
-  items and this one.
-
-State: all three README success criteria are met. Effort is complete
-pending user sign-off — closure proposed in the session report; no
-code/design work remains here. Next step (if signed off): checkpoint/close;
-real work continues in the two new work items.
 
