@@ -89,14 +89,18 @@ flowchart LR
     N7 -- "telemetry / experiment results" --> N1
     N8 -- "triaged work" --> N2
     N5 -- "V&V failures" --> N4
-    N6 -- "rollback / canary failure" --> N4
+    N5 -- "criteria gaps" --> N1
+    N5 -- "design-scenario gaps" --> N3
+    N6 -- "canary failure: fix the code" --> N4
+    N7 -- "rollback: revert the release" --> N6
     N4 -- "implementation discoveries" --> N3
+    N3 -- "design revises scope / estimates" --> N2
     N2 -- "requirement gaps" --> N1
 
     N1 -. "traceability: acceptance criteria are the test basis" .-> N5
 ```
 
-**Feedback edges:**
+**Edges beyond the forward path** (N7→N8 doubles as a backbone step):
 
 | Edge | Meaning |
 |------|---------|
@@ -104,8 +108,11 @@ flowchart LR
 | N7 → N8 | Incidents and production bugs enter maintenance (doubles as the backbone step) |
 | N8 → N2 | Triaged work re-enters planning (the steady-state loop of a live product) |
 | N5 → N4 | V&V failures loop back to build |
-| N6 → N4 | Rollback / canary failure |
+| N5 → N1 / N3 | Scenario/criteria gaps found at V&V re-enter discovery (criteria) or design (scenarios only design can know) |
+| N6 → N4 | Canary failure — fixing the code (fix-forward, or the fix after a rollback) |
+| N7 → N6 | Rollback — reverting the system is a *release* action, distinct from fixing the code |
 | N4 → N3 | Implementation discoveries revise design |
+| N3 → N2 | Design revises scope and estimates |
 | N2 → N1 | Planning exposes requirement gaps |
 
 **Traceability (correspondence, not flow):** N1 ⇢ N5 — acceptance criteria
@@ -124,7 +131,8 @@ nothing new, and scenario gaps discovered there are feedback edges.
 N7 → N8 → N2 → (N3) → N4 → N5 → N6 → N7, while discovery (N1) runs
 continuously in parallel — fed by telemetry, experiments, and user research
 rather than fronting the pipeline. Big-bang N1-first passes become the
-exception; discovery itself does not.
+exception; discovery itself does not. Expedited hotfixes cut N8 → N4
+directly, skipping planning — the fix still exits through V&V and release.
 
 ## Cross-cutting lanes (touch every node)
 
