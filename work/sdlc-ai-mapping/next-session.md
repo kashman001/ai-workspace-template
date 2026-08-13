@@ -5,9 +5,9 @@
 
 ## Mission
 
-Land the session-12 PR (View 2 mermaid diagrams in both maps + three-zoom
-charset/layout fixes), then close the work item — no further work is
-queued.
+Close the work item — all session-12 work (View 2 mermaid diagrams in
+both maps + three-zoom charset/layout fixes) is merged to main via
+PR #19. No further work is queued.
 
 ## Read these, in order
 
@@ -24,9 +24,9 @@ queued.
 
 ## State snapshot
 
-- **PR open** from branch `worktree-sdlc-map-mermaid-diagrams`
-  (commits `0c40da1` map diagrams, `10d7875` three-zoom fixes) —
-  merging is the user's call. PR #18 merged before this branch.
+- **PR #19 merged** (`64de5fe` on main; commits `0c40da1` map diagrams,
+  `10d7875` three-zoom fixes). PR #18 merged before it. Nothing
+  unmerged remains.
 - Zoom-3 verdict: no chip overlaps (measured); the fixes were charset +
   a layout-timing guard, both verified.
 - Published artifacts (republish only **with the URL as `url`**, after
@@ -35,13 +35,13 @@ queued.
   - three-zoom map: https://claude.ai/code/artifact/181a3593-985f-427e-a889-0fb71776ff7d (favicon 🔍)
   - mermaid drafts: https://claude.ai/code/artifact/abd83fc6-eaa0-4b57-97fd-b43b09bfeabc
   - deck v3: https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
-- **Open user actions:** (1) merge the session-12 PR; (2) the three-zoom
-  artifact's share pin still shows the pre-fix version to link viewers —
-  move the pin from the artifact page's share menu.
+- **Open user action:** the three-zoom artifact's share pin still shows
+  the pre-fix version to link viewers — the user must move the pin from
+  the artifact page's share menu.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
 2. Read `handoff.md` top block.
-3. Confirm the PR merged (or merge on the user's instruction), remind
-   the user about the share pin, and close the item (CLOSED launcher).
+3. Remind the user about the share pin, take any follow-up direction,
+   and otherwise close the item (CLOSED launcher).
