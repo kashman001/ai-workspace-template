@@ -6,6 +6,27 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 6: PR #7 merged, cleanup done, Minors closed won't-do — ITEM CLOSED)
+
+Session 6 found **PR #7 already merged** (2026-08-13 14:12 UTC, merge commit
+`726bbed` on main) — the full round-2 fix pass is on main. Cleanup done:
+removed the `sdlc-ai-mapping-s4-review` and stale `sdlc-ai-mapping-s2`
+worktrees and deleted both branches locally and on origin (both fully merged,
+both worktrees clean; verified before deletion).
+
+Sourcery's PR-#7 review left two advisory comments the user merged past
+without requesting changes: (1) the preamble's audience-routing paragraph is
+dense — suggest a per-reader bullet list; (2) GAP cross-reference wording
+varies across node entries vs. the register — suggest standardizing. Both
+overlap the leftover round-2 Minors territory (`review2-findings.md` §3);
+recorded here, not acted on.
+
+**Minors decision resolved**: the user closed the remaining round-2 Minors
+(session-5 list below + the two Sourcery comments) as **won't-do**
+(2026-08-13; decision note in `decisions.md`). **The work item is closed.**
+No map edits were made this session; only this ledger block, the launcher,
+and `decisions.md` were updated (shipped via PR #8).
+
 # Session Handoff — 2026-08-13 (session 5: round-2 fix pass executed — F1–F11 all applied, PR #7 opened)
 
 Session 5 executed the approved fix pass on `sdlc-map.md` in five commits on

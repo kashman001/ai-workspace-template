@@ -1,66 +1,28 @@
-# Catchup prompt — sdlc-ai-mapping (paste into a new agent session)
+# sdlc-ai-mapping — CLOSED (no next session planned)
 
-We're resuming sdlc-ai-mapping. Works in any runtime (Claude Code, Codex,
-Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
+> **This file is the LAUNCHER.** The work item was closed on 2026-08-13
+> (session 6): PR #7 (round-2 fix pass, F1–F11) merged; leftover round-2
+> Minors — including Sourcery's two advisory PR-#7 comments — closed as
+> **won't-do** by the user; all sdlc-ai-mapping worktrees/branches cleaned
+> up. Provenance: `handoff.md` (top block) and `decisions.md`.
 
-> **This file is the LAUNCHER (catch-up prompt).** Forward-only, and REPLACED
-> at each rollover: it holds what to do next, still-binding constraints, and
-> pointers — never session history. Past-tense provenance lives in
-> `handoff.md` (the append-only ledger). Convention:
-> docs/work-directory-conventions.md.
-
-## Mission
-
-The round-2 fix pass is **complete**: F1–F11 (Blocker + all Majors) applied
-in five commits; **PR #7** is open and ready for review (PR #6, the
-diagnosis artifacts, was merged earlier on 2026-08-13). Next session's job
-is small: (a) get PR #7 merged (user review/merge, or address review
-comments), and (b) decide whether the leftover round-2 **Minors** are worth
-a short pass or should be closed as won't-do.
-
-## First actions
+## If this item is ever reopened
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Check PR #7 state (`gh pr view 7`). If merged: delete/clean the
-   `sdlc-ai-mapping-s4-review` worktree+branch and consider the item
-   closeable. If review comments exist: address them on the same branch.
-3. If (and only if) the user wants the Minors: work
-   `review2-findings.md` §3 "Minor (grouped)" — the undone ones are listed
-   in the session-5 handoff block (top of `handoff.md`).
+2. Read `handoff.md` top block, then `README.md` for the item's shape.
+3. The deliverable is `sdlc-map.md` on main (~640 lines). The won't-do
+   Minors list lives in the session-5/6 handoff blocks and
+   `review2-findings.md` §3 — re-litigate only with a fresh reason.
 
-## Constraints already decided (do not re-litigate)
+## Still-binding constraints (if reopened)
 
-- **The map must be consumable independent of the workspace** — governs
-  every edit (decision note, `decisions.md` 2026-08-13).
-- No document split; F1–F11 are applied — don't re-audit them.
-- All session-1/2 structural constraints stand (N5/N8 nodehood, per-node
-  overlay, two views, tier rubric, gap dispositions incl. G7 out of scope).
-- Tag discipline: tier tags only on AI-capability items; caveats get plain
+- The map must be consumable independent of the workspace.
+- No document split; F1–F11 applied and merged.
+- Tag discipline: tier tags only on AI-capability items; caveats in plain
   parentheses.
-- New since session 5: gap **G9** (no generic backlog convention) is in the
-  register → backlog card **L39** — a template-backlog item, not this
-  work item's job to fix.
+- Gap G9 → backlog card L39 is a template-backlog item, not this item's job.
 
-## Read these, in order
+## Follow-on work (separate efforts, not this item)
 
-1. `handoff.md` (top block) — what session 5 shipped and which Minors remain.
-2. `review2-findings.md` §3 Minors — only if doing the minor pass.
-3. `sdlc-map.md` — targeted reads only (~640 lines now).
-
-## Do NOT reload
-
-- `review-findings.md` (round 1) and `review2-findings.md` §1–§2/§4–§6 —
-  applied/settled; audit-only reference.
-- `research-modern-qa.md` — consult only to verify a specific tier claim.
-- `doc-review-orchestrator.md` — not needed.
-
-## State snapshot
-
-- Branch `worktree-sdlc-ai-mapping-s4-review` pushed; **PR #7 open, ready
-  for review** (the full fix pass). Main holds the map pre-fix-pass plus
-  the round-2 diagnosis artifacts (PR #4, PR #6 both merged).
-- Backlog `docs/template-workspace-backlog.html` updated on this branch
-  (L39 filed, scorecard 6/66/4/0/6) — lands with the PR merge.
-- Follow-on gap work lives in `work/feedback-intake/`, `work/quality-gates/`,
-  backlog cards M27–M29 + L38/L39 — separate efforts, not this item.
-- `work/kimi-k3-agent-integration/` is another effort's untracked dir — leave it.
+- `work/feedback-intake/` (G1), `work/quality-gates/` (G2/G3),
+  backlog cards M27–M29 + L38/L39.
