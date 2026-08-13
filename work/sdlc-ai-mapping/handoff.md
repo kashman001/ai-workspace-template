@@ -6,6 +6,42 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 7: deck reviewed + fixed, four deck learnings ported to map as PR #10 — ITEM REOPENED pending merge)
+
+Item reopened with a fresh reason (user walkthrough of the presentation
+deck). Two units shipped:
+
+**1. Deck "Where AI Actually Helps" reviewed and fixed (v3).** Artifact:
+https://claude.ai/code/artifact/6989c82f-fec3-4302-b757-506a1d225d5f
+(user-owned; version label `v3-five-fixes`). All headline numbers verified
+against `research-modern-qa.md` — no factual errors found. Five review
+fixes applied and republished: dense slide 9 split into paradox-mechanism
++ seams slides (audit finding promoted to callout); slide-4 ring caption
+now explains Design folds into build; "two loudest pitches" sentence moved
+card→callout on the hype slide; DORA note links dora.dev + 2024/2025
+reports; progress/counter exclude the 2 backup slides (now "1 / 12" +
+"backup n / 2") and arrow-key scrolling fixed (slides take focus;
+appendix table focusable). v3 source: the artifact (WebFetch it) — the
+repo copy `slides/where-ai-actually-helps.html` on branch
+`worktree-sdlc-ai-mapping-s6-close` is still v2, local-only.
+
+**2. Four deck learnings ported back to sdlc-map.md — PR #10 (OPEN,
+awaiting user merge):** branch `worktree-sdlc-ai-mapping-s7-deck-learnings`
+(commit `09153e0`). Claim 4 + mechanism (writing time→review time,
+bottleneck moves to human checkpoints); claim 2 recast as if/then rule;
+three-sentence refrain closes the preamble; gap register notes both
+High-severity gaps are seams, not stages. Rejected: porting the "asks"
+slide (pitch, not map) — decision note in `decisions.md`. Touches only
+front matter + gap-register intro.
+
+**Not done / CORRECTION:** the `s6-close` worktree holds the deck's v2
+source commits, LOCAL-ONLY (predecessor ledger block below) — do NOT
+remove it until the slides land on a fresh branch + PR; the user's
+"fully merged" was inaccurate for the slides commits.
+
+Suggested skills next session: none beyond session-rollover bookkeeping;
+`code-review` only if the user wants PR #10 reviewed before merge.
+
 # Session Handoff — 2026-08-13 (session 6 cont.: PR #8 merged, item closed; slide deck v2 built, discussion with user pending)
 
 Second half of session 6, after the close-out. PR #8 (ledger/launcher/decision
