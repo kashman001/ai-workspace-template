@@ -6,10 +6,12 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 2026-08-13 (session 5: round-2 fix pass executed — F1–F11 all applied, PR #6 marked ready)
+# Session Handoff — 2026-08-13 (session 5: round-2 fix pass executed — F1–F11 all applied, PR #7 opened)
 
 Session 5 executed the approved fix pass on `sdlc-map.md` in five commits on
-`worktree-sdlc-ai-mapping-s4-review` (PR #6, flipped from draft to ready):
+`worktree-sdlc-ai-mapping-s4-review`. PR #6 (diagnosis artifacts) turned out
+to be already merged before the session started, so the fix pass ships as
+**PR #7** (same branch, ready for review):
 
 1. **Preamble** (F1, F2-status, F5-routing, F6-implication, F7): template
    self-identification, plain status line + sibling-file locations,

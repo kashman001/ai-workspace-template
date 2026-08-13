@@ -12,15 +12,16 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 ## Mission
 
 The round-2 fix pass is **complete**: F1–F11 (Blocker + all Majors) applied
-in five commits; PR #6 is marked ready for review. Next session's job is
-small: (a) get PR #6 merged (user review/merge, or address review
+in five commits; **PR #7** is open and ready for review (PR #6, the
+diagnosis artifacts, was merged earlier on 2026-08-13). Next session's job
+is small: (a) get PR #7 merged (user review/merge, or address review
 comments), and (b) decide whether the leftover round-2 **Minors** are worth
 a short pass or should be closed as won't-do.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Check PR #6 state (`gh pr view 6`). If merged: delete/clean the
+2. Check PR #7 state (`gh pr view 7`). If merged: delete/clean the
    `sdlc-ai-mapping-s4-review` worktree+branch and consider the item
    closeable. If review comments exist: address them on the same branch.
 3. If (and only if) the user wants the Minors: work
@@ -55,9 +56,9 @@ a short pass or should be closed as won't-do.
 
 ## State snapshot
 
-- Branch `worktree-sdlc-ai-mapping-s4-review` pushed; **PR #6 ready for
-  review** (diagnosis artifacts + the full fix pass). Main still holds the
-  pre-round-2 map (PR #4).
+- Branch `worktree-sdlc-ai-mapping-s4-review` pushed; **PR #7 open, ready
+  for review** (the full fix pass). Main holds the map pre-fix-pass plus
+  the round-2 diagnosis artifacts (PR #4, PR #6 both merged).
 - Backlog `docs/template-workspace-backlog.html` updated on this branch
   (L39 filed, scorecard 6/66/4/0/6) — lands with the PR merge.
 - Follow-on gap work lives in `work/feedback-intake/`, `work/quality-gates/`,
