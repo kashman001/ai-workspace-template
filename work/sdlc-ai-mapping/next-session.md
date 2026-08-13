@@ -11,48 +11,58 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Run further review rounds on `sdlc-map.md`, at the user's direction. The
-seven-persona review fix pass (P1–P3) is fully applied and **merged to main
-via PR #4** (2026-08-13); the map is stable. The user explicitly kept this
-item open because they want more reviews — but did not yet specify which
-kind (different personas? deeper single-lens? external-source validation?).
-**First substantive step is asking the user what review they want.**
+Apply (or triage) the round-2 review findings in `review2-findings.md`
+against `sdlc-map.md` — **if the user has approved a fix pass**; the round-2
+review was diagnosis-only by rule, and the user had not yet directed fixes
+when session 4 closed. If no direction exists yet, ask whether to run the
+fix pass (Blocker + Majors first is the natural cut).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Work in a worktree based on current main (which now contains the full
-   fix pass). Branch `worktree-sdlc-ai-mapping-s2` is merged — start fresh
-   rather than reusing it.
-3. Ask the user which reviews to run, then follow the review-method
-   precedent in `decisions.md` (2026-08-13 note) for roster/synthesis shape.
+2. Check whether PR from branch `worktree-sdlc-ai-mapping-s4-review`
+   (round-2 findings + decision notes) is merged; if not, that's the base
+   to build on.
+3. Confirm fix-pass scope with the user, then work in a worktree.
 
 ## Constraints already decided (do not re-litigate)
 
 - All session-1/2 structural constraints stand (N5/N8 nodehood, per-node
   overlay, two views, tier rubric, gap dispositions incl. G7 out of scope).
-- The P1–P3 fix list from `review-findings.md` is fully applied — don't
-  re-audit it unless the user asks; new reviews start from the current map.
-- Closure is deferred by user choice, not blocked by unmet criteria (all
-  README success criteria verified met in session 3).
+- **NEW (2026-08-13): the map must be consumable independent of the
+  workspace** — see the decision note in `decisions.md`. This governs all
+  future edits and review fences.
+- Round-2 synthesis recommends NO document split — self-identification
+  preamble + glosses instead (rationale in `review2-findings.md` §5).
+- P1–P3 (round 1) fixes are applied and merged; don't re-audit.
 
 ## Read these, in order
 
-1. `work/sdlc-ai-mapping/handoff.md` (top block) — where things stand.
-2. `sdlc-map.md` — only once the review scope is known; targeted reads
-   (~570 lines now; artifacts table is a trailing appendix).
+1. `handoff.md` (top block) — where things stand.
+2. `review2-findings.md` — the fix list, if running the fix pass
+   (prioritized §3; restructure outline §5; do-not-break list §6).
+3. `sdlc-map.md` — targeted reads per finding being fixed.
 
 ## Do NOT reload
 
-- `review-findings.md` — fully applied; audit-only reference.
+- `review-findings.md` (round 1) — fully applied; audit-only reference.
 - `research-modern-qa.md` — consult only to verify a specific tier claim.
-- Raw persona reports from round 1, backlog HTML.
+- `doc-review-orchestrator.md` — the round-2 method, now committed; only
+  needed to re-run the method.
+- Raw round-2 per-agent reports (session-4 transcript) — the synthesis is
+  the durable record.
 
 ## State snapshot
 
-- Main contains the fixed map (PR #4 merged 2026-08-13). Branch
-  `worktree-sdlc-ai-mapping-s2` merged; safe to delete with its worktree.
-- No uncommitted work, no running processes, no external tickets.
+- Round-2 review complete (10-agent doc-review-orchestrator run), synthesis
+  committed at `review2-findings.md`; **no fixes applied** — awaiting user
+  direction.
+- Branch `worktree-sdlc-ai-mapping-s4-review` carries: review2-findings.md,
+  doc-review-orchestrator.md (now tracked), 2 decision notes, ledger block,
+  this launcher.
+- Main still holds the map exactly as merged by PR #4 (stable, pre-round-2).
 - Follow-on gap work lives in `work/feedback-intake/`, `work/quality-gates/`,
-  backlog cards M27–M29 + L38 — separate efforts, not this item.
+  backlog cards M27–M29 + L38 — separate efforts, not this item. Note:
+  round-2 finding F10 (N8 "backlog conventions (native)" claims an unshipped
+  capability) may spawn a new backlog card during the fix pass.
 - `work/kimi-k3-agent-integration/` is another effort's untracked dir — leave it.

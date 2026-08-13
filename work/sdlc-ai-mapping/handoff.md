@@ -6,6 +6,33 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-13 (session 4: round-2 review run via doc-review-orchestrator — diagnosis complete, fixes NOT applied)
+
+The user directed session 4 to run their `doc-review-orchestrator.md` against
+`sdlc-map.md`, with the Phase-0 audience model supplied from work-item
+context (user-delegated). Ten agents ran in parallel (structure, 5×audience
+fit, task walkthrough, language, accuracy, skim test); synthesis is at
+**`review2-findings.md`** — the durable record of the round.
+
+Mid-review the user added a binding constraint: **the map must be consumable
+independent of the workspace** (decision note in `decisions.md`). That
+upgraded the implicit-context cluster to Blocker: the doc never identifies
+"this template", and its backlog-card / sibling-file / internal-vocabulary
+references don't resolve for outside readers.
+
+Headlines: accuracy verified fully clean against repo + research (zero
+drift); macro-structure and prose clean; 1 Blocker + 10 Majors, root cause =
+implicit workspace context + one-directional linking (node→register,
+node→appendix missing). Recommended: no split — a self-identification +
+routing upgrade to the summary block plus glosses.
+
+**Per the orchestrator's rules, no fixes were applied — diagnosis only.**
+Next step is the user deciding whether/how to run the fix pass.
+
+Also committed: `doc-review-orchestrator.md` (was untracked in the user's
+checkout), `review2-findings.md`, this ledger block, two decision notes.
+Branch `worktree-sdlc-ai-mapping-s4-review`.
+
 # Session Handoff — 2026-08-13 (session 3 close: fix pass merged via PR #4; item stays OPEN — user wants more reviews)
 
 Supersedes the block below on one point: closure was proposed but the user
