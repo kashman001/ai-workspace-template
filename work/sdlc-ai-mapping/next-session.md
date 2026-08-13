@@ -11,41 +11,42 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-The round-2 fix pass is **complete**: F1–F11 (Blocker + all Majors) applied
-in five commits; **PR #7** is open and ready for review (PR #6, the
-diagnosis artifacts, was merged earlier on 2026-08-13). Next session's job
-is small: (a) get PR #7 merged (user review/merge, or address review
-comments), and (b) decide whether the leftover round-2 **Minors** are worth
-a short pass or should be closed as won't-do.
+The work item is **effectively done**: PR #7 (round-2 fix pass, F1–F11)
+merged to main on 2026-08-13; all sdlc-ai-mapping worktrees and branches
+cleaned up. One decision remains before formal close, and it's the user's:
+**do the leftover round-2 Minors, or close them as won't-do.**
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project sdlc-ai-mapping`
-2. Check PR #7 state (`gh pr view 7`). If merged: delete/clean the
-   `sdlc-ai-mapping-s4-review` worktree+branch and consider the item
-   closeable. If review comments exist: address them on the same branch.
-3. If (and only if) the user wants the Minors: work
-   `review2-findings.md` §3 "Minor (grouped)" — the undone ones are listed
-   in the session-5 handoff block (top of `handoff.md`).
+2. Get the user's Minors decision (see the session-6 handoff block for the
+   full leftover list — session-5 Minors plus two advisory Sourcery comments
+   on PR #7: preamble routing-paragraph density, GAP cross-ref wording
+   consistency).
+   - **Won't-do** → close the item: final ledger block, launcher notes the
+     item is closed, done. Consider `/checkpoint`.
+   - **Do the Minors** → work `review2-findings.md` §3 "Minor (grouped)"
+     (undone items listed in the session-5 handoff block) in a fresh
+     worktree; small single-PR pass.
 
 ## Constraints already decided (do not re-litigate)
 
 - **The map must be consumable independent of the workspace** — governs
   every edit (decision note, `decisions.md` 2026-08-13).
-- No document split; F1–F11 are applied — don't re-audit them.
+- No document split; F1–F11 are applied and merged — don't re-audit them.
 - All session-1/2 structural constraints stand (N5/N8 nodehood, per-node
   overlay, two views, tier rubric, gap dispositions incl. G7 out of scope).
 - Tag discipline: tier tags only on AI-capability items; caveats get plain
   parentheses.
-- New since session 5: gap **G9** (no generic backlog convention) is in the
-  register → backlog card **L39** — a template-backlog item, not this
+- Gap **G9** → backlog card **L39** is a template-backlog item, not this
   work item's job to fix.
 
 ## Read these, in order
 
-1. `handoff.md` (top block) — what session 5 shipped and which Minors remain.
+1. `handoff.md` (top two blocks) — session 6 close-out + session 5's list of
+   undone Minors.
 2. `review2-findings.md` §3 Minors — only if doing the minor pass.
-3. `sdlc-map.md` — targeted reads only (~640 lines now).
+3. `sdlc-map.md` — targeted reads only (~640 lines).
 
 ## Do NOT reload
 
@@ -56,11 +57,9 @@ a short pass or should be closed as won't-do.
 
 ## State snapshot
 
-- Branch `worktree-sdlc-ai-mapping-s4-review` pushed; **PR #7 open, ready
-  for review** (the full fix pass). Main holds the map pre-fix-pass plus
-  the round-2 diagnosis artifacts (PR #4, PR #6 both merged).
-- Backlog `docs/template-workspace-backlog.html` updated on this branch
-  (L39 filed, scorecard 6/66/4/0/6) — lands with the PR merge.
+- **Main holds everything**: map fix pass (PR #7), diagnosis artifacts
+  (PR #4, #6), backlog L39 + scorecard 6/66/4/0/6. No open PRs, no
+  sdlc-ai-mapping branches or worktrees remain (local or origin).
 - Follow-on gap work lives in `work/feedback-intake/`, `work/quality-gates/`,
   backlog cards M27–M29 + L38/L39 — separate efforts, not this item.
 - `work/kimi-k3-agent-integration/` is another effort's untracked dir — leave it.
