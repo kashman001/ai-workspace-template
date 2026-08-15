@@ -1,0 +1,42 @@
+docs/work-directory-conventions.md
+  s_21ff78ea98d130::t_2b75e922bee2c5 72-82
+docs/context-budget.md
+  s_21ff78ea98d130::t_4f538e55418dfa 223-228
+docs/adr/0007-session-number-single-source.md
+  s_21ff78ea98d130::t_af6b4f15dba313 44-46
+  s_21ff78ea98d130::t_6ad4e5a0698593 52-83
+  s_21ff78ea98d130::t_3149f9ebac56bf 3
+docs/template-workspace-backlog-archive.html
+  s_21ff78ea98d130::t_8c7102b0ed9a84 575-599
+skills/session-rollover/SKILL.md
+  s_21ff78ea98d130::t_d2274e7e159efc 168-172
+  s_21ff78ea98d130::t_505b983536e287 68-77
+  s_21ff78ea98d130::t_b2ac8b7fea86d5 118-135
+docs/template-workspace-backlog.html
+  s_21ff78ea98d130::t_2ab558c344f85d 79
+scripts/launch-next-session.sh
+  s_21ff78ea98d130::t_bf5269c8509eb7 147-169
+scripts/rollover-prep.sh
+  s_21ff78ea98d130::t_6554a3fed63f9e 81-82,87-88
+  s_21ff78ea98d130::t_e17884aaf45927 12,15-22
+  s_21ff78ea98d130::t_f2617555e87818 157-170
+  s_21ff78ea98d130::t_f31a508c57c04c 23
+scripts/check-rollover-consistency.sh
+  s_21ff78ea98d130::t_1120e2887b9831 1-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b0434e1f1001d3d20dfdb6dad292001848aab583",
+  "prompts": {},
+  "sessions": {
+    "s_21ff78ea98d130": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cc413e64-a2ce-4eab-bac1-29e004d2b5ab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
