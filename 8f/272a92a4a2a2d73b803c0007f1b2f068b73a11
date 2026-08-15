@@ -2,6 +2,8 @@ scripts/capture-rollover-options.sh
   s_50f37338782365::t_8278c9640ae951 16-20
 docs/template-workspace-backlog-archive.html
   s_50f37338782365::t_10c50945ee5fe4 1185-1199,1203-1204
+  s_0a2f0fed006886::t_fddfd59935bbb1 1183-1184
+  s_0a2f0fed006886::t_6ec3a8aa427050 1200-1202
 scripts/launch-next-session.sh
   s_50f37338782365::t_2c10361509c3c2 19-22
 mcp-fragments/README.md
@@ -11,8 +13,12 @@ docs/mcp-setup.md
   s_50f37338782365::t_dff24ed390b57b 48-59
 docs/template-workspace-backlog.html
   s_50f37338782365::t_6e241c703c18bc 72
+  s_0a2f0fed006886::t_d15d0025b66d46 334
+  s_0a2f0fed006886::t_f1a2c3e1cdc408 79
+  s_0a2f0fed006886::t_3b20890811b427 327
 .claude/settings.json.example
   s_50f37338782365::t_3d6ddc74066610 3
+  s_0a2f0fed006886::t_5338346863e7cc 2
 ---
 {
   "schema_version": "authorship/3.0.0",
@@ -20,6 +26,14 @@ docs/template-workspace-backlog.html
   "base_commit_sha": "8f272a92a4a2a2d73b803c0007f1b2f068b73a11",
   "prompts": {},
   "sessions": {
+    "s_0a2f0fed006886": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b31c6366-456c-4eb2-8021-a0a7701e924a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    },
     "s_50f37338782365": {
       "agent_id": {
         "tool": "claude",
