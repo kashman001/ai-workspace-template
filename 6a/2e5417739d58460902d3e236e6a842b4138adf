@@ -1,0 +1,33 @@
+scripts/capture-rollover-options.sh
+  s_50f37338782365::t_8278c9640ae951 16-20
+docs/template-workspace-backlog-archive.html
+  s_50f37338782365::t_10c50945ee5fe4 873-891
+scripts/launch-next-session.sh
+  s_50f37338782365::t_2c10361509c3c2 19-22
+mcp-fragments/README.md
+  s_50f37338782365::t_defca49cc47681 34-43,50-56
+docs/mcp-setup.md
+  s_50f37338782365::t_3115ac74e57137 27-32
+  s_50f37338782365::t_dff24ed390b57b 48-59
+docs/template-workspace-backlog.html
+  s_50f37338782365::t_6e241c703c18bc 72
+  s_50f37338782365::t_82dd28a7adac50 79
+.claude/settings.json.example
+  s_50f37338782365::t_3d6ddc74066610 2-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6a2e5417739d58460902d3e236e6a842b4138adf",
+  "prompts": {},
+  "sessions": {
+    "s_50f37338782365": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35e8e7a7-2bbf-4e04-b2ff-4f071d466ffb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
