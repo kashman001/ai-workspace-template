@@ -31,12 +31,29 @@ structured tools, recreate the fragment: hosted server at
 - **Claude Code (scoped child session):** from any runtime, spawn a headless
   worker that carries the extra server only for one task:
   `claude -p "<task>" --mcp-config mcp-fragments/youtube-transcript.json`.
+  Keep the prompt attached to `-p` **before** `--mcp-config`: the flag is
+  variadic, so a trailing bare prompt is consumed as another config path
+  ("MCP config file not found: <your prompt>").
+- **Claude Code (subagent):** a custom agent definition in
+  `.claude/agents/*.md` can add servers via `mcpServers` frontmatter — the
+  child carries the server, the parent stays lean.
+- **Rollover successor:** hand the next session a fragment via
+  `ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<name>.json"` in
+  `work/<project>/.rollover-options` (see
+  `scripts/capture-rollover-options.sh`).
 - **Durable opt-in (any runtime reading `.mcp.json`):** merge the fragment's
   server entry into your local `.mcp.json` (gitignored).
 - **OpenCode:** servers are pre-declared in root `opencode.json` with
   `"enabled": false` — flip to `true` locally when needed.
 - **Gemini CLI / Codex / others:** copy the server definition into that
   runtime's MCP config (see `docs/mcp-setup.md` for per-runtime syntax).
+  These runtimes load full tool schemas, so keeping fragments out of their
+  standing config matters most there.
+
+**A running session cannot attach a new MCP server** — fragments apply at
+launch only. In Claude Code, wired servers' schemas are already deferred
+(names only until tool search), so an idle wired server is cheap there;
+full-schema runtimes pay the whole cost up front.
 
 Adding a new capability? Prefer a CLI on `PATH` first; add a fragment here
 only when MCP genuinely beats the CLI. Add heavy servers as fragments, not

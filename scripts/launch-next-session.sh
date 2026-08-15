@@ -16,7 +16,10 @@
 #          work/<project>/.rollover-options (optional, written at rollover):
 #          ROLLOVER_OPT_APPROVAL=default|edits|auto|full, ROLLOVER_OPT_MODEL=<id>,
 #          ROLLOVER_OPT_EXTRA=<raw args> — replayed as per-runtime flags on
-#          the successor launch.
+#          the successor launch. Use ROLLOVER_OPT_EXTRA to hand the successor
+#          an opt-in MCP fragment, e.g.
+#          ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<server>.json"
+#          (claude-only flags; see mcp-fragments/README.md).
 # Exit:    0 ok / 3 error. Requires jq.
 # Vendor flags verified against live --help 2026-08-05: claude [prompt] + --bg;
 # codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. claude -n/--name

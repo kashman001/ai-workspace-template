@@ -24,7 +24,12 @@ for every runtime. Re-add recipe, if a task ever needs the structured tools:
 
 Every wired MCP server adds standing tool surface (and context cost) to every
 session, so servers are split by default-need (rationale: `CONTEXT.md` →
-"Tool & Context Loading"):
+"Tool & Context Loading"). Only Claude Code defers tool schemas until first
+use (names only until tool search — an idle wired server is cheap there);
+other runtimes load FULL schemas up front, so keeping opt-in servers out of
+their standing config matters most. **Not wired ≠ unavailable** — an agent
+needing a capability finds it in the fragment table
+(`mcp-fragments/README.md`) and brings it in for the session at hand:
 
 - **Core** (`.mcp.json`, template at `.mcp.json.example`): only the
   always-useful, cheap set — currently **graphify** (10 tools). Copy the
@@ -40,6 +45,18 @@ session, so servers are split by default-need (rationale: `CONTEXT.md` →
   - Durable opt-in: merge the fragment's entry into your local `.mcp.json`.
   - OpenCode: flip the matching server's `"enabled"` to `true` in
     `opencode.json` locally.
+
+  Bring-in mechanics (Claude Code):
+  - **A running session cannot attach a new MCP server** — fragments and
+    wiring apply at session start only (`/reload-plugins` covers
+    plugin-provided servers, nothing else). Plan the fragment at launch, or
+    spawn the scoped child worker above.
+  - **Subagents** inherit the parent's MCP connections; a custom agent
+    definition in `.claude/agents/*.md` can add servers via `mcpServers`
+    frontmatter — the child carries the server, the parent stays lean.
+  - **Rollover successors** inherit a fragment via
+    `ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<name>.json"` in
+    `work/<project>/.rollover-options` (`mcp-fragments/README.md`).
 - **CLI-first:** capabilities ride CLIs wherever one exists — `gh` for GitHub
   (the only GitHub path), `scripts/mcp/`'s `yt-dlp` wrapper for transcripts.
   A fragment is only for structured MCP tools a CLI can't match.
