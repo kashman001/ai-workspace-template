@@ -139,6 +139,19 @@ untagged skills assume an engineering operator.
   consult before writing or reworking anything under `skills/`. Model-invoked
   (no slash command).
 
+**Vendored engineering set (Matt Pocock, MIT)** — the full curated skill set
+from `github.com/mattpocock/skills` ships in `skills/` alongside the above:
+`tdd`, `grill-with-docs`/`grill-me`/`grilling`, `diagnosing-bugs`,
+`domain-modeling`, `codebase-design`, `implement`, `code-review`,
+`improve-codebase-architecture`, `prototype`, `research`,
+`resolving-merge-conflicts`, `wizard`, `ask-matt`, `handoff`, `teach`,
+`to-questionnaire`, `wait-what`, `setup-matt-pocock-skills`,
+`git-guardrails-claude-code`, `setup-pre-commit` (and the adapted
+`to-spec`/`to-tickets`/`triage`/`wayfinder` above). One-liners, slash-command
+map, refresh workflow (`scripts/sync-vendored-skills.sh`), and license:
+`skills/vendored-skills.md`. Run `setup-matt-pocock-skills` once per repo
+before the tracker-dependent ones.
+
 ## Service Access
 
 External services are documented in `docs/service-access.md`. MCP setup is

@@ -70,3 +70,19 @@
 **Rejected:** A small `skills/portable-brief/SKILL.md` + `/portable-brief` shortcut — adds an always-loaded CONTEXT.md skills-list line and a skill to maintain for a workflow that is one template file; premature until a second instance reinvents or misapplies the convention.
 **Blast radius:** docs/work-directory-conventions.md, both backlog HTML files.
 **Promote?:** no
+
+## 2026-08-16 — Vendor the full Matt Pocock skill set in-repo
+
+**What:** All 27 curated skills (engineering + productivity + 2 misc setup) now ship
+vendored at `skills/<name>/`, pinned to upstream `068b6e0`, refreshed via
+`scripts/sync-vendored-skills.sh` (pristine re-copy vs adapted body-swap classes).
+
+**Why:** Template downloaders previously got only 5 of 27 skills; the rest required
+the author's personal global clone+symlink setup. Vendoring makes them available to
+anyone downloading the template, agent-agnostically (every runtime reads the same
+SKILL.md; upstream's agents/openai.yaml ships too).
+
+**Rejected:** (a) git submodule — breaks on zip downloads, poor runtime support;
+(b) upstream Claude Code plugin — Claude-Code-only, violates agent-agnostic rule;
+(c) setup script that clones+symlinks per user — leaves downloaders a manual step
+and nothing works offline/out-of-the-box.

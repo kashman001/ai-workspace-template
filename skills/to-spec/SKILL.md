@@ -6,11 +6,11 @@ disable-model-invocation: true
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/to-spec/
-at commit 8b36d4f (2026-08-12). Everything below this comment is upstream
+at commit 068b6e0 (2026-08-15). Everything below this comment is upstream
 content; keep it unmodified so refreshes stay a clean re-copy.
-Refresh: pull the reference clone (~/Developer/references/mattpocock-skills,
-or `agent-context-sync`), re-copy SKILL.md + agents/openai.yaml over this
-directory, re-add this comment, and update the pinned commit.
+Refresh: scripts/sync-vendored-skills.sh (adapted class — it preserves the
+frontmatter and this comment, re-copies the upstream body + support files,
+and bumps the pinned commit).
 This workspace's tracker + spec wiring lives in docs/agents/issue-tracker.md:
 specs go to work/<effort>/spec.md and keep the "Spec conventions" skeleton's
 Status header and stable S<n> item IDs (upstream's user stories are the S<n>
@@ -20,7 +20,7 @@ that file — no extra setup needed here.
 
 This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user — just synthesize what you already know.
 
-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
+The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
 
 ## Process
 
