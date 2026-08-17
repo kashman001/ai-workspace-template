@@ -6,6 +6,35 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-08-16 (session #6: M30 — Matt Pocock skill set vendored)
+
+**Trigger:** work-unit complete at context-budget WARN (~127K); PR open,
+merge pending.
+
+**What shipped (branch `vendor-mattpocock-skills`, PR #23 — user merges):**
+- **M30** (filed + resolved same pass): all 27 curated Matt Pocock skills now
+  vendored at `skills/<name>/`, pinned to upstream `068b6e0` (2026-08-15,
+  MIT), agent-agnostic (every runtime reads SKILL.md; upstream
+  `agents/openai.yaml` ships too). 22 new + the 5 previously vendored
+  refreshed. Upstream `in-progress/` + course-tooling skipped deliberately.
+- `scripts/sync-vendored-skills.sh` — refresh for both classes (pristine
+  re-copy + stamp; adapted: frontmatter/comment preserved, body swapped).
+  Verified idempotent + graceful without the upstream clone.
+- `skills/vendored-skills.md` — index, slash map, pristine/adapted classes,
+  embedded MIT license, `code-review` name-collision flag.
+- 10 `.claude/commands/` wrappers for user-invoked skills.
+- CONTEXT.md: one grouped vendored-set entry. `recommended-tooling.md` §3
+  flipped: vendored = default path, global symlinks = maintainer path (+
+  duplicate-copy note & `.syncignore` fix). Backlog M30 card → archive;
+  scorecard 6/67/4/0/6. Tier-2 decision note in `decisions.md` (2026-08-16,
+  vendor > submodule/plugin/setup-script).
+- Fresh-clone verification passed (27 stamped skills, zero abs paths).
+
+**Not done / follow-ups:**
+- PR #23 merge — user's call.
+- Optional, origin machine only: dedupe global `~/.claude/skills` symlinks
+  vs vendored copies (documented in recommended-tooling.md §3).
+
 # Session Handoff — 2026-08-12 (session #5: L37 fixed — house-sale mission COMPLETE)
 
 **Trigger:** normal completion (background session, worktree
