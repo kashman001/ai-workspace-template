@@ -198,6 +198,12 @@ ROLLOVER_RUNTIME=claude   # fallback default only — the actual relaunch runtim
                           # comes from the dying session's own registry record
 ```
 
+The successor-registration handshake (`successor-pending-<project>.json`) is
+written only when `launch-next-session.sh` actually starts a successor; with
+`ROLLOVER_RELAUNCH=off` — or when the printed command is run by hand — the
+manually started successor registers project-less by design and picks up its
+work item at its first `--project` invocation.
+
 **Per-work-item override:** an optional `work/<project>/context-budget.env`
 may set `ROLLOVER_RELAUNCH` (and/or `ROLLOVER_RUNTIME`) for that work item
 alone — e.g. one project runs hands-free `auto` chaining while the workspace

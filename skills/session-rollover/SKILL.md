@@ -126,7 +126,10 @@ exchanges so STOP can't pass unnoticed.
    the pasted prompt is the whole handoff. The script refuses to launch when a
    newer committed `next-session.md` exists on a ref outside the launching
    checkout's history (stale-launcher guard, backlog L33) — merge/pull first;
-   `--skip-freshness` overrides.
+   `--skip-freshness` overrides. Worktree-invoked launches self-heal this when
+   the work branch is a clean fast-forward of `origin/main`: the script
+   ff-pushes the branch to main, syncs the main checkout, and proceeds; only
+   real divergence still refuses.
 
 7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 

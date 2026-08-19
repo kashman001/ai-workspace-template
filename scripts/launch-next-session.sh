@@ -112,6 +112,34 @@ if [ "$SKIP_FRESH" -eq 0 ]; then
   # someone has a launcher edit this checkout lacks (no date comparison —
   # rapid-fire commits share second-resolution timestamps).
   NEWER="$(git -C "$WORKSPACE_ROOT" rev-list -1 --all --not HEAD -- "work/$PROJECT/next-session.md" 2>/dev/null)"
+  # Inline ff-only self-heal (rollover-automation-fix): a worktree-invoked
+  # launch commits the fresh launcher on its work branch, but the successor
+  # launches from the main checkout — background sessions cannot close that
+  # gap themselves (classifier / keychain / isolation), so every bg rollover
+  # used to die here waiting for a human merge. If the work branch is a CLEAN
+  # fast-forward of origin/main, push it to main and re-check; on real
+  # divergence fall through to the refusal below (a human must see it).
+  # The push must also actually cure the staleness — NEWER reachable from the
+  # work branch — else (newest launcher on a third ref) both dry-run and real
+  # mode refuse identically instead of pushing and then refusing anyway.
+  if [ -n "$NEWER" ] && [ "$SCRIPT_ROOT" != "$WORKSPACE_ROOT" ]; then
+    WT_BRANCH="$(git -C "$SCRIPT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    if [ -n "$WT_BRANCH" ] && [ "$WT_BRANCH" != "HEAD" ] \
+       && git -C "$SCRIPT_ROOT" merge-base --is-ancestor origin/main "$WT_BRANCH" 2>/dev/null \
+       && git -C "$SCRIPT_ROOT" merge-base --is-ancestor "$NEWER" "$WT_BRANCH" 2>/dev/null; then
+      if [ "$DRY" -eq 1 ]; then
+        note "dry-run: would ff-push origin $WT_BRANCH:main (stale launcher self-heal)"
+        NEWER=""
+      elif git -C "$SCRIPT_ROOT" push origin "$WT_BRANCH:main" >/dev/null 2>&1; then
+        note "stale launcher self-heal: ff-pushed origin $WT_BRANCH:main"
+        git -C "$WORKSPACE_ROOT" pull --ff-only -q 2>/dev/null \
+          || die "main checkout 'git pull --ff-only' failed after ff-push — sync it manually"
+        NEWER="$(git -C "$WORKSPACE_ROOT" rev-list -1 --all --not HEAD -- "work/$PROJECT/next-session.md" 2>/dev/null)"
+      else
+        note "ff-push origin $WT_BRANCH:main failed — leaving the stale-launcher refusal in place"
+      fi
+    fi
+  fi
   if [ -n "$NEWER" ]; then
     refs="$(git -C "$WORKSPACE_ROOT" branch -a --contains "$NEWER" 2>/dev/null \
       | sed 's/^[* ] //' | head -3 | tr '\n' ' ')"
@@ -304,9 +332,31 @@ if [ "$DRY" -eq 1 ]; then
   exit 0
 fi
 
+# Registration handshake (rollover-automation-fix): the successor's
+# SessionStart hook runs `context-budget.sh register` with no --project (it
+# cannot know the work item at session start), so its record used to carry
+# project:"" — making the --bg confirm poll below undecidable and degrading
+# lock attribution/release. Drop a pending file the successor's register
+# consumes (freshest non-expired wins; TTL enforced there). A file, not an
+# env var: it must survive `claude --bg` daemonization, and works identically
+# for attached launches on every runtime. Written ONLY at the two points that
+# actually start a successor (bg launch, attached exec) and removed if the bg
+# launch dies — no pending file may exist unless a successor was actually
+# started (a consumer of a launch-less file would take the project's primary
+# lock; the non-tty branch below prints the command and exits, launching
+# nothing, so a successor started from that printout registers project-less).
+PENDING="$STATE_DIR/successor-pending-$PROJECT.json"
+write_pending() {
+  mkdir -p "$STATE_DIR"
+  jq -n --arg proj "$PROJECT" --argjson seq "$SEQ" --arg ts "$(date -u +%FT%TZ)" \
+    '{project:$proj, seq:$seq, launched_at:$ts}' > "$PENDING"
+  note "handshake: wrote ${PENDING#"$WORKSPACE_ROOT/"} for the successor's register"
+}
+
 if [ "$BG" -eq 1 ]; then
   PRE_EXISTING=" $(ls "$STATE_DIR/sessions/" 2>/dev/null | tr '\n' ' ') "
-  "${CMD[@]}" || die "launch failed: ${CMD[*]}"
+  write_pending
+  "${CMD[@]}" || { rm -f "$PENDING"; die "launch failed: ${CMD[*]}"; }
   deadline=$(( $(date +%s) + CONFIRM_SECS ))
   while [ "$(date +%s)" -lt "$deadline" ]; do
     for f in "$STATE_DIR/sessions/"*.json; do
@@ -321,6 +371,25 @@ if [ "$BG" -eq 1 ]; then
     done
     sleep 2
   done
+  # Fallback (rollover-automation-fix): hooks disabled or handshake missed —
+  # a NEW but project-less record inside the window is almost certainly the
+  # successor (the .project match above stays primary; this only softens the
+  # verdict from unconfirmed to probable).
+  PROBABLE=""
+  for f in "$STATE_DIR/sessions/"*.json; do
+    [ -f "$f" ] || continue
+    case "$PRE_EXISTING" in *" $(basename "$f") "*) continue ;; esac
+    proj="$(jq -r '.project // empty' "$f" 2>/dev/null)"
+    sid="$(jq -r '.session_id // empty' "$f" 2>/dev/null)"
+    if [ -z "$proj" ] && [ -n "$sid" ] && [ "$sid" != "$DYING_SID" ]; then
+      PROBABLE="$sid"
+    fi
+  done
+  if [ -n "$PROBABLE" ]; then
+    note "a new project-less session registered in the window — handshake missed, treating as the successor"
+    echo "successor=probable session=$PROBABLE"
+    exit 0
+  fi
   note "successor did not register within ${CONFIRM_SECS}s — check 'claude attach' / the sessions dir"
   echo "successor=unconfirmed"
   exit 0
@@ -330,6 +399,7 @@ fi
 # print the ready-to-run command instead (relaunch-analysis: "print the
 # ready-to-run command (others)").
 if [ -t 0 ] && [ -t 1 ]; then
+  write_pending
   exec "${CMD[@]}"
 else
   note "not an interactive terminal — run this in one:"

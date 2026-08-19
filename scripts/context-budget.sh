@@ -599,6 +599,46 @@ cmd_register() {
   mkdir -p "$STATE_DIR/sessions"
   rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
   find "$STATE_DIR/sessions" -name '*.json' -mtime +7 -delete 2>/dev/null  # dead sessions
+  # Registration handshake (rollover-automation-fix): launch-next-session.sh
+  # drops successor-pending-<project>.json just before launching; SessionStart
+  # hooks invoke register with no --project, so consume the freshest
+  # non-expired pending file (TTL 600s by mtime — a crashed launch's stale
+  # file must not mis-stamp a later unrelated session) and stamp its project
+  # into this record. Every top-level register sweeps expired files; a
+  # top-level register with explicit --project wins and retires only its own
+  # pending file unread. Child registrations (--parent-session) are by
+  # construction never the launched successor: they neither consume nor
+  # retire a handshake — the real successor's file must survive a child
+  # registering first.
+  local pf pnow pmt page pproj
+  if [ -z "$PARENT_SESSION" ]; then
+    pnow=$(date +%s)
+    while IFS= read -r pf; do
+      [ -f "$pf" ] || continue
+      pmt=$(stat -f%m "$pf" 2>/dev/null || stat -c%Y "$pf" 2>/dev/null || echo 0)
+      page=$(( pnow - pmt ))
+      if [ "$page" -ge 600 ]; then
+        rm -f "$pf"
+        note "register: swept expired successor handshake ${pf##*/} (${page}s old)"
+        continue
+      fi
+      if [ -n "$PROJECT" ]; then
+        # Explicit --project wins: retire this project's own pending file
+        # unread; fresh files for other projects belong to concurrent
+        # launches' successors — leave them.
+        [ "$pf" = "$STATE_DIR/successor-pending-$PROJECT.json" ] && rm -f "$pf"
+        continue
+      fi
+      pproj=$(jq -r '.project // empty' "$pf" 2>/dev/null)
+      # Consume only the freshest fresh file (ls -t: newest first); a second
+      # fresh file belongs to a concurrent launch's successor — leave it.
+      if [ -n "$pproj" ] && [ -d "$WORKSPACE_ROOT/work/$pproj" ]; then
+        PROJECT="$pproj"
+        rm -f "$pf"
+        note "register: consumed successor handshake ${pf##*/} — project=$PROJECT"
+      fi
+    done < <(ls -t "$STATE_DIR"/successor-pending-*.json 2>/dev/null)
+  fi
   DEPTH=0
   if [ -n "$PARENT_SESSION" ]; then
     local prec
