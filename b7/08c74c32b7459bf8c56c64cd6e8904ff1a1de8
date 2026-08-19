@@ -1,0 +1,28 @@
+scripts/launch-next-session.sh
+  s_9e310d4148f29f::t_ff531c2eb52775 167-179,185-186,188-195,197-198,251-267
+skills/session-rollover/SKILL.md
+  s_9e310d4148f29f::t_ff531c2eb52775 114-118
+scripts/tests/test-launch-next-session.sh
+  s_9e310d4148f29f::t_ff531c2eb52775 339-369
+scripts/tests/test-rollover-prep.sh
+  s_9e310d4148f29f::t_ff531c2eb52775 148-155,160-164
+  s_9e310d4148f29f::t_3cb84e0ac6efa0 165
+scripts/rollover-prep.sh
+  s_9e310d4148f29f::t_ff531c2eb52775 27-35,155-172
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b708c74c32b7459bf8c56c64cd6e8904ff1a1de8",
+  "prompts": {},
+  "sessions": {
+    "s_9e310d4148f29f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24cbcfc7-470f-4305-8a5d-659525c2c3ab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
