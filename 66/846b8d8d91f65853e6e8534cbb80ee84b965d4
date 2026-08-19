@@ -1,0 +1,25 @@
+docs/context-budget.md
+  s_16b20104927a43::t_b27c5f05f15a60 201-206
+scripts/context-budget.sh
+  s_16b20104927a43::t_a5b0be7b2fa56c 602-641
+scripts/launch-next-session.sh
+  s_16b20104927a43::t_286b9aa6eb076a 115-142,335-355,358-359,374-392,402
+skills/session-rollover/SKILL.md
+  s_16b20104927a43::t_6e3143061a9b8b 129-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "66846b8d8d91f65853e6e8534cbb80ee84b965d4",
+  "prompts": {},
+  "sessions": {
+    "s_16b20104927a43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "54d75295-356f-4800-a23c-298128c58b07",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
