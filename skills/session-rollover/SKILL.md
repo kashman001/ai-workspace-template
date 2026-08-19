@@ -111,6 +111,11 @@ exchanges so STOP can't pass unnoticed.
 6. **Sync the counter, emit the bootstrap prompt.** Write the session number from
    your **own** bootstrap prompt to `work/<project>/.session-seq`
    (`echo <N> > …`; no number in your prompt → use the prep-printed value + 1).
+   From a worktree session this write lands in your own checkout — that is
+   fine: prep and `launch-next-session.sh` reconcile `.session-seq` across
+   all checkouts of the repo (numeric max wins; prep prints the effective
+   value) and adopt the newest `.rollover-options` copy, so
+   worktree-stranded state still reaches the successor.
    The prompt + counter are the canonical session-number source; on disagreement
    the ledger note gets repaired, never the counter (ADR-0007). Then emit the
    successor's prompt in a fenced block:
