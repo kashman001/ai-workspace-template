@@ -164,15 +164,38 @@ MODE="${ROLLOVER_RELAUNCH:-off}"
 FALLBACK_RUNTIME="${ROLLOVER_RUNTIME:-claude}"
 CONFIRM_SECS="${ROLLOVER_CONFIRM_SECS:-120}"
 
+# Untracked coordination state can be stranded in a sibling checkout: the
+# rolling agent writes work/<proj>/.session-seq (and hand-edits
+# .rollover-options) relative to its OWN worktree, where this script never
+# used to look (rollover-state-sync-issue). Reconcile at read time across
+# every checkout of the repo instead of trusting the main copy. Fails open
+# to the main checkout outside a git repo (main is listed first, so it also
+# wins mtime ties below).
+all_checkouts() {
+  git -C "$WORKSPACE_ROOT" worktree list --porcelain 2>/dev/null \
+    | sed -n 's/^worktree //p'
+  echo "$WORKSPACE_ROOT"   # non-git fallback; the duplicate is harmless
+}
+
 # Lineage sequence: work/<proj>/.session-seq holds the last-launched session's
 # number (machine-local runtime state, gitignored). Successor = last+1;
 # persisted only on a real run (--dry-run never mutates). Absent file means
 # the current session is #1. Feeds the prompt lead + claude --name so session
 # titles read "work item + number" instead of a guess from early content.
+# The counter only grows, so across checkouts the numeric max wins; the
+# result is persisted to the main checkout, which every launch reads.
 SEQF="$WORKSPACE_ROOT/work/$PROJECT/.session-seq"
-LAST_SEQ=""
-[ -f "$SEQF" ] && LAST_SEQ="$(tr -cd '0-9' < "$SEQF" 2>/dev/null)"
+LAST_SEQ=""; SEQ_SRC=""
+while IFS= read -r co; do
+  f="$co/work/$PROJECT/.session-seq"
+  [ -f "$f" ] || continue
+  v="$(tr -cd '0-9' < "$f" 2>/dev/null)"
+  [ -n "$v" ] || continue
+  if [ -z "$LAST_SEQ" ] || [ "$v" -gt "$LAST_SEQ" ]; then LAST_SEQ="$v"; SEQ_SRC="$f"; fi
+done < <(all_checkouts)
 [ -n "$LAST_SEQ" ] || LAST_SEQ=1
+[ -n "$SEQ_SRC" ] && [ "$SEQ_SRC" != "$SEQF" ] \
+  && note "session-seq: adopting $LAST_SEQ from $SEQ_SRC (main copy stale or absent)"
 SEQ=$((LAST_SEQ + 1))
 [ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
 
@@ -225,6 +248,23 @@ fi
 # (.rollover-options, written at rollover; see docs/context-budget.md).
 OPT_ARGS=()
 OPTF="$WORKSPACE_ROOT/work/$PROJECT/.rollover-options"
+# Same stranding as .session-seq: the newest copy across checkouts wins,
+# and an adopted copy is persisted to the main checkout so it survives
+# worktree pruning. --dry-run reads the newest copy in place instead.
+OPT_NEWEST=""
+while IFS= read -r co; do
+  f="$co/work/$PROJECT/.rollover-options"
+  [ -f "$f" ] || continue
+  if [ -z "$OPT_NEWEST" ] || [ "$f" -nt "$OPT_NEWEST" ]; then OPT_NEWEST="$f"; fi
+done < <(all_checkouts)
+if [ -n "$OPT_NEWEST" ] && [ "$OPT_NEWEST" != "$OPTF" ]; then
+  if [ "$DRY" -eq 1 ]; then
+    note "dry-run: would adopt .rollover-options from $OPT_NEWEST"
+    OPTF="$OPT_NEWEST"
+  elif cp "$OPT_NEWEST" "$OPTF" 2>/dev/null; then
+    note "rollover-options: adopted newest copy from $OPT_NEWEST"
+  fi
+fi
 if [ -f "$OPTF" ]; then
   ROLLOVER_OPT_APPROVAL=""; ROLLOVER_OPT_MODEL=""; ROLLOVER_OPT_EXTRA=""
   . "$OPTF" >/dev/null 2>&1 || true

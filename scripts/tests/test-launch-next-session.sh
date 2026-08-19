@@ -336,6 +336,37 @@ assert_eq "W5a: exit 0" "$rc" "0"
 assert_not_contains "W5b: no worktree sync attempted" "$out" "worktree-invoked"
 cd "$TMP"
 
+echo "W6: stranded worktree .session-seq — numeric max across checkouts wins (state-sync)"
+printf '27\n' > "$GMAIN/work/testproj/.session-seq"
+printf '29\n' > "$GMAIN/wt/work/testproj/.session-seq"
+out=$(run_lns "$WLNS" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq       "W6a: exit 0" "$rc" "0"
+assert_contains "W6b: successor numbered from the worktree copy" "$out" "rollover session #30"
+assert_contains "W6c: adoption noted" "$out" "session-seq: adopting 29"
+out=$(run_lns "$WLNS" testproj 2>&1 </dev/null)
+assert_eq "W6d: real run persists max+1 in main root" \
+  "$(cat "$GMAIN/work/testproj/.session-seq")" "30"
+assert_eq "W6e: worktree copy left alone" \
+  "$(cat "$GMAIN/wt/work/testproj/.session-seq")" "29"
+out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null)
+assert_contains "W6f: main-checkout invocation reconciles too" "$out" "rollover session #31"
+rm -f "$GMAIN/work/testproj/.session-seq" "$GMAIN/wt/work/testproj/.session-seq"
+
+echo "W7: stranded newer worktree .rollover-options — adopted, persisted to main"
+printf 'ROLLOVER_OPT_APPROVAL=default\n' > "$GMAIN/work/testproj/.rollover-options"
+touch -t 202001010000 "$GMAIN/work/testproj/.rollover-options"
+printf 'ROLLOVER_OPT_APPROVAL=edits\n' > "$GMAIN/wt/work/testproj/.rollover-options"
+out=$(run_lns "$WLNS" testproj --runtime claude --dry-run 2>&1 </dev/null)
+assert_contains "W7a: dry-run reads the newest copy in place" "$out" "--permission-mode acceptEdits"
+assert_contains "W7b: dry-run does not persist (would-adopt note)" "$out" "would adopt"
+assert_contains "W7c: main copy untouched by dry-run" \
+  "$(cat "$GMAIN/work/testproj/.rollover-options")" "ROLLOVER_OPT_APPROVAL=default"
+out=$(run_lns "$WLNS" testproj --runtime claude 2>&1 </dev/null)
+assert_contains "W7d: real run persists the adopted copy to main" \
+  "$(cat "$GMAIN/work/testproj/.rollover-options")" "ROLLOVER_OPT_APPROVAL=edits"
+rm -f "$GMAIN/work/testproj/.rollover-options" "$GMAIN/wt/work/testproj/.rollover-options" \
+  "$GMAIN/work/testproj/.session-seq"
+
 echo "F1: newer launcher on an unmerged local branch — stale-launcher refusal (L33)"
 echo "# launcher v5" > "$GMAIN/wt/work/testproj/next-session.md"
 GITC -C "$GMAIN/wt" commit -qam "rollover v5"
