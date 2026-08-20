@@ -123,6 +123,9 @@ untagged skills assume an engineering operator.
   synthesized into prioritized recommendations. `/doc-review <path>`
 - **onboard-repo** — bring a repo into the workspace: registry entry, graphify
   index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
+- **research-wave** — research several subjects in parallel, then verify each
+  result with an independent fact-checker before the claims are published or
+  presented. User-invoked only. `/research-wave <subjects>`
 - **rlm** — answer a query over a context too large to read into chat
   (persistent Python REPL + cheap leaf LLM over slices; good for counting,
   per-item classification, whole-corpus summaries). `/rlm context=<path> query=<question>`
