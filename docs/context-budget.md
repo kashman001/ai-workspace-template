@@ -274,10 +274,13 @@ project when no lock exists) and prints a one-line status
 (`project=… runtime=… session=… role=primary|auxiliary|child|superseded|none
 age=…s live=yes|no locked=yes|no`). Don't
 relaunch a session that's still live and locked — the lock enforces one
-active session per project — instead the script `exec`s
-`claude --resume <session_id>` on a real TTY (no `claude attach` subcommand
-exists; `-r/--resume` is the closest supported attach-by-id form, verified
-against live `--help` 2026-08-06). For a non-claude runtime it reports that
+active session per project — instead the script `exec`s, on a real TTY, either
+`claude attach <session_id>` or `claude --resume <session_id>` — it reads the
+session's `kind` from `claude agents --json` and picks attach for a background
+session, resume for anything else (`claude attach` exists as of claude 2.1.226,
+verified 2026-08-20, superseding the 2026-08-06 note that it did not; it opens
+a **background** session in this terminal, whereas `--resume` replays a
+transcript into a NEW process and so is not attaching). For a non-claude runtime it reports that
 attach is not possible (those runtimes have no background sessions — the
 launcher's `--bg` is claude-only — so the session is already interactive in
 someone's terminal). If the lock is released or stale, it prints the launch
