@@ -5,18 +5,57 @@
 #          agent process, the supervisor regains the terminal, and the tty is
 #          left usable. Stub-only by default so CI needs no vendor binary;
 #          --live <runtime> runs the same assertions against a real one.
+#          T1/T2 need a controlling terminal; without one they SKIP loudly
+#          rather than reporting failures that look like a regression.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
-PASS=0; FAIL=0
-ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
-bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1" >&2; }
+PASS=0; FAIL=0; SKIP=0
+ok()   { PASS=$((PASS+1)); echo "  ok: $1"; }
+bad()  { FAIL=$((FAIL+1)); echo "  FAIL: $1" >&2; }
+skip() { SKIP=$((SKIP+1)); echo "  skip: $1"; }
 assert_eq()       { [ "$2" = "$3" ] && ok "$1" || bad "$1 (want [$3] got [$2])"; }
 assert_contains() { case "$2" in *"$3"*) ok "$1" ;; *) bad "$1 (no [$3] in [$2])" ;; esac; }
 
 LIVE=""
 [ "${1:-}" = "--live" ] && LIVE="${2:?--live needs a runtime}"
+
+# script(1) is what gives the stub agent a real pty, and T1/T2 are meaningless
+# without one. Under a detached harness (background job, nohup) stdin can be a
+# socket rather than a terminal, and script aborts with
+#   script: tcgetattr/ioctl: Operation not supported on socket
+# which used to surface as two *false* failures indistinguishable from a real
+# regression in the exit mechanism. Probe with a no-op rather than testing
+# [ -t 0 ]: stdin is not a tty in plenty of contexts where script works fine,
+# and a false skip hides real bugs just as badly as a false failure.
+# BSD script (macOS) takes the typescript file first, then the command.
+run_script() {   # run_script <executable> -> combined output; script's rc
+  case "$(uname -s)" in
+    Darwin) script -q /dev/null "$1" 2>&1 ;;
+    *)      script -q -c "$1" /dev/null 2>&1 ;;
+  esac
+}
+
+printf '#!/usr/bin/env bash\nexit 0\n' > "$TMP/noop.sh"; chmod +x "$TMP/noop.sh"
+NO_PTY=""
+if ! probe="$(run_script "$TMP/noop.sh")"; then
+  NO_PTY="${probe%%$'\n'*}"
+  [ -n "$NO_PTY" ] || NO_PTY="script(1) exited nonzero"
+else
+  case "$probe" in *tcgetattr*|*ioctl*) NO_PTY="${probe%%$'\n'*}" ;; esac
+fi
+[ -n "$NO_PTY" ] && NO_PTY="no controlling terminal — $NO_PTY"
+
+summary() {
+  if [ "$SKIP" -gt 0 ]; then
+    echo "passed=$PASS failed=$FAIL skipped=$SKIP"
+    echo "SKIPPED $SKIP assertion(s): $NO_PTY." >&2
+    echo "Re-run this suite in the foreground for full coverage." >&2
+  else
+    echo "passed=$PASS failed=$FAIL"
+  fi
+}
 
 # The hook under test. Stands in for a vendor turn-end hook: it is spawned by the
 # "agent" process, and it terminates that process by signalling its own parent.
@@ -57,27 +96,29 @@ echo "T1: a turn-end hook terminates the agent at the turn boundary"
 export TF_EXIT_LOG="$TMP/exit.log"; : > "$TF_EXIT_LOG"
 export TF_HOOK="$TMP/hook.sh"
 export TF_CHILD="$TMP/agent.sh"
-# script(1) gives the child a real pty, which is what makes the tty-restore
-# assertion meaningful. BSD script (macOS) takes the file first, then the command.
-case "$(uname -s)" in
-  Darwin) out="$(script -q /dev/null "$TMP/sup.sh" 2>&1)" ;;
-  *)      out="$(script -q -c "$TMP/sup.sh" /dev/null 2>&1)" ;;
-esac
-assert_contains "T1a: the hook ran and saw the agent pid" "$(cat "$TF_EXIT_LOG")" "terminating agent pid"
-assert_contains "T1b: the supervisor regained the terminal" "$out" "supervisor: terminal regained"
-case "$out" in *"STILL ALIVE"*) bad "T1c: the agent survived the hook" ;;
-               *) ok "T1c: the agent did not survive the hook" ;; esac
+if [ -n "$NO_PTY" ]; then
+  skip "T1a: the hook ran and saw the agent pid ($NO_PTY)"
+  skip "T1b: the supervisor regained the terminal ($NO_PTY)"
+  skip "T1c: the agent did not survive the hook ($NO_PTY)"
+else
+  out="$(run_script "$TMP/sup.sh")"
+  assert_contains "T1a: the hook ran and saw the agent pid" "$(cat "$TF_EXIT_LOG")" "terminating agent pid"
+  assert_contains "T1b: the supervisor regained the terminal" "$out" "supervisor: terminal regained"
+  case "$out" in *"STILL ALIVE"*) bad "T1c: the agent survived the hook" ;;
+                 *) ok "T1c: the agent did not survive the hook" ;; esac
+fi
 
 echo "T2: the tty is usable after the child is terminated"
 # The failure this pins: a child killed mid-raw-mode leaves the terminal without
 # echo, and every later session in the chain is typed into a dead-looking shell.
-before="$(stty -g 2>/dev/null || echo unavailable)"
-case "$(uname -s)" in
-  Darwin) script -q /dev/null "$TMP/sup.sh" >/dev/null 2>&1 ;;
-  *)      script -q -c "$TMP/sup.sh" /dev/null >/dev/null 2>&1 ;;
-esac
-after="$(stty -g 2>/dev/null || echo unavailable)"
-assert_eq "T2a: tty settings unchanged across the run" "$after" "$before"
+if [ -n "$NO_PTY" ]; then
+  skip "T2a: tty settings unchanged across the run ($NO_PTY)"
+else
+  before="$(stty -g 2>/dev/null || echo unavailable)"
+  run_script "$TMP/sup.sh" >/dev/null 2>&1
+  after="$(stty -g 2>/dev/null || echo unavailable)"
+  assert_eq "T2a: tty settings unchanged across the run" "$after" "$before"
+fi
 
 echo "T3: SIGTERM only — no SIGKILL anywhere in the mechanism"
 # failure mode 9. Grep the shipped hook wrappers, not the stub.
@@ -118,10 +159,10 @@ if [ -n "$LIVE" ]; then
     *) echo "unknown runtime: $LIVE" >&2; exit 1 ;;
   esac
   command -v "${LIVE_CMD[0]}" >/dev/null 2>&1 \
-    || { bad "T4a: ${LIVE_CMD[0]} is not on PATH"; echo "passed=$PASS failed=$FAIL"; exit 1; }
+    || { bad "T4a: ${LIVE_CMD[0]} is not on PATH"; summary; exit 1; }
   TF_SESSION_LOOP=1 TF_EXIT_LOG="$TF_EXIT_LOG" "${LIVE_CMD[@]}" >"$TMP/live.out" 2>&1 || true
   assert_contains "T4a: the turn-end hook fired" "$(cat "$TF_EXIT_LOG")" "terminating agent pid"
 fi
 
-echo "passed=$PASS failed=$FAIL"
+summary
 [ "$FAIL" -eq 0 ]

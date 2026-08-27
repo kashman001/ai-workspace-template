@@ -3,7 +3,8 @@
 # Purpose: Re-attach step of session-rollover (ADR-0003) for chained claude
 #          successors: find the latest session for a work item and, when it
 #          is alive and holds the work-item lock, connect this terminal to
-#          it. Resolution: work/<project>/.active-session lock >
+#          it. Resolution: work/<project>/.active-session lock (corrected for a
+#          fork that re-keyed the held session — see fork_of() below) >
 #          newest .context-budget/sessions/*.json record for the project
 #          (fallback, same convention as own_record() in
 #          launch-next-session.sh) > newest live `claude agents --json` entry
@@ -75,6 +76,35 @@ if [ -f "$LOCK" ]; then
   SID="$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)"
   [ -n "$RUNTIME" ] && [ -n "$SID" ] && LOCKED=1
 fi
+# A fork (Claude's SessionStart:fork) RE-KEYS a live session: the transcript
+# moves to a new session id and `record` self-heals onto it, but the lock still
+# names the pre-fork id. Because the lock resolves first, the naming step below
+# — which would have found the live session — never got a chance to run, so the
+# script printed a `--resume` for a dead id. The fork inherits the launcher's
+# `-n "<project> #<N>"` name, so an entry sharing that exact name with a strictly
+# later start IS the fork of the held session, not a different one. Adopt it:
+# the lock is still validly held (a fork is the same logical session), only its
+# id moved. Positive evidence only — no oracle, no name, no timestamps, or any
+# jq/CLI failure all leave the locked id exactly as it was.
+fork_of() {  # $1 = session id -> id of the fork that superseded it, or empty
+  claude agents --json 2>/dev/null | jq -r --arg s "$1" '
+      (map(select(.sessionId == $s)) | .[0]) as $h
+      | if ($h | type) != "object" then ""
+        elif (($h.name // "") == "") or (($h.startedAt | type) != "number") then ""
+        else ( map(select((.name // "") == $h.name
+                          and (.startedAt | type) == "number"
+                          and .startedAt > $h.startedAt))
+               | sort_by(.startedAt) | .[-1].sessionId // "" )
+        end' 2>/dev/null
+}
+if [ "$LOCKED" -eq 1 ] && [ "$RUNTIME" = "claude" ]; then
+  FORK="$(fork_of "$SID")" || FORK=""
+  if [ -n "$FORK" ] && [ "$FORK" != "$SID" ]; then
+    note "lock names $SID, which a fork superseded; following it to $FORK (same session, re-keyed)"
+    SID="$FORK"
+  fi
+fi
+
 if [ "$LOCKED" -eq 0 ]; then
   RUNTIME=""; SID=""
   while IFS= read -r f; do
