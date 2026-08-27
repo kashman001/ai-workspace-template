@@ -1,0 +1,21 @@
+docs/operational-knowledge.md
+  s_61451ee1e3206e::t_e5aab8e8b19244 384-413
+skills/session-rollover/SKILL.md
+  s_61451ee1e3206e::t_e5aab8e8b19244 126-138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5cbbef90566ad709c98416aec331ee63a95bd6d9",
+  "prompts": {},
+  "sessions": {
+    "s_61451ee1e3206e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "274e59e3-0a79-4460-aa79-c6fd61d839f2",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
