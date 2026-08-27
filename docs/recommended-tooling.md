@@ -39,7 +39,7 @@ what matches how you work.
 |---|---|---|
 | Claude Code status line | Two-line status bar (model · context% · cost · clock · git branch) | Global |
 | superpowers plugin | Process skills: brainstorming, TDD, systematic debugging, plan execution, code review | Global |
-| Matt Pocock engineering skills | `tdd`, `grill-with-docs`, `domain-modeling`, `codebase-design`, `implement`, `code-review`, `diagnosing-bugs`, `to-spec`/`to-tickets`, `triage`, `improve-codebase-architecture`, `handoff`, `teach` | Global skills + **per-repo** config |
+| Matt Pocock engineering skills | `tdd`, `grill-with-docs`, `domain-modeling`, `codebase-design`, `implement`, `code-review`, `diagnosing-bugs`, `to-spec`/`to-tickets`, `triage`, `improve-codebase-architecture`, `handoff`, `teach` | **Vendored in-repo** (`skills/vendored-skills.md`) + **per-repo** config |
 | Karpathy coding principles | The four always-on principles + `karpathy-examples` calibration skill | Global (principles already in `CONTEXT.md`) |
 | graphify | Codebase → queryable knowledge graph (`graphify-out/`) | Global CLI + **per-repo** graph |
 
@@ -165,7 +165,9 @@ Verify: `claude plugin list` (or `/plugin` in a session), then restart.
 ## 3. Matt Pocock engineering skills
 
 A suite of repeatable engineering workflows from
-[`github.com/mattpocock/skills`](https://github.com/mattpocock/skills):
+[`github.com/mattpocock/skills`](https://github.com/mattpocock/skills).
+**The full curated set is vendored into this repo** (see below) — downloaders
+get every skill in this table with zero setup:
 
 | Skill | Use when |
 |---|---|
@@ -180,12 +182,12 @@ A suite of repeatable engineering workflows from
 | `diagnosing-bugs` | Reproduce → minimise → fix a hard bug or perf regression |
 | `resolving-merge-conflicts` | Work an in-progress merge/rebase conflict hunk-by-hunk by intent (never `--abort`) |
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
-| `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges — **also vendored in this repo** (see below) |
-| `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time — **also vendored in this repo** (see below) |
+| `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
+| `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time |
 | `wizard` | Generate an interactive bash wizard walking a human through steps only they can do (credentials, dashboards, one-off migrations) — pairs with `docs/runbooks/` |
 | `to-questionnaire` | Turn a decision you can't fully answer into a questionnaire for someone else — pairs with wayfinder's HITL decision tickets |
 | `wait-what` | Stop — that last message didn't land; re-pitch it |
-| `triage` | Move incoming issues through a triage state machine — **also vendored in this repo** (see below) |
+| `triage` | Move incoming issues through a triage state machine |
 | `handoff` | Compact a session into a pickup doc |
 | `teach` | Teach a concept over multiple sessions, using the directory as a stateful workspace |
 | `writing-for-agents` | Reference for writing any document an agent consumes — skills, `AGENTS.md`/`CLAUDE.md`, pointed-to docs (formerly `writing-great-skills`) |
@@ -201,8 +203,26 @@ A suite of repeatable engineering workflows from
 > scheme (see `CONTEXT.md` → *Decision Records*): grill/model a decision, then
 > promote the durable ones to an ADR.
 
-**Install (global, via agent-context):** clone the repo into the references
-dir, then let `agent-context-sync` link the skills (it offers each new one):
+**Vendored in this repo (the default path).** Every skill in the table above
+ships at `skills/<name>/`, pinned to an upstream commit in each `SKILL.md`'s
+provenance comment — readable by every runtime (each directory also carries
+upstream's `agents/openai.yaml`), with Claude Code slash-command wrappers
+under `.claude/commands/` for the user-invoked ones. The per-skill index,
+pristine-vs-adapted classes, slash map, and upstream MIT license live in
+`skills/vendored-skills.md`. Refresh the whole set with
+`scripts/sync-vendored-skills.sh` (needs a local clone of the upstream repo —
+the script prints clone instructions if it's missing; pull the clone first).
+
+Not vendored: upstream's `skills/in-progress/` bucket — expect churn there,
+and note `claude-handoff` competes with this workspace's `session-rollover`/
+`handoff` conventions — plus the TypeScript-course misc skills
+(`scaffold-exercises`, `migrate-to-shoehorn`). Link those manually (below) if
+you want them.
+
+**Global install (optional — for repos outside this workspace, or the
+maintainer keeping the reference clone fresh):** clone the repo into the
+references dir, then let `agent-context-sync` link the skills (it offers each
+new one):
 
 ```sh
 git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
@@ -220,52 +240,20 @@ ln -sfn ~/Developer/references/mattpocock-skills/skills/engineering/tdd ~/.confi
 > Permanently skip an upstream skill by adding its name to
 > `~/.config/agent-context/skills/.syncignore`.
 
-> **"Skill not found" on another machine?** Upstream adds skills over time
-> (`implement`, `wayfinder`, `teach`, `ask-matt` all arrived after launch). A
-> machine whose reference clone predates a skill — or where a new upstream
-> skill was never linked — won't have it. Run `agent-context-sync` (pulls the
-> clone and offers any new skills), or `git pull` the clone and add the symlink
-> by hand as above. Mind the buckets when linking manually: e.g. `teach` lives
-> under `skills/productivity/`, not `engineering/`.
-
-> **Five skills are vendored into this repo** — the spec chain `to-spec`,
-> `to-tickets`, `triage`, and `wayfinder` (with this workspace's tracker +
-> spec wiring in `docs/agents/issue-tracker.md`), plus `writing-for-agents`
-> (incl. its `SKILL-MECHANICS.md` reference) — each at `skills/<name>/`,
-> pinned to an upstream commit in its provenance comment, so Copilot users
-> and template downloaders get them with zero global setup. On a machine that
-> *also* has the global symlink install, Claude Code sees both copies of each
-> — same content; prefer the project copy here (its `/`-commands load the
-> workspace tracker conventions). The other skills — including the
-> engineering-practice ones the spec chain pairs with (`tdd`,
-> `diagnosing-bugs`, `grilling`, `domain-modeling`) — stay global-only:
-> install per this doc.
-
-> **Newer upstream skills worth watching** (under `skills/in-progress/`
-> upstream — expect churn; note `agent-context-sync` scans only the
-> `engineering`/`productivity`/`misc` buckets, so link these manually with
-> `ln -sfn` as above if wanted). Formerly-watched skills have graduated:
-> `wizard`, `to-questionnaire`, `wait-what`, and `writing-for-agents` (renamed
-> from `writing-great-skills`) are now released and in the table above, and
-> `batch-grill-me` was folded into the `grilling` engine (round-by-round
-> frontier interview). Still in progress:
-> - `claude-handoff` — hands a conversation to a fresh background agent. **Not**
->   recommended in this workspace: it competes with the `session-rollover` /
->   `handoff` conventions here.
-> - `loop-me`, `setup-ts-deep-modules`, `writing-*` (and misc
->   `migrate-to-shoehorn`, `scaffold-exercises`) — TypeScript-course/writing
->   specific; skip unless that's your domain.
+> **Duplicate copies in this workspace.** On a machine that *also* has the
+> global symlink install, Claude Code sees two copies of each skill — same
+> content; prefer the project copy here (its `/`-commands load the workspace
+> tracker conventions). To silence the duplicates, add the vendored names to
+> `~/.config/agent-context/skills/.syncignore` and remove those symlinks.
 
 > **Claude Code-only alternative — the upstream plugin.** The repo also ships
 > as a native Claude Code plugin (`claude plugin marketplace add mattpocock/skills`,
 > then `claude plugin install mattpocock-skills@mattpocock`): a read-only bundle
-> that auto-updates with no clone to maintain. Only use it if you work
-> exclusively in Claude Code *and* don't run the agent-context system — other
-> runtimes (Codex, Gemini, OpenCode) can't read Claude Code plugins, and
-> combining the plugin with the symlink install gives Claude Code two copies of
-> every skill (duplicate/ambiguous triggering). With agent-context,
-> `agent-context-sync` already updates every runtime at once, so the plugin
-> adds nothing there.
+> that auto-updates with no clone to maintain. In this workspace it adds
+> nothing (the skills are vendored, and the plugin would give Claude Code a
+> second copy of each with duplicate/ambiguous triggering) — and other
+> runtimes (Codex, Gemini, OpenCode) can't read Claude Code plugins. Only use
+> it in repos outside this workspace where you work exclusively in Claude Code.
 
 **Per-repo setup (required before `to-tickets` / `to-spec` / `triage` /
 `improve-codebase-architecture` work):** run the `setup-matt-pocock-skills`

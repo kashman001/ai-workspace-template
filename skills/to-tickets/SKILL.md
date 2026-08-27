@@ -6,11 +6,11 @@ disable-model-invocation: true
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/to-tickets/
-at commit 8b36d4f (2026-08-12). Everything below this comment is upstream
+at commit 068b6e0 (2026-08-15). Everything below this comment is upstream
 content; keep it unmodified so refreshes stay a clean re-copy.
-Refresh: pull the reference clone (~/Developer/references/mattpocock-skills,
-or `agent-context-sync`), re-copy SKILL.md + agents/openai.yaml over this
-directory, re-add this comment, and update the pinned commit.
+Refresh: scripts/sync-vendored-skills.sh (adapted class — it preserves the
+frontmatter and this comment, re-copies the upstream body + support files,
+and bumps the pinned commit).
 This workspace's tracker wiring lives in docs/agents/issue-tracker.md: local
 tickets go to work/<effort>/issues/NN-<slug>.md (NOT upstream's .scratch/),
 and the triage label vocabulary is the canonical names used verbatim. The
@@ -21,7 +21,7 @@ upstream "/setup-matt-pocock-skills" reference is satisfied by that file.
 
 Break a plan, spec, or conversation into a set of **tickets** — tracer-bullet vertical slices, each declaring the tickets that **block** it.
 
-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
+The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
 
 ## Process
 

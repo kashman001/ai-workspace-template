@@ -5,12 +5,11 @@ description: Writing documents for agents. Use when creating or editing skills, 
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/productivity/writing-for-agents/
-at commit 8b36d4f (2026-08-05). Everything below this comment is upstream
+at commit 068b6e0 (2026-08-15). Everything below this comment is upstream
 content; keep it unmodified so refreshes stay a clean re-copy.
-Refresh: pull the reference clone (~/Developer/references/mattpocock-skills,
-or `agent-context-sync`), re-copy SKILL.md + SKILL-MECHANICS.md +
-agents/openai.yaml over this directory, re-add this comment, and update the
-pinned commit.
+Refresh: scripts/sync-vendored-skills.sh (adapted class — it preserves the
+frontmatter and this comment, re-copies the upstream body + support files,
+and bumps the pinned commit).
 -->
 
 Reference for writing any document an agent consumes — a skill, an `AGENTS.md` / `CLAUDE.md`, a doc reached by a pointer. The packaging differs; the writing does not: the same levers make each one predictable — the agent taking the same _process_ every run, not producing the same output.

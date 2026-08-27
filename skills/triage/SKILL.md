@@ -6,12 +6,11 @@ disable-model-invocation: true
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/triage/
-at commit 8b36d4f (2026-08-12). Everything below this comment is upstream
+at commit 068b6e0 (2026-08-15). Everything below this comment is upstream
 content; keep it unmodified so refreshes stay a clean re-copy.
-Refresh: pull the reference clone (~/Developer/references/mattpocock-skills,
-or `agent-context-sync`), re-copy SKILL.md + AGENT-BRIEF.md + OUT-OF-SCOPE.md
-+ agents/openai.yaml over this directory, re-add this comment, and update the
-pinned commit.
+Refresh: scripts/sync-vendored-skills.sh (adapted class — it preserves the
+frontmatter and this comment, re-copies the upstream body + support files,
+and bumps the pinned commit).
 This workspace's tracker wiring lives in docs/agents/issue-tracker.md: the
 canonical role names below are used verbatim as Status:/category lines on
 work/<effort>/issues/ files — no label mapping. Step 4's /grilling and
@@ -55,7 +54,7 @@ For a PR, the same states read against the attached code: `ready-for-agent` mean
 
 Every triaged issue should carry exactly one category role and one state role. If state roles conflict, flag it and ask the maintainer before doing anything else.
 
-These are canonical role names — the actual label strings used in the issue tracker may differ. The mapping should have been provided to you - run `/setup-matt-pocock-skills` if not.
+These are canonical role names — the actual label strings used in the issue tracker may differ. The mapping should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
 
 State transitions: an unlabeled issue normally goes to `needs-triage` first; from there it moves to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer can override at any time — flag transitions that look unusual and ask before proceeding.
 
@@ -88,7 +87,7 @@ Show counts and a one-line summary per item. Let the maintainer pick.
 
 3. **Verify the claim.** Before any grilling, check that the claim holds up. For a bug, reproduce it from the reporter's steps. For a PR, confirm the diff does what it claims — check it out, run the relevant tests or commands. Report what happened: confirmed (with code path), failed, or insufficient detail (a strong `needs-info` signal). A confirmed verification makes a much stronger agent brief.
 
-4. **Grill (if needed).** If the request needs fleshing out, run the `/grilling` and `/domain-modeling` skills together — grill it into shape a round of questions at a time, sharpening domain terms and updating `CONTEXT.md`/ADRs inline as decisions land.
+4. **Grill (if needed).** If the request needs fleshing out, call the Skill tool twice, for "grilling" and "domain-modeling" — grill it into shape a round of questions at a time, sharpening domain terms and updating `CONTEXT.md`/ADRs inline as decisions land.
 
 5. **Apply the outcome:**
    - `ready-for-agent` — post an agent brief comment ([AGENT-BRIEF.md](AGENT-BRIEF.md)).

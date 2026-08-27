@@ -572,6 +572,20 @@
       already git-free — the fix is labeling, not new machinery.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M30</span> Matt Pocock skill set was global-install-only — downloaders got 5 of 27 skills
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
+    <p><span class="fix">Fixed:</span> vendored the full curated set (22 more skills — engineering, productivity,
+      and the two misc setup skills; upstream <code>in-progress/</code> and course tooling deliberately skipped) into
+      <code>skills/&lt;name&gt;/</code> at upstream commit <code>068b6e0</code>, each with a provenance comment; added
+      <code>scripts/sync-vendored-skills.sh</code> (pristine re-copy + adapted body-swap classes),
+      <code>skills/vendored-skills.md</code> (index + slash map + MIT license), 10 <code>.claude/commands/</code>
+      wrappers for the user-invoked ones, a grouped CONTEXT.md entry, and rewrote
+      <code>recommended-tooling.md</code> §3 so vendored-in-repo is the default path and the global symlink install
+      is the maintainer/other-repos path. Agent-agnostic: every runtime reads the same <code>SKILL.md</code>
+      (upstream's <code>agents/openai.yaml</code> ships too).</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">
