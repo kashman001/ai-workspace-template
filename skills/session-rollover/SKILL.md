@@ -123,6 +123,19 @@ exchanges so STOP can't pass unnoticed.
    unattended chain a re-narrated mission is a telephone game; disk anchors facts
    but not intent.
 
+   **If the mission needs the user, say what the successor does with nobody
+   there.** `ROLLOVER_RELAUNCH=auto` — the default — background-launches the
+   successor, so it can wake unwatched outside a `handsoff` chain too, and a
+   conversational mission ("agree the scope with the user", "confirm the
+   approach") then gets answered by the successor itself. Write both halves:
+   a **no-human-in-the-loop** clause in the launcher — what to do unattended
+   (prepare the material, commit it, stop with the question still open) versus
+   what must wait for a person — and, when the mission *is* the conversation,
+   `ROLLOVER_RELAUNCH=off` in `work/<project>/context-budget.env` (or `manual`
+   if a human is watching this session), so the rollover hands back a
+   paste-ready prompt instead of launching a successor into a question only a
+   person can answer.
+
 6. **Check the counter, emit the bootstrap prompt.** This step is an **assertion,
    not a write.** `work/<project>/.session-seq` holds the last-launched session's
    number — so if a launcher started you, it *already holds yours*. Compare it
