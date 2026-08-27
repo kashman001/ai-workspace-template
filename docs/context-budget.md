@@ -288,6 +288,69 @@ hint instead: run `scripts/launch-next-session.sh <project>` from a real
 terminal — it `exec`s the successor interactively with options inherited from
 `.rollover-options` as above.
 
+## The supervisor — `scripts/session-loop.sh`
+
+Runs a chain of rollover sessions unattended. Started once by a human, owns the
+terminal, never talks to a model:
+
+```sh
+scripts/session-loop.sh <project> [--runtime <rt>] \
+  [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>]
+```
+
+Each iteration it `eval`s the command the dying session staged into
+`work/<proj>/.next-command` (written by `launch-next-session.sh --emit`), waits on
+the foreground child, and then proves the iteration against two facts it reads
+itself:
+
+| Counter delta | Sentinel in the main checkout | Supervisor's reading |
+| --- | --- | --- |
+| 0 | absent | nobody rolled over — deliberate quit, exit 0 |
+| 1 | present, `seq` matches | normal rollover — relaunch |
+| 1 | absent | **a session ended somewhere I did not look** — halt and notify |
+| ≠ 1 | any | numbering rule 5 violated — halt and notify |
+
+`TF_SESSION_LOOP=1` is exported by the supervisor and inherited by the agent and
+its hooks. It is the single opt-in discriminator: unset, every mechanism here is
+inert and plain `claude` behaves exactly as before.
+
+**Knobs** live in `context-budget.env`; a committed `work/<proj>/context-budget.env`
+overrides per work item, the same precedence `ROLLOVER_RELAUNCH` uses.
+
+| Knob | Default | Guards |
+| --- | --- | --- |
+| `SESSION_LOOP_MAX_SESSIONS` | 10 | chain cap (failure mode 3) |
+| `SESSION_LOOP_MIN_LIFETIME` | 60 | first-turn spurious STOP (failure mode 1) |
+| `SESSION_LOOP_STALL_LIMIT` | 3 | a stuck chain committing only bookkeeping (failure mode 2) |
+| `SESSION_LOOP_NOTIFY` | unset | a command run with the halt message as `$1` |
+
+**Stall detection** counts *consecutive* hands-off sessions whose commits touched
+nothing outside the rollover bookkeeping set — `next-session.md`, `handoff.md`,
+`handoff-archive.md`, and the counter. That exclusion is the whole guard, because
+rollover is itself a commit: writing the ledger and the launcher is what the skill
+does, so an unqualified "did this session commit?" test is a heartbeat, not a
+signal, and a perfectly stuck chain would pass it forever. One session that
+commits real work resets the count to zero. Ticket transitions need no separate
+mechanism — `work/<proj>/issues/` is outside the bookkeeping set already.
+
+For the same reason the supervisor's own runtime files must never be tracked:
+`.session-loop.log` is appended on every iteration by construction, so a
+committed copy would show progress in every session and the guard could never
+fire. They are gitignored under "Live-session runtime state under `work/`".
+
+**Halt vs. exit.** A halt is never just a stop. Every inherited refusal in
+`launch-next-session.sh` was written for a watching human; unattended, a `die` is
+a silent stopped chain. So the supervisor exits 1, logs to
+`work/<proj>/.session-loop.log`, rings the terminal bell, and runs
+`SESSION_LOOP_NOTIFY` if set. A clean end of chain — deliberate quit or chain cap
+— exits 0.
+
+**Modes.** The dying session infers `interactive` vs `handsoff` and writes it into
+the sentinel; a human `touch work/<proj>/.hands-off` or `.interactive` overrides
+it. Interactive waits for **Enter** between sessions (a keypress, not a countdown
+— a countdown eats a human's unsubmitted text) and disables stall detection, since
+the human at the prompt is the stall detector.
+
 ## Multi-session model (session-keyed registry + per-project lock)
 
 > **Status:** implemented 2026-08-05 (session-keyed registry + `register

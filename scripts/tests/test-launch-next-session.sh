@@ -336,20 +336,23 @@ assert_eq "W5a: exit 0" "$rc" "0"
 assert_not_contains "W5b: no worktree sync attempted" "$out" "worktree-invoked"
 cd "$TMP"
 
-echo "W6: stranded worktree .session-seq — numeric max across checkouts wins (state-sync)"
+echo "W6: stranded worktree .session-seq — main checkout is authoritative, stray reported"
+# Max-wins was retired once seq-sync became the counter's only writer: it could
+# only increase, so a stranded over-count was ratified forever (ADR-0008).
 printf '27\n' > "$GMAIN/work/testproj/.session-seq"
 printf '29\n' > "$GMAIN/wt/work/testproj/.session-seq"
 out=$(run_lns "$WLNS" testproj --dry-run 2>&1 </dev/null); rc=$?
 assert_eq       "W6a: exit 0" "$rc" "0"
-assert_contains "W6b: successor numbered from the worktree copy" "$out" "rollover session #30"
-assert_contains "W6c: adoption noted" "$out" "session-seq: adopting 29"
+assert_contains "W6b: successor numbered from the main copy" "$out" "rollover session #28"
+assert_contains "W6c: stray reported, not adopted" "$out" "ignoring stray copy"
+assert_not_contains "W6c2: the stray does not floor the number" "$out" "rollover session #30"
 out=$(run_lns "$WLNS" testproj 2>&1 </dev/null)
-assert_eq "W6d: real run persists max+1 in main root" \
-  "$(cat "$GMAIN/work/testproj/.session-seq")" "30"
+assert_eq "W6d: real run persists main+1 in main root" \
+  "$(cat "$GMAIN/work/testproj/.session-seq")" "28"
 assert_eq "W6e: worktree copy left alone" \
   "$(cat "$GMAIN/wt/work/testproj/.session-seq")" "29"
 out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null)
-assert_contains "W6f: main-checkout invocation reconciles too" "$out" "rollover session #31"
+assert_contains "W6f: main-checkout invocation reads the same copy" "$out" "rollover session #29"
 rm -f "$GMAIN/work/testproj/.session-seq" "$GMAIN/wt/work/testproj/.session-seq"
 
 echo "W7: stranded newer worktree .rollover-options — adopted, persisted to main"
@@ -366,6 +369,25 @@ assert_contains "W7d: real run persists the adopted copy to main" \
   "$(cat "$GMAIN/work/testproj/.rollover-options")" "ROLLOVER_OPT_APPROVAL=edits"
 rm -f "$GMAIN/work/testproj/.rollover-options" "$GMAIN/wt/work/testproj/.rollover-options" \
   "$GMAIN/work/testproj/.session-seq"
+
+echo "W8: dry-run from a worktree announces the sync, never claims it happened"
+# The note sat outside the `[ "$DRY" -eq 0 ]` guard, so --dry-run reported
+# "main checkout synced" while pulling nothing. A dry-run that describes work it
+# did not do is worse than silence: it is the one mode whose whole contract is
+# that the operator can trust the readout without checking.
+echo "# launcher v4b" > "$GMAIN/wt/work/testproj/next-session.md"
+GITC -C "$GMAIN/wt" commit -qam "rollover v4b"
+git -C "$GMAIN/wt" push -q origin session-branch:main
+before="$(cat "$GMAIN/work/testproj/next-session.md")"
+out=$(run_lns "$WLNS" testproj --dry-run 2>&1 </dev/null); rc=$?
+assert_eq "W8a: exit 0" "$rc" "0"
+assert_not_contains "W8b: does not claim a completed sync" "$out" "checkout synced"
+assert_contains     "W8c: announces the sync as pending" "$out" "would sync"
+assert_eq "W8d: the main checkout was genuinely not pulled" \
+  "$(cat "$GMAIN/work/testproj/next-session.md")" "$before"
+git -C "$GMAIN" reset -q --hard origin/main
+rm -f "$GMAIN/work/testproj/.session-seq"
+
 
 echo "F1: newer launcher on an unmerged local branch — stale-launcher refusal (L33)"
 echo "# launcher v5" > "$GMAIN/wt/work/testproj/next-session.md"

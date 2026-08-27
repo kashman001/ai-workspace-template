@@ -54,6 +54,12 @@ Consequences (observed 2026-08-05, session 7):
   with the worktree-keyed path explicitly. Before acting on any surprising
   WARN/STOP, confirm the artifact is yours: `grep` it for a string unique to
   the current conversation.
+- **Recurred 2026-08-21.** The failure is silent, not loud: `record` from the
+  worktree did **not** error — it printed a perfectly plausible
+  `tokens=135245 status=WARN` for a *different* session's artifact, 4.5K above
+  this session's true 130755. A number that looks right is the whole hazard.
+  Always read the `artifact=` field in the output and check the slug matches
+  your cwd before believing the token count.
 
 ## Claude Code — worktree-isolated Bash guard refuses compound commands
 
@@ -191,3 +197,61 @@ both hit twice (sessions 15 and 16):
 - Never auto-relaunch a rollover successor from inside a worktree: its
   registry/locks are worktree-local and die with it. Launch the successor
   from the main checkout after pulling. *(Retired by the fix above.)*
+
+## Ledger headings break silently — verify the count, and check the archive after prep
+
+Two separate ledger-integrity failures inside one session (2026-08-22), both of
+which passed a "looks fine" glance:
+
+1. **A patch script spliced a whole block into the file's own comment header.**
+   The script asserted its *content* but anchored its *insertion point* on
+   `text.index("# Session Handoff")` — which matched the copy of that string
+   inside `handoff.md`'s PURPOSE comment (`TOP. Each "# Session Handoff" block
+   records…`), not the first real heading. `check-ledger.py` still printed
+   **"all ledgers well-formed"**; what exposed it was the count line reading
+   *"17 blocks, newest is session 79"* when 18/80 was expected.
+2. **`scripts/rollover-prep.sh` emitted a bare `# Session Handoff` line** at
+   line 1 of `handoff-archive.md` when it rotated blocks out. That one the gate
+   *did* catch: `handoff-archive.md:1 not a well-formed session block heading`,
+   exit 1.
+
+**Rules that follow:**
+
+- **Read `check-ledger.py`'s count line, not its verdict.** The verdict cannot
+  see a heading swallowed by a comment or a surrounding block; the count can.
+  Run it with `> file 2>&1; echo $?` — piping through `tail` masks the exit code.
+- **A patch script must assert its insertion point as strictly as its content.**
+  Anchor on a line-anchored pattern (`^# Session Handoff — <n>`), never a bare
+  substring that also appears in prose or comments.
+- **`rollover-prep.sh` rotates the archive unattended — check the result.** The
+  skill says so; this is the failure it is warning about. Verify the archive's
+  first line is a real numbered heading before committing the rollover.
+
+**Related:** `skills/session-rollover/SKILL.md` → Verification; the standing fix
+suggestion is to have `check-ledger.py` assert the block numbers form an
+unbroken descending run, which would have caught failure 1 immediately.
+
+## Workspace scripts — `die` is `exit`, so `|| true` cannot catch it
+
+Every script here defines `die() { echo "error: $*" >&2; exit 3; }`
+(`scripts/context-budget.sh`, `scripts/launch-next-session.sh`). Calling a
+helper that may `die` and guarding it with `|| true` **does not work** — `exit`
+terminates the shell, and `||` only sees non-zero *returns*, never an exit.
+
+```sh
+resolve_session 2>/dev/null || true      # WRONG — a die() inside still exits 3
+```
+
+This matters for any helper whose failure should be tolerable. `resolve_session`
+in `context-budget.sh` dies on an undetectable runtime or a missing artifact,
+which is fatal for a caller that only wanted the session id as decoration.
+
+Run it in a **subshell**, where the `exit` is contained:
+
+```sh
+ident="$( (resolve_session >/dev/null 2>&1 && printf '%s|%s' "$RUNTIME" "$SESSION_ID") 2>/dev/null )" || true
+```
+
+Caught 2026-08-25 while writing the session-numbering plan's provenance-sidecar
+snippet: the guard would have failed the counter sync — the part that matters —
+because identity lookup, the decoration, could not resolve a runtime.

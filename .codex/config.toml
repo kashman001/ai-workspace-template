@@ -5,3 +5,13 @@
 type = "command"
 command = "scripts/hooks/context-budget-codex-hook.sh"
 timeout = 30
+
+# Session-loop supervisor exit. Verdict for codex 0.149.0 `Stop`: FIRES, observed
+# live on 2026-08-26 (work/session-loop-automation/probe-results.md) — the hook
+# ran, TF_SESSION_LOOP survived the hook boundary, and SIGTERM to $PPID actually
+# terminated the agent. Inert unless TF_SESSION_LOOP=1.
+[[hooks.Stop]]
+[[hooks.Stop.hooks]]
+type = "command"
+command = "scripts/hooks/context-budget-stop-hook.sh codex"
+timeout = 30

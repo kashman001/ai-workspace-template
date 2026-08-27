@@ -11,6 +11,13 @@
 #          VS Code payloads are snake_case (session_id); the Copilot CLI sends
 #          camelCase (sessionId), so it exits harmlessly at the guard below if
 #          it ever loads this file.
+#
+# No session-loop exit hook here by design: an editor-hosted chat agent is a UI
+# pane, not a process owning a terminal. Killing it is neither possible nor
+# necessary — `code chat -r -m agent` already opens the successor headlessly
+# (launch-next-session.sh), so ROLLOVER_RELAUNCH=auto reaches zero human action
+# without a supervisor. The `Stop` branch below is the budget push, not an exit.
+# See the spec's "Editor-hosted chat agents".
 set -u
 event="${1:-}"
 command -v jq >/dev/null 2>&1 || exit 0

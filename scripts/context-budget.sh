@@ -5,13 +5,14 @@
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
 # Usage:   context-budget.sh check|register|record|watch|release|children|
-#            dispatch-contract|dispatch-open|dispatch-close|dispatch-list
+#            dispatch-contract|dispatch-open|dispatch-close|dispatch-list|
+#            seq-sync|opts-sync|rollover-complete
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
 #            [--parent-session <sid>] [--agent-id <id>] [--takeover] [--all]
 #            [--report <path>] [--brief <path>] [--gen <n>] [--task <slug>]
 #            [--agent-type <t>] [--model <m>] [--effort <e>] [--status <S>]
-#            [--interval <secs>] [--quiet]
+#            [--interval <secs>] [--quiet] [--mode interactive|handsoff]
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
 # Design notes: D1–D9 in docs/archive/context-budget-design.html + docs/context-budget.md.
@@ -68,8 +69,9 @@ COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30;
 COPILOT_PIN_AMBIGUOUS=0
 PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
 REPORT_FILE=""; BRIEF_FILE=""; GEN=1; GEN_SET=0
-TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""
-case "${1:-}" in check|register|record|watch|release|children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list) COMMAND="$1"; shift ;; esac
+TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""; SESSION_NUM=""; LOOP_MODE=""
+EXTRA_OPTS=""; APPROVAL=""
+case "${1:-}" in check|register|record|watch|release|children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list|seq-sync|opts-sync|rollover-complete) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -87,6 +89,10 @@ while [ $# -gt 0 ]; do
     --model) MODEL="$2"; shift 2 ;;
     --effort) EFFORT="$2"; shift 2 ;;
     --status) CLOSE_STATUS="$2"; shift 2 ;;
+    --session) SESSION_NUM="$2"; shift 2 ;;
+    --mode) LOOP_MODE="$2"; shift 2 ;;
+    --extra) EXTRA_OPTS="$2"; shift 2 ;;
+    --approval) APPROVAL="$2"; shift 2 ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -948,7 +954,173 @@ cmd_dispatch_list() {
   return "$any_open"
 }
 
+# seq-sync: the counter's single writer (spec: numbering rules 1-2; ADR-0008).
+# The agent no longer writes .session-seq by hand — a bare relative path lands
+# in the caller's own worktree and strands, which is how session 3 of
+# session-loop-automation left a `4` behind. Resolve, validate, then write.
+cmd_seq_sync() {
+  local dir seqf stored action _rt _sid _ident
+  [ -n "$PROJECT" ] || die "seq-sync requires --project <work-item>"
+  [ -n "$SESSION_NUM" ] || die "seq-sync requires --session <N>"
+  case "$SESSION_NUM" in
+    ''|*[!0-9]*) die "seq-sync: --session must be a positive integer, got: $SESSION_NUM" ;;
+  esac
+  [ "$SESSION_NUM" -ge 1 ] || die "seq-sync: --session must be >= 1, got: $SESSION_NUM"
+
+  dir="$WORKSPACE_ROOT/work/$PROJECT"
+  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
+  seqf="$dir/.session-seq"
+
+  if [ -f "$seqf" ]; then
+    stored="$(tr -cd '0-9' < "$seqf" 2>/dev/null)"
+  else
+    stored=""
+  fi
+
+  if [ -z "$stored" ]; then
+    action="created"
+  elif [ "$stored" -eq "$SESSION_NUM" ]; then
+    # The launcher already wrote this number before starting the session.
+    # A write that is not a correction is a bug — so do not touch the file,
+    # and leave the mtime alone (.rollover-options reconciliation is
+    # mtime-ordered; a gratuitous touch here is a lie to that reader).
+    action="noop"
+  elif [ "$stored" -lt "$SESSION_NUM" ]; then
+    action="raised"
+  else
+    action="lowered"
+  fi
+
+  [ "$action" = "noop" ] || printf '%s\n' "$SESSION_NUM" > "$seqf"
+
+  # Provenance sidecar (numbering rule 4). The counter stays a bare integer —
+  # launch-next-session.sh:191 parses it with `tr -cd '0-9'`, which would turn a
+  # JSON body into a garbage number — so identity lives beside it, not in it.
+  # Written even on a noop: "session N ran and agreed" is the evidence that makes
+  # a later over-count attributable.
+  # resolve_session can `die`, and `die` is `exit 3` — `|| true` does NOT catch
+  # an exit. Run it in a subshell so failing to identify the writer degrades the
+  # sidecar to "unknown" instead of failing the counter sync, which is the part
+  # that actually matters.
+  _rt="unknown"; _sid="unknown"
+  _ident="$( (resolve_session >/dev/null 2>&1 && printf '%s|%s' "$RUNTIME" "$SESSION_ID") 2>/dev/null )" || true
+  if [ -n "$_ident" ]; then
+    _rt="${_ident%%|*}"; _sid="${_ident##*|}"
+    [ -n "$_rt" ] || _rt="unknown"
+    [ -n "$_sid" ] || _sid="unknown"
+  fi
+
+  jq -n \
+    --argjson session "$SESSION_NUM" \
+    --arg action "$action" \
+    --arg runtime "$_rt" \
+    --arg session_id "$_sid" \
+    --arg cwd "$(pwd -P)" \
+    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{session:$session, action:$action, runtime:$runtime,
+      session_id:$session_id, cwd:$cwd, written_at:$written_at}' \
+    > "$seqf.provenance.json"
+
+  printf 'seq-sync: %s project=%s session=%s stored=%s path=%s\n' \
+    "$action" "$PROJECT" "$SESSION_NUM" "${stored:-none}" "$seqf"
+  return 0
+}
+
+# opts-sync: the successor-options file's single writer. Same layer-1 rule as
+# seq-sync — a hand-edit from a worktree lands in the caller's own checkout.
+# Rewrites the file whole rather than merging: the launcher initialises all
+# three keys to "" before sourcing (launch-next-session.sh:275), so an omitted
+# key means "unset", and a merge would make an option impossible to clear.
+cmd_opts_sync() {
+  local dir optf
+  [ -n "$PROJECT" ] || die "opts-sync requires --project <work-item>"
+  dir="$WORKSPACE_ROOT/work/$PROJECT"
+  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
+  # Four levels, matching launch-next-session.sh:277-311. Keep these in step:
+  # a level the writer cannot set is a level that still needs a hand-edit.
+  case "$APPROVAL" in
+    ''|default|edits|auto|full) : ;;
+    *) die "opts-sync: --approval must be default|edits|auto|full, got: $APPROVAL" ;;
+  esac
+  optf="$dir/.rollover-options"
+  : > "$optf"
+  [ -n "$APPROVAL" ]   && printf 'ROLLOVER_OPT_APPROVAL=%s\n' "$APPROVAL" >> "$optf"
+  [ -n "$MODEL" ]      && printf 'ROLLOVER_OPT_MODEL=%s\n' "$MODEL" >> "$optf"
+  [ -n "$EXTRA_OPTS" ] && printf 'ROLLOVER_OPT_EXTRA=%s\n' "$EXTRA_OPTS" >> "$optf"
+  printf 'opts-sync: wrote %s\n' "$optf"
+  return 0
+}
+
 command -v jq >/dev/null 2>&1 || die "jq is required"
+
+# rollover-complete: the sentinel's single writer (spec: "Architecture" -> 3;
+# "Worktrees" -> layer 3, rules 1-2). Written LAST in the rollover, after flush
+# and verification, so a rollover that dies partway leaves none (failure mode 8).
+#
+# Not a flag — a record. Absence is the meaningful signal ("nobody rolled over"),
+# so a stranded copy does not merge wrong, it lies. Hence: resolved through the
+# common dir like every other coordination file, and carrying enough identity for
+# a supervisor to tell "no session ended" from "a session ended somewhere I did
+# not look."
+cmd_rollover_complete() {
+  local dir sentf seq_own _rt _sid _ident hands inter
+  [ -n "$PROJECT" ] || die "rollover-complete requires --project <work-item>"
+  [ -n "$LOOP_MODE" ] || die "rollover-complete requires --mode interactive|handsoff"
+
+  dir="$WORKSPACE_ROOT/work/$PROJECT"
+  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
+
+  # Human override wins over the agent's inference (spec: "Modes"). Mode is a
+  # property of the moment, and the human is the authority on which moment it is.
+  hands=0; inter=0
+  [ -f "$dir/.hands-off" ]   && hands=1
+  [ -f "$dir/.interactive" ] && inter=1
+  if [ "$hands" -eq 1 ] && [ "$inter" -eq 1 ]; then
+    die "rollover-complete: both .hands-off and .interactive exist in work/$PROJECT — remove one"
+  fi
+  [ "$hands" -eq 1 ] && LOOP_MODE="handsoff"
+  [ "$inter" -eq 1 ] && LOOP_MODE="interactive"
+
+  case "$LOOP_MODE" in
+    interactive|handsoff) : ;;
+    *) die "rollover-complete: --mode must be interactive|handsoff, got: $LOOP_MODE" ;;
+  esac
+
+  # seq is the WRITER's own number, not its successor's. By the time this runs,
+  # --emit has already bumped the counter for the successor (failure mode 8), so
+  # reading .session-seq here would record N+1 and the supervisor's
+  # sentinel.seq == seq_before assertion would never hold. The provenance sidecar
+  # holds the number seq-sync validated for THIS session — its first consumer.
+  seq_own="$(jq -r '.session // empty' "$dir/.session-seq.provenance.json" 2>/dev/null)"
+  [ -n "$seq_own" ] || seq_own="$(tr -cd '0-9' < "$dir/.session-seq" 2>/dev/null)"
+  [ -n "$seq_own" ] || seq_own=0
+
+  # Same subshell guard as seq-sync: resolve_session can `die`, and `die` is
+  # `exit 3`, which `|| true` does not catch.
+  _rt="unknown"; _sid="unknown"
+  _ident="$( (resolve_session >/dev/null 2>&1 && printf '%s|%s' "$RUNTIME" "$SESSION_ID") 2>/dev/null )" || true
+  if [ -n "$_ident" ]; then
+    _rt="${_ident%%|*}"; _sid="${_ident##*|}"
+    [ -n "$_rt" ] || _rt="unknown"
+    [ -n "$_sid" ] || _sid="unknown"
+  fi
+
+  sentf="$dir/.rollover-complete"
+  jq -n \
+    --arg mode "$LOOP_MODE" \
+    --argjson seq "$seq_own" \
+    --arg reason "$LABEL" \
+    --arg session_id "$_sid" \
+    --arg runtime "$_rt" \
+    --arg cwd "$(pwd -P)" \
+    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{mode:$mode, seq:$seq, reason:$reason, session_id:$session_id,
+      runtime:$runtime, cwd:$cwd, written_at:$written_at}' \
+    > "$sentf"
+
+  printf 'rollover-complete: mode=%s seq=%s path=%s\n' "$LOOP_MODE" "$seq_own" "$sentf"
+  return 0
+}
 
 case "$COMMAND" in
   check) resolve_session; emit_check ;;
@@ -961,4 +1133,7 @@ case "$COMMAND" in
   dispatch-open) cmd_dispatch_open ;;
   dispatch-close) cmd_dispatch_close ;;
   dispatch-list) cmd_dispatch_list ;;
+  seq-sync) cmd_seq_sync ;;
+  opts-sync) cmd_opts_sync ;;
+  rollover-complete) cmd_rollover_complete ;;
 esac
