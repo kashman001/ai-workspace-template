@@ -339,7 +339,14 @@ fi
 # Every mode prints the paste-me prompt first — it must survive launch failure.
 printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n' "$PROMPT"
 
-[ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
+# --emit hands the command to a supervisor that runs it in the FOREGROUND and
+# waits on it, so no mode-derived backgrounding may reach the emitted line. The
+# explicit --bg is refused above, but that guard runs before this assignment:
+# without the [ -z "$EMIT" ] clause, ROLLOVER_RELAUNCH=auto + runtime=claude
+# slips --bg into the emitted command, session-loop.sh evals something that
+# returns at once, and it reads the missing sentinel as a deliberate quit
+# (found 2026-08-27, starting a supervised chain on a fresh work item).
+[ -z "$EMIT" ] && [ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
 # copilot-vscode's `code chat` is detached by nature (exits before the seeded
 # session responds — issue 01) — always confirm the successor via the BG loop.
 [ "$RUNTIME" = "copilot-vscode" ] && BG=1
