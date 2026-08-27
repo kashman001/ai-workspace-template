@@ -74,5 +74,30 @@ got="$(eval "set -- $(sed 's/^claude //' "$EMITF")"; echo "$*")"
 assert_contains "E5a: the bootstrap prompt survived quoting" "$got" "rollover session #8"
 assert_contains "E5b: the launcher wording is verbatim" "$got" "continue from **First actions**"
 
+echo "E6: ROLLOVER_RELAUNCH=auto must not slip --bg into the emitted command"
+# The regression this pins: --bg is refused as a flag (E4c), but BG is ALSO set
+# from the mode, later in the script. The supervisor evals the emitted line in
+# the foreground and waits on it, so a --bg there returns at once and the chain
+# reads the missing sentinel as a deliberate quit. Every case above runs under
+# the fixture's ROLLOVER_RELAUNCH=manual, which is exactly why this went unseen.
+printf 'ROLLOVER_RELAUNCH=auto\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
+printf '7\n' > "$SEQF"; rm -f "$EMITF"
+run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >/dev/null 2>&1
+emitted="$(cat "$EMITF" 2>/dev/null)"
+case "$emitted" in
+  *--bg*) bad "E6a: emitted command carries --bg under auto ([$emitted])" ;;
+  '') bad "E6a: nothing was emitted under auto" ;;
+  *) ok "E6a: emitted command is foreground under auto" ;;
+esac
+# %q-quoted, like E5 — unquote by eval before matching on the prompt text.
+got="$(eval "set -- $(sed 's/^claude //' "$EMITF")"; echo "$*")"
+assert_contains "E6b: it is still a real launch command" "$got" "rollover session #8"
+# --bg remains correct for a NON-emit auto launch: that path backgrounds by
+# design (ADR-0003) and confirms the successor via the poll loop.
+printf '7\n' > "$SEQF"
+dry="$(run_lns "$LNS" testproj --runtime claude --dry-run 2>/dev/null | sed -n 's/^cmd: //p')"
+assert_contains "E6c: a non-emit auto launch still backgrounds" "$dry" "--bg"
+printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

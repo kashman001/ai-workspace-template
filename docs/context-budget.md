@@ -310,6 +310,13 @@ itself:
 | 1 | absent | **a session ended somewhere I did not look** — halt and notify |
 | ≠ 1 | any | numbering rule 5 violated — halt and notify |
 
+`--emit` always produces a **foreground** command, whatever `ROLLOVER_RELAUNCH`
+says: the supervisor evals the staged line and waits on it, so a backgrounding
+launch would return at once and the chain would read the missing sentinel as a
+deliberate quit. `auto` still backgrounds a normal, non-emit rollover launch —
+the two paths differ deliberately (`launch-next-session.sh`, the `[ -z "$EMIT" ]`
+clause on the mode-derived `BG=1`; pinned by `scripts/tests/test-emit-mode.sh` E6).
+
 `TF_SESSION_LOOP=1` is exported by the supervisor and inherited by the agent and
 its hooks. It is the single opt-in discriminator: unset, every mechanism here is
 inert and plain `claude` behaves exactly as before.
