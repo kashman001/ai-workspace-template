@@ -381,3 +381,33 @@ private remote.
 - Diagnose by narrowing to the authenticated operation. `ls-remote` on a public
   repo succeeds without credentials, so it proves the network and proves
   nothing about auth; the first command that actually hangs is the signal.
+
+## A clean auto-merge is not a correct merge — watch derived counts
+
+**Symptom.** A conflicted merge is resolved, every conflict marker is gone, the
+file parses, and the result is still wrong — in a place git never flagged.
+
+**Cause.** Git conflicts on *textual disagreement*, not on *semantic staleness*.
+When both branches independently changed the same derived value to the **same**
+number by different routes, git sees agreement and auto-merges silently. The
+merged tree then contains both routes, so the shared value is now wrong.
+
+Concretely (merging a long-lived branch back into `main`, 2026-08-27): two
+branches each appended one row to a changelog table and each bumped a
+"Resolved: 67" scorecard card from 66 to 67. The appended rows conflicted and
+were resolved by keeping both — correct. The card did **not** conflict, because
+both sides said 67. The merged page listed 68 resolved findings under a header
+claiming 67. The conflict markers pointed at the half that was easy; the silent
+half was the one that ended up wrong.
+
+**Rules:**
+
+- After resolving an **append-vs-append** conflict (both sides added to a list,
+  table, or log), immediately ask what *counts, totals, dates, or "last updated"
+  fields* are derived from that list, and re-derive them. They are the class git
+  cannot flag.
+- Read the non-conflicting part of the merge diff too. `git diff HEAD...MERGE_HEAD`
+  after resolution shows what was auto-merged; the conflict markers only show
+  what was not.
+- Same trap in any generated summary: a scorecard, a row count, a table of
+  contents, a "N findings" line, a version bump both sides made identically.
