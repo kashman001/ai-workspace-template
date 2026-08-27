@@ -340,3 +340,44 @@ Two consequences, and only one of them is a bug:
   when the holder's transcript has stopped growing **and** its `claude agents
   --json` state is `done`. Do *not* reach for it because a session reads
   `blocked` — that means waiting on a human, and the human is coming back.
+
+## `git -c credential.helper=...` APPENDS — a background push still hangs
+
+The recipe commonly carried for background (non-interactive) pushes is
+
+```sh
+git -c 'credential.helper=!gh auth git-credential' push
+```
+
+and on 2026-08-27 it **hung until killed**, twice, in a background job whose
+`gh auth token` and `gh api user` both worked fine and whose `git ls-remote`
+(unauthenticated) succeeded. The push was the only thing that blocked.
+
+`credential.helper` is a **multi-valued** config key. `-c` *adds* to the list,
+it does not replace it. A typical macOS `~/.gitconfig` sets two helpers —
+`osxkeychain` and `git-credential-manager` — and git tries them **in order**,
+so the keychain helper runs first and blocks forever waiting on a GUI/tty
+prompt that a background job can never answer. The `gh` helper at the end of
+the list is never reached.
+
+Reset the list with an empty value first, then add the one you want:
+
+```sh
+git -c credential.helper= \
+    -c 'credential.helper=!f() { echo username=x-access-token; echo "password=$(gh auth token)"; }; f' \
+    push -u origin <branch>
+```
+
+The empty `-c credential.helper=` is what clears the inherited helpers; without
+it the rest is decoration. Same fix applies to `pull` and `fetch` against a
+private remote.
+
+**Rules:**
+
+- A hang is not a credential *failure*. `gh auth status` looking healthy tells
+  you nothing about which helper git will reach first — check
+  `git config --get-all --global credential.helper` and read it as an ordered
+  list.
+- Diagnose by narrowing to the authenticated operation. `ls-remote` on a public
+  repo succeeds without credentials, so it proves the network and proves
+  nothing about auth; the first command that actually hangs is the signal.
