@@ -198,6 +198,12 @@ ROLLOVER_RUNTIME=claude   # fallback default only — the actual relaunch runtim
                           # comes from the dying session's own registry record
 ```
 
+The successor-registration handshake (`successor-pending-<project>.json`) is
+written only when `launch-next-session.sh` actually starts a successor; with
+`ROLLOVER_RELAUNCH=off` — or when the printed command is run by hand — the
+manually started successor registers project-less by design and picks up its
+work item at its first `--project` invocation.
+
 **Per-work-item override:** an optional `work/<project>/context-budget.env`
 may set `ROLLOVER_RELAUNCH` (and/or `ROLLOVER_RUNTIME`) for that work item
 alone — e.g. one project runs hands-free `auto` chaining while the workspace
@@ -268,16 +274,89 @@ project when no lock exists) and prints a one-line status
 (`project=… runtime=… session=… role=primary|auxiliary|child|superseded|none
 age=…s live=yes|no locked=yes|no`). Don't
 relaunch a session that's still live and locked — the lock enforces one
-active session per project — instead the script `exec`s
-`claude --resume <session_id>` on a real TTY (no `claude attach` subcommand
-exists; `-r/--resume` is the closest supported attach-by-id form, verified
-against live `--help` 2026-08-06). For a non-claude runtime it reports that
+active session per project — instead the script `exec`s, on a real TTY, either
+`claude attach <session_id>` or `claude --resume <session_id>` — it reads the
+session's `kind` from `claude agents --json` and picks attach for a background
+session, resume for anything else (`claude attach` exists as of claude 2.1.226,
+verified 2026-08-20, superseding the 2026-08-06 note that it did not; it opens
+a **background** session in this terminal, whereas `--resume` replays a
+transcript into a NEW process and so is not attaching). For a non-claude runtime it reports that
 attach is not possible (those runtimes have no background sessions — the
 launcher's `--bg` is claude-only — so the session is already interactive in
 someone's terminal). If the lock is released or stale, it prints the launch
 hint instead: run `scripts/launch-next-session.sh <project>` from a real
 terminal — it `exec`s the successor interactively with options inherited from
 `.rollover-options` as above.
+
+## The supervisor — `scripts/session-loop.sh`
+
+Runs a chain of rollover sessions unattended. Started once by a human, owns the
+terminal, never talks to a model:
+
+```sh
+scripts/session-loop.sh <project> [--runtime <rt>] \
+  [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>]
+```
+
+Each iteration it `eval`s the command the dying session staged into
+`work/<proj>/.next-command` (written by `launch-next-session.sh --emit`), waits on
+the foreground child, and then proves the iteration against two facts it reads
+itself:
+
+| Counter delta | Sentinel in the main checkout | Supervisor's reading |
+| --- | --- | --- |
+| 0 | absent | nobody rolled over — deliberate quit, exit 0 |
+| 1 | present, `seq` matches | normal rollover — relaunch |
+| 1 | absent | **a session ended somewhere I did not look** — halt and notify |
+| ≠ 1 | any | numbering rule 5 violated — halt and notify |
+
+`--emit` always produces a **foreground** command, whatever `ROLLOVER_RELAUNCH`
+says: the supervisor evals the staged line and waits on it, so a backgrounding
+launch would return at once and the chain would read the missing sentinel as a
+deliberate quit. `auto` still backgrounds a normal, non-emit rollover launch —
+the two paths differ deliberately (`launch-next-session.sh`, the `[ -z "$EMIT" ]`
+clause on the mode-derived `BG=1`; pinned by `scripts/tests/test-emit-mode.sh` E6).
+
+`TF_SESSION_LOOP=1` is exported by the supervisor and inherited by the agent and
+its hooks. It is the single opt-in discriminator: unset, every mechanism here is
+inert and plain `claude` behaves exactly as before.
+
+**Knobs** live in `context-budget.env`; a committed `work/<proj>/context-budget.env`
+overrides per work item, the same precedence `ROLLOVER_RELAUNCH` uses.
+
+| Knob | Default | Guards |
+| --- | --- | --- |
+| `SESSION_LOOP_MAX_SESSIONS` | 10 | chain cap (failure mode 3) |
+| `SESSION_LOOP_MIN_LIFETIME` | 60 | first-turn spurious STOP (failure mode 1) |
+| `SESSION_LOOP_STALL_LIMIT` | 3 | a stuck chain committing only bookkeeping (failure mode 2) |
+| `SESSION_LOOP_NOTIFY` | unset | a command run with the halt message as `$1` |
+
+**Stall detection** counts *consecutive* hands-off sessions whose commits touched
+nothing outside the rollover bookkeeping set — `next-session.md`, `handoff.md`,
+`handoff-archive.md`, and the counter. That exclusion is the whole guard, because
+rollover is itself a commit: writing the ledger and the launcher is what the skill
+does, so an unqualified "did this session commit?" test is a heartbeat, not a
+signal, and a perfectly stuck chain would pass it forever. One session that
+commits real work resets the count to zero. Ticket transitions need no separate
+mechanism — `work/<proj>/issues/` is outside the bookkeeping set already.
+
+For the same reason the supervisor's own runtime files must never be tracked:
+`.session-loop.log` is appended on every iteration by construction, so a
+committed copy would show progress in every session and the guard could never
+fire. They are gitignored under "Live-session runtime state under `work/`".
+
+**Halt vs. exit.** A halt is never just a stop. Every inherited refusal in
+`launch-next-session.sh` was written for a watching human; unattended, a `die` is
+a silent stopped chain. So the supervisor exits 1, logs to
+`work/<proj>/.session-loop.log`, rings the terminal bell, and runs
+`SESSION_LOOP_NOTIFY` if set. A clean end of chain — deliberate quit or chain cap
+— exits 0.
+
+**Modes.** The dying session infers `interactive` vs `handsoff` and writes it into
+the sentinel; a human `touch work/<proj>/.hands-off` or `.interactive` overrides
+it. Interactive waits for **Enter** between sessions (a keypress, not a countdown
+— a countdown eats a human's unsubmitted text) and disables stall detection, since
+the human at the prompt is the stall detector.
 
 ## Multi-session model (session-keyed registry + per-project lock)
 

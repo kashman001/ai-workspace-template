@@ -71,9 +71,19 @@ exchanges so STOP can't pass unnoticed.
    anchored matching — prep owns the archive step), and prints
    the remaining top handoff block, `.session-seq`, and the freshly captured
    `.rollover-options`. Read its output; it replaces separate git-status /
-   handoff-read / archive / options-capture calls. Hand-edit `.rollover-options`
-   only for `ROLLOVER_OPT_MODEL` / `ROLLOVER_OPT_EXTRA` (see
-   `scripts/capture-rollover-options.sh` header for semantics).
+   handoff-read / archive / options-capture calls.
+
+   To change the successor's model or extra flags, call the script rather than
+   editing the file — from a worktree a hand-edit lands in your own checkout:
+
+   ```sh
+   scripts/context-budget.sh opts-sync --project <project> --model <model>
+   ```
+
+   It rewrites the file whole, so pass every option you want the successor to
+   keep; `--approval default|edits|auto|full` and `--extra "<raw args>"` are the
+   other two keys (see `scripts/capture-rollover-options.sh` header for
+   semantics).
 
 2. **Reflect — route conversation-only learnings to disk.** Anything learned this
    session that lives only in conversation is unrecoverable after rollover:
@@ -108,16 +118,107 @@ exchanges so STOP can't pass unnoticed.
    - **First actions** — step 1 is always `scripts/context-budget.sh register`;
      then the concrete next steps.
 
-6. **Sync the counter, emit the bootstrap prompt.** Write the session number from
-   your **own** bootstrap prompt to `work/<project>/.session-seq`
-   (`echo <N> > …`; no number in your prompt → use the prep-printed value + 1).
-   The prompt + counter are the canonical session-number source; on disagreement
-   the ledger note gets repaired, never the counter (ADR-0007). Then emit the
-   successor's prompt in a fenced block:
+   Under `handsoff` mode the launcher must carry only **position** — "ticket 4 of
+   9, 3 done" against a named spec, plan, or ticket path. Over a 10-session
+   unattended chain a re-narrated mission is a telephone game; disk anchors facts
+   but not intent.
+
+6. **Check the counter, emit the bootstrap prompt.** This step is an **assertion,
+   not a write.** `work/<project>/.session-seq` holds the last-launched session's
+   number — so if a launcher started you, it *already holds yours*. Compare it
+   (prep printed the effective value in step 1) against the number in your own
+   bootstrap prompt:
+
+   - **Equal** → the normal case. **Write nothing.** The launcher already synced it.
+   - **Different** → you started ad-hoc (hand-pasted prompt, launcher bypassed).
+     Correct it to **your own** number and note the correction in your handoff block.
+   - **No number in your prompt** → you are the prep-printed value + 1; write that.
+
+   **A write that is not a correction is a bug.** Re-deriving the number here is
+   exactly how session 3 of `session-loop-automation` wrote `4`, launched `#5`,
+   and left no session 4 (2026-08-25). At step 6 your *successor's* number is the
+   salient one and it is the wrong one: the counter holds **yours**, and
+   `launch-next-session.sh` adds the one.
+
+   **An error here is permanent, so get it right the first time.** Reconciliation
+   across checkouts is numeric-max-wins, which can only increase — a counter set
+   too high is ratified forever, and the self-heal below recovers only a counter
+   set too *low* (ADR-0008).
+
+   **You do not write this file.** Call the script, which resolves the common dir,
+   validates your number against the stored one, and writes only when that is a
+   correction:
+
+   ```sh
+   scripts/context-budget.sh seq-sync --project <project> --session <N>
+   ```
+
+   `<N>` is **your own** number — the one in your bootstrap prompt — never your
+   successor's. The script reports what it did:
+
+   | Action | Meaning | What you do |
+   | --- | --- | --- |
+   | `noop` | the counter already held your number | nothing; this is the normal case |
+   | `created` | no counter existed | nothing |
+   | `raised` | counter was low — you started ad-hoc | note the correction in your handoff block |
+   | `lowered` | counter was **high** — a previous session over-counted | note it, and say which number was wrong |
+
+   A `raised` or `lowered` result means something upstream was wrong. Record it;
+   an unexplained correction in the ledger is how the next reader learns the
+   lineage skipped a number.
+
+   Because the script is now the only writer, the counter has exactly one copy and
+   nothing strands. The read-time reconciliation in `launch-next-session.sh` is a
+   safety net for pre-existing strays, not a mechanism to rely on. The same rule
+   applies to `.rollover-options` in step 1 — see that step for its script call.
+
+   The prompt + counter remain the canonical session-number source; on
+   disagreement the ledger note gets repaired, never the counter (ADR-0007, as
+   amended by ADR-0008). Then emit the successor's prompt in a fenced block:
 
    > Work item <project> - rollover session #N+1. Read
    > `work/<project>/next-session.md` and continue from **First actions**.
    > Governing skill: `skills/session-rollover/SKILL.md`.
+
+   > **A committed `ROLLOVER_RELAUNCH=auto` IS your authorization to launch the
+   > successor. Do not ask for permission. Do not stop and wait to be told.**
+   >
+   > Launching an unattended session that spends tokens trips the standing
+   > instinct to confirm outward-facing or hard-to-reverse actions "unless
+   > durably authorized." A knob committed to `context-budget.env` **is** that
+   > durable authorization — the user set it precisely so the chain does not
+   > stop. Across sessions 1–10 of `session-loop-automation` agents kept
+   > declining to launch anyway, because the caution was in context and the
+   > permission was only on disk. It is now in both places; there is nothing
+   > left to check.
+   >
+   > **Before concluding you *cannot* launch, run
+   > `scripts/launch-next-session.sh <project> --dry-run` and read what it
+   > prints.** A believed technical blocker is not a blocker until the dry-run
+   > confirms it. This is a separate failure from the permission one above: it
+   > does not feel like hesitancy, it feels like a fact, so the authorization
+   > rule never fires. The script is worktree-aware — invoked from a worktree it
+   > ff-pushes the branch to main, syncs the main checkout, and proceeds — the
+   > stale-launcher-guard paragraph a few lines below says so. Session 12 of
+   > `session-loop-automation` reported it could not launch for exactly that
+   > reason, with the disproving text open in the same session; the dry-run
+   > printed `worktree-invoked: dry-run would sync the main checkout` in about
+   > three seconds and the real launch worked first try. One cheap command turns
+   > the assumption into an observation.
+   >
+   > **"I need input from the user" is expressed by rolling over with
+   > `--mode interactive` (step 8), never by declining to launch.** Interactive
+   > mode starts the successor and has it re-pose the question on a fresh
+   > window, with full context. Declining to launch is strictly worse than that
+   > in every case: it burns the handoff you just wrote, strands staged work,
+   > and still requires the user to notice and intervene — the interruption
+   > *plus* the delay.
+   >
+   > The one thing to get right: launch the successor **into work it can
+   > actually start**. If the next unit is genuinely blocked on a human
+   > decision, that is what interactive mode is for — carry the question into
+   > the launcher's START HERE so the successor asks it first. Blocked is a
+   > reason to roll over interactively, never a reason to halt the chain.
 
    The "Work item … session #" lead line names the lineage (session titles are
    auto-generated from early content). Honor `ROLLOVER_RELAUNCH` via
@@ -126,9 +227,56 @@ exchanges so STOP can't pass unnoticed.
    the pasted prompt is the whole handoff. The script refuses to launch when a
    newer committed `next-session.md` exists on a ref outside the launching
    checkout's history (stale-launcher guard, backlog L33) — merge/pull first;
-   `--skip-freshness` overrides.
+   `--skip-freshness` overrides. Worktree-invoked launches self-heal this when
+   the work branch is a clean fast-forward of `origin/main`: the script
+   ff-pushes the branch to main, syncs the main checkout, and proceeds; only
+   real divergence still refuses.
+
+   **Under the supervisor (`TF_SESSION_LOOP=1`), you do not launch — you stage.**
+   Instead of running the launcher bare, run it with `--emit`, which performs
+   every real-run side effect and writes the successor's command to the file the
+   supervisor is waiting on:
+
+   ```sh
+   scripts/launch-next-session.sh <project> \
+     --emit "$(git rev-parse --path-format=absolute --git-common-dir)/../work/<project>/.next-command"
+   ```
+
+   The absolute path is not optional — the script refuses a relative one. A
+   relative path resolves against *your* cwd, which under isolation is a worktree,
+   and the supervisor reading the main checkout would find nothing and report a
+   clean shutdown (spec, "Worktrees" -> layer 3, rule 1).
+
+   `TF_SESSION_LOOP` unset => ignore this entirely and emit the paste-ready prompt
+   as always.
 
 7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
+
+8. **Under the supervisor only — write the sentinel, last.** If
+   `TF_SESSION_LOOP` is set, the very last thing you do is:
+
+   ```sh
+   scripts/context-budget.sh rollover-complete --project <project> \
+     --mode <interactive|handsoff> --label "<why you rolled>"
+   ```
+
+   **Last** is load-bearing. The sentinel means *"this session ended on purpose,
+   with disk current."* Writing it before the flush would make a half-completed
+   rollover indistinguishable from a clean one, and the supervisor would relaunch
+   on top of stale disk (failure mode 8).
+
+   Choose `--mode` by what the moment is, not what the launch was:
+
+   | | `interactive` | `handsoff` |
+   | --- | --- | --- |
+   | You were | mid-conversation with a human | mid-execution of a plan, spec, or ticket |
+   | The successor | re-poses the open question and waits | resumes executing |
+   | Your launcher must | carry the live question **verbatim** | carry only *position* against a fixed artifact — never a re-told goal |
+
+   A human `touch work/<project>/.hands-off` or `.interactive` overrides you; the
+   script applies that itself, so do not check for those files.
+
+   `TF_SESSION_LOOP` unset => skip this step entirely.
 
 ## Guardrails
 
@@ -145,8 +293,17 @@ exchanges so STOP can't pass unnoticed.
 
 - `grep -n '^# Session Handoff' work/<project>/handoff.md` shows exactly 2 blocks,
   yours on top with today's date (prep rotated the rest; you prepended one).
+- `scripts/check-ledger.py work/<project>` exits 0. The grep above counts blocks
+  but cannot see a heading swallowed by an unclosed purpose comment, nor one
+  filed out of order — both have reached a live ledger. Prep rotates the archive
+  unattended, so check the result rather than assuming it.
 - The launcher was REPLACED, not appended: `next-session.md` describes only the
   next session's mission.
+- Session number: the counter equals **your own** number, not your successor's —
+  `cat "$(git rev-parse --path-format=absolute --git-common-dir)/../work/<project>/.session-seq"`
+  prints the number in your bootstrap prompt. If it prints your number + 1, you
+  wrote your successor's number; correct it *now*, before launching, because
+  max-wins makes it unrecoverable afterwards (ADR-0008).
 - Work-item lock: `scripts/launch-next-session.sh` releases it itself immediately
   before launching. If the script was not invoked, release manually:
   `scripts/context-budget.sh release --project <project>`.

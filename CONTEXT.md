@@ -123,6 +123,9 @@ untagged skills assume an engineering operator.
   synthesized into prioritized recommendations. `/doc-review <path>`
 - **onboard-repo** — bring a repo into the workspace: registry entry, graphify
   index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
+- **research-wave** — research several subjects in parallel, then verify each
+  result with an independent fact-checker before the claims are published or
+  presented. User-invoked only. `/research-wave <subjects>`
 - **rlm** — answer a query over a context too large to read into chat
   (persistent Python REPL + cheap leaf LLM over slices; good for counting,
   per-item classification, whole-corpus summaries). `/rlm context=<path> query=<question>`
@@ -270,6 +273,17 @@ Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in
 `docs/context-budget.md` → "Relaunch knobs"); a committed
 `work/<proj>/context-budget.env` overrides it per work item. The successor
 inherits the predecessor's launch options via `work/<proj>/.rollover-options`.
+
+**`ROLLOVER_RELAUNCH=auto` is standing authorization to launch the successor —
+do not ask, and do not stop to be told.** It is committed to disk precisely so
+agent work continues across session boundaries without a human restarting it
+each time. Needing the user's input is expressed by rolling over with
+`--mode interactive`, so the successor re-poses the question on a fresh window;
+it is never expressed by declining to launch, which burns the handoff and
+strands the work. And before concluding you *cannot* launch, run
+`scripts/launch-next-session.sh <project> --dry-run` — a believed blocker is not
+a blocker until the dry-run confirms it. Details:
+`skills/session-rollover/SKILL.md` step 6.
 
 Full reference: `docs/context-budget.md`; rollover workflow:
 `skills/session-rollover/SKILL.md`.

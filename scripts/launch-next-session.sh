@@ -8,6 +8,7 @@
 #          ROLLOVER_RUNTIME > claude.
 # Usage:   launch-next-session.sh <project>
 #            [--runtime claude|codex|gemini|opencode|copilot] [--bg] [--dry-run]
+#            [--emit <abs-path>] [--skip-freshness]
 # Knobs:   ROLLOVER_RELAUNCH=off|manual|auto, ROLLOVER_RUNTIME (fallback
 #          only). Precedence: explicit env > work/<project>/context-budget.env
 #          (committed per-item policy, optional) > global context-budget.env >
@@ -16,7 +17,10 @@
 #          work/<project>/.rollover-options (optional, written at rollover):
 #          ROLLOVER_OPT_APPROVAL=default|edits|auto|full, ROLLOVER_OPT_MODEL=<id>,
 #          ROLLOVER_OPT_EXTRA=<raw args> — replayed as per-runtime flags on
-#          the successor launch.
+#          the successor launch. Use ROLLOVER_OPT_EXTRA to hand the successor
+#          an opt-in MCP fragment, e.g.
+#          ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<server>.json"
+#          (claude-only flags; see mcp-fragments/README.md).
 # Exit:    0 ok / 3 error. Requires jq.
 # Vendor flags verified against live --help 2026-08-05: claude [prompt] + --bg;
 # codex [PROMPT]; gemini -i; opencode --prompt; copilot -i. claude -n/--name
@@ -60,18 +64,32 @@ STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 note() { echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
 
-PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0
+PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0; EMIT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --bg) BG=1; shift ;;
     --dry-run) DRY=1; shift ;;
     --skip-freshness) SKIP_FRESH=1; shift ;;
+    --emit) EMIT="$2"; shift 2 ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--skip-freshness]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit <abs-path>] [--skip-freshness]"
+
+# --emit: perform every real-run side effect, then write the command to a file
+# instead of exec'ing (spec: "Architecture" -> 2). exec would replace the
+# supervisor; --dry-run would skip the counter bump, the options adopt, the lock
+# release, and the pending record the successor's register consumes.
+if [ -n "$EMIT" ]; then
+  case "$EMIT" in
+    /*) : ;;
+    *)  die "--emit requires an absolute path (layer-1 invariant: a relative path lands in the caller's own worktree)" ;;
+  esac
+  [ "$DRY" -eq 0 ]  || die "--emit cannot be combined with --dry-run (--emit performs the side effects --dry-run refuses)"
+  [ "$BG"  -eq 0 ]  || die "--emit cannot be combined with --bg (the supervisor runs the child in the foreground)"
+fi
 
 # Worktree-invoked (issue 05): tracked handoff artifacts (launcher/ledger)
 # flow only through git, so before launching make the successor's launch root
@@ -86,11 +104,17 @@ if [ "$SCRIPT_ROOT" != "$WORKSPACE_ROOT" ]; then
     || die "worktree has commits not on any remote — push first (the successor launches from the main checkout)"
   [ -z "$(git -C "$WORKSPACE_ROOT" status --porcelain -uno -- "work/$PROJECT" 2>/dev/null)" ] \
     || die "main checkout has uncommitted changes under work/$PROJECT — resolve them before relaunch"
+  # The note belongs INSIDE the guard: --dry-run performs no pull, and a
+  # readout claiming a sync that did not happen is the one failure a dry-run
+  # cannot afford — the mode exists so the operator can trust it without
+  # verifying. Both branches keep the "worktree-invoked" marker the tests match on.
   if [ "$DRY" -eq 0 ]; then
     git -C "$WORKSPACE_ROOT" pull --ff-only -q 2>/dev/null \
       || die "main checkout 'git pull --ff-only' failed (diverged or offline) — sync it manually"
+    note "worktree-invoked: main checkout synced; launching from $WORKSPACE_ROOT"
+  else
+    note "worktree-invoked: dry-run would sync the main checkout, then launch from $WORKSPACE_ROOT"
   fi
-  note "worktree-invoked: main checkout synced; launching from $WORKSPACE_ROOT"
   cd "$WORKSPACE_ROOT"
 fi
 
@@ -109,6 +133,34 @@ if [ "$SKIP_FRESH" -eq 0 ]; then
   # someone has a launcher edit this checkout lacks (no date comparison —
   # rapid-fire commits share second-resolution timestamps).
   NEWER="$(git -C "$WORKSPACE_ROOT" rev-list -1 --all --not HEAD -- "work/$PROJECT/next-session.md" 2>/dev/null)"
+  # Inline ff-only self-heal (rollover-automation-fix): a worktree-invoked
+  # launch commits the fresh launcher on its work branch, but the successor
+  # launches from the main checkout — background sessions cannot close that
+  # gap themselves (classifier / keychain / isolation), so every bg rollover
+  # used to die here waiting for a human merge. If the work branch is a CLEAN
+  # fast-forward of origin/main, push it to main and re-check; on real
+  # divergence fall through to the refusal below (a human must see it).
+  # The push must also actually cure the staleness — NEWER reachable from the
+  # work branch — else (newest launcher on a third ref) both dry-run and real
+  # mode refuse identically instead of pushing and then refusing anyway.
+  if [ -n "$NEWER" ] && [ "$SCRIPT_ROOT" != "$WORKSPACE_ROOT" ]; then
+    WT_BRANCH="$(git -C "$SCRIPT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    if [ -n "$WT_BRANCH" ] && [ "$WT_BRANCH" != "HEAD" ] \
+       && git -C "$SCRIPT_ROOT" merge-base --is-ancestor origin/main "$WT_BRANCH" 2>/dev/null \
+       && git -C "$SCRIPT_ROOT" merge-base --is-ancestor "$NEWER" "$WT_BRANCH" 2>/dev/null; then
+      if [ "$DRY" -eq 1 ]; then
+        note "dry-run: would ff-push origin $WT_BRANCH:main (stale launcher self-heal)"
+        NEWER=""
+      elif git -C "$SCRIPT_ROOT" push origin "$WT_BRANCH:main" >/dev/null 2>&1; then
+        note "stale launcher self-heal: ff-pushed origin $WT_BRANCH:main"
+        git -C "$WORKSPACE_ROOT" pull --ff-only -q 2>/dev/null \
+          || die "main checkout 'git pull --ff-only' failed after ff-push — sync it manually"
+        NEWER="$(git -C "$WORKSPACE_ROOT" rev-list -1 --all --not HEAD -- "work/$PROJECT/next-session.md" 2>/dev/null)"
+      else
+        note "ff-push origin $WT_BRANCH:main failed — leaving the stale-launcher refusal in place"
+      fi
+    fi
+  fi
   if [ -n "$NEWER" ]; then
     refs="$(git -C "$WORKSPACE_ROOT" branch -a --contains "$NEWER" 2>/dev/null \
       | sed 's/^[* ] //' | head -3 | tr '\n' ' ')"
@@ -133,14 +185,43 @@ MODE="${ROLLOVER_RELAUNCH:-off}"
 FALLBACK_RUNTIME="${ROLLOVER_RUNTIME:-claude}"
 CONFIRM_SECS="${ROLLOVER_CONFIRM_SECS:-120}"
 
+# Untracked coordination state can be stranded in a sibling checkout: the
+# rolling agent writes work/<proj>/.session-seq (and hand-edits
+# .rollover-options) relative to its OWN worktree, where this script never
+# used to look (rollover-state-sync-issue). Reconcile at read time across
+# every checkout of the repo instead of trusting the main copy. Fails open
+# to the main checkout outside a git repo (main is listed first, so it also
+# wins mtime ties below).
+all_checkouts() {
+  git -C "$WORKSPACE_ROOT" worktree list --porcelain 2>/dev/null \
+    | sed -n 's/^worktree //p'
+  echo "$WORKSPACE_ROOT"   # non-git fallback; the duplicate is harmless
+}
+
 # Lineage sequence: work/<proj>/.session-seq holds the last-launched session's
 # number (machine-local runtime state, gitignored). Successor = last+1;
 # persisted only on a real run (--dry-run never mutates). Absent file means
-# the current session is #1. Feeds the prompt lead + claude --name so session
-# titles read "work item + number" instead of a guess from early content.
+# the current session is #1.
+#
+# The main checkout's copy is authoritative (numbering rule 3). Cross-checkout
+# max-wins was retired once seq-sync became the counter's only writer: it could
+# only ever increase, so an over-count stranded in a worktree was ratified
+# forever and no downward correction could land. Strays are now reported, not
+# absorbed — a warning a human can act on beats a silent floor.
 SEQF="$WORKSPACE_ROOT/work/$PROJECT/.session-seq"
 LAST_SEQ=""
-[ -f "$SEQF" ] && LAST_SEQ="$(tr -cd '0-9' < "$SEQF" 2>/dev/null)"
+if [ -f "$SEQF" ]; then
+  LAST_SEQ="$(tr -cd '0-9' < "$SEQF" 2>/dev/null)"
+fi
+while IFS= read -r co; do
+  [ "$co" = "$WORKSPACE_ROOT" ] && continue
+  f="$co/work/$PROJECT/.session-seq"
+  [ -f "$f" ] || continue
+  v="$(tr -cd '0-9' < "$f" 2>/dev/null)"
+  [ -n "$v" ] || continue
+  note "session-seq: ignoring stray copy $f (holds $v; authoritative is ${LAST_SEQ:-none})"
+  note "session-seq: prune it — the agent no longer writes this file by hand (ADR-0008)"
+done < <(all_checkouts)
 [ -n "$LAST_SEQ" ] || LAST_SEQ=1
 SEQ=$((LAST_SEQ + 1))
 [ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
@@ -194,6 +275,23 @@ fi
 # (.rollover-options, written at rollover; see docs/context-budget.md).
 OPT_ARGS=()
 OPTF="$WORKSPACE_ROOT/work/$PROJECT/.rollover-options"
+# Same stranding as .session-seq: the newest copy across checkouts wins,
+# and an adopted copy is persisted to the main checkout so it survives
+# worktree pruning. --dry-run reads the newest copy in place instead.
+OPT_NEWEST=""
+while IFS= read -r co; do
+  f="$co/work/$PROJECT/.rollover-options"
+  [ -f "$f" ] || continue
+  if [ -z "$OPT_NEWEST" ] || [ "$f" -nt "$OPT_NEWEST" ]; then OPT_NEWEST="$f"; fi
+done < <(all_checkouts)
+if [ -n "$OPT_NEWEST" ] && [ "$OPT_NEWEST" != "$OPTF" ]; then
+  if [ "$DRY" -eq 1 ]; then
+    note "dry-run: would adopt .rollover-options from $OPT_NEWEST"
+    OPTF="$OPT_NEWEST"
+  elif cp "$OPT_NEWEST" "$OPTF" 2>/dev/null; then
+    note "rollover-options: adopted newest copy from $OPT_NEWEST"
+  fi
+fi
 if [ -f "$OPTF" ]; then
   ROLLOVER_OPT_APPROVAL=""; ROLLOVER_OPT_MODEL=""; ROLLOVER_OPT_EXTRA=""
   . "$OPTF" >/dev/null 2>&1 || true
@@ -241,7 +339,14 @@ fi
 # Every mode prints the paste-me prompt first — it must survive launch failure.
 printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n' "$PROMPT"
 
-[ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
+# --emit hands the command to a supervisor that runs it in the FOREGROUND and
+# waits on it, so no mode-derived backgrounding may reach the emitted line. The
+# explicit --bg is refused above, but that guard runs before this assignment:
+# without the [ -z "$EMIT" ] clause, ROLLOVER_RELAUNCH=auto + runtime=claude
+# slips --bg into the emitted command, session-loop.sh evals something that
+# returns at once, and it reads the missing sentinel as a deliberate quit
+# (found 2026-08-27, starting a supervised chain on a fresh work item).
+[ -z "$EMIT" ] && [ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
 # copilot-vscode's `code chat` is detached by nature (exits before the seeded
 # session responds — issue 01) — always confirm the successor via the BG loop.
 [ "$RUNTIME" = "copilot-vscode" ] && BG=1
@@ -301,9 +406,42 @@ if [ "$DRY" -eq 1 ]; then
   exit 0
 fi
 
+# Registration handshake (rollover-automation-fix): the successor's
+# SessionStart hook runs `context-budget.sh register` with no --project (it
+# cannot know the work item at session start), so its record used to carry
+# project:"" — making the --bg confirm poll below undecidable and degrading
+# lock attribution/release. Drop a pending file the successor's register
+# consumes (freshest non-expired wins; TTL enforced there). A file, not an
+# env var: it must survive `claude --bg` daemonization, and works identically
+# for attached launches on every runtime. Written ONLY at the two points that
+# actually start a successor (bg launch, attached exec) and removed if the bg
+# launch dies — no pending file may exist unless a successor was actually
+# started (a consumer of a launch-less file would take the project's primary
+# lock; the non-tty branch below prints the command and exits, launching
+# nothing, so a successor started from that printout registers project-less).
+PENDING="$STATE_DIR/successor-pending-$PROJECT.json"
+write_pending() {
+  mkdir -p "$STATE_DIR"
+  jq -n --arg proj "$PROJECT" --argjson seq "$SEQ" --arg ts "$(date -u +%FT%TZ)" \
+    '{project:$proj, seq:$seq, launched_at:$ts}' > "$PENDING"
+  note "handshake: wrote ${PENDING#"$WORKSPACE_ROOT/"} for the successor's register"
+}
+
+# --emit: the supervisor treats the appearance of $EMIT as the signal that a
+# successor is fully staged, so write_pending must already have run when it
+# appears. Sits after write_pending's definition (it calls it) and before the
+# --bg block (which --emit refuses).
+if [ -n "$EMIT" ]; then
+  write_pending
+  printf '%s\n' "$(printf '%q ' "${CMD[@]}" | sed 's/ $//')" > "$EMIT"
+  note "emit: wrote the successor command to $EMIT"
+  exit 0
+fi
+
 if [ "$BG" -eq 1 ]; then
   PRE_EXISTING=" $(ls "$STATE_DIR/sessions/" 2>/dev/null | tr '\n' ' ') "
-  "${CMD[@]}" || die "launch failed: ${CMD[*]}"
+  write_pending
+  "${CMD[@]}" || { rm -f "$PENDING"; die "launch failed: ${CMD[*]}"; }
   deadline=$(( $(date +%s) + CONFIRM_SECS ))
   while [ "$(date +%s)" -lt "$deadline" ]; do
     for f in "$STATE_DIR/sessions/"*.json; do
@@ -318,6 +456,25 @@ if [ "$BG" -eq 1 ]; then
     done
     sleep 2
   done
+  # Fallback (rollover-automation-fix): hooks disabled or handshake missed —
+  # a NEW but project-less record inside the window is almost certainly the
+  # successor (the .project match above stays primary; this only softens the
+  # verdict from unconfirmed to probable).
+  PROBABLE=""
+  for f in "$STATE_DIR/sessions/"*.json; do
+    [ -f "$f" ] || continue
+    case "$PRE_EXISTING" in *" $(basename "$f") "*) continue ;; esac
+    proj="$(jq -r '.project // empty' "$f" 2>/dev/null)"
+    sid="$(jq -r '.session_id // empty' "$f" 2>/dev/null)"
+    if [ -z "$proj" ] && [ -n "$sid" ] && [ "$sid" != "$DYING_SID" ]; then
+      PROBABLE="$sid"
+    fi
+  done
+  if [ -n "$PROBABLE" ]; then
+    note "a new project-less session registered in the window — handshake missed, treating as the successor"
+    echo "successor=probable session=$PROBABLE"
+    exit 0
+  fi
   note "successor did not register within ${CONFIRM_SECS}s — check 'claude attach' / the sessions dir"
   echo "successor=unconfirmed"
   exit 0
@@ -327,6 +484,7 @@ fi
 # print the ready-to-run command instead (relaunch-analysis: "print the
 # ready-to-run command (others)").
 if [ -t 0 ] && [ -t 1 ]; then
+  write_pending
   exec "${CMD[@]}"
 else
   note "not an interactive terminal — run this in one:"

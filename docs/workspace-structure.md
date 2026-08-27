@@ -505,6 +505,7 @@ scripts/
 ├── check-workspace-structure.sh   # Structural validation against this doc
 ├── check-service-access.sh        # Credential/service access preflight checker
 ├── check-repo-context.sh          # Warn-only repo context freshness check
+├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
@@ -514,6 +515,7 @@ scripts/
 ├── capture-rollover-options.sh    # Capture the session's launch options for replay
 ├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt
 ├── attach-session.sh              # Re-attach a chained rollover successor to its work item
+├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
 ├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
@@ -540,6 +542,17 @@ scripts/
   exist, symlinks resolve, scripts are executable, and the repo-context doc
   templates are present. (It does **not** reconcile the registry against the
   on-disk repos.)
+- `check-ledger.py` — validates every `work/<project>/` ledger: each
+  `# Session Handoff` heading is well-formed (both title conventions),
+  none is buried inside the purpose comment, blocks run newest-first by
+  session number and date, and `handoff-archive.md` holds nothing newer
+  than `handoff.md`. Mutation-tested by
+  `scripts/tests/test-check-ledger.py`.
+- `session-loop.sh` — the session-loop supervisor: launches a work item's
+  successor sessions one after another, unattended, gating each handover on
+  the rollover sentinel and the session counter rather than on the child's
+  exit code. Bounded by a max-session count; see `docs/context-budget.md` →
+  "The supervisor".
 
 **Recommended scripts** (add as the workspace matures):
 - `diff-review.sh` — open a commit or range as a directory diff for review;

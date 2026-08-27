@@ -145,9 +145,23 @@ if git -C "$TMP" worktree add -q "$WT" -b t10branch >/dev/null 2>&1; then
   assert_eq       "T10g: no archive created in main" "$([ -f "$AF" ] && echo yes || echo no)" "no"
   assert_contains "T10h: session-seq read from main coordination state" "$out" "seq-from-main-checkout"
   assert_contains "T10i: git summary shows the worktree" "$out" "(workspace root)"
+  echo "27" > "$TMP/work/testproj/.session-seq"
+  echo "29" > "$WT/work/testproj/.session-seq"
+  out="$(cd "$WT" && "$RP" testproj --no-record 2>&1)"
+  assert_contains "T10j: stranded worktree counter surfaced as effective max" "$out" "effective: 29"
+  echo "31" > "$TMP/work/testproj/.session-seq"
+  out="$(cd "$WT" && "$RP" testproj --no-record 2>&1)"
+  assert_not_contains "T10k: no effective line when main copy already wins" "$out" "effective:"
+  rm -f "$TMP/work/testproj/.session-seq" "$WT/work/testproj/.session-seq"
 else
   bad "T10: could not create worktree"
 fi
+
+echo "T11: dead cwd (pruned worktree) — refuses instead of falling back to main"
+DEADD="$TMP/deadwt"; mkdir -p "$DEADD"
+out="$(cd "$DEADD" && rmdir "$DEADD" && "$RP" testproj --no-record 2>&1)"; rc=$?
+assert_eq       "T11a: exit 1" "$rc" "1"
+assert_contains "T11b: names the dead cwd" "$out" "no longer exists"
 
 echo
 echo "pass=$PASS fail=$FAIL"

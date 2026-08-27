@@ -3,19 +3,27 @@
 # Purpose: Re-attach step of session-rollover (ADR-0003) for chained claude
 #          successors: find the latest session for a work item and, when it
 #          is alive and holds the work-item lock, connect this terminal to
-#          it. Resolution: work/<project>/.active-session lock >
+#          it. Resolution: work/<project>/.active-session lock (corrected for a
+#          fork that re-keyed the held session — see fork_of() below) >
 #          newest .context-budget/sessions/*.json record for the project
 #          (fallback, same convention as own_record() in
-#          launch-next-session.sh) > none.
+#          launch-next-session.sh) > newest live `claude agents --json` entry
+#          whose `name` matches the launcher's "<project> #<N>" convention
+#          (last resort for a session that registered project-less — see the
+#          note at the fallback) > none.
 # Usage:   attach-session.sh <project> [--dry-run]
 # Exit:    0 handled (attached, printed command, or informative no-op) /
 #          3 error (bad args, no session known). Requires jq.
-# Vendor flags verified against live claude --help 2026-08-06: no `claude
-# attach` subcommand exists. `claude agents --json` lists both interactive
-# and background sessions keyed by `sessionId`; `-r/--resume [value]`
-# ("Resume a conversation by session ID, or open interactive picker") is the
-# closest supported attach-by-id form and is what this script wires. Re-verify
-# before changing (ADR-0003: a nonexistent flag already slipped in once).
+# Vendor flags re-verified against live claude 2.1.226 on 2026-08-20:
+# `claude attach <id>` DOES now exist ("Open the background session in this
+# terminal") and supersedes the 2026-08-06 note that it did not. It is valid
+# ONLY for a background session — the kind the launcher's --bg creates.
+# `claude agents --json` keys sessions by `sessionId` and distinguishes them
+# with `kind` ("background" | "interactive"); this script reads that field and
+# picks: attach for background, `-r/--resume` otherwise (resume replays a
+# transcript into a NEW process, so it is the wrong verb for a live background
+# session and the right one for anything else). Re-verify before changing
+# (ADR-0003: a nonexistent flag already slipped in once).
 
 set -u
 
@@ -68,6 +76,35 @@ if [ -f "$LOCK" ]; then
   SID="$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)"
   [ -n "$RUNTIME" ] && [ -n "$SID" ] && LOCKED=1
 fi
+# A fork (Claude's SessionStart:fork) RE-KEYS a live session: the transcript
+# moves to a new session id and `record` self-heals onto it, but the lock still
+# names the pre-fork id. Because the lock resolves first, the naming step below
+# — which would have found the live session — never got a chance to run, so the
+# script printed a `--resume` for a dead id. The fork inherits the launcher's
+# `-n "<project> #<N>"` name, so an entry sharing that exact name with a strictly
+# later start IS the fork of the held session, not a different one. Adopt it:
+# the lock is still validly held (a fork is the same logical session), only its
+# id moved. Positive evidence only — no oracle, no name, no timestamps, or any
+# jq/CLI failure all leave the locked id exactly as it was.
+fork_of() {  # $1 = session id -> id of the fork that superseded it, or empty
+  claude agents --json 2>/dev/null | jq -r --arg s "$1" '
+      (map(select(.sessionId == $s)) | .[0]) as $h
+      | if ($h | type) != "object" then ""
+        elif (($h.name // "") == "") or (($h.startedAt | type) != "number") then ""
+        else ( map(select((.name // "") == $h.name
+                          and (.startedAt | type) == "number"
+                          and .startedAt > $h.startedAt))
+               | sort_by(.startedAt) | .[-1].sessionId // "" )
+        end' 2>/dev/null
+}
+if [ "$LOCKED" -eq 1 ] && [ "$RUNTIME" = "claude" ]; then
+  FORK="$(fork_of "$SID")" || FORK=""
+  if [ -n "$FORK" ] && [ "$FORK" != "$SID" ]; then
+    note "lock names $SID, which a fork superseded; following it to $FORK (same session, re-keyed)"
+    SID="$FORK"
+  fi
+fi
+
 if [ "$LOCKED" -eq 0 ]; then
   RUNTIME=""; SID=""
   while IFS= read -r f; do
@@ -79,6 +116,24 @@ if [ "$LOCKED" -eq 0 ]; then
     fi
   done < <(ls -t "$STATE_DIR/sessions/"*.json 2>/dev/null)
 fi
+# Third resolution step. The two above depend on state the session must write
+# about itself: the lock, and `project` in its budget record. The registration
+# handshake normally supplies it, but it cannot in every case — the launcher's
+# own note records that a successor started from the printed command (the
+# non-tty branch, which launches nothing) still registers project-less, and so
+# does any session predating the handshake. Such a session holds no lock and
+# matches no record. Fall back to the launcher's OWN naming: it starts every
+# successor with `-n "<project> #<N>"`, which `claude agents --json` reports as
+# `name`, so a live session stays discoverable. Newest start wins. Claude-only,
+# like --bg itself.
+if [ -z "$RUNTIME" ] || [ -z "$SID" ]; then
+  SID="$(claude agents --json 2>/dev/null \
+         | jq -r --arg p "$PROJECT" \
+             'map(select(.name // "" | startswith($p + " #")))
+              | sort_by(.startedAt) | reverse | .[0].sessionId // ""' 2>/dev/null)"
+  [ -n "$SID" ] && RUNTIME="claude"
+fi
+
 [ -n "$RUNTIME" ] && [ -n "$SID" ] || die "no session known for work/$PROJECT"
 
 # Liveness: mirror lock_holder_age() in scripts/context-budget.sh (read it
@@ -122,7 +177,17 @@ if [ "$RUNTIME" != "claude" ]; then
   exit 0
 fi
 
-CMD=(claude --resume "$SID")
+# `claude attach` connects this terminal to the RUNNING background session;
+# `--resume` would instead replay the transcript into a new process. Pick by
+# the session's own `kind`, and fall back to resume on any older CLI that has
+# no attach subcommand.
+KIND="$(claude agents --json 2>/dev/null \
+        | jq -r --arg s "$SID" 'map(select(.sessionId == $s)) | .[0].kind // ""' 2>/dev/null)"
+if [ "$KIND" = "background" ] && claude attach --help >/dev/null 2>&1; then
+  CMD=(claude attach "$SID")
+else
+  CMD=(claude --resume "$SID")
+fi
 
 if [ "$DRY" -eq 1 ] || { [ ! -t 0 ] || [ ! -t 1 ]; }; then
   echo "run: $(printf '%q ' "${CMD[@]}" | sed 's/ $//')"

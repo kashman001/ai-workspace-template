@@ -1,8 +1,14 @@
 # ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers
 
-- Status: accepted
+- Status: accepted — **amended by [ADR-0008](0008-session-counter-assertion-not-write.md)**
 - Date: 2026-08-06
 - Deciders: Kashif (user) + agent, session 30 of automatic-session-rollover
+
+> **Amendment (2026-08-25).** The canonical-source ruling below stands. The
+> step-6 *mechanism* — an unconditional `echo <N> >` by the dying session — was
+> replaced: it is redundant for launcher-launched sessions and drifted the
+> counter upward in a way max-wins makes permanent. Step 6 is now an assertion
+> that writes only to correct. Read this ADR with ADR-0008.
 
 ## Context
 

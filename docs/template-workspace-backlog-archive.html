@@ -1194,6 +1194,28 @@
       document in work-directory-conventions next to the dispatch-record pattern.</p>
   </div>
 
+  <div class="find low resolved" id="L40">
+    <h3><span class="id">L40</span> Fragment bring-in mechanics undocumented; claude.ai connectors always-on by default
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">mcp-fragments/ · docs/mcp-setup.md · .claude/ · scripts</span></h3>
+    <p><span class="k">Evidence</span> — 2026-08-14 downstream context-efficiency audit (Insight workspace): the
+      fragment docs covered launch-time loading only — no path for a subagent to carry a server the parent lacks,
+      no way to hand a fragment to a rollover successor, and the "a running session cannot attach a new server"
+      fact (with the schema-deferral asymmetry: Claude Code defers schemas until tool search, other runtimes load
+      full schemas up front) was nowhere. claude.ai account connectors (Gmail/Drive/Slack) also joined every
+      session's standing tool surface with no lean-by-default counterpart.</p>
+    <p><span class="k">Impact</span> — sessions either over-provisioned at launch or lost the capability mid-task;
+      full-schema runtimes silently paid the standing cost the split exists to avoid.</p>
+    <p><span class="fix">Fixed:</span> ported from the downstream workspace 2026-08-14 — bring-in mechanics added
+      to <code>mcp-fragments/README.md</code> and <code>docs/mcp-setup.md</code> (subagent <code>mcpServers</code>
+      frontmatter, <code>ROLLOVER_OPT_EXTRA</code> fragment hand-off, no-attach-while-running + schema-deferral
+      facts, and the variadic <code>--mcp-config</code> prompt-ordering trap); <code>disableClaudeAiConnectors:
+      true</code> added to <code>.claude/settings.json.example</code>; <code>ROLLOVER_OPT_EXTRA</code> fragment
+      examples added to the <code>capture-rollover-options.sh</code> / <code>launch-next-session.sh</code> headers.</p>
+    <p><span class="k">Note</span> — originally filed downstream as L35; renumbered to L40 at publish time because
+      L35 was already claimed on the published backlog (context-budget minimal mode). Same lesson as the L34
+      repair: an ID is only claimed once pushed.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

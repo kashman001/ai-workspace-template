@@ -13,7 +13,11 @@
 #          project slug dir. Claude-only; on any other runtime or missing
 #          transcript it exits 0 leaving the file untouched (fail open —
 #          the file's last known values still apply, per session-rollover
-#          step 1). Existing ROLLOVER_OPT_MODEL/EXTRA lines are preserved.
+#          step 1). Existing ROLLOVER_OPT_MODEL/EXTRA lines are preserved —
+#          EXTRA is the hand-edited slot for successor launch args, e.g. an
+#          opt-in MCP fragment:
+#          ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<server>.json"
+#          (see mcp-fragments/README.md).
 # Exit:    0 (captured, or fail-open no-op) / 1 usage error. Requires jq.
 
 set -u

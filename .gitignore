@@ -32,6 +32,17 @@ work/*/.agent-locks/
 work/*/.agent-dispatch/
 work/*/.rollover-options
 work/*/.session-seq
+work/*/.session-seq.provenance.json
+work/*/.rollover-complete
+work/*/.next-command
+work/*/.session-loop
+# The supervisor's own log. Load-bearing for stall detection, not just tidiness:
+# it is appended on every iteration by construction, so a tracked copy would make
+# "did this session commit something outside the bookkeeping set?" true forever
+# and the guard could never fire (scripts/session-loop.sh, session_made_progress).
+work/*/.session-loop.log
+work/*/.hands-off
+work/*/.interactive
 
 
 # Gemini CLI local telemetry (token counts for context-budget; grows per session)
@@ -55,3 +66,14 @@ graphify-out/
 # .venv/           # Python virtualenv
 # node_modules/    # Node deps
 # .idea/           # JetBrains IDE files
+
+# Session worktrees. These are nested git worktrees of THIS repo — tracking
+# them would commit a checkout into its own history.
+.claude/worktrees/
+
+# Office lock / owner files, written beside a document while it is open.
+# PowerPoint leaves them behind after a render.
+~$*
+
+# Editor and settings backups.
+*.bak

@@ -26,6 +26,11 @@ case "$event" in
   agentStop)
     active=$(echo "$input" | jq -r '.stop_hook_active // false')
     [ "$active" = "true" ] && exit 0
+    # Session-loop supervisor exit, before the budget checks below: those return
+    # early on a missing transcript or a non-STOP status, and the exit must not
+    # depend on either. Inert unless TF_SESSION_LOOP=1.
+    [ -n "${TF_SESSION_LOOP_PROJECT:-}" ] \
+      && budget_hook_exit copilot "$sid" "$TF_SESSION_LOOP_PROJECT"
     transcript=$(echo "$input" | jq -r '.transcriptPath // empty')
     [ -n "$transcript" ] && [ -f "$transcript" ] || exit 0
     out=$(budget_hook_check copilot-cli "$sid" "$transcript")

@@ -24,6 +24,15 @@
 
 set -u
 
+# A pruned worktree leaves the invoking shell with a dead cwd; the old
+# behavior silently fell back to operating on the main checkout, leaving
+# rotation side effects there that then block the relaunch
+# (rollover-state-sync-issue, symptom 2). Refuse loudly instead.
+if [ ! -d "$PWD" ]; then
+  echo "error: working directory $PWD no longer exists (worktree pruned?) — cd to a live checkout and re-run" >&2
+  exit 1
+fi
+
 resolve_workspace_root() {  # same convention as capture-rollover-options.sh
   local root common repo
   root="$(cd "$1" && pwd -P)"
@@ -143,6 +152,24 @@ fi
 
 echo "== session-seq =="
 if [ -f "$COORD_DIR/.session-seq" ]; then cat "$COORD_DIR/.session-seq"; else echo "absent"; fi
+# A rolling agent's counter write lands in its own checkout; surface the
+# effective value (numeric max across all checkouts of the repo — the same
+# reconciliation launch-next-session.sh applies) when it beats the main copy.
+SEQ_BEST=""; SEQ_WHERE=""
+while IFS= read -r co; do
+  f="$co/work/$PROJECT/.session-seq"
+  [ -f "$f" ] || continue
+  v="$(tr -cd '0-9' < "$f" 2>/dev/null)"; [ -n "$v" ] || continue
+  if [ -z "$SEQ_BEST" ] || [ "$v" -gt "$SEQ_BEST" ]; then SEQ_BEST="$v"; SEQ_WHERE="$f"; fi
+done < <(git -C "$WORKSPACE_ROOT" worktree list --porcelain 2>/dev/null \
+           | sed -n 's/^worktree //p'; echo "$WORKSPACE_ROOT")
+MAIN_SEQ=""
+[ -f "$COORD_DIR/.session-seq" ] \
+  && MAIN_SEQ="$(tr -cd '0-9' < "$COORD_DIR/.session-seq" 2>/dev/null)"
+if [ -n "$SEQ_BEST" ] && [ "$SEQ_WHERE" != "$COORD_DIR/.session-seq" ] \
+   && { [ -z "$MAIN_SEQ" ] || [ "$SEQ_BEST" -gt "$MAIN_SEQ" ]; }; then
+  echo "effective: $SEQ_BEST (max across checkouts, from $SEQ_WHERE)"
+fi
 
 echo "== rollover-options =="
 "$WORKSPACE_ROOT/scripts/capture-rollover-options.sh" "$PROJECT" || true
