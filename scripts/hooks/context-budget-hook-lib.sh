@@ -75,3 +75,50 @@ budget_hook_message() {
     echo "CONTEXT BUDGET WARN: this session is at $tokens tokens, approaching the $threshold-token dumb-zone threshold. Wrap up the current work unit and avoid loading large files; prepare to run the session-rollover workflow (skills/session-rollover/SKILL.md) soon. Mention this warning to the user in your next reply."
   fi
 }
+
+# --- session-loop supervisor: turn-end exit ---------------------------------
+#
+# The hook does NOT decide whether the session should end — the agent already
+# did, by completing its rollover and writing a sentinel naming itself. The
+# hook's whole job is to notice that its own sentinel is on disk and act. That
+# is what keeps this vendor-specific surface as thin as it is: one condition,
+# read from a file the design already requires.
+#
+# Three conditions, all necessary:
+#   TF_SESSION_LOOP=1        — nobody is supervising otherwise (opt-in contract)
+#   the sentinel exists      — a rollover actually completed
+#   its session_id is MINE   — not a predecessor's leftover, not a sibling's
+#
+# The decision and the signal are separate functions because not every runtime
+# signals: opencode's exit path runs inside its own plugin process and self-kills
+# with process.pid, so it needs the predicate without the SIGTERM.
+
+# budget_hook_should_exit <session_id> <project>
+#   rc 0 when this session's own rollover sentinel is on disk under the
+#   supervisor; rc 1 in every other case, including every error.
+budget_hook_should_exit() {
+  local sid="${1:-}" proj="${2:-}" sentf owner
+  [ "${TF_SESSION_LOOP:-}" = "1" ] || return 1
+  [ -n "$sid" ] && [ -n "$proj" ] || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+  # WORKSPACE_ROOT, not budget_hook_resolve_root(): the resolver deliberately
+  # ignores the env override so it can find the main checkout from a worktree,
+  # and every other reader in this lib goes through WORKSPACE_ROOT.
+  sentf="$WORKSPACE_ROOT/work/$proj/.rollover-complete"
+  [ -f "$sentf" ] || return 1
+  owner="$(jq -r '.session_id // empty' "$sentf" 2>/dev/null)"
+  [ "$owner" = "$sid" ] || return 1
+  return 0
+}
+
+# budget_hook_exit <runtime> <session_id> <project>
+#   The predicate plus a SIGTERM to the agent that spawned this hook process.
+#   SIGTERM only; no escalation (failure mode 9). Never returns non-zero — a
+#   hook that fails must not block a turn.
+budget_hook_exit() {
+  local rt="${1:-}" sid="${2:-}" proj="${3:-}"
+  budget_hook_should_exit "$sid" "$proj" || return 0
+  echo "session-loop: terminating $rt session $sid at the turn boundary (pid $PPID)" >&2
+  kill -TERM "$PPID" 2>/dev/null
+  return 0
+}

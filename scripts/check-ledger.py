@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""
+File: scripts/check-ledger.py
+Purpose: Validate the shape of every work-item ledger (work/<project>/handoff.md
+         and its handoff-archive.md) — block headings well-formed, none buried
+         inside the purpose comment, newest-first ordering, archive continuity.
+         Exits non-zero on any failure.
+See: docs/work-directory-conventions.md → "handoff.md — the ledger"
+
+The ledger is the provenance record this workspace runs on, and nothing gated
+its shape: rollover tooling appends to it unattended, and in one instance two
+of five recent blocks were misfiled in two different ways before anyone noticed
+(a heading swallowed by an unclosed purpose comment, and a block left out of
+order). Both are cheap to detect and expensive to find late.
+
+Usage:
+    scripts/check-ledger.py                 # every work/<project>/ ledger
+    scripts/check-ledger.py work/foo        # just this one
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+GREEN, RED, YELLOW, RESET = "\033[32m", "\033[31m", "\033[33m", "\033[0m"
+
+
+def rel(path: Path) -> str:
+    """Path for display. Falls back to the absolute path outside the workspace
+    (the mutation tests run against fixtures in a temp dir)."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+# Two title conventions are in use and both are legitimate history.
+#
+#   current (session 69 onward)
+#       # Session Handoff — 76 (2026-08-22): what happened
+#   legacy (sessions 2-68)
+#       # Session Handoff — 2026-08-22 (session 68, bg: what happened)
+#
+# A session number may carry a letter suffix ("74b") or a continuation word
+# ("session 9 cont.") when one session wrote more than one block.
+DASH = r"[—-]"
+CURRENT = re.compile(
+    rf"^# Session Handoff {DASH} (?P<num>\d+)(?P<suffix>[a-z]*) "
+    rf"\((?P<date>\d{{4}}-\d{{2}}-\d{{2}})\)(?::.*)?$"
+)
+LEGACY = re.compile(
+    rf"^# Session Handoff {DASH} (?P<date>\d{{4}}-\d{{2}}-\d{{2}}) "
+    rf"\(session (?P<num>\d+)(?P<suffix>[a-z]*)\b.*\)$"
+)
+
+
+class Block:
+    """One `# Session Handoff` heading, located and parsed."""
+
+    def __init__(self, path: Path, line_no: int, text: str, num: int, date: str):
+        self.path = path
+        self.line_no = line_no
+        self.text = text
+        self.num = num
+        self.date = date
+
+    @property
+    def where(self) -> str:
+        return f"{rel(self.path)}:{self.line_no}"
+
+
+def parse_file(path: Path, report) -> list[Block]:
+    """Return the file's blocks in document order, reporting shape failures."""
+    blocks: list[Block] = []
+    in_comment = False
+    seen_block = False
+
+    for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = raw.rstrip()
+
+        # Track HTML-comment depth before classifying the line, so a heading
+        # swallowed by an unclosed <!-- --> is caught rather than silently lost.
+        opened = "<!--" in line
+        closed = "-->" in line
+        inside = in_comment or (opened and not closed)
+        if opened and not closed:
+            in_comment = True
+        elif closed:
+            in_comment = False
+
+        if line.startswith("## ") and not inside and not seen_block:
+            report.bad(
+                f"{rel(path)}:{line_no} sub-heading before the first "
+                f"session block — {line[:60]!r}"
+            )
+            continue
+
+        if not line.startswith("# "):
+            continue
+
+        if inside:
+            report.bad(
+                f"{rel(path)}:{line_no} block heading is inside a "
+                f"comment (unclosed purpose comment?) — {line[:60]!r}"
+            )
+            continue
+
+        m = CURRENT.match(line) or LEGACY.match(line)
+        if not m:
+            report.bad(
+                f"{rel(path)}:{line_no} not a well-formed session "
+                f"block heading — {line[:70]!r}"
+            )
+            continue
+
+        seen_block = True
+        blocks.append(
+            Block(path, line_no, line, int(m.group("num")), m.group("date"))
+        )
+
+    if in_comment:
+        report.bad(f"{rel(path)} ends inside an unclosed HTML comment")
+
+    return blocks
+
+
+def check_ordering(blocks: list[Block], report) -> None:
+    """Newest first: session numbers and dates both non-increasing downward.
+
+    Equal numbers are allowed — one session sometimes writes two blocks
+    ("41, live continuation" above "41, background") — so this is
+    non-increasing, not strictly decreasing.
+    """
+    for older, newer in zip(blocks[1:], blocks):
+        if older.num > newer.num:
+            report.bad(
+                f"out of order: session {older.num} at {older.where} sits below "
+                f"session {newer.num} at {newer.where} (newest block goes on top)"
+            )
+        if older.date > newer.date:
+            report.bad(
+                f"out of order by date: {older.date} at {older.where} sits below "
+                f"{newer.date} at {newer.where}"
+            )
+
+
+class Report:
+    def __init__(self):
+        self.fail = False
+
+    def ok(self, msg: str) -> None:
+        print(f"  {GREEN}✓{RESET} {msg}")
+
+    def bad(self, msg: str) -> None:
+        print(f"  {RED}✗{RESET} {msg}", file=sys.stderr)
+        self.fail = True
+
+    def warn(self, msg: str) -> None:
+        print(f"  {YELLOW}!{RESET} {msg}", file=sys.stderr)
+
+
+def check_ledger(project: Path, report: Report) -> None:
+    ledger = project / "handoff.md"
+    archive = project / "handoff-archive.md"
+
+    if not ledger.exists():
+        report.warn(f"{rel(project)} has no handoff.md — skipped")
+        return
+
+    print(f"\n{rel(project)}")
+
+    if "PURPOSE:" not in ledger.read_text(encoding="utf-8")[:1000]:
+        report.warn(f"{rel(ledger)} has no PURPOSE comment at the top")
+
+    live = parse_file(ledger, report)
+    if not live:
+        report.bad(f"{rel(ledger)} contains no session blocks")
+        return
+
+    archived = parse_file(archive, report) if archive.exists() else []
+
+    # The two files are one logical ledger: newest-first has to hold across the
+    # seam, or a rotation has interleaved them.
+    check_ordering(live + archived, report)
+
+    report.ok(f"{len(live)} block(s) in handoff.md, newest is session {live[0].num}")
+    if archived:
+        report.ok(
+            f"{len(archived)} block(s) in handoff-archive.md, "
+            f"newest is session {archived[0].num}"
+        )
+
+
+def main(argv: list[str]) -> int:
+    if argv:
+        projects = [Path(a).resolve() for a in argv]
+    else:
+        projects = sorted(p for p in (ROOT / "work").iterdir() if p.is_dir())
+
+    print(f"Checking work-item ledgers at {ROOT}")
+    report = Report()
+    for project in projects:
+        check_ledger(project, report)
+
+    if report.fail:
+        print(f"\n{RED}ledger check FAILED{RESET}", file=sys.stderr)
+        return 1
+    print(f"\n{GREEN}all ledgers well-formed{RESET}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

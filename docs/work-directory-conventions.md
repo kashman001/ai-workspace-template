@@ -78,6 +78,17 @@ use `.session-seq` + 1 as your N and the sync write counts you in.
 blocks live in `handoff.md`; move older blocks to `handoff-archive.md` (read on
 demand only). The archive uses the same newest-on-top ordering.
 
+**Gate (`scripts/check-ledger.py`):** the ledger is a provenance record written
+unattended by rollover tooling, so its shape is machine-checked rather than
+trusted. The check validates that every `# Session Handoff` heading parses (both
+the current `— N (date):` form and the legacy `— date (session N, ...)` form),
+that none is buried inside the purpose comment by an unclosed `<!-- -->`, that
+blocks run newest-first by session number *and* date, and that
+`handoff-archive.md` holds nothing newer than `handoff.md`. Run it after any
+rotation — `scripts/check-ledger.py [work/<project>]`, exit 0 when clean. Two
+misfiled blocks reached a live ledger before this existed, in exactly the first
+two of those ways.
+
 **Alternative pattern — dated handoff files.** Some projects use one file per
 session, `handoff-YYYY-MM-DD-topic.md`, instead of a single append-only file.
 This is naturally bounded (no archival step) but needs the launcher to point at

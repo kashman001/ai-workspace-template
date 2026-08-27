@@ -225,4 +225,128 @@ assert_contains "T12c: parent WARN text" "$err" "CONTEXT BUDGET WARN"
 [ -f "$TMP/.context-budget/hook-claude-s12-sidechain.status" ] \
   && ok "T12e: sidechain state keyed separately" || bad "T12e: sidechain state file missing"
 
+echo "X: session-loop turn-end exit (plan 2, Task 8)"
+# A vendor hook is a SEPARATE PROCESS spawned by the agent, so $PPID inside it is
+# the agent. Modelling that matters: calling budget_hook_exit in-process from the
+# harness (or from a bare `bash -c`) would make $PPID the *test runner*, and a
+# firing exit would SIGTERM the suite instead of its subject.
+# The supervisor flag is passed as an argument, never as a `VAR=1 func` prefix —
+# bash leaks such an assignment past the call when the callee is a function.
+XTMP="$(mktemp -d)"; mkdir -p "$XTMP/work/p"
+xsent() {
+  cat > "$XTMP/work/p/.rollover-complete" <<XEOF
+{"mode":"handsoff","seq":8,"reason":"t","session_id":"$1","runtime":"claude","cwd":"/x"}
+XEOF
+}
+cat > "$XTMP/hook.sh" <<XEOF
+#!/usr/bin/env bash
+set -u
+. "$SRC_ROOT/scripts/hooks/context-budget-hook-lib.sh"
+budget_hook_exit "\$@"
+XEOF
+cat > "$XTMP/agent.sh" <<XEOF
+#!/usr/bin/env bash
+set -u
+"$XTMP/hook.sh" claude "\$1" p 2>>"$XTMP/hook.err"
+i=0; while [ \$i -lt 4 ]; do sleep 0.25; i=\$((i+1)); done
+echo "STILL ALIVE" >> "$XTMP/hook.err"
+XEOF
+chmod +x "$XTMP/hook.sh" "$XTMP/agent.sh"
+# xrun <0|1 supervisor> <sid> -> stderr in $XTMP/hook.err, exit status in $XRC
+xrun() {
+  : > "$XTMP/hook.err"
+  # The inner subshell absorbs bash's "Terminated: 15" job notice, which the
+  # harness shell would otherwise print for X4 and make a pass look like a crash.
+  if [ "$1" = 1 ]; then
+    ( env TF_SESSION_LOOP=1 WORKSPACE_ROOT="$XTMP" "$XTMP/agent.sh" "$2" >/dev/null 2>&1 ) 2>/dev/null
+  else
+    ( env -u TF_SESSION_LOOP WORKSPACE_ROOT="$XTMP" "$XTMP/agent.sh" "$2" >/dev/null 2>&1 ) 2>/dev/null
+  fi
+  XRC=$?
+}
+xerr()  { cat "$XTMP/hook.err"; }
+xsaid() { grep -v 'STILL ALIVE' "$XTMP/hook.err" || true; }
+
+echo "X1: budget_hook_exit is inert outside the supervisor"
+xsent sid-1
+xrun 0 sid-1
+assert_empty "X1a: silent with TF_SESSION_LOOP unset" "$(xsaid)"
+assert_contains "X1b: the agent survived" "$(xerr)" "STILL ALIVE"
+
+echo "X2: it is inert when the sentinel belongs to another session"
+xrun 1 sid-OTHER
+assert_empty "X2a: silent for a foreign sentinel" "$(xsaid)"
+assert_contains "X2b: the agent survived" "$(xerr)" "STILL ALIVE"
+
+echo "X3: it is inert when no sentinel exists"
+rm -f "$XTMP/work/p/.rollover-complete"
+xrun 1 sid-1
+assert_empty "X3a: silent with no sentinel" "$(xsaid)"
+assert_contains "X3b: the agent survived" "$(xerr)" "STILL ALIVE"
+
+echo "X4: it terminates its agent when all three conditions hold"
+xsent sid-1
+xrun 1 sid-1
+assert_contains "X4a: the exit was announced" "$(xerr)" "session-loop: terminating"
+case "$(xerr)" in *"STILL ALIVE"*) bad "X4b: the agent survived" ;;
+                  *) ok "X4b: the agent did not survive" ;; esac
+assert_eq "X4c: the agent died of SIGTERM" "$XRC" "143"
+
+echo "X5: budget_hook_should_exit is the predicate the plugin path shares"
+# opencode kills from inside its own plugin process (process.pid), not from a
+# hook child's $PPID, so it needs the decision without the signal.
+xpred() {
+  local pre=""; [ "$1" = 1 ] && pre="TF_SESSION_LOOP=1"
+  env $pre WORKSPACE_ROOT="$XTMP" bash -c '
+    . "$1/scripts/hooks/context-budget-hook-lib.sh"
+    budget_hook_should_exit "$2" p; echo "rc=$?"' _ "$SRC_ROOT" "$2" 2>&1
+}
+assert_eq "X5a: rc 0 when the sentinel is mine" "$(xpred 1 sid-1)" "rc=0"
+assert_eq "X5b: rc 1 for a foreign sentinel" "$(xpred 1 sid-OTHER)" "rc=1"
+assert_eq "X5c: rc 1 outside the supervisor" "$(xpred 0 sid-1)" "rc=1"
+
+echo "X6: the Stop wrapper is inert unless the supervisor set it up"
+: > "$XTMP/w.err"
+out=$(echo '{"session_id":"sid-1","stop_hook_active":false}' \
+      | env -u TF_SESSION_LOOP WORKSPACE_ROOT="$XTMP" \
+        "$HOOKS/context-budget-stop-hook.sh" claude 2>"$XTMP/w.err"); rc=$?
+assert_eq "X6a: exit 0 with TF_SESSION_LOOP unset" "$rc" "0"
+assert_empty "X6b: silent with TF_SESSION_LOOP unset" "$out$(cat "$XTMP/w.err")"
+out=$(echo '{"session_id":"sid-1","stop_hook_active":false}' \
+      | env -u TF_SESSION_LOOP_PROJECT TF_SESSION_LOOP=1 WORKSPACE_ROOT="$XTMP" \
+        "$HOOKS/context-budget-stop-hook.sh" claude 2>"$XTMP/w.err"); rc=$?
+assert_eq "X6c: exit 0 with no TF_SESSION_LOOP_PROJECT" "$rc" "0"
+assert_empty "X6d: silent with no TF_SESSION_LOOP_PROJECT" "$out$(cat "$XTMP/w.err")"
+
+echo "X7: the Stop wrapper respects stop_hook_active (no second SIGTERM)"
+out=$(echo '{"session_id":"sid-1","stop_hook_active":true}' \
+      | env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p WORKSPACE_ROOT="$XTMP" \
+        "$HOOKS/context-budget-stop-hook.sh" claude 2>&1); rc=$?
+assert_eq "X7a: exit 0 on a hook-continued turn" "$rc" "0"
+assert_empty "X7b: silent on a hook-continued turn" "$out"
+
+echo "X8: no SIGKILL anywhere in the exit path (failure mode 9)"
+if grep -rn 'kill -9\|-KILL\|SIGKILL' \
+     "$SRC_ROOT/scripts/hooks/" "$SRC_ROOT/scripts/session-loop.sh" >/dev/null 2>&1
+then bad "X8a: an escalation path exists"; else ok "X8a: SIGTERM only, no escalation"; fi
+
+echo "X9: the opencode plugin pins the payload field a live probe proved"
+# 2026-08-27 probe on 1.18.15: session.idle carries properties.sessionID, equal
+# to chat.message's input.sessionID. Recorded here so a future "be tolerant"
+# edit cannot quietly reintroduce guessed spellings. Positive + negative paired:
+# X9a would fail on a plugin that reads nothing, X9b on one that reads extras.
+OCP="$SRC_ROOT/.opencode/plugins/context-budget.js"
+if grep -qF 'event.properties?.sessionID' "$OCP"
+then ok "X9a: reads the proven field"; else bad "X9a: reads the proven field"; fi
+if grep -qE 'sessionId|event\.sessionID' "$OCP"
+then bad "X9b: no unproven fallback spellings remain"
+else ok "X9b: no unproven fallback spellings remain"; fi
+# The self-kill target is proven too: the plugin's process.pid was measured
+# equal to the TUI's own pid, so this is the terminal-owning process.
+if grep -qF 'process.kill(process.pid, "SIGTERM")' "$OCP"
+then ok "X9c: self-kills the terminal-owning process with SIGTERM"
+else bad "X9c: self-kills the terminal-owning process with SIGTERM"; fi
+
+rm -rf "$XTMP"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

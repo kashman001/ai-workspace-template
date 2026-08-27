@@ -59,4 +59,5 @@ keep it here.
 - [ADR-0004: Operate rollover automation under a multi-session model — session-keyed budget state, per-project locks, hybrid trigger](0004-multi-session-rollover-model.md) — accepted 2026-08-05
 - [ADR-0005: Session roles with the lock as primary marker, and a parent/child session registry](0005-session-roles-and-child-registry.md) — accepted 2026-08-06
 - [ADR-0006: Key coordination state to repository identity, never to a checkout](0006-repository-keyed-coordination-state.md) — accepted 2026-08-06
-- [ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers](0007-session-number-single-source.md) — accepted 2026-08-06
+- [ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers](0007-session-number-single-source.md) — accepted 2026-08-06, amended by ADR-0008
+- [ADR-0008: Rollover step 6 asserts the session counter rather than writing it](0008-session-counter-assertion-not-write.md) — accepted 2026-08-25
