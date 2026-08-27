@@ -38,7 +38,7 @@ from the transcript artifact, which includes the materialized attachments,
 so its numbers are the trustworthy ones — WARN/STOP sit ~10K closer than a
 pre-message `/context` suggests.
 
-## Claude Code — EnterWorktree re-keys the session transcript path mid-session
+## Claude Code — the session transcript path can be re-keyed mid-session
 
 Claude Code stores the live transcript under `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`,
 keyed by the session's cwd. `EnterWorktree` changes the cwd, so the transcript
@@ -60,6 +60,14 @@ Consequences (observed 2026-08-05, session 7):
   this session's true 130755. A number that looks right is the whole hazard.
   Always read the `artifact=` field in the output and check the slug matches
   your cwd before believing the token count.
+- **`EnterWorktree` is not the only trigger (2026-08-27, third strike).** A
+  `SessionStart:fork` re-keys it too: mid-session the hook fired with a *new*
+  artifact path while the registration still named the old one. Here `record`
+  self-healed — resolve-self found the new artifact and kept measuring — so
+  nothing broke, and the healing is exactly what made it invisible. The rule
+  generalizes past worktrees: **the artifact path is not stable for the life of
+  a session.** Never cache it; read `artifact=` out of every `record` and
+  confirm the slug before acting on the number.
 
 ## Claude Code — worktree-isolated Bash guard refuses compound commands
 
@@ -255,3 +263,80 @@ ident="$( (resolve_session >/dev/null 2>&1 && printf '%s|%s' "$RUNTIME" "$SESSIO
 Caught 2026-08-25 while writing the session-numbering plan's provenance-sidecar
 snippet: the guard would have failed the counter sync — the part that matters —
 because identity lookup, the decoration, could not resolve a runtime.
+
+## `test-turn-end-exit.sh` needs a controlling terminal — detached it skips
+
+The suite drives the real turn-end exit path, so it uses `script(1)` to
+allocate a pty. Run **detached** — `nohup`, a background job harness, anything
+whose stdio is a socket — `script` cannot allocate one:
+
+```
+script: tcgetattr/ioctl: Operation not supported on socket
+```
+
+**Until 2026-08-27 the suite reported that as `passed=3 failed=2`.** Two of
+those failures were false and looked exactly like a regression in the exit
+mechanism; worse, two *other* assertions passed **vacuously** — they assert the
+absence of a string, and the string is absent when nothing ran at all. So the
+detached run was wrong in both directions at once. It now probes for a usable
+pty up front and skips T1/T2 loudly instead:
+
+```
+passed=1 failed=0 skipped=4
+SKIPPED 4 assertion(s): no controlling terminal — script: tcgetattr/ioctl: ...
+Re-run this suite in the foreground for full coverage.
+```
+
+Attached it is still `passed=5 failed=0` with the summary line unchanged, so a
+full-coverage run stays recognisable at a glance. Exit status is 0 when the only
+shortfall is skips — a skip is not a failure — but `skipped=` in the summary
+means the run did **not** cover the exit mechanism.
+
+**Rules:**
+
+- **A red suite in a batch runner is not automatically a red suite.** Before
+  chasing a failure a batch script reported, re-run that one suite in the
+  foreground. It is cheap, and it is the difference between a finding and a
+  ghost.
+- **Probe for the missing capability; do not infer it from `[ -t 0 ]`.** stdin
+  is not a tty in plenty of contexts where `script` works fine — this suite
+  passes 5/0 inside a background job whose stdin is a pipe. The check runs
+  `script` against a no-op and reads the result, because a false skip hides a
+  real bug exactly as well as a false failure invents one.
+- When a full-gate run is scripted, expect `skipped=` on this suite and say so
+  in whatever you hand the reader, so the next person does not re-derive it.
+
+Every other suite in the same batch reported correctly, so the signature
+identifies this suite, not the runner.
+
+## A fork leaves the work-item lock naming the pre-fork session id
+
+`work/<project>/.active-session` is written once, at `register`. A
+`SessionStart:fork` re-keys the session (see the transcript section above) and
+`record` self-heals onto the new id — but **the lock does not**. It goes on
+naming the pre-fork id for the rest of the work item.
+
+Two consequences, and only one of them is a bug:
+
+- **`attach-session.sh` printed a dead id.** The lock is its *first* resolution
+  step, so it short-circuited past the step that matches the launcher's
+  `-n "<project> #<N>"` naming — the one step that would have found the live
+  session. Observed 2026-08-27: `role=primary live=yes locked=yes` and a
+  `claude --resume <pre-fork-id>` for a session that was no longer the live
+  transcript. Fixed the same day: the script now follows the fork, identifying
+  it as the `claude agents --json` entry sharing the locked session's exact
+  `name` with a strictly later `startedAt`.
+- **A successor contending for the lock is refused as `auxiliary`.** This one is
+  *not* a bug. The lock's liveness test is the holder's artifact age against
+  `CONTEXT_LOCK_STALE_SECS` (default 10800), and just after a fork the holder
+  genuinely was writing moments ago. When you know the holder has finished, take
+  the lock deliberately rather than waiting three hours:
+
+  ```
+  scripts/context-budget.sh register --project <project> --takeover
+  ```
+
+  It stamps the old holder `superseded` and returns `role=primary`. Reach for it
+  when the holder's transcript has stopped growing **and** its `claude agents
+  --json` state is `done`. Do *not* reach for it because a session reads
+  `blocked` — that means waiting on a human, and the human is coming back.
