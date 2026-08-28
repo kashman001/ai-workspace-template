@@ -1,0 +1,23 @@
+docs/runbooks/dependencies.md
+  s_120492d37e9c3c::t_e0f31c6d31f6f7 28
+scripts/check-dependencies.sh
+  s_120492d37e9c3c::t_e0f31c6d31f6f7 62
+docs/recommended-tooling.md
+  s_120492d37e9c3c::t_e0f31c6d31f6f7 113-119,122,128,130,133-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "18e9dab6bea254caad938d2b9f848ddd22a7affa",
+  "prompts": {},
+  "sessions": {
+    "s_120492d37e9c3c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a005fd2-4bc2-4234-9043-a7765ea3cb0b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashif.siddiqui@core42.ai>"
+    }
+  }
+}
