@@ -163,6 +163,64 @@ out="$(cd "$DEADD" && rmdir "$DEADD" && "$RP" testproj --no-record 2>&1)"; rc=$?
 assert_eq       "T11a: exit 1" "$rc" "1"
 assert_contains "T11b: names the dead cwd" "$out" "no longer exists"
 
+echo "T12: workspace nested BELOW the repo root — resolves work/ under the workspace, not the toplevel"
+# The whole point of the fixture: git toplevel != workspace root. A bare
+# `rev-parse --show-toplevel` points one level above work/ and every project
+# resolves as "not found"; the marker-validated suffix carry keeps it correct.
+NEST="$(cd "$(mktemp -d)" && pwd -P)"   # canonical: the script prints -P paths
+trap 'rm -rf "$TMP" "$NEST"' EXIT
+NWS="$NEST/ws"
+mkdir -p "$NWS/scripts" "$NWS/work/testproj"
+cp "$SRC_ROOT/scripts/rollover-prep.sh" "$TMP/scripts/context-budget.sh" \
+   "$TMP/scripts/capture-rollover-options.sh" "$NWS/scripts/"
+git -C "$NEST" init -q 2>/dev/null || true
+NHF="$NWS/work/testproj/handoff.md"; NAF="$NWS/work/testproj/handoff-archive.md"
+mk_handoff_at() {  # 2 blocks, no PURPOSE comment needed here
+  cat > "$1" <<'EOF'
+# Session Handoff — 2026-08-10 (session 3)
+
+newest block body.
+
+# Session Handoff — 2026-08-09 (session 2)
+
+middle block body.
+EOF
+}
+mk_handoff_at "$NHF"
+out="$(cd "$NWS" && ./scripts/rollover-prep.sh testproj --no-record 2>&1)"; rc=$?
+assert_eq       "T12a: exit 0 (work/ found under the nested workspace)" "$rc" "0"
+assert_not_contains "T12b: no not-found error" "$out" "not found"
+assert_contains "T12c: reports rotation" "$out" "rotated 1 block(s)"
+assert_eq       "T12d: nested handoff keeps 1 block" "$(grep -c '^# Session Handoff' "$NHF")" "1"
+assert_eq       "T12e: nested archive holds 1 block" "$(grep -c '^# Session Handoff' "$NAF")" "1"
+assert_not_contains "T12f: invoke root == workspace root (no divergence note)" \
+  "$out" "note: operating on checkout"
+
+echo "T13: nested workspace invoked from a worktree — carries the nesting across (M25)"
+mk_handoff_at "$NHF"; rm -f "$NAF"
+git -C "$NEST" add -A >/dev/null 2>&1
+git -C "$NEST" -c user.email=t@t -c user.name=t commit -qm seed >/dev/null 2>&1
+NWT="$NEST/wt"
+if git -C "$NEST" worktree add -q "$NWT" -b t13branch >/dev/null 2>&1; then
+  out="$(cd "$NWT/ws" && "$NWS/scripts/rollover-prep.sh" testproj --no-record 2>&1)"; rc=$?
+  assert_eq       "T13a: exit 0" "$rc" "0"
+  assert_contains "T13b: notes divergent checkout" "$out" "note: operating on checkout $NWT/ws"
+  assert_eq       "T13c: worktree handoff keeps 1 block" \
+    "$(grep -c '^# Session Handoff' "$NWT/ws/work/testproj/handoff.md")" "1"
+  assert_eq       "T13d: main nested handoff untouched (2 blocks)" \
+    "$(grep -c '^# Session Handoff' "$NHF")" "2"
+  # Candidate that is not a workspace (no marker file) must fail safe to the
+  # workspace root rather than targeting a directory with no work/.
+  rm -f "$NWT/ws/scripts/rollover-prep.sh"
+  out="$(cd "$NWT/ws" && "$NWS/scripts/rollover-prep.sh" testproj --no-record 2>&1)"; rc=$?
+  assert_eq       "T13e: exit 0 when the candidate lacks the marker" "$rc" "0"
+  assert_not_contains "T13f: falls back to the workspace root" "$out" "note: operating on checkout"
+  assert_eq       "T13g: fallback rotated the main nested handoff" \
+    "$(grep -c '^# Session Handoff' "$NHF")" "1"
+else
+  bad "T13: could not create worktree"
+fi
+
 echo
 echo "pass=$PASS fail=$FAIL"
 [ "$FAIL" -eq 0 ]
