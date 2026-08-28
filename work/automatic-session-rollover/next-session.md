@@ -1,38 +1,28 @@
-# Catchup prompt — Automatic Session Rollover (paste into a new agent session)
-
-> **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
-> each rollover. Past-tense provenance lives in `handoff.md` (append-only
-> ledger, newest block on top). Convention: docs/work-directory-conventions.md.
+# Catchup prompt — Automatic Session Rollover
 
 ## Mission
 
-**None — the work item is DORMANT.** The wayfinder map is complete and fully
-drained: issues 01–10 are CLOSED/settled; issue 04 (in-place clear relaunch)
-is PARKED and strictly user-scheduled — never pick it up unprompted. Only
-resume this item on an explicit user mission.
+No active implementation task. Confirm with the user whether any new mission
+exists beyond the already-completed PR #35 merge-conflict resolution.
 
-## If you were launched anyway
+## Read these, in order
 
-1. **Freshness guard:** `git fetch origin` then
-   `git log --oneline HEAD..origin/main` — MUST be empty; else
-   `git pull --ff-only` and RE-READ this launcher.
-2. `scripts/context-budget.sh register --project automatic-session-rollover`
-   — expect `role=primary`.
-3. Read the top `handoff.md` block, then ask the user what the mission is.
-
-## Numbering rule (ADR-0007, binding)
-
-Your session number = the number in your own bootstrap prompt, verbatim —
-use it in your ledger block title and any worktree name; never re-derive it
-from ledger prose. At rollover, sync `.session-seq` to your own number before
-launching (session-rollover skill, step 7).
+1. `work/automatic-session-rollover/handoff.md` (top block only)
+2. `scripts/tests/test-launch-next-session.sh` (T23 and C1–C5 sections)
+3. `scripts/tests/test-rollover-clear-seed.sh`
 
 ## Do NOT reload
 
-- Issue tickets, `map.md`, research corpus, sessions ≤29 handoff blocks,
-  `handoff-archive.md` — settled provenance; reference only.
+- Archived handoff history in `work/automatic-session-rollover/handoff-archive.md`
+- Previously closed map/issues unless user explicitly reopens them
 
-## At session end
+## State snapshot
 
-Lock releases mechanically (launcher script or SessionEnd hook). Manual
-fallback: `scripts/context-budget.sh release --project automatic-session-rollover`.
+- Branch: `feat/clear-in-place-rollover`
+- Latest conflict-resolution merge commit: `a075cb8`
+- No known pending local code edits expected for this work item
+
+## First actions
+
+1. `scripts/context-budget.sh register --project automatic-session-rollover`
+2. Ask the user for the next mission (or confirm done).
