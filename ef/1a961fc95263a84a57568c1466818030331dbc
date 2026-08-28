@@ -1,0 +1,25 @@
+scripts/tests/test-launch-next-session.sh
+  s_10420ecf33899c::t_d19d9e7b4143ee 271-315
+docs/adr/0007-session-number-single-source.md
+  s_10420ecf33899c::t_1ecc7778856cd1 56-81
+scripts/launch-next-session.sh
+  s_10420ecf33899c::t_698ade53d9cd8f 225-249
+skills/session-rollover/SKILL.md
+  s_10420ecf33899c::t_f1c1ff398341fd 248-255
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ef1a961fc95263a84a57568c1466818030331dbc",
+  "prompts": {},
+  "sessions": {
+    "s_10420ecf33899c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9a1bd690-f7ea-4ff2-8d6b-db6acd595a0a",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
