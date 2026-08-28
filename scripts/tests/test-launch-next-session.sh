@@ -268,6 +268,51 @@ assert_contains "T22b: bg implied (detached launch)" "$out" "bg=1"
 assert_contains "T22c: code chat argv"    "$out" "cmd: code chat -r -m agent"
 assert_contains "T22d: verbatim prompt"   "$out" "continue from"
 
+echo "T23: lineage gate — counter must match the handoff top block's session number"
+rm -f "$SESS"/*.json "$TMP/work/testproj/.session-seq" "$TMP/work/testproj/handoff.md"
+HF="$TMP/work/testproj/handoff.md"
+
+# No counter yet (session #1): nothing to compare, gate must stay inert.
+printf '# Session Handoff — 2026-08-20 (session 9: a ledger block)\n' > "$HF"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23a: no counter -> gate inert" "$rc" "0"
+assert_contains "T23b: still first successor"    "$out" "rollover session #2"
+
+# Counter agrees with the ledger: launch, and the +1 is the launcher's alone.
+printf '9\n' > "$TMP/work/testproj/.session-seq"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23c: agreement -> exit 0"   "$rc" "0"
+assert_contains "T23d: successor is ledger+1" "$out" "rollover session #10"
+
+# Counter holds the SUCCESSOR's number instead of its own — the s102/#104
+# off-by-one. Refuse rather than mint a phantom lineage number.
+printf '10\n' > "$TMP/work/testproj/.session-seq"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23e: mismatch -> exit 3"          "$rc" "3"
+assert_contains "T23f: gate named"                  "$out" "lineage gate"
+assert_contains "T23g: counter value reported"      "$out" ".session-seq=10"
+assert_contains "T23h: ledger value reported"       "$out" "top block is session 9"
+assert_contains "T23i: remediation names seq-sync"  "$out" "seq-sync --project testproj --session 9"
+assert_not_contains "T23j: refusal launches nothing" "$out" "cmd: claude"
+
+# Unparseable top block: prose may VETO a number, never DERIVE one — skip.
+printf '# Session Handoff — no number in this block\n' > "$HF"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq "T23k: unparseable ledger -> gate skips" "$rc" "0"
+
+# Absent ledger: projects without a numbered ledger pass trivially.
+rm -f "$HF"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq "T23l: absent ledger -> gate skips" "$rc" "0"
+
+# The session_handoff.md spelling is gated too.
+printf '# Session Handoff — 2026-08-20 (session 4: older spelling)\n' \
+  > "$TMP/work/testproj/session_handoff.md"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23m: session_handoff.md spelling gates too" "$rc" "3"
+assert_contains "T23n: names that ledger's number"            "$out" "top block is session 4"
+rm -f "$TMP/work/testproj/session_handoff.md" "$TMP/work/testproj/.session-seq"
+
 echo "W: worktree-invoked launch — sync the main checkout, launch from it (issue 05)"
 GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
 trap 'rm -rf "$TMP" "$GW"' EXIT
