@@ -253,6 +253,18 @@ exchanges so STOP can't pass unnoticed.
    relaunch. Projects whose ledger has no parseable session number are
    unaffected.
 
+   **Spawn a process, or roll over in place?** Decide by whether the MCP server
+   set must change (ADR-0009). Same set — the ordinary rollover — use
+   `--clear`: the script does every real-run side effect, then seeds
+   `work/<project>/.pending-clear-seed` and tells the human to press `/clear`,
+   which a `SessionStart` hook drains into the fresh context. That skips the
+   spawn path's re-authentication and MCP-reconnect, both observed downstream.
+   Different MCP fragment, different runtime, a wedged CLI, or `--bg` while this
+   session keeps working — spawn. `--clear` is claude-only, refuses
+   `--bg`/`--emit`, and runs even under `ROLLOVER_RELAUNCH=off`. It leaves the
+   counter one ahead if the human never clears, and prints the `seq-sync`
+   rewind for exactly that case.
+
    **Under the supervisor (`TF_SESSION_LOOP=1`), you do not launch — you stage.**
    Instead of running the launcher bare, run it with `--emit`, which performs
    every real-run side effect and writes the successor's command to the file the
