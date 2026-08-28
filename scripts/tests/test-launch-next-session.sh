@@ -268,6 +268,64 @@ assert_contains "T22b: bg implied (detached launch)" "$out" "bg=1"
 assert_contains "T22c: code chat argv"    "$out" "cmd: code chat -r -m agent"
 assert_contains "T22d: verbatim prompt"   "$out" "continue from"
 
+echo "C: --clear in-place rollover (closes issue 04; ADR-0009)"
+SEEDF="$TMP/work/testproj/.pending-clear-seed"
+SEQF="$TMP/work/testproj/.session-seq"
+CLEAR_PROMPT='Work item testproj - rollover session #2. Read `work/testproj/next-session.md` and continue from **First actions**.'
+
+echo "C1: --clear --dry-run announces mode=clear, seeds nothing, bumps nothing"
+rm -f "$SESS"/*.json "$SEEDF" "$SEQF" "$LOCKF"
+out=$(run_lns "$LNS" testproj --runtime claude --clear --dry-run 2>&1); rc=$?
+assert_eq           "C1a: exit 0"           "$rc" "0"
+assert_contains     "C1b: mode=clear"       "$out" "mode=clear"
+assert_contains     "C1c: canonical prompt" "$out" "$CLEAR_PROMPT"
+assert_not_contains "C1d: launches nothing" "$out" "cmd: claude"
+[ ! -f "$SEEDF" ] && ok "C1e: no seed written"   || bad "C1e: dry-run wrote a seed"
+[ ! -f "$SEQF" ]  && ok "C1f: counter not bumped" || bad "C1f: dry-run bumped the counter"
+
+echo "C2: --clear seeds the canonical prompt verbatim, bumps the counter, execs nothing"
+out=$(run_lns "$LNS" testproj --runtime claude --clear 2>&1); rc=$?
+assert_eq "C2a: exit 0" "$rc" "0"
+assert_eq "C2b: seed holds the prompt verbatim" "$(cat "$SEEDF" 2>/dev/null)" "$CLEAR_PROMPT"
+assert_eq "C2c: counter bumped to 2"            "$(cat "$SEQF" 2>/dev/null)" "2"
+assert_not_contains "C2d: no process launched"  "$out" "cmd: claude"
+assert_contains "C2e: names the seed file"      "$out" ".pending-clear-seed"
+assert_contains "C2f: tells the human to clear" "$out" "/clear"
+assert_contains "C2g: rewind hint is exact"     "$out" "seq-sync --project testproj --session 1"
+rm -f "$SEEDF" "$SEQF"
+
+echo "C3: --clear keeps the lock and the registry record — the process is still alive"
+rm -f "$SESS"/*.json; mk_record claude sid-old testproj
+mklock claude sid-old
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --clear 2>&1)
+[ -f "$LOCKF" ] && ok "C3a: own lock NOT released" || bad "C3a: --clear released its own lock"
+assert_eq "C3b: record NOT stamped superseded" \
+  "$(jq -r '.role // "none"' "$SESS/claude-sid-old.json")" "none"
+assert_not_contains "C3c: no release note" "$out" "lock: released"
+rm -f "$LOCKF" "$SEEDF" "$SEQF"
+
+echo "C4: --clear refuses the combinations that cannot mean anything"
+rm -f "$SESS"/*.json
+out=$(run_lns "$LNS" testproj --runtime claude --clear --emit "$TMP/cmd.txt" 2>&1); rc=$?
+assert_eq       "C4a: with --emit, exit 3" "$rc" "3"
+assert_contains "C4b: --emit named"        "$out" "--emit"
+out=$(run_lns "$LNS" testproj --runtime claude --clear --bg 2>&1); rc=$?
+assert_eq       "C4c: with --bg, exit 3"   "$rc" "3"
+assert_contains "C4d: --bg named"          "$out" "--bg"
+[ ! -f "$SEQF" ] && ok "C4e: parse-time refusals bump no counter" || bad "C4e: refusal bumped the counter"
+out=$(run_lns "$LNS" testproj --runtime codex --clear 2>&1); rc=$?
+assert_eq       "C4f: non-claude runtime, exit 3" "$rc" "3"
+assert_contains "C4g: claude-only"                "$out" "claude-only"
+[ ! -f "$SEEDF" ] && ok "C4h: no seed written on any refusal" || bad "C4h: a refusal still seeded"
+rm -f "$SEQF"
+
+echo "C5: --clear is an explicit request — ROLLOVER_RELAUNCH=off does not neuter it"
+out=$(run_lns ROLLOVER_RELAUNCH=off "$LNS" testproj --runtime claude --clear 2>&1); rc=$?
+assert_eq       "C5a: exit 0"     "$rc" "0"
+assert_contains "C5b: mode=clear" "$out" "mode=clear"
+assert_eq "C5c: seed still written" "$(cat "$SEEDF" 2>/dev/null)" "$CLEAR_PROMPT"
+rm -f "$SEEDF" "$SEQF" "$SESS"/*.json
+
 echo "W: worktree-invoked launch — sync the main checkout, launch from it (issue 05)"
 GW="$(mktemp -d)"; GW="$(cd "$GW" && pwd -P)"
 trap 'rm -rf "$TMP" "$GW"' EXIT
