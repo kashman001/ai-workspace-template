@@ -103,6 +103,10 @@ exchanges so STOP can't pass unnoticed.
 
 4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
    directly below the PURPOSE comment, above the single block prep left behind.
+   If your edit anchors on the previous block's `# Session Handoff` header line,
+   your replacement text must END with that same header line — dropping it
+   silently merges the old block into yours (observed downstream; the block-count
+   grep under "Verification" catches it).
    *Backward-looking*: what happened, what shipped, where things stand. Contract:
    **≤40 lines**; reference artifacts by path/URL (never duplicate their content);
    a **suggested skills** section for the next session; optional `Learnings:`
