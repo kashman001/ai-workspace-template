@@ -53,8 +53,32 @@ start) takes counter + 1 as its number; its rollover sync counts it in.
 - The number is machine-local by design: two machines working the same item
   can still disagree until one launches from the other's pushed state — an
   accepted limitation of not committing the counter.
-- No mechanical validator exists; a session that ignores the verbatim rule
-  reintroduces prose drift until its successor's sync.
+- ~~No mechanical validator exists; a session that ignores the verbatim rule
+  reintroduces prose drift until its successor's sync.~~ Closed by the
+  amendment below.
+
+## Amendment: a lineage gate in `launch-next-session.sh`
+
+`launch-next-session.sh` refuses to launch when `.session-seq` disagrees with
+the session number in the handoff's top block, printing the `seq-sync` command
+that reconciles them.
+
+Why it is not redundant with ADR-0008's `seq-sync`: `seq-sync` compares the
+counter against the **live** session's own number, at rollover-write time. The
+gate compares it against the **ledger the successor is about to inherit**, at
+launch time. Both can be satisfied independently, and the observed failure —
+the s102/#104 off-by-one, where a session wrote its successor's number instead
+of its own — passes `seq-sync` and is caught only here. The counter is trusted
+by the `+1`, so the last moment to challenge it is immediately before that.
+
+This does parse agent-written prose, which "`register`-time warning when ledger
+title ≠ counter" was rejected above for doing. The distinction is directional
+and is what makes it safe: **prose may VETO a number, never DERIVE one.** The
+gate never writes, never infers a number to use, and skips silently when either
+side is absent or unparseable — so a project without a numbered ledger, or a
+ledger whose heading does not match, is unaffected rather than blocked. The
+worst case for a bad parse is a refusal with both numbers printed and a
+one-line fix, not a wrong number written to disk.
 
 ## Provenance
 

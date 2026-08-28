@@ -245,6 +245,14 @@ exchanges so STOP can't pass unnoticed.
    ff-pushes the branch to main, syncs the main checkout, and proceeds; only
    real divergence still refuses.
 
+   It also refuses when the session counter disagrees with the session number
+   in the handoff's top block (lineage gate, ADR-0007 amendment) — that means
+   the counter was written wrong, and launching would mint a phantom number.
+   The refusal prints both numbers and the `seq-sync` call that reconciles
+   them; run that (or fix the ledger if the ledger is what is wrong), then
+   relaunch. Projects whose ledger has no parseable session number are
+   unaffected.
+
    **Under the supervisor (`TF_SESSION_LOOP=1`), you do not launch — you stage.**
    Instead of running the launcher bare, run it with `--emit`, which performs
    every real-run side effect and writes the successor's command to the file the

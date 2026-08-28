@@ -236,6 +236,31 @@ while IFS= read -r co; do
   note "session-seq: ignoring stray copy $f (holds $v; authoritative is ${LAST_SEQ:-none})"
   note "session-seq: prune it — the agent no longer writes this file by hand (ADR-0008)"
 done < <(all_checkouts)
+
+# Lineage gate: at launch time the counter must equal the session number in the
+# handoff's top block — the session that just rolled over. A mismatch means the
+# counter was written wrong (e.g. an agent wrote the successor's number instead
+# of its own — the s102/#104 off-by-one, 2026-08-14); refuse rather than mint a
+# phantom lineage number. Skipped when either side is absent/unparseable, so
+# projects without a numbered ledger pass trivially — prose is used only to
+# VETO a number, never to DERIVE one. Complements ADR-0008: the assertion in
+# seq-sync catches a counter that disagrees with the LIVE session; this catches
+# one that disagrees with the ledger the successor is about to inherit.
+if [ -n "$LAST_SEQ" ]; then
+  for HF in "$WORKSPACE_ROOT/work/$PROJECT/handoff.md" \
+            "$WORKSPACE_ROOT/work/$PROJECT/session_handoff.md"; do
+    [ -f "$HF" ] || continue
+    TOP_N="$(grep -m1 -E '^#[[:space:]]*Session Handoff' "$HF" 2>/dev/null \
+             | grep -oiE 'session[[:space:]]+[0-9]+' | head -1 \
+             | grep -oE '[0-9]+' || true)"
+    if [ -n "$TOP_N" ] && [ "$LAST_SEQ" != "$TOP_N" ]; then
+      die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
+The counter must hold the just-rolled-over session's number (launch does the +1).
+Fix: scripts/context-budget.sh seq-sync --project $PROJECT --session $TOP_N   (or correct the ledger if IT is wrong), then relaunch."
+    fi
+    break
+  done
+fi
 [ -n "$LAST_SEQ" ] || LAST_SEQ=1
 SEQ=$((LAST_SEQ + 1))
 [ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
