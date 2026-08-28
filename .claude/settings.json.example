@@ -1,9 +1,9 @@
 {
-  "_comment": "Starter Claude Code config. Copy to .claude/settings.local.json (gitignored) and tailor \u2014 scripts/setup.sh does this for you. Permissions are a personal trust decision \u2014 keep the copy out of git. The hooks block wires context-budget session registration (SessionStart), the WARN/STOP check (PostToolUse), and work-item lock release (SessionEnd) \u2014 see docs/context-budget.md. Every hook resolves the repo root itself rather than trusting $CLAUDE_PROJECT_DIR: a session launched with its cwd inside a subdirectory (a background job started in work/<project>/, for example) gets an empty or subdir-relative value, and the bare \"$CLAUDE_PROJECT_DIR\"/scripts/... form then fails on every tool call \u2014 noisily for PostToolUse, silently killing the WARN/STOP guardrail. The resolver trusts the variable only when it actually contains scripts/, else falls back to git rev-parse (correct inside worktrees too). The statusLine shows this session's work-item role (PRIMARY/AUXILIARY/SUPERSEDED) \u2014 see docs/context-budget.md -> 'Session roles'. disableClaudeAiConnectors keeps claude.ai account connectors (Gmail/Drive/Slack etc.) out of every session's standing tool surface, per the lean-by-default rule (CONTEXT.md -> 'Tool & Context Loading') \u2014 drop it if your project wants them. See docs/workspace-structure.md -> '.claude/ \u2014 Claude Code (Project-Level)'. The Stop hook is the session-loop supervisor's exit mechanism and is inert unless TF_SESSION_LOOP=1 \u2014 see docs/context-budget.md -> 'The supervisor'.",
+  "_comment": "Starter Claude Code config. Copy to .claude/settings.local.json (gitignored) and tailor \u2014 scripts/setup.sh does this for you. Permissions are a personal trust decision \u2014 keep the copy out of git. The hooks block wires context-budget session registration (SessionStart), the WARN/STOP check (PostToolUse), and work-item lock release (SessionEnd) \u2014 see docs/context-budget.md. Every hook resolves the repo root itself rather than trusting $CLAUDE_PROJECT_DIR: a session launched with its cwd inside a subdirectory (a background job started in work/<project>/, for example) gets an empty or subdir-relative value, and the bare \"$CLAUDE_PROJECT_DIR\"/scripts/... form then fails on every tool call \u2014 noisily for PostToolUse, silently killing the WARN/STOP guardrail. The resolver trusts the variable only when it actually resolves scripts/context-budget.sh, else walks up from $PWD looking for that same marker \u2014 which finds the workspace root whether or not it coincides with the git toplevel (a workspace nested below the repo root, e.g. <repo>/<workspace>/, breaks the git rev-parse form). Each hook then guards on the resolved script being executable and exits 0 if not, so an unrecognised layout degrades quietly instead of erroring on every tool call. The statusLine shows this session's work-item role (PRIMARY/AUXILIARY/SUPERSEDED) \u2014 see docs/context-budget.md -> 'Session roles'. disableClaudeAiConnectors keeps claude.ai account connectors (Gmail/Drive/Slack etc.) out of every session's standing tool surface, per the lean-by-default rule (CONTEXT.md -> 'Tool & Context Loading') \u2014 drop it if your project wants them. See docs/workspace-structure.md -> '.claude/ \u2014 Claude Code (Project-Level)'. The Stop hook is the session-loop supervisor's exit mechanism and is inert unless TF_SESSION_LOOP=1 \u2014 see docs/context-budget.md -> 'The supervisor'.",
   "disableClaudeAiConnectors": true,
   "statusLine": {
     "type": "command",
-    "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec \"$d\"/scripts/statusline-context-budget.sh"
+    "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/statusline-context-budget.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
   },
   "hooks": {
     "SessionStart": [
@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$d\"/scripts/context-budget.sh register --runtime claude ${t:+--transcript \"$t\"} || true"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; c=\"$d/scripts/context-budget.sh\"; [ -x \"$c\" ] || exit 0; t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$c\" register --runtime claude ${t:+--transcript \"$t\"} || true"
           }
         ]
       }
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); h=\"$d/scripts/hooks/context-budget-claude-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/hooks/context-budget-claude-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
           }
         ]
       }
@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$d\"/scripts/context-budget.sh release --runtime claude ${t:+--transcript \"$t\"} --quiet || true"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; c=\"$d/scripts/context-budget.sh\"; [ -x \"$c\" ] || exit 0; t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$c\" release --runtime claude ${t:+--transcript \"$t\"} --quiet || true"
           }
         ]
       }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); h=\"$d/scripts/hooks/context-budget-stop-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\" claude"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/hooks/context-budget-stop-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\" claude"
           }
         ]
       }

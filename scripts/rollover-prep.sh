@@ -61,16 +61,25 @@ canon_common_dir() {  # $1 = dir to query; prints resolved common dir or nothing
   (cd "$common" 2>/dev/null && pwd -P)
 }
 resolve_invoke_root() {
-  local top pcommon scommon
+  local top pcommon scommon stop cand
   top="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" \
     || { printf '%s' "$WORKSPACE_ROOT"; return; }
   pcommon="$(canon_common_dir "$PWD")"
   scommon="$(canon_common_dir "$WORKSPACE_ROOT")"
   if [ -n "$pcommon" ] && [ "$pcommon" = "$scommon" ]; then
-    printf '%s' "$top"
-  else
-    printf '%s' "$WORKSPACE_ROOT"
+    # The workspace root is not necessarily the git toplevel: a workspace may
+    # sit below the repo root (<repo>/<workspace>/), in which case a bare $top
+    # points above work/ and every project resolves as "not found". Carry the
+    # workspace's own path-within-the-checkout across to $PWD's checkout, then
+    # validate the candidate with the same marker idiom resolve_workspace_root
+    # uses above, so a candidate that is not a workspace fails safe to the one
+    # we know is. Where workspace root and toplevel coincide the suffix is
+    # empty and this reduces to $top.
+    stop="$(git -C "$WORKSPACE_ROOT" rev-parse --show-toplevel 2>/dev/null)"
+    cand="$top${WORKSPACE_ROOT#"$stop"}"
+    if [ -f "$cand/scripts/rollover-prep.sh" ]; then printf '%s' "$cand"; return; fi
   fi
+  printf '%s' "$WORKSPACE_ROOT"
 }
 INVOKE_ROOT="$(resolve_invoke_root)"
 
