@@ -1,0 +1,23 @@
+.claude/settings.json.example
+  s_ac9958faea78b3::t_f4b309c4b34ae0 2,6,15,26,37,48
+scripts/tests/test-rollover-prep.sh
+  s_ac9958faea78b3::t_da5ece58d6c73d 166-223
+scripts/rollover-prep.sh
+  s_ac9958faea78b3::t_da5ece58d6c73d 64,70-80,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "38bf63ae1bcf095129849126a99042c308427f53",
+  "prompts": {},
+  "sessions": {
+    "s_ac9958faea78b3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "74516c71-b7ed-43b5-82f8-fc26cff3995c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
