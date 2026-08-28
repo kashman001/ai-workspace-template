@@ -1,0 +1,20 @@
+skills/session-rollover/SKILL.md
+  s_bae88fa5f7f148::t_4811068f4b77af 106-107
+  s_bae88fa5f7f148::t_790f090169f399 108-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "10be341b44f26a47b389fb32a25c5965d9626ad6",
+  "prompts": {},
+  "sessions": {
+    "s_bae88fa5f7f148": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "682fb107-44eb-4744-b818-8ede7236d786",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
