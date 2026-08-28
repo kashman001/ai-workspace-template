@@ -8,7 +8,10 @@
 #          ROLLOVER_RUNTIME > claude.
 # Usage:   launch-next-session.sh <project>
 #            [--runtime claude|codex|gemini|opencode|copilot] [--bg] [--dry-run]
-#            [--emit <abs-path>] [--skip-freshness]
+#            [--emit <abs-path>] [--skip-freshness] [--clear]
+#          --clear: in-place relaunch (ADR-0009, claude-only) — seed
+#          work/<project>/.pending-clear-seed and let the human press /clear
+#          instead of spawning a successor process.
 # Knobs:   ROLLOVER_RELAUNCH=off|manual|auto, ROLLOVER_RUNTIME (fallback
 #          only). Precedence: explicit env > work/<project>/context-budget.env
 #          (committed per-item policy, optional) > global context-budget.env >
@@ -64,19 +67,20 @@ STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 note() { echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
 
-PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0; EMIT=""
+PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0; EMIT=""; CLEAR=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --bg) BG=1; shift ;;
     --dry-run) DRY=1; shift ;;
     --skip-freshness) SKIP_FRESH=1; shift ;;
+    --clear) CLEAR=1; shift ;;
     --emit) EMIT="$2"; shift 2 ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit <abs-path>] [--skip-freshness]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit <abs-path>] [--skip-freshness] [--clear]"
 
 # --emit: perform every real-run side effect, then write the command to a file
 # instead of exec'ing (spec: "Architecture" -> 2). exec would replace the
@@ -89,6 +93,16 @@ if [ -n "$EMIT" ]; then
   esac
   [ "$DRY" -eq 0 ]  || die "--emit cannot be combined with --dry-run (--emit performs the side effects --dry-run refuses)"
   [ "$BG"  -eq 0 ]  || die "--emit cannot be combined with --bg (the supervisor runs the child in the foreground)"
+fi
+
+# --clear (ADR-0009): the successor is THIS process after /clear, not a new
+# one. Both refusals are decided here, at parse time, so a bad invocation costs
+# no side effects — the counter bump is still ahead of us. The claude-only
+# check cannot live here: it needs the resolved runtime, so it sits with the
+# --clear block below, exactly where --bg's own claude-only check sits.
+if [ "$CLEAR" -eq 1 ]; then
+  [ -z "$EMIT" ]   || die "--clear cannot be combined with --emit (no new process is started to run the emitted command)"
+  [ "$BG" -eq 0 ]  || die "--clear cannot be combined with --bg (the successor is this process, not a background one)"
 fi
 
 # Worktree-invoked (issue 05): tracked handoff artifacts (launcher/ledger)
@@ -363,6 +377,42 @@ fi
 
 # Every mode prints the paste-me prompt first — it must survive launch failure.
 printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n' "$PROMPT"
+
+# --clear: in-place relaunch (ADR-0009, closing issue 04). Everything above
+# still applies — the freshness guard, the counter bump, the canonical prompt
+# wording. What changes is the handover: instead of spawning a process we drop
+# a seed marker that the SessionStart hook (scripts/hooks/rollover-clear-seed.sh)
+# drains into the cleared context, so the human presses /clear and types
+# nothing.
+#
+# Placement is load-bearing on both sides. It is AFTER runtime resolution, so
+# the claude-only refusal below is decided on the same resolved runtime --bg
+# uses. It is BEFORE the lock release and the superseded stamp, and it exits:
+# neither may run on this path. The process survives /clear, so its registry
+# record is still live and its lock is still correctly held; `register` re-fires
+# from the SessionStart hook and reconciles the new session id itself. Stamping
+# the record superseded here would mark a session dead that is still running.
+# No successor-pending handshake file is written either: no second process
+# starts, so there is no second register call to consume one.
+#
+# It also exits before the MODE=off branch, deliberately: --clear is an
+# explicit human invocation, and ROLLOVER_RELAUNCH=off means "do not spawn a
+# successor behind my back", which is not what this does.
+if [ "$CLEAR" -eq 1 ]; then
+  [ "$RUNTIME" = "claude" ] \
+    || die "--clear is claude-only (/clear and the SessionStart seed hook are Claude Code features); runtime=$RUNTIME"
+  SEED="$WORKSPACE_ROOT/work/$PROJECT/.pending-clear-seed"
+  if [ "$DRY" -eq 1 ]; then
+    echo "project=$PROJECT runtime=$RUNTIME mode=clear seq=$SEQ (dry-run: counter NOT bumped, no seed written)"
+    exit 0
+  fi
+  printf '%s\n' "$PROMPT" > "$SEED" || die "could not write seed marker: $SEED"
+  echo "project=$PROJECT runtime=$RUNTIME mode=clear seq=$SEQ seed=$SEED"
+  note "the prompt above is seeded automatically — NOW PRESS /clear and type nothing."
+  note "if you do NOT clear, the counter is already at $SEQ; rewind with:"
+  note "  scripts/context-budget.sh seq-sync --project $PROJECT --session $LAST_SEQ"
+  exit 0
+fi
 
 # --emit hands the command to a supervisor that runs it in the FOREGROUND and
 # waits on it, so no mode-derived backgrounding may reach the emitted line. The
