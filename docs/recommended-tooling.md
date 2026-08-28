@@ -110,22 +110,38 @@ A two-line status bar rendered by [ccstatusline](https://www.npmjs.com/package/c
 
 **Setup (global):**
 
-1. Prereqs: Node.js (for `npx`), Claude Code, git on `PATH`.
+1. Prereqs: Node.js/npm, Claude Code, git on `PATH`. Install the renderer
+   once — `npm install -g ccstatusline` — and point the status line at the
+   installed binary, **not** `npx ... @latest`, which re-resolves the package
+   over the network on every refresh. Refresh it deliberately with
+   `npm update -g ccstatusline`. Note `npm install -g` follows your npm
+   prefix, so check `command -v ccstatusline` matches what you wire in
+   below — a second copy under another prefix will not get your updates.
 2. Layout config — create `~/.config/ccstatusline/settings.json` with your
    widget layout (model, context-percentage, session-cost, session-clock,
-   git-branch, git-worktree). Run `npx -y ccstatusline@latest` for the
-   interactive editor.
+   git-branch, git-worktree). Run `ccstatusline` for the interactive editor.
 3. Wire Claude Code — merge this into `~/.claude/settings.json` (merge the
    key; don't overwrite the file):
    ```json
    "statusLine": {
      "type": "command",
-     "command": "npx -y ccstatusline@latest",
+     "command": "ccstatusline",
      "padding": 0,
-     "refreshInterval": 10
+     "refreshInterval": 60
    }
    ```
-4. Restart Claude Code; the bar appears. Quick check: `echo '{}' | npx -y ccstatusline@latest`.
+4. Restart Claude Code; the bar appears. Quick check: `echo '{}' | ccstatusline`.
+
+> **On `refreshInterval`.** Claude Code blocks on the status-line command
+> every refresh, so the interval has to clear the render time. Warm, the
+> installed binary renders in ~1s (0.76–2.58s over five runs, macOS 26 /
+> Node 26), which 10 would clear — 60 is simply headroom for a loaded
+> machine. Measure on a *quiet* box before tuning this: renders timed while
+> npm installs were running came out at 4.6–11.7s, which reflects contention,
+> not the tool. ccstatusline does carry a `checkForUpdates` path that queries
+> the npm registry, but its only call site is in the interactive TUI, not the
+> render path, and forcing fetches to fail fast via a dead proxy changed the
+> render time not at all.
 
 > Customize later via `/statusline` in Claude Code, or re-run the ccstatusline
 > editor. Changes land in `~/.config/ccstatusline/settings.json`.
