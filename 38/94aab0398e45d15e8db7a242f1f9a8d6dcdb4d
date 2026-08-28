@@ -1,0 +1,35 @@
+scripts/tests/test-rollover-clear-seed.sh
+  s_6903b8425ac847::t_c496a17ea622a2 1-81
+.claude/settings.json.example
+  s_6903b8425ac847::t_db040c761b0874 2
+  s_6903b8425ac847::t_89217bb9c09a23 16-19
+scripts/hooks/rollover-clear-seed.sh
+  s_6903b8425ac847::t_20191f54ab3a93 1-69
+work/automatic-session-rollover/issues/04-in-place-clear-relaunch.md
+  s_6903b8425ac847::t_1715ce60723e34 3,6-15
+  s_6903b8425ac847::t_bc35acc84f5234 16
+scripts/launch-next-session.sh
+  s_6903b8425ac847::t_c2764b1155adf2 70,77,83,98-107,356-390
+  s_6903b8425ac847::t_d050ac64983887 391
+  s_6903b8425ac847::t_542d701e9f7b51 11-14
+docs/adr/0009-clear-based-rollover-relaunch.md
+  s_6903b8425ac847::t_76952d7a0f5359 1-138
+scripts/tests/test-launch-next-session.sh
+  s_6903b8425ac847::t_7ed24ce8534b09 271-328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3894aab0398e45d15e8db7a242f1f9a8d6dcdb4d",
+  "prompts": {},
+  "sessions": {
+    "s_6903b8425ac847": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a7cd844d-fedf-4cde-b380-6a4b396a297a",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
