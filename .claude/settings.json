@@ -6,7 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$d\"/scripts/context-budget.sh register --runtime claude ${t:+--transcript \"$t\"} || true"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; c=\"$d/scripts/context-budget.sh\"; [ -x \"$c\" ] || exit 0; t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$c\" register --runtime claude ${t:+--transcript \"$t\"} || true"
+          },
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/hooks/rollover-clear-seed.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
           }
         ]
       }
@@ -17,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); h=\"$d/scripts/hooks/context-budget-claude-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/hooks/context-budget-claude-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
           }
         ]
       }
@@ -28,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$d\"/scripts/context-budget.sh release --runtime claude ${t:+--transcript \"$t\"} --quiet || true"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; c=\"$d/scripts/context-budget.sh\"; [ -x \"$c\" ] || exit 0; t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$c\" release --runtime claude ${t:+--transcript \"$t\"} --quiet || true"
           }
         ]
       }
@@ -39,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); h=\"$d/scripts/hooks/context-budget-stop-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\" claude"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/hooks/context-budget-stop-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\" claude"
           }
         ]
       }
@@ -47,6 +51,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -d \"$d/scripts\" ] || d=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec \"$d\"/scripts/statusline-context-budget.sh"
+    "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/statusline-context-budget.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
   }
 }

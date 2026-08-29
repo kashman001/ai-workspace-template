@@ -1,7 +1,18 @@
 # 04 — In-place relaunch via /clear (third ROLLOVER_RELAUNCH mode)
 
-Status: open — future consideration, not scheduled · raised 2026-08-06
+Status: CLOSED — implemented 2026-08-28 as ADR-0009 · raised 2026-08-06
 (brainstorm with user; deliberately parked)
+
+> Implemented by `scripts/launch-next-session.sh --clear` +
+> `scripts/hooks/rollover-clear-seed.sh`. See
+> `docs/adr/0009-clear-based-rollover-relaunch.md`, whose "How the five losses
+> in issue 04 are handled" section answers this document point by point.
+> Two of the five (launch-config change point, process freshness) are not
+> solved but accepted as the mode's boundary — they are the selection rule for
+> spawning instead. Loss 2, the one called an "actual bug" below, dissolves:
+> the `--clear` path does not release the lock or stamp the record superseded
+> in the first place, so there is nothing for the register hook to inherit.
+> Kept for the analysis, which is what the ADR was written against.
 
 ## Idea
 

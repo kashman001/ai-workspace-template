@@ -33,7 +33,8 @@ Section index:
 - **Why you can't ask the model (D1)** — why usage is measured from disk.
 - **Thresholds** — WARN/STOP values and where they live.
 - **Rollover trigger policy** — what to do on exit 1 (WARN) vs 2 (STOP).
-- **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override.
+- **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override;
+  `--clear` in-place relaunch.
 - **Multi-session model** *(fleet-only)* — session-keyed registry,
   per-project lock, session roles.
 - **Worktrees** *(fleet-only)* — workspace-root anchoring.
@@ -237,6 +238,28 @@ returns before the session responds, so the launcher always routes it through
 the background confirm loop (waits for the successor's `register`). Vendor
 flags live only in the script — re-verify against `--help` before changing
 them.
+
+**In-place relaunch (`--clear`, ADR-0009):** `launch-next-session.sh <project>
+--clear` runs the identical freshness guard, counter bump and prompt
+construction as the spawn path, then writes the prompt to
+`work/<project>/.pending-clear-seed` instead of starting a process. The
+`SessionStart` hook `scripts/hooks/rollover-clear-seed.sh` fires on
+`source == "clear"`, drains the marker, and returns it as `additionalContext`
+— so the human presses `/clear` and types nothing. Choose by **whether the MCP
+server set must change**: same set → `--clear` (the common case, and it avoids
+the spawn path's two failure modes observed downstream, re-authentication and
+MCP connection races); different MCP fragment, different runtime, or `--bg`
+while this session keeps working → spawn. `--clear` is claude-only (exit 3
+otherwise), cannot be combined with `--bg`/`--emit`, and is honoured even under
+`ROLLOVER_RELAUNCH=off` — that knob means "do not spawn behind my back", and an
+explicitly typed `--clear` is not that. It deliberately does **not** release
+`.active-session` or stamp the dying record `superseded`: the process survives
+`/clear`, so the record is still live. The counter bumps at invocation, so an
+abandoned `--clear` leaves it one ahead; the command prints the exact
+`seq-sync` rewind on every real run. Wiring the hook requires the `SessionStart`
+entry from `.claude/settings.json.example` — a `.claude/settings.local.json`
+predating this sync will not have it, and `--clear` then seeds a marker nothing
+drains.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
 by the dying session at `session-rollover` step 1 via
