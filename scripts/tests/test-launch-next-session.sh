@@ -322,6 +322,30 @@ assert_eq       "T23m: session_handoff.md spelling gates too" "$rc" "3"
 assert_contains "T23n: names that ledger's number"            "$out" "top block is session 4"
 rm -f "$TMP/work/testproj/session_handoff.md" "$TMP/work/testproj/.session-seq"
 
+# Widened heading grammar (backlog M33): the gate must see the number in every
+# numbered title form check-ledger.py accepts, not just "session N".
+printf '# Session Handoff — s202 (dateless sNNN form)\n' > "$HF"
+printf '9\n' > "$TMP/work/testproj/.session-seq"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23o: sNNN form gates too"        "$rc" "3"
+assert_contains "T23p: sNNN number extracted"      "$out" "top block is session 202"
+
+printf '# Session Handoff — 2026-08-29 (session #9: hash-number form)\n' > "$HF"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq "T23q: 'session #N' form agrees -> exit 0" "$rc" "0"
+
+printf '# Session Handoff — 9 (2026-08-29): current numbered form\n' > "$HF"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq "T23r: current '— N (date)' form agrees -> exit 0" "$rc" "0"
+
+# Date-only heading: the year must not be misread as a session number, and
+# the skip must be visible, not silent.
+printf '# Session Handoff — 2026-08-07 (date-only title, no number)\n' > "$HF"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23s: date-only heading -> gate skips"  "$rc" "0"
+assert_contains "T23t: skip is announced"                "$out" "carries no session number"
+rm -f "$TMP/work/testproj/.session-seq" "$HF"
+
 echo "C: --clear in-place rollover (closes issue 04; ADR-0009)"
 SEEDF="$TMP/work/testproj/.pending-clear-seed"
 SEQF="$TMP/work/testproj/.session-seq"

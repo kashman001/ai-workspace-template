@@ -295,9 +295,19 @@ if [ -n "$LAST_SEQ" ]; then
   for HF in "$WORKSPACE_ROOT/work/$PROJECT/handoff.md" \
             "$WORKSPACE_ROOT/work/$PROJECT/session_handoff.md"; do
     [ -f "$HF" ] || continue
-    TOP_N="$(grep -m1 -E '^#[[:space:]]*Session Handoff' "$HF" 2>/dev/null \
-             | grep -oiE 'session[[:space:]]+[0-9]+' | head -1 \
-             | grep -oE '[0-9]+' || true)"
+    # Number extraction mirrors check-ledger.py's grammar: strip ISO dates
+    # first (so "2026" is never read as a session number), then accept
+    # "session N" / "session #N" anywhere, or "— N"/"— sN" right after the
+    # heading dash (current + sNNN title forms). A heading with no session
+    # number yields empty and the gate is skipped — noted below, not silent.
+    TOP_LINE="$(grep -m1 -E '^#[[:space:]]*Session Handoff' "$HF" 2>/dev/null || true)"
+    TOP_N="$(printf '%s\n' "$TOP_LINE" \
+             | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}//g' \
+             | grep -oiE 'session[[:space:]]+#?[0-9]+|^#[[:space:]]*session handoff[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
+             | head -1 | grep -oE '[0-9]+' | head -1 || true)"
+    if [ -n "$TOP_LINE" ] && [ -z "$TOP_N" ]; then
+      note "lineage gate: top ledger heading carries no session number — gate skipped ($HF)"
+    fi
     if [ -n "$TOP_N" ] && [ "$LAST_SEQ" != "$TOP_N" ]; then
       die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
 The counter must hold the just-rolled-over session's number (launch does the +1).

@@ -26,8 +26,10 @@ Convention: docs/work-directory-conventions.md.
 -->
 """
 
-# A clean two-block ledger in the current title convention, plus an archive in
-# the legacy convention — both forms are live history and both must parse.
+# A clean ledger exercising every accepted title convention (current, sNNN,
+# hash-number, date-only), plus an archive in the legacy convention — all are
+# live history and all must parse; the mixed date-only/dateless blocks also
+# prove ordering skips a missing key without breaking the chain.
 CLEAN_LEDGER = PURPOSE + """
 # Session Handoff — 76 (2026-08-22): the newest thing that happened
 
@@ -40,13 +42,25 @@ More body.
 # Session Handoff — 75 (2026-08-21): the older thing that happened
 
 Body prose.
-"""
 
-CLEAN_ARCHIVE = """# Session Handoff — 2026-08-20 (session 74, bg: an archived block)
+# Session Handoff — s74 (a dateless sNNN block)
 
 Body prose.
 
-# Session Handoff — 2026-08-19 (session 73, bg: an older archived block)
+# Session Handoff — 2026-08-20 (session #73: a hash-numbered block)
+
+Body prose.
+
+# Session Handoff — 2026-08-19 (a date-only block with no session number)
+
+Body prose.
+"""
+
+CLEAN_ARCHIVE = """# Session Handoff — 2026-08-18 (session 72, bg: an archived block)
+
+Body prose.
+
+# Session Handoff — 2026-08-17 (session 71, bg: an older archived block)
 
 Body prose.
 """
@@ -91,25 +105,59 @@ def mutate_date_regression(ledger: str, archive: str):
 def mutate_archive_interleave(ledger: str, archive: str):
     """Rotation put a NEWER block in the archive than the live ledger holds —
     the seam between the two files is where rollover tooling writes blind."""
-    return ledger, archive.replace("session 74", "session 77")
+    return ledger, archive.replace("session 72", "session 77")
 
 
+def mutate_keyless_heading(ledger: str, archive: str):
+    """A heading in the right shape but yielding neither a session number nor
+    a date — nothing for ordering to hold on to."""
+    return ledger.replace(
+        "# Session Handoff — 2026-08-19 (a date-only block with no session number)",
+        "# Session Handoff — (neither a number nor a date here)",
+    ), archive
+
+
+def mutate_broken_live_hides_archive(ledger: str, archive: str):
+    """The live ledger yields no parseable blocks at all — the check must
+    still parse the archive and report its defects, not return early (a
+    broken live heading once silently hid a 193-block archive)."""
+    broken = PURPOSE + """
+# Session Handoff — (wholly unparseable heading)
+
+Body prose.
+"""
+    swapped = (
+        archive.replace("session 72", "TMP")
+        .replace("session 71", "session 72")
+        .replace("TMP", "session 71")
+    )
+    return broken, swapped
+
+
+# (name, mutation, required stderr substring or None)
 MUTATIONS = [
-    ("purpose comment never closes, heading swallowed", mutate_unclosed_comment),
-    ("a block is filed below an older one", mutate_out_of_order),
-    ("a heading matches neither title convention", mutate_malformed_heading),
-    ("body content stranded above the first block", mutate_orphan_subheading),
-    ("dates contradict the session numbers", mutate_date_regression),
-    ("archive holds a newer block than the ledger", mutate_archive_interleave),
+    ("purpose comment never closes, heading swallowed", mutate_unclosed_comment, None),
+    ("a block is filed below an older one", mutate_out_of_order, None),
+    ("a heading matches neither title convention", mutate_malformed_heading, None),
+    ("body content stranded above the first block", mutate_orphan_subheading, None),
+    ("dates contradict the session numbers", mutate_date_regression, None),
+    ("archive holds a newer block than the ledger", mutate_archive_interleave, None),
+    ("a heading yields neither number nor date", mutate_keyless_heading, None),
+    (
+        "broken live ledger must not hide archive defects",
+        mutate_broken_live_hides_archive,
+        "handoff-archive.md",
+    ),
 ]
 
 
-def run_check(project: Path) -> int:
-    return subprocess.run(
+def run_check(project: Path) -> tuple[int, str]:
+    proc = subprocess.run(
         [sys.executable, str(CHECK), str(project)],
         capture_output=True,
         text=True,
-    ).returncode
+    )
+    return proc.returncode, proc.stderr
 
 
 def write_project(tmp: Path, ledger: str, archive: str) -> Path:
@@ -129,22 +177,24 @@ def main() -> int:
 
         # Baseline: the check must be quiet on a well-formed ledger, or every
         # failure below is meaningless.
-        code = run_check(write_project(tmp, CLEAN_LEDGER, CLEAN_ARCHIVE))
+        code, _ = run_check(write_project(tmp, CLEAN_LEDGER, CLEAN_ARCHIVE))
         if code == 0:
             print("  baseline: clean ledger passes                        OK")
             passed += 1
         else:
             print(f"  baseline: clean ledger passes                        FALSE ALARM (exit {code})")
 
-        for name, mutate in MUTATIONS:
+        for name, mutate, expect in MUTATIONS:
             ledger, archive = mutate(CLEAN_LEDGER, CLEAN_ARCHIVE)
             if (ledger, archive) == (CLEAN_LEDGER, CLEAN_ARCHIVE):
                 print(f"  {name:52} MUTATION IS A NO-OP")
                 continue
-            code = run_check(write_project(tmp, ledger, archive))
-            if code != 0:
+            code, stderr = run_check(write_project(tmp, ledger, archive))
+            if code != 0 and (expect is None or expect in stderr):
                 print(f"  {name:52} caught")
                 passed += 1
+            elif code != 0:
+                print(f"  {name:52} MISSED (failed, but stderr lacks {expect!r})")
             else:
                 print(f"  {name:52} MISSED")
 

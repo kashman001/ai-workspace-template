@@ -142,7 +142,9 @@ exchanges so STOP can't pass unnoticed.
    but not intent.
 
    **If the mission needs the user, say what the successor does with nobody
-   there.** `ROLLOVER_RELAUNCH=auto` — the default — background-launches the
+   there.** `ROLLOVER_RELAUNCH=auto` — the committed workspace default, set in
+   the root `context-budget.env` (the launcher's built-in fallback when no env
+   file sets the knob is `off`) — background-launches the
    successor, so it can wake unwatched outside a `handsoff` chain too, and a
    conversational mission ("agree the scope with the user", "confirm the
    approach") then gets answered by the successor itself. Write both halves:

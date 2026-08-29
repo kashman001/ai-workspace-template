@@ -60,9 +60,13 @@ ledger; anything superseded is deleted, not annotated as "superseded".
 ### Ledger (`handoff.md`)
 
 The append-only provenance log. Each session prepends one
-`# Session Handoff — <date> (session N: <one-line summary>)` block containing:
+`# Session Handoff — <n> (<YYYY-MM-DD>): <one-line summary>` block containing:
 what got done, repo/state at rollover, and the immediate next step. Read only
-the top block; the rest is history.
+the top block; the rest is history. That title form is the preferred one for
+**new** blocks; older forms found in live ledgers (legacy date-first
+`— <date> (session N: …)`, `session #N`, dateless `sNNN`, date-only) are
+grandfathered — the checker accepts them, so don't rewrite history to
+"modernize" headings.
 
 **Session numbering — one source of truth (ADR-0007):** N is the number from
 your own bootstrap prompt, **verbatim**. The canonical source is machine-local
@@ -80,10 +84,11 @@ demand only). The archive uses the same newest-on-top ordering.
 
 **Gate (`scripts/check-ledger.py`):** the ledger is a provenance record written
 unattended by rollover tooling, so its shape is machine-checked rather than
-trusted. The check validates that every `# Session Handoff` heading parses (both
-the current `— N (date):` form and the legacy `— date (session N, ...)` form),
-that none is buried inside the purpose comment by an unclosed `<!-- -->`, that
-blocks run newest-first by session number *and* date, and that
+trusted. The check validates that every `# Session Handoff` heading parses
+(yields a session number, a date, or both — all the grandfathered title forms
+above are accepted), that none is buried inside the purpose comment by an
+unclosed `<!-- -->`, that blocks run newest-first by session number *and* date
+(each checked against the nearest block above carrying that key), and that
 `handoff-archive.md` holds nothing newer than `handoff.md`. Run it after any
 rotation — `scripts/check-ledger.py [work/<project>]`, exit 0 when clean. Two
 misfiled blocks reached a live ledger before this existed, in exactly the first

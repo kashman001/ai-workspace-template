@@ -37,35 +37,57 @@ def rel(path: Path) -> str:
     except ValueError:
         return str(path)
 
-# Two title conventions are in use and both are legitimate history.
-#
-#   current (session 69 onward)
+# Several title conventions are in use and all are legitimate history —
+# preferred for NEW blocks:
 #       # Session Handoff — 76 (2026-08-22): what happened
-#   legacy (sessions 2-68)
+# grandfathered (live in older ledgers; do not rewrite history):
 #       # Session Handoff — 2026-08-22 (session 68, bg: what happened)
+#       # Session Handoff — 2026-08-29 (session #8: what happened)
+#       # Session Handoff — s201 (what happened)              [dateless]
+#       # Session Handoff — 2026-08-07 (what happened)        [date-only]
+#       # Session Handoff — 2026-08-22/23 (what happened)     [midnight span]
 #
-# A session number may carry a letter suffix ("74b") or a continuation word
-# ("session 9 cont.") when one session wrote more than one block.
-DASH = r"[—-]"
-CURRENT = re.compile(
-    rf"^# Session Handoff {DASH} (?P<num>\d+)(?P<suffix>[a-z]*) "
-    rf"\((?P<date>\d{{4}}-\d{{2}}-\d{{2}})\)(?::.*)?$"
-)
-LEGACY = re.compile(
-    rf"^# Session Handoff {DASH} (?P<date>\d{{4}}-\d{{2}}-\d{{2}}) "
-    rf"\(session (?P<num>\d+)(?P<suffix>[a-z]*)\b.*\)$"
-)
+# Rather than one regex per form, parse tolerantly: the heading must open
+# `# Session Handoff` plus a dash, and must yield a session number, a date,
+# or both. A session number may carry a letter suffix ("74b") or a
+# continuation word ("session 9 cont.") when one session wrote more than one
+# block; a midnight-span date range orders by its first date.
+HEAD = re.compile(r"^# Session Handoff\s*[—-]\s*(?P<rest>.*)$")
+DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+# Number right after the dash ("76 (…", "74b (…", "s201 (…") — matched after
+# stripping ISO dates so a year is never read as a session number…
+LEAD_NUM = re.compile(r"^s?(?P<num>\d+)[a-z]*\b", re.IGNORECASE)
+# …else "session N" / "session #N" anywhere in the title.
+SESSION_NUM = re.compile(r"session\s*#?\s*(?P<num>\d+)[a-z]*", re.IGNORECASE)
+
+
+def parse_heading(rest: str) -> tuple[int | None, str | None]:
+    """Extract (session number, date) from a heading's post-dash text."""
+    dm = DATE_RE.search(rest)
+    date = dm.group(0) if dm else None
+    nodate = DATE_RE.sub("", rest).lstrip()
+    nm = LEAD_NUM.match(nodate) or SESSION_NUM.search(nodate)
+    num = int(nm.group("num")) if nm else None
+    return num, date
 
 
 class Block:
-    """One `# Session Handoff` heading, located and parsed."""
+    """One `# Session Handoff` heading, located and parsed. Depending on the
+    title form, `num` or `date` (never both) may be absent."""
 
-    def __init__(self, path: Path, line_no: int, text: str, num: int, date: str):
+    def __init__(
+        self, path: Path, line_no: int, text: str,
+        num: int | None, date: str | None,
+    ):
         self.path = path
         self.line_no = line_no
         self.text = text
         self.num = num
         self.date = date
+
+    @property
+    def describe(self) -> str:
+        return f"session {self.num}" if self.num is not None else self.date
 
     @property
     def where(self) -> str:
@@ -108,7 +130,7 @@ def parse_file(path: Path, report) -> list[Block]:
             )
             continue
 
-        m = CURRENT.match(line) or LEGACY.match(line)
+        m = HEAD.match(line)
         if not m:
             report.bad(
                 f"{rel(path)}:{line_no} not a well-formed session "
@@ -116,10 +138,16 @@ def parse_file(path: Path, report) -> list[Block]:
             )
             continue
 
+        num, date = parse_heading(m.group("rest"))
+        if num is None and date is None:
+            report.bad(
+                f"{rel(path)}:{line_no} session block heading yields "
+                f"neither a session number nor a date — {line[:70]!r}"
+            )
+            continue
+
         seen_block = True
-        blocks.append(
-            Block(path, line_no, line, int(m.group("num")), m.group("date"))
-        )
+        blocks.append(Block(path, line_no, line, num, date))
 
     if in_comment:
         report.bad(f"{rel(path)} ends inside an unclosed HTML comment")
@@ -133,18 +161,29 @@ def check_ordering(blocks: list[Block], report) -> None:
     Equal numbers are allowed — one session sometimes writes two blocks
     ("41, live continuation" above "41, background") — so this is
     non-increasing, not strictly decreasing.
+
+    Some title forms carry only a number or only a date, so each key is
+    checked independently against the nearest block ABOVE that carries it;
+    a block missing a key is skipped for that key without breaking the chain.
     """
-    for older, newer in zip(blocks[1:], blocks):
-        if older.num > newer.num:
-            report.bad(
-                f"out of order: session {older.num} at {older.where} sits below "
-                f"session {newer.num} at {newer.where} (newest block goes on top)"
-            )
-        if older.date > newer.date:
-            report.bad(
-                f"out of order by date: {older.date} at {older.where} sits below "
-                f"{newer.date} at {newer.where}"
-            )
+    prev_num: Block | None = None
+    prev_date: Block | None = None
+    for b in blocks:
+        if b.num is not None:
+            if prev_num is not None and b.num > prev_num.num:
+                report.bad(
+                    f"out of order: session {b.num} at {b.where} sits below "
+                    f"session {prev_num.num} at {prev_num.where} "
+                    f"(newest block goes on top)"
+                )
+            prev_num = b
+        if b.date is not None:
+            if prev_date is not None and b.date > prev_date.date:
+                report.bad(
+                    f"out of order by date: {b.date} at {b.where} sits below "
+                    f"{prev_date.date} at {prev_date.where}"
+                )
+            prev_date = b
 
 
 class Report:
@@ -177,8 +216,9 @@ def check_ledger(project: Path, report: Report) -> None:
 
     live = parse_file(ledger, report)
     if not live:
+        # Still parse and check the archive: an early return here once let a
+        # single broken live heading hide a 193-block archive from the check.
         report.bad(f"{rel(ledger)} contains no session blocks")
-        return
 
     archived = parse_file(archive, report) if archive.exists() else []
 
@@ -186,11 +226,14 @@ def check_ledger(project: Path, report: Report) -> None:
     # seam, or a rotation has interleaved them.
     check_ordering(live + archived, report)
 
-    report.ok(f"{len(live)} block(s) in handoff.md, newest is session {live[0].num}")
+    if live:
+        report.ok(
+            f"{len(live)} block(s) in handoff.md, newest is {live[0].describe}"
+        )
     if archived:
         report.ok(
             f"{len(archived)} block(s) in handoff-archive.md, "
-            f"newest is session {archived[0].num}"
+            f"newest is {archived[0].describe}"
         )
 
 

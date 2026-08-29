@@ -75,11 +75,16 @@ Write it *when you decide*, not in a cleanup pass — the reasoning is freshest 
 in the moment. Keep it to the fork that mattered; skip decisions with no real alternative.
 Never put secrets in it.
 
-**Archive when it grows.** When `decisions.md` passes ~16KB (`wc -c`), move the
-settled notes — `Promote?:` reads `no` or `done → ADR-NNNN` — to
-`decisions-archive.md` beside it (create on first use, newest last), keeping
-open `maybe`/`yes` notes in place. Same discipline as the handoff ledger:
-the live file stays cheap to consult; history stays on disk.
+**Archive when it grows.** ~16KB (`wc -c`) is a *trigger*, not a size target:
+when `decisions.md` passes it, move the settled notes — `Promote?:` reads `no`
+or `done → ADR-NNNN` — to `decisions-archive.md` beside it (create on first
+use, newest last). Open `maybe`/`yes` notes stay in place *regardless of the
+size that leaves* — a long-lived work item can sit well above 16KB after a
+sweep, and that's fine; don't churn trying to hit the number. If a single open
+note grows outsized (10KB+), split it: keep the decision statement and
+`Promote?:` line live, move the supporting detail to the archive with a
+pointer. Same discipline as the handoff ledger: the live file stays cheap to
+consult; history stays on disk.
 
 Counter-example — *don't* log this: "picked `date-fns` over `dayjs` for a one-off
 formatting helper". Reversible in minutes, either lib would do, no trade-off that

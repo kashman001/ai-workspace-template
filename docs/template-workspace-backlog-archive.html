@@ -614,6 +614,55 @@
       "auto relaunch didn't happen".</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M32</span> check-ledger.py heading grammar too narrow — downstream widened it; template diverges
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts · ledger</span></h3>
+    <p><span class="fix">Fixed:</span> ported the downstream widening — <code>check-ledger.py</code> now parses
+      headings tolerantly: <code># Session Handoff</code> + dash, then an optional session number (ISO dates stripped
+      first so a year is never misread; <code>— N</code>/<code>— sN</code> after the dash, else
+      <code>session N</code>/<code>session #N</code> anywhere) and an optional first-ISO-date (midnight-span ranges
+      order by their first date); a heading yielding neither is malformed. Ordering compares each key against the
+      nearest block above carrying it, and a live ledger with no parseable blocks no longer hides the archive
+      (early-return removed). Tests extended 7→9 cases incl. the broken-live-must-not-hide-archive regression
+      (stderr must name the archive); <code>docs/work-directory-conventions.md</code> now names the current form as
+      preferred with old forms grandfathered. The widening exposed genuine pre-existing ordering defects in two
+      historical archives — tracked as <code>L43</code>, not silently re-filed.</p>
+    <p><span class="k">Evidence</span> — peer report from the downstream insight-dev-ai-workspace (2026-08-29,
+      their commit <code>089f526</code>): live history uses six heading forms but our
+      <code>scripts/check-ledger.py:51,55</code> encodes two/three, so their gate failed on 89 findings and — because
+      <code>check_ledger</code> returns early when the live ledger yields no parseable blocks — a broken live heading
+      silently hid a 193-block archive from the check entirely. They added the dateless
+      <code># Session Handoff — s201 (title)</code> form, date-only, addendum, and midnight-span date-range forms;
+      made ordering compare against the nearest block <em>above</em> carrying the key; and require a heading to yield
+      a number or date (10/10 tests, was 8/10).</p>
+    <p><span class="k">Impact</span> — the template's copy has the same failure classes latent; the two copies now
+      diverge silently, defeating the shared-tooling premise.</p>
+    <p><span class="k">Fix</span> — port their grammar widening + ordering/guard changes and the two test mutations
+      into <code>scripts/check-ledger.py</code> and <code>scripts/tests/test-check-ledger.py</code>; update
+      <code>docs/work-directory-conventions.md</code> (prefer current form for new blocks; old forms grandfathered).</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M33</span> launch-next-session.sh lineage gate silently skipped for sNNN heading form
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts · rollover</span></h3>
+    <p><span class="fix">Fixed:</span> <code>launch-next-session.sh</code> TOP_N extraction now mirrors the
+      check-ledger grammar — strips ISO dates, then accepts <code>session N</code>/<code>session #N</code> anywhere
+      or <code>— N</code>/<code>— sN</code> right after the heading dash (covers current, sNNN, and hash forms; the
+      old grep also missed the current <code>— N (date)</code> form). A present heading yielding no number announces
+      "carries no session number — gate skipped" instead of failing open silently. Six new T23 assertions
+      (T23o–T23t); suite 207/0.</p>
+    <p><span class="k">Evidence</span> — <code>scripts/launch-next-session.sh:299</code> derives the ledger's top
+      session number with <code>grep -oiE 'session[[:space:]]+[0-9]+'</code>, which does not match the
+      <code># Session Handoff — s202 (…)</code> heading form; <code>TOP_N</code> comes back empty and the
+      <code>.session-seq</code>-vs-ledger lineage gate is skipped, failing open on every launch. Confirmed live
+      downstream (peer report 2026-08-29); the identical pattern ships here.</p>
+    <p><span class="k">Impact</span> — any project adopting an <code>sNNN</code> title form loses the lineage gate
+      with no visible signal.</p>
+    <p><span class="k">Fix</span> — widen the pattern to also match <code>s[0-9]+</code> (aligned with whatever
+      grammar M32 lands), and add a test; consider warning when <code>TOP_N</code> is empty instead of skipping
+      silently.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">
@@ -1242,6 +1291,42 @@
     <p><span class="k">Note</span> — originally filed downstream as L35; renumbered to L40 at publish time because
       L35 was already claimed on the published backlog (context-budget minimal mode). Same lesson as the L34
       repair: an ID is only claimed once pushed.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L41</span> session-rollover skill states the wrong ROLLOVER_RELAUNCH default
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills · rollover</span></h3>
+    <p><span class="fix">Fixed:</span> the skill now says <code>auto</code> is the committed workspace default set
+      in the root <code>context-budget.env</code>, and <code>off</code> is the launcher’s built-in fallback when no
+      env file sets the knob — matching <code>launch-next-session.sh</code> reality at both layers.</p>
+    <p><span class="k">Evidence</span> — <code>skills/session-rollover/SKILL.md:145</code> calls
+      <code>ROLLOVER_RELAUNCH=auto</code> "the default"; the launcher's built-in fallback is <code>off</code>
+      (<code>scripts/launch-next-session.sh:243</code>) — <code>auto</code> only comes from the committed root
+      <code>context-budget.env:26</code>. Both true at different layers; the skill conflates them. Found and fixed
+      downstream (peer commit <code>87700e7</code>, 2026-08-29).</p>
+    <p><span class="k">Impact</span> — a workspace that deletes or overrides the env file reads the skill as
+      promising auto-relaunch that never happens.</p>
+    <p><span class="k">Fix</span> — one-line doc fix: say <code>auto</code> is the committed workspace default via
+      <code>context-budget.env</code>, and <code>off</code> is the launcher's built-in fallback when no file sets
+      the knob.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L42</span> decision-log's ~16KB archive bar unreachable for long-lived work items
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills · decisions</span></h3>
+    <p><span class="fix">Fixed:</span> reworded ~16KB as a trigger, not a target — when passed, archive settled
+      (<code>Promote?: no</code>/<code>done</code>) notes; open notes stay regardless of the size that leaves, don’t
+      churn toward the number. Added split guidance for outsized open notes (keep the decision statement +
+      <code>Promote?:</code> line live, move supporting detail to the archive with a pointer).</p>
+    <p><span class="k">Evidence</span> — downstream experience (peer report 2026-08-29): archiving all 17 settled
+      (<code>Promote?: no</code>) notes out of a 110KB <code>decisions.md</code> only reached 55KB — the remaining
+      notes are open (<code>maybe</code>/<code>yes</code>) or unmarked, one alone 14.7KB. The
+      <code>skills/decision-log/SKILL.md:78</code> "~16KB" bar reads as a size target but behaves as a trigger; the
+      rule has no lever once the open set is large.</p>
+    <p><span class="k">Impact</span> — agents either churn trying to hit an unreachable number or ignore the rule
+      entirely.</p>
+    <p><span class="k">Fix</span> — reword the bar as a trigger ("when past ~16KB, archive settled notes; open notes
+      stay regardless of size"), and/or add guidance for splitting oversized open notes.</p>
   </div>
 
   <h2>Decisions</h2>
