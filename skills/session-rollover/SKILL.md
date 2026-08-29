@@ -107,7 +107,16 @@ exchanges so STOP can't pass unnoticed.
    your replacement text must END with that same header line — dropping it
    silently merges the old block into yours (observed downstream; the block-count
    grep under "Verification" catches it).
-   *Backward-looking*: what happened, what shipped, where things stand. Contract:
+   **Verify the comment actually closes where you think it does** — a prior
+   rollover can leave a block jammed *inside* the PURPOSE comment, so the first
+   `-->` in the file sits *below* the newest block and a naive "insert after
+   the first `-->`" buries the new block at the bottom (observed downstream).
+   Grep `^# Session Handoff —` and `^-->` and check their line order before
+   inserting; repair the comment if it is broken. `scripts/check-ledger.py`
+   (Verification) catches the symptom, not the cause.
+   *Backward-looking*: what happened, what shipped, where things stand. Use the
+   document structure from `skills/handoff/SKILL.md` (summary, repos worked on,
+   decisions, current state, open questions, next steps, key files). Contract:
    **≤40 lines**; reference artifacts by path/URL (never duplicate their content);
    a **suggested skills** section for the next session; optional `Learnings:`
    line-list (step 2); redact secrets/PII.
@@ -119,8 +128,13 @@ exchanges so STOP can't pass unnoticed.
    - **Do NOT reload** — settled side quests and dead ends, each with a one-line
      why, so the next session doesn't re-litigate them.
    - **State snapshot** — branch, uncommitted work, running processes, open items.
-   - **First actions** — step 1 is always `scripts/context-budget.sh register`;
-     then the concrete next steps.
+   - **First actions** — step 1 is always
+     `scripts/context-budget.sh register --project <project>`; then the
+     concrete next steps. **The `--project` flag is not optional**: without it
+     the budget record's `.project` is empty, `scripts/statusline-context-budget.sh`
+     renders no `ROLE · project · pct` segment, and the work item silently stops
+     showing in the status bar for any session not started via
+     `launch-next-session.sh`.
 
    Under `handsoff` mode the launcher must carry only **position** — "ticket 4 of
    9, 3 done" against a named spec, plan, or ticket path. Over a 10-session
@@ -153,14 +167,17 @@ exchanges so STOP can't pass unnoticed.
 
    **A write that is not a correction is a bug.** Re-deriving the number here is
    exactly how session 3 of `session-loop-automation` wrote `4`, launched `#5`,
-   and left no session 4 (2026-08-25). At step 6 your *successor's* number is the
-   salient one and it is the wrong one: the counter holds **yours**, and
-   `launch-next-session.sh` adds the one.
+   and left no session 4 (2026-08-25) — a failure class observed again
+   downstream. At step 6 your *successor's* number is the salient one and it is
+   the wrong one: the counter holds **yours**, and `launch-next-session.sh`
+   adds the one.
 
-   **An error here is permanent, so get it right the first time.** Reconciliation
-   across checkouts is numeric-max-wins, which can only increase — a counter set
-   too high is ratified forever, and the self-heal below recovers only a counter
-   set too *low* (ADR-0008).
+   **Get it right the first time — a wrong number still costs a lineage gap.**
+   Cross-checkout max-wins was retired once `seq-sync` became the counter's only
+   writer (`scripts/launch-next-session.sh:265-269`), so an over-count is no longer
+   ratified forever: `seq-sync` can correct downward (`lowered`, below), and the
+   launcher now *reports* stray copies in other checkouts instead of absorbing
+   them. Prune a reported stray rather than letting it stand.
 
    **You do not write this file.** Call the script, which resolves the common dir,
    validates your number against the stored one, and writes only when that is a
@@ -249,48 +266,88 @@ exchanges so STOP can't pass unnoticed.
    ff-pushes the branch to main, syncs the main checkout, and proceeds; only
    real divergence still refuses.
 
-   It also refuses when the session counter disagrees with the session number
-   in the handoff's top block (lineage gate, ADR-0007 amendment) — that means
-   the counter was written wrong, and launching would mint a phantom number.
-   The refusal prints both numbers and the `seq-sync` call that reconciles
-   them; run that (or fix the ledger if the ledger is what is wrong), then
-   relaunch. Projects whose ledger has no parseable session number are
-   unaffected.
+   **Two relaunch mechanisms — pick by whether the MCP server set must change
+   (ADR-0009).** Both run the same lineage gate, the same counter bump, and the
+   same canonical prompt; they differ only in what carries the handover.
 
-   **Spawn a process, or roll over in place?** Decide by whether the MCP server
-   set must change (ADR-0009). Same set — the ordinary rollover — use
-   `--clear`: the script does every real-run side effect, then seeds
-   `work/<project>/.pending-clear-seed` and tells the human to press `/clear`,
-   which a `SessionStart` hook drains into the fresh context. That skips the
-   spawn path's re-authentication and MCP-reconnect, both observed downstream.
-   Different MCP fragment, different runtime, a wedged CLI, or `--bg` while this
-   session keeps working — spawn. `--clear` is claude-only, refuses
-   `--bg`/`--emit`, and runs even under `ROLLOVER_RELAUNCH=off`. It leaves the
-   counter one ahead if the human never clears, and prints the `seq-sync`
-   rewind for exactly that case.
+   - **`--clear` (same process, preferred for ordinary rollovers).**
+     `scripts/launch-next-session.sh <project> --clear` writes a seed marker
+     (`work/<project>/.pending-clear-seed`) and tells you to press `/clear`.
+     The SessionStart hook (`scripts/hooks/rollover-clear-seed.sh`) drains
+     that marker into the cleared context, so **the human presses `/clear` and
+     types nothing**. Keeps the authenticated process and the
+     already-connected MCP servers, which avoids both the login failure and
+     the MCP startup race a fresh process can hit, and it runs even under
+     `ROLLOVER_RELAUNCH=off`. **An agent cannot press `/clear` itself** — that
+     keystroke is the one manual step, by design.
+   - **A fresh process (`launch-next-session.sh <project>` as before).**
+     Required when the successor needs a DIFFERENT MCP fragment: a running
+     session cannot attach a new server (`docs/mcp-setup.md`), so only a
+     relaunch can change the set — via `ROLLOVER_OPT_EXTRA="--mcp-config …"`.
+     Also the only path for handing the work to another runtime, or for `--bg`
+     when this session must keep working (ADR-0004).
 
-   **Under the supervisor (`TF_SESSION_LOOP=1`), you do not launch — you stage.**
-   Instead of running the launcher bare, run it with `--emit`, which performs
-   every real-run side effect and writes the successor's command to the file the
-   supervisor is waiting on:
+   Either way the counter advances at invocation, not at successor start. If
+   you run one and then don't follow through, rewind with
+   `scripts/context-budget.sh seq-sync --project <project> --session <N>` —
+   never by hand (ADR-0007, as amended by ADR-0008).
+
+   **Decide whether you are supervised — from disk, not from the environment.**
 
    ```sh
-   scripts/launch-next-session.sh <project> \
-     --emit "$(git rev-parse --path-format=absolute --git-common-dir)/../work/<project>/.next-command"
+   scripts/context-budget.sh supervised --project <project>
    ```
 
-   The absolute path is not optional — the script refuses a relative one. A
-   relative path resolves against *your* cwd, which under isolation is a worktree,
-   and the supervisor reading the main checkout would find nothing and report a
-   clean shutdown (spec, "Worktrees" -> layer 3, rule 1).
+   | Exit | Meaning | What you do |
+   |---|---|---|
+   | 0 | supervised | **stage** — do not launch |
+   | 1 | not supervised | ordinary rollover; emit the paste-ready prompt |
+   | 2 | ambiguous | **stage anyway**, and say so loudly in the handoff |
 
-   `TF_SESSION_LOOP` unset => ignore this entirely and emit the paste-ready prompt
-   as always.
+   Do **not** branch on `TF_SESSION_LOOP`. A forked agent does not inherit it,
+   so its absence proves nothing. Exit 3 is not
+   an answer: it means the query itself was malformed (missing `--project`, an
+   unknown option), so fix the invocation and ask again. Only 0/1/2 are answers.
+   Exit 2 means stage anyway — a spurious staged command is harmless, a missing
+   one strands the chain. The query mutates nothing, so it is not a cleanup tool.
+
+   **When you are staging, you do not launch.** Run the launcher with a **bare**
+   `--emit`, which performs every real-run side effect and writes the successor's
+   command to the file the supervisor is waiting on:
+
+   ```sh
+   scripts/launch-next-session.sh <project> --emit
+   ```
+
+   `--emit` with no argument resolves the target inside the launcher, from the
+   launcher's own workspace root — the identical expression the supervisor uses.
+   **Never compute that path yourself.** The recipe this step used to carry
+   (`git rev-parse --path-format=absolute --git-common-dir`) resolves to the
+   *git* root, which is the wrong directory whenever the workspace is nested
+   inside the repository, and a path built against *your* cwd is wrong again
+   under isolation, where that cwd is a worktree: the supervisor would read the
+   main checkout, find nothing, and report a clean shutdown (spec, "Worktrees"
+   -> layer 3, rule 1). The bare form cannot get either wrong by construction.
+
+   The explicit form `--emit <abs-path>` still works and still refuses a
+   relative path; the supervisor's own bootstrap call uses it. Prefer the bare
+   form. If staging fails, the launcher now says so and exits non-zero, naming
+   the path it could not write and the `seq-sync` rewind for the counter it
+   already advanced — a failed emit never reports success.
+
+   Not supervised (exit 1) => ignore staging entirely and emit the paste-ready
+   prompt as always.
+
+   `--clear` refuses three things, all before the counter is bumped,
+   so a bad invocation costs nothing: `--emit` and `--bg` (both start or wrap a
+   new process, and `--clear` starts none), and any runtime other than `claude`
+   (`/clear` and the SessionStart seed hook are Claude Code features — on
+   codex/gemini it exits 3 rather than seeding a marker nothing will drain).
 
 7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 
-8. **Under the supervisor only — write the sentinel, last.** If
-   `TF_SESSION_LOOP` is set, the very last thing you do is:
+8. **Under the supervisor only — write the sentinel, last.** If step 6's
+   `supervised` query answered 0 or 2, the very last thing you do is:
 
    ```sh
    scripts/context-budget.sh rollover-complete --project <project> \
@@ -313,7 +370,7 @@ exchanges so STOP can't pass unnoticed.
    A human `touch work/<project>/.hands-off` or `.interactive` overrides you; the
    script applies that itself, so do not check for those files.
 
-   `TF_SESSION_LOOP` unset => skip this step entirely.
+   Not supervised (step 6 exit 1) => skip this step entirely.
 
 ## Guardrails
 
@@ -334,24 +391,40 @@ exchanges so STOP can't pass unnoticed.
   but cannot see a heading swallowed by an unclosed purpose comment, nor one
   filed out of order — both have reached a live ledger. Prep rotates the archive
   unattended, so check the result rather than assuming it.
-- The launcher was REPLACED, not appended: `next-session.md` describes only the
-  next session's mission.
 - Session number: the counter equals **your own** number, not your successor's —
-  `cat "$(git rev-parse --path-format=absolute --git-common-dir)/../work/<project>/.session-seq"`
-  prints the number in your bootstrap prompt. If it prints your number + 1, you
-  wrote your successor's number; correct it *now*, before launching, because
-  max-wins makes it unrecoverable afterwards (ADR-0008).
+  `cat work/<project>/.session-seq`, run from the workspace root like every
+  `scripts/…` call in this skill, prints the number in your bootstrap prompt
+  (under worktree isolation this reads the worktree's tracked copy — a
+  mismatch there means check the main checkout via `seq-sync`, not hand-edit).
+  If it prints your number + 1, you wrote your successor's number; correct it
+  *now*, before launching — once the successor is minted the gap is in the
+  lineage for good, even though `seq-sync` can lower the counter itself
+  (ADR-0008). Step 6's `seq-sync` reports `noop` when this already holds —
+  never hand-write the file.
+- The launcher was REPLACED, not appended: `next-session.md` describes only the
+  next session's mission. `launch-next-session.sh`'s lineage gate refuses to
+  launch if the counter disagrees with the top handoff block.
 - Work-item lock: `scripts/launch-next-session.sh` releases it itself immediately
-  before launching. If the script was not invoked, release manually:
-  `scripts/context-budget.sh release --project <project>`.
+  before launching, whatever session id the lock records — at rollover the
+  rollover is the authority. If the script was not invoked, release manually:
+  `scripts/context-budget.sh release --project <project>`. That manual release
+  still checks ownership: if the lock is recorded to a different session id —
+  which is what a forked session sees, since the fork has a new id — it **exits
+  3** and names the remedy. Re-run it as
+  `scripts/context-budget.sh release --project <project> --takeover`. Takeover
+  moves lock *authority*, not lock *ordering*: live child locks under
+  `work/<project>/.agent-locks/` still block the release, and are still released
+  bottom-up first.
 
 ## Outputs
 
-- Ledger entries bracketing the rollover; learnings routed; disk fully current.
+- Ledger entries bracketing the rollover (`.context-budget/context-ledger.jsonl`);
+  learnings routed; disk fully current.
 - `work/<project>/handoff.md`, `next-session.md`, and `.rollover-options`.
 - A paste-ready bootstrap prompt.
 
-End by telling the user: start a fresh session (don't `/compact` — rollover replaces
-compaction) and paste the bootstrap prompt — unless `ROLLOVER_RELAUNCH` already
-launched the successor, in which case tell them where it's running (attached
-terminal, or `scripts/attach-session.sh <project>` for a `--bg` launch).
+End by telling the user how the successor starts (don't `/compact` — rollover
+replaces compaction): for `--clear`, that they press `/clear` and the prompt
+is seeded for them; for a fresh process, where it is running (attached
+terminal, or `scripts/attach-session.sh <project>` for a `--bg` launch), or
+the pasted prompt if nothing was launched.

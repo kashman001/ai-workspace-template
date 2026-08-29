@@ -4,9 +4,9 @@
 #          on-disk transcript and compare it against the workspace "dumb zone"
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
-# Usage:   context-budget.sh check|register|record|watch|release|children|
-#            dispatch-contract|dispatch-open|dispatch-close|dispatch-list|
-#            seq-sync|opts-sync|rollover-complete
+# Usage:   context-budget.sh check|register|record|watch|release|supervised|
+#            children|dispatch-contract|dispatch-open|dispatch-close|
+#            dispatch-list|seq-sync|opts-sync|rollover-complete
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
 #            [--parent-session <sid>] [--agent-id <id>] [--takeover] [--all]
@@ -71,7 +71,7 @@ PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
 REPORT_FILE=""; BRIEF_FILE=""; GEN=1; GEN_SET=0
 TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""; SESSION_NUM=""; LOOP_MODE=""
 EXTRA_OPTS=""; APPROVAL=""
-case "${1:-}" in check|register|record|watch|release|children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list|seq-sync|opts-sync|rollover-complete) COMMAND="$1"; shift ;; esac
+case "${1:-}" in check|register|record|watch|release|supervised|children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list|seq-sync|opts-sync|rollover-complete) COMMAND="$1"; shift ;; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -558,13 +558,21 @@ acquire_lock() {
         if [ "$TAKEOVER" -eq 1 ]; then
           # Explicit recorded steal (S33 — human authority beats liveness):
           # the old holder's record is stamped, never silently orphaned.
-          local hrec="$STATE_DIR/sessions/$hrt-$hsid.json"
-          if [ -f "$hrec" ]; then
-            jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
+          # The stamp is bookkeeping — the takeover proceeds whether or not it
+          # lands, but the note must say what actually happened (and a failed
+          # jq must not strand its half-written .tmp).
+          local hrec="$STATE_DIR/sessions/$hrt-$hsid.json" stamp
+          if [ ! -f "$hrec" ]; then
+            stamp="holder record absent — nothing to stamp"
+          elif jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
               '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
-              "$hrec" > "$hrec.tmp" && mv "$hrec.tmp" "$hrec"
+              "$hrec" > "$hrec.tmp" && mv "$hrec.tmp" "$hrec"; then
+            stamp="old holder stamped superseded"
+          else
+            rm -f "$hrec.tmp"
+            stamp="WARNING: failed to stamp holder record superseded — ${hrec##*/} left unstamped"
           fi
-          note "lock: takeover — stealing work/$PROJECT/.active-session from live holder $hrt-$hsid (artifact active ${age}s ago); old holder stamped superseded"
+          note "lock: takeover — stealing work/$PROJECT/.active-session from live holder $hrt-$hsid (artifact active ${age}s ago); $stamp"
         else
           ROLE="auxiliary"
           note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one primary session per work item; continuing as role=auxiliary"
@@ -679,6 +687,12 @@ cmd_register() {
 
 cmd_record() {
   resolve_session
+  # Record-file mtime = time of last measured activity: register's 7-day
+  # `-mtime +7` purge must never collect a live, record-ing session's record
+  # (R9). `record` at boundaries is the standing workspace discipline, so
+  # this one touch keeps every disciplined session's record alive.
+  [ -f "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" ] \
+    && touch "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
   local rc=0
   emit_check || rc=$?
   mkdir -p "$(dirname "$LEDGER")"
@@ -725,6 +739,36 @@ EOF
   printf '%s' "${out# }"
 }
 
+# C1 — the supervision query (design.md §3). Read-only, and it NEVER deletes a
+# stale marker: sweeping belongs to the supervisor (session-loop.sh:76-82), and
+# an agent deleting a marker belonging to a supervisor mid-start would create
+# the exact failure this work item exists to remove.
+#
+# Exit 0 supervised / 1 not supervised / 2 ambiguous. Ambiguity resolves to
+# "stage" at the caller (R3): a spurious staged command is harmless, a missing
+# one strands the chain. Note die() exits 3, so ambiguity must return, not die.
+cmd_supervised() {
+  [ -n "$PROJECT" ] || die "supervised: --project is required"
+  local loopf="$WORKSPACE_ROOT/work/$PROJECT/.session-loop"
+  local pid="" started=""
+  if [ -f "$loopf" ]; then
+    pid="$(jq -r '.pid // empty' "$loopf" 2>/dev/null)"
+    started="$(jq -r '.started_at // empty' "$loopf" 2>/dev/null)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      [ "$QUIET" -eq 1 ] || echo "supervised pid=$pid project=$PROJECT started_at=$started"
+      return 0
+    fi
+    [ "$QUIET" -eq 1 ] || echo "ambiguous marker work/$PROJECT/.session-loop exists but pid ${pid:-unknown} is not alive"
+    return 2
+  fi
+  if [ "${TF_SESSION_LOOP_PROJECT:-}" = "$PROJECT" ]; then
+    [ "$QUIET" -eq 1 ] || echo "ambiguous TF_SESSION_LOOP_PROJECT names $PROJECT but no .session-loop marker exists"
+    return 2
+  fi
+  [ "$QUIET" -eq 1 ] || echo "unsupervised"
+  return 1
+}
+
 cmd_release() {
   resolve_session
   if [ -z "$PROJECT" ]; then
@@ -748,14 +792,50 @@ cmd_release() {
   [ -f "$lock" ] || { note "release: no lock at work/$PROJECT/.active-session"; return 0; }
   hrt=$(jq -r '.runtime // empty' "$lock" 2>/dev/null)
   hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
-  if [ "$hrt-$hsid" = "$RUNTIME-$SESSION_ID" ]; then
+  # C5 — lock authority (design.md §3). --takeover is symmetric with the
+  # acquisition side (:558-567), where an explicit recorded steal from a LIVE
+  # holder already exists as "human authority beats liveness". The non-owner
+  # branch now exits non-zero: a scripted release must never silently no-op,
+  # because a forked session has a new session id and can never satisfy the
+  # equality test (D4).
+  if [ "$hrt-$hsid" = "$RUNTIME-$SESSION_ID" ] || [ "$TAKEOVER" -eq 1 ]; then
     # Release-order guard (I4): every live child lock descends from the
-    # project lock, so any survivor blocks the holder's release.
+    # project lock, so any survivor blocks the holder's release. --takeover
+    # does NOT bypass it — lock authority moves; lock ordering does not.
     [ -z "$LIVE_CHILD_LOCKS" ] \
       || die "release: refusing — live child locks in work/$PROJECT/.agent-locks: $(printf '%s' "$LIVE_CHILD_LOCKS" | while IFS= read -r f; do printf '%s ' "${f##*/}"; done)"
+    if [ "$hrt-$hsid" != "$RUNTIME-$SESSION_ID" ]; then
+      # A7 — symmetric with the acquisition-side steal above: the dispossessed
+      # holder's record is stamped, never left in the registry as a primary
+      # with no lock behind it.
+      # The stamp is bookkeeping — the takeover proceeds whether or not it
+      # lands, but the note must say what actually happened (and a failed
+      # jq must not strand its half-written .tmp).
+      local hrec="$STATE_DIR/sessions/$hrt-$hsid.json" stamp
+      if [ ! -f "$hrec" ]; then
+        stamp="holder record absent — nothing to stamp"
+      elif jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
+          '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
+          "$hrec" > "$hrec.tmp" && mv "$hrec.tmp" "$hrec"; then
+        stamp="holder stamped superseded"
+      else
+        rm -f "$hrec.tmp"
+        stamp="WARNING: failed to stamp holder record superseded — ${hrec##*/} left unstamped"
+      fi
+      note "release: takeover — releasing work/$PROJECT/.active-session recorded to $hrt-$hsid; $stamp"
+    fi
     rm -f "$lock"; note "release: released work/$PROJECT/.active-session"
   else
-    note "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID); left in place"
+    # A7 — the refusal names the holder's liveness (same signal as the lock's
+    # stale rule) so the operator can tell "takeover is safe" from "you may be
+    # the wrong session". Refusal is unconditional either way — only the
+    # message differs.
+    local hage
+    if hage=$(lock_holder_age "$hrt" "$hsid") && [ "$hage" -lt "$LOCK_STALE" ]; then
+      die "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID) — holder is live (artifact active ${hage}s ago), you may be the wrong session; re-run with --takeover to release it anyway"
+    else
+      die "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID) — holder looks stale/dead (no artifact activity within ${LOCK_STALE}s), takeover is safe; re-run with --takeover to release it"
+    fi
   fi
 }
 
@@ -1128,6 +1208,7 @@ case "$COMMAND" in
   record) cmd_record ;;
   watch) cmd_watch ;;
   release) cmd_release ;;
+  supervised) cmd_supervised ;;
   children) cmd_children ;;
   dispatch-contract) cmd_dispatch_contract ;;
   dispatch-open) cmd_dispatch_open ;;

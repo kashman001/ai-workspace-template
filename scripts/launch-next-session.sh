@@ -8,7 +8,7 @@
 #          ROLLOVER_RUNTIME > claude.
 # Usage:   launch-next-session.sh <project>
 #            [--runtime claude|codex|gemini|opencode|copilot] [--bg] [--dry-run]
-#            [--emit <abs-path>] [--skip-freshness] [--clear]
+#            [--emit [<abs-path>]] [--skip-freshness] [--clear]
 #          --clear: in-place relaunch (ADR-0009, claude-only) — seed
 #          work/<project>/.pending-clear-seed and let the human press /clear
 #          instead of spawning a successor process.
@@ -75,17 +75,32 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY=1; shift ;;
     --skip-freshness) SKIP_FRESH=1; shift ;;
     --clear) CLEAR=1; shift ;;
-    --emit) EMIT="$2"; shift 2 ;;
+    # C2 — --emit takes an OPTIONAL argument. The bare form is resolved below
+    # from this script's own WORKSPACE_ROOT (:64) — the identical expression
+    # the supervisor uses at session-loop.sh:57 — so the agent never computes
+    # the path. The explicit form is retained for the tests and for the
+    # supervisor's own bootstrap call (session-loop.sh:139-141), which passes
+    # $NEXTF.
+    --emit)
+      if [ $# -ge 2 ] && case "$2" in -*|"") false ;; *) true ;; esac; then
+        EMIT="$2"; shift 2
+      else
+        EMIT="@auto"; shift
+      fi ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit <abs-path>] [--skip-freshness] [--clear]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit [<abs-path>]] [--skip-freshness] [--clear]"
 
 # --emit: perform every real-run side effect, then write the command to a file
 # instead of exec'ing (spec: "Architecture" -> 2). exec would replace the
 # supervisor; --dry-run would skip the counter bump, the options adopt, the lock
 # release, and the pending record the successor's register consumes.
+if [ "$EMIT" = "@auto" ]; then
+  EMIT="$WORKSPACE_ROOT/work/$PROJECT/.next-command"
+fi
+
 if [ -n "$EMIT" ]; then
   case "$EMIT" in
     /*) : ;;
@@ -98,8 +113,9 @@ fi
 # --clear (ADR-0009): the successor is THIS process after /clear, not a new
 # one. Both refusals are decided here, at parse time, so a bad invocation costs
 # no side effects — the counter bump is still ahead of us. The claude-only
-# check cannot live here: it needs the resolved runtime, so it sits with the
-# --clear block below, exactly where --bg's own claude-only check sits.
+# check cannot live here: it needs the resolved runtime, so it sits in the
+# pre-bump refusal zone after runtime resolution, alongside --bg's own
+# claude-only check and the unknown-runtime check.
 if [ "$CLEAR" -eq 1 ]; then
   [ -z "$EMIT" ]   || die "--clear cannot be combined with --emit (no new process is started to run the emitted command)"
   [ "$BG" -eq 0 ]  || die "--clear cannot be combined with --bg (the successor is this process, not a background one)"
@@ -185,14 +201,43 @@ fi
 # Relaunch knobs: explicit env > per-item work/$PROJECT/context-budget.env >
 # global context-budget.env > built-in default. Sourced here (not at the top)
 # because the per-item path needs $PROJECT from the args.
+#
+# EXCEPTION (TE6 R8): CONTEXT_LOCK_STALE_SECS is GLOBAL-ONLY. The pre-release
+# guard below and context-budget.sh (register/release/sweep) must be the SAME
+# liveness oracle for one lock, and context-budget.sh reads only the global
+# env file — so LOCK_STALE is captured from exactly those sources (explicit
+# env > global env file > built-in 10800) BEFORE the per-item file is
+# sourced. The per-item file keeps its authority over the ROLLOVER_* knobs,
+# which are genuinely launcher-owned per-item policy.
 EXPLICIT_RELAUNCH="${ROLLOVER_RELAUNCH:-}"
 EXPLICIT_RUNTIME="${ROLLOVER_RUNTIME:-}"
-for envf in "$WORKSPACE_ROOT/context-budget.env" \
-            "$WORKSPACE_ROOT/work/$PROJECT/context-budget.env"; do
-  if [ -f "$envf" ]; then
-    . "$envf" >/dev/null 2>&1 || true
-  fi
-done
+EXPLICIT_STALE="${CONTEXT_LOCK_STALE_SECS:-}"
+if [ -f "$WORKSPACE_ROOT/context-budget.env" ]; then
+  . "$WORKSPACE_ROOT/context-budget.env" >/dev/null 2>&1 || true
+fi
+if [ -n "$EXPLICIT_STALE" ]; then
+  LOCK_STALE="$EXPLICIT_STALE"
+else
+  LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
+fi
+_stale_pre_item="${CONTEXT_LOCK_STALE_SECS:-}"
+if [ -f "$WORKSPACE_ROOT/work/$PROJECT/context-budget.env" ]; then
+  . "$WORKSPACE_ROOT/work/$PROJECT/context-budget.env" >/dev/null 2>&1 || true
+fi
+# A knob that quietly does nothing is the defect class this work item is
+# about: say so, loudly, when the per-item file tries to move the liveness
+# rule to a different value than the one actually in force.
+if [ "${CONTEXT_LOCK_STALE_SECS:-}" != "$_stale_pre_item" ] \
+   && [ "${CONTEXT_LOCK_STALE_SECS:-}" != "$LOCK_STALE" ]; then
+  note "CONTEXT_LOCK_STALE_SECS in work/$PROJECT/context-budget.env is global-only and IGNORED for lock liveness (effective: ${LOCK_STALE}s from env/global/default)"
+fi
+# TE6 R8 (one oracle), env-inheritance leg: if the operator's shell had
+# EXPORTED CONTEXT_LOCK_STALE_SECS, the per-item sourcing above updated the
+# exported copy, and an exec'd/--bg successor would inherit the per-item
+# value as "explicit env" — which outranks the global file inside
+# context-budget.sh. Re-set it to the launcher's own (global-resolution)
+# value so any exported copy carries the one oracle's answer.
+CONTEXT_LOCK_STALE_SECS="$LOCK_STALE"
 [ -n "$EXPLICIT_RELAUNCH" ] && ROLLOVER_RELAUNCH="$EXPLICIT_RELAUNCH"
 [ -n "$EXPLICIT_RUNTIME" ] && ROLLOVER_RUNTIME="$EXPLICIT_RUNTIME"
 MODE="${ROLLOVER_RELAUNCH:-off}"
@@ -261,18 +306,19 @@ Fix: scripts/context-budget.sh seq-sync --project $PROJECT --session $TOP_N   (o
     break
   done
 fi
-[ -n "$LAST_SEQ" ] || LAST_SEQ=1
-SEQ=$((LAST_SEQ + 1))
-[ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
-
-# The canonical bootstrap prompt (ADR-0003: wording is load-bearing, verbatim).
-PROMPT="Work item $PROJECT - rollover session #$SEQ. Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."
-
-own_record() {
-  # D6 "read my own record": env-first identity, same order as
-  # context-budget.sh session_id_for(). Falls back to the newest record
-  # registered for this project (lock invariant: one active session per item).
-  local rt sid b f
+# D6 "read my own record" — split (TE6 R1/R2) into the two legs it always
+# had, because only one of them may carry authority:
+#   env leg  = POSITIVE identity: an exported session id AND a registry
+#              record under that exact id (same order as context-budget.sh
+#              session_id_for()). The only self-knowledge that cannot be a
+#              guess; the authorization guard below keys on this alone.
+#   fallback = newest record registered for this project: a HINT for runtime
+#              resolution and logging only. It grants and denies nothing —
+#              authorization hung on it once and misresolved attended
+#              primaries and forked auxes both (registration order is not
+#              identity).
+env_session_record() {
+  local rt sid b
   for rt in claude codex copilot-cli copilot-vscode; do
     case "$rt" in
       claude)      sid="${CLAUDE_CODE_SESSION_ID:-}" ;;
@@ -287,6 +333,11 @@ own_record() {
       echo "$STATE_DIR/sessions/$rt-$sid.json"; return 0
     fi
   done
+  return 1
+}
+own_record() {
+  local f
+  env_session_record && return 0
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     if [ "$(jq -r '.project // empty' "$f" 2>/dev/null)" = "$PROJECT" ]; then
@@ -296,6 +347,7 @@ own_record() {
   return 1
 }
 
+OWN_ENV_REC="$(env_session_record)" || OWN_ENV_REC=""
 DYING_SID=""
 REC="$(own_record)" || REC=""
 if [ -n "$REC" ]; then
@@ -309,6 +361,126 @@ if [ -z "$RUNTIME" ]; then
   RUNTIME="$FALLBACK_RUNTIME"
   note "no session record found; falling back to ROLLOVER_RUNTIME=$RUNTIME"
 fi
+
+# --emit x copilot-vscode (TE6 A5): `code chat` is detached BY NATURE — the
+# launch paths force BG=1 for this runtime AFTER the parse-time --emit/--bg
+# check, so that check cannot see it. The supervisor runs the emitted line in
+# the FOREGROUND and waits on it; a command that returns at once reads as
+# delta 0 / deliberate quit, the marker is deleted, and the real session runs
+# unsupervised (the 2026-08-27 --bg bug in a second costume). Same shape as
+# the --bg claude-only refusal below, but decided HERE, at the first point
+# the runtime is resolved and before the authorization guard and the counter
+# bump, so the refusal costs no side effects (TE6 R3).
+if [ -n "$EMIT" ] && [ "$RUNTIME" = "copilot-vscode" ]; then
+  die "--emit cannot be combined with runtime=copilot-vscode ('code chat' is detached by nature — the supervisor waits on the emitted command in the foreground and would read its instant return as a deliberate quit); run the chain with an attached runtime"
+fi
+
+# Runtime-conditioned refusals, decided HERE in the pre-bump refusal zone
+# (s15 follow-on (a)): $RUNTIME is fully resolved above (flag -> record ->
+# fallback), so every refusal that depends on it is taken before the counter
+# bump — a refusal costs no side effects: no bump, no seed, no lock release,
+# no superseded stamp. These used to sit at their enforcement points below the
+# bump, from when RUNTIME resolved late; that rationale is gone (TE6 R3).
+#
+# --clear needs /clear and the SessionStart seed hook — Claude Code features.
+if [ "$CLEAR" -eq 1 ] && [ "$RUNTIME" != "claude" ]; then
+  die "--clear is claude-only (/clear and the SessionStart seed hook are Claude Code features); runtime=$RUNTIME"
+fi
+# Explicit --bg on a runtime with no background mode. Decided on the
+# parse-time flag alone: the two mode-DERIVED BG=1 assignments below (auto +
+# claude, and copilot-vscode's detached launch) only ever apply to the two
+# exempt runtimes — any future derivation for another runtime must add it to
+# this exemption list.
+if [ "$BG" -eq 1 ] && [ "$RUNTIME" != "claude" ] && [ "$RUNTIME" != "copilot-vscode" ]; then
+  die "--bg (background launch) is claude-only (ADR-0003); runtime=$RUNTIME"
+fi
+# Valid-runtime enumeration: MUST match the arms of the launch
+# `case "$RUNTIME"` statement below (whose `*)` die is now an unreachable
+# backstop) — keep the two lists in sync.
+case "$RUNTIME" in
+  claude|codex|gemini|opencode|copilot|copilot-cli|copilot-vscode) : ;;
+  *) die "unknown runtime: $RUNTIME" ;;
+esac
+
+LOCK="$WORKSPACE_ROOT/work/$PROJECT/.active-session"
+
+# Pre-release authorization guard (TE6 R1/R3/R4) — the DECISION, hoisted
+# above the counter bump so that a refusal costs nothing: no bump, no seed,
+# no lock touched, no record stamped, and the primary's next legitimate
+# rollover needs no repair step. The release ACTION stays downstream (it must
+# not run for --clear, and its place before the launch paths is
+# load-bearing); the window between decision and action is straight-line code
+# with no waits. Skipped on --dry-run, which releases nothing and so has
+# nothing to protect.
+#
+# Both helpers are deliberate copies of context-budget.sh
+# (lock_holder_age :436, sweep_child_locks :708) — same liveness rule
+# (artifact mtime vs LOCK_STALE; unknowable = stale); keep them in sync.
+lock_holder_age() {
+  local rt="$1" sid="$2" af mt
+  af=$(jq -r '.artifact // empty' "$STATE_DIR/sessions/$rt-$sid.json" 2>/dev/null)
+  [ -n "$af" ] && [ -f "$af" ] || return 1
+  mt=$(stat -f%m "$af" 2>/dev/null || stat -c%Y "$af" 2>/dev/null) || return 1
+  echo $(( $(date +%s) - mt ))
+}
+sweep_child_locks() {
+  local lockdir="$WORKSPACE_ROOT/work/$PROJECT/.agent-locks" f crt csid age
+  LIVE_CHILD_LOCKS=""
+  [ -d "$lockdir" ] || return 0
+  for f in "$lockdir"/*.json; do
+    [ -f "$f" ] || continue
+    crt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
+    csid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
+    if age=$(lock_holder_age "$crt" "$csid") && [ "$age" -lt "$LOCK_STALE" ]; then
+      LIVE_CHILD_LOCKS="$LIVE_CHILD_LOCKS$f
+"
+    else
+      rm -f "$f"; note "lock: swept stale child lock ${f##*/}"
+    fi
+  done
+}
+
+if [ "$DRY" -eq 0 ] && [ -f "$LOCK" ]; then
+  hrt=$(jq -r '.runtime // empty' "$LOCK" 2>/dev/null)
+  hsid=$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)
+  # Guard (a) — identity x liveness (TE6 R1): a POSITIVELY-identified session
+  # that is not the recorded holder must not delete a live holder's lock.
+  # Role is never consulted — auxiliary, superseded, an anomalous second
+  # primary all refuse identically, because the predicate is the invariant
+  # itself, not an allowlist of ways to violate it. Self, a stale/dead/
+  # unknowable holder, or no positive identity (the D4 fork and the attended
+  # human terminal): release proceeds — the rollover is the authority (C5).
+  if [ -n "$OWN_ENV_REC" ]; then
+    own_b="${OWN_ENV_REC##*/}"; own_key="${own_b%.json}"
+    if [ "$own_key" != "$hrt-$hsid" ] \
+       && age=$(lock_holder_age "$hrt" "$hsid") && [ "$age" -lt "$LOCK_STALE" ]; then
+      die "lock: work/$PROJECT/.active-session is held by LIVE session $hrt-$hsid (artifact active ${age}s ago) and this session is positively $own_key — refusing to release another session's live lock (one primary per work item). Roll over from the holding session instead."
+    fi
+  fi
+  # Guard (b) — I4 release order, same sweep as context-budget.sh cmd_release:
+  # stale child locks are swept (idempotent hygiene, the guard's only side
+  # effect), any LIVE child lock blocks the project-lock release (lock
+  # authority moves at rollover; lock ordering does not).
+  #
+  # NOT applied on --clear (TE6 R4 verifier finding): I4 exists to protect
+  # the project-lock RELEASE from outliving live child locks, and --clear
+  # releases nothing — it exits before the release action, and the surviving
+  # process keeps its lock and its children. Guard (a) above still applies.
+  if [ "$CLEAR" -eq 0 ]; then
+    sweep_child_locks
+    [ -z "${LIVE_CHILD_LOCKS:-}" ] \
+      || die "lock: refusing pre-launch release — live child locks in work/$PROJECT/.agent-locks: $(printf '%s' "$LIVE_CHILD_LOCKS" | while IFS= read -r f; do printf '%s ' "${f##*/}"; done). Close/release the children first (context-budget.sh release from each), then relaunch."
+  fi
+fi
+
+# Counter bump — the FIRST write; everything that can say "no" already has
+# (TE6 R3).
+[ -n "$LAST_SEQ" ] || LAST_SEQ=1
+SEQ=$((LAST_SEQ + 1))
+[ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
+
+# The canonical bootstrap prompt (ADR-0003: wording is load-bearing, verbatim).
+PROMPT="Work item $PROJECT - rollover session #$SEQ. Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."
 
 # Successor option inheritance: persist-and-replay from the work item
 # (.rollover-options, written at rollover; see docs/context-budget.md).
@@ -385,9 +557,11 @@ printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n
 # drains into the cleared context, so the human presses /clear and types
 # nothing.
 #
-# Placement is load-bearing on both sides. It is AFTER runtime resolution, so
-# the claude-only refusal below is decided on the same resolved runtime --bg
-# uses. It is BEFORE the lock release and the superseded stamp, and it exits:
+# The claude-only refusal is no longer here: it is decided in the pre-bump
+# refusal zone (with --bg's claude-only check and the unknown-runtime check),
+# so a refused --clear costs no counter bump and no seed. This block's own
+# placement is still load-bearing: it is AFTER the counter bump and the
+# paste-me prompt, BEFORE the lock release and the superseded stamp, and it exits:
 # neither may run on this path. The process survives /clear, so its registry
 # record is still live and its lock is still correctly held; `register` re-fires
 # from the SessionStart hook and reconciles the new session id itself. Stamping
@@ -399,8 +573,6 @@ printf 'Bootstrap prompt (paste into the successor if needed):\n----\n%s\n----\n
 # explicit human invocation, and ROLLOVER_RELAUNCH=off means "do not spawn a
 # successor behind my back", which is not what this does.
 if [ "$CLEAR" -eq 1 ]; then
-  [ "$RUNTIME" = "claude" ] \
-    || die "--clear is claude-only (/clear and the SessionStart seed hook are Claude Code features); runtime=$RUNTIME"
   SEED="$WORKSPACE_ROOT/work/$PROJECT/.pending-clear-seed"
   if [ "$DRY" -eq 1 ]; then
     echo "project=$PROJECT runtime=$RUNTIME mode=clear seq=$SEQ (dry-run: counter NOT bumped, no seed written)"
@@ -424,40 +596,63 @@ fi
 [ -z "$EMIT" ] && [ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
 # copilot-vscode's `code chat` is detached by nature (exits before the seeded
 # session responds — issue 01) — always confirm the successor via the BG loop.
+# An explicit --bg on any other runtime was refused in the pre-bump refusal
+# zone; these two derivations only ever set BG=1 for the runtimes that zone
+# exempts — a derivation for a new runtime must extend its exemption list.
 [ "$RUNTIME" = "copilot-vscode" ] && BG=1
-if [ "$BG" -eq 1 ] && [ "$RUNTIME" != "claude" ] && [ "$RUNTIME" != "copilot-vscode" ]; then
-  die "--bg (background launch) is claude-only (ADR-0003); runtime=$RUNTIME"
-fi
 
 echo "project=$PROJECT runtime=$RUNTIME mode=$MODE bg=$BG"
 
 # Release the dying session's own work-item lock BEFORE any launch path: with
 # auto-relaunch the successor's register races an unreleased lock (and the
-# attached-manual path execs below, so nothing can release afterwards). Only a
-# lock held by this session's own registry identity is removed — a foreign
-# holder's lock is never stolen, just warned about.
-LOCK="$WORKSPACE_ROOT/work/$PROJECT/.active-session"
+# attached-manual path execs below, so nothing can release afterwards).
+#
+# C5 — at rollover, the rollover is the authority (design.md §3). The lock is
+# released regardless of the recorded holder's session id, logging the
+# previous holder by name — including when a fork gave the caller a new
+# session id (D4), in which case an id-equality rule could never be satisfied
+# and the successor would race an unreleased lock. The DECISION that this
+# release is authorized was taken by the identity x liveness guard above,
+# BEFORE the counter bump; from here on the release is the unconditional
+# action that decision permitted.
 if [ "$DRY" -eq 0 ] && [ -f "$LOCK" ]; then
   hrt=$(jq -r '.runtime // empty' "$LOCK" 2>/dev/null)
   hsid=$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)
   drt=""; [ -n "$REC" ] && drt=$(jq -r '.runtime // empty' "$REC" 2>/dev/null)
+  rm -f "$LOCK"
   if [ -n "$DYING_SID" ] && [ "$hrt-$hsid" = "$drt-$DYING_SID" ]; then
-    rm -f "$LOCK"
     note "lock: released work/$PROJECT/.active-session (pre-launch; successor's register re-acquires)"
-    # The dying session's primary role ends here: stamp its registry record
-    # superseded so listings and attach-session.sh never mistake it for a
-    # usable session (the successor's own register becomes the new primary).
-    if [ -n "$REC" ] && [ -f "$REC" ]; then
-      jq --arg ts "$(date -u +%FT%TZ)" '.role="superseded" | .superseded_at=$ts' \
-        "$REC" > "$REC.tmp" && mv "$REC.tmp" "$REC"
-      note "role: $drt-$DYING_SID stamped superseded"
-    fi
   else
-    note "lock: held by $hrt-$hsid, not this session — left in place; successor will contend"
+    note "lock: released work/$PROJECT/.active-session (pre-launch; recorded holder $hrt-$hsid — rollover authority)"
+  fi
+  # The dying session's primary role ends here: stamp its registry record
+  # superseded so listings and attach-session.sh never mistake it for a
+  # usable session (the successor's own register becomes the new primary).
+  # Stamp ONLY the record that is provably the dying session's (TE6 R2):
+  # env-resolved (it is the caller's own), or the fallback record whose
+  # session_id matches the released holder's (the D4 fork — the fallback
+  # found the actual dying primary). A fallback record matching neither is
+  # somebody else's live session — leave it alone; the registry's own hygiene
+  # (backstamp_superseded, sweep_stale_primaries) covers stragglers at the
+  # successor's register.
+  if [ -n "$REC" ] && [ -f "$REC" ] \
+     && { [ -n "$OWN_ENV_REC" ] || { [ -n "$DYING_SID" ] && [ "$DYING_SID" = "$hsid" ]; }; }; then
+    jq --arg ts "$(date -u +%FT%TZ)" '.role="superseded" | .superseded_at=$ts' \
+      "$REC" > "$REC.tmp" && mv "$REC.tmp" "$REC"
+    note "role: $drt-$DYING_SID stamped superseded"
   fi
 fi
 
-if [ "$MODE" = "off" ]; then
+# The [ -z "$EMIT" ] clause (TE6 A4): --emit stages a command for a
+# supervisor and launches nothing itself, so mode=off has nothing to refuse —
+# "off" means "do not LAUNCH a successor", and the staging path never does.
+# Without the clause, --emit under a committed off exits 0 here having staged
+# nothing: the supervisor bootstrap's `--emit "$NEXTF" || halt` in
+# session-loop.sh never fires its halt, and the chain dissolves later with a
+# fabricated story.
+# (Refusing off + --emit at parse time was considered and rejected: the
+# supervisor's own bootstrap call must keep working under a committed off.)
+if [ "$MODE" = "off" ] && [ -z "$EMIT" ]; then
   note "ROLLOVER_RELAUNCH=off — not launching; paste the prompt above manually"
   exit 0
 fi
@@ -473,6 +668,10 @@ case "$RUNTIME" in
     # Verified (issue 01, session 28): opens a NEW agent session in the
     # last-active VS Code window and returns immediately.
     CMD=(code chat ${OPT_ARGS[@]+"${OPT_ARGS[@]}"} -r -m agent "$PROMPT") ;;
+  # Backstop: the pre-bump valid-runtime enumeration already refused any
+  # runtime not in these arms — keep the two lists in sync. Not strictly
+  # unreachable: sourcing .rollover-options (above) runs after that zone and
+  # an out-of-contract RUNTIME= line there lands here, post-bump.
   *) die "unknown runtime: $RUNTIME" ;;
 esac
 
@@ -508,7 +707,21 @@ write_pending() {
 # --bg block (which --emit refuses).
 if [ -n "$EMIT" ]; then
   write_pending
-  printf '%s\n' "$(printf '%q ' "${CMD[@]}" | sed 's/ $//')" > "$EMIT"
+  # C3 — temp file + mv, both status-checked, then assert the target is
+  # non-empty. write_pending IS rolled back on failure: the --bg path below
+  # already does exactly this, and leaving a pending record for a successor
+  # that was never staged is the same defect that rollback was written to
+  # prevent. The counter is NOT auto-rewound — seq-sync is max-wins and
+  # ADR-0008 governed, so the remedy is named rather than performed.
+  emit_tmp="$EMIT.tmp.$$"
+  emit_fail() {
+    rm -f "$emit_tmp" "$PENDING"
+    die "emit: could not stage the successor at $EMIT ($1); the counter advanced to $SEQ; if you retry, rewind first with scripts/context-budget.sh seq-sync --project $PROJECT --session $((SEQ - 1))"
+  }
+  printf '%s\n' "$(printf '%q ' "${CMD[@]}" | sed 's/ $//')" > "$emit_tmp" \
+    || emit_fail "write failed"
+  mv "$emit_tmp" "$EMIT" || emit_fail "mv failed"
+  [ -s "$EMIT" ] || emit_fail "target missing or empty after write"
   note "emit: wrote the successor command to $EMIT"
   exit 0
 fi

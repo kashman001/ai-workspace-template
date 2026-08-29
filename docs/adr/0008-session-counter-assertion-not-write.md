@@ -4,6 +4,17 @@
 - Date: 2026-08-25
 - Deciders: Kashif + Claude Code session 5 (session-loop-automation project)
 
+> **Amendment (2026-08-29).** The first Decision consequence
+> below prescribes a hand-run `git rev-parse --path-format=absolute
+> --git-common-dir` recipe for the correction write. That recipe is superseded:
+> the write moved behind the validating script mode this ADR anticipated
+> (`scripts/context-budget.sh seq-sync --project <p> --session <N>`), which is
+> now the counter's single writer and resolves the workspace root itself — the
+> hand-run recipe resolves to the *git* root, the wrong directory whenever the
+> workspace is nested inside the repository. Agents never hand-write
+> `.session-seq`; step 1's `.rollover-options` hand-edit likewise moved behind
+> `opts-sync`. The decision itself (assert, write only to correct) stands.
+
 Amends ADR-0007. That ADR's core ruling stands unchanged: `.session-seq`, as
 surfaced through each session's bootstrap prompt, is the canonical session
 number, and on disagreement the ledger note is repaired, never the counter. What

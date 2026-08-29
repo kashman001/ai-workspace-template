@@ -27,9 +27,11 @@ mk_record() {  # $1=runtime $2=session-id $3=project
     > "$SESS/$1-$2.json"
 }
 # All runtime-identity env vars cleared per call unless a test sets one.
+# CONTEXT_LOCK_STALE_SECS is scrubbed too: a developer shell exporting a small
+# value would make the live-holder fixtures (G1/G5/G9/G10) spuriously red.
 run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
   -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
-  -u ROLLOVER_RELAUNCH -u ROLLOVER_RUNTIME "$@"; }
+  -u ROLLOVER_RELAUNCH -u ROLLOVER_RUNTIME -u CONTEXT_LOCK_STALE_SECS "$@"; }
 
 PROMPT='Work item testproj - rollover session #2. Read `work/testproj/next-session.md` and continue from **First actions**.'
 
@@ -210,11 +212,18 @@ assert_eq           "T16a: exit 0"                   "$rc" "0"
 assert_not_contains "T16b: lock gone at launch time" "$out" "LOCK_STILL_HELD_AT_LAUNCH"
 assert_contains     "T16c: release noted"            "$out" "lock: released"
 
-echo "T17: a lock held by ANOTHER session is left in place"
-mklock claude sid-other
+echo "T17: a lock recorded to a DIFFERENT session id is released anyway (C5, D4)"
+# At rollover the rollover is the authority (design.md §3 C5). This launcher has
+# already passed the lineage gate and is minting the successor, so the recorded
+# holder is by definition the session that is ending -- including when a fork
+# gave it a new session id, which the old id-equality rule could never satisfy
+# and which left the successor racing an unreleased lock.
+mklock claude forked-parent
 out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --runtime claude </dev/null 2>&1)
-[ -f "$LOCKF" ] && ok "T17a: foreign lock kept" || bad "T17a: foreign lock removed"
-assert_contains "T17b: foreign holder noted" "$out" "not this session"
+[ ! -f "$LOCKF" ] && ok "T17a: foreign-id lock released at rollover" \
+  || bad "T17a: lock survived the rollover -- the D4 shape"
+assert_contains "T17b: previous holder named"    "$out" "claude-forked-parent"
+assert_contains "T17c: rollover authority noted" "$out" "rollover authority"
 
 echo "T18: --dry-run never mutates the lock"
 mklock claude sid-old
@@ -520,6 +529,290 @@ assert_contains "F4b: stale launcher named" "$out" "stale launcher"
 git -C "$GMAIN" pull -q --ff-only
 out=$(run_lns "$GMAIN/scripts/launch-next-session.sh" testproj --dry-run 2>&1 </dev/null); rc=$?
 assert_eq "F4c: exit 0 after pull" "$rc" "0"
+
+echo "G: pre-launch lock release guards (TE6 A1) — role/liveness + I4 child-lock sweep"
+# Mutations that make these red: G1 — drop the role/liveness check before the
+# rm (the pre-A1 unconditional release); G2 — invert it to refuse on ANY
+# non-self holder; G3 — drop the live-child-lock refusal; G4 — drop the
+# stale-child-lock sweep (the child lock file survives).
+cd "$TMP"
+mk_live_record() {  # $1=runtime $2=session-id $3=project $4=role — live artifact
+  echo live > "$TMP/art-$2"
+  jq -n --arg rt "$1" --arg sid "$2" --arg p "$3" --arg role "$4" \
+    --arg af "$TMP/art-$2" \
+    '{runtime:$rt, session_id:$sid, artifact:$af, project:$p,
+      registered_at:"2026-08-05T00:00:00Z", role:$role}' \
+    > "$SESS/$1-$2.json"
+}
+
+echo "G1: an auxiliary session must NOT release a LIVE primary's lock"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"; rm -rf "$TMP/work/testproj/.agent-locks"
+mk_live_record claude sid-primary testproj primary
+mk_live_record claude sid-aux testproj auxiliary
+mklock claude sid-primary
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-aux "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq       "G1a: exit 3 (loud refusal)"    "$rc" "3"
+assert_contains "G1b: names the live holder"    "$out" "claude-sid-primary"
+[ -f "$LOCKF" ] && ok "G1c: live primary's lock intact" \
+  || bad "G1c: aux destroyed the live primary's lock (two-primaries shape)"
+assert_eq "G1d: primary record not stamped superseded" \
+  "$(jq -r '.role' "$SESS/claude-sid-primary.json")" "primary"
+# G1e (amended, TE6 R3): a refusal must be side-effect-free — the old form
+# asserted the seq-sync rewind remedy, whose defect (counter bumped before the
+# guard) is now removed. Mutation that makes G1e red: move the counter bump
+# back above the authorization guard (the pre-R3 order).
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "G1e: refusal leaves .session-seq untouched" \
+  || bad "G1e: refusal bumped the counter"
+
+echo "G2: aux with a DEAD/unknowable holder still releases (rollover authority, D4 preserved)"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"
+mk_live_record claude sid-aux testproj auxiliary
+mklock claude sid-ghost   # no registry record -> liveness unknowable -> stale
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-aux "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq "G2a: exit 0" "$rc" "0"
+[ ! -f "$LOCKF" ] && ok "G2b: dead holder's lock released" \
+  || bad "G2b: lock survived — successor will race it"
+assert_contains "G2c: rollover authority noted" "$out" "rollover authority"
+
+echo "G3: live child lock blocks the pre-launch release (I4)"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"; rm -rf "$TMP/work/testproj/.agent-locks"
+mk_live_record claude sid-old testproj primary
+mk_live_record claude sid-kid testproj child
+mklock claude sid-old
+mkdir -p "$TMP/work/testproj/.agent-locks"
+jq -n '{runtime:"claude", session_id:"sid-kid", parent_session_id:"sid-old",
+        project:"testproj", acquired_at:"2026-08-05T00:00:00Z"}' \
+  > "$TMP/work/testproj/.agent-locks/claude-sid-kid.json"
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq       "G3a: exit 3 (refused)"       "$rc" "3"
+assert_contains "G3b: names the child lock"   "$out" "claude-sid-kid"
+[ -f "$LOCKF" ] && ok "G3c: project lock intact (release order kept)" \
+  || bad "G3c: project lock released above a live child lock"
+# G3d (TE6 R3): the I4 refusal is side-effect-free too. Mutation that makes
+# G3d red: move the counter bump back above the authorization guard.
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "G3d: refusal leaves .session-seq untouched" \
+  || bad "G3d: refusal bumped the counter"
+
+echo "G4: stale child lock is swept, release proceeds"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"; rm -rf "$TMP/work/testproj/.agent-locks"
+mk_live_record claude sid-old testproj primary
+mklock claude sid-old
+mkdir -p "$TMP/work/testproj/.agent-locks"
+jq -n '{runtime:"claude", session_id:"sid-dead-kid", parent_session_id:"sid-old",
+        project:"testproj", acquired_at:"2026-08-05T00:00:00Z"}' \
+  > "$TMP/work/testproj/.agent-locks/claude-sid-dead-kid.json"  # no record -> stale
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq "G4a: exit 0" "$rc" "0"
+[ ! -f "$TMP/work/testproj/.agent-locks/claude-sid-dead-kid.json" ] \
+  && ok "G4b: stale child lock swept" || bad "G4b: stale child lock survived"
+[ ! -f "$LOCKF" ] && ok "G4c: project lock released" || bad "G4c: project lock survived"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP"/art-*; rm -rf "$TMP/work/testproj/.agent-locks"
+
+echo "G5: a SUPERSEDED-role caller (takeover backstory) must NOT release a LIVE holder's lock"
+# Mutation that makes G5a/G5c/G5f red: reinstate the role allowlist
+# ([ "$own_role" = "auxiliary" ]) in the pre-release guard — a caller whose
+# record says role=superseded is not on the list, passes, and releases the
+# live holder's lock (the TE6 R1 two-primaries shape).
+# Mutation that makes G5b red: drop the holder's name from the refusal
+# message (the refusal must name who it is protecting).
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"; rm -rf "$TMP/work/testproj/.agent-locks"
+mk_live_record claude sid-primary testproj primary
+mk_live_record claude sid-super testproj superseded
+mklock claude sid-primary
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-super "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq       "G5a: exit 3 (loud refusal)"    "$rc" "3"
+assert_contains "G5b: names the live holder"    "$out" "claude-sid-primary"
+[ -f "$LOCKF" ] && ok "G5c: live holder's lock intact" \
+  || bad "G5c: superseded caller destroyed the live holder's lock"
+# Mutation that makes G5d red: reinstate the role allowlist AND stamp the
+# released holder's record (the record named by the lock) instead of stamping
+# $REC only when it is provably the caller's own — the wrongly-passing
+# release then marks the live primary superseded.
+assert_eq "G5d: holder record not stamped superseded" \
+  "$(jq -r '.role' "$SESS/claude-sid-primary.json")" "primary"
+# Mutation that makes G5e red: move the counter bump back above the guard.
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "G5e: refusal leaves .session-seq untouched" \
+  || bad "G5e: refusal bumped the counter"
+assert_contains "G5f: one-primary invariant named" "$out" "one primary per work item"
+
+echo "G6: no env identity, fallback resolves an aux's record — release proceeds (C5/R2)"
+# Mutation that makes G6a/G6b red: key the guard on the fallback-resolved
+# record (the pre-R1 shape: own_role read from \$REC wherever it came from) —
+# the attended primary (no exported session id) resolves to the newer aux
+# record and its legitimate rollover is wrongly refused.
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"
+mk_live_record claude sid-primary testproj primary
+mk_live_record claude sid-aux testproj auxiliary
+touch -t 202001010000 "$SESS/claude-sid-primary.json"   # aux record is newest
+mklock claude sid-primary
+out=$(run_lns "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq "G6a: exit 0 (rollover authority retained)" "$rc" "0"
+[ ! -f "$LOCKF" ] && ok "G6b: lock released" \
+  || bad "G6b: attended rollover wrongly refused — lock survived"
+
+echo "G7: in G6's scenario the fallback-resolved aux record is NOT stamped superseded"
+# Mutation that makes G7a red: stamp \$REC unconditionally after the release
+# (the pre-R2 shape at :524-528) — the LIVE aux's record, which merely
+# happened to be newest, gets marked superseded.
+assert_eq "G7a: aux record role unchanged" \
+  "$(jq -r '.role' "$SESS/claude-sid-aux.json")" "auxiliary"
+
+echo "G9: --clear from an env-identified non-holder while the holder is LIVE — refused"
+# Mutation that makes G9a/G9b/G9c red: keep the --clear early-exit above the
+# authorization guard (the pre-R4 order) — the aux's --clear exits 0 having
+# bumped the shared counter and written .pending-clear-seed (an in-place
+# successor with no lock authority).
+rm -f "$SESS"/*.json "$LOCKF" "$SEEDF" "$TMP/work/testproj/.session-seq"
+mk_live_record claude sid-primary testproj primary
+mk_live_record claude sid-aux testproj auxiliary
+mklock claude sid-primary
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-aux "$LNS" testproj --clear </dev/null 2>&1); rc=$?
+assert_eq "G9a: exit 3" "$rc" "3"
+[ ! -f "$SEEDF" ] && ok "G9b: no .pending-clear-seed written" \
+  || bad "G9b: refused --clear still seeded"
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "G9c: refusal leaves .session-seq untouched" \
+  || bad "G9c: refusal bumped the counter"
+# Mutation that makes G9d red: run the release ACTION at the guard's decision
+# site (hoist rm with the decision) — a passing-through --clear would lose its
+# own lock; here the refusal path must equally leave the holder's lock alone.
+[ -f "$LOCKF" ] && ok "G9d: live holder's lock intact" \
+  || bad "G9d: --clear touched the live holder's lock"
+
+echo "G10: per-item CONTEXT_LOCK_STALE_SECS is GLOBAL-ONLY for lock liveness (R8)"
+# Mutation that makes G10a/G10c red: let the per-item context-budget.env
+# override LOCK_STALE (the pre-R8 knob loop) — the 1s per-item value calls
+# the 60s-old holder "stale" and the guard releases a live lock that
+# context-budget.sh still calls live (split-brain).
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"
+printf 'CONTEXT_LOCK_STALE_SECS=1\n' > "$TMP/work/testproj/context-budget.env"
+mk_live_record claude sid-primary testproj primary
+mk_live_record claude sid-aux testproj auxiliary
+past="$(date -v-60S +%Y%m%d%H%M.%S 2>/dev/null || date -d '-60 seconds' +%Y%m%d%H%M.%S)"
+touch -t "$past" "$TMP/art-sid-primary"   # 60s old: live globally, "stale" per-item
+mklock claude sid-primary
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-aux "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq "G10a: exit 3 (holder live under the global rule)" "$rc" "3"
+[ -f "$LOCKF" ] && ok "G10c: live holder's lock intact" \
+  || bad "G10c: per-item stale override released a live lock"
+# G10b: the ignored knob is called out loudly. Mutation that makes G10b red:
+# drop the ignore-note (silently discard the per-item value).
+assert_contains "G10b: per-item value loudly ignored" "$out" "global-only"
+rm -f "$TMP/work/testproj/context-budget.env"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP"/art-* "$TMP/work/testproj/.session-seq"
+
+echo "G11: --clear from the LIVE holder with a live CHILD lock — allowed (I4 protects the release; --clear releases nothing)"
+# Mutation that makes G11a/G11b/G11c/G11d red: apply guard (b)'s child-lock
+# refusal to the --clear path (the unscoped hoist, TE6 R4 verifier finding) —
+# the holder's own in-place relaunch is refused over a child its surviving
+# process still owns, violating R4(c)'s "--clear from the holder ... unchanged
+# behaviour".
+rm -f "$SESS"/*.json "$LOCKF" "$SEEDF" "$TMP/work/testproj/.session-seq"
+rm -rf "$TMP/work/testproj/.agent-locks"
+mk_live_record claude sid-old testproj primary
+mk_live_record claude sid-kid testproj child
+mklock claude sid-old
+mkdir -p "$TMP/work/testproj/.agent-locks"
+jq -n '{runtime:"claude", session_id:"sid-kid", parent_session_id:"sid-old",
+        project:"testproj", acquired_at:"2026-08-05T00:00:00Z"}' \
+  > "$TMP/work/testproj/.agent-locks/claude-sid-kid.json"
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --clear </dev/null 2>&1); rc=$?
+assert_eq "G11a: exit 0 (holder's --clear proceeds)" "$rc" "0"
+assert_eq "G11b: seed written verbatim" "$(cat "$SEEDF" 2>/dev/null)" "$CLEAR_PROMPT"
+[ -f "$LOCKF" ] && ok "G11c: own project lock intact (--clear releases nothing)" \
+  || bad "G11c: --clear touched the project lock"
+assert_eq "G11d: counter bumped normally" \
+  "$(cat "$TMP/work/testproj/.session-seq" 2>/dev/null)" "2"
+# Mutation that makes G11e red: make --clear pass guard (b) by force-removing
+# the child locks instead of scoping the guard off the --clear path — the
+# surviving process's live child loses its lock.
+[ -f "$TMP/work/testproj/.agent-locks/claude-sid-kid.json" ] \
+  && ok "G11e: live child lock untouched" \
+  || bad "G11e: --clear disturbed a live child lock"
+rm -f "$SESS"/*.json "$LOCKF" "$SEEDF" "$TMP"/art-* "$TMP/work/testproj/.session-seq"
+rm -rf "$TMP/work/testproj/.agent-locks"
+
+echo "G12: exported CONTEXT_LOCK_STALE_SECS reaches the successor at the launcher's resolution, not the per-item value (R8 env-inheritance leg)"
+# Mutation that makes G12a red: drop the post-resolution re-set of
+# CONTEXT_LOCK_STALE_SECS (leave the exported copy holding the per-item
+# file's value) — the --bg successor inherits the per-item value as explicit
+# env, which outranks the global file inside context-budget.sh (split oracle).
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq" "$TMP/child-env.txt"
+printf 'CONTEXT_LOCK_STALE_SECS=1\n' > "$TMP/work/testproj/context-budget.env"
+mk_record claude sid-old testproj
+cat > "$TMP/bin/claude" <<STUB
+#!/usr/bin/env bash
+echo "STALE=\${CONTEXT_LOCK_STALE_SECS:-unset}" > "$TMP/child-env.txt"
+jq -n '{runtime:"claude", session_id:"sid-new", artifact:"/dev/null",
+        project:"testproj", registered_at:"2026-08-05T00:00:01Z"}' \
+  > "$SESS/claude-sid-new.json"
+STUB
+chmod +x "$TMP/bin/claude"
+out=$(PATH="$TMP/bin:$PATH" ROLLOVER_CONFIRM_SECS=10 \
+  run_lns CLAUDE_CODE_SESSION_ID=sid-old CONTEXT_LOCK_STALE_SECS=7777 \
+  "$LNS" testproj --bg 2>&1); rc=$?
+assert_eq "G12a: successor sees the launcher's resolved value" \
+  "$(grep -o 'STALE=[0-9a-z]*' "$TMP/child-env.txt" 2>/dev/null)" "STALE=7777"
+rm -f "$TMP/work/testproj/context-budget.env" "$TMP/child-env.txt" "$SESS"/*.json \
+  "$TMP/work/testproj/.session-seq"
+
+echo "H: runtime-conditioned refusals are decided PRE-bump (s15 follow-on (a))"
+# RUNTIME resolves before the counter bump, so the three refusals that depend
+# on it (--clear claude-only, --bg claude-only, unknown runtime) must be
+# decided in the pre-bump refusal zone: a refusal costs no side effects — no
+# counter bump, no seed, no lock release, no superseded stamp.
+
+echo "H1: --clear on a non-claude runtime — refused with no side effects"
+rm -f "$SESS"/*.json "$LOCKF" "$SEEDF" "$TMP/work/testproj/.session-seq"
+out=$(run_lns "$LNS" testproj --runtime codex --clear </dev/null 2>&1); rc=$?
+assert_eq       "H1a: exit 3"          "$rc" "3"
+assert_contains "H1b: claude-only"     "$out" "claude-only"
+# Mutation that makes H1c red: move the --clear claude-only die back below
+# the counter bump (the pre-hoist placement in the --clear block).
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "H1c: refusal leaves .session-seq untouched" \
+  || bad "H1c: refusal bumped the counter"
+# Mutation that makes H1d red: move the die below the seed write.
+[ ! -f "$SEEDF" ] && ok "H1d: no seed written" || bad "H1d: refusal seeded"
+
+echo "H2: --bg on a non-claude runtime — refused with no side effects"
+rm -f "$SESS"/*.json "$TMP/work/testproj/.session-seq"
+mklock claude sid-old
+out=$(run_lns "$LNS" testproj --runtime codex --bg </dev/null 2>&1); rc=$?
+assert_eq       "H2a: exit 3"          "$rc" "3"
+assert_contains "H2b: claude-only"     "$out" "claude-only"
+# Mutation that makes H2c red: move the --bg claude-only die back below the
+# counter bump (the pre-hoist placement after the BG-derivation assignments).
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "H2c: refusal leaves .session-seq untouched" \
+  || bad "H2c: refusal bumped the counter"
+# Mutation that makes H2d red: move the die below the pre-launch lock release.
+[ -f "$LOCKF" ] && ok "H2d: lock untouched" || bad "H2d: refusal released the lock"
+
+echo "H3: unknown runtime — refused with no side effects"
+rm -f "$SESS"/*.json "$TMP/work/testproj/.session-seq" "$LOCKF"
+mk_record claude sid-old testproj
+mklock claude sid-old
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-old "$LNS" testproj --runtime bogus </dev/null 2>&1); rc=$?
+assert_eq       "H3a: exit 3"              "$rc" "3"
+assert_contains "H3b: names the runtime"   "$out" "unknown runtime: bogus"
+# Mutation that makes H3c red: drop the pre-bump valid-runtime enumeration and
+# fall back to the launch case statement's `*)` die (the pre-hoist placement,
+# which sat below the bump, the lock release, and the superseded stamp).
+[ ! -f "$TMP/work/testproj/.session-seq" ] \
+  && ok "H3c: refusal leaves .session-seq untouched" \
+  || bad "H3c: refusal bumped the counter"
+# Mutation that makes H3d red: same as H3c (the old `*)` die sat below the
+# pre-launch lock release, so the refusal destroyed the caller's own lock).
+[ -f "$LOCKF" ] && ok "H3d: lock untouched" || bad "H3d: refusal released the lock"
+# Mutation that makes H3e red: same as H3c (the old placement also stamped the
+# dying session's record superseded before refusing to launch anything).
+assert_eq "H3e: record not stamped superseded" \
+  "$(jq -r '.role // "none"' "$SESS/claude-sid-old.json")" "none"
+rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
