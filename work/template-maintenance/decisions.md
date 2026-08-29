@@ -96,3 +96,18 @@ didn't happen"). Committing makes Claude Code update-with-pull like every other 
 **Rejected:** teaching setup.sh to reconcile template-owned blocks, and/or a drift check
 in check-workspace-structure.sh — both detect or repair the failure class instead of
 removing it; committing the file removes it. (Tier-1 trailer on commit a660150.)
+
+## 2026-08-29 — L43: explicit lineage-restart marker, not renumbering (context-decay)
+**What:** Teach `check-ledger.py` a `<!-- ledger-lineage-restart: … -->` marker that
+restarts the session-number chain at the block below it; dates still check across the
+seam. One marker placed in `work/context-decay/handoff-archive.md` where the numbering
+restarted; mutation-tested (marker-less restart and marker-hidden date regression both
+still fail).
+**Why:** The restart is real history — the later lineage (#3–#4, then live 5–6) is
+referenced by launchers/commits, and the conventions say grandfathered headings are
+never rewritten. A marker keeps the gate honest while declaring the anomaly explicitly.
+**Rejected:** (a) renumbering either lineage's headings — rewrites history and ripples
+into live-ledger/cross-references; (b) silently widening the ordering rule to tolerate
+restarts — already rejected in session #9 (an undeclared restart is indistinguishable
+from a misfiling); (c) resetting the date chain at the marker too — wider than needed,
+would let a misfiled date hide behind the seam.
