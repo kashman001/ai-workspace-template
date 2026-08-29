@@ -6,6 +6,44 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 9 (2026-08-29): M32+M33+L41+L42 delivered to main; audit findings filed
+
+**Summary:** All four peer-flagged cards fixed, tested, and ff-pushed to main
+(`dcebc95`, worktree `tm-s9`). Setup-docs audit (mission item 3) ran as a
+read-only subagent; 18 findings persisted to
+`work/template-maintenance/setup-docs-audit-2026-08-29.md` — fixes not yet
+applied. Workspace currency (mission item 2) not yet done.
+
+**Shipped (commit dcebc95):**
+- M33: launch-next-session.sh TOP_N grammar widened (sNNN/#N/current forms;
+  skip announced). T23o–T23t; suite 207/0.
+- M32: check-ledger.py tolerant heading parse (optional num/date, neither =
+  malformed), nearest-key-above ordering, archive no longer hidden by broken
+  live ledger; tests 9/9; work-directory-conventions.md updated (via fork
+  subagent). L41/L42 skill doc rewords.
+- Backlog: 4 cards → archive with Fixed: notes; **L43 filed** (two historical
+  archives genuinely out of order — repo-wide check-ledger exits 1 until a
+  deliberate ledger-content pass; per-project runs green).
+
+**Decisions:** L43 instead of inline archive re-filing (content edits reserved
+for a deliberate pass; rejected widening the ordering rule to tolerate
+restarts). Delivery included ff-merging `vendor-mattpocock-skills` (launcher's
+"fully merged" claim was wrong — session-8's card/launcher commits sat only on
+that branch; now truly merged via the main push).
+
+**State:** main = dcebc95; worktree branch `worktree-tm-s9` = main + this
+rollover commit. `m31-close` worktree still present (locked), vendor branch
+retirable. User's main checkout still on `vendor-mattpocock-skills`, not yet
+pulled.
+
+**Learnings:**
+- A rollover-bookkeeping commit made on a feature branch (session-8's cards on
+  vendor-mattpocock-skills) makes the next session's worktree-from-main miss
+  the backlog cards; deliver bookkeeping to main with the close.
+
+**Suggested skills next:** none special — targeted edits + verification;
+session-rollover at WARN.
+
 # Session Handoff — 2026-08-29 (session 8, bg: M31 closed & delivered)
 
 **Trigger:** planned close per launcher; ran as a background job in worktree
