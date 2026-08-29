@@ -6,7 +6,7 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 2026-08-29 (session #8: M31 closed & delivered)
+# Session Handoff — 2026-08-29 (session 8, bg: M31 closed & delivered)
 
 **Trigger:** planned close per launcher; ran as a background job in worktree
 `m31-close` (branched off `vendor-mattpocock-skills`).
@@ -31,71 +31,21 @@ Convention: docs/work-directory-conventions.md.
   addressed (stale check-dependencies remediation, red H7b, resolver-rationale
   restored to the vendor table, test prefix deduped).
 - **Delivered:** close commit on top of a660150, backlog M31 → archive
-  (Resolved, 6 open / 69 resolved), branch merged to `main` via PR, pushed.
+  (Resolved), branch merged to `main` via PR #40 (`gh pr merge` was
+  classifier-blocked; delivered via the authorized ff `git push origin
+  m31-close:main`, PR auto-marked merged).
+- **Post-delivery:** user renamed session (`template-maintenance #8`); peer
+  session R11PolicyDev #202 (downstream insight-dev-ai-workspace) flagged four
+  rollover/ledger divergences — all four verified present in the template and
+  filed as backlog cards **M32** (check-ledger grammar port), **M33**
+  (launch-next-session sNNN lineage-gate blind spot), **L41**
+  (ROLLOVER_RELAUNCH default claim), **L42** (decision-log 16KB bar).
+  Scorecard 10 open / 69 resolved. Context STOP (152K) fired — via the very
+  PostToolUse hook M31 fixed — so the fixes roll to session #9.
 
 **Learnings:**
 - Git clobbers *ignored* untracked files on merge/checkout with no warning —
   the "untracked working tree files would be overwritten" guard only covers
   non-ignored files. Any future "start tracking a previously-gitignored file"
   migration must warn users to back up first.
-
-# Session Handoff — 2026-08-29 (session #7: M31 — Claude Code hook wiring committed, partial)
-
-**Trigger:** context STOP (~184K) mid-M31; user directed rollover + relaunch via
-launcher, successor to finish testing, review, and delivery.
-
-**What happened (branch `vendor-mattpocock-skills`, ahead 1 unpushed):**
-- Pulled the session-loop hardening set (branch ff 48e3f79→036a0af; local main
-  ff'd to 0dc3bac; supervisor/Stop-hook/research-wave landed).
-- Diagnosed "auto relaunch doesn't happen even with the supervisor": staging +
-  sentinel are still agent instructions; total-forget maps to silent
-  "deliberate quit" exit 0 (session-loop.sh:172); and THIS checkout's
-  `.claude/settings.json` (Aug 6) lacked the Stop hook + used the broken bare
-  `$CLAUDE_PROJECT_DIR` form → supervisor would block in eval. Root cause:
-  setup.sh:43 `copy_if_missing` never reconciles → filed backlog **M31**.
-- **Commit a660150** (fix M31, partial): `.claude/settings.json` now TRACKED
-  (hooks + statusLine, resolver form, incl. session-loop Stop hook);
-  `.gitignore` un-ignores it with rationale; `settings.json.example` stripped
-  to personal starter (permissions/MCP/connectors); backlog M31 card added
-  (Open). Remaining steps are in the commit body + next-session.md.
-- STOP arrived in-band via the very PostToolUse hook the fix repaired.
-
-**Session numbering correction:** counter held 5 but ledger shows #6 ran
-(2026-08-16, ad-hoc, never seq-synced); this session is #7, seq-sync raised.
-
-**Learnings:**
-- Claude Code schema-validates tracked `.claude/settings.json` — `_comment`
-  is rejected there (fine in `.example` and `settings.local.json`).
-- Other 5 runtimes' hook wiring already committed — M31 was Claude-Code-only.
-
-**Suggested skills:** code-review (pre-delivery), decision-log (if scope moves).
-
-# Session Handoff — 2026-08-16 (session #6: M30 — Matt Pocock skill set vendored)
-
-**Trigger:** work-unit complete at context-budget WARN (~127K); PR open,
-merge pending.
-
-**What shipped (branch `vendor-mattpocock-skills`, PR #23 — user merges):**
-- **M30** (filed + resolved same pass): all 27 curated Matt Pocock skills now
-  vendored at `skills/<name>/`, pinned to upstream `068b6e0` (2026-08-15,
-  MIT), agent-agnostic (every runtime reads SKILL.md; upstream
-  `agents/openai.yaml` ships too). 22 new + the 5 previously vendored
-  refreshed. Upstream `in-progress/` + course-tooling skipped deliberately.
-- `scripts/sync-vendored-skills.sh` — refresh for both classes (pristine
-  re-copy + stamp; adapted: frontmatter/comment preserved, body swapped).
-  Verified idempotent + graceful without the upstream clone.
-- `skills/vendored-skills.md` — index, slash map, pristine/adapted classes,
-  embedded MIT license, `code-review` name-collision flag.
-- 10 `.claude/commands/` wrappers for user-invoked skills.
-- CONTEXT.md: one grouped vendored-set entry. `recommended-tooling.md` §3
-  flipped: vendored = default path, global symlinks = maintainer path (+
-  duplicate-copy note & `.syncignore` fix). Backlog M30 card → archive;
-  scorecard 6/67/4/0/6. Tier-2 decision note in `decisions.md` (2026-08-16,
-  vendor > submodule/plugin/setup-script).
-- Fresh-clone verification passed (27 stamped skills, zero abs paths).
-
-**Not done / follow-ups:**
-- PR #23 merge — user's call.
-- Optional, origin machine only: dedupe global `~/.claude/skills` symlinks
-  vs vendored copies (documented in recommended-tooling.md §3).
 
