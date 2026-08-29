@@ -38,9 +38,9 @@ req git "core — clone/symlinks/registry"
 req gh  "GitHub CLI — the workspace's GitHub path (auth, PRs, API)"
 req jq  "context-budget accounting (scripts/context-budget.sh) — every session runs it"
 
-# Wiring, not a binary: context-budget hooks per runtime. Codex/Gemini/OpenCode/
-# Copilot wiring ships committed with the repo; Claude Code's is gitignored and
-# materialized by scripts/setup.sh, so it is required only when claude is installed.
+# Wiring, not a binary: context-budget hooks per runtime. All six runtimes'
+# wiring ships committed with the repo (Claude Code's in .claude/settings.json
+# since M31); a missing claude wiring means the checkout predates that commit.
 hooks_wired=""
 grep -qs 'context-budget-claude-hook' .claude/settings.json .claude/settings.local.json 2>/dev/null && hooks_wired="$hooks_wired claude"
 grep -qs 'context-budget-codex-hook' .codex/config.toml 2>/dev/null && hooks_wired="$hooks_wired codex"
@@ -49,7 +49,7 @@ grep -qs 'context-budget-gemini-hook' .gemini/settings.json 2>/dev/null && hooks
 ls .github/hooks/context-budget*.json >/dev/null 2>&1 && hooks_wired="$hooks_wired copilot"
 
 if have claude && [[ "$hooks_wired" != *claude* ]]; then
-  printf '  \033[31m✗\033[0m %-8s MISSING (required) — claude is installed but its context-budget hooks are not wired; run scripts/setup.sh (copies .claude/settings.json.example → .claude/settings.local.json)\n' "hooks" >&2
+  printf '  \033[31m✗\033[0m %-8s MISSING (required) — claude is installed but its context-budget hooks are not wired; the wiring is committed in .claude/settings.json — git pull, or restore the file (docs/context-budget.md → Vendor hook deployments)\n' "hooks" >&2
   missing_required=1
 elif [ -n "$hooks_wired" ]; then
   printf '  \033[32m✓\033[0m %-8s context-budget hooks wired:%s\n' "hooks" "$hooks_wired"

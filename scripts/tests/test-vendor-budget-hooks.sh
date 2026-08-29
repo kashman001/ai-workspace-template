@@ -349,4 +349,31 @@ else bad "X9c: self-kills the terminal-owning process with SIGTERM"; fi
 
 rm -rf "$XTMP"
 
+echo "X10: Claude Code wiring is committed and template-owned (M31)"
+# The wiring must update with git pull: tracked settings.json carries the four
+# hooks + statusLine in the resolver form; the example (settings.local.json
+# starter) must carry NO hooks/statusLine, or Claude Code's file merge would
+# fire every hook twice.
+CSJ="$SRC_ROOT/.claude/settings.json"
+CSE="$SRC_ROOT/.claude/settings.json.example"
+RESOLVER_PREFIX='d="${CLAUDE_PROJECT_DIR:-}"'
+if [ -n "$(git -C "$SRC_ROOT" ls-files .claude/settings.json 2>/dev/null)" ]
+then ok "X10a: .claude/settings.json is git-tracked"
+else bad "X10a: .claude/settings.json is git-tracked"; fi
+if jq empty "$CSJ" 2>/dev/null
+then ok "X10b: settings.json is valid JSON"; else bad "X10b: settings.json is valid JSON"; fi
+for ev in SessionStart PostToolUse SessionEnd Stop; do
+  if [ "$(jq --arg e "$ev" '.hooks[$e][0].hooks | length' "$CSJ" 2>/dev/null)" -ge 1 ] 2>/dev/null
+  then ok "X10c: $ev hook wired"; else bad "X10c: $ev hook wired"; fi
+done
+nores=$(jq -r --arg p "$RESOLVER_PREFIX" '[.hooks | to_entries[].value[].hooks[].command
+                | select(startswith($p) | not)] | length' "$CSJ" 2>/dev/null)
+assert_eq "X10d: every hook command uses the cwd-safe resolver prefix" "$nores" "0"
+if [ "$(jq -r --arg p "$RESOLVER_PREFIX" '.statusLine.command | startswith($p)' "$CSJ" 2>/dev/null)" = "true" ]
+then ok "X10e: statusLine wired with the resolver prefix"
+else bad "X10e: statusLine wired with the resolver prefix"; fi
+if [ "$(jq 'has("hooks") or has("statusLine")' "$CSE" 2>/dev/null)" = "false" ]
+then ok "X10f: example carries no hooks/statusLine (double-fire guard)"
+else bad "X10f: example carries no hooks/statusLine (double-fire guard)"; fi
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

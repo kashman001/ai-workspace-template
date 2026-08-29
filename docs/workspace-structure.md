@@ -214,15 +214,17 @@ regardless of the specific tool.
 .claude/
 ├── agents/                     # Subagent profiles with scoped toolsets (checked in)
 ├── commands/                   # Slash-command shortcuts for workspace skills (checked in)
-└── settings.json               # Bash and MCP tool permission allowlist (gitignored)
+├── settings.json               # Template-owned hook wiring + statusLine (committed)
+└── settings.local.json         # Personal permission allowlist (gitignored)
 ```
 
-User-specific permission allowlist controlling which Bash commands and MCP
-tools Claude Code can run without prompting. Gitignored — permissions are a
-personal trust decision. Provide a starter template (`settings.json.example`)
-for new users. The template's example also carries the `hooks` block wiring
-the context-budget WARN/STOP hook (`docs/context-budget.md`) — copy it into
-your `settings.json` to get in-band context warnings.
+`settings.json` (committed) carries only template-owned wiring — the
+context-budget hooks and statusLine (`docs/context-budget.md` → "Vendor hook
+deployments") — so it updates with `git pull` like every other runtime's hook
+deployment. Personal settings live in `settings.local.json` (gitignored —
+permissions are a personal trust decision), seeded from the starter template
+`settings.json.example` by `scripts/setup.sh`. Claude Code merges both files;
+never copy the hooks into the local file, or each hook fires twice.
 
 **`agents/`** (checked in) holds subagent profiles — narrow-toolset children a
 lean parent session delegates to (e.g. `repo-navigator`: read-only navigation
@@ -658,12 +660,13 @@ agent conversation history.
 | `context-budget.env` | Yes | Non-secret context-budget thresholds + relaunch knobs (a count is never a credential) |
 | `.mcp.json.example` | Yes | Template for project-level MCP config |
 | `.vscode/mcp.json.example` | Yes | Template for VS Code MCP config |
-| `.claude/settings.json.example` | Yes | Template for the Claude Code permission allowlist |
+| `.claude/settings.json` | Yes | Committed Claude Code hook wiring + statusLine (template-owned) |
+| `.claude/settings.json.example` | Yes | Template for the personal Claude Code permission allowlist |
 | `.claude/agents/`, `.claude/commands/` | Yes | Subagent profiles and slash-command shortcuts |
 | `mcp-fragments/` | Yes | Opt-in MCP server configs (no secrets; loaded per session) |
 | `.mcp.json` | **No** | User-specific project MCP config (copied from `.mcp.json.example`) |
 | `.vscode/mcp.json` | **No** | User-specific MCP paths |
-| `.claude/settings.json`, `.claude/settings.local.json` | **No** | User-specific permission allowlist |
+| `.claude/settings.local.json` | **No** | User-specific permission allowlist |
 | `repos/` (except `README.md`) | **No** | Separate git repos, cloned on setup |
 | `references/*/` | **No** | Cloned external repos |
 | `graphify-out/` | **No** | Locally regenerated knowledge-graph output |
@@ -949,7 +952,7 @@ references/*
 
 # User-specific agent / IDE config
 .vscode/mcp.json
-.claude/settings.json
+.claude/settings.local.json
 
 # Scratch
 temp/

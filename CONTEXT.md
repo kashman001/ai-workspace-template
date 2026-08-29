@@ -258,8 +258,7 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
   ahead to disk incrementally); `2` (STOP, ≥150K) — finish only the current
   atomic step and roll over immediately, no ask. All six runtimes
   (claude/codex/gemini/opencode/copilot CLI/Copilot VS Code agent mode) get
-  the in-band push at these thresholds via their hook wiring — committed for
-  all but Claude Code, whose copy `scripts/setup.sh` materializes
+  the in-band push at these thresholds via their committed hook wiring
   (`docs/context-budget.md` → "Vendor hook deployments").
 - Dispatching a long-running subagent: open a dispatch record and emit the
   rollover contract for its prompt in one step —

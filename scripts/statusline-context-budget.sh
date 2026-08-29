@@ -12,7 +12,7 @@
 # Input:   Claude Code statusline JSON on stdin (session_id, workspace dirs).
 # Wire-up: .claude/settings.json → "statusLine": {"type": "command",
 #          "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/statusline-context-budget.sh"}
-#          (shipped in .claude/settings.json.example). Roles model:
+#          (committed — M31). Roles model:
 #          docs/context-budget.md → "Session roles".
 set -u
 

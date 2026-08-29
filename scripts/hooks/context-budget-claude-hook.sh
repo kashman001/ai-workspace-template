@@ -4,7 +4,7 @@
 #          when the session crosses the context-budget threshold. Core logic
 #          (throttle, escalation-only, fail-open) lives in
 #          context-budget-hook-lib.sh, shared with the other runtimes' wrappers.
-# Wiring:  .claude/settings.json "hooks" (see .claude/settings.json.example).
+# Wiring:  .claude/settings.json "hooks" (committed — M31).
 set -u
 command -v jq >/dev/null 2>&1 || exit 0
 . "$(cd "$(dirname "$0")" && pwd)/context-budget-hook-lib.sh"

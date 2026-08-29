@@ -73,7 +73,7 @@ standing "Context Budget" section in `CONTEXT.md` tells every agent to register
 at session start, which only works for sessions started inside the workspace
 tree (where the agent loads that file) by an agent that follows it. Claude Code
 is the one confirmed exception — it registers **by mechanism**, not by
-instruction, via the `SessionStart` hook in `.claude/settings.json.example`.
+instruction, via the `SessionStart` hook in the committed `.claude/settings.json`.
 Copilot-in-VS-Code registers the same way via
 `.github/hooks/context-budget-vscode.json` →
 `context-budget-copilot-vscode-hook.sh` (pinning THIS session's transcript from
@@ -256,10 +256,10 @@ explicitly typed `--clear` is not that. It deliberately does **not** release
 `.active-session` or stamp the dying record `superseded`: the process survives
 `/clear`, so the record is still live. The counter bumps at invocation, so an
 abandoned `--clear` leaves it one ahead; the command prints the exact
-`seq-sync` rewind on every real run. Wiring the hook requires the `SessionStart`
-entry from `.claude/settings.json.example` — a `.claude/settings.local.json`
-predating this sync will not have it, and `--clear` then seeds a marker nothing
-drains.
+`seq-sync` rewind on every real run. Wiring the hook is the `SessionStart`
+entry in the committed `.claude/settings.json`, which updates with `git pull` —
+a checkout predating that commit lacks it, and `--clear` then seeds a marker
+nothing drains.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
 by the dying session at `session-rollover` step 1 via
@@ -411,7 +411,7 @@ Every element must hold under N concurrent sessions:
   dying session's own lock immediately before launching (release-before-launch:
   the successor's `register` must not race it, and the attached-manual path
   `exec`s, after which nothing can release); a foreign holder's lock is never
-  removed. A `SessionEnd` hook (shipped in `.claude/settings.json.example`;
+  removed. A `SessionEnd` hook (committed in `.claude/settings.json`;
   claude-only — other runtimes have no end hook) runs `release` on exit, so a
   plainly-closed primary session frees its lock instead of squatting until the
   stale threshold. Without either, the dying session releases manually after
@@ -629,9 +629,10 @@ No single mechanism covers every runtime, so four layers overlap:
    wiring pushes a WARN/STOP message into the agent's turn. Escalation-only
    (one WARN + one STOP per session), throttled to one check/minute, fails
    open — any hook error exits 0 (or emits the vendor's silent-JSON shape) so
-   it can never block real work. Claude Code's wiring lives in
-   `.claude/settings.local.json` (gitignored — `scripts/setup.sh` copies it
-   from `.claude/settings.json.example`); the others ship committed. Full
+   it can never block real work. All six wirings ship committed — Claude
+   Code's in `.claude/settings.json` (hooks + statusLine only; personal
+   permissions stay in the gitignored `settings.local.json`, which
+   `scripts/setup.sh` seeds from `.claude/settings.json.example`). Full
    per-runtime wiring/channel/friction breakdown: "Vendor hook deployments"
    below.
 2. **Mandatory checkpoints in long-running skills (all runtimes):** `onboard-repo`
@@ -654,12 +655,23 @@ into the shared lib for the actual check and message text.
 
 | Runtime | Wiring file | Event | In-band channel | Friction gate |
 | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/settings.local.json` (gitignored; `scripts/setup.sh` copies from `.claude/settings.json.example`) → `scripts/hooks/context-budget-claude-hook.sh` | `PostToolUse` | stderr text + `exit 2` (Claude Code surfaces stderr as an interrupting message on a non-zero exit) | None beyond the local settings copy — no vendor-side trust gate. |
+| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`, and Claude Code merges both files) → `scripts/hooks/context-budget-claude-hook.sh` | `PostToolUse` | stderr text + `exit 2` (Claude Code surfaces stderr as an interrupting message on a non-zero exit) | None — wiring is committed; no vendor-side trust gate. Every command self-resolves the repo root (walks up from `$PWD` when `$CLAUDE_PROJECT_DIR` is unset/empty, e.g. in subdir-cwd or worktree sessions) — a bare `$CLAUDE_PROJECT_DIR` path silently kills the guardrail. |
 | Codex | `.codex/config.toml` `[[hooks.UserPromptSubmit]]` → `context-budget-codex-hook.sh` | `UserPromptSubmit` | `hookSpecificOutput` JSON on stdout (`{hookSpecificOutput:{hookEventName,additionalContext}}`), `exit 0` | **Hash-based hook trust:** the first run of the hook in a repo prompts the human to approve it (hash recorded; editing the script re-prompts). Automation/CI must pass `--dangerously-bypass-hook-trust`. |
 | Gemini CLI | `.gemini/settings.json` `hooks.BeforeAgent` → `context-budget-gemini-hook.sh` | `BeforeAgent` | JSON-only stdout — gemini hooks require valid JSON on every invocation; the wrapper emits `{}` when silent (no jq, no escalation) and `{hookSpecificOutput:{additionalContext}}` on WARN/STOP | Measurement reads the workspace `.gemini/telemetry.log`, not the payload's `transcript_path` (the chat transcript carries no token counts) — exact only once the telemetry log has an entry for this session. **Known limitation:** the telemetry log is shared and append-only across sessions in the workspace, so a successor gemini session's *first-turn* `BeforeAgent` check can read the predecessor's last (large) entry before its own first response lands, and spuriously report STOP on turn one. Accepted — gemini chains are human-launched anyway (see "Chained rollovers & re-attach" above), so a spurious first-turn STOP is caught by a human before it matters. |
 | opencode | `.opencode/opencode.json` `"plugin"` array → `.opencode/plugins/context-budget.js`, which shells out to `context-budget-opencode-hook.sh <sessionID>` | `chat.message` | the plugin `push`es a message `Part` (`output.parts.push(...)`) | opencode's Part schema is strict: a bare `{type,text}` part fails validation and kills the turn — every part needs `id`, `sessionID`, and `messageID`. Also: `.opencode/plugins/*.js` is **not** auto-discovered in this repo (empirically verified) — a plugin must be explicitly listed in `opencode.json`'s `plugin` array or it never runs. Measurement is a sqlite read from `~/.local/share/opencode/opencode.db` (`message.data` per-turn `tokens.total`, with a session-column sum fallback; no size-estimate fallback, since the db is shared across all sessions). |
 | Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh sessionStart` / `... agentStop` | `sessionStart` (WARN/STOP) and `agentStop` (STOP only) | `sessionStart`: `{additionalContext}` JSON. `agentStop`: `{decision:"block",reason}` — **blocks only at STOP**, because `additionalContext` is model-discounted (phrased as tooling status, easy to ignore) while `block` is a strong lever; guarded by `stop_hook_active` so it never fights the CLI's 8-block continuation limit. | **Folder-trust gate:** repo-committed hooks silently no-op unless the workspace is listed in `~/.copilot/config.json` → `trustedFolders` — no error, no visible signal, the hook simply never fires. `scripts/setup.sh` seeds it idempotently (JSONC comment-preserving; skips with a note until Copilot's first run creates `~/.copilot/`), and `scripts/check-dependencies.sh` reports trust status as a verify-only advisory. CI must still pre-seed the file itself. |
 | Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` (**PascalCase** events, `command` key, repo-relative path — hook-process cwd is the workspace root; verified 2026-08-06, VS Code 1.132.0) → `context-budget-copilot-vscode-hook.sh SessionStart` / `... Stop` | `SessionStart` (WARN/STOP) and `Stop` (STOP only) | `SessionStart`: `{hookSpecificOutput:{additionalContext}}` JSON, model-visible (occasionally discounted as "injected" — the Stop channel is the authoritative lever). `Stop`: **stderr text + `exit 2`** forces one continuation turn carrying the rollover instruction — JSON `{decision:"block"}` is IGNORED by VS Code, exit-2 is the only working block channel; guarded by `stop_hook_active`. Payloads are snake_case (`session_id`) vs the CLI's camelCase (`sessionId`) — each wrapper guards on its own casing, so both `.github/hooks/*.json` files coexist safely whichever runtime loads them. | **`.github/hooks/` is a DEFAULT `chat.hookFilesLocations` location — the hook loads and auto-registers with NO settings entry (CONFIRMED 2026-08-11, VS Code 1.132.0).** Requires a TRUSTED workspace. The earlier s78/s79 "DEAD END" was a false negative: the hook fired but a pre-register `[ -f "$cs" ]` guard skipped registration on fresh sessions (SessionStart fires seconds before the `chatSessions/<sid>.jsonl` file is born); fixed by registering above the measurement guard. Manual register (fix-B prefixed form) retained only as a fallback for hook-less contexts. `$CLAUDE_PROJECT_DIR` is unset in hook processes (the repo's claude hooks no-op harmlessly if VS Code loads `.claude/settings.json` via its default `chat.hookFilesLocations`). |
+
+**Migrating an existing workspace (pre-2026-08-29):** `.claude/settings.json`
+used to be a gitignored per-user copy of the example. Pulling the commit that
+tracks it **silently overwrites** your untracked local file with the template
+copy — no refusal, no backup (git clobbers *ignored* untracked files without
+the usual "would be overwritten" error, verified live on the migration merge).
+**Before** pulling, save your copy
+(`mv .claude/settings.json .claude/settings.json.bak`), pull, then fold any
+personal bits (permissions, MCP servers, connectors) into
+`.claude/settings.local.json` — do **not** re-add hook or statusLine blocks
+there: Claude Code merges both files, so a second copy fires every hook twice.
 
 ## Session registration
 
@@ -683,7 +695,7 @@ default 3h) is reclaimed. `release [--project <proj>]` frees a lock held by
 this session (project defaults to the one recorded at registration) — the
 `session-rollover` skill calls it after the verification gate.
 For Claude Code, registration is also mechanical: a `SessionStart` hook in
-`.claude/settings.json.example` runs `register` with the transcript path from
+the committed `.claude/settings.json` runs `register` with the transcript path from
 the hook payload at every session start/resume, so even an agent that ignores
 `CONTEXT.md` gets pinned (and sees the status line — `SessionStart` hook stdout
 is added to the session context).

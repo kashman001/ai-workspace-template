@@ -5,7 +5,7 @@
 #          boundary once its own rollover sentinel is on disk. Inert otherwise.
 # Usage:   context-budget-stop-hook.sh <runtime>     (payload on stdin)
 # Wiring:  claude — .claude/settings.json "hooks" -> "Stop"
-#            (see .claude/settings.json.example)
+#            (committed — M31)
 #          codex  — .codex/config.toml [[hooks.Stop]]
 #
 # One file rather than one per runtime: claude 2.x and codex 0.149.0 send the

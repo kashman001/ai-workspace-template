@@ -68,11 +68,11 @@ out=$(payload clear | "$HOOK" 2>/dev/null); rc=$?
 assert_eq "H6a: exit 0"    "$rc" "0"
 assert_eq "H6b: no output" "$out" ""
 
-echo "H7: the hook is registered as a SessionStart hook in .claude/settings.json.example"
+echo "H7: the hook is registered as a SessionStart hook in .claude/settings.json"
 # Without registration the --clear flag is a trap: the counter advances and the
-# seed is never drained. The example config is what scripts/setup.sh copies.
-CFG="$SRC_ROOT/.claude/settings.json.example"
-assert_eq "H7a: example config is valid JSON" \
+# seed is never drained. The wiring is committed (M31) so it updates with pull.
+CFG="$SRC_ROOT/.claude/settings.json"
+assert_eq "H7a: tracked config is valid JSON" \
   "$(jq -e . "$CFG" >/dev/null 2>&1 && echo yes || echo no)" "yes"
 assert_eq "H7b: registered on SessionStart" \
   "$(jq -r '[.hooks.SessionStart[].hooks[].command | select(test("rollover-clear-seed[.]sh"))] | length' "$CFG")" "1"

@@ -586,6 +586,34 @@
       (upstream's <code>agents/openai.yaml</code> ships too).</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M31</span> Claude Code hook wiring goes stale on existing installs — <code>copy_if_missing</code> never reconciles
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts · setup</span></h3>
+    <p><span class="fix">Fixed:</span> committed the wiring like every other runtime — tracked a hooks-only
+      <code>.claude/settings.json</code> (hooks + statusLine, resolver-prefixed, incl. the session-loop
+      <code>Stop</code> hook) at <code>a660150</code>, and stripped <code>settings.json.example</code> down to the
+      personal <code>settings.local.json</code> starter (permissions/MCP/connectors — Claude Code merges both files,
+      so hooks must never be duplicated into the local copy). Rejected: teaching <code>setup.sh</code> to reconcile /
+      a drift check — those detect rather than remove the failure class. Docs brought current in the closing commit:
+      <code>context-budget.md</code> (vendor table row, registration + <code>--clear</code> paragraphs, and an
+      existing-workspace migration note — an untracked local <code>settings.json</code> is <em>silently
+      overwritten</em> on pull because the pre-migration <code>.gitignore</code> ignores it (verified live); save it
+      aside before pulling, fold personal bits into <code>settings.local.json</code>), <code>CONTEXT.md</code>,
+      <code>workspace-structure.md</code>, <code>runbooks/dependencies.md</code>;
+      <code>test-vendor-budget-hooks.sh</code> extended to assert the tracked wiring (valid JSON, all four hooks in
+      resolver form, example carries no hooks/statusLine); <code>check-dependencies.sh</code> remediation text, the
+      hook/statusline script header comments, and <code>test-rollover-clear-seed.sh</code> H7 repointed from the
+      example to the tracked file.</p>
+    <p><span class="k">Evidence</span> — <code>scripts/setup.sh:43</code> materialized
+      <code>.claude/settings.json.example</code> via <code>copy_if_missing</code>, so a workspace whose settings copy
+      predated a template update never received new wiring and no <code>check-*.sh</code> detected the drift. Observed
+      live 2026-08-29: a checkout with an Aug-6 <code>.claude/settings.json</code> lacked the session-loop
+      <code>Stop</code> hook (PR #39) and still used the bare <code>$CLAUDE_PROJECT_DIR</code> hook form the example's
+      comment warns silently breaks in subdir-cwd sessions. Under the session-loop supervisor the missing
+      <code>Stop</code> hook meant the dying session never exited at the turn boundary and the chain presented as
+      "auto relaunch didn't happen".</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">
