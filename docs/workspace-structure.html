@@ -287,7 +287,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 9038d4e050c109998a194ce2204ca42e650bf317 -->
+  <!-- source-md-sha1: 8e97b20234ab0737ee1c71ebd58f705ab7ef9281 -->
 </head>
 <body>
 <div class="src-banner">
@@ -547,15 +547,17 @@ Claude Code (Project-Level)</h3>
 <pre><code>.claude/
 ├── agents/                     # Subagent profiles with scoped toolsets (checked in)
 ├── commands/                   # Slash-command shortcuts for workspace skills (checked in)
-└── settings.json               # Bash and MCP tool permission allowlist (gitignored)</code></pre>
-<p>User-specific permission allowlist controlling which Bash commands
-and MCP tools Claude Code can run without prompting. Gitignored —
-permissions are a personal trust decision. Provide a starter template
-(<code>settings.json.example</code>) for new users. The template's
-example also carries the <code>hooks</code> block wiring the
-context-budget WARN/STOP hook (<code>docs/context-budget.md</code>) —
-copy it into your <code>settings.json</code> to get in-band context
-warnings.</p>
+├── settings.json               # Template-owned hook wiring + statusLine (committed)
+└── settings.local.json         # Personal permission allowlist (gitignored)</code></pre>
+<p><code>settings.json</code> (committed) carries only template-owned
+wiring — the context-budget hooks and statusLine
+(<code>docs/context-budget.md</code> → "Vendor hook deployments") — so
+it updates with <code>git pull</code> like every other runtime's hook
+deployment. Personal settings live in <code>settings.local.json</code>
+(gitignored — permissions are a personal trust decision), seeded from
+the starter template <code>settings.json.example</code> by
+<code>scripts/setup.sh</code>. Claude Code merges both files; never copy
+the hooks into the local file, or each hook fires twice.</p>
 <p><strong><code>agents/</code></strong> (checked in) holds subagent
 profiles — narrow-toolset children a lean parent session delegates to
 (e.g. <code>repo-navigator</code>: read-only navigation via the graphify
@@ -880,10 +882,13 @@ Bootstrap and Utility Scripts</h2>
 └── tests/                         # Automated workspace tests (one suite per feature area — see ls)</code></pre>
 <p><strong>Required scripts</strong> (start with these):</p>
 <ul>
-<li><code>setup.sh</code> — creates <code>.env</code> from
-<code>.env.example</code>, creates required symlinks
-(<code>CLAUDE.md</code>, <code>AGENTS.md</code>,
-<code>repos/README.md</code>), optionally clones repos.</li>
+<li><code>setup.sh</code> — dependency preflight, then bootstrap:
+creates <code>.env</code> from <code>.env.example</code>, the required
+symlinks (<code>CLAUDE.md</code>, <code>AGENTS.md</code>,
+<code>GEMINI.md</code>, <code>repos/README.md</code>), the per-user
+config copies (<code>.mcp.json</code>,
+<code>.claude/settings.local.json</code>), seeds Copilot folder trust,
+optionally clones repos.</li>
 <li><code>check-dependencies.sh</code> — the required-vs-optional
 tooling manifest: <code>req</code> lines (git, gh, jq, hook wiring) exit
 1 when missing; <code>rec</code> lines (e.g. <code>yt-dlp</code> for the
@@ -895,9 +900,10 @@ are reachable (database, cloud CLI, Atlassian, etc.); required services
 ones only degrade the status.</li>
 <li><code>check-workspace-structure.sh</code> — validates that
 documented directories exist, symlinks resolve, scripts are executable,
-and the repo-context doc templates are present. (It does
-<strong>not</strong> reconcile the registry against the on-disk
-repos.)</li>
+the repo-context doc templates are present, <code>repos/README.md</code>
+is not git-ignored, and the generated guide HTML matches its Markdown
+source (sha1 freshness warning). (It does <strong>not</strong> reconcile
+the registry against the on-disk repos.)</li>
 <li><code>check-ledger.py</code> — validates every
 <code>work/&lt;project&gt;/</code> ledger: each
 <code># Session Handoff</code> heading is well-formed (both title
@@ -1093,9 +1099,14 @@ never a credential)</td>
 <td>Template for VS Code MCP config</td>
 </tr>
 <tr>
+<td><code>.claude/settings.json</code></td>
+<td>Yes</td>
+<td>Committed Claude Code hook wiring + statusLine (template-owned)</td>
+</tr>
+<tr>
 <td><code>.claude/settings.json.example</code></td>
 <td>Yes</td>
-<td>Template for the Claude Code permission allowlist</td>
+<td>Template for the personal Claude Code permission allowlist</td>
 </tr>
 <tr>
 <td><code>.claude/agents/</code>, <code>.claude/commands/</code></td>
@@ -1119,8 +1130,7 @@ never a credential)</td>
 <td>User-specific MCP paths</td>
 </tr>
 <tr>
-<td><code>.claude/settings.json</code>,
-<code>.claude/settings.local.json</code></td>
+<td><code>.claude/settings.local.json</code></td>
 <td><strong>No</strong></td>
 <td>User-specific permission allowlist</td>
 </tr>
@@ -1414,7 +1424,8 @@ the user named in preconditions:</p>
 └── (mcp.json is user-specific, do NOT create)
 
 .claude/
-└── (settings.json is user-specific, do NOT create; mention in README)
+├── settings.json                           (stub — tracked, shared hook/permission wiring)
+└── (settings.local.json is user-specific, do NOT create; mention in README)
 
 &lt;Project&gt;.code-workspace                    (stub — multi-root workspace, only if VS Code)</code></pre>
 <h3 id="stub-header-template">Stub header template</h3>
@@ -1454,7 +1465,7 @@ references/*
 
 # User-specific agent / IDE config
 .vscode/mcp.json
-.claude/settings.json
+.claude/settings.local.json
 
 # Scratch
 temp/

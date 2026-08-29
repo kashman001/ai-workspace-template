@@ -245,9 +245,9 @@ rm -rf .git &amp;&amp; git init</code></pre>
     <a href="runbooks/authentication.md">runbooks/authentication.md</a> for anything missing; per-runtime MCP
     detail is in <code>docs/mcp-setup.md</code>. The YouTube transcript MCP server is workspace-local and
     credential-free; install <code>yt-dlp</code> if you use it.</p>
-    <pre><code>cp .env.example .env
-cp .mcp.json.example .mcp.json
-cp .claude/settings.json.example .claude/settings.local.json
+    <pre><code>cp -n .env.example .env
+cp -n .mcp.json.example .mcp.json
+cp -n .claude/settings.json.example .claude/settings.local.json
 ./scripts/check-service-access.sh                  # reports gaps + fix commands
 gh auth login                                      # if not already authenticated</code></pre>
   </div></div>
@@ -346,10 +346,10 @@ gh auth login                                      # if not already authenticate
     <tbody>
       <tr><td><code>CONTEXT.md</code> + CLAUDE/AGENTS/GEMINI symlinks</td><td class="yes">Yes</td><td>Agent entrypoints</td></tr>
       <tr><td><code>docs/ skills/ work/ prompt-library/ scripts/</code></td><td class="yes">Yes</td><td>Shared docs, skills, state, tooling</td></tr>
-      <tr><td><code>opencode.json .opencode/ .gemini/settings.json</code></td><td class="yes">Yes</td><td>Shared per-runtime config</td></tr>
+      <tr><td><code>opencode.json .opencode/ .gemini/settings.json .claude/settings.json</code></td><td class="yes">Yes</td><td>Shared per-runtime config + hook wiring</td></tr>
       <tr><td><code>*.example</code> (env, mcp, claude settings)</td><td class="yes">Yes</td><td>Templates to copy locally</td></tr>
       <tr><td><code>repos/README.md references/README.md</code></td><td class="yes">Yes</td><td>Registries (repos/README is a symlink)</td></tr>
-      <tr><td><code>.env .mcp.json .claude/settings*.json</code></td><td class="no">No</td><td>User-specific / may hold paths</td></tr>
+      <tr><td><code>.env .mcp.json .claude/settings.local.json</code></td><td class="no">No</td><td>User-specific / may hold paths</td></tr>
       <tr><td><code>repos/* references/*</code> (except READMEs)</td><td class="no">No</td><td>Separate cloned repos</td></tr>
       <tr><td><code>.service-access.local.json</code></td><td class="no">No</td><td>Machine credential cache</td></tr>
       <tr><td><code>graphify-out/ temp/ tmp/ .DS_Store</code></td><td class="no">No</td><td>Locally regenerated / scratch</td></tr>
@@ -399,7 +399,7 @@ gh auth login                                      # if not already authenticate
 
   <p>Quick reference:</p>
   <pre><code># status line
-npx -y ccstatusline@latest            # editor; wire statusLine in ~/.claude/settings.json
+npm install -g ccstatusline           # install once; wire statusLine in ~/.claude/settings.json
 
 # plugins (official marketplace is built in)
 claude plugin install superpowers@claude-plugins-official

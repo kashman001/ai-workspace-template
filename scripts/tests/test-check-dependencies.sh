@@ -2,9 +2,9 @@
 # File: scripts/tests/test-check-dependencies.sh
 # Purpose: Regression tests for the runtime-aware context-budget hooks check in
 #          check-dependencies.sh (backlog M24): committed non-Claude wiring must
-#          satisfy the check on a pristine clone, the Claude settings copy is
-#          required only when `claude` is installed, and a tree with no wiring
-#          at all still fails.
+#          satisfy the check on a pristine clone, the tracked Claude wiring
+#          (.claude/settings.json) is required only when `claude` is installed,
+#          and a tree with no wiring at all still fails.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
@@ -55,7 +55,7 @@ else
   ok "D1: no hooks MISSING line"
 fi
 
-echo "D2: claude installed but its settings copy absent — required failure"
+echo "D2: claude installed but its tracked settings absent — required failure"
 out="$(PATH="$STUB:$BASE_PATH" "$WS/scripts/check-dependencies.sh" 2>&1)"; rc=$?
 if [ "$rc" -ne 0 ] && echo "$out" | grep -q 'claude is installed but its context-budget hooks are not wired'; then
   ok "D2: exit $rc with the claude-specific MISSING message"
@@ -63,9 +63,9 @@ else
   bad "D2: expected exit 1 + claude MISSING message; rc=$rc, hooks line: $(echo "$out" | grep hooks)"
 fi
 
-echo "D3: claude installed and settings copy wired — check passes and lists claude"
+echo "D3: claude installed and tracked settings wired — check passes and lists claude"
 mkdir -p "$WS/.claude"
-echo '{"hooks": "context-budget-claude-hook"}' > "$WS/.claude/settings.local.json"
+echo '{"hooks": "context-budget-claude-hook"}' > "$WS/.claude/settings.json"
 out="$(PATH="$STUB:$BASE_PATH" "$WS/scripts/check-dependencies.sh" 2>&1)"
 if echo "$out" | grep -q 'hooks.*wired:.*claude'; then
   ok "D3: hooks wired line includes claude"

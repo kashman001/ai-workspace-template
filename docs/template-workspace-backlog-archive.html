@@ -663,6 +663,23 @@
       silently.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M34</span> Setup docs stale vs post-M31 reality — 18 findings (audit 2026-08-29)
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs · scripts · setup</span></h3>
+    <p><span class="fix">Fixed:</span> applied all 18 findings from
+      <code>work/template-maintenance/setup-docs-audit-2026-08-29.md</code> (F1–F18): regenerated
+      <code>workspace-structure.html</code> (was instructing pre-M31 double-wiring of hooks), corrected
+      <code>setup-guide.html</code> tracked-vs-gitignored table / <code>cp&nbsp;-n</code> / ccstatusline install,
+      purged the phantom "MCP token export" from runbooks/setup.sh/workspace-setup, fixed the
+      <code>graphify</code>→<code>graphifyy[mcp]</code> package name in <code>check-dependencies.sh</code> (the one
+      user-facing install bug), added the runbook "wiring checks" section (hooks restore + Copilot trust), and
+      pointed test D3 at the tracked <code>.claude/settings.json</code>. Suite 5/5.</p>
+    <p><span class="k">Evidence</span> — session-9 read-only audit of documented setup paths vs the M31 migration
+      (tracked <code>.claude/settings.json</code>); findings file carries exact locations.</p>
+    <p><span class="k">Impact</span> — a fresh adopter following the stale HTML would wire hooks twice; the wrong
+      package name broke the documented graphify install.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

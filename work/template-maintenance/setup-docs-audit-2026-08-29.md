@@ -1,5 +1,8 @@
 # Setup-docs audit — findings (session #9, 2026-08-29)
 
+> **APPLIED** — all 18 findings fixed in session #10 (2026-08-29); backlog card
+> M34 (archive). Kept for the audit trail.
+
 Read-only audit of the documented setup paths vs post-M31 reality (tracked
 `.claude/settings.json` hook wiring). Verified clean: context-budget.md
 migration note + vendor table, check-service-access ↔ authentication runbook,

@@ -100,6 +100,6 @@ echo "Done. Next:"
 if [ -f docs/template-workspace-backlog.html ]; then
   echo "  - instantiating? prune the template-development artifacts: docs/template-usage.md §5"
 fi
-echo "  - authenticate / export the MCP token: scripts/check-service-access.sh (then docs/runbooks/authentication.md)"
+echo "  - authenticate to GitHub via gh: scripts/check-service-access.sh (then docs/runbooks/authentication.md)"
 echo "  - fill in CONTEXT.md, then run scripts/check-workspace-structure.sh"
 echo "  - onboard a repo: /onboard-repo <repo-name>  (freshness later: scripts/check-repo-context.sh)"

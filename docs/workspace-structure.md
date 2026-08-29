@@ -530,9 +530,11 @@ scripts/
 
 **Required scripts** (start with these):
 
-- `setup.sh` — creates `.env` from `.env.example`, creates required
-  symlinks (`CLAUDE.md`, `AGENTS.md`, `repos/README.md`), optionally clones
-  repos.
+- `setup.sh` — dependency preflight, then bootstrap: creates `.env` from
+  `.env.example`, the required symlinks (`CLAUDE.md`, `AGENTS.md`,
+  `GEMINI.md`, `repos/README.md`), the per-user config copies (`.mcp.json`,
+  `.claude/settings.local.json`), seeds Copilot folder trust, optionally
+  clones repos.
 - `check-dependencies.sh` — the required-vs-optional tooling manifest:
   `req` lines (git, gh, jq, hook wiring) exit 1 when missing; `rec` lines
   (e.g. `yt-dlp` for the YouTube MCP server) warn only. Human-readable view:
@@ -541,9 +543,10 @@ scripts/
   (database, cloud CLI, Atlassian, etc.); required services (today: GitHub
   via `gh`) exit 1 when unreachable, optional ones only degrade the status.
 - `check-workspace-structure.sh` — validates that documented directories
-  exist, symlinks resolve, scripts are executable, and the repo-context doc
-  templates are present. (It does **not** reconcile the registry against the
-  on-disk repos.)
+  exist, symlinks resolve, scripts are executable, the repo-context doc
+  templates are present, `repos/README.md` is not git-ignored, and the
+  generated guide HTML matches its Markdown source (sha1 freshness warning).
+  (It does **not** reconcile the registry against the on-disk repos.)
 - `check-ledger.py` — validates every `work/<project>/` ledger: each
   `# Session Handoff` heading is well-formed (both title conventions),
   none is buried inside the purpose comment, blocks run newest-first by
@@ -902,7 +905,8 @@ preconditions:
 └── (mcp.json is user-specific, do NOT create)
 
 .claude/
-└── (settings.json is user-specific, do NOT create; mention in README)
+├── settings.json                           (stub — tracked, shared hook/permission wiring)
+└── (settings.local.json is user-specific, do NOT create; mention in README)
 
 <Project>.code-workspace                    (stub — multi-root workspace, only if VS Code)
 ```

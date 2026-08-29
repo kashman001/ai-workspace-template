@@ -60,7 +60,7 @@ fi
 
 echo "Recommended (install the ones whose features you use):"
 rec node    "Claude Code status line (npm install -g ccstatusline)"
-rec uv      "graphify install (uv tool install graphify)"
+rec uv      "graphify install (uv tool install \"graphifyy[mcp]\")"
 rec python3 "graphify runtime / general tooling"
 rec yt-dlp  "workspace-local YouTube transcript MCP server"
 rec graphify "per-repo knowledge graph (optional)"

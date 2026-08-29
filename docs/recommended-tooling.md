@@ -26,7 +26,7 @@ manifest — they exit 1 while anything below is missing:
 | `git` | Clone, symlinks, registry — nothing works without it |
 | `gh`, authenticated | The workspace's only GitHub path (auth, PRs, API) |
 | `jq` | `scripts/context-budget.sh` — every session start/record runs it |
-| context-budget hook wiring | The in-band WARN/STOP push (`docs/context-budget.md`); `scripts/setup.sh` wires it for Claude Code |
+| context-budget hook wiring | The in-band WARN/STOP push (`docs/context-budget.md`); ships committed in `.claude/settings.json` for Claude Code |
 
 Teams add their own non-negotiables the same way: a `req` line per binary, a
 required block per service (see `docs/workspace-structure.md` → "Authoring a

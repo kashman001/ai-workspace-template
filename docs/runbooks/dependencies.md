@@ -58,7 +58,21 @@ winget install Git.Git GitHub.cli jqlang.jq OpenJS.NodeJS astral-sh.uv yt-dlp.yt
 ```
 > The `scripts/*.sh` are bash — run them under **Git Bash** or WSL on Windows.
 
-## 3. Verify
+## 3. Wiring checks (fixes are not installs)
+
+Two check results have no install command:
+
+- **`hooks` MISSING with claude installed** — the Claude Code context-budget
+  wiring is *committed* in `.claude/settings.json`; a missing wiring means the
+  checkout predates it or the file was deleted. Fix: `git pull`, or restore the
+  file (`git checkout -- .claude/settings.json`). Details:
+  `../context-budget.md` → "Vendor hook deployments".
+- **`copilot` does NOT trust this workspace (advisory)** — the committed
+  Copilot hooks silently no-op unless this workspace's path is in
+  `~/.copilot/config.json` `trustedFolders`. Fix: run `./scripts/setup.sh`
+  (it seeds the entry), or add the path there by hand.
+
+## 4. Verify
 
 ```bash
 ./scripts/check-dependencies.sh   # expect: "Required dependencies present."

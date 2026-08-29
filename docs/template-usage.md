@@ -126,8 +126,9 @@ grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
   and list each in `CONTEXT.md` → "Workspace Skills". Drop any you don't want (e.g.
   `rlm`'s leaf sub-LM is a nested `claude -p`, so it's most useful with Claude Code).
 - **Scripts** — `scripts/setup.sh` (symlinks, config copies, `--clone-repos`),
-  `check-workspace-structure.sh`, and `check-service-access.sh` are functional
-  out of the box; extend them as the workspace grows.
+  `check-dependencies.sh`, `check-workspace-structure.sh`, and
+  `check-service-access.sh` are functional out of the box; extend them as the
+  workspace grows.
 - **Agent toolchain** — optional global tools (Claude Code status line,
   superpowers plugin, Matt Pocock engineering skills, Karpathy principles,
   graphify) are documented in `docs/recommended-tooling.md`, including the

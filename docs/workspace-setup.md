@@ -16,8 +16,8 @@ Bootstrapping splits into two layers:
   files come with the clone; the `*.example` / `*.local` files are copied
   and tailored per user.
 
-Do the global layer first; the workspace layer depends on it (e.g. the MCP
-token export and the `gh` login).
+Do the global layer first; the workspace layer depends on it (e.g. the
+`gh` login).
 
 ## Global — once per machine
 
@@ -67,7 +67,8 @@ git clone <clone-url> <workspace-dir> && cd <workspace-dir>
 ./scripts/setup.sh            # add --clone-repos for a multi-repo workspace
 
 # 3. Dependencies — check, then install anything missing per the runbook.
-#    (After setup.sh, so the hooks check sees the settings copy it creates.)
+#    (After setup.sh, so the Copilot-trust advisory sees the trustedFolders
+#    seed it creates.)
 ./scripts/check-dependencies.sh                   # → docs/runbooks/dependencies.md
 
 # 4. Authentication — check, then follow the runbook for anything missing.
