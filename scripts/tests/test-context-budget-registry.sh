@@ -57,14 +57,129 @@ touch -t 202601010000 "$PROJ_DIR/aaa.jsonl"
 run_as bbb register --project testproj --quiet >/dev/null
 assert_eq "T3a: stale lock reclaimed by bbb" "$(jq -r .session_id "$LOCK")" "bbb"
 
-echo "T4: release removes own lock, never another session's"
-err=$(run_as aaa release --project testproj 2>&1 >/dev/null)   # bbb holds it
+echo "T4: release — a non-owner is refused loudly; --takeover releases (C5, D4)"
+err=$(run_as aaa release --project testproj 2>&1 >/dev/null); rc=$?   # bbb holds it
 assert_eq "T4a: foreign lock left in place" "$(jq -r .session_id "$LOCK")" "bbb"
+assert_eq "T4a2: non-owner release exits non-zero" "$rc" "3"
+assert_contains "T4a3: refusal names --takeover as the remedy" "$err" "--takeover"
+run_as aaa release --project testproj --takeover --quiet >/dev/null
+[ ! -f "$LOCK" ] && ok "T4a4: --takeover released a foreign lock" || bad "T4a4: --takeover no-op"
+
+run_as bbb register --project testproj --quiet >/dev/null      # re-acquire for T4b
 run_as bbb release --project testproj --quiet >/dev/null
 [ ! -f "$LOCK" ] && ok "T4b: own lock released" || bad "T4b: lock still present"
 run_as bbb register --project testproj --quiet >/dev/null      # project now in session file
 run_as bbb release --quiet >/dev/null                          # no --project: self-derived
 [ ! -f "$LOCK" ] && ok "T4c: release derives project from own session file" || bad "T4c"
+
+echo "T4d: --takeover moves lock authority, but does NOT bypass the I4 release order"
+# Lock authority moves; lock *ordering* does not (design.md 3, C5). Build the
+# live child the way T8 does -- child liveness is the holder artifact's mtime
+# (sweep_child_locks -> lock_holder_age), not the lock file's own timestamp.
+mk_transcript agent-t4 8000
+run_as bbb register --project testproj --quiet >/dev/null
+run_as bbb register --transcript "$PROJ_DIR/agent-t4.jsonl" \
+  --parent-session bbb --agent-id t4 --project testproj --quiet >/dev/null
+T4CLOCK="$TMP/work/testproj/.agent-locks/claude-agent-t4.json"
+[ -f "$T4CLOCK" ] && ok "T4d0: live child lock in place" || bad "T4d0: no child lock at $T4CLOCK"
+err=$(run_as aaa release --project testproj --takeover 2>&1 >/dev/null); rc=$?
+[ "$rc" -ne 0 ] && ok "T4d1: live child lock still blocks --takeover" \
+  || bad "T4d1: --takeover bypassed the I4 guard (rc=$rc)"
+assert_contains "T4d2: refusal names the live child" "$err" "claude-agent-t4"
+[ -f "$LOCK" ] && ok "T4d3: project lock survived the refused takeover" || bad "T4d3: lock removed anyway"
+run_as agent-t4 release --project testproj --quiet >/dev/null
+run_as aaa release --project testproj --takeover --quiet >/dev/null
+[ ! -f "$LOCK" ] && ok "T4d4: --takeover succeeds once the child is gone" || bad "T4d4: lock remains"
+# Unconditional teardown -- T4d must hand T5/T6 the same empty-lock state the
+# original T4 did, whether or not its own assertions passed.
+rm -f "$LOCK"; rm -rf "$TMP/work/testproj/.agent-locks"
+rm -f "$TMP/.context-budget/sessions/claude-agent-t4.json" "$PROJ_DIR/agent-t4.jsonl"
+
+echo "T4e: takeover-release stamps the dispossessed holder superseded (A7)"
+SESSD="$TMP/.context-budget/sessions"
+mk_transcript aaa 50000; mk_transcript bbb 90000                # both live
+run_as bbb register --project testproj --quiet >/dev/null       # bbb = live holder
+run_as aaa release --project testproj --takeover --quiet >/dev/null
+[ ! -f "$LOCK" ] && ok "T4e0: takeover-release removed the lock" || bad "T4e0: lock remains"
+# Mutation red (T4e1-T4e3): drop the holder-record stamp from cmd_release's
+# takeover branch — the registry keeps bbb as a primary with no lock behind it
+# (the asymmetry vs the acquisition-side steal that A7 closes).
+assert_eq "T4e1: dispossessed holder stamped role=superseded" \
+  "$(jq -r '.role // "none"' "$SESSD/claude-bbb.json")" "superseded"
+assert_eq "T4e2: superseded_by names the taking-over session" \
+  "$(jq -r '.superseded_by // "none"' "$SESSD/claude-bbb.json")" "claude-aaa"
+[ -n "$(jq -r '.superseded_at // empty' "$SESSD/claude-bbb.json")" ] \
+  && ok "T4e3: superseded_at stamped" || bad "T4e3: no superseded_at"
+
+echo "T4f: non-owner refusal names the holder's liveness (A7)"
+mk_transcript aaa 50000; mk_transcript bbb 90000
+run_as bbb register --project testproj --quiet >/dev/null       # bbb = live holder
+err=$(run_as aaa release --project testproj 2>&1 >/dev/null); rc=$?
+assert_eq "T4f0: non-owner refusal still exits 3" "$rc" "3"
+# Mutation red (T4f1, T4f3): revert the die message to the single pre-A7
+# wording — neither the live nor the stale marker text appears.
+assert_contains "T4f1: live holder called out as live" "$err" "holder is live"
+assert_contains "T4f2: live refusal still names --takeover" "$err" "--takeover"
+touch -t 202601010000 "$PROJ_DIR/bbb.jsonl"                     # holder now stale
+err=$(run_as aaa release --project testproj 2>&1 >/dev/null); rc=$?
+assert_eq "T4f3a: stale-holder refusal still exits 3" "$rc" "3"
+assert_contains "T4f3: stale holder called out as stale" "$err" "stale"
+assert_contains "T4f4: stale refusal still names --takeover" "$err" "--takeover"
+run_as aaa release --project testproj --takeover --quiet >/dev/null   # teardown
+
+echo "T4g: takeover-release when the holder's record was already purged (A7 follow-on b)"
+mk_transcript aaa 50000; mk_transcript bbb 90000
+run_as bbb register --project testproj --quiet >/dev/null       # bbb = live holder
+rm -f "$SESSD/claude-bbb.json"                                  # record purged out-of-band
+out=$(run_as aaa release --project testproj --takeover 2>&1)
+# Mutation red (T4g0): abort the takeover when the stamp cannot land — the
+# stamp is bookkeeping; the release must proceed either way.
+[ ! -f "$LOCK" ] && ok "T4g0: takeover-release still removed the lock" \
+  || bad "T4g0: lock remains"
+# Mutation red (T4g1, T4g2): revert the note to the unconditional
+# "holder stamped superseded" wording.
+assert_contains "T4g1: note says the holder record was absent" "$out" "holder record absent"
+case "$out" in *"stamped superseded"*) bad "T4g2: note claims a stamp that never landed" ;;
+               *) ok "T4g2: no stamped-superseded claim without a stamp" ;; esac
+# Mutation red (T4g3): stamp unconditionally (drop the [ -f ] guard) AND drop
+# the rm -f cleanup — jq on the missing record strands the .tmp.
+[ ! -e "$SESSD/claude-bbb.json.tmp" ] && ok "T4g3: no stranded .tmp" \
+  || bad "T4g3: stranded $SESSD/claude-bbb.json.tmp"
+
+echo "T4h: takeover-release when the holder's record cannot be stamped (A7 follow-on b)"
+mk_transcript aaa 50000; mk_transcript bbb 90000
+run_as bbb register --project testproj --quiet >/dev/null       # bbb = live holder
+printf 'not-json{' > "$SESSD/claude-bbb.json"                   # jq-unparseable record
+out=$(run_as aaa release --project testproj --takeover 2>&1)
+# Mutation red (T4h0): abort the takeover when the stamp fails.
+[ ! -f "$LOCK" ] && ok "T4h0: takeover-release still removed the lock" \
+  || bad "T4h0: lock remains"
+# Mutation red (T4h1): drop the rm -f of the stranded tmp.
+[ ! -e "$SESSD/claude-bbb.json.tmp" ] && ok "T4h1: stranded .tmp removed" \
+  || bad "T4h1: stranded $SESSD/claude-bbb.json.tmp"
+# Mutation red (T4h2, T4h3): revert the note to the unconditional wording.
+assert_contains "T4h2: note says the stamp failed" "$out" "failed to stamp"
+case "$out" in *"stamped superseded"*) bad "T4h3: note claims a stamp that never landed" ;;
+               *) ok "T4h3: no stamped-superseded claim without a stamp" ;; esac
+
+echo "T4i: acquisition takeover when the stamp cannot be written (A7 follow-on b)"
+# The acquisition takeover branch is gated on lock_holder_age, which reads the
+# same record file — an absent/corrupt record routes to the stale-reclaim
+# branch instead, so only the write-failure defect is directly drivable here:
+# block the .tmp redirect target to fail the stamp without touching the record.
+mk_transcript aaa 50000; mk_transcript bbb 90000
+run_as aaa register --project testproj --quiet >/dev/null       # aaa = live holder
+mkdir -p "$SESSD/claude-aaa.json.tmp"                           # stamp write must fail
+out=$(run_as bbb register --project testproj --takeover 2>&1)
+# Mutation red (T4i0): abort the takeover when the stamp fails.
+assert_eq "T4i0: takeover still moved the lock" "$(jq -r .session_id "$LOCK")" "bbb"
+# Mutation red (T4i1, T4i2): revert the note to the unconditional
+# "old holder stamped superseded" wording.
+assert_contains "T4i1: note says the stamp failed" "$out" "failed to stamp"
+case "$out" in *"stamped superseded"*) bad "T4i2: note claims a stamp that never landed" ;;
+               *) ok "T4i2: no stamped-superseded claim without a stamp" ;; esac
+rm -rf "$SESSD/claude-aaa.json.tmp"                             # fixture teardown
+run_as bbb release --project testproj --quiet >/dev/null        # bbb owns it now
 
 echo "T5: gemini register — fresh telemetry log means a concurrent session owns it"
 mkdir -p "$TMP/.gemini" "$HOME/.gemini/tmp/h0"
@@ -310,6 +425,62 @@ CONTEXT_LOCK_STALE_SECS=999999999 CLAUDE_CODE_SESSION_ID=bbb \
   "$CB" register --project testproj --runtime claude --quiet >/dev/null 2>&1
 assert_eq "T16a: huge explicit stale-secs keeps holder live — lock not stolen" \
   "$(jq -r .session_id "$LOCK")" "aaa"
+
+echo "T20: supervised — on-disk supervision query (C1)"
+# Hermetic: the query consults TF_SESSION_LOOP_PROJECT, so a supervised
+# *test runner* would otherwise leak into T20a/T20e.
+unset TF_SESSION_LOOP_PROJECT
+LOOPF="$TMP/work/testproj/.session-loop"
+rm -f "$LOOPF"
+
+# T20a: no marker, no env => unsupervised, exit 1
+out=$(run_as aaa supervised --project testproj 2>/dev/null); rc=$?
+assert_eq "T20a: unsupervised line" "$out" "unsupervised"
+assert_eq "T20a: unsupervised rc"   "$rc"  "1"
+
+# T20b: marker with a live pid => supervised, exit 0
+jq -n --argjson pid "$$" --arg project testproj --arg started_at "2026-01-01T00:00:00Z" \
+  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"
+out=$(run_as aaa supervised --project testproj 2>/dev/null); rc=$?
+assert_eq "T20b: supervised rc" "$rc" "0"
+case "$out" in "supervised pid=$$ project=testproj started_at="*) ok "T20b: supervised line" ;;
+               *) bad "T20b: supervised line was: $out" ;; esac
+
+# T20c: marker with a dead pid => ambiguous, exit 2 (never deleted)
+sleep 0 & deadpid=$!; wait "$deadpid" 2>/dev/null
+jq -n --argjson pid "$deadpid" --arg project testproj --arg started_at "2026-01-01T00:00:00Z" \
+  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"
+out=$(run_as aaa supervised --project testproj 2>/dev/null); rc=$?
+assert_eq "T20c: ambiguous rc" "$rc" "2"
+case "$out" in ambiguous*) ok "T20c: ambiguous line" ;; *) bad "T20c: line was: $out" ;; esac
+[ -f "$LOOPF" ] && ok "T20c: stale marker NOT deleted" || bad "T20c: marker was deleted"
+rm -f "$LOOPF"
+
+# T20d: no marker but TF_SESSION_LOOP_PROJECT names us => ambiguous, exit 2
+out=$(TF_SESSION_LOOP_PROJECT=testproj run_as aaa supervised --project testproj 2>/dev/null); rc=$?
+assert_eq "T20d: env-only ambiguous rc" "$rc" "2"
+
+# T20e: --quiet prints nothing, exit code unchanged
+out=$(run_as aaa supervised --project testproj --quiet 2>/dev/null); rc=$?
+assert_eq "T20e: quiet is silent" "$out" ""
+assert_eq "T20e: quiet rc"        "$rc"  "1"
+
+# T20f: --project is required
+run_as aaa supervised >/dev/null 2>&1; rc=$?
+assert_eq "T20f: missing --project errors" "$rc" "3"
+
+echo "R9: record refreshes the session record's mtime (7-day purge liveness)"
+mk_transcript aaa 50000
+run_as aaa register --quiet >/dev/null
+touch -t 202001010000 "$SESS/claude-aaa.json"      # back-date: looks >7 days dead
+run_as aaa record --label "r9-liveness" --quiet >/dev/null 2>&1
+# Mutation red: drop the session-record `touch` from cmd_record — the record
+# keeps its 2020 mtime, so register's `-mtime +7` purge would collect a live,
+# record-ing session's record.
+mt=$(stat -f%m "$SESS/claude-aaa.json" 2>/dev/null || stat -c%Y "$SESS/claude-aaa.json" 2>/dev/null)
+age=$(( $(date +%s) - mt ))
+[ "$age" -lt 600 ] && ok "R9a: record refreshed session record mtime (age=${age}s)" \
+  || bad "R9a: session record mtime not refreshed by record (age=${age}s)"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
