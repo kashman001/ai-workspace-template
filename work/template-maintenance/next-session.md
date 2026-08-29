@@ -1,62 +1,60 @@
 <!-- LAUNCHER: forward-looking only; REPLACED at each rollover. History: handoff.md -->
 
-# Next Session — template-maintenance (session #10)
+# Next Session — template-maintenance (session #11)
 
 ## Mission
 
-Finish the session-8 user directive (cards are DONE, delivered at `dcebc95`):
+**L43** (last open thread of this arc): two historical handoff archives fail
+the now-honest repo-wide `scripts/check-ledger.py` (exits 1; every per-project
+run is green). One deliberate ledger-content pass:
 
-1. **Apply the setup-docs audit fixes** — all 18 findings are enumerated with
-   exact locations and fixes in
-   `work/template-maintenance/setup-docs-audit-2026-08-29.md` (F1–F18 + fixer
-   notes: fix the .md sources first, then regenerate guide HTML via
-   `scripts/build-guide-html.sh`, then hand-fix setup-guide.html if it isn't
-   generated). No behavior changes; F8 (graphify→graphifyy package name) is the
-   one user-facing install bug. Commit, ff-push to main (authorized pattern,
-   PR #40 precedent). No backlog cards exist for these; either fold into the
-   commit message or file/resolve one card for the audit as a whole.
-2. **Workspace currency (user's own checkout):** it sits on
-   `vendor-mattpocock-skills` (now FULLY merged into main by dcebc95 —
-   verified ancestor). Switch it to `main` + pull; delete the vendor branch
-   (local + origin) — no user ask needed, it is merged; remove the merged
-   `m31-close` worktree (`git worktree remove`, it's locked — unlock first);
-   verify M31 migration live: `.claude/settings.json` is the tracked copy,
-   personal bits in `settings.local.json`, hooks fire once.
-3. If headroom remains: L43 (two out-of-order historical archives — see the
-   backlog card; ledger-content pass, deliberate re-file + posture decision).
+1. `work/automatic-session-rollover/handoff-archive.md` — genuine misfilings:
+   session 11 (2026-08-06) filed below session 1 (2026-08-05) at ~:996/:1015,
+   session 16 below session 9 at ~:1076/:1109. Re-file the blocks into
+   newest-first date order (move whole blocks; content untouched).
+2. `work/context-decay/handoff-archive.md` — dates ARE ordered; the session
+   *numbering restarted* mid-project (earlier lineage's 4b below a later
+   lineage's 3, ~:34/:100). Decide the posture: annotate the restart in the
+   archive so a human isn't confused AND make the check pass — either teach
+   `check-ledger.py` an explicit restart marker (mutation-test it in
+   `scripts/tests/test-check-ledger.py`), or renumber/retitle the later
+   lineage's headings. Session #9 already rejected silently widening the
+   ordering rule to tolerate restarts — don't relitigate that; a marker must
+   be explicit and rare.
+3. Verify repo-wide `scripts/check-ledger.py` exits 0; resolve L43 (card →
+   archive with Fixed: note, scorecard 6 open / 75 resolved), commit, ff-push
+   to main (authorized pattern).
 
-**No-human-in-the-loop:** all of 1–2 is buildable unattended. Touching the
-user's main checkout (switch to main + pull + branch/worktree cleanup) is
-explicitly directed by the session-8 user directive — do it, don't ask; only
-stop if the checkout is dirty with non-trivial uncommitted changes (then leave
-it, note it, continue with the rest).
+**No-human-in-the-loop:** buildable unattended. Work in a worktree; push to
+main; pull the user's checkout current after (`git pull --ff-only`).
 
 ## Read these, in order
 
-1. `work/template-maintenance/setup-docs-audit-2026-08-29.md` — the work list.
-2. Only when reaching item 2: `git -C <main-checkout> status` first.
+1. Backlog card L43 (`grep -n 'L43' -A 15 docs/template-workspace-backlog.html`).
+2. The two archive files — targeted reads around the cited lines only; line
+   numbers were taken at `dcebc95`, re-verify before editing.
+3. Only if adding a restart marker: `scripts/check-ledger.py` +
+   `scripts/tests/test-check-ledger.py`.
 
 ## Do NOT reload
 
-- M32/M33/L41/L42 details — delivered (dcebc95), cards in the backlog archive.
+- The setup-docs audit / M34 — delivered (`34f8dce`), card in the archive.
+- M31/M32/M33 history — settled; M32's grammar is what made the gate honest.
 - The peer message / downstream commits — fully consumed at sessions #8–9.
-- docs/context-budget.md, the M31 history — settled; audit verified the
-  migration note CLEAN.
-- The audit's methodology — trust the findings file; re-verify only the line
-  numbers you edit (they were taken at dcebc95).
 
 ## State snapshot
 
-- main = `dcebc95` (cards + backlog + L43). Backlog: 7 open / 73 resolved.
-- Session-9 worktree `tm-s9` (branch `worktree-tm-s9`) carried the rollover
-  commit; launcher self-heals by ff-pushing it to main at launch.
-- `m31-close` worktree: merged, locked, disposable. `doc-review-skill` and
+- main = `34f8dce` (M34 audit fixes + session-10 close). Backlog: 7 open
+  (incl. L43) / 74 resolved.
+- User's checkout: on main, current, clean. Vendor branch and the
+  `m31-close`/`tm-s9` worktrees are gone; `doc-review-skill` and
   `learn-agentic-workflows-s2` worktrees belong to OTHER work — leave them.
-- Repo-wide `scripts/check-ledger.py` exits 1 (L43's two archives, known);
-  per-project `work/template-maintenance` is green.
+- `.claude/settings.json` (tracked) carries the Claude hook wiring; local
+  file is personal-only. Verified live session #10.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`
-2. Work the audit findings file top-down (F1–F18), verify, commit, push.
-3. `scripts/context-budget.sh record --label "audit fixes done"`, then item 2.
+2. Work the mission top-down; verify with repo-wide `check-ledger.py`.
+3. `scripts/context-budget.sh record --label "L43 done"`; close per
+   conventions (ledger block + launcher replacement + push).
