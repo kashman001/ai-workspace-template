@@ -10,9 +10,13 @@ references/*
 .env
 .service-access.local.json
 
-# User-specific agent / IDE config (the .example templates stay tracked)
+# User-specific agent / IDE config (the .example templates stay tracked).
+# NOTE: .claude/settings.json is deliberately NOT ignored — it carries only
+# template-owned hook wiring (hooks + statusLine, nothing personal) and is
+# committed so existing workspaces pick up wiring changes with git pull, like
+# every other runtime's hook deployment (M31). Personal permissions belong in
+# settings.local.json; Claude Code merges both files.
 .vscode/mcp.json
-.claude/settings.json
 .claude/settings.local.json
 .mcp.json
 

@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">6</div><div class="lab">Open</div></div>
+    <div class="sc amber"><div class="num">7</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">68</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -192,6 +192,29 @@
     <p><span class="k">Fix</span> — a postmortem template/convention (blameless, timeline + contributing factors +
       actions), with a defined landing place and a pointer from the feedback-intake convention once that exists.
       AI assist is [established] for drafting postmortems from timelines per the map's evidence tiers.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M31</span> Claude Code hook wiring goes stale on existing installs — <code>copy_if_missing</code> never reconciles
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts · setup</span></h3>
+    <p><span class="k">Evidence</span> — <code>scripts/setup.sh:43</code> materializes
+      <code>.claude/settings.json.example</code> via <code>copy_if_missing</code>, so a workspace whose settings copy
+      predates a template update never receives new wiring and no <code>check-*.sh</code> detects the drift. Observed
+      live 2026-08-29: a checkout with an Aug-6 <code>.claude/settings.json</code> lacked the session-loop
+      <code>Stop</code> hook (PR #39) and still used the bare <code>$CLAUDE_PROJECT_DIR</code> hook form the example's
+      comment warns silently breaks in subdir-cwd sessions. Every other runtime's hook deployment is committed
+      (<code>.codex/config.toml</code>, <code>.github/hooks/</code>, <code>.opencode/</code>) and updates with
+      <code>git pull</code>; Claude Code is the only copy-once runtime.</p>
+    <p><span class="k">Impact</span> — under the session-loop supervisor the missing <code>Stop</code> hook means the
+      dying session never exits at the turn boundary, the supervisor blocks in <code>eval</code>, and the chain
+      presents as "auto relaunch didn't happen" — the exact failure the supervisor exists to remove. The broken
+      <code>$CLAUDE_PROJECT_DIR</code> form silently kills the WARN/STOP guardrail.</p>
+    <p><span class="k">Fix</span> — make the Claude Code wiring update-with-pull like the other runtimes: commit a
+      hooks-only <code>.claude/settings.json</code> (hooks + statusLine are template-owned and carry no personal
+      permissions; personal allowlists stay in the gitignored <code>settings.local.json</code>, and Claude Code merges
+      both). Alternatively teach <code>setup.sh</code> to reconcile template-owned blocks against the example on every
+      run, and/or add a drift check to <code>check-workspace-structure.sh</code>. Either way, document the
+      bring-existing-workspaces-current step.</p>
   </div>
 
   <!-- ========================= LOW ========================= -->
