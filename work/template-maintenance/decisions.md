@@ -86,3 +86,13 @@ SKILL.md; upstream's agents/openai.yaml ships too).
 (b) upstream Claude Code plugin — Claude-Code-only, violates agent-agnostic rule;
 (c) setup script that clones+symlinks per user — leaves downloaders a manual step
 and nothing works offline/out-of-the-box.
+
+## 2026-08-29 — M31: commit Claude Code hook wiring rather than reconcile it
+**What:** Track `.claude/settings.json` (hooks + statusLine only); strip hooks from
+`settings.json.example`, which becomes the personal `settings.local.json` starter.
+**Why:** `setup.sh` `copy_if_missing` meant existing installs never received new hook
+wiring (missing session-loop Stop hook → supervisor blocks in eval → "auto relaunch
+didn't happen"). Committing makes Claude Code update-with-pull like every other runtime.
+**Rejected:** teaching setup.sh to reconcile template-owned blocks, and/or a drift check
+in check-workspace-structure.sh — both detect or repair the failure class instead of
+removing it; committing the file removes it. (Tier-1 trailer on commit a660150.)
