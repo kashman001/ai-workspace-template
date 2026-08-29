@@ -59,6 +59,13 @@ DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 LEAD_NUM = re.compile(r"^s?(?P<num>\d+)[a-z]*\b", re.IGNORECASE)
 # …else "session N" / "session #N" anywhere in the title.
 SESSION_NUM = re.compile(r"session\s*#?\s*(?P<num>\d+)[a-z]*", re.IGNORECASE)
+# Explicit lineage-restart marker: a project that restarted its session
+# numbering mid-history places this comment between the lineages (newer
+# lineage above, older below). The number chain restarts at the next block
+# below the marker; the DATE chain deliberately does not — archives stay
+# chronological across the seam, so a misfiled date can't hide behind a
+# marker. Rare by design; never add one to paper over an ordinary misfiling.
+LINEAGE_RESTART = re.compile(r"<!--\s*ledger-lineage-restart:")
 
 
 def parse_heading(rest: str) -> tuple[int | None, str | None]:
@@ -77,13 +84,16 @@ class Block:
 
     def __init__(
         self, path: Path, line_no: int, text: str,
-        num: int | None, date: str | None,
+        num: int | None, date: str | None, restart: bool = False,
     ):
         self.path = path
         self.line_no = line_no
         self.text = text
         self.num = num
         self.date = date
+        # True when a lineage-restart marker sits above this block: the
+        # session-number chain starts over here.
+        self.restart = restart
 
     @property
     def describe(self) -> str:
@@ -99,9 +109,13 @@ def parse_file(path: Path, report) -> list[Block]:
     blocks: list[Block] = []
     in_comment = False
     seen_block = False
+    pending_restart = False
 
     for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         line = raw.rstrip()
+
+        if LINEAGE_RESTART.search(line):
+            pending_restart = True
 
         # Track HTML-comment depth before classifying the line, so a heading
         # swallowed by an unclosed <!-- --> is caught rather than silently lost.
@@ -147,7 +161,8 @@ def parse_file(path: Path, report) -> list[Block]:
             continue
 
         seen_block = True
-        blocks.append(Block(path, line_no, line, num, date))
+        blocks.append(Block(path, line_no, line, num, date, pending_restart))
+        pending_restart = False
 
     if in_comment:
         report.bad(f"{rel(path)} ends inside an unclosed HTML comment")
@@ -165,10 +180,16 @@ def check_ordering(blocks: list[Block], report) -> None:
     Some title forms carry only a number or only a date, so each key is
     checked independently against the nearest block ABOVE that carries it;
     a block missing a key is skipped for that key without breaking the chain.
+
+    An explicit `ledger-lineage-restart` marker restarts the NUMBER chain at
+    the block below it (dates keep checking across the seam — see the marker
+    regex above).
     """
     prev_num: Block | None = None
     prev_date: Block | None = None
     for b in blocks:
+        if b.restart:
+            prev_num = None
         if b.num is not None:
             if prev_num is not None and b.num > prev_num.num:
                 report.bad(

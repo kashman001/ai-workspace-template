@@ -94,6 +94,14 @@ rotation — `scripts/check-ledger.py [work/<project>]`, exit 0 when clean. Two
 misfiled blocks reached a live ledger before this existed, in exactly the first
 two of those ways.
 
+**Lineage restart (rare):** if a project genuinely restarted its session
+numbering mid-history, declare it with a
+`<!-- ledger-lineage-restart: <why> -->` comment placed between the lineages
+(newer lineage above, older below). The checker restarts its session-number
+chain at the block below the marker; dates must still run newest-first across
+the seam. Never use the marker to paper over an ordinary misfiling — re-file
+the block instead.
+
 **Alternative pattern — dated handoff files.** Some projects use one file per
 session, `handoff-YYYY-MM-DD-topic.md`, instead of a single append-only file.
 This is naturally bounded (no archival step) but needs the launcher to point at

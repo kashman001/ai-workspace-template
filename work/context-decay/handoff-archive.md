@@ -97,6 +97,13 @@ Claude-runtime transcripts only.
 
 ---
 
+<!-- ledger-lineage-restart: the session NUMBERING restarted mid-project.
+Blocks above this line (sessions #3-#4, 2026-08-07, and the live ledger's
+5-6) are a later lineage than the July blocks below (sessions 3, 4, 4b of
+2026-07-23) - the count began again when the project resumed, so "session
+3" appears in both lineages. Blocks are still newest-first by date across
+this seam; scripts/check-ledger.py restarts its number chain here. -->
+
 # Session Handoff — 2026-07-23 (session 4b: post-rollover continuation — convention migration + ledger analysis pass 2)
 
 Session 4 continued past its rollover (user-driven) and hit **STOP at

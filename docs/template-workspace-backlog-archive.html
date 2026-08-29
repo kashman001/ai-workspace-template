@@ -1346,6 +1346,28 @@
       stay regardless of size"), and/or add guidance for splitting oversized open notes.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L43</span> Two historical handoff archives fail the (now honest) ledger ordering check
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">work · ledgers</span></h3>
+    <p><span class="fix">Fixed:</span> re-filed the four misfiled
+      <code>work/automatic-session-rollover/handoff-archive.md</code> blocks (11, 10, 9 and 16) into newest-first
+      position, content untouched; for <code>work/context-decay/handoff-archive.md</code> taught
+      <code>check-ledger.py</code> an explicit <code>&lt;!-- ledger-lineage-restart: … --&gt;</code> marker (restarts
+      the number chain only — dates still check across the seam) and placed one, with a human-readable explanation
+      of the two lineages, at the seam. Marker documented in <code>docs/work-directory-conventions.md</code>;
+      mutation suite extended to 12/12 (restart-without-marker and marker-hides-date-regression both caught).
+      Repo-wide <code>check-ledger.py</code> exits 0. Renumbering the later lineage was rejected: grandfathered
+      history is not rewritten, and the lineage continues into the live ledger.</p>
+    <p><span class="k">Evidence</span> — M32’s grammar widening made the repo-wide gate honest, exposing genuine
+      pre-existing defects: <code>work/automatic-session-rollover/handoff-archive.md</code> had session 11
+      (2026-08-06) filed below session 1 (2026-08-05) and session 16 below session 9; and
+      <code>work/context-decay/handoff-archive.md</code> had session #3 (2026-08-07) above session 4b (2026-07-23) —
+      dates ordered fine, the session <em>numbering restarted</em> mid-project, previously hidden by the
+      early-return bug.</p>
+    <p><span class="k">Impact</span> — repo-wide <code>scripts/check-ledger.py</code> exited 1; every other work item
+      was green per-project.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

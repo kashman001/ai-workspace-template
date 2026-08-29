@@ -65,6 +65,22 @@ Body prose.
 Body prose.
 """
 
+# An earlier numbering lineage below an explicit restart marker: session 90
+# outranks the 71 above it numerically, which only the marker makes legal.
+# Dates still descend across the seam — the marker never excuses those.
+RESTART_TAIL = """
+<!-- ledger-lineage-restart: numbering restarted; earlier lineage below. -->
+
+# Session Handoff — 2026-08-10 (session 90: last block of the earlier lineage)
+
+Body prose.
+
+# Session Handoff — 2026-08-09 (session 89: an even older block)
+
+Body prose.
+"""
+RESTART_ARCHIVE = CLEAN_ARCHIVE + RESTART_TAIL
+
 
 def mutate_unclosed_comment(ledger: str, archive: str):
     """Session 76 defect 1: the purpose comment never closes, so the block
@@ -117,6 +133,23 @@ def mutate_keyless_heading(ledger: str, archive: str):
     ), archive
 
 
+def mutate_restart_without_marker(ledger: str, archive: str):
+    """The earlier-lineage tail WITHOUT its marker — the numbering restart
+    must fail unless the marker explicitly declares it."""
+    return ledger, archive + RESTART_TAIL.replace(
+        "<!-- ledger-lineage-restart: numbering restarted; earlier lineage below. -->\n",
+        "",
+    )
+
+
+def mutate_restart_marker_date_regression(ledger: str, archive: str):
+    """A marker restarts only the number chain: a NEWER date filed below the
+    seam must still be caught."""
+    return ledger, archive + RESTART_TAIL.replace(
+        "2026-08-10 (session 90", "2026-08-19 (session 90"
+    )
+
+
 def mutate_broken_live_hides_archive(ledger: str, archive: str):
     """The live ledger yields no parseable blocks at all — the check must
     still parse the archive and report its defects, not return early (a
@@ -143,6 +176,8 @@ MUTATIONS = [
     ("dates contradict the session numbers", mutate_date_regression, None),
     ("archive holds a newer block than the ledger", mutate_archive_interleave, None),
     ("a heading yields neither number nor date", mutate_keyless_heading, None),
+    ("a numbering restart with no lineage marker", mutate_restart_without_marker, None),
+    ("a marker must not excuse a date regression", mutate_restart_marker_date_regression, None),
     (
         "broken live ledger must not hide archive defects",
         mutate_broken_live_hides_archive,
@@ -170,7 +205,7 @@ def write_project(tmp: Path, ledger: str, archive: str) -> Path:
 
 def main() -> int:
     passed = 0
-    total = len(MUTATIONS) + 1
+    total = len(MUTATIONS) + 2
 
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
@@ -183,6 +218,14 @@ def main() -> int:
             passed += 1
         else:
             print(f"  baseline: clean ledger passes                        FALSE ALARM (exit {code})")
+
+        # Second baseline: a declared lineage restart is legal.
+        code, _ = run_check(write_project(tmp, CLEAN_LEDGER, RESTART_ARCHIVE))
+        if code == 0:
+            print("  baseline: marked lineage restart passes              OK")
+            passed += 1
+        else:
+            print(f"  baseline: marked lineage restart passes              FALSE ALARM (exit {code})")
 
         for name, mutate, expect in MUTATIONS:
             ledger, archive = mutate(CLEAN_LEDGER, CLEAN_ARCHIVE)

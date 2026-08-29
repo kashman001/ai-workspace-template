@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">7</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">74</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">6</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">75</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -223,24 +223,6 @@
       deletion; the issue-tracker conventions cover tickets, not a standing findings backlog.</p>
     <p><span class="k">Fix</span> — extract the practice into a generic convention (doc section or scaffold) that
       survives instantiation, or explicitly document "bring your own tracker" as the decided posture.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L43</span> Two historical handoff archives fail the (now honest) ledger ordering check
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">work · ledgers</span></h3>
-    <p><span class="k">Evidence</span> — M32’s grammar widening made the repo-wide gate honest, exposing genuine
-      pre-existing defects: <code>work/automatic-session-rollover/handoff-archive.md</code> has session 11
-      (2026-08-06) filed below session 1 (2026-08-05) at :996/:1015 (dates regress too) and session 16 below
-      session 9 at :1076/:1109 — this archive was already red under the pre-M32 checker; and
-      <code>work/context-decay/handoff-archive.md</code> has session #3 (2026-08-07) above session 4b (2026-07-23)
-      at :34/:100 — dates are ordered fine, the session <em>numbering restarted</em> mid-project (earlier lineage’s
-      4b below a later lineage’s 3), previously hidden by the early-return bug.</p>
-    <p><span class="k">Impact</span> — repo-wide <code>scripts/check-ledger.py</code> exits 1; every other work item
-      is green per-project.</p>
-    <p><span class="k">Fix</span> — re-file the two misfiled automatic-session-rollover blocks into date order
-      (genuine misfilings), and decide the context-decay posture: annotate the lineage restart in the archive, or
-      teach the ordering rule an explicit restart marker. Ledger-content edits — needs a deliberate pass, not a
-      drive-by.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
