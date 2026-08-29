@@ -4,15 +4,34 @@
 
 ## Mission
 
-Work the four peer-flagged backlog cards filed at session #8 close, in order:
-**M33** (small: widen `launch-next-session.sh:299`'s session-number grep to
-match `sNNN` headings + test), **L41** (one-line doc fix in
-`skills/session-rollover/SKILL.md:145`), **L42** (reword
-`skills/decision-log/SKILL.md:78` bar as trigger), then **M32** (the real
-port: widen `scripts/check-ledger.py` heading grammar to six forms + ordering
-fix + tests — largest, do last, pre-flight headroom first). Deliver like M31:
-commit, ff-push to main (authorized pattern established at PR #40), resolve
-cards to the archive.
+User directive (2026-08-29, session #8): *"integrate all these things …, and
+also bring the current workspace up to date. Need to make sure all code and
+instructions are updated and there is proper documentation to make sure
+existing and new workspaces are set up properly."* Concretely:
+
+1. Work the four peer-flagged backlog cards, in order: **M33** (small: widen
+   `launch-next-session.sh:299`'s session-number grep to match `sNNN`
+   headings + test), **L41** (one-line doc fix in
+   `skills/session-rollover/SKILL.md:145`), **L42** (reword
+   `skills/decision-log/SKILL.md:78` bar as trigger), then **M32** (the real
+   port: widen `scripts/check-ledger.py` heading grammar to six forms +
+   ordering fix + tests — largest, pre-flight headroom first).
+2. **Bring THIS workspace current:** after delivery, the user's own checkout
+   must be on updated `main` (pull), with the M31 migration applied cleanly —
+   verify `.claude/settings.json` is the tracked copy, personal bits live in
+   `settings.local.json`, hooks fire once. Retire fully-merged branches
+   (`vendor-mattpocock-skills`) with the user's ok; clean the merged
+   `m31-close` worktree.
+3. **Setup-docs audit (existing + new workspaces):** verify the documented
+   setup paths end-to-end — fresh clone (`scripts/setup.sh` +
+   `docs/workspace-setup.md`/`template-usage.md`) and existing-workspace
+   migration (`docs/context-budget.md` → migration note; runbooks). Every
+   instruction must match the post-M31 + post-M32/M33 reality; fix what
+   doesn't, and make sure the check scripts (`check-dependencies.sh`,
+   `check-workspace-structure.sh`) agree with the docs.
+
+Deliver like M31: commit, ff-push to main (authorized pattern established at
+PR #40), resolve cards to the archive with `Fixed:` notes.
 
 ## Read these, in order
 
