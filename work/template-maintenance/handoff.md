@@ -6,6 +6,40 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 12 (2026-08-31): exit-UX design approved + written ahead; implementation rolls to session 13
+
+**Summary:** Conversation session (started ad-hoc — seq-sync `raised` 11→12).
+Analyzed session-end handling (what happens on exit without rollover): 9
+scenarios enumerated, 3 UX gaps found (empty session poisons next launch;
+work-without-rollover fails silently/misleadingly; nothing funnels to the
+two end-of-session doors). User approved a 3-part fix + tests; context WARN
+fired after design/discovery, so implementation rolls over.
+
+**Shipped this session (nothing to main yet — design only):**
+- `work/template-maintenance/exit-ux-plan.md` — the complete approved
+  design + test plan with verified line anchors. THE artifact; successor
+  implements from it without re-deriving.
+- Decision note (decisions.md 2026-08-31): heal/diagnose at next launch,
+  not at exit; rejected alternatives listed there.
+
+**Key verified facts (details + more in exit-ux-plan.md):**
+- Lineage gate: launch-next-session.sh:295-318; counter bump :488-490
+  (AFTER gate, BEFORE mode=off exit ~:668). `note()` :67, DRY :75.
+- seq-sync CAN lower (action "lowered"). Only cmd_record appends
+  measurement-ledger entries — register does not (empty session ⇒ zero
+  entries ⇒ heal is safe). `.session-seq` + context-ledger gitignored.
+- session-loop quit branch ~:302; keep "deliberate quit" say line verbatim
+  (tests L2b/C4f/L3c assert on it); notify() at :79.
+- Existing tests: T23e-j must be REWORKED (they assert the old blanket-die
+  on the one-ahead case); T23m/o/q/r unaffected (non-one-ahead paths).
+
+**State:** main = d42bab7, clean except untracked exit-ux-plan.md (this
+rollover commits it). No worktrees opened. Backlog 6 open / 75 resolved —
+exit-ux card to be FILED by successor when delivering (not filed yet).
+
+**Suggested skills next:** tdd (red first, per plan's slices);
+superpowers:verification-before-completion before claiming suites green.
+
 # Session Handoff — 11 (2026-08-29): L43 delivered — ledger archives fixed, lineage-restart marker shipped; arc complete
 
 **What got done (all committed & pushed to main):**
@@ -28,45 +62,4 @@ Convention: docs/work-directory-conventions.md.
 pulled current. Worktree `tm-s11-l43` disposable. The L43 arc (M31→M34, L41–L43)
 is fully drained; no queued mission — session 12 picks from the backlog's 6
 open cards.
-
-# Session Handoff — 10 (2026-08-29): setup-docs audit applied (M34) + workspace currency done
-
-**Summary:** Both directive items delivered. All 18 setup-docs audit findings
-(F1–F18) fixed, tested, ff-pushed to main (`34f8dce`); filed + resolved as
-backlog card **M34** (archive), scorecard 74. User's checkout brought current
-and cleaned. L43 deferred (headroom: 98K at decision point; it needs a
-deliberate pass).
-
-**Shipped (commit 34f8dce):**
-- F1/F2: workspace-structure.html regenerated (was instructing pre-M31
-  double-wiring); F3/F16/F17 hand-fixed in setup-guide.html (tracked-vs-
-  gitignored split, `cp -n`, `npm install -g ccstatusline`).
-- F4–F7: phantom "MCP token export" / "setup.sh wires claude hooks" purged.
-- F8: check-dependencies.sh `graphifyy[mcp]` package name (the install bug).
-- F9/F10: runbook tool list + new "wiring checks" section (hooks restore,
-  Copilot trustedFolders).
-- F11–F15 md rewords; F18 test D3 → tracked settings.json. Suite 5/5;
-  check-workspace-structure exit 0. Audit file stamped APPLIED.
-
-**Workspace currency (user's checkout):** was already on main (launcher's
-"sits on vendor branch" claim stale); pulled to `34f8dce`. Deleted merged
-`vendor-mattpocock-skills` (local + origin). Removed merged worktrees
-`m31-close` (unlocked first) + `tm-s9` and their branches. M31 verified live:
-hook wiring only in tracked `.claude/settings.json` (local file has none —
-hooks fire once; local carries only permissions/MCP enables).
-
-**Decisions:** deferred L43 rather than starting it at 98K tokens — its card
-demands a deliberate pass (ledger-content re-file + checker-posture decision),
-not a tail-of-session drive-by. Removed `tm-s9` worktree beyond the explicit
-directive (fully merged, this work item's own detritus).
-
-**State:** main = `34f8dce`; user's checkout on main, current, clean. Only
-foreign worktrees remain (`doc-review-skill`, `learn-agentic-workflows-s2`).
-Repo-wide `check-ledger.py` still exits 1 (L43's two archives — the one open
-thread).
-
-**Learnings:** none beyond the ledger.
-
-**Suggested skills next:** none special — L43 is targeted edits + one design
-decision; session-rollover at WARN.
 

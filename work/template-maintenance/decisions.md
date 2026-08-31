@@ -111,3 +111,11 @@ into live-ledger/cross-references; (b) silently widening the ordering rule to to
 restarts — already rejected in session #9 (an undeclared restart is indistinguishable
 from a misfiling); (c) resetting the date chain at the marker too — wider than needed,
 would let a misfiled date hide behind the seam.
+
+## 2026-08-31 — exit-UX: heal/diagnose at next launch, not at exit
+Session-end handling (S1 empty session poisons next launch; S2 silent quit):
+chose lineage-gate diagnosis + auto-heal at NEXT LAUNCH plus notify-on-quit
+in session-loop. Rejected: SessionEnd-time warnings (agent gone, output not
+reliably visible), forced rollover on exit (hostile), treating sentinel-less
+clean exits as errors (punishes checkpoint-quit). Statusline "unrecorded"
+indicator deferred, not declined. Design: work/template-maintenance/exit-ux-plan.md.

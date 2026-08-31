@@ -1,39 +1,47 @@
-<!-- LAUNCHER: forward-looking only; REPLACED at each rollover. History: handoff.md -->
-
-# Next Session — template-maintenance (session #12)
+# Next Session — template-maintenance (session 13)
 
 ## Mission
 
-No queued mission — the M31→M34 / L41–L43 arc is fully drained and repo-wide
-`scripts/check-ledger.py` exits 0. Pick the next work from the backlog's
-**6 open cards** (`docs/template-workspace-backlog.html` — grep card IDs,
-never load whole) by severity/leverage, or take direction from the user.
+Implement the approved exit-UX changes (session-end handling) exactly as
+specified in `work/template-maintenance/exit-ux-plan.md`, test-first: (1)
+lineage-gate diagnosis + auto-heal in `scripts/launch-next-session.sh`,
+(2) notify-on-quit in `scripts/session-loop.sh`, (3) "two doors" docs.
+The design is settled and user-approved — do not re-litigate it; build it.
 
 ## Read these, in order
 
-1. Open cards: `grep -n 'status open' -B 2 docs/template-workspace-backlog.html`
-   then targeted reads of the chosen card(s).
-2. Top ledger block (`work/template-maintenance/handoff.md`) only if you need
-   session-11 context.
+1. `work/template-maintenance/exit-ux-plan.md` — the whole spec: change
+   details, verified line anchors, test plan, gotchas. Sufficient on its own.
+2. `scripts/launch-next-session.sh:295-318` (gate) and
+   `scripts/tests/test-launch-next-session.sh:280-346` (T23 block) — only
+   when the corresponding slice starts.
+3. `scripts/session-loop.sh:290-305` + `scripts/tests/test-session-loop.sh`
+   harness (top ~100 lines) — only at the notify-on-quit slice.
 
 ## Do NOT reload
 
-- L43 / the ledger-archive fixes — delivered (see session-11 ledger block);
-  the lineage-restart marker is documented in
-  `docs/work-directory-conventions.md` → "Lineage restart (rare)".
-- M31–M34 history — settled; setup docs and hook wiring are current.
+- The scenario analysis conversation — its output IS exit-ux-plan.md.
+- `docs/context-budget.md` / `skills/session-rollover/SKILL.md` wholesale —
+  plan carries the needed excerpts; doc edits are targeted.
+- Rejected approaches (SessionEnd warnings, forced rollover, statusline
+  indicator): settled, see decisions.md 2026-08-31 entry.
 
 ## State snapshot
 
-- main = session-11 close commit (L43 fix is its parent). Backlog: 6 open /
-  75 resolved. Repo-wide ledger check green; mutation suite 12/12.
-- User's checkout: on main, pulled current at session-11 close.
-- `.claude/settings.json` (tracked) carries the Claude hook wiring; local
-  file is personal-only.
+- main = d42bab7 pushed; only this rollover's bookkeeping commit on top.
+- No worktrees for this effort; suites last known green (launcher 207/0,
+  session-loop 68/68).
+- Backlog card NOT yet filed — file one in
+  `docs/template-workspace-backlog.html` when delivering (per CLAUDE.md
+  "Template Backlog"; targeted edits, grep the ID scheme first).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`
-2. Pick/confirm the mission (see above); work it top-down.
-3. `scripts/context-budget.sh record --label "<unit>"`; close per conventions
-   (ledger block + launcher replacement + push).
+2. Consider a worktree for the implementation (prior sessions' pattern:
+   `tm-s13-exitux`); user's checkout should stay clean.
+3. Work the plan's slices in order, red→green each:
+   T24 heal tests → gate heal → evidence collection → T23e-j rework →
+   git-evidence isolated test → session-loop N-series → docs → backlog card.
+4. Run both suites + `scripts/check-workspace-structure.sh`; commit per
+   convention (`Fix <card>: …` + Decision trailer), push, update backlog.
