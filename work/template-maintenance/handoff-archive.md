@@ -1,3 +1,60 @@
+# Session Handoff — 12 (2026-08-31): exit-UX design approved + written ahead; implementation rolls to session 13
+
+**Summary:** Conversation session (started ad-hoc — seq-sync `raised` 11→12).
+Analyzed session-end handling (what happens on exit without rollover): 9
+scenarios enumerated, 3 UX gaps found (empty session poisons next launch;
+work-without-rollover fails silently/misleadingly; nothing funnels to the
+two end-of-session doors). User approved a 3-part fix + tests; context WARN
+fired after design/discovery, so implementation rolls over.
+
+**Shipped this session (nothing to main yet — design only):**
+- `work/template-maintenance/exit-ux-plan.md` — the complete approved
+  design + test plan with verified line anchors. THE artifact; successor
+  implements from it without re-deriving.
+- Decision note (decisions.md 2026-08-31): heal/diagnose at next launch,
+  not at exit; rejected alternatives listed there.
+
+**Key verified facts (details + more in exit-ux-plan.md):**
+- Lineage gate: launch-next-session.sh:295-318; counter bump :488-490
+  (AFTER gate, BEFORE mode=off exit ~:668). `note()` :67, DRY :75.
+- seq-sync CAN lower (action "lowered"). Only cmd_record appends
+  measurement-ledger entries — register does not (empty session ⇒ zero
+  entries ⇒ heal is safe). `.session-seq` + context-ledger gitignored.
+- session-loop quit branch ~:302; keep "deliberate quit" say line verbatim
+  (tests L2b/C4f/L3c assert on it); notify() at :79.
+- Existing tests: T23e-j must be REWORKED (they assert the old blanket-die
+  on the one-ahead case); T23m/o/q/r unaffected (non-one-ahead paths).
+
+**State:** main = d42bab7, clean except untracked exit-ux-plan.md (this
+rollover commits it). No worktrees opened. Backlog 6 open / 75 resolved —
+exit-ux card to be FILED by successor when delivering (not filed yet).
+
+**Suggested skills next:** tdd (red first, per plan's slices);
+superpowers:verification-before-completion before claiming suites green.
+
+# Session Handoff — 11 (2026-08-29): L43 delivered — ledger archives fixed, lineage-restart marker shipped; arc complete
+
+**What got done (all committed & pushed to main):**
+- Re-filed the four misfiled blocks (11, 10, 9, 16) in
+  `work/automatic-session-rollover/handoff-archive.md` into newest-first
+  position — whole blocks moved, content untouched.
+- context-decay posture settled: taught `scripts/check-ledger.py` an explicit
+  `<!-- ledger-lineage-restart: … -->` marker (restarts the NUMBER chain at
+  the block below; dates still check across the seam) and placed one, with a
+  human-readable two-lineage explanation, at the seam in
+  `work/context-decay/handoff-archive.md`. Renumbering rejected — see
+  decisions.md 2026-08-29 L43 note.
+- Marker documented in `docs/work-directory-conventions.md` → "Lineage
+  restart (rare)"; mutation suite extended to 12/12 (restart-without-marker
+  and marker-hidden-date-regression both caught).
+- Repo-wide `scripts/check-ledger.py` exits 0 — first time since M32 made the
+  gate honest. Backlog: L43 → archive with Fixed: note; 6 open / 75 resolved.
+
+**State at close:** main carries the fix + this close commit; user's checkout
+pulled current. Worktree `tm-s11-l43` disposable. The L43 arc (M31→M34, L41–L43)
+is fully drained; no queued mission — session 12 picks from the backlog's 6
+open cards.
+
 # Session Handoff — 10 (2026-08-29): setup-docs audit applied (M34) + workspace currency done
 
 **Summary:** Both directive items delivered. All 18 setup-docs audit findings
