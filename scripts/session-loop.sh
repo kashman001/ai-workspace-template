@@ -170,6 +170,24 @@ trap 'on_signal HUP'  HUP
 
 read_seq() { tr -cd '0-9' < "$S/.session-seq" 2>/dev/null; }
 
+# Session number in the ledger's top block, empty when absent/unnumbered.
+# Extraction mirrors the launcher's lineage-gate grammar (strip ISO dates,
+# then "session N"/"session #N" anywhere or "— N"/"— sN" after the heading
+# dash); the canonical grammar lives in check-ledger.py.
+top_ledger_seq() {
+  local hf line
+  for hf in "$S/handoff.md" "$S/session_handoff.md"; do
+    [ -f "$hf" ] || continue
+    line="$(grep -m1 -E '^#[[:space:]]*Session Handoff' "$hf" 2>/dev/null || true)"
+    printf '%s\n' "$line" \
+      | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}//g' \
+      | grep -oiE 'session[[:space:]]+#?[0-9]+|^#[[:space:]]*session handoff[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
+      | head -1 | grep -oE '[0-9]+' | head -1
+    return 0
+  done
+  return 0
+}
+
 # Stall detection (failure mode 2; spec open question 5, answered 2026-08-25).
 # Progress = a commit touching something OUTSIDE the rollover bookkeeping set.
 # The exclusion is the entire guard: rollover writes the ledger and the launcher
@@ -300,6 +318,16 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
       [ "$rc" -eq 0 ] \
         || halt "session #$seq_before exited rc=$rc with no sentinel and an unmoved counter — the command failed to run or died before its first counter write; refusing to call this a quit"
       say "no sentinel and the counter did not move — deliberate quit; ending the chain"
+      # A quit ends the chain silently for anyone not watching the log; push
+      # it through notify, and say whether the ledger recorded the session.
+      top_n="$(top_ledger_seq)"
+      if [ -z "$top_n" ]; then
+        notify "chain ended: session #$seq_before quit"
+      elif [ "$top_n" = "$seq_before" ]; then
+        notify "chain ended: session #$seq_before quit after writing its ledger block"
+      else
+        notify "chain ended: session #$seq_before quit WITHOUT a rollover or checkpoint — no ledger block for it (top block is session $top_n)"
+      fi
       exit 0
     fi
     halt "the counter moved ${seq_before}->${seq_after} but no sentinel is in the main checkout — a session ended somewhere I did not look (check for a stranded .rollover-complete inside a worktree)"

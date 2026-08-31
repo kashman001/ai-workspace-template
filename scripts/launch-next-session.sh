@@ -309,9 +309,47 @@ if [ -n "$LAST_SEQ" ]; then
       note "lineage gate: top ledger heading carries no session number — gate skipped ($HF)"
     fi
     if [ -n "$TOP_N" ] && [ "$LAST_SEQ" != "$TOP_N" ]; then
-      die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
+      if [ "$LAST_SEQ" = "$((TOP_N + 1))" ]; then
+        # One-ahead is a signature, not a corruption: the launcher staged
+        # session LAST_SEQ (bumped the counter) but that session never wrote
+        # its ledger block — it quit, crashed, or never booted. Whether its
+        # number can be reclaimed depends on whether it did WORK. Anchor =
+        # the counter's own mtime: the bump below is the staging timestamp.
+        staged_epoch="$(stat -f %m "$SEQF" 2>/dev/null || stat -c %Y "$SEQF" 2>/dev/null)"
+        staged_iso="$(date -u -r "$staged_epoch" +%FT%TZ 2>/dev/null \
+                      || date -u -d "@$staged_epoch" +%FT%TZ 2>/dev/null)"
+        # (a) work-unit records since staging. Entries carry no project field,
+        # so this is workspace-wide — a false positive refuses, which is the
+        # conservative direction. Lexicographic compare is sound on ISO-8601Z.
+        EV_RECORDS=""
+        if command -v jq >/dev/null 2>&1 && [ -f "$STATE_DIR/context-ledger.jsonl" ]; then
+          EV_RECORDS="$(jq -r --arg t "$staged_iso" 'select(.ts > $t) | .label' \
+            "$STATE_DIR/context-ledger.jsonl" 2>/dev/null | tail -5)"
+        fi
+        # (b) commits since staging; (c) uncommitted changes in the work item.
+        # (.session-seq, provenance, and the context ledger are gitignored, so
+        # none of them can self-trigger this.)
+        EV_COMMITS="$(git -C "$WORKSPACE_ROOT" log --oneline --since="$staged_iso" 2>/dev/null | head -5)"
+        EV_DIRTY="$(git -C "$WORKSPACE_ROOT" status --porcelain -- "work/$PROJECT" 2>/dev/null | head -5)"
+        if [ -z "$EV_RECORDS" ] && [ -z "$EV_COMMITS" ] && [ -z "$EV_DIRTY" ]; then
+          note "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N — session $LAST_SEQ left no trace since it was staged ($staged_iso): no work-unit records, no commits, clean work item — reclaiming its number."
+          [ "$DRY" -eq 0 ] && printf '%s\n' "$TOP_N" > "$SEQF"
+          LAST_SEQ="$TOP_N"
+        else
+          die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
+Session $LAST_SEQ was staged ($staged_iso) and left evidence of work but no ledger block:
+${EV_RECORDS:+  work-unit records: $(printf '%s' "$EV_RECORDS" | tr '\n' ';' )
+}${EV_COMMITS:+  commits since staging: $(printf '%s' "$EV_COMMITS" | tr '\n' ';')
+}${EV_DIRTY:+  uncommitted changes in work/$PROJECT: $(printf '%s' "$EV_DIRTY" | tr '\n' ';')
+}Reconstruct session $LAST_SEQ's ledger block in work/$PROJECT/handoff.md from that evidence
+(git log, the record labels, write-ahead files), then relaunch. Or, if the number should
+be abandoned instead: scripts/context-budget.sh seq-sync --project $PROJECT --session $TOP_N   then relaunch."
+        fi
+      else
+        die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
 The counter must hold the just-rolled-over session's number (launch does the +1).
 Fix: scripts/context-budget.sh seq-sync --project $PROJECT --session $TOP_N   (or correct the ledger if IT is wrong), then relaunch."
+      fi
     fi
     break
   done

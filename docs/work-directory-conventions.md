@@ -107,6 +107,27 @@ session, `handoff-YYYY-MM-DD-topic.md`, instead of a single append-only file.
 This is naturally bounded (no archival step) but needs the launcher to point at
 the latest. Either pattern is acceptable; pick one per project and be consistent.
 
+## How a session ends: two doors
+
+A primary session on a work item ends through one of two doors, both of which
+write the ledger before the lights go out:
+
+- **session-rollover** — the work continues: prune, hand off, stage (or
+  launch) the successor.
+- **checkpoint** — the work stops here: reconcile the backlog/memory/docs and
+  close the ledger block.
+
+A plain exit (`/exit`, closing the terminal) is neither door, but it is
+**recoverable**, not fatal. The launcher's lineage gate notices the signature
+it leaves — a counter one ahead of the ledger's top block — and splits on
+evidence: a session that left **no trace** (no work-unit records, no commits,
+a clean work item) gets its number silently reclaimed at the next launch; a
+session that **did work** but wrote no ledger block makes the launcher refuse
+with a reconstruction brief (the evidence it found, and the `seq-sync` rewind
+as the alternative). Under `session-loop.sh`, a quit additionally pushes a
+chain-ended notification saying whether the ledger recorded the session.
+Mechanics: `docs/context-budget.md`.
+
 ## Required and optional files
 
 | File | Required? | Role |

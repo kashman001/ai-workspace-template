@@ -261,6 +261,22 @@ entry in the committed `.claude/settings.json`, which updates with `git pull` �
 a checkout predating that commit lacks it, and `--clear` then seeds a marker
 nothing drains.
 
+**Lineage gate — diagnosis and auto-heal:** at launch the counter must equal
+the session number in the ledger's top block. A counter exactly **one ahead**
+is the signature of a staged session that never wrote its ledger block (a
+plain `/exit`, a crash, an abandoned `--clear`), and the gate splits on
+evidence gathered since the counter's own mtime (the bump *is* the staging
+timestamp): with **no trace** — no work-unit records in the context ledger,
+no commits, a clean `work/<project>` tree — the launcher reclaims the number
+(rewinds the counter and continues, so the successor reuses it); with
+evidence, it refuses (exit 3) and prints what it found plus the two fixes —
+reconstruct the missing ledger block from that evidence, or abandon the
+number with the printed `seq-sync` rewind. Any other mismatch still refuses
+outright. The record check is workspace-wide (ledger entries carry no project
+field), so a false positive errs toward refusing — the conservative
+direction. See "How a session ends: two doors" in
+`docs/work-directory-conventions.md` for the operator-facing contract.
+
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
 by the dying session at `session-rollover` step 1 via
 `scripts/rollover-prep.sh <project>`, whose options-capture step
@@ -373,7 +389,11 @@ fire. They are gitignored under "Live-session runtime state under `work/`".
 a silent stopped chain. So the supervisor exits 1, logs to
 `work/<proj>/.session-loop.log`, rings the terminal bell, and runs
 `SESSION_LOOP_NOTIFY` if set. A clean end of chain — deliberate quit or chain cap
-— exits 0.
+— exits 0. A deliberate quit still notifies (a chain end is a fact a human
+should learn without reading the log): the message says whether the ledger's
+top block records the quitting session, or names the unrecorded quit — "quit
+WITHOUT a rollover or checkpoint" — so a missing ledger block is flagged the
+moment it happens rather than at the next launch's lineage gate.
 
 **Modes.** The dying session infers `interactive` vs `handsoff` and writes it into
 the sentinel; a human `touch work/<proj>/.hands-off` or `.interactive` overrides

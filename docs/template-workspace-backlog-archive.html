@@ -680,6 +680,27 @@
       package name broke the documented graphify install.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M35</span> Plain session exit is a dead end — lineage gate dies, chain ends silently
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">launch-next-session.sh · session-loop.sh · docs</span></h3>
+    <p><span class="fix">Fixed:</span> (1) the lineage gate now splits the one-ahead signature (counter =
+      ledger top + 1 — a staged session that never wrote its ledger block): with no evidence of work since the
+      counter's staging mtime (no work-unit records, no commits, clean work item) it <strong>auto-heals</strong> —
+      reclaims the number and continues the launch; with evidence it refuses with a diagnosis (evidence found,
+      reconstruction guidance, <code>seq-sync</code> rewind as the alternative). Other mismatches die verbatim as
+      before. (2) <code>session-loop.sh</code> pushes a ledger-aware <code>notify</code> on a deliberate quit
+      ("quit after writing its ledger block" vs "quit WITHOUT a rollover or checkpoint"). (3) "How a session ends:
+      two doors" section in <code>work-directory-conventions.md</code> + <code>context-budget.md</code> updates +
+      a CONTEXT.md pointer. Tests: T23e–j reworked, T24a–h and N1–N3 added; suites 221/0 and 76/0.</p>
+    <p><span class="k">Evidence</span> — session-12 exit-UX scenario analysis
+      (<code>work/template-maintenance/exit-ux-plan.md</code>): a human typing <code>/exit</code> after a launched
+      session did nothing left the next launch dead (exit 3) with a remediation aimed at a different failure, and
+      an unattended chain ended with no notification at all.</p>
+    <p><span class="k">Impact</span> — the common "launched it, quit without doing anything" path required a manual
+      <code>seq-sync</code> to recover; an unrecorded quit (work done, no ledger block) was indistinguishable from
+      counter corruption, and nobody was told the chain had ended.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

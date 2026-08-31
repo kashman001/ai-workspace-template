@@ -415,8 +415,11 @@ echo "D5b-d: SESSION_LOOP_ALARM defaults to off -- today's behaviour, exactly"
 reset; printf 'sleep 2\n' > "$NEXT"; : > "$NOTED"
 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
-[ ! -s "$NOTED" ] && ok "D5b-d: no alarm when the knob is unset" \
-                  || bad "D5b-d: the alarm fired without being asked for"
+# The quit-path chain-ended notification lands in the log too (N-series);
+# "off by default" means no STALL message, not an empty log.
+grep -q "running with no exit" "$NOTED" \
+  && bad "D5b-d: the alarm fired without being asked for" \
+  || ok "D5b-d: no alarm when the knob is unset"
 
 echo "D5b-e: no alarm subshell outlives the child"
 # Measured as "the log stops growing once the supervisor has returned". The
@@ -462,8 +465,12 @@ echo "D5b-g: a reap landing mid-notify forks no fresh orphan sleep (TE6 A2)"
 # Mutation that makes this red: drop the stop-flag creation from reap_alarm,
 # or the subshell's loop-top stop-flag check — the pre-A2 reap order (measured
 # red 6/6 on the pre-fix code).
+# The chain-ended quit notification runs the same hook synchronously on the
+# way out; let it through fast so elapsed still measures only the alarm reap,
+# keeping the tuned 3s margins intact.
 cat > "$TMP/slow-hook.sh" <<'EOF'
 #!/usr/bin/env bash
+case "$1" in *"chain ended"*) exit 0 ;; esac
 exec sleep 4
 EOF
 chmod +x "$TMP/slow-hook.sh"
@@ -677,6 +684,40 @@ unset V4_MAIN; rm -f "$W/.active-session"
 # Unconditional teardown: leave the exported fixture state as the suite's
 # default so a later case can never inherit stage-nothing or a live alarm.
 unset TF_ALARM_LOG; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff; reset
+
+echo "N: notify-on-quit — a chain end is pushed through notify, not just logged"
+cat > "$TMP/notify.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$1" >> "$NOTIFY_LOG"
+EOF
+chmod +x "$TMP/notify.sh"
+export NOTIFY_LOG="$TMP/notify.log"
+
+echo "N1: quit with no ledger — generic chain-ended notification, external path fires"
+reset; rm -f "$W/handoff.md" "$W/session_handoff.md"; export STUB_BEHAVIOUR=quit
+: > "$NOTIFY_LOG"
+SESSION_LOOP_NOTIFY="$TMP/notify.sh" "$SL" testproj --max-sessions 3 >"$TMP/n1" 2>&1 </dev/null; rc=$?
+assert_eq       "N1a: exit 0 stays"               "$rc" "0"
+assert_contains "N1b: chain-ended in output"      "$(cat "$TMP/n1")" "chain ended"
+assert_contains "N1c: external notify path fired" "$(cat "$NOTIFY_LOG")" "chain ended: session #8 quit"
+
+echo "N2: top ledger block == the quitting session — quit was recorded"
+printf '# Session Handoff — 8 (2026-08-31): wrapped up\n' > "$W/handoff.md"
+reset; export STUB_BEHAVIOUR=quit
+: > "$NOTIFY_LOG"
+SESSION_LOOP_NOTIFY="$TMP/notify.sh" "$SL" testproj --max-sessions 3 >"$TMP/n2" 2>&1 </dev/null; rc=$?
+assert_eq       "N2a: exit 0 stays"              "$rc" "0"
+assert_contains "N2b: recorded-quit message"     "$(cat "$NOTIFY_LOG")" "quit after writing its ledger block"
+
+echo "N3: top ledger block behind the quitting session — unrecorded quit named"
+printf '# Session Handoff — 7 (2026-08-30): older block\n' > "$W/handoff.md"
+reset; export STUB_BEHAVIOUR=quit
+: > "$NOTIFY_LOG"
+SESSION_LOOP_NOTIFY="$TMP/notify.sh" "$SL" testproj --max-sessions 3 >"$TMP/n3" 2>&1 </dev/null; rc=$?
+assert_eq       "N3a: exit 0 stays"               "$rc" "0"
+assert_contains "N3b: unrecorded quit named"      "$(cat "$NOTIFY_LOG")" "WITHOUT a rollover"
+assert_contains "N3c: names the actual top block" "$(cat "$NOTIFY_LOG")" "top block is session 7"
+rm -f "$W/handoff.md"; unset NOTIFY_LOG; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff; reset
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

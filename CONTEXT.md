@@ -284,6 +284,10 @@ strands the work. And before concluding you *cannot* launch, run
 a blocker until the dry-run confirms it. Details:
 `skills/session-rollover/SKILL.md` step 6.
 
+Sessions end via `session-rollover` (continue) or `checkpoint` (stop); a plain
+exit is recoverable — see "How a session ends: two doors" in
+`docs/work-directory-conventions.md`.
+
 Full reference: `docs/context-budget.md`; rollover workflow:
 `skills/session-rollover/SKILL.md`.
 

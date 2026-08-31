@@ -294,15 +294,23 @@ assert_eq       "T23c: agreement -> exit 0"   "$rc" "0"
 assert_contains "T23d: successor is ledger+1" "$out" "rollover session #10"
 
 # Counter holds the SUCCESSOR's number instead of its own — the s102/#104
-# off-by-one. Refuse rather than mint a phantom lineage number.
+# off-by-one — AND the staged session left evidence of work (a work-unit
+# record newer than the counter's staging mtime). Refuse with a diagnosis
+# rather than reclaim a number that did real work. (The no-evidence
+# one-ahead case auto-heals instead — T24.)
 printf '10\n' > "$TMP/work/testproj/.session-seq"
+touch -t 202001010100 "$TMP/work/testproj/.session-seq"
+printf '{"ts":"%s","label":"t23-work"}\n' "$(date -u +%FT%TZ)" \
+  > "$TMP/.context-budget/context-ledger.jsonl"
 out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
-assert_eq       "T23e: mismatch -> exit 3"          "$rc" "3"
+assert_eq       "T23e: one-ahead + evidence -> exit 3" "$rc" "3"
 assert_contains "T23f: gate named"                  "$out" "lineage gate"
 assert_contains "T23g: counter value reported"      "$out" ".session-seq=10"
 assert_contains "T23h: ledger value reported"       "$out" "top block is session 9"
 assert_contains "T23i: remediation names seq-sync"  "$out" "seq-sync --project testproj --session 9"
 assert_not_contains "T23j: refusal launches nothing" "$out" "cmd: claude"
+assert_contains "T23j2: evidence label shown"       "$out" "t23-work"
+rm -f "$TMP/.context-budget/context-ledger.jsonl"
 
 # Unparseable top block: prose may VETO a number, never DERIVE one — skip.
 printf '# Session Handoff — no number in this block\n' > "$HF"
@@ -345,6 +353,68 @@ out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
 assert_eq       "T23s: date-only heading -> gate skips"  "$rc" "0"
 assert_contains "T23t: skip is announced"                "$out" "carries no session number"
 rm -f "$TMP/work/testproj/.session-seq" "$HF"
+
+echo "T24: lineage gate one-ahead — no-trace auto-heal vs evidence refusal"
+# One-ahead with NO trace of work (fresh staging mtime, no work-unit records,
+# non-git workspace): the staged session was launched but never did anything —
+# reclaim its number and continue the launch instead of dying.
+printf '# Session Handoff — 2026-08-20 (session 9: a ledger block)\n' > "$HF"
+printf '10\n' > "$TMP/work/testproj/.session-seq"
+rm -f "$TMP/.context-budget/context-ledger.jsonl"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T24a: no-trace one-ahead heals -> exit 0" "$rc" "0"
+assert_contains "T24b: reclaim announced"                  "$out" "reclaiming its number"
+assert_contains "T24c: successor reuses the number"        "$out" "rollover session #10"
+assert_eq "T24c2: dry-run leaves counter untouched" "$(cat "$TMP/work/testproj/.session-seq")" "10"
+
+# Real run (mode=off exits after the bump): heal writes 9, bump writes 10 —
+# net effect the phantom number is reused, and the ledger stays consistent.
+out=$(run_lns ROLLOVER_RELAUNCH=off "$LNS" testproj --runtime claude 2>&1); rc=$?
+assert_eq "T24d: real-run heal -> exit 0" "$rc" "0"
+assert_eq "T24e: number reclaimed (heal to 9 + bump = 10 reused)" \
+  "$(cat "$TMP/work/testproj/.session-seq")" "10"
+
+# Evidence via a work-unit record: message contract — labels listed and
+# reconstruction guidance present (mechanics already covered in T23e).
+touch -t 202001010100 "$TMP/work/testproj/.session-seq"
+printf '{"ts":"%s","label":"t24-evidence"}\n' "$(date -u +%FT%TZ)" \
+  > "$TMP/.context-budget/context-ledger.jsonl"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T24f: record evidence -> exit 3"    "$rc" "3"
+assert_contains "T24f2: evidence label listed"       "$out" "t24-evidence"
+assert_contains "T24f3: reconstruction guidance"     "$out" "Reconstruct"
+rm -f "$TMP/.context-budget/context-ledger.jsonl"
+
+# Git evidence needs a repo, and the main $TMP must stay non-git (C/W-series
+# depend on it) — isolated mini-workspace instead.
+EV="$(mktemp -d)"
+mkdir -p "$EV/scripts" "$EV/work/testproj" "$EV/.context-budget/sessions"
+cp "$SRC_ROOT/scripts/launch-next-session.sh" "$EV/scripts/"
+printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$EV/context-budget.env"
+echo "# launcher" > "$EV/work/testproj/next-session.md"
+printf '# Session Handoff — 2026-08-20 (session 9: a ledger block)\n' \
+  > "$EV/work/testproj/handoff.md"
+printf '10\n' > "$EV/work/testproj/.session-seq"
+touch -t 202001010100 "$EV/work/testproj/.session-seq"
+git -C "$EV" init -q
+git -C "$EV" add -A >/dev/null 2>&1
+git -C "$EV" -c user.email=t@t -c user.name=t commit -qm "t24g work landed" >/dev/null 2>&1
+out=$(run_lns "$EV/scripts/launch-next-session.sh" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T24g: commit since staging -> exit 3" "$rc" "3"
+assert_contains "T24g2: commit shown as evidence"      "$out" "t24g work landed"
+
+# Dirty-tree variant: backdate the commit so only the dirty work item remains
+# as evidence.
+GIT_COMMITTER_DATE="2019-01-01T00:00:00Z" git -C "$EV" -c user.email=t@t -c user.name=t \
+  commit -q --amend --no-edit --date "2019-01-01T00:00:00Z" >/dev/null 2>&1
+echo scratch > "$EV/work/testproj/scratch.txt"
+out=$(run_lns "$EV/scripts/launch-next-session.sh" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T24h: dirty work item -> exit 3"     "$rc" "3"
+assert_contains "T24h2: dirty path shown as evidence" "$out" "scratch.txt"
+rm -rf "$EV"
+
+# C-series must inherit nothing from T24.
+rm -f "$TMP/work/testproj/.session-seq" "$HF" "$TMP/.context-budget/context-ledger.jsonl"
 
 echo "C: --clear in-place rollover (closes issue 04; ADR-0009)"
 SEEDF="$TMP/work/testproj/.pending-clear-seed"
