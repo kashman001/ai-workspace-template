@@ -119,3 +119,14 @@ in session-loop. Rejected: SessionEnd-time warnings (agent gone, output not
 reliably visible), forced rollover on exit (hostile), treating sentinel-less
 clean exits as errors (punishes checkpoint-quit). Statusline "unrecorded"
 indicator deferred, not declined. Design: work/template-maintenance/exit-ux-plan.md.
+
+## 2026-08-31 — M16: id-keyed artifact glob over a worktree-entry re-register hook
+
+EnterWorktree relocates a claude transcript mid-session, staling the pinned
+registry artifact path (wrongful stale-primary sweeps, two live incidents).
+Chose: `glob_artifact_for()` — resolve `~/.claude/projects/*/<sid>.jsonl` at
+every read (discovery, check/record self-re-pin, lock_holder_age liveness);
+newest match wins so a stale copy left behind loses. Rejected: a
+worktree-entry hook that re-registers — claude-only, heals only the entry
+moment, and does nothing for other sessions' liveness reads of a record the
+holder never refreshed.
