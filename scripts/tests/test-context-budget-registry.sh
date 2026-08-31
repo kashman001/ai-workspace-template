@@ -482,5 +482,68 @@ age=$(( $(date +%s) - mt ))
 [ "$age" -lt 600 ] && ok "R9a: record refreshed session record mtime (age=${age}s)" \
   || bad "R9a: session record mtime not refreshed by record (age=${age}s)"
 
+echo "M16: relocated transcript (EnterWorktree) — re-pin + liveness survive"
+# EnterWorktree moves a claude transcript to the worktree's project slug dir
+# mid-session; the session id (basename) is stable across the move.
+WTPROJ="$HOME/.claude/projects/wt-slug--claude-worktrees-m16"
+mkdir -p "$WTPROJ"
+rm -f "$LOCK"
+
+# Self-side: record after the move binds the moved transcript and re-pins.
+# Mutation red (M16a-b): drop the id-keyed glob — record falls back to a
+# newest-mtime sibling in the old slug dir and the record keeps the dead path.
+mk_transcript aaa 50000
+run_as aaa register --quiet >/dev/null
+mv "$PROJ_DIR/aaa.jsonl" "$WTPROJ/aaa.jsonl"
+out=$(run_as aaa record --label m16-a 2>/dev/null)
+assert_contains "M16a: record binds the moved transcript" "$out" "artifact=$WTPROJ/aaa.jsonl"
+assert_eq "M16b: registry record re-pinned to the new path" \
+  "$(jq -r .artifact "$SESS/claude-aaa.json")" "$WTPROJ/aaa.jsonl"
+
+# Self-side: a stale copy left behind at the old pinned path must not win —
+# the freshest id-keyed match does.
+mk_transcript aaa 50000                              # stale copy at the old path
+touch -t 202601010000 "$PROJ_DIR/aaa.jsonl"
+jq -cn '{message:{usage:{input_tokens:60000,cache_read_input_tokens:0,cache_creation_input_tokens:0}},isSidechain:false}' \
+  > "$WTPROJ/aaa.jsonl"                              # live relocated transcript, fresher
+jq --arg af "$PROJ_DIR/aaa.jsonl" '.artifact = $af' "$SESS/claude-aaa.json" \
+  > "$SESS/tmp.json" && mv "$SESS/tmp.json" "$SESS/claude-aaa.json"   # pinned at old path
+out=$(run_as aaa record --label m16-c 2>/dev/null)
+assert_contains "M16c: freshest match beats the stale pinned copy" "$out" "tokens=60000"
+assert_eq "M16d: record re-pinned off the stale copy" \
+  "$(jq -r .artifact "$SESS/claude-aaa.json")" "$WTPROJ/aaa.jsonl"
+rm -f "$PROJ_DIR/aaa.jsonl"
+
+# Other-side liveness: the two live wrongful-takeover incidents — a holder
+# whose pinned path went stale after relocation must still read as live.
+rm -f "$LOCK" "$WTPROJ/aaa.jsonl"
+mk_transcript aaa 50000; mk_transcript bbb 90000
+run_as aaa register --project testproj --quiet >/dev/null   # aaa primary, pinned old path
+mv "$PROJ_DIR/aaa.jsonl" "$WTPROJ/aaa.jsonl"                # relocated; still fresh
+err=$(run_as bbb register --project testproj 2>&1 >/dev/null)
+assert_eq "M16e: relocated live holder keeps the lock" "$(jq -r .session_id "$LOCK")" "aaa"
+assert_contains "M16f: challenger degrades to auxiliary" "$err" "role=auxiliary"
+
+# Sweep: a relocated live primary must not be stamped superseded.
+rm -f "$LOCK"                                               # lock lost out-of-band
+mk_transcript ccc 20000
+run_as ccc register --project testproj --quiet >/dev/null
+assert_eq "M16g: relocated live primary not swept" \
+  "$(jq -r '.role // "none"' "$SESS/claude-aaa.json")" "primary"
+
+# Register-side discovery also resolves by id across slugs (no sibling bind).
+rm -f "$LOCK"
+run_as aaa register --project testproj --quiet >/dev/null
+assert_eq "M16h: register re-discovers the relocated transcript" \
+  "$(jq -r .artifact "$SESS/claude-aaa.json")" "$WTPROJ/aaa.jsonl"
+
+# Staleness detection must survive the fix: relocated AND idle is still stale.
+touch -t 202601010000 "$WTPROJ/aaa.jsonl"
+run_as bbb register --project testproj --quiet >/dev/null
+assert_eq "M16i: genuinely stale relocated holder still reclaimed" \
+  "$(jq -r .session_id "$LOCK")" "bbb"
+run_as bbb release --project testproj --quiet >/dev/null
+rm -rf "$WTPROJ"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

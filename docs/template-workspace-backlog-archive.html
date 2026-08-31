@@ -701,6 +701,28 @@
       counter corruption, and nobody was told the chain had ended.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M16</span> EnterWorktree mid-session stales the registry artifact path — wrongful stale-primary sweeps
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · ADR-0006</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-08-31 (template-maintenance session 14). The session id is stable across
+      the move, so artifact resolution is now id-keyed everywhere it matters: new <code>glob_artifact_for()</code>
+      resolves <code>~/.claude/projects/*/&lt;sid&gt;.jsonl</code> (newest match wins when a stale copy remains at the
+      old path); <code>claude_discover</code> uses it (register-side — no more newest-mtime sibling bind after a
+      move); <code>resolve_session</code> adopts a fresher match at <code>check</code>/<code>record</code> time and
+      <strong>re-pins the registry record</strong> (loud "artifact moved — re-pinned" note); <code>lock_holder_age</code>
+      trusts the freshest of the recorded path and the glob, so acquire/sweep/release liveness reads survive the
+      relocation — while a relocated-AND-idle holder still reads stale (reclaim preserved). Regression tests
+      M16a–M16i in <code>test-context-budget-registry.sh</code> (122/0) with a relocated-artifact fixture; verified
+      live on the fixing session's own relocated record. Doc: <code>context-budget.md</code> lock-liveness paragraph.</p>
+    <p><span class="k">Evidence</span> — change-log finding 2026-08-06 (session 24), previously un-carded: entering a
+      worktree relocates the claude transcript to a worktree-scoped project directory, so the artifact path pinned at
+      <code>register</code> goes stale; two live primary-takeover incidents. <strong>Reproduced 2026-08-08</strong>
+      (usage-scenarios session 2): <code>record</code> after EnterWorktree shows the artifact path switching to
+      <code>…-claude-worktrees-usage-scenarios-s2/…</code> while the lock was registered under the launch-dir path.</p>
+    <p><span class="k">Impact</span> — the pinned artifact stops updating → holder looks dead → stale-primary sweep
+      or takeover fires against a live session.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

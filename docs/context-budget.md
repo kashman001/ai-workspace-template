@@ -439,7 +439,12 @@ Every element must hold under N concurrent sessions:
   locks (artifact untouched for hours) are reclaimable. The lock file is
   **gitignored**: its validity comes from the holder's artifact mtime, not its
   content, so a committed copy is at best noise and at worst a resurrected
-  stale claim on checkout.
+  stale claim on checkout. Liveness checks survive a mid-session
+  `EnterWorktree`, which relocates a claude transcript to the worktree's
+  project slug: the recorded path can go stale, so every liveness read (and
+  `check`/`record` themselves) re-resolves the artifact by session id across
+  project slug dirs, trusts the freshest match, and re-pins the session
+  record (M16 — the wrongful stale-primary sweeps).
 - **Session roles — one primary per work item.** Each session engaging a work
   item (`register --project X`) holds exactly one of four roles, recorded in
   its registry file and shown as `role=` by `register`/`attach-session.sh`

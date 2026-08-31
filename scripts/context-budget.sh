@@ -105,15 +105,32 @@ die()  { echo "error: $*" >&2; exit 3; }
 
 newest_of() { ls -t "$@" 2>/dev/null | head -1; }
 
+glob_artifact_for() {
+  # $1 = runtime, $2 = session id. Id-keyed artifact resolution across every
+  # project slug dir — survives EnterWorktree relocating a claude transcript
+  # to the worktree's slug mid-session (M16). The id is unique, so this never
+  # binds a sibling; the newest match wins when a stale copy remains at the
+  # old path. rc 1 when the runtime's artifacts don't relocate or no match.
+  local rt="$1" sid="$2" f
+  [ -n "$sid" ] || return 1
+  case "$rt" in
+    claude) f=$(newest_of "$HOME"/.claude/projects/*/"$sid".jsonl) ;;
+    *) return 1 ;;
+  esac
+  [ -n "$f" ] && [ -f "$f" ] && echo "$f"
+}
+
 claude_discover() {
-  local slug proj
+  local slug proj t
   slug="$(pwd | tr '/.' '--')"
   proj="$HOME/.claude/projects/$slug"
-  [ -d "$proj" ] || return 1
   # Transcript basename = the exported session id; newest-mtime alone races
-  # with a concurrent session in the same workspace.
-  local t="$proj/${CLAUDE_CODE_SESSION_ID:-}.jsonl"
-  [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && [ -f "$t" ] && { echo "$t"; return 0; }
+  # with a concurrent session in the same workspace. The id-keyed glob also
+  # finds a transcript EnterWorktree relocated out of the cwd slug (M16).
+  if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+    t=$(glob_artifact_for claude "$CLAUDE_CODE_SESSION_ID") && { echo "$t"; return 0; }
+  fi
+  [ -d "$proj" ] || return 1
   newest_of "$proj"/*.jsonl
 }
 
@@ -393,9 +410,24 @@ resolve_session() {
   # per-runtime registry let session A measure session B's artifact (M13).
   # register must always re-discover; the registry is what it's there to (re)write.
   if [ -z "$ARTIFACT" ] && [ "$COMMAND" != "register" ] && [ -n "$SESSION_ID" ]; then
-    local reg="$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
+    local reg="$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" cand
     if [ -f "$reg" ]; then
       ARTIFACT=$(jq -r '.artifact // empty' "$reg" 2>/dev/null)
+      # M16: EnterWorktree relocates a claude transcript mid-session, staling
+      # the pinned path (a stale copy may remain behind). The session id is
+      # stable across the move: adopt the freshest id-keyed match and re-pin
+      # the record so other sessions' liveness checks read a live path again.
+      if cand=$(glob_artifact_for "$RUNTIME" "$SESSION_ID") \
+         && [ "$cand" != "$ARTIFACT" ] \
+         && { [ ! -f "$ARTIFACT" ] || [ "$cand" -nt "$ARTIFACT" ]; }; then
+        ARTIFACT="$cand"
+        if jq --arg af "$ARTIFACT" '.artifact = $af' "$reg" > "$reg.tmp" \
+           && mv "$reg.tmp" "$reg"; then
+          note "artifact moved — re-pinned $RUNTIME-$SESSION_ID to $ARTIFACT"
+        else
+          rm -f "$reg.tmp"
+        fi
+      fi
       [ -f "$ARTIFACT" ] || ARTIFACT=""
     fi
   fi
@@ -436,9 +468,15 @@ emit_check() {
 lock_holder_age() {
   # Age in seconds of the lock holder's artifact (its liveness signal), via the
   # holder's own session file; rc 1 when unknowable (treated as stale — a
-  # holder with no session record cannot be confirmed live).
-  local rt="$1" sid="$2" af mt
+  # holder with no artifact anywhere cannot be confirmed live). The recorded
+  # path can be stale mid-session (EnterWorktree relocation, M16): trust the
+  # freshest of the recorded path and the id-keyed glob.
+  local rt="$1" sid="$2" af mt cand
   af=$(jq -r '.artifact // empty' "$STATE_DIR/sessions/$rt-$sid.json" 2>/dev/null)
+  if cand=$(glob_artifact_for "$rt" "$sid") \
+     && { [ ! -f "$af" ] || [ "$cand" -nt "$af" ]; }; then
+    af="$cand"
+  fi
   [ -n "$af" ] && [ -f "$af" ] || return 1
   mt=$(stat -f%m "$af" 2>/dev/null || stat -c%Y "$af" 2>/dev/null) || return 1
   echo $(( $(date +%s) - mt ))

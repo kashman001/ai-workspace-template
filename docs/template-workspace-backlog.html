@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc amber"><div class="num">6</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">76</div><div class="lab">Resolved</div></div>
+    <div class="sc amber"><div class="num">5</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">77</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -139,21 +139,6 @@
 
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
-
-  <div class="find med">
-    <h3><span class="id">M16</span> EnterWorktree mid-session stales the registry artifact path — wrongful stale-primary sweeps
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh · ADR-0006</span></h3>
-    <p><span class="k">Evidence</span> — change-log finding 2026-08-06 (session 24), previously un-carded: entering a
-      worktree relocates the claude transcript to a worktree-scoped project directory, so the artifact path pinned at
-      <code>register</code> goes stale; two live primary-takeover incidents. <strong>Reproduced 2026-08-08</strong>
-      (usage-scenarios session 2): <code>record</code> after EnterWorktree shows the artifact path switching to
-      <code>…-claude-worktrees-usage-scenarios-s2/…</code> while the lock was registered under the launch-dir path.</p>
-    <p><span class="k">Impact</span> — the pinned artifact stops updating → holder looks dead → stale-primary sweep
-      or takeover fires against a live session.</p>
-    <p><span class="k">Fix</span> — re-pin the artifact at <code>record</code> time when the session-id's transcript
-      has moved (the session id is stable across the move), or a worktree-entry hook that re-registers; add a
-      regression test with a relocated artifact fixture.</p>
-  </div>
 
   <div class="find med">
     <h3><span class="id">M27</span> No testability / failure-mode-analysis prompt at design time
