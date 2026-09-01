@@ -723,6 +723,25 @@
       or takeover fires against a live session.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M36</span> Ledger heading grammar rejects the addendum form real ledgers produce
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/check-ledger.py</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-01 (downstream template-sync session 21 contribution,
+      <code>fix/check-ledger-addendum-heading</code>). <code>(?: addendum)?</code> added to the <code>HEAD</code>
+      regex, the title-convention comment extended with the addendum form, and the mutation suite grew a clean
+      addendum fixture (legacy-dated, mirroring the real-world block) plus a keyless-addendum mutation proving the
+      widened grammar does not relax key extraction — 13/13 caught, and the suite false-alarms on the unpatched
+      checker, so the new fixture bites.</p>
+    <p><span class="k">Evidence</span> — M32's tolerant parser requires a heading to open <code># Session
+      Handoff</code> plus a dash, but a session that files a second block for itself heads it <code># Session
+      Handoff addendum — …</code> (live proof in the downstream workspace history the grammar was ported from:
+      R11PolicyDev session 166, 2026-08-22). Equal session numbers are already legal in the ordering check, so the
+      addendum is well-formed history the heading grammar alone rejected.</p>
+    <p><span class="k">Impact</span> — <code>check-ledger.py</code> exits 1 on legitimate append-only history the
+      gate exists to protect; downstream adopters with addendum blocks cannot adopt the checker (the originating
+      workspace kept its local copy for exactly this reason).</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">
