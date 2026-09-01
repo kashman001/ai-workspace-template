@@ -1,0 +1,23 @@
+docs/template-workspace-backlog.html
+  s_d8d6e7994687e3::t_cb8e28fa41f374 79
+scripts/tests/test-vendor-budget-hooks.sh
+  s_d8d6e7994687e3::t_7ff7985b746c92 300-302
+docs/template-workspace-backlog-archive.html
+  s_d8d6e7994687e3::t_0122b0a242202d 1433-1448
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3f8080943d345653efe9276fd98430f8c536689b",
+  "prompts": {},
+  "sessions": {
+    "s_d8d6e7994687e3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "190750d4-cadb-430c-aa0f-5bdfddc90b4c",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
