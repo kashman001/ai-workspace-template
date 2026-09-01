@@ -1,0 +1,29 @@
+docs/template-workspace-backlog-archive.html
+  s_d8d6e7994687e3::t_fe80103663076f 726-744
+scripts/tests/test-check-ledger.py
+  s_d8d6e7994687e3::t_3b2f089ec94fc6 30-33,43-45
+  s_d8d6e7994687e3::t_04f00e7621b108 193
+  s_d8d6e7994687e3::t_4cc5460978d2eb 141-149
+  s_d8d6e7994687e3::t_7317870a0f93cb 46
+scripts/check-ledger.py
+  s_d8d6e7994687e3::t_6d139009fc4c69 49,52-59
+docs/template-workspace-backlog.html
+  s_d8d6e7994687e3::t_adae9c8efa878c 72
+  s_d8d6e7994687e3::t_82c619bfb4e61d 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e16e93f1136bc4031ad345f8cc602f3845c674c9",
+  "prompts": {},
+  "sessions": {
+    "s_d8d6e7994687e3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "190750d4-cadb-430c-aa0f-5bdfddc90b4c",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
