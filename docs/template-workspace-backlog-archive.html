@@ -1430,6 +1430,22 @@
       was green per-project.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L44</span> X5c false-fails when the vendor-hooks suite itself runs inside a session-loop supervisor
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/tests/test-vendor-budget-hooks.sh</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-01 (downstream template-sync session 21 contribution,
+      <code>fix/vendor-hooks-x5c-supervisor-env</code>; fix first landed downstream in the s20 sync commit).
+      <code>xpred</code> now scrubs the inherited variable — <code>env -u TF_SESSION_LOOP $pre …</code> — with a
+      comment naming the trap. Verified: unpatched suite under <code>TF_SESSION_LOOP=1</code> fails X5c (84/1);
+      patched passes both under a supervisor and in a plain shell (85/0).</p>
+    <p><span class="k">Evidence</span> — X5c ("rc 1 outside the supervisor") builds its environment with a bare
+      <code>env $pre …</code>, which passes the parent environment through. When the suite runs inside a
+      session-loop supervisor, the inherited <code>TF_SESSION_LOOP=1</code> fakes "inside" for the outside case
+      and the predicate returns rc 0.</p>
+    <p><span class="k">Impact</span> — the suite is not runnable from inside a supervised session without a
+      spurious failure; a real X5c regression would be indistinguishable from the environment artifact.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">
