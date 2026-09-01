@@ -27,9 +27,10 @@ Convention: docs/work-directory-conventions.md.
 """
 
 # A clean ledger exercising every accepted title convention (current, sNNN,
-# hash-number, date-only), plus an archive in the legacy convention — all are
-# live history and all must parse; the mixed date-only/dateless blocks also
-# prove ordering skips a missing key without breaking the chain.
+# hash-number, date-only, addendum), plus an archive in the legacy
+# convention — all are live history and all must parse; the mixed
+# date-only/dateless blocks also prove ordering skips a missing key without
+# breaking the chain.
 CLEAN_LEDGER = PURPOSE + """
 # Session Handoff — 76 (2026-08-22): the newest thing that happened
 
@@ -38,6 +39,10 @@ Body prose.
 ## A sub-heading inside the block
 
 More body.
+
+# Session Handoff addendum — 2026-08-21 (session 75: a second block filed by the same session)
+
+Body prose.
 
 # Session Handoff — 75 (2026-08-21): the older thing that happened
 
@@ -133,6 +138,15 @@ def mutate_keyless_heading(ledger: str, archive: str):
     ), archive
 
 
+def mutate_addendum_keyless(ledger: str, archive: str):
+    """The addendum form must not relax key extraction: an addendum heading
+    yielding neither a session number nor a date still fails."""
+    return ledger.replace(
+        "# Session Handoff addendum — 2026-08-21 (session 75: a second block filed by the same session)",
+        "# Session Handoff addendum — (a keyless addendum heading)",
+    ), archive
+
+
 def mutate_restart_without_marker(ledger: str, archive: str):
     """The earlier-lineage tail WITHOUT its marker — the numbering restart
     must fail unless the marker explicitly declares it."""
@@ -176,6 +190,7 @@ MUTATIONS = [
     ("dates contradict the session numbers", mutate_date_regression, None),
     ("archive holds a newer block than the ledger", mutate_archive_interleave, None),
     ("a heading yields neither number nor date", mutate_keyless_heading, None),
+    ("an addendum heading yields neither number nor date", mutate_addendum_keyless, None),
     ("a numbering restart with no lineage marker", mutate_restart_without_marker, None),
     ("a marker must not excuse a date regression", mutate_restart_marker_date_regression, None),
     (

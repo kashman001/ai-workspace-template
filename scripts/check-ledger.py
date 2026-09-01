@@ -46,13 +46,17 @@ def rel(path: Path) -> str:
 #       # Session Handoff — s201 (what happened)              [dateless]
 #       # Session Handoff — 2026-08-07 (what happened)        [date-only]
 #       # Session Handoff — 2026-08-22/23 (what happened)     [midnight span]
+#       # Session Handoff addendum — 2026-08-22 (session 166: what happened)
 #
 # Rather than one regex per form, parse tolerantly: the heading must open
-# `# Session Handoff` plus a dash, and must yield a session number, a date,
-# or both. A session number may carry a letter suffix ("74b") or a
-# continuation word ("session 9 cont.") when one session wrote more than one
-# block; a midnight-span date range orders by its first date.
-HEAD = re.compile(r"^# Session Handoff\s*[—-]\s*(?P<rest>.*)$")
+# `# Session Handoff` (or `# Session Handoff addendum`, when a session files
+# a second block for itself — equal session numbers are already legal, so an
+# addendum is a well-formed block, not a defect) plus a dash, and must yield
+# a session number, a date, or both. A session number may carry a letter
+# suffix ("74b") or a continuation word ("session 9 cont.") when one session
+# wrote more than one block; a midnight-span date range orders by its first
+# date.
+HEAD = re.compile(r"^# Session Handoff(?: addendum)?\s*[—-]\s*(?P<rest>.*)$")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 # Number right after the dash ("76 (…", "74b (…", "s201 (…") — matched after
 # stripping ISO dates so a year is never read as a session number…
