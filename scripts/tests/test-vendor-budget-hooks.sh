@@ -297,7 +297,9 @@ echo "X5: budget_hook_should_exit is the predicate the plugin path shares"
 # hook child's $PPID, so it needs the decision without the signal.
 xpred() {
   local pre=""; [ "$1" = 1 ] && pre="TF_SESSION_LOOP=1"
-  env $pre WORKSPACE_ROOT="$XTMP" bash -c '
+  # env -u first: the suite may itself run inside a session-loop supervisor,
+  # and an inherited TF_SESSION_LOOP would fake "inside" for the outside case.
+  env -u TF_SESSION_LOOP $pre WORKSPACE_ROOT="$XTMP" bash -c '
     . "$1/scripts/hooks/context-budget-hook-lib.sh"
     budget_hook_should_exit "$2" p; echo "rc=$?"' _ "$SRC_ROOT" "$2" 2>&1
 }
