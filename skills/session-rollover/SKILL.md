@@ -290,9 +290,13 @@ exchanges so STOP can't pass unnoticed.
      when this session must keep working (ADR-0004).
 
    Either way the counter advances at invocation, not at successor start. If
-   you run one and then don't follow through, rewind with
-   `scripts/context-budget.sh seq-sync --project <project> --session <N>` —
-   never by hand (ADR-0007, as amended by ADR-0008).
+   you run one and then don't follow through, abandon the staged successor with
+   `scripts/launch-next-session.sh <project> --unstage` — one command that
+   removes the seed/staged-command/handshake artifacts AND rewinds the counter
+   through seq-sync (never by hand; ADR-0007, as amended by ADR-0008). The
+   rewind and the file cleanup are one operation for a reason: doing them
+   separately is how a hand-converted seed left the counter one ahead and
+   tripped the lineage gate on the next launch.
 
    **Decide whether you are supervised — from disk, not from the environment.**
 
@@ -376,6 +380,14 @@ exchanges so STOP can't pass unnoticed.
 
 ## Guardrails
 
+- **Resumed after staging? Follow through or unstage — never re-roll on top.**
+  A resumed conversation (IDE restart, `--resume`) gets a NEW transcript id but
+  is still the same session; if it already staged/minted a successor, either
+  complete that staged launch or first run
+  `scripts/launch-next-session.sh <project> --unstage`. Rolling over again on
+  top of a staged successor leaves the counter one ahead with rollover-flavored
+  evidence, and the next launch halts at the lineage gate blaming a phantom
+  session.
 - **Specialized workflow state files win.** If a skill (onboard-repo, rlm, …) keeps
   its own state/handoff files, they stay authoritative — `next-session.md` carries
   thin pointers to them, never a fork of their content.

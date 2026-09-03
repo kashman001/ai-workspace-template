@@ -742,6 +742,30 @@
       workspace kept its local copy for exactly this reason).</p>
   </div>
 
+  <div class="find resolved">
+    <h3><span class="id">M37</span> Abandoning a staged successor is a missable two-step; the lineage gate then blames a phantom session
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-03 (downstream contribution, <code>fix/unstage-atomic-abandon</code>).
+      New <code>--unstage</code> mode: the atomic inverse of staging — removes whichever staged artifacts exist
+      (<code>.pending-clear-seed</code>, <code>.next-command</code>, the successor-pending handshake) AND rewinds the
+      counter through seq-sync (ADR-0008 single-writer preserved), only on the one-ahead staged-bump signature;
+      other mismatches refuse the rewind and name the manual fix. The gate's evidence refusal now detects the
+      resumed-predecessor fingerprint (all post-staging evidence is rollover bookkeeping: <code>rollover
+      start/complete</code> records + commits touching only <code>work/&lt;p&gt;/</code>, clean tree) and leads with
+      that diagnosis and <code>--unstage</code>; the neutral message and <code>--clear</code>'s abandon hint name
+      <code>--unstage</code> too. Docs/skill updated (context-budget.md, work-directory-conventions.md,
+      session-rollover SKILL.md, ADR-0009 amendment note). Regression cover: U-series in
+      <code>test-launch-next-session.sh</code> (249/0; T23i/C2g updated to the new message contract).</p>
+    <p><span class="k">Evidence</span> — downstream incident 2026-09-03: a session staged its successor, the IDE
+      restart resumed the predecessor under a NEW transcript id, and it converted the <code>--clear</code> seed to a
+      paste-prompt by hand without the separate seq-sync rewind. The next <code>session-loop.sh</code> start halted
+      at the lineage gate, whose evidence heuristic attributed the predecessor's own rollover-finalization record and
+      commit to the never-started staged session and steered toward reconstructing a phantom ledger block.</p>
+    <p><span class="k">Impact</span> — chain halts with a misleading diagnosis; the operator (or agent) is pointed
+      at fabricating a ledger block for a session that never ran, when the correct one-command repair existed only as
+      an undocumented two-step.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

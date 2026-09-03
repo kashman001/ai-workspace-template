@@ -99,6 +99,11 @@ one place. A parallel script would have duplicated both.
   has when a launch fails, with the same documented fix. `--clear` prints that
   exact rewind command (`context-budget.sh seq-sync --project <p> --session
   <N>`) on every real run, so the operator never has to derive it.
+  *(Amended 2026-09-03: the printed remedy is now
+  `launch-next-session.sh <p> --unstage`, which removes the abandoned seed AND
+  rewinds the counter — still through seq-sync — in one command; the two-step
+  manual form above proved missable when a resumed conversation converted the
+  seed by hand.)*
 - `--clear` is honoured even under `ROLLOVER_RELAUNCH=off`. That knob means "do
   not spawn a successor behind my back"; an explicitly typed `--clear` is not
   that. Regression-tested (C5).
