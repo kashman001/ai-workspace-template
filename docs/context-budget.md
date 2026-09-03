@@ -256,7 +256,7 @@ explicitly typed `--clear` is not that. It deliberately does **not** release
 `.active-session` or stamp the dying record `superseded`: the process survives
 `/clear`, so the record is still live. The counter bumps at invocation, so an
 abandoned `--clear` leaves it one ahead; the command prints the exact
-`seq-sync` rewind on every real run. Wiring the hook is the `SessionStart`
+`--unstage` remedy on every real run (see below). Wiring the hook is the `SessionStart`
 entry in the committed `.claude/settings.json`, which updates with `git pull` —
 a checkout predating that commit lacks it, and `--clear` then seeds a marker
 nothing drains.
@@ -271,10 +271,17 @@ no commits, a clean `work/<project>` tree — the launcher reclaims the number
 (rewinds the counter and continues, so the successor reuses it); with
 evidence, it refuses (exit 3) and prints what it found plus the two fixes —
 reconstruct the missing ledger block from that evidence, or abandon the
-number with the printed `seq-sync` rewind. Any other mismatch still refuses
-outright. The record check is workspace-wide (ledger entries carry no project
-field), so a false positive errs toward refusing — the conservative
-direction. See "How a session ends: two doors" in
+number with `launch-next-session.sh <project> --unstage`: the atomic inverse
+of staging, which removes the seed/staged-command/handshake artifacts and
+rewinds the counter via seq-sync in one command. When ALL the evidence is
+rollover bookkeeping — records labelled `rollover start`/`rollover complete`
+and commits touching only `work/<project>/` — the refusal instead leads with
+the likely diagnosis: the predecessor itself, resumed under a new transcript
+id (e.g. an IDE restart), finished its own rollover after staging, and the
+staged session never ran — `--unstage` is the primary remedy there. Any
+other mismatch still refuses outright. The record check is workspace-wide
+(ledger entries carry no project field), so a false positive errs toward
+refusing — the conservative direction. See "How a session ends: two doors" in
 `docs/work-directory-conventions.md` for the operator-facing contract.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written

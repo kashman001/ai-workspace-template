@@ -8,10 +8,16 @@
 #          ROLLOVER_RUNTIME > claude.
 # Usage:   launch-next-session.sh <project>
 #            [--runtime claude|codex|gemini|opencode|copilot] [--bg] [--dry-run]
-#            [--emit [<abs-path>]] [--skip-freshness] [--clear]
+#            [--emit [<abs-path>]] [--skip-freshness] [--clear] [--unstage]
 #          --clear: in-place relaunch (ADR-0009, claude-only) — seed
 #          work/<project>/.pending-clear-seed and let the human press /clear
 #          instead of spawning a successor process.
+#          --unstage: abandon a staged-but-never-started successor — remove
+#          the seed/staged-command/handshake artifacts and rewind the counter
+#          (via seq-sync, ADR-0008) when it sits exactly one ahead of the
+#          ledger top block. The atomic inverse of staging: use it instead of
+#          hand-running seq-sync + rm when a staged launch is not followed
+#          through (e.g. a --clear seed abandoned by an IDE restart).
 # Knobs:   ROLLOVER_RELAUNCH=off|manual|auto, ROLLOVER_RUNTIME (fallback
 #          only). Precedence: explicit env > work/<project>/context-budget.env
 #          (committed per-item policy, optional) > global context-budget.env >
@@ -67,7 +73,7 @@ STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 note() { echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
 
-PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0; EMIT=""; CLEAR=0
+PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0; EMIT=""; CLEAR=0; UNSTAGE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -75,6 +81,7 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY=1; shift ;;
     --skip-freshness) SKIP_FRESH=1; shift ;;
     --clear) CLEAR=1; shift ;;
+    --unstage) UNSTAGE=1; shift ;;
     # C2 — --emit takes an OPTIONAL argument. The bare form is resolved below
     # from this script's own WORKSPACE_ROOT (:64) — the identical expression
     # the supervisor uses at session-loop.sh:57 — so the agent never computes
@@ -91,7 +98,16 @@ while [ $# -gt 0 ]; do
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit [<abs-path>]] [--skip-freshness] [--clear]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit [<abs-path>]] [--skip-freshness] [--clear] [--unstage]"
+
+# --unstage abandons a staged successor; it stages and launches nothing, so
+# every mode that does is contradictory. Decided at parse time — a refused
+# invocation costs no side effects.
+if [ "$UNSTAGE" -eq 1 ]; then
+  [ "$CLEAR" -eq 0 ] || die "--unstage cannot be combined with --clear (one stages a seed, the other removes it)"
+  [ -z "$EMIT" ]     || die "--unstage cannot be combined with --emit (one stages a command, the other removes it)"
+  [ "$BG" -eq 0 ]    || die "--unstage launches nothing; --bg does not apply"
+fi
 
 # --emit: perform every real-run side effect, then write the command to a file
 # instead of exec'ing (spec: "Architecture" -> 2). exec would replace the
@@ -146,6 +162,75 @@ if [ "$SCRIPT_ROOT" != "$WORKSPACE_ROOT" ]; then
     note "worktree-invoked: dry-run would sync the main checkout, then launch from $WORKSPACE_ROOT"
   fi
   cd "$WORKSPACE_ROOT"
+fi
+
+# Top-of-ledger session number — shared by --unstage and the lineage gate.
+# ledger_file: the project's ledger, first existing of the two conventions.
+# top_ledger_session <file>: number from the top "# Session Handoff" heading,
+# empty when absent/unnumbered. Grammar mirrors check-ledger.py: strip ISO
+# dates first (so "2026" is never read as a session number), then accept
+# "session N" / "session #N" anywhere, or "— N"/"— sN" right after the
+# heading dash (current + sNNN title forms).
+ledger_file() {
+  local hf
+  for hf in "$WORKSPACE_ROOT/work/$PROJECT/handoff.md" \
+            "$WORKSPACE_ROOT/work/$PROJECT/session_handoff.md"; do
+    [ -f "$hf" ] && { printf '%s' "$hf"; return 0; }
+  done
+  return 1
+}
+top_ledger_session() {
+  grep -m1 -E '^#[[:space:]]*Session Handoff' "$1" 2>/dev/null \
+    | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}//g' \
+    | grep -oiE 'session[[:space:]]+#?[0-9]+|^#[[:space:]]*session handoff[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
+    | head -1 | grep -oE '[0-9]+' | head -1 || true
+}
+
+# --unstage: the atomic inverse of staging (2026-09-03 cm_bugs incident: a
+# staged successor was abandoned when an IDE restart resumed the predecessor
+# under a new transcript id; the seed was converted by hand but the counter
+# rewind — a separate manual step then — was missed, and the next launch hit
+# the lineage gate blaming a phantom session). Sits BEFORE the freshness
+# guard and the gate: the gate dies on exactly the state this repairs, and a
+# stale-launcher refusal must not block the repair. Removes whatever staged
+# artifacts exist and rewinds the counter through its single writer
+# (seq-sync, ADR-0008) — but only on the staged-bump signature (counter
+# exactly one ahead of the ledger top block). Any other mismatch is not
+# staging debris: the rewind is refused and the explicit remedy named.
+if [ "$UNSTAGE" -eq 1 ]; then
+  u_cur=""
+  [ -f "$WORKSPACE_ROOT/work/$PROJECT/.session-seq" ] \
+    && u_cur="$(tr -cd '0-9' < "$WORKSPACE_ROOT/work/$PROJECT/.session-seq" 2>/dev/null)"
+  u_did=0
+  for u_f in "$WORKSPACE_ROOT/work/$PROJECT/.pending-clear-seed" \
+             "$WORKSPACE_ROOT/work/$PROJECT/.next-command" \
+             "$STATE_DIR/successor-pending-$PROJECT.json"; do
+    [ -f "$u_f" ] || continue
+    if [ "$DRY" -eq 1 ]; then
+      note "unstage: would remove ${u_f#"$WORKSPACE_ROOT/"}"
+    else
+      rm -f "$u_f" && note "unstage: removed ${u_f#"$WORKSPACE_ROOT/"}"
+    fi
+    u_did=1
+  done
+  u_top=""
+  if u_hf="$(ledger_file)"; then u_top="$(top_ledger_session "$u_hf")"; fi
+  if [ -n "$u_top" ] && [ -n "$u_cur" ] && [ "$u_cur" = "$((u_top + 1))" ]; then
+    if [ "$DRY" -eq 1 ]; then
+      note "unstage: would rewind .session-seq $u_cur -> $u_top (via seq-sync)"
+    else
+      "$WORKSPACE_ROOT/scripts/context-budget.sh" seq-sync --project "$PROJECT" --session "$u_top" \
+        || die "unstage: seq-sync rewind failed — counter still at $u_cur"
+    fi
+    u_did=1
+  elif [ -n "$u_top" ] && [ "$u_cur" = "$u_top" ]; then
+    note "unstage: counter already matches the ledger top block ($u_top) — nothing to rewind"
+  elif [ -n "$u_cur" ]; then
+    note "unstage: counter=$u_cur vs ledger top block ${u_top:-unnumbered} is not the staged-bump signature (one ahead) — refusing to rewind; if the counter is wrong, correct it explicitly: scripts/context-budget.sh seq-sync --project $PROJECT --session <N>"
+  fi
+  [ "$u_did" -eq 1 ] \
+    || die "unstage: nothing staged for $PROJECT — no seed/staged-command/handshake file and the counter is not one ahead of the ledger"
+  exit 0
 fi
 
 [ -f "$WORKSPACE_ROOT/work/$PROJECT/next-session.md" ] \
@@ -291,20 +376,12 @@ done < <(all_checkouts)
 # VETO a number, never to DERIVE one. Complements ADR-0008: the assertion in
 # seq-sync catches a counter that disagrees with the LIVE session; this catches
 # one that disagrees with the ledger the successor is about to inherit.
-if [ -n "$LAST_SEQ" ]; then
-  for HF in "$WORKSPACE_ROOT/work/$PROJECT/handoff.md" \
-            "$WORKSPACE_ROOT/work/$PROJECT/session_handoff.md"; do
-    [ -f "$HF" ] || continue
-    # Number extraction mirrors check-ledger.py's grammar: strip ISO dates
-    # first (so "2026" is never read as a session number), then accept
-    # "session N" / "session #N" anywhere, or "— N"/"— sN" right after the
-    # heading dash (current + sNNN title forms). A heading with no session
+if [ -n "$LAST_SEQ" ] && HF="$(ledger_file)"; then
+    # Number extraction: top_ledger_session (shared with --unstage; grammar
+    # mirrors check-ledger.py — see its definition). A heading with no session
     # number yields empty and the gate is skipped — noted below, not silent.
     TOP_LINE="$(grep -m1 -E '^#[[:space:]]*Session Handoff' "$HF" 2>/dev/null || true)"
-    TOP_N="$(printf '%s\n' "$TOP_LINE" \
-             | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}//g' \
-             | grep -oiE 'session[[:space:]]+#?[0-9]+|^#[[:space:]]*session handoff[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
-             | head -1 | grep -oE '[0-9]+' | head -1 || true)"
+    TOP_N="$(top_ledger_session "$HF")"
     if [ -n "$TOP_LINE" ] && [ -z "$TOP_N" ]; then
       note "lineage gate: top ledger heading carries no session number — gate skipped ($HF)"
     fi
@@ -336,14 +413,61 @@ if [ -n "$LAST_SEQ" ]; then
           [ "$DRY" -eq 0 ] && printf '%s\n' "$TOP_N" > "$SEQF"
           LAST_SEQ="$TOP_N"
         else
-          die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
+          # Resumed-predecessor fingerprint (2026-09-03 cm_bugs incident): a
+          # predecessor resumed under a NEW transcript id (IDE restart) that
+          # finishes its own rollover AFTER staging leaves exactly this
+          # evidence — rollover-bookkeeping records plus commits touching only
+          # its own work item — and the staged session never ran. When ALL
+          # evidence matches that shape, lead with the likely diagnosis and
+          # --unstage; the reconstruct remedy stays available. Any
+          # non-matching evidence falls through to the neutral message
+          # (conservative: a false non-match only costs the better hint).
+          FP=1
+          if [ -n "$EV_RECORDS" ]; then
+            while IFS= read -r l; do
+              [ -z "$l" ] && continue
+              case "$l" in "rollover start"*|"rollover complete"*) : ;; *) FP=0; break ;; esac
+            done <<EOF_EV
+$EV_RECORDS
+EOF_EV
+          fi
+          if [ "$FP" -eq 1 ] && [ -n "$EV_COMMITS" ]; then
+            while read -r h _; do
+              [ -z "$h" ] && continue
+              # Any touched path outside work/$PROJECT breaks the fingerprint.
+              # Substring match, not anchored: log paths are repo-root-relative
+              # and the workspace may be nested inside the repository.
+              if git -C "$WORKSPACE_ROOT" show --name-only --format= "$h" 2>/dev/null \
+                 | grep -v '^$' | grep -vq "work/$PROJECT/"; then
+                FP=0; break
+              fi
+            done <<EOF_EV
+$EV_COMMITS
+EOF_EV
+          fi
+          [ -n "$EV_DIRTY" ] && FP=0
+          if [ "$FP" -eq 1 ]; then
+            die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
+All evidence since staging ($staged_iso) is rollover bookkeeping, not mission work:
+${EV_RECORDS:+  work-unit records: $(printf '%s' "$EV_RECORDS" | tr '\n' ';' )
+}${EV_COMMITS:+  commits since staging: $(printf '%s' "$EV_COMMITS" | tr '\n' ';')
+}This is the fingerprint of session $TOP_N itself, resumed under a NEW transcript id (e.g. an
+IDE restart), finishing its own rollover after staging — session $LAST_SEQ most likely never
+started. Abandon its number and clear the staged artifacts atomically:
+  scripts/launch-next-session.sh $PROJECT --unstage   then relaunch.
+If session $LAST_SEQ really did run, reconstruct its ledger block in work/$PROJECT/handoff.md
+from the evidence above instead, then relaunch."
+          else
+            die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
 Session $LAST_SEQ was staged ($staged_iso) and left evidence of work but no ledger block:
 ${EV_RECORDS:+  work-unit records: $(printf '%s' "$EV_RECORDS" | tr '\n' ';' )
 }${EV_COMMITS:+  commits since staging: $(printf '%s' "$EV_COMMITS" | tr '\n' ';')
 }${EV_DIRTY:+  uncommitted changes in work/$PROJECT: $(printf '%s' "$EV_DIRTY" | tr '\n' ';')
 }Reconstruct session $LAST_SEQ's ledger block in work/$PROJECT/handoff.md from that evidence
-(git log, the record labels, write-ahead files), then relaunch. Or, if the number should
-be abandoned instead: scripts/context-budget.sh seq-sync --project $PROJECT --session $TOP_N   then relaunch."
+(git log, the record labels, write-ahead files), then relaunch. Or, if the number should be
+abandoned instead: scripts/launch-next-session.sh $PROJECT --unstage   (clears staged
+seed/command artifacts and rewinds the counter via seq-sync), then relaunch."
+          fi
         fi
       else
         die "lineage gate: .session-seq=$LAST_SEQ but $HF top block is session $TOP_N.
@@ -351,8 +475,6 @@ The counter must hold the just-rolled-over session's number (launch does the +1)
 Fix: scripts/context-budget.sh seq-sync --project $PROJECT --session $TOP_N   (or correct the ledger if IT is wrong), then relaunch."
       fi
     fi
-    break
-  done
 fi
 # D6 "read my own record" — split (TE6 R1/R2) into the two legs it always
 # had, because only one of them may carry authority:
@@ -629,8 +751,8 @@ if [ "$CLEAR" -eq 1 ]; then
   printf '%s\n' "$PROMPT" > "$SEED" || die "could not write seed marker: $SEED"
   echo "project=$PROJECT runtime=$RUNTIME mode=clear seq=$SEQ seed=$SEED"
   note "the prompt above is seeded automatically — NOW PRESS /clear and type nothing."
-  note "if you do NOT clear, the counter is already at $SEQ; rewind with:"
-  note "  scripts/context-budget.sh seq-sync --project $PROJECT --session $LAST_SEQ"
+  note "if you do NOT clear (or the IDE restarts first), abandon the staged successor with:"
+  note "  scripts/launch-next-session.sh $PROJECT --unstage   (removes the seed and rewinds the counter)"
   exit 0
 fi
 

@@ -123,8 +123,11 @@ it leaves — a counter one ahead of the ledger's top block — and splits on
 evidence: a session that left **no trace** (no work-unit records, no commits,
 a clean work item) gets its number silently reclaimed at the next launch; a
 session that **did work** but wrote no ledger block makes the launcher refuse
-with a reconstruction brief (the evidence it found, and the `seq-sync` rewind
-as the alternative). Under `session-loop.sh`, a quit additionally pushes a
+with a reconstruction brief (the evidence it found, and
+`launch-next-session.sh <project> --unstage` — remove the staged artifacts
+and rewind the counter in one command — as the abandon alternative; evidence
+that is all rollover bookkeeping gets the resumed-predecessor diagnosis with
+`--unstage` first). Under `session-loop.sh`, a quit additionally pushes a
 chain-ended notification saying whether the ledger recorded the session.
 Mechanics: `docs/context-budget.md`.
 

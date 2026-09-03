@@ -307,7 +307,7 @@ assert_eq       "T23e: one-ahead + evidence -> exit 3" "$rc" "3"
 assert_contains "T23f: gate named"                  "$out" "lineage gate"
 assert_contains "T23g: counter value reported"      "$out" ".session-seq=10"
 assert_contains "T23h: ledger value reported"       "$out" "top block is session 9"
-assert_contains "T23i: remediation names seq-sync"  "$out" "seq-sync --project testproj --session 9"
+assert_contains "T23i: remediation names --unstage" "$out" "launch-next-session.sh testproj --unstage"
 assert_not_contains "T23j: refusal launches nothing" "$out" "cmd: claude"
 assert_contains "T23j2: evidence label shown"       "$out" "t23-work"
 rm -f "$TMP/.context-budget/context-ledger.jsonl"
@@ -416,6 +416,103 @@ rm -rf "$EV"
 # C-series must inherit nothing from T24.
 rm -f "$TMP/work/testproj/.session-seq" "$HF" "$TMP/.context-budget/context-ledger.jsonl"
 
+echo "U: --unstage — atomic abandon of a staged-but-never-started successor"
+# The rewind delegates to seq-sync (the counter's single writer, ADR-0008),
+# so the fixture needs context-budget.sh beside the launcher.
+cp "$SRC_ROOT/scripts/context-budget.sh" "$TMP/scripts/"
+printf '# Session Handoff — 2026-08-20 (session 9: a ledger block)\n' > "$HF"
+printf '10\n' > "$TMP/work/testproj/.session-seq"
+printf 'seeded prompt\n' > "$TMP/work/testproj/.pending-clear-seed"
+
+# Dry-run previews and mutates nothing.
+out=$(run_lns "$LNS" testproj --unstage --dry-run 2>&1); rc=$?
+assert_eq       "U1a: dry-run exit 0"            "$rc" "0"
+assert_contains "U1b: removal previewed"         "$out" "would remove"
+assert_contains "U1c: rewind previewed"          "$out" "would rewind"
+assert_eq "U1d: seed untouched"   "$(cat "$TMP/work/testproj/.pending-clear-seed")" "seeded prompt"
+assert_eq "U1e: counter untouched" "$(cat "$TMP/work/testproj/.session-seq")" "10"
+
+# Real run: seed removed AND counter rewound in the one command.
+out=$(run_lns "$LNS" testproj --unstage 2>&1); rc=$?
+assert_eq       "U2a: unstage exit 0"            "$rc" "0"
+assert_contains "U2b: seed removal announced"    "$out" "unstage: removed"
+assert_eq "U2c: seed gone"      "$(test -f "$TMP/work/testproj/.pending-clear-seed" && echo present || echo gone)" "gone"
+assert_eq "U2d: counter rewound to ledger" "$(cat "$TMP/work/testproj/.session-seq")" "9"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "U2e: launch passes after repair" "$rc" "0"
+assert_contains "U2f: successor number reused"    "$out" "rollover session #10"
+
+# Nothing staged: refuse loudly rather than report a repair that did nothing.
+out=$(run_lns "$LNS" testproj --unstage 2>&1); rc=$?
+assert_eq       "U3a: nothing staged -> exit 3"  "$rc" "3"
+assert_contains "U3b: says so"                   "$out" "nothing staged"
+
+# Counter beyond one-ahead is NOT staging debris: files are removed but the
+# rewind is refused and the explicit seq-sync remedy named.
+printf '12\n' > "$TMP/work/testproj/.session-seq"
+printf 'stale\n' > "$TMP/work/testproj/.next-command"
+out=$(run_lns "$LNS" testproj --unstage 2>&1); rc=$?
+assert_eq       "U4a: files removed -> exit 0"    "$rc" "0"
+assert_contains "U4b: rewind refused"             "$out" "refusing to rewind"
+assert_eq "U4c: counter untouched" "$(cat "$TMP/work/testproj/.session-seq")" "12"
+assert_eq "U4d: staged command gone" "$(test -f "$TMP/work/testproj/.next-command" && echo present || echo gone)" "gone"
+
+# Contradictory modes are refused at parse time.
+for bad in "--clear" "--emit /tmp/x" "--bg"; do
+  # shellcheck disable=SC2086
+  out=$(run_lns "$LNS" testproj --unstage $bad 2>&1); rc=$?
+  assert_eq "U5: --unstage $bad refused" "$rc" "3"
+done
+
+# Fingerprint diagnosis: one-ahead where ALL post-staging evidence is
+# rollover bookkeeping (a "rollover complete" record + commits touching only
+# work/<project>/, clean tree) = the predecessor resumed under a new
+# transcript id and finished its own rollover; the staged session never ran.
+# The refusal must lead with that diagnosis and name --unstage. Git evidence
+# needs a repo and $TMP must stay non-git — isolated mini-workspace.
+EVU="$(mktemp -d)"
+mkdir -p "$EVU/scripts" "$EVU/work/testproj" "$EVU/.context-budget/sessions"
+cp "$SRC_ROOT/scripts/launch-next-session.sh" "$SRC_ROOT/scripts/context-budget.sh" "$EVU/scripts/"
+printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$EVU/context-budget.env"
+printf '.context-budget/\n.session-seq*\n.pending-clear-seed\n.next-command\n' > "$EVU/.gitignore"
+echo "# launcher" > "$EVU/work/testproj/next-session.md"
+printf '# Session Handoff — 2026-08-20 (session 9: a ledger block)\n' \
+  > "$EVU/work/testproj/handoff.md"
+git -C "$EVU" init -q
+git -C "$EVU" add -A >/dev/null 2>&1
+GIT_COMMITTER_DATE="2019-01-01T00:00:00Z" git -C "$EVU" -c user.email=t@t -c user.name=t \
+  commit -qm "init" --date "2019-01-01T00:00:00Z" >/dev/null 2>&1
+printf '10\n' > "$EVU/work/testproj/.session-seq"
+touch -t 202001010100 "$EVU/work/testproj/.session-seq"
+printf '{"ts":"%s","label":"rollover complete: testproj (fresh-process handoff)"}\n' \
+  "$(date -u +%FT%TZ)" > "$EVU/.context-budget/context-ledger.jsonl"
+echo "# launcher v2" > "$EVU/work/testproj/next-session.md"
+git -C "$EVU" add work/testproj/next-session.md >/dev/null 2>&1
+git -C "$EVU" -c user.email=t@t -c user.name=t commit -qm "rollover finalized" >/dev/null 2>&1
+out=$(run_lns "$EVU/scripts/launch-next-session.sh" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "U6a: fingerprint still refuses"     "$rc" "3"
+assert_contains "U6b: resumed-predecessor diagnosis" "$out" "resumed under a NEW transcript id"
+assert_contains "U6c: --unstage is the remedy"       "$out" "launch-next-session.sh testproj --unstage"
+# Mixed evidence (a commit outside work/<project>) falls back to the neutral
+# reconstruct-first message.
+echo x > "$EVU/other.txt"
+git -C "$EVU" add other.txt >/dev/null 2>&1
+git -C "$EVU" -c user.email=t@t -c user.name=t commit -qm "unrelated work" >/dev/null 2>&1
+out=$(run_lns "$EVU/scripts/launch-next-session.sh" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "U6d: mixed evidence still refuses"  "$rc" "3"
+assert_contains "U6e: neutral reconstruct guidance"  "$out" "Reconstruct"
+# --unstage repairs the halted chain end-to-end.
+out=$(run_lns "$EVU/scripts/launch-next-session.sh" testproj --unstage 2>&1); rc=$?
+assert_eq "U6f: unstage repairs -> exit 0" "$rc" "0"
+assert_eq "U6g: counter rewound" "$(cat "$EVU/work/testproj/.session-seq")" "9"
+out=$(run_lns "$EVU/scripts/launch-next-session.sh" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq "U6h: launch passes after repair" "$rc" "0"
+rm -rf "$EVU"
+
+# C-series must inherit nothing from U.
+rm -f "$TMP/work/testproj/.session-seq" "$TMP/work/testproj/.session-seq.provenance.json" \
+      "$HF" "$TMP/scripts/context-budget.sh"
+
 echo "C: --clear in-place rollover (closes issue 04; ADR-0009)"
 SEEDF="$TMP/work/testproj/.pending-clear-seed"
 SEQF="$TMP/work/testproj/.session-seq"
@@ -439,7 +536,7 @@ assert_eq "C2c: counter bumped to 2"            "$(cat "$SEQF" 2>/dev/null)" "2"
 assert_not_contains "C2d: no process launched"  "$out" "cmd: claude"
 assert_contains "C2e: names the seed file"      "$out" ".pending-clear-seed"
 assert_contains "C2f: tells the human to clear" "$out" "/clear"
-assert_contains "C2g: rewind hint is exact"     "$out" "seq-sync --project testproj --session 1"
+assert_contains "C2g: abandon hint is exact"    "$out" "launch-next-session.sh testproj --unstage"
 rm -f "$SEEDF" "$SEQF"
 
 echo "C3: --clear keeps the lock and the registry record — the process is still alive"
