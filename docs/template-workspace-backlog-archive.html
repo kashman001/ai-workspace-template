@@ -766,6 +766,30 @@
       an undocumented two-step.</p>
   </div>
 
+  <div class="find resolved">
+    <h3><span class="id">M38</span> Supervised-chain halts are easy to cause and easy to miss: step 7's "rollover
+      complete" label invites skipping the sentinel, and no stock <code>SESSION_LOOP_NOTIFY</code> hook ships
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">skills/session-rollover · scripts</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-09 (downstream contribution, <code>fix/session-loop-notify-hook</code>).
+      Three pieces. (1) A red-flag block in <code>session-rollover/SKILL.md</code> after step 7: the
+      <code>record --label "rollover complete"</code> call only stamps the budget ledger — the supervisor never reads
+      it — so under supervision step 8's sentinel is still mandatory; treat "I recorded completion" as a trigger to
+      check step 8, never as evidence it happened. (2) A stock notify hook, <code>scripts/session-loop-notify.sh</code>:
+      desktop notification where available (macOS <code>osascript</code>, Linux <code>notify-send</code>) and an
+      unconditional echo so the message always lands in the supervisor's terminal/log; new suite
+      <code>scripts/tests/test-session-loop-notify.sh</code> (8/0). (3) <code>context-budget.md</code> documents the
+      wiring — <code>SESSION_LOOP_NOTIFY="${ROOT:-.}/scripts/session-loop-notify.sh"</code> — and why the
+      <code>${ROOT:-.}</code> guard is load-bearing: <code>launch-next-session.sh</code> sources the same env files
+      under <code>set -u</code> with no <code>ROOT</code>, so a bare <code>$ROOT</code> kills the launcher itself.</p>
+    <p><span class="k">Evidence</span> — downstream incident 2026-09-09: a supervised session ran step 7, skipped
+      step 8, and the supervisor HALTed after the session idled ~5h with no notification anywhere but the log; the
+      follow-up hardening then hit the second trap — a bare <code>$ROOT</code> in a per-item
+      <code>context-budget.env</code> broke <code>launch-next-session.sh</code> under <code>set -u</code>.</p>
+    <p><span class="k">Impact</span> — an unattended chain strands silently for hours; the knob built to surface
+      exactly that (<code>SESSION_LOOP_NOTIFY</code>) had no shipped implementation to point at, and naive wiring of
+      one could break the launcher.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">
