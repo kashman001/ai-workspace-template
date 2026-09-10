@@ -6,6 +6,41 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2 (2026-09-10): review list drained — cards archived, L45 filed, C2–C12 fixed; checkpoint
+
+**Summary.** Mission fully delivered in one commit `39224b8` on
+`review/template-improvement-review-s1` (now 2 ahead of main; not merged,
+not pushed — merging is the user's call). Suites 21/21 green
+(`test-turn-end-exit.sh` skips 4 tty assertions without a controlling
+terminal), structure + ledger checks clean.
+
+**Shipped.** M27/M28/M29/L38/L39 flipped Resolved with `Fixed:` lines and
+moved to the archive; new card **L45** (gitignored work dirs lost in
+worktree-forced background sessions, from A10); scorecard 1 open / 85
+resolved; two change-log rows. C2–C12 applied by one subagent pass (see
+`review.md` §C, all "done (session 2)"); `skills/vendored-skills.md` also
+gained `design-for-testability`. `work/template-maintenance/next-session.md`
+carries a supersede note (options-brief walk no longer needed).
+`work/README.md` rows for both items updated.
+
+**Decisions.** Commit trailer only: `probe-results.md` citations repointed
+to the session-loop spec's "Open questions" table because the file was never
+committed (C2c). No new Tier-2 note.
+
+**Open / next.** Nothing left for an agent in this item. Remaining items are
+user-only (`review.md` §E) plus: merge this branch; decide L45's fix
+direction (guard exemption vs. copy-back); review the five build-under-
+assumption choices in `decisions.md`. Item state: **complete pending merge**.
+
+**Learnings:**
+- Session 1's "main is 3 ahead of origin" snapshot was stale by session 2
+  (main == origin/main now): re-check `git log origin/main..main` at start
+  rather than trusting the launcher's branch arithmetic.
+- The review's C2 claim about `docs/adr/0008:125` was wrong (it cites
+  `decisions.md`, a provenance line, not `probe-results.md`); the subagent
+  verified before editing, which is the right discipline for stale-line
+  findings.
+
 # Session Handoff — 1 (2026-09-10): pooled review written, housekeeping + 5 design-gap cards built
 
 **Summary.** Created this item; surveyed every `work/*` item, the 5 open
