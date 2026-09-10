@@ -183,6 +183,20 @@ committed copy is a stale claim waiting to be checked out) and
 `.rollover-options` (per-launch flags for this machine's runtime, rewritten
 each rollover).
 
+**Local-only items and worktrees:** an item can be kept off the repo entirely
+(personal learning, client-confidential notes) by ignoring its whole directory
+— `work/<item>/` in `.gitignore`, or in `.git/info/exclude` for one machine.
+A git worktree carries tracked files only, so such an item is *absent* from
+the worktree a runtime isolates a background session into, and anything the
+session writes there dies with the worktree. `scripts/link-local-work.sh`
+closes that gap: on every per-tool hook firing and at `context-budget.sh
+register`, it symlinks each ignored `work/<item>/` from the main checkout into
+the worktree, so the session reads and writes the real directory. It never
+replaces a directory that already exists in the worktree and never links an
+untracked-but-not-ignored item (that symlink would be committable) — ignore
+an item *before* the first background session works it. Trap details:
+`docs/operational-knowledge.md` → "Local-only work items vanish in worktrees".
+
 ## Validation evidence (`uat.md`)
 
 `verification.md` is the author proving the criteria were met; `uat.md` is

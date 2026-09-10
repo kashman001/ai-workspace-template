@@ -630,6 +630,10 @@ acquire_lock() {
 
 cmd_register() {
   resolve_session
+  # From a worktree, share local-only work/<item>/ dirs in before the session
+  # reads its launcher (backlog L45); prints one line per new link.
+  [ -x "$WORKSPACE_ROOT/scripts/link-local-work.sh" ] \
+    && "$WORKSPACE_ROOT/scripts/link-local-work.sh" "$PWD" 2>/dev/null
   # Session boundary: the workspace telemetry log is shared append-only and
   # single-session — normally reset it so a new session never reads the previous
   # session's counts. But a non-empty log written in the last 10 min means

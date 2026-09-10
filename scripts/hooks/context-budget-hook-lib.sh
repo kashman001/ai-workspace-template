@@ -35,6 +35,11 @@ budget_hook_rank() { case "$1" in STOP) echo 2 ;; WARN) echo 1 ;; *) echo 0 ;; e
 budget_hook_check() {
   local runtime="$1" session_id="${2:-unknown}" transcript="${3:-}"
   [ -n "$session_id" ] || session_id="unknown"
+  # Worktree sessions: share local-only work/<item>/ dirs in from the main
+  # checkout (backlog L45). Before the throttle, on every firing — a write
+  # must never race the link. No-op (one git call) in the main checkout.
+  [ -x "$WORKSPACE_ROOT/scripts/link-local-work.sh" ] \
+    && "$WORKSPACE_ROOT/scripts/link-local-work.sh" "$PWD" >/dev/null 2>&1
   mkdir -p "$BUDGET_STATE_DIR" 2>/dev/null || return 0
   local stamp="$BUDGET_STATE_DIR/hook-$runtime-$session_id.stamp"
   local state="$BUDGET_STATE_DIR/hook-$runtime-$session_id.status"

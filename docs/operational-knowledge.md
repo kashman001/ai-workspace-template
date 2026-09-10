@@ -208,6 +208,33 @@ both hit twice (sessions 15 and 16):
   registry/locks are worktree-local and die with it. Launch the successor
   from the main checkout after pulling. *(Retired by the fix above.)*
 
+## Local-only work items vanish in worktrees — share them in, don't copy back
+
+A `work/<item>/` ignored via `.gitignore` or `.git/info/exclude` is not in
+the index, so `git worktree add` never materializes it. Claude Code's
+background sessions, `EnterWorktree`, and `Agent(isolation: worktree)` all
+work in `.claude/worktrees/<name>/`, so the item is simply missing there, and
+whatever the session writes under `work/<item>/` in the worktree is removed
+with it — a worktree whose only changes are ignored files even counts as
+"unchanged" and is auto-cleaned. The `learn-agentic-workflows` item paid
+this with a manual `cp` per session (backlog L45).
+
+- There is no repo-owned "guard" to exempt the directory from: the redirect is
+  the runtime's isolation. The fix is `scripts/link-local-work.sh`, which
+  symlinks each ignored item from the main checkout into the worktree;
+  Write/Edit tools write through a symlinked *directory* fine (only a
+  symlinked *file* is refused). It runs unthrottled from the shared hook lib
+  (every runtime's per-tool hook) and from `context-budget.sh register`, so
+  the first write in a worktree can't race the link.
+- A `work/<item>/` pattern with a trailing slash matches directories only, so
+  the symlink would show as `??` in the worktree and a blanket `git add -A`
+  there would commit it. The script registers the exact path (no slash) in
+  the shared `.git/info/exclude` after linking — expect that line to appear.
+- Copy-back at worktree exit was rejected: nothing repo-owned runs at
+  `ExitWorktree(remove)` or at the auto-clean, so it loses exactly the case
+  that hurts. A pre-existing real copy in a worktree (an old manual `cp`) is
+  left alone; delete it to get the link.
+
 ## Ledger headings break silently — verify the count, and check the archive after prep
 
 Two separate ledger-integrity failures inside one session (2026-08-22), both of
