@@ -6,6 +6,39 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-09-10): L45 probed live, merged to main, item complete (checkpoint)
+
+**Summary.** Live end-to-end probe of L45 via `Agent(isolation: worktree)`:
+the `work/learn-agentic-workflows` symlink appeared in the worktree, the
+probe write landed in the real directory, `.git/info/exclude` gained the
+exact `work/learn-agentic-workflows` line, and the worktree was auto-cleaned
+as "unchanged" while the write survived — the exact case the card named.
+Result recorded as a bullet in `operational-knowledge.md` (`7a98718`), then
+`fix/l45-gitignored-work-dirs` merged into main `--no-ff` (`5fd5480`).
+23/23 suites green on merged main; structure + ledger checks clean. Backlog
+row and archived card updated with the merge; `work/README.md` status row
+flipped to Complete. Local fix branch deleted (merged).
+
+**Decisions.** None new; promotion scan clean (no `Promote?: yes|maybe`).
+
+**Learnings:**
+- The worktree's branch is cut from `origin/main`, which predates the fix,
+  so it had no `scripts/link-local-work.sh` — yet the link appeared. Hooks
+  run the *main checkout's* lib (`CLAUDE_PROJECT_DIR` in the hook wiring;
+  the lib's root resolver walks to the git common dir). The fix therefore
+  holds in worktrees cut from any base.
+- The harness's worktree guard refuses compound `git -C "$PWD" …; pwd`
+  commands inside an isolated subagent; single commands pass.
+
+**Open / next.** Item **complete**. Only outstanding: pushing main (13
+ahead of `origin/main`) — the user's call, not done. `review.md` §E lists
+user-only items. `.claude/worktrees/learn-agentic-workflows-s2` still holds
+a stale real copy of that item (by design; delete it to get the link).
+`review/template-improvement-review-s1` is merged but not deleted.
+
+**Suggested skills.** None — no successor session planned. If reopened:
+`checkpoint` after the push.
+
 # Session Handoff — 3 (2026-09-10): L45 built and committed on a branch; rollover at WARN
 
 **Summary.** Built backlog **L45** test-first in one commit `5f51898` on
@@ -41,25 +74,3 @@ still holds a stale manual copy of that item — it will stay a real dir (by
 design) until deleted. Push of main remains the user's call.
 
 **Suggested skills.** verification-before-completion, checkpoint.
-
-# Session Handoff — 2 (2026-09-10): post-checkpoint — user approval, merged to main, rollover to build L45
-
-**Summary.** After the checkpoint the user approved every request in it
-("go build it"). Recorded in `decisions.md` (top note), then the branch was
-merged into local main (`0cba137`, --no-ff; main now 7 ahead of origin/main,
-**not pushed** — outward-facing, left to the user). Rolled over at WARN
-(135K) so L45 is built with headroom, not in the dumb zone.
-
-**Current state.** On `main`, clean tree, suites green at the branch tip
-(main's tip = that tip + merge commit). Backlog 1 open (L45) / 86 resolved.
-
-**Decisions.** The five build-under-assumption choices stand (user
-approval). L45's fix direction is delegated to session 3 after it reads the
-repo guard.
-
-**Next.** Session 3 builds L45 per `next-session.md`; then checkpoint or
-roll over. Push of main stays the user's call.
-
-**Suggested skills.** brainstorming (briefly, for the L45 direction), tdd,
-decision-log, checkpoint.
-

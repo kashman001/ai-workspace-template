@@ -1,3 +1,24 @@
+# Session Handoff — 2 (2026-09-10): post-checkpoint — user approval, merged to main, rollover to build L45
+
+**Summary.** After the checkpoint the user approved every request in it
+("go build it"). Recorded in `decisions.md` (top note), then the branch was
+merged into local main (`0cba137`, --no-ff; main now 7 ahead of origin/main,
+**not pushed** — outward-facing, left to the user). Rolled over at WARN
+(135K) so L45 is built with headroom, not in the dumb zone.
+
+**Current state.** On `main`, clean tree, suites green at the branch tip
+(main's tip = that tip + merge commit). Backlog 1 open (L45) / 86 resolved.
+
+**Decisions.** The five build-under-assumption choices stand (user
+approval). L45's fix direction is delegated to session 3 after it reads the
+repo guard.
+
+**Next.** Session 3 builds L45 per `next-session.md`; then checkpoint or
+roll over. Push of main stays the user's call.
+
+**Suggested skills.** brainstorming (briefly, for the L45 direction), tdd,
+decision-log, checkpoint.
+
 # Session Handoff — 2 (2026-09-10): review list drained — cards archived, L45 filed, C2–C12 fixed; checkpoint
 
 **Summary.** Mission fully delivered in one commit `39224b8` on
