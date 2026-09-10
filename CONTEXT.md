@@ -118,6 +118,11 @@ untagged skills assume an engineering operator.
 - **decision-log** *(anyone)* — capture the *why* behind a decision per the
   three-tier scheme above. `/decision <what + why + rejected>` (or
   `/decision promote <note>`)
+- **design-for-testability** — advisory design-time interrogation alongside
+  grill/spec/ADR work: how will we test this, how does it fail, what is
+  observable, what is the cheapest proving check; answers land in the spec's
+  `## Testability`, the ADR's Consequences, or `verification.md`. Not a gate.
+  `/design-for-testability [effort or design]`
 - **doc-review** *(anyone)* — multi-perspective review of a technical
   document: audience gate first, six independent reviewer subagents, findings
   synthesized into prioritized recommendations. `/doc-review <path>`

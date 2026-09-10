@@ -33,6 +33,13 @@ convention in front of them.
   Codex/Gemini/OpenCode, not just Claude Code) and shipped/documented for
   template downloaders.
 
+## Incoming pointers
+
+- `docs/postmortems/` (shipped 2026-09-10 for backlog card M29) forward-points
+  its action-item routing at this effort: when the intake convention lands,
+  replace the placeholder sentence in `docs/postmortems/README.md` with the
+  real route.
+
 ## Files
 
 - `next-session.md` — forward launcher (what to do next). REPLACED each rollover.

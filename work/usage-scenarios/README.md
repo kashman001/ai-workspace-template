@@ -37,6 +37,9 @@ item's sessions but were scoped OUT of its mission. They remain Open cards
 in `docs/template-workspace-backlog.html` (the authoritative record — grep
 the ID there for evidence/impact/fix detail):
 
+All three cards below are now **resolved** (M16 in `6152b8d`; L32/L33 in
+the devex fix packages) — kept as the record of what the scenarios surfaced.
+
 - **M16 (Medium)** — EnterWorktree mid-session relocates the claude
   transcript, staling the artifact path pinned by
   `scripts/context-budget.sh register`; a live session then looks dead and

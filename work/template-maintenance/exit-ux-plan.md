@@ -1,4 +1,4 @@
-# Exit-UX plan — session-end handling (approved design, ready to implement)
+# Exit-UX plan — session-end handling (HISTORICAL — shipped as M35, `4bf8cf0`)
 
 User approved (2026-08-31) building three changes + tests. Full scenario
 analysis happened in-conversation; this file is the write-ahead so a fresh

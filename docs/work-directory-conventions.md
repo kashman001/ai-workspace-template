@@ -144,6 +144,7 @@ Mechanics: `docs/context-budget.md`.
 | `map.md` + `issues/NN-<slug>.md` | Optional | Wayfinder map + decision tickets for the effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations" (governing skill: `skills/wayfinder/SKILL.md`). |
 | `spec.md` | Required when "done" is debatable | The effort's spec/PRD — skeleton, when-required rule, approval flow, and external-tracker (spec-of-record) handling: `docs/agents/issue-tracker.md` → "Spec conventions". Distinct from root `SPEC.md` (product-level Z0). **No spec → success criteria go in a `## Success criteria` section of `README.md`.** |
 | `verification.md` | Recommended when there's anything to verify | The evidence behind "done": test plan (before) + results (after) in one file (skeleton below). |
+| `uat.md` | Recommended when a human other than the author must judge the result | The **validation** evidence: who tests, against which spec items, and the verdict (skeleton below). |
 | `briefs/<audience>-vN.md` | Optional | Sealed, versioned export of project state to an out-of-workspace agent (see "Portable agent brief" below). |
 
 Keep everything else (state trackers, registries, run logs, specs) named for
@@ -181,6 +182,39 @@ the work is committed (the whole table above, plus a per-item
 committed copy is a stale claim waiting to be checked out) and
 `.rollover-options` (per-launch flags for this machine's runtime, rewritten
 each rollover).
+
+## Validation evidence (`uat.md`)
+
+`verification.md` is the author proving the criteria were met; `uat.md` is
+someone else judging whether the thing is right for its users — the UAT /
+beta half of pre-release V&V. Same shape, different judge:
+
+```markdown
+# UAT — <effort>
+
+Tester: <role — product owner, pilot user, second engineer>
+Covers: S1–S4   <!-- spec items (or README success-criteria items) under judgement -->
+Verdict: pending   <!-- pending | go | no-go -->
+
+## Plan
+<!-- written BEFORE the tester starts: what they walk through, and what "right" looks like -->
+
+- [ ] U1 — <scenario> (judges S1)
+- [ ] U2 — …
+
+## Results
+<!-- filled by or with the tester: date, what they did, what they saw, GO/NO-GO -->
+
+- U1 — GO 2026-01-15 — <observed>
+- U2 — NO-GO 2026-01-15 — <what was wrong for the user>
+```
+
+**Recording a no-go:** set `Verdict: no-go`, capture the *why* as a Tier-2
+decision note in `decisions.md` (`/decision`, per
+`skills/decision-log/SKILL.md` — the rejected alternative is the build as
+tested), and flip the spec's `Status:` back to `draft` so the criteria get
+reworked rather than the evidence. A rerun after rework appends a fresh dated
+`## Results` block.
 
 ## Portable agent brief (`briefs/<audience>-vN.md`)
 

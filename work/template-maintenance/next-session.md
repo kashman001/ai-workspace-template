@@ -26,12 +26,15 @@ regenerate the brief; verify state and stop.
 
 ## State snapshot
 
-- Session-15 work on worktree branch `worktree-tm-s15-options-brief`
-  (brief + this rollover); the launch ff-pushes it to main (launcher
-  self-heal). Verify with `git log --oneline -2` post-launch.
-- No code/test changes in session 15 — suites still 21 green as of s14
-  (registry 122/0, launcher 221/0, loop 76/0). Backlog: 5 open / 77 resolved
-  (unchanged; brief resolves nothing by itself).
+- Session-15 branch `worktree-tm-s15-options-brief` is merged into main
+  (verified s16, 2026-09-03). Three fixes landed on main after it via PRs
+  #41–#43 (M36 check-ledger heading, L44 TF_SESSION_LOOP scrub, M37
+  --unstage atomic abandon); each carried its own backlog update.
+- Suites re-run on current main in s16: 21/21 green (registry 122/0,
+  launcher 249/0, loop 76/0, vendor-hooks 85/0). Backlog: 5 open / 80
+  resolved (brief resolves nothing by itself).
+- All five `.claude/worktrees/*` branches are merged into main; the
+  worktrees are still present and locked — cleanup is a user call.
 
 ## First actions
 

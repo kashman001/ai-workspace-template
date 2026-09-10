@@ -24,6 +24,7 @@ why loading less is the point).
 | Verify an agent runtime loads the workspace context | [`agent-onboarding-check.md`](agent-onboarding-check.md) (canary + live checks; static test: `scripts/tests/test-agent-entrypoints.sh`) |
 | Onboard or navigate a product repo | [`repos-registry.md`](repos-registry.md), [`repo-context/`](repo-context/README.md) |
 | Avoid known build/CI/shell traps | [`operational-knowledge.md`](operational-knowledge.md) |
+| Record an incident and its learnings | [`postmortems/README.md`](postmortems/README.md) (blameless; agent drafts, human reviews) |
 
 ## Developing your product here
 

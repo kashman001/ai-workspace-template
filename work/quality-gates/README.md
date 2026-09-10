@@ -34,6 +34,16 @@ and the natural anchor for AI test tooling.
 - Wired per template rules: agent-agnostic (Codex/Gemini/OpenCode via
   CONTEXT.md, not just Claude Code) and shipped/documented for downloaders.
 
+## Incoming scope (routed here)
+
+- **L38 — dependency upgrades & test-suite health** (template backlog, SDLC gap
+  G8) was routed into this lane on 2026-09-10 by `template-improvement-review`:
+  dependency-upgrade policy (cadence, automation such as Renovate/Dependabot,
+  review bar for AI-generated upgrade PRs) and suite-health monitoring
+  (flakiness, runtime) belong with the flake policy designed here, not in a
+  separate convention. The card is resolved as "routed"; this README is the
+  only remaining record of the obligation.
+
 ## Files
 
 - `next-session.md` — forward launcher (what to do next). REPLACED each rollover.
