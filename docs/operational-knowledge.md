@@ -234,6 +234,13 @@ this with a manual `cp` per session (backlog L45).
   `ExitWorktree(remove)` or at the auto-clean, so it loses exactly the case
   that hurts. A pre-existing real copy in a worktree (an old manual `cp`) is
   left alone; delete it to get the link.
+- Probed live (2026-09-10) with `Agent(isolation: worktree)`: the link, the
+  write-through, and the exclude line all appeared, and the worktree was
+  auto-cleaned as "unchanged" while the write survived in the real dir. The
+  worktree's branch (cut from `origin/main`) did not even contain the script:
+  hooks run the *main checkout's* copy (`CLAUDE_PROJECT_DIR` in the hook
+  wiring, and the lib's root resolver walks to the git common dir), so the fix
+  holds in worktrees cut from a base that predates it.
 
 ## Ledger headings break silently — verify the count, and check the archive after prep
 
