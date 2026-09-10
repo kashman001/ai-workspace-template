@@ -766,6 +766,61 @@
       an undocumented two-step.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M27</span> No testability / failure-mode-analysis prompt at design time
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">skills · docs (design stage)</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-10 (<code>dc1f334</code>, <code>work/template-improvement-review/</code>
+      session 1). Native advisory skill <code>skills/design-for-testability/SKILL.md</code> +
+      <code>/design-for-testability</code> command, listed in <code>CONTEXT.md</code> beside the design skills; specs
+      gain an optional <code>## Testability</code> heading (<code>docs/agents/issue-tracker.md</code>) that the skill
+      fills. Interrogation covers how it is tested, how it fails, what is observable, and the cheapest proving check;
+      answers land in the spec, the ADR's Consequences, or <code>verification.md</code>. Advisory, not a gate
+      (decision note in the work item's <code>decisions.md</code>).</p>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G4</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N3 entry): design-stage decision capture is strong (decision-log, ADRs, trailers, graphify), but
+      testability/failure-mode analysis has no prompt or checklist anywhere — the quality lane's design station is
+      unmanned.</p>
+    <p><span class="k">Impact</span> — designs reach N4/N5 without anyone having asked "how will we test this /
+      how does it fail", so testability problems surface late, where they're expensive.</p>
+    <p><span class="k">Fix</span> — add a design-time prompt/checklist (skill or doc section) covering testability
+      as a design constraint and failure-mode analysis; wire it where design work already happens
+      (e.g. alongside <code>grill-with-docs</code> / ADR authoring).</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M28</span> No UAT/beta coordination support — the validation half of pre-release V&amp;V
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">skills · conventions (N5)</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-10 (<code>dc1f334</code>). <code>docs/work-directory-conventions.md</code>
+      gains a <code>uat.md</code> slot beside <code>verification.md</code>: who tests, success criteria taken from the
+      spec, where results land, and a no-go recorded as a Tier-2 decision note. Convention only — no
+      <code>/uat-plan</code> skill was built (decision note in the work item's <code>decisions.md</code>).</p>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G5</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N5 entry): <code>verification.md</code> covers the verification half (executing acceptance criteria with
+      evidence), but UAT/beta — real humans judging the real thing — has no template story.</p>
+    <p><span class="k">Impact</span> — validation gets skipped or improvised; a feature can pass every verification
+      gate and still be wrong for users, with no convention for catching that before release.</p>
+    <p><span class="k">Fix</span> — a lightweight UAT/beta coordination convention: who tests, against which
+      success criteria (from the spec), where results land, and how a no-go is recorded.</p>
+  </div>
+
+  <div class="find med resolved">
+    <h3><span class="id">M29</span> No postmortem convention — incident learnings evaporate
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs · conventions (N7)</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-10 (<code>dc1f334</code>). Committed <code>docs/postmortems/</code>
+      (README + <code>0000-template.md</code>), blameless: timeline, contributing factors, actions; the agent drafts
+      from the timeline, a human reviews. Threshold: any incident that cost a session or reached a user
+      (adopter-tunable). Pointers from <code>docs/operational-knowledge.md</code> and <code>docs/README.md</code>;
+      forward pointer to <code>work/feedback-intake/</code> rather than blocking on it.</p>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G6</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N7 entry): the template has homes for operational gotchas (<code>operational-knowledge.md</code>) and runbooks,
+      but no postmortem convention; incident learnings have nowhere durable to land.</p>
+    <p><span class="k">Impact</span> — the same incident classes recur; the N7→N1 learning edge stays broken even
+      after <code>work/feedback-intake/</code> lands, because there's no postmortem artifact to route.</p>
+    <p><span class="k">Fix</span> — a postmortem template/convention (blameless, timeline + contributing factors +
+      actions), with a defined landing place and a pointer from the feedback-intake convention once that exists.
+      AI assist is [established] for drafting postmortems from timelines per the map's evidence tiers.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">
@@ -1468,6 +1523,44 @@
       and the predicate returns rc 0.</p>
     <p><span class="k">Impact</span> — the suite is not runnable from inside a supervised session without a
       spurious failure; a real X5c regression would be indistinguishable from the environment artifact.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L38</span> Dependency upgrades &amp; test-suite health unowned
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs · conventions (N8)</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-10 (<code>dc1f334</code>) — resolved as <em>routed</em>, per the
+      options brief. <code>work/quality-gates/README.md</code> now carries an "Incoming scope" section owning
+      dependency-upgrade policy (cadence, automation, review bar for AI-generated upgrade PRs) and suite-health
+      monitoring alongside the flake policy designed there; that README is the remaining record of the
+      obligation.</p>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G8</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N8 entry): maintenance is otherwise well covered (<code>triage</code>, backlog conventions,
+      <code>onboard-repo</code> refresh), but dependency upgrades and test-suite-health monitoring (flakiness,
+      runtime) have no convention.</p>
+    <p><span class="k">Impact</span> — dependency rot and suite decay accumulate silently until they block work;
+      AI-generated dependency-upgrade PRs ([established]) have no template guidance on when/how to adopt them.</p>
+    <p><span class="k">Fix</span> — a short maintenance-cadence convention: dependency-upgrade policy (cadence,
+      automation, review bar) and test-suite health checks. Overlaps <code>work/quality-gates/</code> flake policy —
+      resolve there or here, not both.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L39</span> No generic backlog convention ships
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs · conventions (N8)</span></h3>
+    <p><span class="fix">Fixed:</span> 2026-09-10 (<code>dc1f334</code>). Posture declared as "bring your own
+      tracker" in <code>docs/agents/issue-tracker.md</code> ("Findings backlog" section): adopters point spec lines at
+      their tracker; for a self-tracked backlog, this file + the archive + the Maintaining rules are named as a
+      copyable worked example, with the advice to copy it before pruning the <code>CONTEXT.md</code> Template
+      Backlog section. A <code>create-backlog</code> scaffold was rejected — no adopter demand on record.</p>
+    <p><span class="k">Evidence</span> — SDLC map gap <strong>G9</strong> (<code>work/sdlc-ai-mapping/sdlc-map.md</code>,
+      N8 entry, surfaced by review-2 finding F10): the map's N8 entry claimed "backlog conventions (native)", but the
+      only backlog practice is the template repo's own (CLAUDE.md "Template Backlog" section + this file's maintenance
+      rules), which adopters are told to delete on instantiation. Nothing generic ships.</p>
+    <p><span class="k">Impact</span> — adopters wanting a lightweight self-tracked backlog (severity-scoped IDs,
+      status badges, archive rotation, scorecard) must reverse-engineer it from template-repo artifacts slated for
+      deletion; the issue-tracker conventions cover tickets, not a standing findings backlog.</p>
+    <p><span class="k">Fix</span> — extract the practice into a generic convention (doc section or scaffold) that
+      survives instantiation, or explicitly document "bring your own tracker" as the decided posture.</p>
   </div>
 
   <h2>Decisions</h2>

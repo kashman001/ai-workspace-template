@@ -204,9 +204,9 @@ regardless of the specific tool.
   workspace-local wrapper scripts.
 - **`mcp.json.example`** (checked in) — template so new users can copy and
   customize.
-- **`<Project>.code-workspace`** (checked in) — VS Code multi-root
-  workspace file. Registers each product repo as a workspace root for
-  IntelliSense, search, and debugging.
+- **`<Project>.code-workspace`** (optional; not shipped — create it if you
+  want one, checked in) — VS Code multi-root workspace file. Registers each
+  product repo as a workspace root for IntelliSense, search, and debugging.
 
 ### `.claude/` — Claude Code (Project-Level)
 
@@ -264,6 +264,8 @@ docs/
 ├── mcp-setup.md                # MCP server configuration guide
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 │
+├── adr/                        # Architecture Decision Records (Tier 3 of the decision scheme)
+├── postmortems/                # Blameless incident write-ups
 ├── agents/                     # Per-repo config the engineering skills consume
 │   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
 │
@@ -311,19 +313,31 @@ folder with at least a `SKILL.md` describing:
 ```
 skills/
 ├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
+├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
 ├── create-work-item/           # Scaffold a work/<project>/ dir (README + launcher + ledger)
 ├── decision-log/               # Capture the why (commit trailer → note → ADR)
+├── design-for-testability/     # Advisory design-time testability interrogation
+├── doc-review/                 # Multi-perspective review of a technical document
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
+├── research-wave/              # Parallel research, each result independently fact-checked
 ├── rlm/                        # Recursive Language Model loop for huge contexts
-├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
-├── wayfinder/                  # Map-of-decision-tickets planning (vendored from mattpocock/skills)
+├── to-spec/                    # Conversation → effort spec (adapted from mattpocock/skills)
+├── to-tickets/                 # Plan/spec → tracer-bullet tickets (adapted)
+├── triage/                     # Triage state machine (adapted)
+├── wayfinder/                  # Map-of-decision-tickets planning (adapted)
+├── writing-for-agents/         # Style guide for agent-consumed docs (adapted)
+├── tdd/, grill-with-docs/, …   # Vendored Matt Pocock engineering set — see skills/vendored-skills.md
 └── <your-domain-skills>/       # Project-specific workflows
 ```
 
-The template ships with `checkpoint`, `create-work-item`, `decision-log`,
-`onboard-repo`, `rlm`, `session-rollover`, and `wayfinder` (vendored from
-[mattpocock/skills](https://github.com/mattpocock/skills) — see its `SKILL.md`
-provenance comment for the refresh procedure); add your own alongside them. `decision-log` captures decision provenance — the
+The template ships with the native skills above (`checkpoint`,
+`session-rollover`, `create-work-item`, `decision-log`, `design-for-testability`,
+`doc-review`, `onboard-repo`, `research-wave`, `rlm`), the adapted
+`to-spec`/`to-tickets`/`triage`/`wayfinder`/`writing-for-agents`, and the
+vendored [mattpocock/skills](https://github.com/mattpocock/skills) engineering
+set — one-liners, slash-command map, refresh workflow
+(`scripts/sync-vendored-skills.sh`), and license in `skills/vendored-skills.md`;
+add your own alongside them. `decision-log` captures decision provenance — the
 *why* code can't record — as ephemeral notes under `work/<project>/decisions.md`,
 promoted to committed ADRs under `docs/adr/` for lasting-weight decisions.
 
@@ -520,6 +534,7 @@ scripts/
 ├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
 ├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
+├── sync-vendored-skills.sh        # Refresh the vendored Matt Pocock skills from an upstream clone
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
 │   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
 ├── mcp/                           # Workspace-local MCP servers
@@ -636,7 +651,7 @@ needed to authenticate and verify access without guessing:
 - **Username**: `you@example.com`
 - **Retrieve cmd** (macOS): `security find-generic-password -s atlassian-api-token -w`
 - **Verify cmd**: `curl -su "$USER:$TOKEN" https://your-org.atlassian.net/rest/api/3/myself`
-- **Used by**: MCP `atlassian-*` servers; `scripts/file-bug.sh`
+- **Used by**: MCP `atlassian-*` servers; `scripts/<your-script>.sh`
 - **Rotation**: every 90 days; rotate at id.atlassian.com → Account → Security
 ```
 

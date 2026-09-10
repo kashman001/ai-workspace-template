@@ -23,40 +23,41 @@ user can do it · **PARK** = deferred by design, revisit on its trigger.
 | A7 | `work/template-maintenance/next-session.md` session-16 snapshot uncommitted | git status | done |
 | A8 | Cross-item coupling unrecorded: L38 routed into quality-gates; M29 postmortem → feedback-intake forward pointer. Neither target README mentions it | options brief §L38/§M29 | done |
 | A9 | Stale banners: `template-maintenance/exit-ux-plan.md` ("ready to implement" — M35 shipped), `context-decay/trim-estimates.md` ("no trims yet" — declined 2026-08-07) | those files, line 1-5 | done |
-| A10 | Gitignored work dirs don't survive worktree-forced background sessions (manual `cp` back) — real friction, never carded | `work/learn-agentic-workflows/NOTES.md:26-28` | todo: file backlog card (next session) |
+| A10 | Gitignored work dirs don't survive worktree-forced background sessions (manual `cp` back) — real friction, never carded | `work/learn-agentic-workflows/NOTES.md:26-28` | done — filed as backlog card L45 (2026-09-10, session 2) |
 
 ## B. The 5 open design-gap cards (BUILD, per options brief)
 
 | Card | Direction taken | Status |
 |---|---|---|
-| L38 dep upgrades / suite health | ROUTE into `work/quality-gates/` scope; resolve card as routed | built — backlog card move pending |
-| L39 generic backlog convention | Declare "bring your own tracker" in `docs/agents/issue-tracker.md`, pointing at the template's own backlog files as a copyable worked example | built — backlog card move pending |
-| M29 postmortem convention | Committed `docs/postmortems/` (README + template), blameless; agent drafts, human reviews; forward pointer to feedback-intake | built — backlog card move pending |
-| M28 UAT/beta convention | Extend `docs/work-directory-conventions.md` with a `uat.md` slot (who tests, criteria from spec, results, no-go = Tier-2 decision note); convention only, no skill | built — backlog card move pending |
-| M27 testability / failure-mode prompt | Native companion skill `design-for-testability` (advisory interrogation), pointer beside `grill-with-docs`; suggested "Testability" heading in specs | built — backlog card move pending |
+| L38 dep upgrades / suite health | ROUTE into `work/quality-gates/` scope; resolve card as routed | done — card resolved + archived (session 2) |
+| L39 generic backlog convention | Declare "bring your own tracker" in `docs/agents/issue-tracker.md`, pointing at the template's own backlog files as a copyable worked example | done — card resolved + archived (session 2) |
+| M29 postmortem convention | Committed `docs/postmortems/` (README + template), blameless; agent drafts, human reviews; forward pointer to feedback-intake | done — card resolved + archived (session 2) |
+| M28 UAT/beta convention | Extend `docs/work-directory-conventions.md` with a `uat.md` slot (who tests, criteria from spec, results, no-go = Tier-2 decision note); convention only, no skill | done — card resolved + archived (session 2) |
+| M27 testability / failure-mode prompt | Native companion skill `design-for-testability` (advisory interrogation), pointer beside `grill-with-docs`; suggested "Testability" heading in specs | done — card resolved + archived (session 2) |
 
 ## C. Fresh-eyes findings (FIX unless noted)
 
 Baseline from the review: hook configs, command→skill links, skill
 frontmatter, gitignore, placeholders all verified clean. Defects are
-doc/reality drift. C1 is done in A1. Items marked "todo" are for the next
-session (one subagent can do C2–C12 in a single pass; they are all small
-doc edits).
+doc/reality drift. C1 is done in A1. C2–C12 were applied in session 2 by one subagent pass; C2(c) found
+`probe-results.md` was never committed (verdicts live in the session-loop
+spec), and the same dangling cite existed in `.codex/config.toml`,
+`.opencode/plugins/context-budget.js`, and the spec itself — all repointed.
 
 | # | Finding | Source | Fix | Status |
 |---|---|---|---|---|
 | C1 | `work/README.md` missing kimi-k3 row | work/README.md | (= A1) | done |
-| C2 | `docs/template-usage.md` §5 prune guide (l.179-182) claims only ADR lines + backlog rows point into `work/`; actually `docs/context-budget.md:157,639,750,758`, `docs/operational-knowledge.md:25`, `README.md:28` link into `work/automatic-session-rollover/…` and `work/usage-scenarios/scenarios.md`; `work/README.md` keeps rows for deleted dirs. Also `scripts/hooks/context-budget-{stop,gemini,opencode}-hook.sh` and `docs/adr/0008:125` cite `work/session-loop-automation/probe-results.md`, which does not exist at all | template-usage.md §5 | (a) §5: "reset `work/README.md` to header + empty table"; (b) list the docs pointers as expected-dangling or move the cited analyses into `docs/archive/`; (c) fix the `session-loop-automation` citations (find where probe results actually live via `git log -S probe-results`) | todo |
-| C3 | `docs/workspace-structure.md:313-325` skills inventory stale: lists 7 skills, calls `wayfinder` vendored, omits `doc-review`, `research-wave`, no pointer to `skills/vendored-skills.md` | workspace-structure.md | replace tree with the native list from CONTEXT.md + one vendored-set line; rebuild HTML | todo |
-| C4 | `skills/vendored-skills.md:76-78` workspace-authored list omits `research-wave` | vendored-skills.md | add it | todo |
-| C5 | `docs/README.md` skips `docs/workspace-setup.md`, `docs/agents/issue-tracker.md`, `docs/superpowers/{plans,specs}/` | docs/README.md | add rows for the first two; for `docs/superpowers/` add a "Developing the template" row or move to `docs/archive/` + prune list | todo |
-| C6 | Stop hook (`scripts/hooks/context-budget-stop-hook.sh`, wired in `.claude/settings.json` + `.codex/config.toml`) undocumented; `docs/context-budget.md:690-695` vendor table omits it; `sync-vendored-skills.sh` absent from workspace-structure scripts list | context-budget.md, workspace-structure.md | add to both table rows + "The supervisor" section; add the script line | todo |
-| C7 | `writing-for-agents` provenance: CONTEXT.md:142-144 lists it as native; SKILL.md carries upstream provenance and vendored-skills.md:62 says adapted | CONTEXT.md:146-153 | add it to the "(and the adapted …)" parenthetical | todo |
-| C8 | `docs/workspace-structure.md:207-209` documents a `<Project>.code-workspace` that does not exist | workspace-structure.md | mark optional or drop | todo |
-| C9 | `docs/workspace-structure.md:639` example cites nonexistent `scripts/file-bug.sh` | workspace-structure.md | generic placeholder | todo |
-| C10 | `.claude/settings.json.example` enables `youtube-transcript` though `.mcp.json.example` carries only graphify (youtube is a fragment) | settings.json.example | drop `youtube-transcript` from `enabledMcpjsonServers` | todo |
-| C11 | `docs/template-usage.md:97` placeholder-hunt grep matches HTML tags in `docs/*.html` | template-usage.md | add `--exclude='*.html'` | todo |
-| C12 | `docs/recommended-tooling.md:282` says setup-matt-pocock-skills scaffolds `triage-labels.md` + `domain.md`; it writes `triage-labels.md` only when `triage` is installed | recommended-tooling.md | qualify the sentence | todo |
+| C2 | `docs/template-usage.md` §5 prune guide (l.179-182) claims only ADR lines + backlog rows point into `work/`; actually `docs/context-budget.md:157,639,750,758`, `docs/operational-knowledge.md:25`, `README.md:28` link into `work/automatic-session-rollover/…` and `work/usage-scenarios/scenarios.md`; `work/README.md` keeps rows for deleted dirs. Also `scripts/hooks/context-budget-{stop,gemini,opencode}-hook.sh` and `docs/adr/0008:125` cite `work/session-loop-automation/probe-results.md`, which does not exist at all | template-usage.md §5 | (a) §5: "reset `work/README.md` to header + empty table"; (b) list the docs pointers as expected-dangling or move the cited analyses into `docs/archive/`; (c) fix the `session-loop-automation` citations (find where probe results actually live via `git log -S probe-results`) | done (session 2) |
+| C3 | `docs/workspace-structure.md:313-325` skills inventory stale: lists 7 skills, calls `wayfinder` vendored, omits `doc-review`, `research-wave`, no pointer to `skills/vendored-skills.md` | workspace-structure.md | replace tree with the native list from CONTEXT.md + one vendored-set line; rebuild HTML | done (session 2) |
+| C4 | `skills/vendored-skills.md:76-78` workspace-authored list omits `research-wave` | vendored-skills.md | add it | done (session 2) |
+| C5 | `docs/README.md` skips `docs/workspace-setup.md`, `docs/agents/issue-tracker.md`, `docs/superpowers/{plans,specs}/` | docs/README.md | add rows for the first two; for `docs/superpowers/` add a "Developing the template" row or move to `docs/archive/` + prune list | done (session 2) |
+| C6 | Stop hook (`scripts/hooks/context-budget-stop-hook.sh`, wired in `.claude/settings.json` + `.codex/config.toml`) undocumented; `docs/context-budget.md:690-695` vendor table omits it; `sync-vendored-skills.sh` absent from workspace-structure scripts list | context-budget.md, workspace-structure.md | add to both table rows + "The supervisor" section; add the script line | done (session 2) |
+| C7 | `writing-for-agents` provenance: CONTEXT.md:142-144 lists it as native; SKILL.md carries upstream provenance and vendored-skills.md:62 says adapted | CONTEXT.md:146-153 | add it to the "(and the adapted …)" parenthetical | done (session 2) |
+| C8 | `docs/workspace-structure.md:207-209` documents a `<Project>.code-workspace` that does not exist | workspace-structure.md | mark optional or drop | done (session 2) |
+| C9 | `docs/workspace-structure.md:639` example cites nonexistent `scripts/file-bug.sh` | workspace-structure.md | generic placeholder | done (session 2) |
+| C10 | `.claude/settings.json.example` enables `youtube-transcript` though `.mcp.json.example` carries only graphify (youtube is a fragment) | settings.json.example | drop `youtube-transcript` from `enabledMcpjsonServers` | done (session 2) |
+| C11 | `docs/template-usage.md:97` placeholder-hunt grep matches HTML tags in `docs/*.html` | template-usage.md | add `--exclude='*.html'` | done (session 2) |
+| C12 | `docs/recommended-tooling.md:282` says setup-matt-pocock-skills scaffolds `triage-labels.md` + `domain.md`; it writes `triage-labels.md` only when `triage` is installed | recommended-tooling.md | qualify the sentence | done (session 2) |
 
 ## D. Ready-to-act threads owned by other items (ROUTE)
 

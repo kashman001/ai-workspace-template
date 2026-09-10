@@ -94,7 +94,7 @@ Replace every `<…>` placeholder and resolve the `TODO` / "Fill in" comments:
 A fast way to find what's left:
 
 ```bash
-grep -rIn --exclude-dir=.git -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
+grep -rIn --exclude-dir=.git --exclude='*.html' -e '<[a-z-]\+>' -e 'TODO' -e 'Fill in:' .
 ```
 
 ## 3. Wire up agents & MCP
@@ -176,10 +176,16 @@ git commit -m "prune template-development artifacts"
 ```
 
 (`work/.gitkeep` keeps the directory; delete `docs/template-usage.md` last,
-once you're done with it.) Two kinds of pointers into the deleted `work/`
-dirs remain by design and are safe to leave dangling: ADR `Promoted from:` /
-`Refs:` provenance lines, and history rows in the template backlog — both
-record where a decision came from, not content you need.
+once you're done with it.) Then reset `work/README.md` to its header comment,
+intro, and an empty status table — its rows describe the dirs you just
+deleted. Pointers into the deleted `work/` dirs remain by design and are safe
+to leave dangling: ADR `Promoted from:` / `Refs:` provenance lines, history
+rows in the template backlog, and a few committed docs that cite
+template-development analyses for the record — `docs/context-budget.md`
+(`work/automatic-session-rollover/…` smoke-test, stats, and ticket files),
+`docs/operational-knowledge.md` (`work/automatic-session-rollover/relaunch-analysis.md`),
+`docs/zoom-model.md` and `README.md` (`work/usage-scenarios/scenarios.md`).
+All record where a claim or decision came from, not content you need.
 
 `scripts/setup.sh` reminds you about this section while the backlog pair is
 still present.

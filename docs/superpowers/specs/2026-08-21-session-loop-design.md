@@ -638,9 +638,9 @@ discovery: `launch-next-session.sh` already pins successors to the main checkout
 (`:96`) and already ff-merges the work branch unattended (`:115`). See
 "Worktrees" → layer 2, points 3–4.
 
-Questions 1–4 were probed on 2026-08-24; evidence and method are in
-`work/session-loop-automation/probe-results.md`, and the answers are folded into the
-tables above.
+Questions 1–4 were probed on 2026-08-24 (the probe log,
+`work/session-loop-automation/probe-results.md`, was a local work file and was
+never committed); the answers are folded into the tables above.
 
 | # | Question | Answer |
 | --- | --- | --- |

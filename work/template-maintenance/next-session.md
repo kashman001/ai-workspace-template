@@ -2,6 +2,13 @@
 
 ## Mission
 
+> **Superseded 2026-09-10:** `work/template-improvement-review/` built all
+> five cards under stated assumptions (its `decisions.md`; backlog now
+> 1 open / 85 resolved, M27/M28/M29/L38/L39 archived) after the user
+> authorised autonomous improvement. Walking the brief is no longer needed;
+> the user's review of those choices, if any, replaces it. Next session:
+> verify state, then take direction — the paragraph below is history.
+
 Blocked on user input. Session 15 wrote
 `work/template-maintenance/open-cards-options-brief.md` — an options brief
 for the 5 remaining open cards (M27 testability prompt, M28 UAT/beta,
@@ -32,7 +39,7 @@ regenerate the brief; verify state and stop.
   --unstage atomic abandon); each carried its own backlog update.
 - Suites re-run on current main in s16: 21/21 green (registry 122/0,
   launcher 249/0, loop 76/0, vendor-hooks 85/0). Backlog: 5 open / 80
-  resolved (brief resolves nothing by itself).
+  resolved at s16; 1 open / 85 resolved after 2026-09-10 (see note above).
 - All five `.claude/worktrees/*` branches are merged into main; the
   worktrees are still present and locked — cleanup is a user call.
 

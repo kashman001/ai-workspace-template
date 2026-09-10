@@ -155,7 +155,8 @@ from `github.com/mattpocock/skills` ships in `skills/` alongside the above:
 `resolving-merge-conflicts`, `wizard`, `ask-matt`, `handoff`, `teach`,
 `to-questionnaire`, `wait-what`, `setup-matt-pocock-skills`,
 `git-guardrails-claude-code`, `setup-pre-commit` (and the adapted
-`to-spec`/`to-tickets`/`triage`/`wayfinder` above). One-liners, slash-command
+`to-spec`/`to-tickets`/`triage`/`wayfinder`/`writing-for-agents` above).
+One-liners, slash-command
 map, refresh workflow (`scripts/sync-vendored-skills.sh`), and license:
 `skills/vendored-skills.md`. Run `setup-matt-pocock-skills` once per repo
 before the tracker-dependent ones.
