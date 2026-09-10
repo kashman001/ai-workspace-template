@@ -10,8 +10,8 @@ The review list is drained (session 2, commit `39224b8`). This item is
 **complete pending merge**; there is no unattended agent work left. With the
 user present:
 
-1. Merge `review/template-improvement-review-s1` into main (2 commits:
-   `dc1f334`, `39224b8`); run the suites once more on main after the merge.
+1. Merge `review/template-improvement-review-s1` into main (it already
+   contains origin/main as of PR #44); run the suites once more after.
 2. Walk `review.md` §E (user-only items) and take direction on each.
 3. Ask whether the five build-under-assumption choices (`decisions.md`)
    stand — each is a cheap doc/skill reversal.
@@ -34,13 +34,13 @@ Unattended: verify state and stop — nothing to build.
 
 ## State snapshot
 
-- Branch `review/template-improvement-review-s1`, clean tree, 2 ahead of
-  main; main == origin/main.
+- Branch `review/template-improvement-review-s1`, clean tree, ahead of
+  main (= origin/main `ccbb27a`), merge of origin/main included.
 - Suites 21/21 green; structure + ledger checks clean. Backlog 1 open (L45) /
-  85 resolved.
+  86 resolved.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
-2. `git status --short && git log --oneline main..HEAD` — expect a clean tree and the two commits above.
+2. `git fetch && git status --short && git log --oneline main..HEAD` — expect a clean tree; re-merge if origin moved again.
 3. Continue per Mission.

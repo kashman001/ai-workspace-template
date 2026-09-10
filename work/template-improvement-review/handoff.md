@@ -9,15 +9,16 @@ Convention: docs/work-directory-conventions.md.
 # Session Handoff — 2 (2026-09-10): review list drained — cards archived, L45 filed, C2–C12 fixed; checkpoint
 
 **Summary.** Mission fully delivered in one commit `39224b8` on
-`review/template-improvement-review-s1` (now 2 ahead of main; not merged,
-not pushed — merging is the user's call). Suites 21/21 green
+`review/template-improvement-review-s1` (not merged, not pushed — merging is
+the user's call); origin/main (PR #44, M38) merged into the branch at
+checkpoint, backlog conflicts resolved, M38's missing change-log row added. Suites 21/21 green
 (`test-turn-end-exit.sh` skips 4 tty assertions without a controlling
 terminal), structure + ledger checks clean.
 
 **Shipped.** M27/M28/M29/L38/L39 flipped Resolved with `Fixed:` lines and
 moved to the archive; new card **L45** (gitignored work dirs lost in
-worktree-forced background sessions, from A10); scorecard 1 open / 85
-resolved; two change-log rows. C2–C12 applied by one subagent pass (see
+worktree-forced background sessions, from A10); scorecard 1 open / 86
+resolved (incl. M38 from PR #44); two change-log rows. C2–C12 applied by one subagent pass (see
 `review.md` §C, all "done (session 2)"); `skills/vendored-skills.md` also
 gained `design-for-testability`. `work/template-maintenance/next-session.md`
 carries a supersede note (options-brief walk no longer needed).
@@ -33,9 +34,11 @@ direction (guard exemption vs. copy-back); review the five build-under-
 assumption choices in `decisions.md`. Item state: **complete pending merge**.
 
 **Learnings:**
-- Session 1's "main is 3 ahead of origin" snapshot was stale by session 2
-  (main == origin/main now): re-check `git log origin/main..main` at start
-  rather than trusting the launcher's branch arithmetic.
+- Session 1's "main is 3 ahead of origin" snapshot was stale by session 2:
+  local main had been pushed and origin/main had gained PR #44, which also
+  edited the backlog files. Run `git fetch && git log main..origin/main` at
+  start, before touching the backlog, rather than trusting the launcher's
+  branch arithmetic. PR #44 also skipped its change-log row (rule 6 applied).
 - The review's C2 claim about `docs/adr/0008:125` was wrong (it cites
   `decisions.md`, a provenance line, not `probe-results.md`); the subagent
   verified before editing, which is the right discipline for stale-line

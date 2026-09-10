@@ -382,6 +382,25 @@ overrides per work item, the same precedence `ROLLOVER_RELAUNCH` uses.
 | `SESSION_LOOP_STALL_LIMIT` | 3 | a stuck chain committing only bookkeeping (failure mode 2) |
 | `SESSION_LOOP_NOTIFY` | unset | a command run with the halt message as `$1` |
 
+A stock hook ships at `scripts/session-loop-notify.sh`: desktop notification
+where available (macOS `osascript`, Linux `notify-send`), plus an echo of the
+message as a fallback for callers that do no logging of their own. Under
+`session-loop.sh` that echo is deliberately discarded — the supervisor's
+`notify()` has already written the message to stderr and `.session-loop.log`
+before invoking the hook, so there the hook only adds the desktop
+notification. Wire it in an env file as
+
+```sh
+SESSION_LOOP_NOTIFY="${ROOT:-.}/scripts/session-loop-notify.sh"
+```
+
+The `${ROOT:-.}` guard is load-bearing, not style: `session-loop.sh` sets
+`ROOT` before sourcing the env files, but `launch-next-session.sh` sources the
+same files under `set -u` with no `ROOT` — a bare `$ROOT` there kills the
+launcher itself, not just the hook (measured 2026-09-09 in a downstream
+workspace). The same applies to any variable referenced in a
+`context-budget.env` value: expand it with a `${VAR:-fallback}` default.
+
 **Stall detection** counts *consecutive* hands-off sessions whose commits touched
 nothing outside the rollover bookkeeping set — `next-session.md`, `handoff.md`,
 `handoff-archive.md`, and the counter. That exclusion is the whole guard, because
