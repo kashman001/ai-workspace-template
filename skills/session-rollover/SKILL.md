@@ -352,6 +352,15 @@ exchanges so STOP can't pass unnoticed.
 
 7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
 
+   **Red flag — this record is NOT the sentinel.** The label says "rollover
+   complete", but it only stamps the budget ledger; the supervisor never reads
+   it. If step 6 answered "supervised", step 8 below is still mandatory —
+   skipping it strands the chain (measured 2026-09-09 in a downstream
+   workspace: a supervised session ran this step, skipped step 8, and the
+   supervisor HALTed after the session idled ~5h; the Stop hook stayed inert
+   the whole time). Treat "I recorded completion" as a trigger to check
+   step 8, never as evidence it already happened.
+
 8. **Under the supervisor only — write the sentinel, last.** If step 6's
    `supervised` query answered 0 or 2, the very last thing you do is:
 
