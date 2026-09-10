@@ -6,6 +6,42 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 3 (2026-09-10): L45 built and committed on a branch; rollover at WARN
+
+**Summary.** Built backlog **L45** test-first in one commit `5f51898` on
+`fix/l45-gitignored-work-dirs` (off main `6f8c6c2`; not merged, not pushed).
+New `scripts/link-local-work.sh` symlinks every ignored `work/<item>/` from
+the main checkout into a git worktree; called unthrottled from the shared
+hook lib (all six runtimes' per-tool hooks) and from `context-budget.sh
+register`. Suite `test-link-local-work.sh` 30/30; all 22 suites green,
+structure + ledger checks clean; guide HTML rebuilt. Card L45 archived,
+scorecard 0 open / 87 resolved, change-log row added. Docs:
+`work-directory-conventions.md` (local-only items + worktrees),
+`operational-knowledge.md` (new entry), `workspace-structure.md` tree line.
+Rolled over at WARN (130K).
+
+**Decisions.** Tier-2 note (top of `decisions.md`): share-in by symlink; the
+card's "repo guard" does not exist in repo code — the redirect is the
+runtime's own worktree isolation — so exemption was impossible, and
+copy-back loses the auto-cleaned "unchanged" worktree case.
+
+**Learnings:**
+- A `work/<item>/` ignore pattern (trailing slash) matches directories only;
+  a symlink at that path shows as `??` in the worktree. The script registers
+  the exact path in the shared `.git/info/exclude` after linking.
+- Claude Code's Write/Edit tools write through a symlinked *directory*
+  (verified in scratchpad); the CONTEXT.md refusal is for symlinked files.
+- `work/learn-agentic-workflows` is excluded via `.git/info/exclude`, not
+  `.gitignore`; the fix handles both.
+
+**Open / next.** Not yet done: a live end-to-end probe in a real worktree
+session (register + hook wiring under Claude Code's isolation), merging the
+branch into main, and `checkpoint`. `.claude/worktrees/learn-agentic-workflows-s2`
+still holds a stale manual copy of that item — it will stay a real dir (by
+design) until deleted. Push of main remains the user's call.
+
+**Suggested skills.** verification-before-completion, checkpoint.
+
 # Session Handoff — 2 (2026-09-10): post-checkpoint — user approval, merged to main, rollover to build L45
 
 **Summary.** After the checkpoint the user approved every request in it
@@ -26,42 +62,4 @@ roll over. Push of main stays the user's call.
 
 **Suggested skills.** brainstorming (briefly, for the L45 direction), tdd,
 decision-log, checkpoint.
-
-# Session Handoff — 2 (2026-09-10): review list drained — cards archived, L45 filed, C2–C12 fixed; checkpoint
-
-**Summary.** Mission fully delivered in one commit `39224b8` on
-`review/template-improvement-review-s1` (not merged, not pushed — merging is
-the user's call); origin/main (PR #44, M38) merged into the branch at
-checkpoint, backlog conflicts resolved, M38's missing change-log row added. Suites 21/21 green
-(`test-turn-end-exit.sh` skips 4 tty assertions without a controlling
-terminal), structure + ledger checks clean.
-
-**Shipped.** M27/M28/M29/L38/L39 flipped Resolved with `Fixed:` lines and
-moved to the archive; new card **L45** (gitignored work dirs lost in
-worktree-forced background sessions, from A10); scorecard 1 open / 86
-resolved (incl. M38 from PR #44); two change-log rows. C2–C12 applied by one subagent pass (see
-`review.md` §C, all "done (session 2)"); `skills/vendored-skills.md` also
-gained `design-for-testability`. `work/template-maintenance/next-session.md`
-carries a supersede note (options-brief walk no longer needed).
-`work/README.md` rows for both items updated.
-
-**Decisions.** Commit trailer only: `probe-results.md` citations repointed
-to the session-loop spec's "Open questions" table because the file was never
-committed (C2c). No new Tier-2 note.
-
-**Open / next.** Nothing left for an agent in this item. Remaining items are
-user-only (`review.md` §E) plus: merge this branch; decide L45's fix
-direction (guard exemption vs. copy-back); review the five build-under-
-assumption choices in `decisions.md`. Item state: **complete pending merge**.
-
-**Learnings:**
-- Session 1's "main is 3 ahead of origin" snapshot was stale by session 2:
-  local main had been pushed and origin/main had gained PR #44, which also
-  edited the backlog files. Run `git fetch && git log main..origin/main` at
-  start, before touching the backlog, rather than trusting the launcher's
-  branch arithmetic. PR #44 also skipped its change-log row (rule 6 applied).
-- The review's C2 claim about `docs/adr/0008:125` was wrong (it cites
-  `decisions.md`, a provenance line, not `probe-results.md`); the subagent
-  verified before editing, which is the right discipline for stale-line
-  findings.
 
