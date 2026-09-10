@@ -1588,6 +1588,34 @@
       survives instantiation, or explicitly document "bring your own tracker" as the decided posture.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L45</span> Gitignored work directories do not survive worktree-forced background sessions
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">.claude/settings.json (repo guard) · docs/work-directory-conventions.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/learn-agentic-workflows/NOTES.md</code> (local-only item): the
+      repo guard forces a background session's writes into a <code>.claude/worktrees/*</code> checkout; a git worktree
+      carries tracked files only, so a gitignored <code>work/&lt;item&gt;/</code> is absent there, and the worktree is
+      deleted at session end. The item's author syncs teaching files back to the real directory with a manual
+      <code>cp</code> every session. Real, recurring friction; never carded.</p>
+    <p><span class="k">Impact</span> — any local-only (gitignored) work item silently loses a background session's
+      output unless the operator remembers the copy-back; the launcher/ledger discipline that protects tracked items
+      does not apply.</p>
+    <p><span class="k">Fix</span> — document the trap in <code>docs/work-directory-conventions.md</code> (local-only
+      items + background/worktree sessions) and <code>docs/operational-knowledge.md</code>; then either exempt
+      gitignored <code>work/</code> dirs from the guard's worktree redirect, or have <code>rollover-prep.sh</code> /
+      the worktree-exit path copy them back. Decide which after checking how often local-only items are worked in the
+      background.</p>
+    <p><span class="k">Fixed</span> — 2026-09-10 (<code>work/template-improvement-review/</code> session 3). The
+      "repo guard" is the runtime's own worktree isolation, not repo code, so the directory is shared <em>into</em> the
+      worktree instead: <code>scripts/link-local-work.sh</code> symlinks every ignored <code>work/&lt;item&gt;/</code>
+      from the main checkout into the worktree, unthrottled from the shared hook lib (all six runtimes' per-tool
+      hooks) and from <code>context-budget.sh register</code>; never replaces an existing path, never links an
+      untracked-but-not-ignored item, and registers the exact path in <code>.git/info/exclude</code> (a
+      trailing-slash pattern would let the symlink show as untracked). Copy-back rejected as lossy (a worktree whose
+      only changes are ignored files is auto-cleaned as "unchanged"). Tests: <code>test-link-local-work.sh</code>
+      (30 asserts). Docs: <code>work-directory-conventions.md</code> (local-only items),
+      <code>operational-knowledge.md</code>.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

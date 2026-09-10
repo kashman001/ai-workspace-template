@@ -527,6 +527,7 @@ scripts/
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
 ├── context-inspect.sh             # Break down what fills a session's context window
 ├── context-experiment.sh          # Reproducible headless context experiment harness
+├── link-local-work.sh             # Share ignored work/<item>/ dirs into a worktree by symlink (L45)
 ├── rollover-prep.sh               # One-shot mechanical prep for a session rollover
 ├── capture-rollover-options.sh    # Capture the session's launch options for replay
 ├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt

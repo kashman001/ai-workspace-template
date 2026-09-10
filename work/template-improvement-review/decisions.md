@@ -2,6 +2,33 @@
 
 Tier-2 notes (see `skills/decision-log/SKILL.md`). Newest on top.
 
+## 2026-09-10 — L45: share local-only work items into worktrees by symlink (not copy-back, not a guard exemption)
+
+**Decision:** a new `scripts/link-local-work.sh` symlinks every ignored
+(`.gitignore` or `.git/info/exclude`) top-level `work/<item>/` from the main
+checkout into a worktree that lacks it, so a worktree-isolated session reads
+and writes the real directory and nothing dies with the worktree. It runs on
+every per-tool hook firing (shared `context-budget-hook-lib.sh`, so all six
+runtimes get it, unthrottled so no write can race the link) and at
+`context-budget.sh register`. Pre-existing real directories in the worktree
+are never touched; untracked-but-not-ignored items are never linked (a
+symlink would be committable).
+**Why:** the "repo guard" named on the card does not exist in repo code —
+the redirect is the runtime's own worktree isolation (Claude Code
+`EnterWorktree` / `isolation: worktree` / background sessions), so
+"exempt the dirs from the guard" is only realizable by sharing the directory
+in. Verified in-session that Claude Code's Write/Edit tools write through a
+symlinked *directory* (the symlink-file refusal in CONTEXT.md is about
+symlinked files).
+**Rejected:** (a) guard exemption — no repo-owned guard to edit. (b) copy-back
+on worktree exit / in `rollover-prep.sh` — lossy by construction: a worktree
+whose only changes are ignored files looks *unchanged* and is auto-removed
+before anything repo-owned runs, and `ExitWorktree(remove)` is a runtime
+tool with no repo hook. (c) doc-only — the operator already does the manual
+`cp`; the card is about removing that.
+**Reversal cost:** delete the script and its two one-line call sites.
+**Promote?:** no.
+
 ## 2026-09-10 — User approved the session-2 checkpoint requests
 
 **Decision:** the user approved "the things requested above" at the session-2
