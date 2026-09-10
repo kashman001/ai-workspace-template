@@ -11,7 +11,8 @@ set -u
 # Session-loop supervisor exit. Unlike every other runtime, opencode does NOT
 # signal from here: the plugin runs inside the terminal-owning opencode process
 # and self-kills with process.pid (verified end-to-end, 1.18.15 — see
-# work/session-loop-automation/probe-results.md Q3). This hook only decides.
+# docs/superpowers/specs/2026-08-21-session-loop-design.md -> "Open questions"
+# Q3; the probe log itself was never committed). This hook only decides.
 if [ "${1:-}" = "--exit-check" ]; then
   sid="${2:-}"
   [ -n "$sid" ] && [ -n "${TF_SESSION_LOOP_PROJECT:-}" ] || exit 0

@@ -9,6 +9,8 @@ See: docs/workspace-structure.md → "docs/ — Workspace Documentation"
 
 Gotchas and rules that prevent silent failures. Each entry: the symptom, the
 cause, and the rule that avoids it. Add to this as you hit new ones.
+Incident narratives — how a failure unfolded, not just the rule it left behind —
+live in `docs/postmortems/` (see its README for the threshold and workflow).
 
 ## context-budget.sh — concurrent sessions clobber the registry (measure the wrong session)
 

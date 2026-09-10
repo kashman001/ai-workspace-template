@@ -94,6 +94,9 @@ Spec-of-record: —        <!-- external ticket ref + link, if the spec lives
 ## Non-goals
 
 - <what this effort deliberately does not do>
+
+## Testability                    <!-- optional; filled by the
+                                      design-for-testability skill -->
 ```
 
 The `to-spec` skill generates richer content (problem statement, user
@@ -154,3 +157,18 @@ i.e. a Tier-2 decision note in this workspace's decision-record scheme
 of `decisions.md` for the effort; there's no need to duplicate entries between
 them. When a resolution has lasting weight beyond the effort, promote it to an
 ADR with `/decision promote` (or at `checkpoint`).
+
+## Findings backlog: bring your own tracker
+
+The template ships the ticket and spec conventions above and no standing
+findings-backlog tool. Adopters bring their own tracker — GitHub Issues,
+Linear, JIRA — and point `Spec-of-record:` / `Spec:` lines at it. For a
+self-tracked findings backlog, the template repo's own
+`docs/template-workspace-backlog.html` (+ its `-archive.html` and the
+"Maintaining this backlog" rules inside it) is a copyable worked example:
+severity-scoped stable IDs (`H3`, `M28`, `L39`), status badges, `Fixed:`
+lines that move a card to the archive, archive rotation, and a scorecard.
+Copy it before pruning the `CONTEXT.md` "Template Backlog" section. It is a
+maintenance surface with known friction — edit by grepping the ID and reading
+a slice; a whole-file load of either HTML file is a context-budget trap — so
+adopt it only when that friction is worth owning.

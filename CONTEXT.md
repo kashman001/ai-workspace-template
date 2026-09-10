@@ -118,6 +118,11 @@ untagged skills assume an engineering operator.
 - **decision-log** *(anyone)* — capture the *why* behind a decision per the
   three-tier scheme above. `/decision <what + why + rejected>` (or
   `/decision promote <note>`)
+- **design-for-testability** — advisory design-time interrogation alongside
+  grill/spec/ADR work: how will we test this, how does it fail, what is
+  observable, what is the cheapest proving check; answers land in the spec's
+  `## Testability`, the ADR's Consequences, or `verification.md`. Not a gate.
+  `/design-for-testability [effort or design]`
 - **doc-review** *(anyone)* — multi-perspective review of a technical
   document: audience gate first, six independent reviewer subagents, findings
   synthesized into prioritized recommendations. `/doc-review <path>`
@@ -150,7 +155,8 @@ from `github.com/mattpocock/skills` ships in `skills/` alongside the above:
 `resolving-merge-conflicts`, `wizard`, `ask-matt`, `handoff`, `teach`,
 `to-questionnaire`, `wait-what`, `setup-matt-pocock-skills`,
 `git-guardrails-claude-code`, `setup-pre-commit` (and the adapted
-`to-spec`/`to-tickets`/`triage`/`wayfinder` above). One-liners, slash-command
+`to-spec`/`to-tickets`/`triage`/`wayfinder`/`writing-for-agents` above).
+One-liners, slash-command
 map, refresh workflow (`scripts/sync-vendored-skills.sh`), and license:
 `skills/vendored-skills.md`. Run `setup-matt-pocock-skills` once per repo
 before the tracker-dependent ones.

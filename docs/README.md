@@ -16,6 +16,7 @@ why loading less is the point).
 | Instantiate the template for my project | [`template-usage.md`](template-usage.md) (markdown) or the rendered [`setup-guide.html`](setup-guide.html) |
 | Get a machine ready (tools, auth) | [`runbooks/`](runbooks/README.md) — paired with `scripts/check-*.sh`; required-vs-optional table in [`recommended-tooling.md`](recommended-tooling.md) |
 | Understand the directory layout and conventions | [`workspace-structure.md`](workspace-structure.md) (rendered: [`workspace-structure.html`](workspace-structure.html)) |
+| Recreate this workspace from scratch | [`workspace-setup.md`](workspace-setup.md) |
 | Know what context to load for a task | [`zoom-model.md`](zoom-model.md) |
 | Track a multi-session effort under `work/` | [`work-directory-conventions.md`](work-directory-conventions.md) |
 | Measure context and roll sessions over | [`context-budget.md`](context-budget.md) |
@@ -24,6 +25,7 @@ why loading less is the point).
 | Verify an agent runtime loads the workspace context | [`agent-onboarding-check.md`](agent-onboarding-check.md) (canary + live checks; static test: `scripts/tests/test-agent-entrypoints.sh`) |
 | Onboard or navigate a product repo | [`repos-registry.md`](repos-registry.md), [`repo-context/`](repo-context/README.md) |
 | Avoid known build/CI/shell traps | [`operational-knowledge.md`](operational-knowledge.md) |
+| Record an incident and its learnings | [`postmortems/README.md`](postmortems/README.md) (blameless; agent drafts, human reviews) |
 
 ## Developing your product here
 
@@ -32,6 +34,7 @@ why loading less is the point).
 | Capture what the product is (Z0) | root `SPEC.md` + [`system-design.md`](system-design.md) |
 | Add a team capability (script/skill/agent/runbook) | [`workspace-structure.md`](workspace-structure.md) → "Authoring a Team Capability" |
 | Record why a decision was made | [`adr/README.md`](adr/README.md) (three tiers; `/decision`) |
+| Know where issues are tracked (what `to-spec`/`to-tickets`/`triage`/`wayfinder` consume) | [`agents/issue-tracker.md`](agents/issue-tracker.md) |
 | Set up the optional agent toolchain | [`recommended-tooling.md`](recommended-tooling.md) |
 
 ## Developing the template itself
@@ -41,3 +44,4 @@ why loading less is the point).
 | See open findings / report one | [rendered backlog page](https://kashman001.github.io/ai-workspace-template/template-workspace-backlog.html) · source [`template-workspace-backlog.html`](template-workspace-backlog.html) (maintenance convention inside; settled cards: [`template-workspace-backlog-archive.html`](template-workspace-backlog-archive.html)) |
 | Run the template's test suites | `scripts/tests/` (`test-template-instantiation.sh` clones committed state — commit first) |
 | Read retired docs | [`archive/`](archive/) |
+| Read the design specs and plans behind template features | [`superpowers/specs/`](superpowers/specs/) · [`superpowers/plans/`](superpowers/plans/) |

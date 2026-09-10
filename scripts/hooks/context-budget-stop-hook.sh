@@ -11,8 +11,9 @@
 # One file rather than one per runtime: claude 2.x and codex 0.149.0 send the
 # same Stop payload (session_id + stop_hook_active), so a per-vendor copy would
 # differ only in a string. The 2026-08-26 live probe confirmed codex's Stop
-# fires and that SIGTERM to $PPID actually terminates the agent
-# (work/session-loop-automation/probe-results.md).
+# fires and that SIGTERM to $PPID actually terminates the agent (the probe log
+# was never committed; verdicts are folded into
+# docs/superpowers/specs/2026-08-21-session-loop-design.md -> "Open questions").
 set -u
 rt="${1:-}"
 [ -n "$rt" ] || exit 0

@@ -1,8 +1,8 @@
 # Trim Estimates — skill_listing & project CLAUDE.md (2026-08-07, session #4)
 
 Measured live on this session's transcript via `scripts/context-inspect.sh`
-(turn-1 exact = 43,855 tok). Estimates are chars/4. **Analysis only — no
-trims implemented yet** (user asked for savings + implications first).
+(turn-1 exact = 43,855 tok). Estimates are chars/4. **Analysis only — the
+trims were declined by the user on 2026-08-07; kept as reference.**
 
 ## Trim 1: skill_listing (~4,026 tok this session)
 

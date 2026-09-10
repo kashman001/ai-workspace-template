@@ -9,12 +9,13 @@
 # Turn-end exit: NOT wired. `AfterAgent` exists in 0.46.0 and supports
 # `continue: false`, but the live firing test on 2026-08-26 recorded **blocked** —
 # no auth is configured on this machine, so no turn runs and no hook can fire
-# (work/session-loop-automation/probe-results.md). A blocked probe is not a
+# (docs/superpowers/specs/2026-08-21-session-loop-design.md -> "Open questions";
+# the probe log itself was never committed). A blocked probe is not a
 # passing probe, and Tier C would assert a negative that was never tested, so
 # gemini stays UNDETERMINED for the supervisor: it prints the command and a human
 # relaunches. Unblock with a `gemini` OAuth login (NO_BROWSER=true works
-# cross-machine) or a GEMINI_API_KEY, then rerun the probe recipe in
-# probe-results.md -> "Corrections to the plan".
+# cross-machine) or a GEMINI_API_KEY, then rerun the firing test the spec's
+# "Open questions" table still records as pending.
 set -u
 emit_silent() { printf '%s' '{}'; exit 0; }
 command -v jq >/dev/null 2>&1 || emit_silent

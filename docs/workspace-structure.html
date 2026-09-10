@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc 3.10.2" />
+  <meta name="generator" content="pandoc 3.11" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Dev-AI Workspace Structure — ai-workspace-template
 guide</title>
@@ -172,7 +172,6 @@ guide</title>
       margin: 0 0.8em 0.2em -1.6em;
       vertical-align: middle;
     }
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
     html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
@@ -287,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 8e97b20234ab0737ee1c71ebd58f705ab7ef9281 -->
+  <!-- source-md-sha1: f2ffedc40c9f64dbddba8ed726a89ebf6e725308 -->
 </head>
 <body>
 <div class="src-banner">
@@ -539,8 +538,9 @@ scripts.</li>
 <li><strong><code>mcp.json.example</code></strong> (checked in) —
 template so new users can copy and customize.</li>
 <li><strong><code>&lt;Project&gt;.code-workspace</code></strong>
-(checked in) — VS Code multi-root workspace file. Registers each product
-repo as a workspace root for IntelliSense, search, and debugging.</li>
+(optional; not shipped — create it if you want one, checked in) — VS
+Code multi-root workspace file. Registers each product repo as a
+workspace root for IntelliSense, search, and debugging.</li>
 </ul>
 <h3 id="claude--claude-code-project-level"><code>.claude/</code> —
 Claude Code (Project-Level)</h3>
@@ -624,6 +624,8 @@ Documentation</h2>
 ├── mcp-setup.md                # MCP server configuration guide
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 │
+├── adr/                        # Architecture Decision Records (Tier 3 of the decision scheme)
+├── postmortems/                # Blameless incident write-ups
 ├── agents/                     # Per-repo config the engineering skills consume
 │   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
 │
@@ -674,24 +676,37 @@ persisted.</li>
 </ul>
 <pre><code>skills/
 ├── checkpoint/                 # Session-boundary wrap-up + hand-off doc
+├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
 ├── create-work-item/           # Scaffold a work/&lt;project&gt;/ dir (README + launcher + ledger)
 ├── decision-log/               # Capture the why (commit trailer → note → ADR)
+├── design-for-testability/     # Advisory design-time testability interrogation
+├── doc-review/                 # Multi-perspective review of a technical document
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
+├── research-wave/              # Parallel research, each result independently fact-checked
 ├── rlm/                        # Recursive Language Model loop for huge contexts
-├── session-rollover/           # Deliberate handoff when the context budget hits WARN/STOP
-├── wayfinder/                  # Map-of-decision-tickets planning (vendored from mattpocock/skills)
+├── to-spec/                    # Conversation → effort spec (adapted from mattpocock/skills)
+├── to-tickets/                 # Plan/spec → tracer-bullet tickets (adapted)
+├── triage/                     # Triage state machine (adapted)
+├── wayfinder/                  # Map-of-decision-tickets planning (adapted)
+├── writing-for-agents/         # Style guide for agent-consumed docs (adapted)
+├── tdd/, grill-with-docs/, …   # Vendored Matt Pocock engineering set — see skills/vendored-skills.md
 └── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
-<p>The template ships with <code>checkpoint</code>,
+<p>The template ships with the native skills above
+(<code>checkpoint</code>, <code>session-rollover</code>,
 <code>create-work-item</code>, <code>decision-log</code>,
-<code>onboard-repo</code>, <code>rlm</code>,
-<code>session-rollover</code>, and <code>wayfinder</code> (vendored from
-<a href="https://github.com/mattpocock/skills">mattpocock/skills</a> —
-see its <code>SKILL.md</code> provenance comment for the refresh
-procedure); add your own alongside them. <code>decision-log</code>
-captures decision provenance — the <em>why</em> code can't record — as
-ephemeral notes under <code>work/&lt;project&gt;/decisions.md</code>,
-promoted to committed ADRs under <code>docs/adr/</code> for
-lasting-weight decisions.</p>
+<code>design-for-testability</code>, <code>doc-review</code>,
+<code>onboard-repo</code>, <code>research-wave</code>,
+<code>rlm</code>), the adapted
+<code>to-spec</code>/<code>to-tickets</code>/<code>triage</code>/<code>wayfinder</code>/<code>writing-for-agents</code>,
+and the vendored <a
+href="https://github.com/mattpocock/skills">mattpocock/skills</a>
+engineering set — one-liners, slash-command map, refresh workflow
+(<code>scripts/sync-vendored-skills.sh</code>), and license in
+<code>skills/vendored-skills.md</code>; add your own alongside them.
+<code>decision-log</code> captures decision provenance — the
+<em>why</em> code can't record — as ephemeral notes under
+<code>work/&lt;project&gt;/decisions.md</code>, promoted to committed
+ADRs under <code>docs/adr/</code> for lasting-weight decisions.</p>
 <p>Skills are agent-vendor-neutral — write them in plain Markdown with
 no runtime-specific syntax. List each skill in the
 <code>CONTEXT.md</code> "Workspace Skills" section with a one-line
@@ -874,6 +889,7 @@ Bootstrap and Utility Scripts</h2>
 ├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
 ├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
+├── sync-vendored-skills.sh        # Refresh the vendored Matt Pocock skills from an upstream clone
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
 │   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
 ├── mcp/                           # Workspace-local MCP servers
@@ -1007,7 +1023,7 @@ class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb11-1">
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Username**: <span class="in">`you@example.com`</span></span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Retrieve cmd** (macOS): <span class="in">`security find-generic-password -s atlassian-api-token -w`</span></span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Verify cmd**: <span class="in">`curl -su &quot;$USER:$TOKEN&quot; https://your-org.atlassian.net/rest/api/3/myself`</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Used by**: MCP <span class="in">`atlassian-*`</span> servers; <span class="in">`scripts/file-bug.sh`</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Used by**: MCP <span class="in">`atlassian-*`</span> servers; <span class="in">`scripts/&lt;your-script&gt;.sh`</span></span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Rotation**: every 90 days; rotate at id.atlassian.com → Account → Security</span></code></pre></div>
 <p>This keeps credentials out of <code>.env</code>, out of tracked
 files, and out of agent conversation history.</p>

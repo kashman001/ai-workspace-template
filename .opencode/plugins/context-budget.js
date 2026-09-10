@@ -41,7 +41,7 @@ export const ContextBudget = async ({ $, directory }) => {
         // 14): session.idle carries {id, type, properties:{sessionID}}, and that
         // sessionID is the same value chat.message gets as input.sessionID. The
         // four-spelling fallback this replaced was a guess; one spelling is now
-        // a fact. See probe-results.md, "2026-08-27 — probe 1".
+        // a fact (the probe log was a local work file, never committed).
         const sid = event.properties?.sessionID;
         if (!sid) return;
         const r = await $`${hook} --exit-check ${sid}`.quiet().nothrow();

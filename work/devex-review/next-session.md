@@ -9,8 +9,9 @@
 
 **The fix program is complete** (session 8, 2026-08-12): all 10 review-born
 backlog cards (M19–M25, L32, L33, L35) are fixed and archived across fix
-packages (a)–(e). The backlog stands at 1 open card — **M16**, a pre-review
-finding owned by template-maintenance, not this program.
+packages (a)–(e). M16, the one pre-review card left at close, was fixed later
+(`6152b8d`); the remaining open cards are SDLC design gaps owned by
+`template-maintenance` / `template-improvement-review`, not this program.
 
 ## Only possible follow-up
 

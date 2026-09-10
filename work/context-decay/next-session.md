@@ -12,7 +12,7 @@
 + slimmed `skills/session-rollover/SKILL.md`). Predicted mechanical floor
 ~10K → ~6–7K. Post-change data points so far: session #5's delta ~4.2K,
 session #6's delta (last two ledger entries). When `grep -c 'rollover
-complete' work/context-decay/context-ledger.jsonl` reaches **≥45** (40
+complete' .context-budget/context-ledger.jsonl` reaches **≥45** (40
 pre-change + 5 post-change), compare post-change `rollover start`→`complete`
 deltas against pre-change medians (~11K local / ~20K heavy) and record the
 verdict in the analysis doc. No other active mission.
@@ -37,7 +37,11 @@ verdict in the analysis doc. No other active mission.
 
 ## Open items
 
-1. Savings validation (the mission above) — gated on ≥45 total completes.
+1. Savings validation (the mission above) — gate PASSED (68 completes on
+   2026-09-10; the launcher had pointed at the pre-M19 ledger path, so the
+   gate went unnoticed). Verdict in `savings-validation-2026-09-10.md`: the
+   predicted ~6–7K floor did NOT materialize (post median 12.3K vs pre 10.8K,
+   n=27/35). Next: decide whether to pursue the rollover cost further or close.
 2. USER ACTION: other machine needs `git reset --hard origin/main` + git
    config email change (history was rewritten session #6 — old SHAs stale;
    see handoff.md). If its push fails or SHAs mismatch, this is why.
@@ -63,6 +67,6 @@ dir `work/kimi-k3-agent-integration/` belongs to another effort — leave it.
 2. `git pull --ff-only origin main` (another deployment also pushes here; if
    it diverges, that machine hasn't reset onto the rewritten history yet —
    do NOT merge old-history commits back in; tell the user).
-3. `grep -c 'rollover complete' work/context-decay/context-ledger.jsonl` —
+3. `grep -c 'rollover complete' .context-budget/context-ledger.jsonl` —
    ≥45: run the savings comparison (mission); otherwise ask the user what's
    next or stay dormant.

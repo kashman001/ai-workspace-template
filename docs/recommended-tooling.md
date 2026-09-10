@@ -279,7 +279,8 @@ skill once in the repo. It interviews you and scaffolds:
   - **Issue tracker** — GitHub (`gh`), GitLab (`glab`), local markdown under `.scratch/`, or freeform
   - **Triage labels** — the five canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) mapped to your repo's actual labels
   - **Domain docs** — single-context (`CONTEXT.md` + `docs/adr/`) vs. multi-context (`CONTEXT-MAP.md`)
-- `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, `docs/agents/domain.md`
+- `docs/agents/issue-tracker.md` and `docs/agents/domain.md` — plus
+  `docs/agents/triage-labels.md` only when the `triage` skill is installed
 
 > In this workspace, `CONTEXT.md` is the symlink target — the `## Agent
 > skills` block lands there and all agents read it.

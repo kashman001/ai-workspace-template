@@ -30,5 +30,5 @@ replace this launcher with a real one.
   building; no speculative machinery.
 - The E-catalog (scenarios.md §3) is canonical; the retired HTML in
   `docs/archive/` must never be resurrected.
-- Nine test suites must stay green; `test-template-instantiation.sh`
+- Every suite under `scripts/tests/` must stay green; `test-template-instantiation.sh`
   clones COMMITTED state — commit before running it.

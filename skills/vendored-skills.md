@@ -74,8 +74,9 @@ the rest are model-invoked (triggered by their `description`).
 Not vendored: upstream's `skills/in-progress/` (marked unstable) and its
 course-tooling misc skills (`scaffold-exercises`, `migrate-to-shoehorn`).
 Workspace-authored skills (`checkpoint`, `session-rollover`, `create-work-item`,
-`decision-log`, `doc-review`, `onboard-repo`, `rlm`) live alongside these in
-`skills/` and are indexed in `CONTEXT.md`.
+`decision-log`, `design-for-testability`, `doc-review`, `onboard-repo`,
+`research-wave`, `rlm`) live alongside these in `skills/` and are indexed in
+`CONTEXT.md`.
 
 ## Upstream license
 
