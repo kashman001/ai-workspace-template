@@ -1,8 +1,12 @@
 #!/bin/sh
 # Notification hook for session-loop.sh — wire via SESSION_LOOP_NOTIFY in
 # context-budget.env (global or work/<proj>/). Called with the halt/stall
-# message as $1. Desktop notification where available; always echoes so the
-# message lands in the supervisor's terminal/log regardless.
+# message as $1. Desktop notification where available; also echoes the
+# message, as a fallback for callers that do no logging of their own
+# (manual runs, other wiring). session-loop.sh itself silences hook output
+# deliberately — its notify() has already written the message to stderr and
+# .session-loop.log via say() before the hook runs, so there the hook only
+# adds the desktop notification.
 MSG="${1:-session-loop notification}"
 if command -v osascript >/dev/null 2>&1; then
   ESC="$(printf '%s' "$MSG" | sed 's/\\/\\\\/g; s/"/\\"/g')"

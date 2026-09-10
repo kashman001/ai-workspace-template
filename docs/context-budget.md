@@ -378,9 +378,12 @@ overrides per work item, the same precedence `ROLLOVER_RELAUNCH` uses.
 | `SESSION_LOOP_NOTIFY` | unset | a command run with the halt message as `$1` |
 
 A stock hook ships at `scripts/session-loop-notify.sh`: desktop notification
-where available (macOS `osascript`, Linux `notify-send`), and it always echoes
-so the message lands in the supervisor's terminal/log regardless. Wire it in
-an env file as
+where available (macOS `osascript`, Linux `notify-send`), plus an echo of the
+message as a fallback for callers that do no logging of their own. Under
+`session-loop.sh` that echo is deliberately discarded — the supervisor's
+`notify()` has already written the message to stderr and `.session-loop.log`
+before invoking the hook, so there the hook only adds the desktop
+notification. Wire it in an env file as
 
 ```sh
 SESSION_LOOP_NOTIFY="${ROOT:-.}/scripts/session-loop-notify.sh"
