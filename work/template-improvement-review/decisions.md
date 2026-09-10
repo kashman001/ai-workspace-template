@@ -2,6 +2,14 @@
 
 Tier-2 notes (see `skills/decision-log/SKILL.md`). Newest on top.
 
+## 2026-09-10 — User approved the session-2 checkpoint requests
+
+**Decision:** the user approved "the things requested above" at the session-2
+checkpoint: merge `review/template-improvement-review-s1` into main; the five
+build-under-assumption choices below stand as built; L45 is to be built (fix
+direction left to the building session — investigate the repo guard first).
+The §E machine/credential items remain user-only. **Promote?:** no.
+
 ## 2026-09-10 — Build the 5 design-gap cards under stated assumptions
 
 **Decision:** the user asked this session to review and improve the template
