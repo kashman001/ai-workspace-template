@@ -57,6 +57,15 @@ purpose (see header block below). Contents, in order:
 Rewrite it at every rollover. Anything that has become history moves to the
 ledger; anything superseded is deleted, not annotated as "superseded".
 
+**Mandatory work belongs in the START HERE / first-actions block, never only
+in a preamble.** The bootstrap prompt sends the successor to *continue from
+the first-actions block*, so anything stated only in a "Mission"/overview
+section is advisory and does not bind — a successor that follows the prompt
+literally is behaving correctly when it skips it. This has already cost a
+live work item a near-miss: a mandatory sub-batch sat in the Mission section
+alone, and the successor would have gone straight past it had a cross-session
+message not caught it.
+
 ### Ledger (`handoff.md`)
 
 The append-only provenance log. Each session prepends one
