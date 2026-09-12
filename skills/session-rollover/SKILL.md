@@ -408,8 +408,10 @@ exchanges so STOP can't pass unnoticed.
   evidence, and the next launch halts at the lineage gate blaming a phantom
   session.
 - **Specialized workflow state files win.** If a skill (onboard-repo, rlm, …) keeps
-  its own state/handoff files, they stay authoritative — `next-session.md` carries
-  thin pointers to them, never a fork of their content.
+  its own state/handoff files, they stay authoritative — so **update THOSE as the
+  source of truth** before you write the rollover artifacts, and keep
+  `handoff.md`/`next-session.md` as thin pointers to them, never a fork of their
+  content.
 - Prefer **file pointers over content summaries** — a summary spends the next
   session's budget on possibly-stale prose; a pointer lets it demand-load.
 - **No secrets** in any rollover artifact.
