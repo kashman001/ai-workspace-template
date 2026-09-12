@@ -287,7 +287,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 8e97b20234ab0737ee1c71ebd58f705ab7ef9281 -->
+  <!-- source-md-sha1: 6d6812667197e53beb9486233b0aaefcc029efb4 -->
 </head>
 <body>
 <div class="src-banner">
@@ -921,8 +921,9 @@ than on the child's exit code. Bounded by a max-session count; see
 <p><strong>Recommended scripts</strong> (add as the workspace
 matures):</p>
 <ul>
-<li><code>diff-review.sh</code> — open a commit or range as a directory
-diff for review; wraps <code>git difftool</code> with the symlink-safe
+<li><code>diff-review.sh</code> — open a commit, a range, or the
+uncommitted working tree (<code>-w</code>) as a directory diff for
+review; wraps <code>git difftool</code> with the symlink-safe
 <code>--no-symlinks</code> flag and the blocking <code>bcomp</code>
 launcher. See <code>docs/operational-knowledge.md</code> → "Diff Review
 Workflow".</li>

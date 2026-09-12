@@ -560,10 +560,10 @@ scripts/
   "The supervisor".
 
 **Recommended scripts** (add as the workspace matures):
-- `diff-review.sh` — open a commit or range as a directory diff for review;
-  wraps `git difftool` with the symlink-safe `--no-symlinks` flag and the
-  blocking `bcomp` launcher. See `docs/operational-knowledge.md` → "Diff
-  Review Workflow".
+- `diff-review.sh` — open a commit, a range, or the uncommitted working tree
+  (`-w`) as a directory diff for review; wraps `git difftool` with the
+  symlink-safe `--no-symlinks` flag and the blocking `bcomp` launcher. See
+  `docs/operational-knowledge.md` → "Diff Review Workflow".
 - `scripts/mcp/` — checked-in, credential-free local MCP servers or launchers
   that are safe to share across runtimes. The template ships a YouTube
   transcript server backed by `yt-dlp`.
