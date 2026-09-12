@@ -21,8 +21,10 @@ echo "# launcher" > "$MAIN/work/testproj/next-session.md"
 # session and pass while testing nothing. The suite must model the repo the
 # guard actually runs against.
 printf '%s\n' 'work/*/.session-seq' 'work/*/.session-seq.provenance.json' \
+  'work/*/.session-seq.bump.json' \
   'work/*/.rollover-complete' 'work/*/.next-command' 'work/*/.session-loop' \
   'work/*/.session-loop.log' 'work/*/.session-loop.alarm-stop' \
+  'work/*/.session-loop.budget' \
   'work/*/.active-session' > "$MAIN/.gitignore"
 git -C "$MAIN" init -q
 git -C "$MAIN" config user.email t@t; git -C "$MAIN" config user.name t
@@ -30,6 +32,7 @@ git -C "$MAIN" add -A; git -C "$MAIN" commit -qm init
 SL="$MAIN/scripts/session-loop.sh"
 W="$MAIN/work/testproj"
 SEQF="$W/.session-seq"; SENT="$W/.rollover-complete"; NEXT="$W/.next-command"
+BUDGET="$W/.session-loop.budget"
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
@@ -47,21 +50,50 @@ set -u
 W="$STUB_W"
 me="$(tr -cd '0-9' < "$W/.session-seq")"
 echo "stub: running as session #$me"
+# What launch-next-session.sh --emit writes at the bump (R2.17 §1): the record
+# the supervisor reads its verdict from. `written_by` is the field that says a
+# sanctioned writer produced it; a stub standing in for the launcher must
+# therefore claim it, and the mutation cases below deliberately do not.
+stub_bump() {
+  # R2.17 §7 — the supervisor halts a session that rolled over without touching
+  # either flush artifact, so a stub standing in for a CLEAN rollover has to
+  # produce one. next-session.md rather than handoff.md because it is the file a
+  # real rollover always rewrites, and because it is in the stall guard's
+  # bookkeeping exclusion set, so writing it here cannot fake progress for the
+  # P-series.
+  # A monotone nonce, not just the session number: consecutive cases both reset
+  # the counter to 8, so "session 8 wrote its number" is byte-identical to the
+  # previous case's last write and the post-condition would read it as no flush.
+  # Kept outside $W so `git add -A` in the P-series stubs cannot commit it and
+  # manufacture progress.
+  _nf="$(dirname "$STUB_SELF")/.stub-flush-nonce"
+  _n=$(( $(cat "$_nf" 2>/dev/null || echo 0) + 1 )); printf '%s\n' "$_n" > "$_nf"
+  printf '# launcher (session %s, flush %s)\n' "$1" "$_n" > "$W/next-session.md"
+  printf '{"seq":%s,"successor":%s,"runtime":"stub","session_id":"sid-%s","cwd":"%s","written_at":"%s","mode":"%s","reason":"stub","written_by":"launch-next-session.sh"}\n' \
+    "$1" "$(($1 + 1))" "$1" "$W" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${STUB_MODE:-handsoff}" \
+    > "$W/.session-seq.bump.json"
+}
 case "${STUB_BEHAVIOUR:-normal}" in
   normal)
     echo $((me + 1)) > "$W/.session-seq"
     printf '%s\n' "$STUB_SELF" > "$W/.next-command"
     printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid-%s","runtime":"stub","cwd":"%s"}\n' \
-      "${STUB_MODE:-handsoff}" "$me" "$me" "$W" > "$W/.rollover-complete" ;;
+      "${STUB_MODE:-handsoff}" "$me" "$me" "$W" > "$W/.rollover-complete"
+    stub_bump "$me" ;;
   quit)          # human typed /exit: no bump, no sentinel
     : ;;
   stage-nothing) # the s184 shape: a clean rollover that stages no successor
     echo $((me + 1)) > "$W/.session-seq"
     printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid-%s","runtime":"stub","cwd":"%s"}\n' \
       "${STUB_MODE:-handsoff}" "$me" "$me" "$W" > "$W/.rollover-complete" ;;
-  died-mid)      # died between --emit and the sentinel (failure mode 8)
+  died-mid)      # staged, then died before it could do anything else.
+                 # Pre-R2.17 this was failure mode 8 (no sentinel -> halt);
+                 # under R2.17 the staging call IS the rollover, so the bump
+                 # record the launcher wrote at --emit is already the verdict
+                 # and this reads CLEAN (R2.17 residual risk 3).
     echo $((me + 1)) > "$W/.session-seq"
-    printf '%s\n' "$STUB_SELF" > "$W/.next-command" ;;
+    printf '%s\n' "$STUB_SELF" > "$W/.next-command"
+    stub_bump "$me" ;;
   stranded)      # sentinel written at a bare relative path, into a worktree
     echo $((me + 1)) > "$W/.session-seq"
     printf '%s\n' "$STUB_SELF" > "$W/.next-command"
@@ -73,6 +105,58 @@ case "${STUB_BEHAVIOUR:-normal}" in
     printf '%s\n' "$STUB_SELF" > "$W/.next-command"
     printf '{"mode":"handsoff","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub","cwd":"%s"}\n' \
       "$me" "$W" > "$W/.rollover-complete" ;;
+  # --- the mutation floor (R2.17 test plan 1-3) ---------------------------
+  # Each writes a BROKEN verdict record and stages a successor correctly, so
+  # the only thing under test is whether the supervisor believes the record.
+  # Both artifacts are mutated identically: the sentinel is what the pre-R2.17
+  # gate reads, the bump record is what the post-R2.17 gate reads, so the same
+  # case is meaningful on either side of the fix.
+  bare-scalar)   # a bare number where an object belongs: D11's fingerprint
+    echo $((me + 1)) > "$W/.session-seq"
+    printf '%s\n' "$STUB_SELF" > "$W/.next-command"
+    printf '%s\n' "$me" > "$W/.rollover-complete"
+    printf '%s\n' "$me" > "$W/.session-seq.bump.json" ;;
+  non-json)      # shell-ish key=value, the other hand-written shape
+    echo $((me + 1)) > "$W/.session-seq"
+    printf '%s\n' "$STUB_SELF" > "$W/.next-command"
+    printf 'seq=%s\n' "$me" > "$W/.rollover-complete"
+    printf 'seq=%s\n' "$me" > "$W/.session-seq.bump.json" ;;
+  # --- R2.21 / D12: a vendor logout (rc 0, no bump, no stage) ------------
+  # All three write the artifact a real logout leaves and the session record
+  # that attributes it to THIS supervisor (a stub's parent is the supervisor,
+  # so $PPID is the same value register would record). They differ only in how
+  # the transcript ends, which is the whole of the R2.21 discriminator.
+  logout*)
+    _d="$(dirname "$STUB_SELF")"; _t="$_d/transcript-$me.jsonl"
+    _err='{"type":"assistant","isApiErrorMessage":true,"error":"authentication_failed","message":{"role":"assistant","model":"<synthetic>","content":[{"type":"text","text":"Not logged in \u00b7 Please run /login"}]}}'
+    printf '{"type":"user","message":{"role":"user","content":"go"}}\n' > "$_t"
+    case "${STUB_BEHAVIOUR}" in
+      logout)           # terminal: the error is the last assistant turn, and
+                        # the trailing non-assistant lines are what a real
+                        # logout transcript carries after it (measured s32)
+        printf '%s\n' "$_err" >> "$_t"
+        printf '{"type":"system","subtype":"turn_duration"}\n' >> "$_t"
+        printf '{"type":"file-history-snapshot"}\n' >> "$_t" ;;
+      logout-transient) # the same error, RETRIED successfully: the session
+                        # carried on afterwards, so it is not a D12 logout.
+                        # This is the 48-of-57 case in the live corpus.
+        printf '%s\n' "$_err" >> "$_t"
+        printf '{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"back on the air"}]}}\n' >> "$_t" ;;
+      logout-textonly)  # a session that merely QUOTED the marker: same text,
+                        # no error shape. Text-only matching calls this a
+                        # logout; R2.21 must not.
+        printf '{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Not logged in \u00b7 Please run /login"}]}}\n' >> "$_t" ;;
+    esac
+    printf '{"runtime":"stub","session_id":"logout-%s","artifact":"%s","project":"testproj","supervisor_pid":%s}\n' \
+      "$me" "$_t" "$PPID" \
+      > "$(cd "$W/../.." && pwd)/.context-budget/sessions/stub-logout-$me-$$.json"
+    ;;
+  no-identity)   # the s16 class: well-formed JSON, right numbers, no identity
+                 # and no writer — nothing sanctioned produced it
+    echo $((me + 1)) > "$W/.session-seq"
+    printf '%s\n' "$STUB_SELF" > "$W/.next-command"
+    printf '{"seq":%s,"successor":%s}\n' "$me" "$((me + 1))" > "$W/.rollover-complete"
+    printf '{"seq":%s,"successor":%s}\n' "$me" "$((me + 1))" > "$W/.session-seq.bump.json" ;;
 esac
 EOF
   chmod +x "$TMP/stub.sh"
@@ -80,7 +164,7 @@ EOF
 mk_stub
 export STUB_W="$W" STUB_SELF="$TMP/stub.sh"
 
-reset() { printf '8\n' > "$SEQF"; rm -f "$SENT" "$NEXT" "$W/.session-loop";
+reset() { printf '8\n' > "$SEQF"; rm -f "$SENT" "$NEXT" "$W/.session-loop" "$BUDGET";
           printf '%s\n' "$TMP/stub.sh" > "$NEXT"; }
 
 # --min-lifetime 0 on every case that expects an iteration to be JUDGED CLEAN:
@@ -104,13 +188,19 @@ reset; export STUB_BEHAVIOUR=quit
 assert_eq       "L2a: exit 0"                 "$rc" "0"
 assert_contains "L2b: reported as a quit"     "$(cat "$TMP/o2")" "deliberate quit"
 
-echo "L3: THE LOAD-BEARING ONE — counter moved but no sentinel here = halt, not clean exit"
+echo "L3 (R2.17): a session that staged and then died reads CLEAN, not as a halt"
+# RE-POINTED, deliberately (R2.17 test plan 4). Before R2.17 the sentinel was
+# written after staging, so "staged, no sentinel" meant the session died
+# mid-rollover and the chain halted for a human. R2.17 removes the sentinel:
+# the staging call IS the rollover and the bump record is the verdict, so the
+# same crash now continues the chain, with a successor reading artifacts that
+# were finished at step 5. A deliberate loosening; this is where it is reviewed.
 reset; export STUB_BEHAVIOUR=died-mid
-"$SL" testproj --max-sessions 3 >"$TMP/o3" 2>&1 </dev/null; rc=$?
-assert_eq       "L3a: exit 1 (halt), NOT 0"   "$rc" "1"
-assert_contains "L3b: halted and notified"    "$(cat "$TMP/o3")" "HALT"
-case "$(cat "$TMP/o3")" in *"deliberate quit"*) bad "L3c: a mid-death was called a clean quit" ;;
-                           *) ok "L3c: a mid-death was not called a clean quit" ;; esac
+"$SL" testproj --max-sessions 2 --min-lifetime 0 --stall-limit 0 >"$TMP/o3" 2>&1 </dev/null; rc=$?
+assert_eq       "L3a: exit 0, not a halt"     "$rc" "0"
+case "$(cat "$TMP/o3")" in *"HALT"*) bad "L3b: a staged-then-died session halted the chain" ;;
+                           *) ok "L3b: a staged-then-died session did not halt the chain" ;; esac
+assert_contains "L3c: it was judged a clean rollover" "$(cat "$TMP/o3")" "rolled over cleanly"
 
 echo "L4: a sentinel stranded in a worktree does not read as a clean shutdown"
 reset; export STUB_BEHAVIOUR=stranded STUB_STRAND="$TMP/wt/work/testproj"
@@ -156,6 +246,27 @@ reset; export STUB_BEHAVIOUR=quit
 "$SL" testproj --max-sessions 3 >/dev/null 2>&1 </dev/null || true
 [ -f "$NEXT" ] && bad "L9a: the staged command outlived the iteration" \
                || ok "L9a: the staged command was consumed"
+
+echo "M1-M3: the mutation floor — a verdict record the supervisor cannot trust"
+# R2.17 test plan 1-3. These are the mutations D11 actually produced on live
+# chains: an agent that hand-wrote the verdict instead of running the sanctioned
+# writer. Each stub stages its successor correctly and bumps the counter by
+# exactly 1, so nothing EXCEPT the record's trustworthiness is under test — if
+# the supervisor reads it and shrugs, it will relaunch a chain whose last
+# session never really finished.
+for mut in bare-scalar non-json no-identity; do
+  reset; export STUB_BEHAVIOUR="$mut"
+  "$SL" testproj --max-sessions 2 --min-lifetime 0 --stall-limit 0 >"$TMP/om" 2>&1 </dev/null; rc=$?
+  assert_eq       "M-$mut a: exit 1 (halt)"        "$rc" "1"
+  assert_contains "M-$mut b: halted and notified"  "$(cat "$TMP/om")" "HALT"
+  # A halt that names no session number is the D11 fingerprint itself: the
+  # supervisor read a field that was not there and printed the empty string.
+  case "$(cat "$TMP/om")" in
+    *"session # "*|*"session #  "*|*"claims session # "*)
+      bad "M-$mut c: the halt message names an empty session number" ;;
+    *) ok "M-$mut c: the halt message is not itself malformed" ;;
+  esac
+done
 
 echo "G1: the minimum-lifetime guard catches a first-turn burn loop"
 # failure mode 1: a successor gemini session reads the PREDECESSOR's token count
@@ -213,6 +324,16 @@ cat > "$TMP/stub-bookkeeping.sh" <<'EOF'
 set -u
 W="$STUB_W"; R="$STUB_ROOT"
 me="$(tr -cd '0-9' < "$W/.session-seq")"
+# R2.17: the verdict the supervisor now reads. Every aux stub below stands in
+# for a session whose rollover ran the sanctioned writer, so it must produce the
+# record that writer produces -- and must leave a flush behind (R2.17 section 7).
+stub_r217() {
+  _nf="$(dirname "$STUB_SELF")/.stub-flush-nonce"
+  _n=$(( $(cat "$_nf" 2>/dev/null || echo 0) + 1 )); printf '%s\n' "$_n" > "$_nf"
+  printf '# launcher (session %s, flush %s)\n' "$1" "$_n" > "$W/next-session.md"
+  printf '{"seq":%s,"successor":%s,"runtime":"stub","session_id":"sid","cwd":"%s","written_at":"2026-01-01T00:00:00Z","mode":"%s","reason":"stub","written_by":"launch-next-session.sh"}\n' \
+    "$1" "$(($1 + 1))" "$W" "${STUB_MODE:-handsoff}" > "$W/.session-seq.bump.json"
+}
 printf 'block %s\n' "$me" >> "$W/handoff.md"
 printf 'launcher %s\n' "$me" > "$W/next-session.md"
 git -C "$R" add work/testproj/handoff.md work/testproj/next-session.md
@@ -221,6 +342,7 @@ echo $((me + 1)) > "$W/.session-seq"
 printf '%s\n' "$STUB_SELF" > "$W/.next-command"
 printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub","cwd":"%s"}\n' \
   "${STUB_MODE:-handsoff}" "$me" "$W" > "$W/.rollover-complete"
+stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-bookkeeping.sh"
 printf '%s\n' "$TMP/stub-bookkeeping.sh" > "$NEXT"
@@ -237,6 +359,16 @@ cat > "$TMP/stub-progress.sh" <<'EOF'
 set -u
 W="$STUB_W"; R="$STUB_ROOT"
 me="$(tr -cd '0-9' < "$W/.session-seq")"
+# R2.17: the verdict the supervisor now reads. Every aux stub below stands in
+# for a session whose rollover ran the sanctioned writer, so it must produce the
+# record that writer produces -- and must leave a flush behind (R2.17 section 7).
+stub_r217() {
+  _nf="$(dirname "$STUB_SELF")/.stub-flush-nonce"
+  _n=$(( $(cat "$_nf" 2>/dev/null || echo 0) + 1 )); printf '%s\n' "$_n" > "$_nf"
+  printf '# launcher (session %s, flush %s)\n' "$1" "$_n" > "$W/next-session.md"
+  printf '{"seq":%s,"successor":%s,"runtime":"stub","session_id":"sid","cwd":"%s","written_at":"2026-01-01T00:00:00Z","mode":"%s","reason":"stub","written_by":"launch-next-session.sh"}\n' \
+    "$1" "$(($1 + 1))" "$W" "${STUB_MODE:-handsoff}" > "$W/.session-seq.bump.json"
+}
 printf 'block %s\n' "$me" >> "$W/handoff.md"
 printf 'real work %s\n' "$me" >> "$R/README.md"
 git -C "$R" add -A
@@ -245,6 +377,7 @@ echo $((me + 1)) > "$W/.session-seq"
 printf '%s\n' "$STUB_SELF" > "$W/.next-command"
 printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub","cwd":"%s"}\n' \
   "${STUB_MODE:-handsoff}" "$me" "$W" > "$W/.rollover-complete"
+stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-progress.sh"
 printf '%s\n' "$TMP/stub-progress.sh" > "$NEXT"
@@ -262,6 +395,16 @@ cat > "$TMP/stub-ticket.sh" <<'EOF'
 set -u
 W="$STUB_W"; R="$STUB_ROOT"
 me="$(tr -cd '0-9' < "$W/.session-seq")"
+# R2.17: the verdict the supervisor now reads. Every aux stub below stands in
+# for a session whose rollover ran the sanctioned writer, so it must produce the
+# record that writer produces -- and must leave a flush behind (R2.17 section 7).
+stub_r217() {
+  _nf="$(dirname "$STUB_SELF")/.stub-flush-nonce"
+  _n=$(( $(cat "$_nf" 2>/dev/null || echo 0) + 1 )); printf '%s\n' "$_n" > "$_nf"
+  printf '# launcher (session %s, flush %s)\n' "$1" "$_n" > "$W/next-session.md"
+  printf '{"seq":%s,"successor":%s,"runtime":"stub","session_id":"sid","cwd":"%s","written_at":"2026-01-01T00:00:00Z","mode":"%s","reason":"stub","written_by":"launch-next-session.sh"}\n' \
+    "$1" "$(($1 + 1))" "$W" "${STUB_MODE:-handsoff}" > "$W/.session-seq.bump.json"
+}
 printf 'block %s\n' "$me" >> "$W/handoff.md"
 printf 'status: done\n' > "$W/issues/t$me.md"
 git -C "$R" add -A
@@ -270,6 +413,7 @@ echo $((me + 1)) > "$W/.session-seq"
 printf '%s\n' "$STUB_SELF" > "$W/.next-command"
 printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub","cwd":"%s"}\n' \
   "${STUB_MODE:-handsoff}" "$me" "$W" > "$W/.rollover-complete"
+stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-ticket.sh"
 printf '%s\n' "$TMP/stub-ticket.sh" > "$NEXT"
@@ -315,6 +459,16 @@ cat > "$TMP/stub-alternating.sh" <<'EOF'
 set -u
 W="$STUB_W"; R="$STUB_ROOT"
 me="$(tr -cd '0-9' < "$W/.session-seq")"
+# R2.17: the verdict the supervisor now reads. Every aux stub below stands in
+# for a session whose rollover ran the sanctioned writer, so it must produce the
+# record that writer produces -- and must leave a flush behind (R2.17 section 7).
+stub_r217() {
+  _nf="$(dirname "$STUB_SELF")/.stub-flush-nonce"
+  _n=$(( $(cat "$_nf" 2>/dev/null || echo 0) + 1 )); printf '%s\n' "$_n" > "$_nf"
+  printf '# launcher (session %s, flush %s)\n' "$1" "$_n" > "$W/next-session.md"
+  printf '{"seq":%s,"successor":%s,"runtime":"stub","session_id":"sid","cwd":"%s","written_at":"2026-01-01T00:00:00Z","mode":"%s","reason":"stub","written_by":"launch-next-session.sh"}\n' \
+    "$1" "$(($1 + 1))" "$W" "${STUB_MODE:-handsoff}" > "$W/.session-seq.bump.json"
+}
 printf 'block %s\n' "$me" >> "$W/handoff.md"
 if [ $((me % 2)) -eq 0 ]; then
   printf 'real work %s\n' "$me" >> "$R/README.md"
@@ -325,6 +479,7 @@ echo $((me + 1)) > "$W/.session-seq"
 printf '%s\n' "$STUB_SELF" > "$W/.next-command"
 printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub","cwd":"%s"}\n' \
   "${STUB_MODE:-handsoff}" "$me" "$W" > "$W/.rollover-complete"
+stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-alternating.sh"
 printf '%s\n' "$TMP/stub-alternating.sh" > "$NEXT"
@@ -389,6 +544,49 @@ assert_eq       "A6a: exit 1 (halt), not 0" "$rc" "1"
 assert_contains "A6b: the HALT names the child's rc" "$(grep 'HALT' "$TMP/a6")" "rc=127"
 case "$(cat "$TMP/a6")" in *"deliberate quit"*) bad "A6c: a failed command was called a deliberate quit" ;;
                            *) ok "A6c: a failed command was not called a deliberate quit" ;; esac
+
+echo "T22 (R2.21/D12): a vendor logout is not a human quit"
+# A logout exits 0, stages nothing and leaves the counter unmoved -- byte for
+# byte the A6 quit shape, which is why it was misreported as a deliberate quit
+# on seven live sessions. The only thing that separates them is the child's own
+# transcript, so these cases vary ONLY the transcript and hold everything else
+# fixed.
+#
+# Mutation that makes T22a-T22e red: delete the `if ... dead_child_artifact`
+# block from the no-sentinel/delta-0/rc-0 branch in session-loop.sh (restore
+# the unconditional quit path). T22h-T22k are the discrimination cases and stay
+# green under that mutation on purpose -- see below.
+reset; export STUB_BEHAVIOUR=logout
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 >"$TMP/t22" 2>&1 </dev/null; rc=$?
+assert_eq       "T22a: exit 1 (halt), not 0" "$rc" "1"
+case "$(cat "$TMP/t22")" in *"deliberate quit"*) bad "T22b: a logout was called a deliberate quit" ;;
+                            *) ok "T22b: a logout was not called a deliberate quit" ;; esac
+assert_contains "T22c: the HALT names the cause" "$(grep 'HALT' "$TMP/t22")" "vendor logout"
+assert_contains "T22d: it says nothing was lost" "$(grep 'HALT' "$TMP/t22")" "Nothing was lost"
+assert_contains "T22e: it prints the resume command" \
+  "$(grep 'HALT' "$TMP/t22")" "scripts/session-loop.sh testproj"
+# Part 4: budget_write runs at session START, so without the refund a logout
+# would permanently spend a slot for four minutes of nothing. The refund reads
+# no file -- it writes back the count this process incremented itself -- so it
+# cannot turn an unreadable budget into a zero (the D9 invariant R2.19 closed).
+assert_eq       "T22f: the logout did not charge a budget slot" \
+  "$(jq -r '.used' "$BUDGET")" "0"
+assert_eq       "T22g: and the budget is otherwise intact" \
+  "$(jq -r '.cap' "$BUDGET")" "3"
+
+# The two discriminators. Both are rc-0/no-stage/delta-0 sessions whose
+# transcripts CONTAIN the marker, and both must still be read as quits: a
+# terminal auth failure is the last assistant turn in the file, and it is
+# matched on the error shape rather than on the text.
+reset; export STUB_BEHAVIOUR=logout-transient
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 >"$TMP/t22h" 2>&1 </dev/null; rc=$?
+assert_eq       "T22h: an auth error the session recovered from is still a quit" "$rc" "0"
+assert_contains "T22i: and is classified as one" "$(cat "$TMP/t22h")" "deliberate quit"
+
+reset; export STUB_BEHAVIOUR=logout-textonly
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 >"$TMP/t22j" 2>&1 </dev/null; rc=$?
+assert_eq       "T22j: a session that merely quoted the marker is still a quit" "$rc" "0"
+assert_contains "T22k: and is classified as one" "$(cat "$TMP/t22j")" "deliberate quit"
 
 # The staged command below is a bare `sleep`, not a stub: these cases are about
 # a child that has NOT returned yet, so it must not roll over. It therefore ends
@@ -574,6 +772,16 @@ W="$STUB_W"
 got_int=0
 trap 'got_int=1' INT
 me="$(tr -cd '0-9' < "$W/.session-seq")"
+# R2.17: the verdict the supervisor now reads. Every aux stub below stands in
+# for a session whose rollover ran the sanctioned writer, so it must produce the
+# record that writer produces -- and must leave a flush behind (R2.17 section 7).
+stub_r217() {
+  _nf="$(dirname "$STUB_SELF")/.stub-flush-nonce"
+  _n=$(( $(cat "$_nf" 2>/dev/null || echo 0) + 1 )); printf '%s\n' "$_n" > "$_nf"
+  printf '# launcher (session %s, flush %s)\n' "$1" "$_n" > "$W/next-session.md"
+  printf '{"seq":%s,"successor":%s,"runtime":"stub","session_id":"sid","cwd":"%s","written_at":"2026-01-01T00:00:00Z","mode":"%s","reason":"stub","written_by":"launch-next-session.sh"}\n' \
+    "$1" "$(($1 + 1))" "$W" "${STUB_MODE:-handsoff}" > "$W/.session-seq.bump.json"
+}
 : > "$W/.stub-int-running"          # fixture handshake: the INT may be sent now
 n=0
 while [ "$got_int" -eq 0 ] && [ "$n" -lt 40 ]; do sleep 0.25 || true; n=$((n+1)); done
@@ -582,6 +790,7 @@ echo $((me + 1)) > "$W/.session-seq"
 printf '%s\n' "$STUB_SELF" > "$W/.next-command"
 printf '{"mode":"handsoff","seq":%s,"reason":"stub","session_id":"sid-%s","runtime":"stub","cwd":"%s"}\n' \
   "$me" "$me" "$W" > "$W/.rollover-complete"
+stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-int-survivor.sh"
 reset; rm -f "$W/.stub-int-running" "$W/.stub-int-caught"
@@ -615,6 +824,209 @@ assert_contains "D5b-i2: the chain proceeded to normal sentinel evaluation" \
 assert_eq "D5b-i3: supervisor exit reflects the chain, not the INT" "$i_rc" "0"
 rm -f "$W/.stub-int-running" "$W/.stub-int-caught"
 
+# ---------------------------------------------------------------------------
+# R2.18 (D7 items 1 and 3) — the alarm's trigger is transcript silence, not
+# wall-clock. Every case below stands a child that maintains its OWN
+# .active-session record and transcript, which is what a registered session
+# does: child_probe reads the pid from that record, checks it is a live child of
+# this supervisor, then ages the artifact the session record names.
+# ---------------------------------------------------------------------------
+cat > "$TMP/probe-child.sh" <<'EOF'
+#!/usr/bin/env bash
+# $1 = session_id, $2 = touches, $3 = seconds between touches, $4 = tail sleep
+set -u
+sid="$1"; touches="$2"; gap="$3"; tail_sleep="$4"
+art="$PC_TMP/transcript-$sid.jsonl"
+: > "$art"; : > "$PC_TMP/touches-$sid.log"; date +%s >> "$PC_TMP/touches-$sid.log"
+printf '{"runtime":"stub","session_id":"%s","project":"testproj","pid":%s,"pid_start":"x","supervisor_pid":%s}\n' \
+  "$sid" "$$" "$PPID" > "$PC_W/.active-session"
+printf '{"runtime":"stub","session_id":"%s","artifact":"%s","project":"testproj","pid":%s}\n' \
+  "$sid" "$art" "$$" > "$PC_MAIN/.context-budget/sessions/stub-$sid.json"
+# Session 34: record every write, so the test can check the fixture's premise
+# ("this child writes every ${gap}s") actually held. Under load the child can be
+# starved off-CPU for longer than the alarm interval, at which point a silence
+# report is CORRECT and asserting against it tests nothing.
+i=0
+while [ "$i" -lt "$touches" ]; do
+  : > "$art"; date +%s >> "$PC_TMP/touches-$sid.log"; sleep "$gap"; i=$((i+1))
+done
+sleep "$tail_sleep"
+: > "$PC_W/.probe-child-done"
+EOF
+chmod +x "$TMP/probe-child.sh"
+export PC_TMP="$TMP" PC_W="$W" PC_MAIN="$MAIN"
+
+echo "R2.18-a: a child that is still writing draws a log line, never a page"
+# Constants retuned in session 34, against measurement, for BOTH flakes this
+# case carried for four sessions. The old pair was `live 8 1 0` at ALARM=2.
+#  - a3 (quantization): child_probe ages the transcript with two whole-second
+#    clocks, so its answer carries +/-1s. A 1s touch gap against `age < ALARM=2`
+#    is a one-second margin against a one-second error, and `quant.sh` in the
+#    work directory reproduces the crossing deterministically (a real 1.2s gap
+#    reports as 2s once the write lands past ~0.7 into a wall-clock second).
+#    ALARM=4 against the same 1s gap gives 3s of margin. The field runs
+#    ALARM=900, so this was never a production defect.
+#  - a2 (pre-registration): the alarm subshell is forked BEFORE `eval "$CMD"`,
+#    so its clock starts before the child exists. Under load the first tick beat
+#    the child's own `.active-session` write, child_probe returned nothing, and
+#    the deliberate unidentified branch paged. Measured session 34: 6/12 loaded
+#    runs, and in every one the unidentified tick was the FIRST tick of the run
+#    and the only one (instrumented per-return-point trace; the `ps -o ppid=`
+#    liveness race that session 33 hypothesised fired zero times in 35 ticks).
+#    12 touches keep three ticks inside the writing phase, so a1 stays
+#    conclusive.
+reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
+# The supervisor log is CUMULATIVE across this whole suite, and the D5b cases
+# above deliberately emit "running with no exit" and "is still running". Truncate
+# it here so a1's conclusiveness check and a2's window below are scoped to THIS
+# case's own run — otherwise a1 can pass on an earlier test's line while this
+# child was never identified at all, and a2's window can open on a line that is
+# not ours. Safe: L7a only checks the file exists, and it runs long before this.
+: > "$W/.session-loop.log"
+_a_alarm=4        # one name for the constant a3's premise guard has to agree with
+printf '%s\n' "$TMP/probe-child.sh live 14 1 0" > "$NEXT"
+SESSION_LOOP_ALARM="$_a_alarm" SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
+# Vacuity guard: with no alarm tick at all, a-2 and a-3 pass while proving
+# nothing. The supervisor log is where the fresh-path line lands.
+grep -q "is still running (transcript written" "$W/.session-loop.log" \
+  && ok "R2.18-a1: fixture conclusive — the probe identified the child and ran" \
+  || bad "R2.18-a1: INCONCLUSIVE — the probe never identified the child, so a2/a3 prove nothing"
+# a2 is WINDOW-aware, and margin alone is not what makes it sound. `notify`
+# calls `say`, so pages and still-running lines land in ONE file, in order. a2
+# fails only for a no-exit page that lands BETWEEN the first and last successful
+# identification — the window in which the child was demonstrably alive and
+# writing, so losing it is the R2.18 defect shape. Session 34 measured two
+# distinct benign causes at the two boundaries, neither of them a production
+# defect, and a blanket grep cannot tell either from a real regression:
+#   - BEFORE the first identification: the alarm subshell is forked before
+#     `eval "$CMD"`, so its clock starts before the child exists; under load the
+#     first tick beat the child's own `.active-session` write (5-6 of 12 loaded
+#     runs, always the first tick).
+#   - AFTER the last identification: the tick due at the child's exit races it,
+#     `ps -o ppid=` finds the pid already gone (traced: `ps_ppid=[] alive=n`),
+#     and the unidentified branch pages a session that ended cleanly (1 tick in
+#     41 loaded ticks, always the last). 14 touches against ALARM=4 put ticks at
+#     t=4/8/12 and the child's exit at t=14, so the exit no longer COLLIDES with
+#     a due tick the way the old 8-touch/ALARM=2 pair did (exit and tick both at
+#     t=8, which made the race a coin flip on every run) — while still leaving
+#     three identifications, so a2's window below is real and not a single point.
+# Both reach the same deliberate branch — no identification, no verdict, never a
+# kill — and the field's ALARM=900 puts both boundaries seconds from a 15-minute
+# tick. Limitation, stated: a2 cannot see a defect that pages ONLY on the very
+# first or very last tick. That is the price of not re-chasing these two for a
+# fifth session, and a1 still covers the case where nothing is ever identified.
+_a_idents="$(grep -n "is still running (transcript written" "$W/.session-loop.log" | cut -d: -f1)"
+_a_first_ident="$(printf '%s\n' "$_a_idents" | head -1)"
+_a_last_ident="$(printf '%s\n' "$_a_idents" | tail -1)"
+if [ -z "$_a_first_ident" ]; then
+  echo "  note: R2.18-a2 not evaluated — nothing was ever identified, which is a1's case"
+else
+  _a_mid_noexit="$(grep -n "running with no exit" "$W/.session-loop.log" | cut -d: -f1 \
+    | awk -v f="$_a_first_ident" -v l="$_a_last_ident" '$1 > f && $1 < l' | wc -l | tr -d ' ')"
+  [ "$_a_mid_noexit" -gt 0 ] \
+    && bad "R2.18-a2: a session the probe had identified as writing was paged as a stall — the R2.18 defect itself" \
+    || ok "R2.18-a2: no page for a session the probe had identified as writing"
+  grep -q "running with no exit" "$W/.session-loop.log" \
+    && echo "  note: R2.18-a2 saw a boundary no-exit tick (pre-registration or exit race — fixture timing, measured session 34, not a defect)"
+fi
+# a3 is PREMISE-GUARDED. It asserts "a session that IS writing is not called
+# silent", so it is only a real assertion while the fixture child really was
+# writing faster than the alarm interval. Under load the child gets starved off
+# -CPU: session 34 measured a true 4s gap at ALARM=4 (the alarm's own `sleep 4`
+# stretched to 7s in the same run), and a silence report against a genuinely 4s
+# -silent transcript is the supervisor being RIGHT. Both a3 reds seen in 24
+# loaded runs were this, at age=4 — not the +/-1s quantization `quant.sh`
+# reproduces, which the ALARM 2->4 retune above already put 3 steps out of
+# reach. Starvation cannot be fixed by margin, because load stretches the
+# interval the margin is measured against; it can only be detected, so an
+# unmet premise reports INCONCLUSIVE rather than red — the same discipline a1
+# and D5b-i1 already use.
+_a3_max_gap="$(awk 'NR>1{d=$1-p; if(d>m)m=d} {p=$1} END{print m+0}' \
+               "$TMP/touches-live.log" 2>/dev/null)"
+if [ -z "$_a3_max_gap" ]; then
+  bad "R2.18-a3: INCONCLUSIVE — the child recorded no writes, so its premise is unknown"
+elif [ "$_a3_max_gap" -ge "$_a_alarm" ]; then
+  echo "  note: R2.18-a3 INCONCLUSIVE — the child was starved ${_a3_max_gap}s (>= ALARM=$_a_alarm), so a silence report would be correct; not evaluated"
+else
+  grep -q "written nothing" "$NOTED" \
+    && bad "R2.18-a3: a writing session was reported as silent (child's worst gap was only ${_a3_max_gap}s)" \
+    || ok "R2.18-a3: a writing session was not called silent"
+fi
+
+echo "R2.18-b: a child that has stopped writing IS paged, and named as silent"
+reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
+printf '%s\n' "$TMP/probe-child.sh mute 1 0 6" > "$NEXT"
+SESSION_LOOP_ALARM=1 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
+[ -s "$NOTED" ] && ok "R2.18-b1: the silent child was paged" \
+                || bad "R2.18-b1: a silent child drew no page"
+assert_contains "R2.18-b2: the page names transcript silence, not wall-clock" \
+  "$(cat "$NOTED")" "has written nothing for"
+[ -f "$W/.probe-child-done" ] \
+  && ok "R2.18-b3: KILL_AFTER defaults to 0 — the silent child ran to completion" \
+  || bad "R2.18-b3: the child was killed with SESSION_LOOP_KILL_AFTER unset"
+
+echo "R2.18-c: SESSION_LOOP_KILL_AFTER ends a silent child, and the chain halts"
+reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
+printf '%s\n' "$TMP/probe-child.sh dead 1 0 60" > "$NEXT"
+c_start="$(date +%s)"
+SESSION_LOOP_ALARM=1 SESSION_LOOP_KILL_AFTER=3 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/c18" 2>&1 </dev/null; c_rc=$?
+c_elapsed=$(( $(date +%s) - c_start ))
+[ "$c_elapsed" -lt 30 ] \
+  && ok "R2.18-c1: the supervisor returned in ${c_elapsed}s, not after the child's 60s" \
+  || bad "R2.18-c1: the supervisor blocked ${c_elapsed}s — the kill never landed"
+[ ! -f "$W/.probe-child-done" ] \
+  && ok "R2.18-c2: the child died before its completion marker" \
+  || bad "R2.18-c2: the child survived the kill"
+assert_contains "R2.18-c3: the kill was announced before it was delivered" \
+  "$(cat "$NOTED")" "ending it"
+# A killed child leaves no successor and an unmoved counter. R2.17 §2 / TE6 A6
+# must call that broken, NOT a deliberate quit — a kill is the supervisor's own
+# doing and is the loudest thing it can report.
+assert_eq       "R2.18-c4: exit 1 (halt), not a clean chain end" "$c_rc" "1"
+assert_contains "R2.18-c5: the HALT names the signal death" \
+  "$(grep 'HALT' "$TMP/c18")" "rc=143"
+case "$(cat "$TMP/c18")" in *"deliberate quit"*) bad "R2.18-c6: a killed session was called a deliberate quit" ;;
+                            *) ok "R2.18-c6: a killed session was not called a deliberate quit" ;; esac
+
+echo "R2.18-d: the probe refuses a record that does not name OUR live child"
+# The identity gate, and the reason nothing here kills on missing evidence: a
+# stale .active-session naming a foreign pid (1 = always live, never our child)
+# must fall back to the pre-R2.18 unconditional message and must not be killed.
+reset; rm -f "$W/.probe-child-done"; : > "$NOTED"
+printf '{"runtime":"stub","session_id":"foreign","project":"testproj","pid":1,"pid_start":"x","supervisor_pid":1}\n' \
+  > "$W/.active-session"
+printf '{"runtime":"stub","session_id":"foreign","artifact":"%s","project":"testproj"}\n' \
+  "$TMP/foreign-transcript" > "$MAIN/.context-budget/sessions/stub-foreign.json"
+: > "$TMP/foreign-transcript"; touch -t 200001010000 "$TMP/foreign-transcript"
+printf '%s\n' "sh -c 'sleep 4; : > $W/.probe-child-done'" > "$NEXT"
+SESSION_LOOP_ALARM=1 SESSION_LOOP_KILL_AFTER=2 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
+assert_contains "R2.18-d1: an unidentified child keeps the pre-R2.18 message" \
+  "$(cat "$NOTED")" "running with no exit"
+[ -f "$W/.probe-child-done" ] \
+  && ok "R2.18-d2: nothing was killed on a record the probe could not verify" \
+  || bad "R2.18-d2: a child was killed on an unverified record"
+rm -f "$W/.active-session"
+
+echo "R2.18-e: repeat pages back off, so a multi-day hang is not 368 identical pages"
+reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
+printf '%s\n' "$TMP/probe-child.sh backoff 1 0 9" > "$NEXT"
+SESSION_LOOP_ALARM=1 SESSION_LOOP_ALARM_MAX=4 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
+e_n="$(wc -l < "$NOTED" | tr -d ' ')"
+# 1+2+4+4 over ~9s of silence is 3-4 pages; a flat 1s interval is 8-9. The upper
+# bound is the assertion, the lower one is the vacuity guard.
+[ "$e_n" -ge 2 ] \
+  && ok "R2.18-e1: fixture conclusive — the silent child was paged ($e_n)" \
+  || bad "R2.18-e1: INCONCLUSIVE — only $e_n pages, so e2 proves nothing"
+[ "$e_n" -le 5 ] \
+  && ok "R2.18-e2: the interval backed off ($e_n pages over ~9s at a 1s base)" \
+  || bad "R2.18-e2: no backoff — $e_n pages over ~9s at a 1s base"
+rm -f "$W/.active-session"
+
 echo "V4: a FORKED agent under a supervisor still stages its successor"
 # README success criterion 3, and the only case that spans all four lanes. The
 # fork is simulated exactly as it occurs in the wild: the staged command runs
@@ -636,6 +1048,12 @@ echo "V4: a FORKED agent under a supervisor still stages its successor"
 reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
 jq -n '{session_id:"pre-fork",runtime:"claude",project:"testproj",role:"primary"}' \
   > "$W/.active-session"
+# R2.17 section 1: the launcher refuses to bump without an identity while a
+# supervisor is live. A real session has one because `register` writes BOTH the
+# lock and this record; the fixture wrote only the lock, so it modelled a state
+# no registered session is ever in.
+jq -n '{session_id:"pre-fork",runtime:"claude",project:"testproj"}' \
+  > "$MAIN/.context-budget/sessions/claude-pre-fork.json"
 export V4_MAIN="$MAIN"
 cat > "$TMP/forked-session.sh" <<'FORK'
 #!/usr/bin/env bash
@@ -643,6 +1061,10 @@ set -u
 unset TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT     # the fork loses them
 cd "$V4_MAIN" || exit 9
 me="$(tr -cd '0-9' < work/testproj/.session-seq)"
+# 0. the flush (R2.17 section 7): the supervisor halts a rollover that left both
+#    next-session.md and handoff.md byte-identical, so the fork has to do what a
+#    real rollover's step 1 does.
+printf '# launcher (V4 session %s)\n' "$me" > work/testproj/next-session.md
 # 1. C1: decide from disk, not from the environment. 0 supervised / 2 ambiguous
 #    both stage (design.md R3); 1 unsupervised here means C1 read the env.
 ./scripts/context-budget.sh supervised --project testproj; sup=$?
@@ -681,6 +1103,56 @@ assert_contains "V4f: 'chain cap' printed — the chain ended on the cap path, n
                 "$(cat "$TMP/v4")" "chain cap"
 unset V4_MAIN; rm -f "$W/.active-session"
 
+echo "V5 (D10): a chain where seq-sync has NEVER run still produces an acceptable sentinel"
+# The regression D10 names. V4 above passes only because its child calls
+# seq-sync, which writes the provenance sidecar rollover-complete used to read.
+# An ordinary chain never needs a counter repair, so that sidecar is never
+# refreshed and the sentinel stamped a months-old number — the supervisor then
+# halted a chain in which nothing was wrong. This child is V4's minus step 5:
+# same REAL single-writers, no seq-sync anywhere, and (below) no sidecar on disk
+# at all, which is the state a fresh work item is actually in.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+rm -f "$W/.session-seq.provenance.json" "$W/.session-seq.bump.json"
+jq -n '{session_id:"nosync",runtime:"claude",project:"testproj"}' \
+  > "$MAIN/.context-budget/sessions/claude-nosync.json"
+export V5_MAIN="$MAIN"
+cat > "$TMP/nosync-session.sh" <<'NOSYNC'
+#!/usr/bin/env bash
+set -u
+cd "$V5_MAIN" || exit 9
+printf '# launcher (V5 %s)\n' "$(tr -cd '0-9' < work/testproj/.session-seq)" \
+  > work/testproj/next-session.md
+./scripts/launch-next-session.sh testproj --emit || exit 9
+./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff || exit 9
+NOSYNC
+chmod +x "$TMP/nosync-session.sh"
+printf '%s\n' "$TMP/nosync-session.sh" > "$NEXT"
+"$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/v5" 2>&1; rc=$?
+assert_eq       "V5a: the sentinel carries the number that actually ran" \
+                "$(jq -r '.seq' "$SENT" 2>/dev/null)" "8"
+assert_contains "V5b: the supervisor accepted the handover" "$(cat "$TMP/v5")" "rolled over cleanly"
+assert_eq       "V5c: the chain ended on the cap, not a halt" "$rc" "0"
+[ ! -f "$W/.session-seq.provenance.json" ] \
+  && ok "V5d: no seq-sync ran — the sidecar the old code read does not even exist" \
+  || bad "V5d: something ran seq-sync; the case is not testing what it claims"
+
+echo "V5e-g (D10): a seq-sync repair retires the bump record rather than losing to it"
+# The precedence has to run both ways. After a repair the counter no longer
+# matches what the bump recorded, so the stale bump record must step aside for
+# the sidecar the repair just wrote.
+reset
+rm -f "$W/.session-seq.provenance.json" "$W/.session-seq.bump.json" "$SENT"
+( cd "$MAIN" && ./scripts/launch-next-session.sh testproj --emit >/dev/null 2>&1 )
+assert_eq "V5e: --emit recorded its own number in the bump record" \
+          "$(jq -r '.seq' "$W/.session-seq.bump.json" 2>/dev/null)" "8"
+"$MAIN/scripts/context-budget.sh" seq-sync --project testproj --session 12 >/dev/null 2>&1
+( cd "$MAIN" && ./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff >/dev/null 2>&1 )
+assert_eq "V5f: the repaired number wins over the retired bump record" \
+          "$(jq -r '.seq' "$SENT" 2>/dev/null)" "12"
+assert_eq "V5g: and the bump record itself was left alone, not rewritten" \
+          "$(jq -r '.successor' "$W/.session-seq.bump.json" 2>/dev/null)" "9"
+unset V5_MAIN; rm -f "$W/.session-seq.provenance.json" "$W/.session-seq.bump.json"
+
 # Unconditional teardown: leave the exported fixture state as the suite's
 # default so a later case can never inherit stage-nothing or a live alarm.
 unset TF_ALARM_LOG; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff; reset
@@ -718,6 +1190,73 @@ assert_eq       "N3a: exit 0 stays"               "$rc" "0"
 assert_contains "N3b: unrecorded quit named"      "$(cat "$NOTIFY_LOG")" "WITHOUT a rollover"
 assert_contains "N3c: names the actual top block" "$(cat "$NOTIFY_LOG")" "top block is session 7"
 rm -f "$W/handoff.md"; unset NOTIFY_LOG; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff; reset
+
+# ---------------------------------------------------------------------------
+# B-series (R2.19 / D9): the chain budget outlives the supervisor process.
+#
+# The defect these pin: `n` was a shell variable, so every restart reopened the
+# full cap. work/policy-dev-onboarding/.session-loop.log has #18, #19, #20 and
+# #27 each opening at "1 of 10" straight after a HALT — sixteen sessions of work
+# under a cap of ten, which never fired once.
+# ---------------------------------------------------------------------------
+echo "B1: a spent budget survives the supervisor and the next start resumes it"
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+"$SL" testproj --max-sessions 2 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null || true
+assert_eq "B1a: two sessions recorded as used" "$(jq -r '.used' "$BUDGET" 2>/dev/null)" "2"
+assert_eq "B1b: the cap is recorded alongside" "$(jq -r '.cap'  "$BUDGET" 2>/dev/null)" "2"
+# Restart the SUPERVISOR without resetting the chain: exactly what an operator
+# does after a halt. Only .session-loop/.next-command are cleared, never $BUDGET.
+rm -f "$W/.session-loop"; printf '%s\n' "$TMP/stub.sh" > "$NEXT"
+out="$("$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null || true)"
+assert_contains "B1c: the restart resumes, it does not reopen"        "$out" "resuming the chain budget at 2 of 5"
+assert_contains "B1d: the counter continues, it does not restart at 1" "$out" "(3 of 5)"
+assert_eq "B1e: the budget reached the cap" "$(jq -r '.used' "$BUDGET")" "5"
+assert_eq "B1f: five sessions of work in total" "$(cat "$SEQF")" "13"
+
+echo "B2: a start on a spent budget refuses without burning a session number"
+# The refusal must land ahead of the bootstrap: --emit bumps .session-seq, so a
+# supervisor that only discovered the cap at the `while` would spend a session
+# number on a session it was never going to run.
+rm -f "$W/.session-loop" "$NEXT"
+seq_before_refusal="$(cat "$SEQF")"
+out="$("$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null || true)"
+assert_contains "B2a: refused with the cap verdict" "$out" "chain cap reached (5 of 5"
+assert_contains "B2b: the remedy is named"          "$out" "--reset-cap"
+assert_eq       "B2c: the counter did not move"     "$(cat "$SEQF")" "$seq_before_refusal"
+assert_eq       "B2d: nothing was staged"           "$([ -s "$NEXT" ] && echo staged || echo none)" "none"
+
+echo "B3: --reset-cap opens a new budget and the next start is fresh"
+out="$("$SL" testproj --reset-cap 2>&1 </dev/null || true)"
+assert_contains "B3a: the reset reports what it spent" "$out" "chain budget reset (5 of"
+assert_eq       "B3b: the budget file is gone"         "$([ -f "$BUDGET" ] && echo present || echo gone)" "gone"
+printf '%s\n' "$TMP/stub.sh" > "$NEXT"
+out="$("$SL" testproj --max-sessions 2 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null || true)"
+assert_contains "B3c: the fresh budget starts at one" "$out" "(1 of 2)"
+
+echo "B4: --reset-cap is refused under a live supervisor"
+# R2.4's reason: the running loop persists .used before every child, so a reset
+# landing underneath it is silently overwritten on the next iteration.
+jq -n --argjson pid "$$" --arg project testproj --arg started_at now \
+  '{pid:$pid, project:$project, started_at:$started_at}' > "$W/.session-loop"
+out="$("$SL" testproj --reset-cap 2>&1 </dev/null || true)"
+assert_contains "B4a: refused, naming the live supervisor" "$out" "already running for testproj"
+assert_eq       "B4b: the budget was left alone"           "$(jq -r '.used' "$BUDGET" 2>/dev/null)" "2"
+rm -f "$W/.session-loop"
+
+echo "B5: a malformed budget halts rather than being read as zero"
+# Reading an unparseable budget as "none used" would restore D9 exactly, and
+# self-healing a malformed control file is declined on this work item (D11
+# candidate 5). The remedy it names must itself survive the corruption.
+reset; printf '{"used":"not-a-number"}\n' > "$BUDGET"
+"$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 0 >"$TMP/b5" 2>&1 </dev/null; rc=$?
+out="$(cat "$TMP/b5")"
+assert_eq       "B5a: exit 1, not a quiet start"  "$rc" "1"
+assert_contains "B5b: named as unreadable"        "$out" "chain budget"
+assert_contains "B5c: the remedy is named"        "$out" "--reset-cap"
+assert_eq       "B5d: it did not stage a session" "$(cat "$SEQF")" "8"
+out="$("$SL" testproj --reset-cap 2>&1 </dev/null || true)"
+assert_contains "B5e: --reset-cap survives the corruption it is the remedy for" "$out" "chain budget reset"
+reset
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

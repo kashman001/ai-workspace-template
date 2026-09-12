@@ -97,14 +97,31 @@ budget_hook_message() {
 #   rc 0 when this session's own rollover sentinel is on disk under the
 #   supervisor; rc 1 in every other case, including every error.
 budget_hook_should_exit() {
-  local sid="${1:-}" proj="${2:-}" sentf owner
+  local sid="${1:-}" proj="${2:-}" dir bumpf sentf owner
   [ "${TF_SESSION_LOOP:-}" = "1" ] || return 1
   [ -n "$sid" ] && [ -n "$proj" ] || return 1
   command -v jq >/dev/null 2>&1 || return 1
   # WORKSPACE_ROOT, not budget_hook_resolve_root(): the resolver deliberately
   # ignores the env override so it can find the main checkout from a worktree,
   # and every other reader in this lib goes through WORKSPACE_ROOT.
-  sentf="$WORKSPACE_ROOT/work/$proj/.rollover-complete"
+  dir="$WORKSPACE_ROOT/work/$proj"
+  # R2.17 section 3 — two script-written facts, no agent-written one. .next-command
+  # non-empty means a successor is staged; the bump record's session_id being
+  # MINE means I am the session that staged it. Both are written by
+  # launch-next-session.sh --emit, which is the only thing that can stage.
+  #
+  # Persistence is safe here where a persistent sentinel was not: the bump record
+  # outlives the session, but no past session's id can equal a live one's, so a
+  # stale record can never match. .next-command is additionally removed by the
+  # supervisor before each run, which bounds it further.
+  bumpf="$dir/.session-seq.bump.json"
+  if [ -s "$dir/.next-command" ] && [ -f "$bumpf" ]; then
+    owner="$(jq -r '.session_id // empty' "$bumpf" 2>/dev/null)"
+    [ "$owner" = "$sid" ] && return 0
+  fi
+  # Transitional, one release: a session that was already in flight when R2.17
+  # landed still runs the demoted rollover-complete, and must still self-kill.
+  sentf="$dir/.rollover-complete"
   [ -f "$sentf" ] || return 1
   owner="$(jq -r '.session_id // empty' "$sentf" 2>/dev/null)"
   [ "$owner" = "$sid" ] || return 1

@@ -33,8 +33,7 @@ Section index:
 - **Why you can't ask the model (D1)** — why usage is measured from disk.
 - **Thresholds** — WARN/STOP values and where they live.
 - **Rollover trigger policy** — what to do on exit 1 (WARN) vs 2 (STOP).
-- **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override;
-  `--clear` in-place relaunch.
+- **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override.
 - **Multi-session model** *(fleet-only)* — session-keyed registry,
   per-project lock, session roles.
 - **Worktrees** *(fleet-only)* — workspace-root anchoring.
@@ -84,13 +83,27 @@ the hook loads and fires on every session. The earlier s78/s79 "DEAD END"
 finding was a false negative — the hook fired, but a pre-register
 `[ -f "$cs" ]` guard skipped registration when SessionStart fires seconds before
 VS Code creates the `chatSessions/<sid>.jsonl` token file. Fixed by moving the
-registration block above the measurement guard (`register` handles a missing
-artifact as `method=deferred`). Manual registration (fix-B prefixed form below)
-is retained only as a fallback for hook-less contexts (e.g. hooks disabled by
-enterprise policy).
+registration block above the measurement guard (commit 27010c7;
+`register` handles a missing artifact as `method=deferred`). Manual registration
+(fix-B prefixed form below) is retained only as a fallback for hook-less
+contexts (e.g. hooks disabled by enterprise policy). Full evidence:
+`work/context-decay/copilot-vscode-hook-research-findings.md`.
 Unregistered sessions still measure — `check` falls back to
 newest-mtime discovery — but only registration pins the exact artifact, which
 is what keeps concurrent sessions from reading each other's counts.
+
+> **⚠️ Copilot VS Code — the `record`/`check` reading can lag the TRUE count by
+> a wide margin under tool-heavy sessions.** Confirmed 2026-08-11 (R11 s84 +
+> s85): `method=exact` returned a flat `52480` (34%) for an entire wave-scale
+> session (30 sub-agents) while the real count was `232996` (155%, past STOP) —
+> the transcript token file (`chatSessions/<sid>.jsonl`) flushes on the runtime's
+> own cadence, not per turn, so mid-session `record` readings can badly
+> under-report and a wave-scale phase can silently blow past STOP unnoticed. The
+> **`Stop`-event hook is the authoritative STOP signal** (it fires with the
+> settled count and blocks completion); do NOT trust a low mid-session `record`
+> value to mean you have headroom. Practical rule: at a wave-scale boundary,
+> roll over on the WORK-UNIT boundary regardless of the reported %, and have the
+> user confirm the number against the VS Code UI if it matters.
 
 ## Quickstart — agent
 
@@ -154,7 +167,7 @@ considered and ruled YAGNI (2026-08-06): thresholds encode where the model
 degrades, roles differ only in the *response* to crossing. Revisit only if
 dispatch records show mid-task `ROLLOVER_NEEDED` closures clustering in one
 role class, or pre-120K degradation attributable to a role. Full reasoning:
-`work/automatic-session-rollover/issues/08-per-role-thresholds.md`.
+`repos/ai-workspace-template/work/automatic-session-rollover/issues/08-per-role-thresholds.md`.
 
 ## Rollover trigger policy (hybrid: WARN asks, STOP goes)
 
@@ -227,9 +240,34 @@ in machine-local `work/<project>/.session-seq` (incremented per real launch,
 never by `--dry-run`). `.session-seq` + the bootstrap prompt are the
 **canonical** session-number source (ADR-0007): sessions use their prompt
 number verbatim in ledger titles and worktree names, and the dying session
-syncs the counter to its own number at `session-rollover` step 6 before
-launching — so a hand-pasted (launcher-bypassing) launch that skipped the
-increment self-corrects within one rollover. All five CLI runtimes get seeded-interactive launch
+asserts the counter against its own number at `session-rollover` step 6 via
+`scripts/context-budget.sh seq-sync --project <p> --session <N>` (never a
+hand-write) — it writes **only** when that is a correction, so a hand-pasted
+(launcher-bypassing) launch that skipped the increment self-corrects within
+one rollover while a launcher-launched session writes nothing at all
+(ADR-0008). A lineage gate in the launcher independently refuses to mint a
+successor number unless the counter equals the handoff top block's session.
+A counter exactly **one ahead** is the signature of a staged session that
+never wrote its ledger block (a plain `/exit`, a crash, an abandoned
+`--clear`); the gate splits on evidence gathered since the counter's own
+mtime: with **no trace** (no work-unit records, no commits, a clean
+`work/<project>` tree) the launcher silently reclaims the number, while with
+evidence it refuses (exit 3) and prints what it found plus the two fixes —
+reconstruct the ledger block, or abandon the number with
+`launch-next-session.sh <project> --unstage` (the atomic inverse of staging:
+removes the seed/staged-command/handshake artifacts and rewinds the counter
+via seq-sync). When ALL the evidence is rollover bookkeeping — records
+labelled `rollover start`/`rollover complete` and commits touching only
+`work/<project>/` — the refusal instead leads with the likely diagnosis: the
+predecessor itself, resumed under a new transcript id (an IDE restart),
+finished its own rollover after staging, and the staged session never ran
+— `--unstage` is the primary remedy there. Any other mismatch still refuses
+outright. The record check is workspace-wide (ledger entries carry no project
+field), so a false positive errs toward refusing — the conservative direction;
+see "How a session ends: two doors" in `docs/work-directory-conventions.md`
+for the operator-facing contract. Under
+`session-loop.sh`, a quit additionally pushes a chain-ended notification
+saying whether the ledger recorded the session. All five CLI runtimes get seeded-interactive launch
 (`claude`, `codex`, `gemini -i`, `opencode --prompt`, `copilot -i`); detached
 background (`--bg`) is claude-only. Copilot **VS Code** gets a seeded launch
 too — `code chat -r -m agent "<prompt>"` opens a new agent session in the
@@ -261,28 +299,21 @@ entry in the committed `.claude/settings.json`, which updates with `git pull` �
 a checkout predating that commit lacks it, and `--clear` then seeds a marker
 nothing drains.
 
-**Lineage gate — diagnosis and auto-heal:** at launch the counter must equal
-the session number in the ledger's top block. A counter exactly **one ahead**
-is the signature of a staged session that never wrote its ledger block (a
-plain `/exit`, a crash, an abandoned `--clear`), and the gate splits on
-evidence gathered since the counter's own mtime (the bump *is* the staging
-timestamp): with **no trace** — no work-unit records in the context ledger,
-no commits, a clean `work/<project>` tree — the launcher reclaims the number
-(rewinds the counter and continues, so the successor reuses it); with
-evidence, it refuses (exit 3) and prints what it found plus the two fixes —
-reconstruct the missing ledger block from that evidence, or abandon the
-number with `launch-next-session.sh <project> --unstage`: the atomic inverse
-of staging, which removes the seed/staged-command/handshake artifacts and
-rewinds the counter via seq-sync in one command. When ALL the evidence is
-rollover bookkeeping — records labelled `rollover start`/`rollover complete`
-and commits touching only `work/<project>/` — the refusal instead leads with
-the likely diagnosis: the predecessor itself, resumed under a new transcript
-id (e.g. an IDE restart), finished its own rollover after staging, and the
-staged session never ran — `--unstage` is the primary remedy there. Any
-other mismatch still refuses outright. The record check is workspace-wide
-(ledger entries carry no project field), so a false positive errs toward
-refusing — the conservative direction. See "How a session ends: two doors" in
-`docs/work-directory-conventions.md` for the operator-facing contract.
+**The writer's own number** (`work/<project>/.session-seq.bump.json`,
+machine-local, gitignored): once `--emit` has bumped the counter, `.session-seq`
+holds the *successor's* number, so nothing in the work item states the number of
+the session that is still running — which is exactly what the rollover verdict
+must record. The launcher writes this record at the bump, the one moment
+anything knows both numbers: `seq` (the bumping session's own) and `successor`
+(what the counter was set to), plus the usual runtime/session-id/cwd
+provenance and the chain `mode`. **Since R2.17 this record *is* the verdict**
+the supervisor judges on; there is no separate sentinel file (see "The
+supervisor" below). The supervisor accepts it only while its `successor` is
+still the live counter — a later `seq-sync` repair moves the counter past it,
+and the supervisor halts rather than act on a retired record.
+Before this existed the verdict read the sidecar first; since `seq-sync` runs
+only on a repair, an ordinary chain froze it at whatever session last needed
+one, and the supervisor halted healthy chains on a months-old number.
 
 **Option inheritance:** `work/<project>/.rollover-options` (optional; written
 by the dying session at `session-rollover` step 1 via
@@ -346,19 +377,31 @@ scripts/session-loop.sh <project> [--runtime <rt>] \
 
 Each iteration it `eval`s the command the dying session staged into
 `work/<proj>/.next-command` (written by `launch-next-session.sh --emit`), waits on
-the foreground child, and then proves the iteration against two facts it reads
-itself:
+the foreground child, and then proves the iteration against two **script-written**
+facts it reads itself: whether this session *staged a successor* (`.next-command`
+non-empty — the file is consumed *before* the run, so its presence afterwards can
+only be this session's work), and what the launcher recorded at the bump
+(`.session-seq.bump.json`). No agent is told to write either one, which is the
+whole point — R2.17 deleted the old `.rollover-complete` sentinel because its
+writer was an LLM-authored instruction that drifted, and a drifted sentinel
+halted the chain (D11).
 
-| Counter delta | Sentinel in the main checkout | Supervisor's reading |
-| --- | --- | --- |
-| 0 | absent | nobody rolled over — deliberate quit, exit 0 |
-| 1 | present, `seq` matches | normal rollover — relaunch |
-| 1 | absent | **a session ended somewhere I did not look** — halt and notify |
-| ≠ 1 | any | numbering rule 5 violated — halt and notify |
+| Counter delta | Staged a successor | Child rc (and, at rc 0, its transcript) | Supervisor's reading |
+| --- | --- | --- | --- |
+| 0 | no | 0, transcript does not end on an auth error | nobody rolled over — deliberate quit, exit 0 |
+| 0 | no | 0, transcript **ends** on a terminal `authentication_failed` | a vendor logout wearing a quit's clothes — halt, and refund the slot |
+| 0 | no | ≠ 0 | the command never ran, or died before its first counter write — halt |
+| ≠ 0 | no | any | **a session ended somewhere I did not look** — halt and notify |
+| 1 | yes, and the bump record matches | any | normal rollover — relaunch |
+| ≠ 1 | yes | any | numbering rule 5 violated — halt and notify |
+
+"The bump record matches" is four checks, each with its own halt message: it
+parses as a JSON object, its `written_by` names a sanctioned writer, its `seq`
+is the session that just ran, and its `successor` is the current counter.
 
 `--emit` always produces a **foreground** command, whatever `ROLLOVER_RELAUNCH`
 says: the supervisor evals the staged line and waits on it, so a backgrounding
-launch would return at once and the chain would read the missing sentinel as a
+launch would return at once and the chain would read the unstaged successor as a
 deliberate quit. `auto` still backgrounds a normal, non-emit rollover launch —
 the two paths differ deliberately (`launch-next-session.sh`, the `[ -z "$EMIT" ]`
 clause on the mode-derived `BG=1`; pinned by `scripts/tests/test-emit-mode.sh` E6).
@@ -375,7 +418,29 @@ overrides per work item, the same precedence `ROLLOVER_RELAUNCH` uses.
 | `SESSION_LOOP_MAX_SESSIONS` | 10 | chain cap (failure mode 3) |
 | `SESSION_LOOP_MIN_LIFETIME` | 60 | first-turn spurious STOP (failure mode 1) |
 | `SESSION_LOOP_STALL_LIMIT` | 3 | a stuck chain committing only bookkeeping (failure mode 2) |
-| `SESSION_LOOP_NOTIFY` | unset | a command run with the halt message as `$1` |
+| `SESSION_LOOP_NOTIFY` | unset | a command run with the halt or stall message as `$1` |
+| `SESSION_LOOP_ALARM` | 0 (off) | seconds between liveness checks while a session is still running — a hung child, which blocks the supervisor silently. Pages only when the child's transcript has gone silent |
+| `SESSION_LOOP_ALARM_MAX` | 3600 | ceiling on the alarm's repeat interval; it doubles from `SESSION_LOOP_ALARM` after each stall page and resets when the child is seen alive |
+| `SESSION_LOOP_KILL_AFTER` | 0 (off) | seconds of **transcript silence** after which the supervisor ends the child |
+
+A stock hook ships at `scripts/session-loop-notify.sh`: desktop notification
+where available (macOS `osascript`, Linux `notify-send`), plus an echo of the
+message as a fallback for callers that do no logging of their own. Under
+`session-loop.sh` that echo is deliberately discarded — the supervisor's
+`notify()` has already written the message to stderr and `.session-loop.log`
+before invoking the hook, so there the hook only adds the desktop
+notification. Wire it in an env file as
+
+```sh
+SESSION_LOOP_NOTIFY="${ROOT:-.}/scripts/session-loop-notify.sh"
+```
+
+The `${ROOT:-.}` guard is load-bearing, not style: `session-loop.sh` sets
+`ROOT` before sourcing the env files, but `launch-next-session.sh` sources the
+same files under `set -u` with no `ROOT` — a bare `$ROOT` there kills the
+launcher itself, not just the hook (measured 2026-09-09 in a downstream
+workspace). The same applies to any variable referenced in a
+`context-budget.env` value: expand it with a `${VAR:-fallback}` default.
 
 A stock hook ships at `scripts/session-loop-notify.sh`: desktop notification
 where available (macOS `osascript`, Linux `notify-send`), plus an echo of the
@@ -410,22 +475,96 @@ For the same reason the supervisor's own runtime files must never be tracked:
 committed copy would show progress in every session and the guard could never
 fire. They are gitignored under "Live-session runtime state under `work/`".
 
+**The stall alarm.** `SESSION_LOOP_ALARM` is the answer to "what if I was not
+here?" — a session that hangs blocks the supervisor in the foreground `eval`, and
+before this it did so in complete silence, for as long as the child lived. Set it
+to a number of seconds and the supervisor checks on that cadence, routing through
+the same `notify` path as a halt so `SESSION_LOOP_NOTIFY` can page a human. A
+non-numeric value is refused at startup (exit 3) rather than read as "off".
+
+**What it checks is transcript silence, not wall-clock** (R2.18). Wall-clock
+never could tell a hang from a long session: one healthy 59-minute session of
+this chain drew three identical alarms, and another drew two while a human sat
+re-running `/login`. A knob whose false-positive rate for "hang" is ~100% can be
+a progress ticker, but it must never be a trigger. What does separate them is
+whether the runtime is still **writing** — so the alarm identifies the child
+first (pid from `work/<proj>/.active-session`, which must be live *and* a child
+of this supervisor) and then ages the transcript that child's session record
+names. Each tick lands in one of four places:
+
+| The probe says | What happens |
+| --- | --- |
+| cannot identify the child | `session #N has been running with no exit` — the pre-R2.18 message and behaviour, kept for chains that predate the probe and for a session that hangs before it registers |
+| written within the last `SESSION_LOOP_ALARM` seconds | a **log line only** — no bell, no hook. This is the false page R2.18 exists to stop |
+| silent, and `SESSION_LOOP_KILL_AFTER` is set and exceeded | the child is **killed**, and the page names the limit |
+| silent | `session #N has written nothing for Xs`, and the interval **doubles** toward `SESSION_LOOP_ALARM_MAX` |
+
+The doubling is why a dead session no longer floods you: 3d 20h of silence at a
+flat 900s is ~368 identical pages. The interval resets the moment the session is
+seen alive again. **No identification means no verdict and never a kill** —
+nothing here acts on missing evidence.
+
+**It can now kill the child** (`SESSION_LOOP_KILL_AFTER`, default 0 = off, which
+is the older behaviour exactly). The tty objection that deferred this is
+*dissolved*, not overridden: killing needs a killable pid, and the old plan to
+get one was to background the child, which takes the tty away and earns an
+interactive session a SIGTTIN on its first read. R2.10 put the pid in the session
+record instead, so the child stays in the foreground and the supervisor kills by
+pid, having already proved that pid is its own live child.
+
 **Halt vs. exit.** A halt is never just a stop. Every inherited refusal in
 `launch-next-session.sh` was written for a watching human; unattended, a `die` is
 a silent stopped chain. So the supervisor exits 1, logs to
 `work/<proj>/.session-loop.log`, rings the terminal bell, and runs
-`SESSION_LOOP_NOTIFY` if set. A clean end of chain — deliberate quit or chain cap
-— exits 0. A deliberate quit still notifies (a chain end is a fact a human
+`SESSION_LOOP_NOTIFY` if set (the message carries a `HALT:` prefix, which is what
+distinguishes it from a stall alarm on the same hook). A clean end of chain —
+deliberate quit or chain cap — exits 0. A deliberate quit still notifies (a chain end is a fact a human
 should learn without reading the log): the message says whether the ledger's
 top block records the quitting session, or names the unrecorded quit — "quit
 WITHOUT a rollover or checkpoint" — so a missing ledger block is flagged the
 moment it happens rather than at the next launch's lineage gate.
 
-**Modes.** The dying session infers `interactive` vs `handsoff` and writes it into
-the sentinel; a human `touch work/<proj>/.hands-off` or `.interactive` overrides
-it. Interactive waits for **Enter** between sessions (a keypress, not a countdown
-— a countdown eats a human's unsubmitted text) and disables stall detection, since
-the human at the prompt is the stall detector.
+**A broken chain is not a clean end.** Reaching the top of the loop mid-chain with
+nothing staged is a contradiction, not a finish: reaching there means the previous
+iteration passed every check above, and a clean verdict asserts a successor
+exists. The supervisor therefore halts with `ended with a clean verdict but
+staged no successor` and exits **1**. Since R2.17 the end-of-iteration gate
+catches "bumped but staged nothing" directly, so this top-of-loop check is now a
+backstop rather than the detector it was. Only the three legitimate endings exit
+0 — the chain cap, a deliberate quit (nothing staged, counter unmoved, rc 0),
+and Ctrl-C at the interactive pause.
+
+**Modes.** The dying session infers `interactive` vs `handsoff` and the launcher
+writes it into the bump record as `mode`, which is where the supervisor reads it;
+a human `touch work/<proj>/.hands-off` or `.interactive` overrides it (the
+launcher refuses if both exist). Interactive waits for **Enter** between sessions (a keypress, not a countdown
+— a countdown eats a human's unsubmitted text) and disables the no-progress stall
+guard (`SESSION_LOOP_STALL_LIMIT`), since the human at the prompt is the stall
+detector.
+
+**A vendor logout is not a deliberate quit.** A logged-out runtime exits **0**
+having staged nothing and left the counter unmoved — the same three facts a
+human `/exit` leaves — so before calling an `rc=0` session a quit the supervisor
+reads that child's own transcript and checks whether it *ends* on a terminal
+`authentication_failed`. If it does, the chain **halts** (exit 1, through
+`notify`) with a message that names the logout, states that nothing was lost
+(counter unmoved, nothing staged), and prints the command to resume. The slot is
+refunded: `budget_write` runs at session start, so without the refund a
+four-minute logout would permanently spend one of `SESSION_LOOP_MAX_SESSIONS`.
+There is no auto-retry — every logout measured here is the credential kind,
+which cannot clear without a human running `/login`. A transient auth error the
+session recovered from is not a logout and is not treated as one.
+
+**A supervisor change takes effect one invocation late.** `bash` runs the script
+text it already holds, so committing an edit to `session-loop.sh` does not change
+the supervisor currently running — the running chain finishes on the old code and
+the edit first applies to the next `scripts/session-loop.sh` invocation. This is
+how the tool works, not a bug, but it has a sharp edge: a HALT from the *old*
+code arriving after you shipped a fix is indistinguishable from the fix being
+broken, and the instinct is to revert something correct. After committing a
+supervisor change, expect one more iteration of the previous behaviour, and say
+so in the handoff you leave. Check `git log -1 scripts/session-loop.sh` against
+the running supervisor's start time before diagnosing a surprising halt.
 
 ## Multi-session model (session-keyed registry + per-project lock)
 
@@ -539,7 +678,9 @@ Every element must hold under N concurrent sessions:
 
 **Coordination state is keyed to the repository, never to a checkout**
 (issue 05, session 19). All coordination scripts resolve `WORKSPACE_ROOT`
-through `git rev-parse --git-common-dir` (parent of the shared `.git`), so a
+through `git rev-parse --git-common-dir` (parent of the shared `.git`) when
+the git root is this workspace, and through the validated script-anchored
+fallback otherwise (ADR-0006; see Fallback below), so a
 script invoked from any git worktree — Claude Code's `.claude/worktrees/`,
 a manually created one, any runtime — reads and writes the **main
 checkout's** `.context-budget/`, per-work-item locks, ledger, and
@@ -655,7 +796,7 @@ fine given the WARN→STOP margin.
 | Claude Code | `~/.claude/projects/<cwd-slug>/$CLAUDE_CODE_SESSION_ID.jsonl` when that var is set (transcript basename = session id), else newest `.jsonl` in the slug dir (slug = cwd with `/` and `.` → `-`) | last main-chain `message.usage` sum of input + cache-read + cache-creation tokens; sidechain (sub-agent) rows excluded — they have their own windows | exact (verified 2026-07-22, this workspace) |
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` — pinned to `rollout-*-<id>.jsonl` when `$CODEX_THREAD_ID` is set (exported to every shell Codex spawns; equals the rollout UUID), else cwd-filtered newest-mtime fallback | last `last_token_usage.total_tokens` | exact (verified 2026-07-22, origin workspace); pin live-verified 2026-07-23 |
 | Copilot VS Code | **Hook route (preferred, CONFIRMED working 2026-08-11):** the agent-mode hooks derive the `chatSessions/<id>.jsonl` path from the hook payload's `transcript_path` + `session_id` (`…/GitHub.copilot-chat/transcripts/<id>.jsonl` → `../../../chatSessions/<id>.jsonl`) and pass it as `--transcript` — no env var, works from the unsandboxed hook process; `.github/hooks/` is a default `chat.hookFilesLocations` location so the hook loads and auto-registers with no settings entry. **Terminal route (fallback):** `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export it — on current builds a `debug-logs/<id>` dir whose basename is the session id), mapped to `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/<id>.jsonl` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — deterministic, so it pins the live session even when a sibling's log is newer. Falls back to newest-mtime only when the var is unset (older builds), which can race | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-23, origin workspace; chatSessions promptTokens re-confirmed live 2026-08-06 on VS Code 1.132.0) |
-| Copilot CLI | root `${COPILOT_HOME:-~/.copilot}`; `session-state/<id>/events.jsonl` pinned via `$COPILOT_AGENT_SESSION_ID` (CLI ≥1.0.29, exported to shell commands), else newest-mtime across `session-state/` then legacy `history-session-state/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | exact (verified 2026-08-05 against a live CLI 1.0.78 session — 73.0k UI match; see `work/automatic-session-rollover/smoke-test-copilot.md`) |
+| Copilot CLI | root `${COPILOT_HOME:-~/.copilot}`; `session-state/<id>/events.jsonl` pinned via `$COPILOT_AGENT_SESSION_ID` (CLI ≥1.0.29, exported to shell commands), else newest-mtime across `session-state/` then legacy `history-session-state/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | exact (verified 2026-08-05 against a live CLI 1.0.78 session in the `ai-workspace-template` deployment — 73.0k UI match; evidence: `repos/ai-workspace-template/work/automatic-session-rollover/smoke-test-copilot.md`. No live CLI session has run in this workspace yet — the ledger has no copilot-cli records) |
 | Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4. The telemetry log is shared append-only across sessions, so `register` resets it — a new session never reads the previous session's counts | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
 
 Non-macOS: the Copilot VS Code storage root differs (Linux `~/.config/Code/…`,
@@ -683,7 +824,8 @@ No single mechanism covers every runtime, so four layers overlap:
    it can never block real work. All six wirings ship committed — Claude
    Code's in `.claude/settings.json` (hooks + statusLine only; personal
    permissions stay in the gitignored `settings.local.json`, which
-   `scripts/setup.sh` seeds from `.claude/settings.json.example`). Full
+   `scripts/setup.sh` seeds from `.claude/settings.json.example`; never copy the `hooks` block
+   into `settings.local.json`, or each copy fires once per event). Full
    per-runtime wiring/channel/friction breakdown: "Vendor hook deployments"
    below.
 2. **Mandatory checkpoints in long-running skills (all runtimes):** `onboard-repo`
@@ -710,8 +852,8 @@ into the shared lib for the actual check and message text.
 | Codex | `.codex/config.toml` `[[hooks.UserPromptSubmit]]` → `context-budget-codex-hook.sh` | `UserPromptSubmit` | `hookSpecificOutput` JSON on stdout (`{hookSpecificOutput:{hookEventName,additionalContext}}`), `exit 0` | **Hash-based hook trust:** the first run of the hook in a repo prompts the human to approve it (hash recorded; editing the script re-prompts). Automation/CI must pass `--dangerously-bypass-hook-trust`. |
 | Gemini CLI | `.gemini/settings.json` `hooks.BeforeAgent` → `context-budget-gemini-hook.sh` | `BeforeAgent` | JSON-only stdout — gemini hooks require valid JSON on every invocation; the wrapper emits `{}` when silent (no jq, no escalation) and `{hookSpecificOutput:{additionalContext}}` on WARN/STOP | Measurement reads the workspace `.gemini/telemetry.log`, not the payload's `transcript_path` (the chat transcript carries no token counts) — exact only once the telemetry log has an entry for this session. **Known limitation:** the telemetry log is shared and append-only across sessions in the workspace, so a successor gemini session's *first-turn* `BeforeAgent` check can read the predecessor's last (large) entry before its own first response lands, and spuriously report STOP on turn one. Accepted — gemini chains are human-launched anyway (see "Chained rollovers & re-attach" above), so a spurious first-turn STOP is caught by a human before it matters. |
 | opencode | `.opencode/opencode.json` `"plugin"` array → `.opencode/plugins/context-budget.js`, which shells out to `context-budget-opencode-hook.sh <sessionID>` | `chat.message` | the plugin `push`es a message `Part` (`output.parts.push(...)`) | opencode's Part schema is strict: a bare `{type,text}` part fails validation and kills the turn — every part needs `id`, `sessionID`, and `messageID`. Also: `.opencode/plugins/*.js` is **not** auto-discovered in this repo (empirically verified) — a plugin must be explicitly listed in `opencode.json`'s `plugin` array or it never runs. Measurement is a sqlite read from `~/.local/share/opencode/opencode.db` (`message.data` per-turn `tokens.total`, with a session-column sum fallback; no size-estimate fallback, since the db is shared across all sessions). |
-| Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh sessionStart` / `... agentStop` | `sessionStart` (WARN/STOP) and `agentStop` (STOP only) | `sessionStart`: `{additionalContext}` JSON. `agentStop`: `{decision:"block",reason}` — **blocks only at STOP**, because `additionalContext` is model-discounted (phrased as tooling status, easy to ignore) while `block` is a strong lever; guarded by `stop_hook_active` so it never fights the CLI's 8-block continuation limit. | **Folder-trust gate:** repo-committed hooks silently no-op unless the workspace is listed in `~/.copilot/config.json` → `trustedFolders` — no error, no visible signal, the hook simply never fires. `scripts/setup.sh` seeds it idempotently (JSONC comment-preserving; skips with a note until Copilot's first run creates `~/.copilot/`), and `scripts/check-dependencies.sh` reports trust status as a verify-only advisory. CI must still pre-seed the file itself. |
-| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` (**PascalCase** events, `command` key, repo-relative path — hook-process cwd is the workspace root; verified 2026-08-06, VS Code 1.132.0) → `context-budget-copilot-vscode-hook.sh SessionStart` / `... Stop` | `SessionStart` (WARN/STOP) and `Stop` (STOP only) | `SessionStart`: `{hookSpecificOutput:{additionalContext}}` JSON, model-visible (occasionally discounted as "injected" — the Stop channel is the authoritative lever). `Stop`: **stderr text + `exit 2`** forces one continuation turn carrying the rollover instruction — JSON `{decision:"block"}` is IGNORED by VS Code, exit-2 is the only working block channel; guarded by `stop_hook_active`. Payloads are snake_case (`session_id`) vs the CLI's camelCase (`sessionId`) — each wrapper guards on its own casing, so both `.github/hooks/*.json` files coexist safely whichever runtime loads them. | **`.github/hooks/` is a DEFAULT `chat.hookFilesLocations` location — the hook loads and auto-registers with NO settings entry (CONFIRMED 2026-08-11, VS Code 1.132.0).** Requires a TRUSTED workspace. The earlier s78/s79 "DEAD END" was a false negative: the hook fired but a pre-register `[ -f "$cs" ]` guard skipped registration on fresh sessions (SessionStart fires seconds before the `chatSessions/<sid>.jsonl` file is born); fixed by registering above the measurement guard. Manual register (fix-B prefixed form) retained only as a fallback for hook-less contexts. `$CLAUDE_PROJECT_DIR` is unset in hook processes (the repo's claude hooks no-op harmlessly if VS Code loads `.claude/settings.json` via its default `chat.hookFilesLocations`). |
+| Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh sessionStart` / `... agentStop` | `sessionStart` (WARN/STOP) and `agentStop` (STOP only) | `sessionStart`: `{additionalContext}` JSON. `agentStop`: `{decision:"block",reason}` — **blocks only at STOP**, because `additionalContext` is model-discounted (phrased as tooling status, easy to ignore) while `block` is a strong lever; guarded by `stop_hook_active` so it never fights the CLI's 8-block continuation limit. | **Folder-trust gate:** repo-committed hooks silently no-op unless the workspace is listed in `~/.copilot/config.json` → `trustedFolders` — no error, no visible signal, the hook simply never fires. Seeded idempotently by `scripts/setup.sh` (skipped until Copilot's first run creates `~/.copilot`); `scripts/check-tooling.sh` verifies and warns. CI must still pre-seed the file itself. |
+| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` (**PascalCase** events, `command` key, repo-relative path — hook-process cwd is the workspace root; verified 2026-08-06, VS Code 1.132.0) → `context-budget-copilot-vscode-hook.sh SessionStart` / `... Stop` | `SessionStart` (WARN/STOP) and `Stop` (STOP only) | `SessionStart`: `{hookSpecificOutput:{additionalContext}}` JSON, model-visible (occasionally discounted as "injected" — the Stop channel is the authoritative lever). `Stop`: **stderr text + `exit 2`** forces one continuation turn carrying the rollover instruction — JSON `{decision:"block"}` is IGNORED by VS Code, exit-2 is the only working block channel; guarded by `stop_hook_active`. Payloads are snake_case (`session_id`) vs the CLI's camelCase (`sessionId`) — each wrapper guards on its own casing, so both `.github/hooks/*.json` files coexist safely whichever runtime loads them. | **`.github/hooks/` is a DEFAULT `chat.hookFilesLocations` location — the hook loads and auto-registers with NO settings entry (CONFIRMED 2026-08-11, VS Code 1.132.0).** Requires a TRUSTED workspace (this one is). The earlier s78/s79 "DEAD END" was a false negative: the hook fired but a pre-register `[ -f "$cs" ]` guard skipped registration on fresh sessions (SessionStart fires seconds before the `chatSessions/<sid>.jsonl` file is born); fixed by registering above the measurement guard (commit 27010c7). Manual register (fix-B prefixed form) retained only as a fallback for hook-less contexts. `$CLAUDE_PROJECT_DIR` is unset in hook processes (the repo's claude hooks no-op harmlessly if VS Code loads `.claude/settings.json` via its default `chat.hookFilesLocations`). |
 
 **Migrating an existing workspace (pre-2026-08-29):** `.claude/settings.json`
 used to be a gitignored per-user copy of the example. Pulling the commit that
@@ -766,16 +908,18 @@ The ledger is **gitignored** (machine-local telemetry, same class as
 `.gemini/telemetry.log` and the `.active-session` locks): hook appends would
 otherwise dirty the tree every session. It is not regenerable — when mining it
 for analysis, commit a deliberate dated snapshot (as
-`work/automatic-session-rollover/subagent-rollover-stats.md` did), never the
-live append-file.
+`work/context-decay/ledger-analysis.md` did here, and
+`repos/ai-workspace-template/work/automatic-session-rollover/subagent-rollover-stats.md`
+did in the template deployment), never the live append-file.
 
 ## Known limitations
 
 - Copilot **VS Code** measurement (`copilot_vscode_measure`) was live-verified
   2026-08-06 (VS Code 1.132.0, chatSessions `promptTokens`), along with the
   agent-mode hooks and `code chat` seeded launch
-  (`work/automatic-session-rollover/issues/01-vscode-agent-mode-hooks.md`).
-  The CLI adapter was live-verified 2026-08-05.
+  (`repos/ai-workspace-template/work/automatic-session-rollover/issues/01-vscode-agent-mode-hooks.md`).
+  The CLI adapter was live-verified 2026-08-05 (template deployment; see the
+  adapter table above).
 - Gemini CLI: the tracked `.gemini/settings.json` enables local-file telemetry
   (`target: local`, no data leaves the machine, `logPrompts: false`), and the
   adapter reads the last response's input-token attribute from

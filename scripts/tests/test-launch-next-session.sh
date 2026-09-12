@@ -8,6 +8,11 @@ SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/scripts" "$TMP/work/testproj" "$TMP/.context-budget/sessions" "$TMP/bin"
 cp "$SRC_ROOT/scripts/launch-next-session.sh" "$TMP/scripts/" 2>/dev/null || true
+# context-budget.sh travels with the launcher: the live-supervisor guard
+# (S-series) shells out to its `supervised` query rather than re-implementing
+# the detector, so the fixture must carry both halves.
+cp "$SRC_ROOT/scripts/context-budget.sh" "$TMP/scripts/" 2>/dev/null || true
+chmod +x "$TMP/scripts/"*.sh
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$TMP/context-budget.env"
 echo "# launcher" > "$TMP/work/testproj/next-session.md"
 cd "$TMP"
@@ -307,10 +312,24 @@ assert_eq       "T23e: one-ahead + evidence -> exit 3" "$rc" "3"
 assert_contains "T23f: gate named"                  "$out" "lineage gate"
 assert_contains "T23g: counter value reported"      "$out" ".session-seq=10"
 assert_contains "T23h: ledger value reported"       "$out" "top block is session 9"
-assert_contains "T23i: remediation names --unstage" "$out" "launch-next-session.sh testproj --unstage"
+# Remediation is --unstage, not a hand-run seq-sync: e778de0 replaced the
+# manual rewind after the 2026-09-03 cm_bugs incident, where seq-sync being a
+# separate step from clearing the seed is exactly what got missed.
+assert_contains "T23i: remediation names --unstage"  "$out" "launch-next-session.sh testproj --unstage"
 assert_not_contains "T23j: refusal launches nothing" "$out" "cmd: claude"
 assert_contains "T23j2: evidence label shown"       "$out" "t23-work"
 rm -f "$TMP/.context-budget/context-ledger.jsonl"
+
+# Counter more than one ahead: NOT the staged-bump signature, so neither the
+# reclaim heuristic nor --unstage applies and the neutral branch must name the
+# explicit seq-sync repair. (Untested until 2026-09-11 — T23i used to assert
+# this string against the one-ahead branch, which stopped producing it in
+# e778de0.)
+printf '12\n' > "$TMP/work/testproj/.session-seq"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run 2>&1); rc=$?
+assert_eq       "T23i2: two-ahead -> exit 3"          "$rc" "3"
+assert_contains "T23i3: neutral branch, not unstage"  "$out" "launch does the +1"
+assert_contains "T23i4: remediation names seq-sync"   "$out" "seq-sync --project testproj --session 9"
 
 # Unparseable top block: prose may VETO a number, never DERIVE one — skip.
 printf '# Session Handoff — no number in this block\n' > "$HF"
@@ -509,9 +528,11 @@ out=$(run_lns "$EVU/scripts/launch-next-session.sh" testproj --runtime claude --
 assert_eq "U6h: launch passes after repair" "$rc" "0"
 rm -rf "$EVU"
 
-# C-series must inherit nothing from U.
-rm -f "$TMP/work/testproj/.session-seq" "$TMP/work/testproj/.session-seq.provenance.json" \
-      "$HF" "$TMP/scripts/context-budget.sh"
+# C-series must inherit nothing from U. context-budget.sh is deliberately NOT
+# removed: it is fixture-wide setup (see the top of this file), and the later
+# S-series shells out to its `supervised` query — deleting it here left every
+# S assertion failing on a missing-file warning instead of the guard's verdict.
+rm -f "$TMP/work/testproj/.session-seq" "$TMP/work/testproj/.session-seq.provenance.json" "$HF"
 
 echo "C: --clear in-place rollover (closes issue 04; ADR-0009)"
 SEEDF="$TMP/work/testproj/.pending-clear-seed"
@@ -536,7 +557,7 @@ assert_eq "C2c: counter bumped to 2"            "$(cat "$SEQF" 2>/dev/null)" "2"
 assert_not_contains "C2d: no process launched"  "$out" "cmd: claude"
 assert_contains "C2e: names the seed file"      "$out" ".pending-clear-seed"
 assert_contains "C2f: tells the human to clear" "$out" "/clear"
-assert_contains "C2g: abandon hint is exact"    "$out" "launch-next-session.sh testproj --unstage"
+assert_contains "C2g: rewind hint is exact"     "$out" "launch-next-session.sh testproj --unstage"
 rm -f "$SEEDF" "$SEQF"
 
 echo "C3: --clear keeps the lock and the registry record — the process is still alive"
@@ -1004,6 +1025,216 @@ assert_contains "H3b: names the runtime"   "$out" "unknown runtime: bogus"
 assert_eq "H3e: record not stamped superseded" \
   "$(jq -r '.role // "none"' "$SESS/claude-sid-old.json")" "none"
 rm -f "$SESS"/*.json "$LOCKF" "$TMP/work/testproj/.session-seq"
+
+echo "S: the live-supervisor guard — a supervised chain may be STAGED, never launched (D6)"
+# Round 2 D6. The supervisor runs its child in the foreground and waits on it;
+# a launcher invocation that starts a session out-of-band leaves the supervisor
+# blocked on a child that will never exit while the real work continues in a
+# session it cannot see. Measured three times on live chains 2026-09-10.
+# The refusal rests on POSITIVE evidence only (supervised exit 0); ambiguity
+# warns and proceeds (design.md R2.3).
+LOOPF="$TMP/work/testproj/.session-loop"
+SEQF2="$TMP/work/testproj/.session-seq"
+mk_marker() {  # $1 = pid to record as the supervisor
+  printf '{"pid":%s,"project":"testproj","started_at":"2026-09-10T00:00:00Z"}\n' "$1" > "$LOOPF"
+}
+# A pid that is reliably NOT alive: start a process and reap it.
+( exec true ) & DEADPID=$!; wait "$DEADPID" 2>/dev/null || true
+s_reset() { rm -f "$SESS"/*.json "$LOCKF" "$SEEDF" "$SEQF2" "$LOOPF" "$EMITF2"; }
+EMITF2="$TMP/work/testproj/.next-command"
+
+echo "S1: live supervisor + bare launch — refused, with no side effects"
+s_reset; mk_marker $$; mk_record claude sid-old testproj; mklock claude sid-old
+out=$(run_lns "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq       "S1a: exit 3"                  "$rc" "3"
+assert_contains "S1b: names the condition"     "$out" "supervisor is live"
+assert_contains "S1c: points at the remedy"    "$out" "--emit"
+# Mutation that makes S1d red: move the guard below the counter bump — the
+# refusal would then consume a sequence number and produce the very delta != 1
+# halt it exists to prevent.
+[ ! -f "$SEQF2" ] && ok "S1d: refusal leaves .session-seq untouched" \
+                  || bad "S1d: refusal bumped the counter"
+[ -f "$LOCKF" ] && ok "S1e: lock untouched" || bad "S1e: refusal released the lock"
+assert_eq "S1f: record not stamped superseded" \
+  "$(jq -r '.role // "none"' "$SESS/claude-sid-old.json")" "none"
+
+echo "S2: live supervisor + --emit — allowed; staging is the correct action"
+# The session record is not decoration here (R2.17 section 1): under a live
+# supervisor the launcher refuses to bump without an identity, because the bump
+# record IS the rollover verdict and one with no session_id cannot be matched to
+# the session that wrote it. A registered session always has this file.
+s_reset; mk_marker $$; mk_record claude sid-emit testproj; printf '7\n' > "$SEQF2"
+out=$(run_lns "$LNS" testproj --runtime claude --emit "$EMITF2" </dev/null 2>&1); rc=$?
+assert_eq "S2a: exit 0"           "$rc" "0"
+assert_eq "S2b: counter bumped"   "$(cat "$SEQF2" 2>/dev/null)" "8"
+[ -s "$EMITF2" ] && ok "S2c: command staged" || bad "S2c: nothing staged at $EMITF2"
+
+echo "S3: live supervisor + --dry-run — allowed; it starts nothing and mutates nothing"
+s_reset; mk_marker $$
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run </dev/null 2>&1); rc=$?
+assert_eq "S3a: exit 0" "$rc" "0"
+[ ! -f "$SEQF2" ] && ok "S3b: dry-run still mutates nothing" \
+                  || bad "S3b: dry-run bumped the counter"
+
+echo "S4: live supervisor + --clear — refused (the successor is this pid, which never exits)"
+s_reset; mk_marker $$
+out=$(run_lns "$LNS" testproj --runtime claude --clear </dev/null 2>&1); rc=$?
+assert_eq       "S4a: exit 3"              "$rc" "3"
+assert_contains "S4b: names the condition" "$out" "supervisor is live"
+[ ! -f "$SEEDF" ] && ok "S4c: no seed written" || bad "S4c: refusal seeded"
+[ ! -f "$SEQF2" ] && ok "S4d: counter untouched" || bad "S4d: refusal bumped the counter"
+
+echo "S5: live supervisor + --unstage — not refused by this guard (it rewinds, it launches nothing)"
+s_reset; mk_marker $$
+out=$(run_lns "$LNS" testproj --runtime claude --unstage </dev/null 2>&1); rc=$?
+assert_not_contains "S5a: guard did not fire" "$out" "supervisor is live"
+
+echo "S6: STALE marker (dead pid) + bare launch — allowed with a warning, not refused"
+# The recovery path for a forked chain runs exactly here. Refusing would block
+# the repair, and the only remedy available to the caller would be deleting a
+# marker context-budget.sh:780 forbids agents to delete (design.md R2.3).
+s_reset; mk_marker "$DEADPID"
+out=$(run_lns "$LNS" testproj --runtime gemini </dev/null 2>&1); rc=$?
+assert_eq           "S6a: exit 0"            "$rc" "0"
+assert_not_contains "S6b: not refused"       "$out" "supervisor is live"
+assert_contains     "S6c: warns about the marker" "$out" "warning"
+
+echo "S7: TF_SESSION_LOOP_PROJECT with no marker — ambiguous; allowed with a warning"
+s_reset
+out=$(TF_SESSION_LOOP_PROJECT=testproj run_lns "$LNS" testproj --runtime gemini </dev/null 2>&1); rc=$?
+assert_eq           "S7a: exit 0"       "$rc" "0"
+assert_not_contains "S7b: not refused"  "$out" "supervisor is live"
+assert_contains     "S7c: warns"        "$out" "warning"
+
+echo "S8: no marker at all — the unsupervised path is unchanged and silent"
+s_reset
+out=$(run_lns "$LNS" testproj --runtime gemini </dev/null 2>&1); rc=$?
+assert_eq           "S8a: exit 0"          "$rc" "0"
+assert_not_contains "S8b: not refused"     "$out" "supervisor is live"
+assert_not_contains "S8c: no stray warning" "$out" "supervisor"
+s_reset
+
+echo "S9-S12: R2.12/R2.13 — the daemon-launch condition is also the fork-RECOVERY condition"
+# R2.12: a bare launch that would have backgrounded (mode=auto + runtime=claude
+# + no --emit) STAGES instead when a supervisor marker is present, so recovery
+# ends in one supervised foreground session rather than a fresh detached holder
+# whose lock blocks the supervisor bootstrap (D8 again, one turn later).
+# R2.13: --dry-run resolves BG under the same conditions, so it stops printing a
+# runnable --bg recipe for the action the guard next to it exists to refuse.
+#
+# Mutations that make these red: drop the SUP_RC check from the BG derivation
+# (S9/S12 go back to bg=1); make --dry-run skip the detector again (S11/S12);
+# set EMIT for --dry-run too (S11d/S12d — dry-run must mutate nothing).
+# The --bg assertions read the `cmd:` LINE, not the whole output: the dry-run
+# note deliberately contains the literal "(no --bg)" for the human reading it.
+printf 'ROLLOVER_RELAUNCH=auto\nROLLOVER_RUNTIME=claude\n' > "$TMP/context-budget.env"
+
+echo "S9: STALE marker + bare launch (auto+claude) — stages, spawns nothing"
+s_reset; mk_marker "$DEADPID"; mk_record claude sid-r212 testproj; printf '4\n' > "$SEQF2"
+out=$(run_lns "$LNS" testproj --runtime claude </dev/null 2>&1); rc=$?
+assert_eq           "S9a: exit 0"                "$rc" "0"
+assert_contains     "S9b: did not background"    "$out" "bg=0"
+assert_contains     "S9c: says it staged"        "$out" "staging to work/testproj/.next-command"
+assert_contains     "S9d: names the reason"      "$out" "pid is not alive"
+[ -s "$EMITF2" ] && ok "S9e: command staged" || bad "S9e: nothing staged at $EMITF2"
+assert_not_contains "S9f: staged line has no --bg" "$(cat "$EMITF2" 2>/dev/null)" "--bg"
+assert_eq           "S9g: counter bumped"        "$(cat "$SEQF2" 2>/dev/null)" "5"
+
+echo "S10: no marker + --dry-run (auto+claude) — genuinely unsupervised, still backgrounds"
+s_reset
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run </dev/null 2>&1); rc=$?
+assert_eq       "S10a: exit 0"           "$rc" "0"
+assert_contains "S10b: bg=1"             "$out" "bg=1"
+assert_contains "S10c: --bg in the cmd"  "$(printf '%s\n' "$out" | grep '^cmd: ')" "--bg"
+
+echo "S11: LIVE supervisor + --dry-run — prints the staging form, not a --bg recipe"
+s_reset; mk_marker $$
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run </dev/null 2>&1); rc=$?
+assert_eq           "S11a: exit 0"                 "$rc" "0"
+assert_contains     "S11b: bg=0"                   "$out" "bg=0"
+assert_not_contains "S11c: no --bg to paste"       "$(printf '%s\n' "$out" | grep '^cmd: ')" "--bg"
+[ ! -f "$SEQF2" ] && ok "S11d: still mutates nothing" || bad "S11d: dry-run bumped the counter"
+[ ! -f "$EMITF2" ] && ok "S11e: staged nothing"      || bad "S11e: dry-run staged a command"
+assert_contains     "S11f: explains what a real launch would do" "$out" "would STAGE"
+
+echo "S12: STALE marker + --dry-run — same staging form, for R2.12's reason"
+s_reset; mk_marker "$DEADPID"
+out=$(run_lns "$LNS" testproj --runtime claude --dry-run </dev/null 2>&1); rc=$?
+assert_eq           "S12a: exit 0"              "$rc" "0"
+assert_contains     "S12b: bg=0"                "$out" "bg=0"
+assert_not_contains "S12c: no --bg to paste"    "$(printf '%s\n' "$out" | grep '^cmd: ')" "--bg"
+[ ! -f "$SEQF2" ] && ok "S12d: still mutates nothing" || bad "S12d: dry-run bumped the counter"
+assert_contains     "S12e: names the dead pid"  "$out" "pid is not alive"
+
+printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$TMP/context-budget.env"
+s_reset
+
+echo "K: D8/R2.10 — the live-lock refusal names the holding PROCESS, or says why it cannot"
+# The refusal itself is G1's business; H pins what R2.10 added to it. Mutations
+# that make these red: K2 — report .pid without re-checking pid_start (K2a goes
+# green on a recycled pid); K3 — drop the supervisor lookup (K3a stops
+# distinguishing the supervised holder from the orphan, which is the whole
+# diagnosis D8 exists to deliver); K1 — report a pid when none was recorded.
+cd "$TMP"
+mklock_pid() {  # $1=runtime $2=sid $3=pid $4=pid_start $5=supervisor_pid ("" to omit)
+  jq -n --arg rt "$1" --arg sid "$2" --argjson pid "$3" --arg ps "$4" --arg sup "$5" \
+    '{runtime:$rt, session_id:$sid, project:"testproj", acquired_at:"2026-08-05T00:00:00Z",
+      pid:$pid, pid_start:$ps} + (if $sup == "" then {} else {supervisor_pid:($sup|tonumber)} end)' \
+    > "$LOCKF"
+}
+refuse() {  # run the launcher as a positively-identified non-holder; echo its output
+  run_lns CLAUDE_CODE_SESSION_ID=sid-aux "$LNS" testproj --runtime claude </dev/null 2>&1
+}
+h_reset() { rm -f "$SESS"/*.json "$TMP/work/testproj/.session-seq"
+  rm -rf "$TMP/work/testproj/.agent-locks"
+  mk_live_record claude sid-primary testproj primary
+  mk_live_record claude sid-aux testproj auxiliary; }
+
+echo "K1: no pid in the lock — say so, do not invent one"
+h_reset; mklock claude sid-primary
+out=$(refuse)
+assert_contains "K1a: refusal still fires" "$out" "refusing to release another session's live lock"
+assert_contains "K1b: absence stated plainly" "$out" "records no pid"
+assert_not_contains "K1c: no pid claimed"    "$out" "The holder is pid"
+
+echo "K2: a recorded pid that is gone, or whose start time no longer matches, is SUPPRESSED"
+# A dead pid. `kill -0` on it must fail for the fixture to mean anything.
+h_reset
+# A pid that is certainly dead: start one, reap it, reuse its number.
+sleep 0.1 >/dev/null 2>&1 & dead=$!
+wait "$dead" 2>/dev/null
+mklock_pid claude sid-primary "$dead" "Tue Aug  5 00:00:00 2026" ""
+out=$(refuse)
+assert_contains "K2a: dead pid named as gone" "$out" "gone or has been reused"
+assert_contains "K2b: recorded start shown"   "$out" "Tue Aug  5 00:00:00 2026"
+assert_not_contains "K2c: not reported as a live holder" "$out" "The holder is pid"
+# Same assertion for the recycled-pid shape: the pid IS live, the start disagrees.
+sleep 600 >/dev/null 2>&1 & live=$!
+mklock_pid claude sid-primary "$live" "Tue Aug  5 00:00:00 2026" ""
+out=$(refuse)
+assert_contains "K2d: live pid with a mismatched start is suppressed, not named" \
+  "$out" "gone or has been reused"
+
+echo "K3: a live holder — supervised says where to go, unsupervised says what to end"
+h_reset
+mkdir -p "$TMP/fakesup"
+cat > "$TMP/fakesup/session-loop.sh" <<'EOS'
+#!/usr/bin/env bash
+sleep 600
+EOS
+bash "$TMP/fakesup/session-loop.sh" >/dev/null 2>&1 & sup=$!
+lstart=$(ps -o lstart= -p "$live" 2>/dev/null | sed 's/^ *//;s/ *$//')
+mklock_pid claude sid-primary "$live" "$lstart" "$sup"
+out=$(refuse)
+assert_contains "K3a: supervised holder points at the supervisor" "$out" "supervised by session-loop.sh pid $sup"
+assert_not_contains "K3b: does not tell the operator to kill a supervised session" "$out" "kill $live"
+# Same live holder, no supervisor: this is the shape that strands a chain.
+mklock_pid claude sid-primary "$live" "$lstart" ""
+out=$(refuse)
+assert_contains "K3c: orphan named as such"      "$out" "NO supervisor is running it"
+assert_contains "K3d: and given a concrete exit" "$out" "kill $live"
+kill "$live" "$sup" 2>/dev/null; wait "$live" "$sup" 2>/dev/null
+rm -f "$LOCKF"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
