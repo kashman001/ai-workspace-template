@@ -1,0 +1,19 @@
+docs/adr/README.md
+  s_78e0c62348845f::t_f9faa064500a73 64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "eeaba96cc51ce7ad53c629548f2bcd05138befca",
+  "prompts": {},
+  "sessions": {
+    "s_78e0c62348845f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c641ddff-f457-4b11-ab1b-ea8ebd2faa1e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
