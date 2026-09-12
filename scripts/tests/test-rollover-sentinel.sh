@@ -82,5 +82,41 @@ echo "S5: a nonexistent work item is refused"
 out="$("$CB" rollover-complete --project nosuch --mode handsoff 2>&1 || true)"
 assert_contains "S5a: refused" "$out" "no such work directory"
 
+echo "S6 (D10): the bump record outranks a stale provenance sidecar"
+# The sidecar is written ONLY by seq-sync, so in a chain that never needed a
+# counter repair it holds whatever session last ran one — session 3 here, while
+# session 8 is the one rolling over. launch-next-session.sh records the writer's
+# own number at the bump; this is that record's consumer contract, unit-tested
+# without the launcher so a failure localises to the precedence itself.
+BUMP="$MAIN/work/testproj/.session-seq.bump.json"
+rm -f "$SENT"
+printf '3\n' > "$SEQF"
+"$CB" seq-sync --project testproj --session 3 >/dev/null 2>&1
+printf '9\n' > "$SEQF"          # session 8 has staged 9
+jq -n '{seq:8, successor:9, runtime:"stub", session_id:"sid-8",
+        cwd:"/x", written_at:"2026-09-11T00:00:00Z"}' > "$BUMP"
+"$CB" rollover-complete --project testproj --mode handsoff >/dev/null 2>&1
+assert_eq "S6a: the bump record's number wins over the frozen sidecar" \
+          "$(jq -r '.seq' "$SENT")" "8"
+
+# ... but only while it is current. A seq-sync repair moves the counter off the
+# successor the record named, which is what retires it — the sidecar the repair
+# just refreshed is then the newer fact.
+rm -f "$SENT"
+"$CB" seq-sync --project testproj --session 12 >/dev/null 2>&1
+"$CB" rollover-complete --project testproj --mode handsoff >/dev/null 2>&1
+assert_eq "S6b: a bump record the counter has moved past is ignored" \
+          "$(jq -r '.seq' "$SENT")" "12"
+
+# A truncated or unparseable record must not poison the chain either: it falls
+# through to the same two sources that existed before it.
+rm -f "$SENT"
+printf '9\n' > "$SEQF"
+printf 'not json' > "$BUMP"
+"$CB" rollover-complete --project testproj --mode handsoff >/dev/null 2>&1
+assert_eq "S6c: an unreadable bump record falls back, it does not fail" \
+          "$(jq -r '.seq' "$SENT")" "12"
+rm -f "$BUMP"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

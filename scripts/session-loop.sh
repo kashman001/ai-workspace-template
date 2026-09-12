@@ -37,9 +37,11 @@ ROOT="$(resolve_workspace_root)"
 [ -f "$ROOT/context-budget.env" ] && . "$ROOT/context-budget.env"
 
 PROJECT=""; RUNTIME=""; MAX_SESSIONS=""; MIN_LIFETIME=""; STALL_LIMIT=""
+RESET_CAP=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
+    --reset-cap) RESET_CAP=1; shift ;;
     --max-sessions) MAX_SESSIONS="$2"; shift 2 ;;
     --min-lifetime) MIN_LIFETIME="$2"; shift 2 ;;
     --stall-limit) STALL_LIMIT="$2"; shift 2 ;;
@@ -47,7 +49,7 @@ while [ $# -gt 0 ]; do
     *) [ -z "$PROJECT" ] && PROJECT="$1" || { echo "unexpected argument: $1" >&2; exit 3; }; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>]" >&2; exit 3; }
+[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap]" >&2; exit 3; }
 
 S="$ROOT/work/$PROJECT"
 [ -d "$S" ] || { echo "error: no such work directory: work/$PROJECT" >&2; exit 3; }
@@ -64,10 +66,141 @@ ALARM="${SESSION_LOOP_ALARM:-0}"
 case "$ALARM" in ''|*[!0-9]*)
   echo "error: SESSION_LOOP_ALARM must be a whole number of seconds, got '$ALARM'" >&2; exit 3 ;;
 esac
+# R2.18 — the alarm's repeat ceiling. A genuinely dead session is dead for days
+# (3d 20h measured, D7), and at a flat 900s that is ~368 identical pages. The
+# interval doubles from $ALARM up to this after each stall notification and
+# resets whenever the session is seen alive again.
+ALARM_MAX="${SESSION_LOOP_ALARM_MAX:-3600}"
+case "$ALARM_MAX" in ''|*[!0-9]*)
+  echo "error: SESSION_LOOP_ALARM_MAX must be a whole number of seconds, got '$ALARM_MAX'" >&2; exit 3 ;;
+esac
+[ "$ALARM_MAX" -ge "$ALARM" ] || ALARM_MAX="$ALARM"
+# R2.18 — kill-on-silence (D7 item 3). Seconds of TRANSCRIPT silence, not of
+# wall-clock: see child_probe() for why those are not the same question. 0 is
+# off and is today's behaviour exactly. Same no-CLI-flag reasoning as $ALARM.
+KILL_AFTER="${SESSION_LOOP_KILL_AFTER:-0}"
+case "$KILL_AFTER" in ''|*[!0-9]*)
+  echo "error: SESSION_LOOP_KILL_AFTER must be a whole number of seconds, got '$KILL_AFTER'" >&2; exit 3 ;;
+esac
 LOOPF="$S/.session-loop"; NEXTF="$S/.next-command"; SENTF="$S/.rollover-complete"
+# R2.17 — the verdict. Written by launch-next-session.sh at the counter bump,
+# which is the only moment anything knows both the ending session's number and
+# its successor's. It replaces $SENTF entirely as the thing this supervisor
+# judges on; $SENTF survives here only to be deleted, for one release.
+BUMPF="$S/.session-seq.bump.json"
+FLUSHF1="$S/next-session.md"; FLUSHF2="$S/handoff.md"
 LOGF="$S/.session-loop.log"; ALARM_STOPF="$S/.session-loop.alarm-stop"
+# R2.19 (D9) — the chain budget. `n` used to live only in this process, so every
+# supervisor restart handed the work item a fresh MAX_SESSIONS and the cap
+# measured "iterations since the last restart" rather than sessions of work:
+# work/policy-dev-onboarding/.session-loop.log shows #18, #19, #20 and #27 each
+# opening at "1 of 10" straight after a HALT, so sixteen sessions ran under a cap
+# of ten and it never once fired. The count therefore has to outlive the
+# supervisor, which means a file next to the work item.
+BUDGETF="$S/.session-loop.budget"
 
 say()  { printf '[session-loop] %s\n' "$*" >&2; printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$LOGF"; }
+
+# Content, not mtime (R2.17 §7). A missing file hashes to a constant, so
+# "absent before and absent after" is correctly read as unchanged.
+hash_file() { if [ -f "$1" ]; then cksum < "$1"; else echo absent; fi; }
+
+# R2.18 — the liveness probe, and the whole of what separates a hang from a
+# long session.
+#
+# The alarm's wall-clock never could: session #28 of this very chain was healthy
+# for 59 minutes and drew three identical alarms, #27 drew two while a human sat
+# at the keyboard re-running /login after a vendor logout, and every session here
+# draws at least one. A knob whose false-positive rate for "hang" is ~100% can be
+# a progress ticker but must never be a trigger.
+#
+# What does separate them is whether the runtime is still WRITING. The
+# transcript context-budget.sh already measures grows every turn — measured 11s
+# old mid-turn (s29) against a 3d 20h block on ~/projects/token-factory that
+# wrote nothing at all. So the probe is that artifact's mtime.
+#
+# Identity is checked FIRST, always. work/<proj>/.active-session is written by
+# the session's own `register`, so early in an iteration it can still name the
+# PREVIOUS session, and pids recycle. A record counts only when its pid is live
+# AND is a child of this supervisor. No identification -> no verdict -> the
+# unconditional notify this alarm has always done, and never a kill. Nothing
+# below kills on missing evidence.
+SUP_PID=$$
+mtime_of() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null; }
+# Echoes "<pid> <transcript-age-seconds>"; rc 1 (and silence) when the running
+# child cannot be positively identified or its transcript cannot be read.
+child_probe() {
+  _rec="$S/.active-session"; [ -f "$_rec" ] || return 1
+  _pid="$(jq -r '.pid // empty' "$_rec" 2>/dev/null)"
+  _rt="$(jq -r '.runtime // empty' "$_rec" 2>/dev/null)"
+  _sid="$(jq -r '.session_id // empty' "$_rec" 2>/dev/null)"
+  [ -n "$_pid" ] && [ -n "$_rt" ] && [ -n "$_sid" ] || return 1
+  [ "$(ps -o ppid= -p "$_pid" 2>/dev/null | tr -d ' ')" = "$SUP_PID" ] || return 1
+  _art="$(jq -r '.artifact // empty' \
+    "$ROOT/.context-budget/sessions/$_rt-$_sid.json" 2>/dev/null)"
+  [ -n "$_art" ] && [ -f "$_art" ] || return 1
+  _m="$(mtime_of "$_art")"; [ -n "$_m" ] || return 1
+  printf '%s %s\n' "$_pid" "$(( $(date +%s) - _m ))"
+}
+
+# R2.21 §1 — the two halves of "was this a vendor logout, or a human?". Both
+# are read-only and both degrade to silence: an unresolvable transcript means
+# no evidence, and no evidence leaves today's verdict exactly as it was.
+#
+# Identity comes from the supervisor's own pid, recorded into the child's
+# session record at registration — the same attribution session 31 used to tie
+# cm_bugs #59 to its transcript. The lock file is deliberately NOT the
+# authority here: child_probe can use it because the child is still alive,
+# whereas by the time this runs the child's SessionEnd `release` may already
+# have removed it. Session records survive the exit they are being asked
+# about. The mtime floor is the iteration fence — it rejects a record left by
+# an older supervisor that happened to hold this pid, and it rejects the
+# earlier children of THIS supervisor, all of which stopped before the current
+# child registered.
+# The mtime fence is tested FIRST because it is a stat and the identity test is
+# a jq: the workspace holds ~150 records on any given day and all but the
+# current child's are older than this iteration, so the cheap test does the
+# pruning and jq runs once or twice rather than 150 times.
+dead_child_artifact() {   # $1 = epoch the child was launched
+  _best=""; _best_m=0
+  for _f in "$ROOT/.context-budget/sessions/"*.json; do
+    [ -f "$_f" ] || continue
+    _m="$(mtime_of "$_f")"; [ -n "$_m" ] || continue
+    [ "$_m" -ge "$1" ] || continue
+    [ "$_m" -ge "$_best_m" ] || continue
+    _art="$(jq -r --argjson sup "$SUP_PID" \
+      'select(.supervisor_pid == $sup) | .artifact // empty' "$_f" 2>/dev/null)"
+    [ -n "$_art" ] && [ -f "$_art" ] || continue
+    _best_m="$_m"; _best="$_art"
+  done
+  [ -n "$_best" ] || return 1
+  printf '%s\n' "$_best"
+}
+# Terminal means terminal: the LAST assistant message in the transcript is the
+# auth error, so nothing came after it. That is what separates D12 from the
+# transient auth error the runtime retries through — measured, the string
+# `authentication_failed` appears in 57 transcripts in this project directory
+# and only 9 of them end on it (session 32; the three logouts session 31
+# resolved are among the 9, and both of its long rc=0 sessions are not).
+#
+# The match is on the JSON shape, never on the text alone. A session that
+# merely *quotes* the marker — this work item's own sessions do, every time
+# they discuss D12 — writes the string into an assistant turn that carries no
+# isApiErrorMessage field, and a text-only grep calls that a logout. Verified:
+# the session that wrote this function trips a text grep and not this test.
+#
+# `fromjson?` skips unparsable lines rather than failing the file, and the tail
+# window bounds the cost on a long transcript. The window can only ever cause a
+# false NEGATIVE (a transcript whose last assistant turn is older than the
+# window falls through to today's verdict), never a false positive.
+child_logged_out() {   # $1 = transcript
+  tail -n 200 "$1" 2>/dev/null \
+    | jq -R -c 'fromjson? | select(.type == "assistant")' 2>/dev/null | tail -1 \
+    | jq -e '.isApiErrorMessage == true
+             and .error == "authentication_failed"
+             and ([.message.content[]?.text // ""] | any(startswith("Not logged in")))' \
+      >/dev/null 2>&1
+}
 
 # Every inherited `die` in launch-next-session.sh was written for a watching
 # human; unattended, a stopped chain is silent (failure mode 11). So a halt is
@@ -83,6 +216,48 @@ notify() {
   return 0
 }
 halt() { notify "HALT: $*"; rm -f "$LOOPF"; exit 1; }
+
+# R2.19 — the budget's three operations. Kept together, above their first
+# caller, because the read and the refusal have to agree about what a malformed
+# file means: NOT zero. Reading an unparseable budget as "none used" would
+# restore the exact defect this section exists to close, and self-healing a
+# malformed control file is already declined on this work item (D11 candidate
+# 5), so the read halts and names the remedy instead.
+BUDGET_USED=0; BUDGET_OPENED_AT=""
+budget_read() {
+  BUDGET_OPENED_AT="$(date -u +%FT%TZ)"
+  [ -f "$BUDGETF" ] || { BUDGET_USED=0; return 0; }
+  BUDGET_USED="$(jq -r '.used // empty' "$BUDGETF" 2>/dev/null)"
+  case "$BUDGET_USED" in ''|*[!0-9]*)
+    halt "the chain budget at ${BUDGETF#"$ROOT/"} is unreadable — refusing to guess how many sessions this chain has already spent; inspect it, then either repair .used or open a new budget with: scripts/session-loop.sh $PROJECT --reset-cap" ;;
+  esac
+  _o="$(jq -r '.opened_at // empty' "$BUDGETF" 2>/dev/null)"
+  [ -n "$_o" ] && BUDGET_OPENED_AT="$_o"
+  return 0
+}
+# Written BEFORE the child starts, never after: a supervisor killed mid-session
+# must not hand the chain that session back for free — which is the restart path
+# D9 is about, arriving by a different route.
+budget_write() {   # $1 = used, $2 = session number just started (optional)
+  jq -n --argjson used "$1" --argjson cap "$MAX_SESSIONS" \
+     --arg opened_at "$BUDGET_OPENED_AT" --arg at "$(date -u +%FT%TZ)" \
+     --arg seq "${2:-}" \
+     '{used:$used, cap:$cap, opened_at:$opened_at, last_start_at:$at}
+      + (if $seq == "" then {} else {last_seq:$seq} end)' > "$BUDGETF.tmp.$$" \
+    && mv "$BUDGETF.tmp.$$" "$BUDGETF" \
+    || { rm -f "$BUDGETF.tmp.$$"; halt "could not record the chain budget at ${BUDGETF#"$ROOT/"}"; }
+}
+# One verdict, two moments. Before R2.19 the cap could only be reached by
+# running the loop out; now a restart can arrive with the budget already spent,
+# and a supervisor that refuses at start is the SAME verdict as one that stops
+# at the end of the loop. They print the same line, name the same remedy, and
+# route through notify() for failure mode 11 — the operator who is not watching
+# is exactly the one a spent budget is meant to summon.
+cap_stop() {   # $1 = sessions used
+  notify "chain cap reached ($1 of $MAX_SESSIONS sessions used since $BUDGET_OPENED_AT) — stopping; open a new budget with: scripts/session-loop.sh $PROJECT --reset-cap"
+  rm -f "$LOOPF"
+  exit 0
+}
 
 # D5b reap, one function so every exit path agrees on the order. The stop flag
 # is written FIRST (TE6 A2): pkill can land while the subshell is inside
@@ -107,6 +282,31 @@ reap_alarm() {
   alarm=""
   rm -f "$ALARM_STOPF"
 }
+
+# R2.19 — opening a new budget is the human checkpoint the cap was always meant
+# to be, so it is an explicit operator action and nothing else may perform it.
+# Refused under a live supervisor for R2.4's reason: the running loop persists
+# .used before every child, so a reset landing underneath it would be silently
+# overwritten on the next iteration and the operator would be told a lie.
+if [ "$RESET_CAP" -eq 1 ]; then
+  if [ -f "$LOOPF" ]; then
+    rc_other="$(jq -r '.pid // empty' "$LOOPF" 2>/dev/null)"
+    if [ -n "$rc_other" ] && kill -0 "$rc_other" 2>/dev/null; then
+      echo "error: a supervisor is already running for $PROJECT (pid $rc_other) — stop it before opening a new budget" >&2; exit 3
+    fi
+  fi
+  # Deliberately NOT budget_read: that halts on a malformed file and names
+  # --reset-cap as the remedy, so routing the remedy through it would make the
+  # one documented way out of a corrupt budget the one thing that cannot run.
+  # The reset deletes the file, so it never needs to parse it — the numbers
+  # below are for the operator's line and degrade to "?" rather than refusing.
+  rc_used="$(jq -r '.used // empty' "$BUDGETF" 2>/dev/null)"
+  rc_open="$(jq -r '.opened_at // empty' "$BUDGETF" 2>/dev/null)"
+  [ -f "$BUDGETF" ] || rc_open="never"
+  rm -f "$BUDGETF"
+  say "chain budget reset (${rc_used:-?} of $MAX_SESSIONS had been used since ${rc_open:-?}) — the next start opens a fresh budget"
+  exit 0
+fi
 
 # One supervisor per work item. Two chains driving the same counter would each
 # see the other's increments and both would halt on a delta != 1 — a confusing
@@ -214,11 +414,22 @@ session_made_progress() {  # $1 = HEAD before the session
       "work/$PROJECT/handoff-archive.md") continue ;;
       "work/$PROJECT/.session-seq") continue ;;
       "work/$PROJECT/.session-seq.provenance.json") continue ;;
+      "work/$PROJECT/.session-seq.bump.json") continue ;;
     esac
     return 0
   done < <(git -C "$ROOT" log --format= --name-only "$before..$after" 2>/dev/null | sort -u)
   return 1
 }
+
+# R2.19 — the budget is read and enforced BEFORE the bootstrap below, because
+# staging a first session is not free: launch-next-session.sh --emit bumps
+# .session-seq, so a supervisor that started on a spent budget and only
+# discovered it at the `while` would burn a session number on a session it was
+# never going to run.
+budget_read
+[ "$BUDGET_USED" -lt "$MAX_SESSIONS" ] || cap_stop "$BUDGET_USED"
+[ "$BUDGET_USED" -gt 0 ] \
+  && say "resuming the chain budget at $BUDGET_USED of $MAX_SESSIONS used (opened $BUDGET_OPENED_AT)"
 
 # Bootstrap: iteration 1 has no dying session to stage its command, so the
 # supervisor stages it. Every later iteration's command is written by the
@@ -230,17 +441,17 @@ if [ ! -s "$NEXTF" ]; then
     || halt "could not stage the first session"
 fi
 
-n=0
+n="$BUDGET_USED"
 stalled=0
 while [ "$n" -lt "$MAX_SESSIONS" ]; do
   # C4 — reached here, an empty .next-command is unambiguously BROKEN, and the
   # loop's own order is the proof: the bootstrap above guarantees the file is
   # non-empty on entry or halts, and reaching here on a later iteration means the
   # previous one already passed every check below — a readable sentinel, delta
-  # == 1, a matching seq, min-lifetime, a fresh measurement. The sentinel is
-  # SKILL.md step 8, written AFTER step 6 stages, so a clean sentinel asserts a
-  # successor was staged. "Clean sentinel, nothing staged" is a contradiction:
-  # the s184 shape. The three legitimate endings never reach here — MAX_SESSIONS
+  # == 1, a matching seq, min-lifetime, a fresh measurement. Under R2.17 the
+  # end-of-iteration gate catches "bumped but staged nothing" directly, so this
+  # is now a backstop rather than the s184 detector it was. The three
+  # legitimate endings never reach here — MAX_SESSIONS
   # exits after the loop, a deliberate quit exits on the no-sentinel/delta-0/
   # rc-0 path, and Ctrl-C exits at the interactive pause.
   #
@@ -248,15 +459,28 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
   # session that just ended. The default only covers the unreachable first
   # iteration, so the message can never trip `set -u`.
   if [ ! -s "$NEXTF" ]; then
-    halt "session #${seq_before:-$(read_seq)} ended with a clean sentinel but staged no successor — the chain is broken (expected a non-empty $NEXTF)"
+    halt "session #${seq_before:-$(read_seq)} ended with a clean verdict but staged no successor — the chain is broken (expected a non-empty $NEXTF)"
   fi
   CMD="$(cat "$NEXTF")"
   # Consumed BEFORE the run, never after: a stale command that survives an
   # iteration is a runaway relaunch waiting to happen (failure mode 5).
+  # $SENTF is removed for one release only — nothing reads it after R2.17, but
+  # an in-flight session may still write one and it must not accumulate.
   rm -f "$NEXTF" "$SENTF"
+
+  # R2.17 §7 — the flush post-condition, taken here rather than inferred later
+  # from mtimes. R2.15 proposed an mtime guard inside the rollover and it fails
+  # both ways: rollover-prep.sh's rotate_handoff rewrites handoff.md at step 1,
+  # so mtime passes when the flush never happened, and context-budget.sh touches
+  # the session record on every `record`, so it fails when the flush did happen.
+  # Content hashes taken by the one process that never talks to a model have
+  # neither problem.
+  flush_before_1="$(hash_file "$FLUSHF1")"
+  flush_before_2="$(hash_file "$FLUSHF2")"
 
   seq_before="$(read_seq)"; [ -n "$seq_before" ] || seq_before=0
   n=$((n + 1))
+  budget_write "$n" "$seq_before"
   say "starting session #$seq_before ($n of $MAX_SESSIONS)"
 
   # Foreground, inheriting the tty — the child behaves exactly as a directly
@@ -284,11 +508,35 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
     # The loop-top stop-flag check is the A2 respawn guard (see reap_alarm);
     # the post-sleep check only spares one spurious notify when the reap lands
     # exactly between a completed sleep and the notify.
-    ( while :; do
+    ( _int="$ALARM"
+      while :; do
         [ -e "$ALARM_STOPF" ] && exit 0
-        sleep "$ALARM" || exit 0
+        sleep "$_int" || exit 0
         [ -e "$ALARM_STOPF" ] && exit 0
-        notify "session #$seq_before has been running with no exit"
+        _probe="$(child_probe || true)"
+        if [ -z "$_probe" ]; then
+          # Unidentified: every pre-R2.18 chain, and any session that hangs
+          # before it registers. Today's message, today's behaviour.
+          notify "session #$seq_before has been running with no exit"
+        elif [ "${_probe#* }" -lt "$ALARM" ]; then
+          # Alive and writing. Kept as a log line so the per-interval telemetry
+          # these handoffs cite survives, but no bell and no hook: this is the
+          # false page R2.18 exists to stop.
+          _int="$ALARM"
+          say "session #$seq_before is still running (transcript written ${_probe#* }s ago)"
+        elif [ "$KILL_AFTER" -gt 0 ] && [ "${_probe#* }" -ge "$KILL_AFTER" ]; then
+          notify "session #$seq_before has written nothing for ${_probe#* }s (limit ${KILL_AFTER}s) — ending it"
+          # No backgrounding, no job control, and so no SIGTTIN: the D5b tty
+          # objection was about restructuring the launch to GET a pid, and
+          # R2.10 put the pid in the record instead. child_probe has already
+          # proved this pid is our own live child.
+          kill "${_probe% *}" 2>/dev/null
+          exit 0
+        else
+          notify "session #$seq_before has written nothing for ${_probe#* }s"
+          [ "$_int" -lt "$ALARM_MAX" ] && _int=$(( _int * 2 ))
+          [ "$_int" -gt "$ALARM_MAX" ] && _int="$ALARM_MAX"
+        fi
       done ) &
     alarm=$!
   fi
@@ -303,9 +551,15 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
   seq_after="$(read_seq)"; [ -n "$seq_after" ] || seq_after=0
   delta=$((seq_after - seq_before))
 
-  if [ ! -f "$SENTF" ]; then
+  # R2.17 §2 — the gate. Two script-written facts decide everything: whether
+  # THIS session staged a successor, and what the launcher recorded at the bump.
+  # No agent is told to write either one. $NEXTF was removed above, before the
+  # run, so its presence here proves this session staged — the same argument
+  # that made the sentinel's presence meaningful, resting on a file whose only
+  # writer is `--emit` itself.
+  if [ ! -s "$NEXTF" ]; then
     # The layer-3 rule-2 discriminator. The counter is the one fact readable
-    # WITHOUT the sentinel, which is what lets absence mean one thing.
+    # WITHOUT any verdict record, which is what lets absence mean one thing.
     if [ "$delta" -eq 0 ]; then
       # TE6 A6: a quit verdict additionally requires the child to have EXITED
       # 0. rc!=0 with no sentinel and an unmoved counter is a command that
@@ -316,8 +570,33 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
       # and never reach the classifier; A6 owns only the classifier-reachable
       # child-rc cases.
       [ "$rc" -eq 0 ] \
-        || halt "session #$seq_before exited rc=$rc with no sentinel and an unmoved counter — the command failed to run or died before its first counter write; refusing to call this a quit"
-      say "no sentinel and the counter did not move — deliberate quit; ending the chain"
+        || halt "session #$seq_before exited rc=$rc having staged nothing and left the counter unmoved — the command failed to run or died before its first counter write; refusing to call this a quit"
+      # R2.21 (D12) — a vendor logout exits 0 too, and reaches here looking
+      # exactly like a quit: nothing staged, counter unmoved, rc 0. It has
+      # already ended seven sessions across two live chains, every one of them
+      # logged as a deliberate quit that no human performed. So rc 0 is
+      # necessary for a quit verdict and no longer sufficient: the child's own
+      # transcript is asked first, and only a transcript that ENDS in a
+      # terminal authentication_failed overrides. No transcript, or a
+      # transcript that ends any other way, leaves the quit path untouched.
+      #
+      # The budget is refunded before the halt, because a logout did no work:
+      # budget_write runs at session START (by design — a supervisor killed
+      # mid-session must not hand that session back for free), so six 4-minute
+      # logouts would otherwise exhaust a cap of 10 having achieved nothing.
+      # The refunded number is $n, which this process read through budget_read
+      # and incremented itself; nothing is re-read from disk, so there is no
+      # path here where an unreadable budget becomes a zero — the D9 invariant
+      # R2.19 closed stays closed.
+      #
+      # Auto-retry is deliberately absent: every logout measured on this
+      # machine is the credential kind, which cannot clear without a human
+      # (design.md -> R2.21, "Decided against").
+      if _art="$(dead_child_artifact "$started_at")" && child_logged_out "$_art"; then
+        [ "$n" -gt 0 ] && { n=$((n - 1)); budget_write "$n" "$seq_before"; }
+        halt "session #$seq_before ended in a vendor logout, not a human quit — its transcript ends in a terminal authentication_failed (\"Not logged in · Please run /login\"). Nothing was lost: the counter is still at $seq_after, nothing was staged, and the chain budget was refunded ($n of $MAX_SESSIONS used), so work/$PROJECT is byte-identical to its state before session #$seq_before started. Log in, then resume the chain at the same session number with: scripts/session-loop.sh $PROJECT"
+      fi
+      say "nothing staged and the counter did not move — deliberate quit; ending the chain"
       # A quit ends the chain silently for anyone not watching the log; push
       # it through notify, and say whether the ledger recorded the session.
       top_n="$(top_ledger_seq)"
@@ -330,18 +609,48 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
       fi
       exit 0
     fi
-    halt "the counter moved ${seq_before}->${seq_after} but no sentinel is in the main checkout — a session ended somewhere I did not look (check for a stranded .rollover-complete inside a worktree)"
+    # The worktree clause is gone with the sentinel: the bump record is written
+    # at launch-next-session.sh's own resolved $SEQF, which is anchored to the
+    # main checkout, so it cannot strand the way a bare-relative-path sentinel
+    # could. What is left is the s184 shape.
+    halt "the counter moved ${seq_before}->${seq_after} but session #$seq_before staged no successor — the chain is broken (expected a non-empty $NEXTF)"
   fi
 
-  jq -e . "$SENTF" >/dev/null 2>&1 \
-    || halt "the sentinel at $SENTF is unreadable — refusing to guess whether this was a clean end"
-
+  # Delta first, deliberately: it is the one fact readable without the record,
+  # so a miscounted chain is named for what it is rather than reported as an
+  # untrustworthy verdict.
   [ "$delta" -eq 1 ] \
     || halt "session-number delta was $delta, not 1 (${seq_before}->${seq_after}) — numbering rule 5"
 
-  sent_seq="$(jq -r '.seq' "$SENTF")"
-  [ "$sent_seq" = "$seq_before" ] \
-    || halt "the sentinel claims session #$sent_seq but #$seq_before is what ran"
+  # The verdict record. Every check below names $seq_before, never a field read
+  # out of the record — a halt message that interpolates a field the record does
+  # not have prints an empty session number, which is D11's own fingerprint.
+  jq -e 'type == "object"' "$BUMPF" >/dev/null 2>&1 \
+    || halt "session #$seq_before staged a successor but its bump record at $BUMPF is missing or is not a JSON object — refusing to guess whether this was a clean end (it is written by scripts/launch-next-session.sh at the counter bump; a hand-written one is D11)"
+
+  rec_by="$(jq -r '.written_by // empty' "$BUMPF" 2>/dev/null)"
+  [ "$rec_by" = "launch-next-session.sh" ] \
+    || halt "the bump record at $BUMPF carries written_by='${rec_by:-<none>}' — nothing sanctioned produced it, so it is not a verdict this supervisor can act on (session #$seq_before)"
+
+  rec_seq="$(jq -r '.seq // empty' "$BUMPF" 2>/dev/null)"
+  [ "$rec_seq" = "$seq_before" ] \
+    || halt "the bump record claims session '${rec_seq:-<none>}' but #$seq_before is what ran — seq-sync: the record at $BUMPF is not this session's"
+
+  rec_succ="$(jq -r '.successor // empty' "$BUMPF" 2>/dev/null)"
+  [ "$rec_succ" = "$seq_after" ] \
+    || halt "the bump record names successor '${rec_succ:-<none>}' but the counter is at $seq_after — seq-sync: the record at $BUMPF has been retired by a later counter write (session #$seq_before)"
+
+  sent_seq="$seq_before"
+
+  # R2.17 §7 — the flush. A session that staged a successor and bumped the
+  # counter has, by definition, run its rollover; a rollover that changed
+  # neither next-session.md nor handoff.md did not flush, and its successor
+  # would start from the predecessor's instructions. Checked on the staged path
+  # only: a deliberate quit (above) is a human's call and never reaches here.
+  if [ "$(hash_file "$FLUSHF1")" = "$flush_before_1" ] \
+     && [ "$(hash_file "$FLUSHF2")" = "$flush_before_2" ]; then
+    halt "session #$seq_before rolled over without changing work/$PROJECT/next-session.md or handoff.md — byte-identical across the whole session, so the flush did not happen and the successor would read its predecessor's instructions"
+  fi
 
   # failure mode 1 + layer 3 rule 4. A session that rolled over faster than
   # MIN_LIFETIME did not do work — the overwhelmingly likely cause is a
@@ -358,16 +667,21 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
     halt "session #$sent_seq rolled over after ${elapsed}s, under the ${MIN_LIFETIME}s min-lifetime — this is the shape of a first-turn spurious STOP, not of work"
   fi
   if [ "$MIN_LIFETIME" -gt 0 ]; then
-    rec="$ROOT/.context-budget/sessions/$(jq -r '.runtime' "$SENTF")-$(jq -r '.session_id' "$SENTF").json"
+    rec="$ROOT/.context-budget/sessions/$(jq -r '.runtime' "$BUMPF")-$(jq -r '.session_id' "$BUMPF").json"
     if [ -f "$rec" ]; then
       rec_mtime="$(stat -f %m "$rec" 2>/dev/null || stat -c %Y "$rec" 2>/dev/null || echo 0)"
       [ "$rec_mtime" -ge "$started_at" ] \
         || halt "session #$sent_seq left no measurement of its own after it started ($rec is older than the session) — it was almost certainly measuring a predecessor's transcript"
+    else
+      # Not a halt — the identity in the record may name a runtime this checkout
+      # has no telemetry for — but never silent either: a skipped freshness check
+      # that nobody can see reads exactly like a passed one (R2.17 §2).
+      say "min-lifetime: no session record at $rec — freshness of the measurement not checked for session #$sent_seq"
     fi
   fi
 
-  mode="$(jq -r '.mode' "$SENTF")"
-  reason="$(jq -r '.reason // ""' "$SENTF")"
+  mode="$(jq -r '.mode // "handsoff"' "$BUMPF")"
+  reason="$(jq -r '.reason // ""' "$BUMPF")"
   say "session #$sent_seq rolled over cleanly (mode=$mode reason=$reason)"
 
   # The [ "$mode" = "handsoff" ] condition is deliberate and matches the spec's
@@ -403,6 +717,6 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
 done
 
 if [ "$n" -ge "$MAX_SESSIONS" ]; then
-  say "chain cap reached ($MAX_SESSIONS sessions) — stopping"
+  cap_stop "$n"
 fi
 exit 0

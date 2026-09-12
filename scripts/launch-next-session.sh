@@ -8,7 +8,8 @@
 #          ROLLOVER_RUNTIME > claude.
 # Usage:   launch-next-session.sh <project>
 #            [--runtime claude|codex|gemini|opencode|copilot] [--bg] [--dry-run]
-#            [--emit [<abs-path>]] [--skip-freshness] [--clear] [--unstage]
+#            [--emit [<abs-path>] [--loop-mode interactive|handsoff]
+#                    [--loop-reason <text>]] [--skip-freshness] [--clear] [--unstage]
 #          --clear: in-place relaunch (ADR-0009, claude-only) — seed
 #          work/<project>/.pending-clear-seed and let the human press /clear
 #          instead of spawning a successor process.
@@ -74,6 +75,7 @@ note() { echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
 
 PROJECT=""; RUNTIME=""; BG=0; DRY=0; SKIP_FRESH=0; EMIT=""; CLEAR=0; UNSTAGE=0
+LOOP_MODE=""; LOOP_REASON=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -82,6 +84,12 @@ while [ $# -gt 0 ]; do
     --skip-freshness) SKIP_FRESH=1; shift ;;
     --clear) CLEAR=1; shift ;;
     --unstage) UNSTAGE=1; shift ;;
+    # R2.17 §1 — the verdict fields the supervisor reads off the bump record.
+    # Deliberately NOT --mode: $MODE here is ROLLOVER_RELAUNCH (auto|off|manual),
+    # a different axis, and collapsing the two names is how a flag gets passed to
+    # the wrong one.
+    --loop-mode)   LOOP_MODE="$2"; shift 2 ;;
+    --loop-reason) LOOP_REASON="$2"; shift 2 ;;
     # C2 — --emit takes an OPTIONAL argument. The bare form is resolved below
     # from this script's own WORKSPACE_ROOT (:64) — the identical expression
     # the supervisor uses at session-loop.sh:57 — so the agent never computes
@@ -98,7 +106,7 @@ while [ $# -gt 0 ]; do
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit [<abs-path>]] [--skip-freshness] [--clear] [--unstage]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--bg] [--dry-run] [--emit [<abs-path>] [--loop-mode interactive|handsoff] [--loop-reason <text>]] [--skip-freshness] [--clear] [--unstage]"
 
 # --unstage abandons a staged successor; it stages and launches nothing, so
 # every mode that does is contradictory. Decided at parse time — a refused
@@ -126,6 +134,33 @@ if [ -n "$EMIT" ]; then
   [ "$BG"  -eq 0 ]  || die "--emit cannot be combined with --bg (the supervisor runs the child in the foreground)"
 fi
 
+# R2.17 §1 — the verdict fields. They describe a rollover, and staging IS the
+# rollover, so they only mean anything alongside --emit. Refused at parse time,
+# above every side effect.
+if [ -z "$EMIT" ]; then
+  [ -z "$LOOP_MODE" ]   || die "--loop-mode requires --emit (it records how the ROLLOVER was performed; a direct launch is not one)"
+  [ -z "$LOOP_REASON" ] || die "--loop-reason requires --emit (it records why the ROLLOVER happened; a direct launch is not one)"
+fi
+
+# The human override, ported verbatim from context-budget.sh's rollover-complete
+# (R2.17 §1): mode is a property of the moment and the human is the authority on
+# which moment it is, so a marker file in the work item beats the flag. The
+# launcher did not have this before R2.17 — it was only ever in the sentinel's
+# writer, which is the thing R2.17 deletes.
+_hands=0; _inter=0
+[ -f "$WORKSPACE_ROOT/work/$PROJECT/.hands-off" ]   && _hands=1
+[ -f "$WORKSPACE_ROOT/work/$PROJECT/.interactive" ] && _inter=1
+if [ "$_hands" -eq 1 ] && [ "$_inter" -eq 1 ]; then
+  die "both .hands-off and .interactive exist in work/$PROJECT — remove one"
+fi
+[ "$_hands" -eq 1 ] && LOOP_MODE="handsoff"
+[ "$_inter" -eq 1 ] && LOOP_MODE="interactive"
+[ -n "$LOOP_MODE" ] || LOOP_MODE="handsoff"
+case "$LOOP_MODE" in
+  interactive|handsoff) : ;;
+  *) die "--loop-mode must be interactive|handsoff, got: $LOOP_MODE" ;;
+esac
+
 # --clear (ADR-0009): the successor is THIS process after /clear, not a new
 # one. Both refusals are decided here, at parse time, so a bad invocation costs
 # no side effects — the counter bump is still ahead of us. The claude-only
@@ -135,6 +170,58 @@ fi
 if [ "$CLEAR" -eq 1 ]; then
   [ -z "$EMIT" ]   || die "--clear cannot be combined with --emit (no new process is started to run the emitted command)"
   [ "$BG" -eq 0 ]  || die "--clear cannot be combined with --bg (the successor is this process, not a background one)"
+fi
+
+# Live-supervisor guard (D6, Round 2) — the ENFORCEMENT Round 1's detector
+# never got. session-loop.sh runs its child in the FOREGROUND and waits on it;
+# a session started out-of-band leaves the supervisor blocked on a child that
+# will never exit while the real work runs in a session it cannot see, the
+# counter advances by more than 1, and the chain's delta == 1 invariant is
+# permanently violated. Measured three times on live chains 2026-09-10
+# (work/session-loop-hardening/defects.md, D6): one supervisor blocked 3d 20h.
+#
+# REFUSE, do not auto-convert (user, 2026-09-10). Auto-adding --emit would
+# always do the right thing but silently override what the caller asked for,
+# and this machinery exists to make quiet failures loud.
+#
+# Decided HERE, at parse time: every input is resolved ($PROJECT, the flags,
+# WORKSPACE_ROOT at :70) and RUNTIME is irrelevant — an out-of-band launch
+# breaks a supervised chain on every runtime. Above the counter bump is not a
+# preference but the point: a refusal that consumed a sequence number would
+# itself produce the delta != 1 halt this guard exists to prevent. It is also
+# above the worktree ff-pull below, the one side effect in between.
+#
+# Exempt: --emit (this IS staging — the action the refusal points at),
+# --unstage (rewinds, launches nothing), --dry-run (mutates nothing, and must
+# stay usable while refused). NOT exempt: --clear — its successor is THIS pid
+# after /clear, so the process never exits and the supervisor blocks exactly as
+# above; session-loop.sh has no --clear support for the refusal to break.
+#
+# Refuse on POSITIVE evidence only (exit 0). Exit 2 is ambiguity, and unlike
+# R3's staging decision the two errors are not symmetric here: exit 2 case (a)
+# is a marker whose pid is *dead*, which is precisely the recovering-a-forked-
+# chain case, and the only remedy a spurious refusal would leave the caller is
+# deleting a marker context-budget.sh:780-783 forbids agents to delete. So
+# ambiguity — and an unavailable detector, which is never evidence — warns and
+# proceeds. Full reasoning: work/session-loop-hardening/design.md R2.3.
+#
+# R2.13 — the detector now runs for --dry-run too, but only the REFUSAL is
+# skipped there. --dry-run stays guard-exempt and still mutates nothing; what
+# it gains is the ability to resolve BG under the same conditions a real launch
+# would face (see the BG derivation below), so its output stops being a
+# ready-to-paste counterexample to the guard standing next to it.
+SUP_RC=-1   # -1 = not consulted (--emit / --unstage); else the detector's exit
+if [ -z "$EMIT" ] && [ "$UNSTAGE" -eq 0 ]; then
+  _sup_out="$("$WORKSPACE_ROOT/scripts/context-budget.sh" supervised --project "$PROJECT" 2>&1)"
+  SUP_RC=$?
+  [ "$DRY" -eq 1 ] || case "$SUP_RC" in
+    0) die "a session-loop supervisor is live for $PROJECT ($_sup_out) — a supervised chain is STAGED, never launched. Run:
+  scripts/launch-next-session.sh $PROJECT --emit \"$WORKSPACE_ROOT/work/$PROJECT/.next-command\"
+then exit; the supervisor starts your successor itself. There is no sentinel step (R2.17). There is deliberately no override (design.md R2.5) — if you truly mean to launch out-of-band, end the supervisor first." ;;
+    1) : ;;
+    *) note "warning: could not positively rule out a live supervisor for $PROJECT ($_sup_out) — proceeding with the launch, but if a session-loop is running for this work item, stage instead: scripts/launch-next-session.sh $PROJECT --emit \"$WORKSPACE_ROOT/work/$PROJECT/.next-command\"" ;;
+  esac
+  unset _sup_out
 fi
 
 # Worktree-invoked (issue 05): tracked handoff artifacts (launcher/ledger)
@@ -202,8 +289,13 @@ if [ "$UNSTAGE" -eq 1 ]; then
   [ -f "$WORKSPACE_ROOT/work/$PROJECT/.session-seq" ] \
     && u_cur="$(tr -cd '0-9' < "$WORKSPACE_ROOT/work/$PROJECT/.session-seq" 2>/dev/null)"
   u_did=0
+  # .rollover-complete is here for the transitional release only (R2.17 §1):
+  # nothing reads it any more, but an in-flight session may still have written
+  # one, and leaving it behind an --unstage would be the one piece of staging
+  # debris this subcommand knowingly skipped.
   for u_f in "$WORKSPACE_ROOT/work/$PROJECT/.pending-clear-seed" \
              "$WORKSPACE_ROOT/work/$PROJECT/.next-command" \
+             "$WORKSPACE_ROOT/work/$PROJECT/.rollover-complete" \
              "$STATE_DIR/successor-pending-$PROJECT.json"; do
     [ -f "$u_f" ] || continue
     if [ "$DRY" -eq 1 ]; then
@@ -532,6 +624,21 @@ if [ -z "$RUNTIME" ]; then
   note "no session record found; falling back to ROLLOVER_RUNTIME=$RUNTIME"
 fi
 
+# R2.17 §1 — a session that cannot name itself cannot self-terminate. Under a
+# live supervisor the bump record IS the verdict: the supervisor reads identity
+# off it, and the self-kill hook fires only when its session_id matches the
+# running session's. With no record, both degrade silently to "unknown" — the
+# chain runs to its cap, every session writing a verdict nothing can match. That
+# is what the opencode regression looked like. Refuse instead.
+#
+# Here, not at the bump: the counter bump is the first write in this script and
+# everything that can say "no" says it above (TE6 R3), so this refusal costs no
+# side effects. --dry-run writes no bump record and is therefore exempt.
+if [ -z "$REC" ] && [ "$DRY" -eq 0 ] \
+   && "$WORKSPACE_ROOT/scripts/context-budget.sh" supervised --project "$PROJECT" --quiet >/dev/null 2>&1; then
+  die "no session record for this session, and work/$PROJECT is under a live supervisor — the bump record would carry no identity, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
+fi
+
 # --emit x copilot-vscode (TE6 A5): `code chat` is detached BY NATURE — the
 # launch paths force BG=1 for this runtime AFTER the parse-time --emit/--bg
 # check, so that check cannot see it. The supervisor runs the emitted line in
@@ -610,6 +717,42 @@ sweep_child_locks() {
   done
 }
 
+# D8/R2.10 — turn "roll over from the holding session instead" into advice the
+# operator can act on. The refusal below is correct (one primary per work item)
+# but its exit was unusable when the holder is a detached child nobody started:
+# liveness here is artifact-mtime based, so the machinery held no handle on the
+# holder at all. context-budget.sh now records the runtime pid in the lock at
+# register time; this reads it back.
+#
+# A recorded pid is NEVER reported on its own. Pids are recycled and a lock
+# record outlives its process by construction, so the recorded start time must
+# still match or the pid is suppressed — an uninformative message is acceptable,
+# a confidently wrong one is not.
+holder_process_note() {
+  local lock="$1" pid pstart now sup supcmd
+  pid=$(jq -r '.pid // empty' "$lock" 2>/dev/null)
+  if [ -z "$pid" ]; then
+    printf ' The lock records no pid (written before this field existed, or a runtime with no process to name), so the holder cannot be identified from here.'
+    return 0
+  fi
+  pstart=$(jq -r '.pid_start // empty' "$lock" 2>/dev/null)
+  now=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//;s/ *$//')
+  if [ -z "$now" ] || { [ -n "$pstart" ] && [ "$now" != "$pstart" ]; }; then
+    printf ' The lock names pid %s, but that pid is gone or has been reused (recorded start: %s), so the holder process no longer exists even though its transcript still looks live — release it with: scripts/context-budget.sh release --project %s' \
+      "$pid" "${pstart:-unrecorded}" "$PROJECT"
+    return 0
+  fi
+  sup=$(jq -r '.supervisor_pid // empty' "$lock" 2>/dev/null)
+  supcmd=""
+  [ -n "$sup" ] && kill -0 "$sup" 2>/dev/null && supcmd=$(ps -o command= -p "$sup" 2>/dev/null)
+  case "$supcmd" in
+    *session-loop.sh*)
+      printf ' The holder is pid %s, supervised by session-loop.sh pid %s — it is attached to that supervisor terminal; roll over from it there.' "$pid" "$sup" ;;
+    *)
+      printf ' The holder is pid %s and NO supervisor is running it (a detached or orphaned session — this is the shape that strands a chain). Either roll over from it, or end it with:  kill %s  and re-run this command.' "$pid" "$pid" ;;
+  esac
+}
+
 if [ "$DRY" -eq 0 ] && [ -f "$LOCK" ]; then
   hrt=$(jq -r '.runtime // empty' "$LOCK" 2>/dev/null)
   hsid=$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)
@@ -624,7 +767,7 @@ if [ "$DRY" -eq 0 ] && [ -f "$LOCK" ]; then
     own_b="${OWN_ENV_REC##*/}"; own_key="${own_b%.json}"
     if [ "$own_key" != "$hrt-$hsid" ] \
        && age=$(lock_holder_age "$hrt" "$hsid") && [ "$age" -lt "$LOCK_STALE" ]; then
-      die "lock: work/$PROJECT/.active-session is held by LIVE session $hrt-$hsid (artifact active ${age}s ago) and this session is positively $own_key — refusing to release another session's live lock (one primary per work item). Roll over from the holding session instead."
+      die "lock: work/$PROJECT/.active-session is held by LIVE session $hrt-$hsid (artifact active ${age}s ago) and this session is positively $own_key — refusing to release another session's live lock (one primary per work item).$(holder_process_note "$LOCK")"
     fi
   fi
   # Guard (b) — I4 release order, same sweep as context-budget.sh cmd_release:
@@ -648,6 +791,56 @@ fi
 [ -n "$LAST_SEQ" ] || LAST_SEQ=1
 SEQ=$((LAST_SEQ + 1))
 [ "$DRY" -eq 0 ] && printf '%s\n' "$SEQ" > "$SEQF"
+
+# Bump record (D10). The counter now says SEQ, the successor's number, so from
+# here on nothing in the work item states MY OWN number — and the sentinel
+# (context-budget.sh rollover-complete) needs exactly that. It used to take it
+# from the provenance sidecar, which only `seq-sync` writes, so in a chain that
+# never needed a counter repair it froze at whatever session last ran one and
+# the supervisor halted a healthy chain. LAST_SEQ is that number and this is the
+# only place that holds it, so record it here: the writer of the bump is the
+# session the bump must not be confused with.
+#
+# `successor` is what makes the record self-invalidating. A later seq-sync
+# repair moves .session-seq away from it, and rollover-complete then ignores
+# this file in favour of the sidecar the repair just refreshed — so the two
+# sources take precedence exactly when each is the current one.
+if [ "$DRY" -eq 0 ]; then
+  # Identity from the record's own fields, not from its filename: the
+  # filename is "$rt-$sid.json" and two of the four runtimes have a hyphen in
+  # the runtime half, so splitting it is wrong for copilot-cli/-vscode.
+  #
+  # R2.17 §1 — own_record (via $REC), not env_session_record. The env table covers four
+  # runtimes by name; anything outside it (opencode) resolved to "unknown" here
+  # and the identity the supervisor and the self-kill hook both key on was
+  # silently absent. own_record falls back past the table to the newest session
+  # record claiming this project, which is what every other identity read in
+  # this script already uses.
+  #
+  # The "yields nothing under a supervisor" case is refused far above, in the
+  # pre-bump refusal zone, where a refusal still costs no side effects.
+  _bump_rt="unknown"; _bump_sid="unknown"
+  if [ -n "$REC" ] && _bump_rec="$REC"; then
+    _bump_rt="$(jq -r '.runtime // "unknown"' "$_bump_rec" 2>/dev/null)"
+    _bump_sid="$(jq -r '.session_id // "unknown"' "$_bump_rec" 2>/dev/null)"
+    [ -n "$_bump_rt" ]  || _bump_rt="unknown"
+    [ -n "$_bump_sid" ] || _bump_sid="unknown"
+  fi
+  jq -n \
+    --argjson seq "$LAST_SEQ" \
+    --argjson successor "$SEQ" \
+    --arg runtime "$_bump_rt" \
+    --arg session_id "$_bump_sid" \
+    --arg cwd "$(pwd -P)" \
+    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg mode "$LOOP_MODE" \
+    --arg reason "$LOOP_REASON" \
+    '{seq:$seq, successor:$successor, runtime:$runtime,
+      session_id:$session_id, cwd:$cwd, written_at:$written_at,
+      mode:$mode, reason:$reason, written_by:"launch-next-session.sh"}' \
+    > "$SEQF.bump.json" \
+    || note "bump record: could not write $SEQF.bump.json — the supervisor has no verdict to read and will halt the chain"
+fi
 
 # The canonical bootstrap prompt (ADR-0003: wording is load-bearing, verbatim).
 PROMPT="Work item $PROJECT - rollover session #$SEQ. Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."
@@ -763,7 +956,42 @@ fi
 # slips --bg into the emitted command, session-loop.sh evals something that
 # returns at once, and it reads the missing sentinel as a deliberate quit
 # (found 2026-08-27, starting a supervised chain on a fresh work item).
-[ -z "$EMIT" ] && [ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ] && BG=1
+#
+# R2.12 — recovery stages, it does not background. The daemon-launch condition
+# above is ALSO the fork-recovery condition: a bare launch against a supervisor
+# marker whose pid is dead passes the D6 guard by design (R2.3 — exit 2 warns
+# and proceeds) and would then mint a fresh detached holder whose lock blocks
+# the supervisor's own bootstrap. That is D8 again, one turn later, created by
+# the documented recovery path.
+#
+# So when a marker is present, stage instead: write work/<proj>/.next-command
+# and spawn nothing. The supervisor's bootstrap skips its own staging step when
+# that file is non-empty and runs the command in the FOREGROUND, which is where
+# recovery should end — one supervised, attached, visible session. Backgrounding
+# is the defect; running attached-but-unsupervised leaves the chain uncounted
+# and re-forks at its own rollover. Only staging hands the work to the one
+# process allowed to start sessions. (design.md R2.12)
+#
+# Scoped to exactly the condition that would otherwise set BG=1, so nothing
+# else about the stale-marker case changes — R2.3 still lets it through.
+#
+# SUP_RC 0 (live) is reachable here only under --dry-run; a real launch already
+# died in the guard. That is R2.13: --dry-run resolves BG as the real launch
+# would, so it prints the staging form rather than a runnable --bg recipe for
+# the action the guard exists to refuse.
+#
+# SUP_RC 2 + no marker file is the TF_SESSION_LOOP_PROJECT arm of the detector,
+# and any other exit is the detector being unavailable — never evidence (R2.3).
+# Both keep today's behaviour.
+STAGE_INSTEAD=0
+if [ -z "$EMIT" ] && [ "$MODE" = "auto" ] && [ "$RUNTIME" = "claude" ]; then
+  if [ "$SUP_RC" -eq 0 ] \
+     || { [ "$SUP_RC" -eq 2 ] && [ -f "$WORKSPACE_ROOT/work/$PROJECT/.session-loop" ]; }; then
+    STAGE_INSTEAD=1
+  else
+    BG=1
+  fi
+fi
 # copilot-vscode's `code chat` is detached by nature (exits before the seeded
 # session responds — issue 01) — always confirm the successor via the BG loop.
 # An explicit --bg on any other runtime was refused in the pre-bump refusal
@@ -772,6 +1000,22 @@ fi
 [ "$RUNTIME" = "copilot-vscode" ] && BG=1
 
 echo "project=$PROJECT runtime=$RUNTIME mode=$MODE bg=$BG"
+
+# R2.12/R2.13 — act on the decision taken at the BG derivation. EMIT is set
+# HERE rather than there so the bg= readout above is the last thing that reads
+# the pre-staging state, and so that --dry-run never sets it at all: the
+# combination is refused at parse time, --dry-run must mutate nothing, and it
+# exits at the `cmd:` print below before the --emit block could run anyway.
+if [ "$STAGE_INSTEAD" -eq 1 ]; then
+  if [ "$SUP_RC" -eq 0 ]; then _why="a supervisor is LIVE"; else _why="a supervisor marker is present but its pid is not alive"; fi
+  if [ "$DRY" -eq 1 ]; then
+    note "dry-run: $_why for $PROJECT, so a real launch would STAGE to work/$PROJECT/.next-command and spawn nothing — the command below is the staging form (no --bg)"
+  else
+    EMIT="$WORKSPACE_ROOT/work/$PROJECT/.next-command"
+    note "$_why — staging to work/$PROJECT/.next-command instead of backgrounding (R2.12); run 'scripts/session-loop.sh $PROJECT' to execute it in the foreground"
+  fi
+  unset _why
+fi
 
 # Release the dying session's own work-item lock BEFORE any launch path: with
 # auto-relaunch the successor's register races an unreleased lock (and the
@@ -893,6 +1137,12 @@ if [ -n "$EMIT" ]; then
   mv "$emit_tmp" "$EMIT" || emit_fail "mv failed"
   [ -s "$EMIT" ] || emit_fail "target missing or empty after write"
   note "emit: wrote the successor command to $EMIT"
+  # R2.17 §1 — under a supervisor, staging IS the rollover, and the only
+  # instruction left is to do nothing. D11 candidate 4, inverted: every earlier
+  # wording told the agent to perform one more step, and "perform one more step"
+  # is the instruction an LLM can execute badly. "Stop" is not.
+  [ "${TF_SESSION_LOOP:-}" = "1" ] \
+    && note "staged — this session ends at the end of this turn; there is no sentinel step."
   exit 0
 fi
 
