@@ -133,6 +133,7 @@ that keep symlinked files from rendering as "missing" in Beyond Compare:
 scripts/diff-review.sh -r repos/<repo> <sha>             # one commit in Beyond Compare
 scripts/diff-review.sh -r repos/<repo> <tip> <first>~1   # a multi-commit range
 scripts/diff-review.sh -t vscode -r repos/<repo> <sha>   # VS Code per-file fallback
+scripts/diff-review.sh -w -- <path> [<path>...]          # UNCOMMITTED changes vs HEAD (scoped)
 ```
 
 Two flags are load-bearing; the script always applies them:
