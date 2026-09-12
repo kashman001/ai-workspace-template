@@ -28,6 +28,8 @@ from the backlog's active sequence.
    reconciliation into its reflect/flush steps.
 
 ## Prerequisites
+- `skills/handoff/SKILL.md` — owns the hand-off document structure.
+- `skills/decision-log/SKILL.md` — owns decision capture and ADR promotion.
 - A project memory location and an issue-tracker/backlog convention (per
   `docs/agents/issue-tracker.md` if the Matt Pocock skills were set up).
 
@@ -52,8 +54,11 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      (or a `maybe` whose condition now holds), **and** `work/*/map.md` "Decisions so far"
      entries — a resolved wayfinder ticket is a Tier-2 decision and the map substitutes
      for `decisions.md` (per `docs/agents/issue-tracker.md` → "Decision-log tie-in").
-     For each, follow the `decision-log` skill's promotion steps (draft an ADR under
-     `docs/adr/`, fill its Provenance block, flip the note to `done → ADR-NNNN`). This is
+     For each, follow `skills/decision-log/SKILL.md`'s promotion steps (draft the
+     ADR in the home its **scope** dictates — cross-repo or workspace →
+     `docs/adr/`; contained in one product repo → `repos/<repo>/docs/adr/`, per
+     `docs/adr/README.md` → "Where it lives (scope)" — fill its Provenance
+     block, flip the note to `done → ADR-NNNN`). This is
      where the session's ephemeral *why* becomes a durable, committed record — do it
      before context compacts.
 
@@ -62,13 +67,21 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
    - reference artifacts by path/URL — never duplicate plans/specs/diffs into the doc;
    - include a **suggested skills** section for the next session;
    - redact secrets/PII.
-   If the global `handoff` skill is installed (`docs/recommended-tooling.md`) you may use
-   it to draft the doc; the contract above binds either way. Frame it around the next
-   focus, or — if none given — the next item in the backlog's active sequence.
+   Draft the doc with `skills/handoff/SKILL.md`, which ships in this repo and owns
+   the document's structure; the contract above binds either way. Frame it around
+   the next focus, or — if none given — the next item in the backlog's active
+   sequence.
 
 3. **Confirm repo/branch state** is clean and recorded: current branch, working tree clean,
    merged branches tidied or noted. If the project deploys, record the live deployment versions.
+   **Also run `git status --short work/`** and commit (or explicitly note) any
+   untracked/uncommitted `work/` state files — a new manifest or tracker left
+   untracked silently strands the next session, which sees a clean tree and no file.
    (No-git workspace: skip — record instead that all state files under `work/` are current.)
+   **If the project maintains a persistent launcher** (`work/<project-name>/next-session.md`),
+   re-read it before emitting the catch-up prompt and check that any "TOP block =
+   session N" annotation still names the current session — a surgical edit easily
+   leaves it stale.
 
 4. **Emit a ready-to-paste catch-up prompt** (for the next session, after context is
    compacted/cleared) in a fenced block — it must name the hand-off doc path and tell the next
