@@ -27,12 +27,14 @@ and can **use its tools**. It has two layers:
 | Claude Code | `CLAUDE.md` | `CONTEXT.md` |
 | Codex / OpenCode | `AGENTS.md` | `CONTEXT.md` |
 | Gemini CLI | `GEMINI.md` | `CONTEXT.md` |
+| GitHub Copilot (VS Code agent mode) | `.github/copilot-instructions.md` | `../CONTEXT.md` |
 
 All are symlinks to the single master `CONTEXT.md`, created by
 `scripts/setup.sh` and validated by `scripts/check-workspace-structure.sh` —
-so *whichever* file a runtime reaches for, it gets the same content. Adding a
-runtime (e.g. GitHub Copilot via `.github/copilot-instructions.md`) means
-adding a symlink and registering it in `scripts/setup.sh`,
+so *whichever* file a runtime reaches for, it gets the same content. A nested
+entrypoint links to `../CONTEXT.md` rather than `CONTEXT.md`; the registries
+record the expected target per entrypoint for that reason. Adding a runtime
+means adding a symlink and registering it in `scripts/setup.sh`,
 `scripts/check-workspace-structure.sh`, and
 `scripts/tests/test-agent-entrypoints.sh` — never forking the content.
 
