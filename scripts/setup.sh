@@ -21,11 +21,15 @@ log(){ printf '  %s\n' "$*"; }
 echo "Bootstrapping workspace at $ROOT"
 
 # 1. Agent entrypoint symlinks → CONTEXT.md
+#    "<path>:<target>" pairs — a nested entrypoint needs a relative target,
+#    which a flat name list cannot express.
 #    Idempotent; also repairs symlinks flattened to files by Windows/copy-based "Use this template" flows.
-for f in CLAUDE.md AGENTS.md GEMINI.md; do
+for e in CLAUDE.md:CONTEXT.md AGENTS.md:CONTEXT.md GEMINI.md:CONTEXT.md          .github/copilot-instructions.md:../CONTEXT.md; do
+  f="${e%%:*}"; t="${e#*:}"
+  mkdir -p "$(dirname "$f")"
   if [ ! -L "$f" ]; then
     [ -e "$f" ] && mv "$f" "$f.bak" && log "backed up real $f → $f.bak"
-    ln -s CONTEXT.md "$f" && log "linked $f → CONTEXT.md"
+    ln -s "$t" "$f" && log "linked $f → $t"
   fi
 done
 

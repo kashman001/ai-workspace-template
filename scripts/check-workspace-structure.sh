@@ -21,7 +21,7 @@ for d in docs skills work prompt-library references repos scripts; do
 done
 
 # Agent entrypoint + registry symlinks resolve
-for l in CLAUDE.md AGENTS.md GEMINI.md repos/README.md; do
+for l in CLAUDE.md AGENTS.md GEMINI.md .github/copilot-instructions.md repos/README.md; do
   if [ -L "$l" ] && [ -e "$l" ]; then ok "symlink $l → $(readlink "$l")"; else bad "broken/missing symlink $l"; fi
 done
 

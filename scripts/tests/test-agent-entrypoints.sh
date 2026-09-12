@@ -15,26 +15,31 @@ cd "$ROOT"
 # docs/agent-onboarding-check.md → "Customizing the token").
 CANARY_TOKEN="WORKSPACE-CONTEXT-OK"
 
-# Entrypoint symlinks and their expected targets. Adding a runtime? Register
-# it here, in setup.sh, and in check-workspace-structure.sh.
-ENTRYPOINTS="CLAUDE.md AGENTS.md GEMINI.md"
+# Entrypoint symlinks and their expected targets, as "<path>:<target>" pairs.
+# A nested entrypoint resolves via a relative target, which a flat name list
+# cannot express. Adding a runtime? Register it here, in setup.sh, and in
+# check-workspace-structure.sh.
+ENTRYPOINTS="CLAUDE.md:CONTEXT.md AGENTS.md:CONTEXT.md GEMINI.md:CONTEXT.md
+             .github/copilot-instructions.md:../CONTEXT.md"
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1" >&2; }
 
 echo "E1: each entrypoint is a symlink whose target is CONTEXT.md"
-for f in $ENTRYPOINTS; do
-  if [ -L "$f" ] && [ "$(readlink "$f")" = "CONTEXT.md" ]; then
-    ok "E1: $f -> CONTEXT.md"
+for e in $ENTRYPOINTS; do
+  f="${e%%:*}"; t="${e#*:}"
+  if [ -L "$f" ] && [ "$(readlink "$f")" = "$t" ]; then
+    ok "E1: $f -> $t"
   else
-    bad "E1: $f is not a symlink to CONTEXT.md (got: $(readlink "$f" 2>/dev/null || echo 'not a symlink'))"
+    bad "E1: $f is not a symlink to $t (got: $(readlink "$f" 2>/dev/null || echo 'not a symlink'))"
   fi
 done
 
 echo "E2: each entrypoint resolves and reads back CONTEXT.md's content"
-for f in $ENTRYPOINTS; do
-  if [ -r "$f" ] && head -1 "$f" 2>/dev/null | grep -q "Workspace Context"; then
+for e in $ENTRYPOINTS; do
+  f="${e%%:*}"
+  if [ -r "$f" ] && head -1 "$f" 2>/dev/null | grep -q '^# .*Workspace Context'; then
     ok "E2: $f reads CONTEXT.md"
   else
     bad "E2: $f does not resolve to CONTEXT.md content (broken symlink?)"
