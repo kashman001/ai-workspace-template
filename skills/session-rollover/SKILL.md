@@ -135,6 +135,10 @@ exchanges so STOP can't pass unnoticed.
      renders no `ROLE · project · pct` segment, and the work item silently stops
      showing in the status bar for any session not started via
      `launch-next-session.sh`.
+     **Anything mandatory goes here, not only in Mission** — the bootstrap
+     prompt sends the successor to this block, so a task named only in the
+     mission paragraph is advisory and does not bind
+     (`docs/work-directory-conventions.md` -> Launcher).
 
    Under `handsoff` mode the launcher must carry only **position** — "ticket 4 of
    9, 3 done" against a named spec, plan, or ticket path. Over a 10-session
