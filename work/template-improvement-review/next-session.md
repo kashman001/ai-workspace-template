@@ -27,12 +27,12 @@ user request (then `create-work-item` a fresh item or extend this one).
 
 ## State snapshot
 
-- `main` at `5fd5480` (merge of `fix/l45-gitignored-work-dirs`, branch
-  deleted after merge), clean, unpushed by design.
+- `main` = local L45 work (`5fd5480`, session-4 checkpoint `0dc4426`) merged
+  with origin PRs #45–#53 (2026-09-13), clean, unpushed by design.
 - 23 suites green; structure + ledger checks clean. Backlog 0 open / 87 resolved.
 
 ## First actions
 
 1. `git status --short && git log --oneline -1 && git branch --show-current`
-   — expect `5fd5480` on `main`, clean.
+   — expect `main`, clean, ahead of `origin/main` only by local commits.
 2. Nothing else; the item is closed.
