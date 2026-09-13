@@ -137,7 +137,12 @@ agent-neutral state on disk.
    - `map.md` + `issues/NN-<slug>.md` — for a wayfinder or tracker-backed
      effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations".
 
-7. **Do not** add the project's internal files to any global workspace file
+7. **Register the project.** Add one row to the status table in
+   `work/README.md` (work item | what it is | status). Keep it to one line —
+   internal detail stays in the project and its governing skill. Without this
+   the index goes stale the moment the project exists.
+
+8. **Do not** add the project's internal files to any global workspace file
    (`CONTEXT.md`, `docs/workspace-structure.md`). Those may name the directory as
    a location pointer only.
 
@@ -147,4 +152,5 @@ agent-neutral state on disk.
   — all three exist.
 - `head -1 work/<project>/handoff.md` prints the `<!--` purpose-header line;
   `grep -c '^# Session Handoff' work/<project>/handoff.md` returns 1.
+- `work/README.md` has a new row for the project.
 - The launcher's START HERE names a concrete first action (read it back).

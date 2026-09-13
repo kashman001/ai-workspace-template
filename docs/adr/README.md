@@ -61,3 +61,4 @@ keep it here.
 - [ADR-0006: Key coordination state to repository identity, never to a checkout](0006-repository-keyed-coordination-state.md) — accepted 2026-08-06
 - [ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers](0007-session-number-single-source.md) — accepted 2026-08-06, amended by ADR-0008
 - [ADR-0008: Rollover step 6 asserts the session counter rather than writing it](0008-session-counter-assertion-not-write.md) — accepted 2026-08-25
+- [ADR-0009: `/clear`-based rollover relaunch](0009-clear-based-rollover-relaunch.md) — accepted 2026-08-28

@@ -584,6 +584,50 @@ sweep_stale_primaries() {
   done
 }
 
+# D8/R2.10 — give the project lock a process identity. The refusal in
+# launch-next-session.sh ("held by LIVE session …, roll over from the holding
+# session instead") is correct but unactionable when the holder is a detached
+# child the operator never started: liveness here is artifact-mtime based, so
+# nothing in the machinery held a handle on the holder at all.
+#
+# $PPID is useless — register runs from a SessionStart hook whose parent is a
+# throwaway shell — so walk the ancestry for the runtime binary. Measured shape
+# (session 23, live chain): hook shell -> `claude …` -> `bash scripts/session-loop.sh`.
+# The runtime's PARENT is therefore the supervisor when there is one, because
+# session-loop.sh runs its child in the foreground; that gives the refusal the
+# "is anything supervising it" half for free.
+#
+# This adds a NAME, not a second liveness authority: artifact mtime stays the
+# predicate for who holds the lock (TE6 R1). Never fails the caller — an
+# unresolvable pid degrades to today's message.
+RUNTIME_PID=""; RUNTIME_PID_START=""; SUPERVISOR_PID=""
+resolve_runtime_pid() {
+  RUNTIME_PID=""; RUNTIME_PID_START=""; SUPERVISOR_PID=""
+  # copilot-vscode has no runtime process to find: the "session" is VS Code
+  # itself, which an operator must not be told to kill.
+  [ "$RUNTIME" = "copilot-vscode" ] && return 0
+  local p="$$" hops=0 ppid cmd argv0
+  while [ "${p:-0}" -gt 1 ] && [ "$hops" -lt 12 ]; do
+    hops=$((hops + 1))
+    ppid=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+    [ -n "$ppid" ] || return 0
+    cmd=$(ps -o command= -p "$p" 2>/dev/null)
+    argv0=${cmd%% *}; argv0=${argv0##*/}
+    if [ "$argv0" = "$RUNTIME" ]; then
+      RUNTIME_PID="$p"
+      # pid_start is not decoration: pids are recycled and a lock record
+      # outlives its process by construction, so a bare pid would eventually
+      # name an unrelated process with confidence.
+      RUNTIME_PID_START=$(ps -o lstart= -p "$p" 2>/dev/null | sed 's/^ *//;s/ *$//')
+      cmd=$(ps -o command= -p "$ppid" 2>/dev/null)
+      case "$cmd" in *session-loop.sh*) SUPERVISOR_PID="$ppid" ;; esac
+      return 0
+    fi
+    p="$ppid"
+  done
+  return 0
+}
+
 acquire_lock() {
   local dir="$WORKSPACE_ROOT/work/$PROJECT" lock hrt hsid age
   [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
@@ -623,13 +667,20 @@ acquire_lock() {
   fi
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg proj "$PROJECT" \
     --arg ts "$(date -u +%FT%TZ)" --arg user "$USER@$(hostname -s)" \
-    '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts, user:$user}' > "$lock"
+    --arg pid "$RUNTIME_PID" --arg pstart "$RUNTIME_PID_START" \
+    --arg sup "$SUPERVISOR_PID" \
+    '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts, user:$user}
+     + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$pstart} end)
+     + (if $sup == "" then {} else {supervisor_pid:($sup|tonumber)} end)' > "$lock"
   ROLE="primary"
   note "lock: acquired work/$PROJECT/.active-session as $RUNTIME-$SESSION_ID role=primary"
 }
 
 cmd_register() {
   resolve_session
+  # D8/R2.10 — resolved once, here, and used by both record writers below
+  # (the project lock and the session record). Must run BEFORE acquire_lock.
+  resolve_runtime_pid
   # From a worktree, share local-only work/<item>/ dirs in before the session
   # reads its launcher (backlog L45); prints one line per new link.
   [ -x "$WORKSPACE_ROOT/scripts/link-local-work.sh" ] \
@@ -667,6 +718,19 @@ cmd_register() {
   # retire a handshake — the real successor's file must survive a child
   # registering first.
   local pf pnow pmt page pproj
+  # D14: a supervised successor inherits TF_SESSION_LOOP_PROJECT from
+  # session-loop.sh, so it KNOWS its work item and must never guess one. Adopting
+  # it here drops this registration onto the explicit-PROJECT path below, which
+  # retires this project's own pending file unread and leaves every other chain's
+  # alone — so two chains staging inside the same TTL can no longer swap locks by
+  # mtime. The freshest-file heuristic survives only for launches with no
+  # supervisor to inherit from (unsupervised and attached starts).
+  if [ -z "$PROJECT" ] && [ -z "$PARENT_SESSION" ] \
+     && [ -n "${TF_SESSION_LOOP_PROJECT:-}" ] \
+     && [ -d "$WORKSPACE_ROOT/work/$TF_SESSION_LOOP_PROJECT" ]; then
+    PROJECT="$TF_SESSION_LOOP_PROJECT"
+    note "register: adopted supervised project=$PROJECT from TF_SESSION_LOOP_PROJECT"
+  fi
   if [ -z "$PARENT_SESSION" ]; then
     pnow=$(date +%s)
     while IFS= read -r pf; do
@@ -712,7 +776,11 @@ cmd_register() {
     --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \
     --arg psid "$PARENT_SESSION" --arg aid "$AGENT_ID" --argjson depth "$DEPTH" \
     --arg user "$USER@$(hostname -s)" \
+    --arg pid "$RUNTIME_PID" --arg pstart "$RUNTIME_PID_START" \
+    --arg sup "$SUPERVISOR_PID" \
     '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts, user:$user}
+     + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$pstart} end)
+     + (if $sup == "" then {} else {supervisor_pid:($sup|tonumber)} end)
      + (if $role == "" then {} else {role:$role} end)
      + (if $psid == "" then {} else {parent_session_id:$psid, depth:$depth} end)
      + (if $aid == "" then {} else {agent_id:$aid} end)' \
@@ -1185,7 +1253,7 @@ command -v jq >/dev/null 2>&1 || die "jq is required"
 # a supervisor to tell "no session ended" from "a session ended somewhere I did
 # not look."
 cmd_rollover_complete() {
-  local dir sentf seq_own _rt _sid _ident hands inter
+  local dir sentf seq_own _rt _sid _ident hands inter _bumpf _bump_succ _cur_seq
   [ -n "$PROJECT" ] || die "rollover-complete requires --project <work-item>"
   [ -n "$LOOP_MODE" ] || die "rollover-complete requires --mode interactive|handsoff"
 
@@ -1211,9 +1279,29 @@ cmd_rollover_complete() {
   # seq is the WRITER's own number, not its successor's. By the time this runs,
   # --emit has already bumped the counter for the successor (failure mode 8), so
   # reading .session-seq here would record N+1 and the supervisor's
-  # sentinel.seq == seq_before assertion would never hold. The provenance sidecar
-  # holds the number seq-sync validated for THIS session — its first consumer.
-  seq_own="$(jq -r '.session // empty' "$dir/.session-seq.provenance.json" 2>/dev/null)"
+  # sentinel.seq == seq_before assertion would never hold.
+  #
+  # Three sources, in the order of which one is CURRENT (D10):
+  #  1. .session-seq.bump.json — written by launch-next-session.sh at the bump
+  #     itself, and the bump is the only moment anything knows both numbers. Used
+  #     only while its recorded `successor` is still the live counter; a later
+  #     seq-sync repair moves the counter away and retires this record.
+  #  2. the provenance sidecar — the number seq-sync validated. Authoritative
+  #     right after a repair, but seq-sync runs ONLY on a repair, so in an
+  #     ordinary chain it freezes at whatever session last needed one. Reading it
+  #     first was D10: three consecutive rollovers stamped a months-old number
+  #     and halted a chain in which nothing was wrong.
+  #  3. the bare counter — last resort, and knowingly N+1 once --emit has run.
+  seq_own=""
+  _bumpf="$dir/.session-seq.bump.json"
+  if [ -f "$_bumpf" ]; then
+    _bump_succ="$(jq -r '.successor // empty' "$_bumpf" 2>/dev/null)"
+    _cur_seq="$(tr -cd '0-9' < "$dir/.session-seq" 2>/dev/null)"
+    if [ -n "$_bump_succ" ] && [ "$_bump_succ" = "$_cur_seq" ]; then
+      seq_own="$(jq -r '.seq // empty' "$_bumpf" 2>/dev/null)"
+    fi
+  fi
+  [ -n "$seq_own" ] || seq_own="$(jq -r '.session // empty' "$dir/.session-seq.provenance.json" 2>/dev/null)"
   [ -n "$seq_own" ] || seq_own="$(tr -cd '0-9' < "$dir/.session-seq" 2>/dev/null)"
   [ -n "$seq_own" ] || seq_own=0
 
@@ -1241,6 +1329,12 @@ cmd_rollover_complete() {
     > "$sentf"
 
   printf 'rollover-complete: mode=%s seq=%s path=%s\n' "$LOOP_MODE" "$seq_own" "$sentf"
+  # R2.17 section 4 — demoted, not deleted. It still writes, so an in-flight
+  # session that runs it succeeds; nothing reads the file any more, so a session
+  # that skips it succeeds too, where before R2.17 it stalled the chain. That
+  # two-sided no-op is what makes R2.17 safe to land against live chains. Delete
+  # the subcommand once both live chains have rolled past this change.
+  note "rollover-complete: DEPRECATED (R2.17) — the rollover verdict is now the bump record written by launch-next-session.sh --emit, and nothing reads $sentf. Staging IS the rollover; there is no sentinel step."
   return 0
 }
 

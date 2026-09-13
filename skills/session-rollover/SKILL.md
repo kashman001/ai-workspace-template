@@ -5,15 +5,17 @@ description: Use when the context budget hits WARN/STOP (hook message, `context-
 
 # session-rollover
 
-The session is approaching or past the **dumb zone** — the ~150K-token point where
-LLM quality degrades regardless of advertised window size. Roll the work over to a
-fresh session *deliberately*: decide what the next session loads, instead of
-letting automatic compaction decide.
+The session is approaching or past the **dumb zone** — the point
+(`CONTEXT_DUMB_ZONE_TOKENS` in `context-budget.env`, currently 150K tokens)
+where LLM quality degrades regardless of advertised window size. Roll the work
+over to a fresh session *deliberately*: decide what the next session loads,
+instead of letting automatic compaction decide.
 
-Vendor-neutral: any agent runtime can follow these steps. Claude Code also exposes
-this as the `/session-rollover` slash command. This file plus the script output in
-step 1 carry everything a rollover needs; `docs/context-budget.md` is
-setup/debugging reference for other occasions.
+Runtime-neutral: any agent runtime that can run shell commands and edit files
+(Claude Code, Codex, Copilot in VS Code, Copilot CLI, Gemini CLI) can follow
+these steps. This file plus the script output in step 1 carry everything a
+rollover needs; `docs/context-budget.md` is setup/debugging reference for
+other occasions.
 
 ## When to invoke (trigger policy: WARN asks, STOP goes)
 
@@ -24,21 +26,21 @@ setup/debugging reference for other occasions.
   verbatim into the launcher's START HERE so the successor re-poses it.
 - **WARN** (exit code 1, or a hook WARN message): finish the current *work unit*
   **only if it is small** (a doc edit, a review pass, bookkeeping — not an
-  implement+test+commit unit), then **ask the user** "roll over now?". On yes,
-  run this; on no, write ahead through the WARN→STOP grace window (the standing
+  implement+test+commit unit), then **roll over automatically — do not ask**
+  (standing user preference, 2026-08-14). If the user explicitly says not to,
+  write ahead through the WARN→STOP grace window (the standing
   discipline below, at every natural pause) so the eventual STOP rollover is
-  cheap. Ledger evidence (`docs/archive/ledger-analysis*.md`): the
-  procedure costs ~1–7K in light sessions but ~20K median in heavy workflows —
-  the gap is deferred bookkeeping, not handoff writing — so WARN leaves room
-  for one small closing unit at most; "finish freely then roll" landed heavy
-  sessions at 160–230K.
+  cheap. Ledger evidence (`work/context-decay/ledger-analysis.md`): in this
+  workspace's heavy workflows the procedure costs ~20K tokens (median) — the
+  gap vs. the ~1–7K seen in light sessions is deferred bookkeeping, not
+  handoff writing — so WARN leaves room for one small closing unit at most;
+  "finish freely then roll" routinely landed sessions at 160–230K.
 - **Pre-flight at work-unit boundaries:** before *starting* a major unit
-  (observed cost 20–40K in light workflows, 50–130K in heavy ones), run
+  (implement+test+commit-scale work — observed cost 50–130K tokens), run
   `record` and check headroom. If current tokens + the unit's likely cost
-  exceed the STOP threshold, roll over **first** — a heavy unit can span the
+  exceed the STOP threshold, roll over **first** — a wave-scale unit spans the
   whole WARN→STOP band, so starting one near WARN means blowing past STOP
-  mid-unit (in the heavy deployment's ledger, 63% of STOP sessions never saw
-  a WARN checkpoint).
+  mid-unit (63% of STOP sessions in the ledger never saw a WARN checkpoint).
 - The user asks to roll over / hand off to a fresh session.
 
 **Write-ahead is the standing discipline, not a WARN-time fallback:** route
@@ -46,7 +48,7 @@ learnings and decisions to their disk homes at incident time, and bring the
 ledger/launcher current at each work-unit boundary, so steps 2–3 below are a
 sweep for what slipped, not the primary capture. That discipline is the
 difference between the 1–7K and 20K+ rollovers above
-(`docs/archive/rollover-cost-analysis-2026-08-11.md`).
+(`repos/ai-workspace-template/docs/archive/rollover-cost-analysis-2026-08-11.md`).
 
 Never roll over mid-atomic-step (half-written file, unresolved merge, mid-migration).
 
@@ -86,39 +88,43 @@ exchanges so STOP can't pass unnoticed.
    semantics).
 
 2. **Reflect — route conversation-only learnings to disk.** Anything learned this
-   session that lives only in conversation is unrecoverable after rollover:
-   operational gotchas → `docs/operational-knowledge.md`; decisions with a rejected
-   alternative → `work/<project>/decisions.md` (the `decision-log` skill); durable
-   reference facts → the matching doc under `docs/`, with `repo/path:line` pointers
-   where code-derived. For observations not obviously durable, park each as a
-   one-line entry under `Learnings:` in the handoff block. A parked learning is
-   promoted to a durable home the *second* time it bites (grep `handoff*.md` for a
-   prior strike); single events die in the archive — the right fate for them.
+   session that lives only in conversation is unrecoverable after rollover. Route
+   each item using the three-tier rule in `CONTEXT.md` → "Recording new learnings":
+   setup-time/environment → `scripts/setup.sh` / `scripts/check-tooling.sh` /
+   `.env.example` / `docs/workspace-setup.md`; operational knowledge →
+   `docs/operational-knowledge.md` (distilled anchor in `CONTEXT.md` only if
+   broadly load-bearing); code-pointer learnings → the relevant doc/skill WITH a
+   `repo/path:line` (or symbol) pointer. Decisions with a rejected alternative →
+   `work/<project>/decisions.md` (the `decision-log` skill). Also update, where
+   the session produced them: glossary rows, skill corrections, repo-context
+   docs. For observations not obviously durable, park each as a one-line entry
+   under `Learnings:` in the handoff block. A parked learning is promoted to a
+   durable home the *second* time it bites (grep `handoff*.md` for a prior
+   strike); single events die in the archive — the right fate for them.
 
 3. **Flush — make disk fully current.** Update state/tracker files the session was
    maintaining; commit per convention or explicitly note uncommitted work in the
-   handoff (the prep output's git summary shows what's dirty); verify any
+   handoff (the prep output's git summary shows what's dirty — **catch
+   untracked/uncommitted `work/` state there**: an untracked manifest that never
+   gets committed silently strands the next session); verify any
    sub-agent-claimed outputs actually exist on disk (summaries are hints, not facts).
    (No-git workspace: saving the files IS the flush; the git summary is empty.)
 
 4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
    directly below the PURPOSE comment, above the single block prep left behind.
-   If your edit anchors on the previous block's `# Session Handoff` header line,
-   your replacement text must END with that same header line — dropping it
-   silently merges the old block into yours (observed downstream; the block-count
-   grep under "Verification" catches it).
    **Verify the comment actually closes where you think it does** — a prior
    rollover can leave a block jammed *inside* the PURPOSE comment, so the first
-   `-->` in the file sits *below* the newest block and a naive "insert after
-   the first `-->`" buries the new block at the bottom (observed downstream).
-   Grep `^# Session Handoff —` and `^-->` and check their line order before
-   inserting; repair the comment if it is broken. `scripts/check-ledger.py`
-   (Verification) catches the symptom, not the cause.
+   `-->` in the file sits *below* the newest block and a naive "insert after the
+   first `-->`" buries the new block at the bottom (seen s171→s172; the s171
+   block was swallowed by the comment). Grep `^# Session Handoff —` and `^-->`
+   and check their line order before inserting; repair the comment if it is
+   broken. `scripts/check-ledger.py` (Verification) catches the symptom, not
+   the cause.
    *Backward-looking*: what happened, what shipped, where things stand. Use the
    document structure from `skills/handoff/SKILL.md` (summary, repos worked on,
    decisions, current state, open questions, next steps, key files). Contract:
-   **≤40 lines**; reference artifacts by path/URL (never duplicate their content);
-   a **suggested skills** section for the next session; optional `Learnings:`
+   reference artifacts by path/URL (never duplicate their content); a
+   **suggested skills** section for the next session; optional `Learnings:`
    line-list (step 2); redact secrets/PII.
 
 5. **Write `work/<project>/next-session.md`** — *forward-looking and deliberately
@@ -135,6 +141,10 @@ exchanges so STOP can't pass unnoticed.
      renders no `ROLE · project · pct` segment, and the work item silently stops
      showing in the status bar for any session not started via
      `launch-next-session.sh`.
+     **Anything mandatory goes here, not only in Mission** — the bootstrap
+     prompt sends the successor to this block, so a task named only in the
+     mission paragraph is advisory and does not bind
+     (`docs/work-directory-conventions.md` -> Launcher).
 
    Under `handsoff` mode the launcher must carry only **position** — "ticket 4 of
    9, 3 done" against a named spec, plan, or ticket path. Over a 10-session
@@ -156,6 +166,7 @@ exchanges so STOP can't pass unnoticed.
    paste-ready prompt instead of launching a successor into a question only a
    person can answer.
 
+
 6. **Check the counter, emit the bootstrap prompt.** This step is an **assertion,
    not a write.** `work/<project>/.session-seq` holds the last-launched session's
    number — so if a launcher started you, it *already holds yours*. Compare it
@@ -169,14 +180,14 @@ exchanges so STOP can't pass unnoticed.
 
    **A write that is not a correction is a bug.** Re-deriving the number here is
    exactly how session 3 of `session-loop-automation` wrote `4`, launched `#5`,
-   and left no session 4 (2026-08-25) — a failure class observed again
-   downstream. At step 6 your *successor's* number is the salient one and it is
-   the wrong one: the counter holds **yours**, and `launch-next-session.sh`
-   adds the one.
+   and left no session 4 (2026-08-25) — the same failure class as this
+   workspace's own s102/#104 off-by-one (ADR-0007's 2026-08-14 amendment). At
+   step 6 your *successor's* number is the salient one and it is the wrong one:
+   the counter holds **yours**, and `launch-next-session.sh` adds the one.
 
    **Get it right the first time — a wrong number still costs a lineage gap.**
    Cross-checkout max-wins was retired once `seq-sync` became the counter's only
-   writer (`scripts/launch-next-session.sh:265-269`), so an over-count is no longer
+   writer (`scripts/launch-next-session.sh:207-211`), so an over-count is no longer
    ratified forever: `seq-sync` can correct downward (`lowered`, below), and the
    launcher now *reports* stray copies in other checkouts instead of absorbing
    them. Prune a reported stray rather than letting it stand.
@@ -243,7 +254,7 @@ exchanges so STOP can't pass unnoticed.
    > the assumption into an observation.
    >
    > **"I need input from the user" is expressed by rolling over with
-   > `--mode interactive` (step 8), never by declining to launch.** Interactive
+   > `--loop-mode interactive` (step 6), never by declining to launch.** Interactive
    > mode starts the successor and has it re-pose the question on a fresh
    > window, with full context. Declining to launch is strictly worse than that
    > in every case: it burns the handoff you just wrote, strands staged work,
@@ -268,26 +279,25 @@ exchanges so STOP can't pass unnoticed.
    ff-pushes the branch to main, syncs the main checkout, and proceeds; only
    real divergence still refuses.
 
-   **Two relaunch mechanisms — pick by whether the MCP server set must change
-   (ADR-0009).** Both run the same lineage gate, the same counter bump, and the
-   same canonical prompt; they differ only in what carries the handover.
+   **Two relaunch mechanisms — pick by whether the MCP server set must change.**
+   Both run the same lineage gate, the same counter bump, and the same
+   canonical prompt; they differ only in what carries the handover.
 
    - **`--clear` (same process, preferred for ordinary rollovers).**
      `scripts/launch-next-session.sh <project> --clear` writes a seed marker
-     (`work/<project>/.pending-clear-seed`) and tells you to press `/clear`.
-     The SessionStart hook (`scripts/hooks/rollover-clear-seed.sh`) drains
-     that marker into the cleared context, so **the human presses `/clear` and
-     types nothing**. Keeps the authenticated process and the
-     already-connected MCP servers, which avoids both the login failure and
-     the MCP startup race a fresh process can hit, and it runs even under
-     `ROLLOVER_RELAUNCH=off`. **An agent cannot press `/clear` itself** — that
+     and tells you to press `/clear`. The SessionStart hook
+     (`scripts/hooks/rollover-clear-seed.sh`) drains that marker into the
+     cleared context, so **the human presses `/clear` and types nothing**.
+     Keeps the authenticated process and the already-connected MCP servers,
+     which avoids both the login failure and the MCP startup race a fresh
+     process can hit. **An agent cannot press `/clear` itself** — that
      keystroke is the one manual step, by design.
    - **A fresh process (`launch-next-session.sh <project>` as before).**
      Required when the successor needs a DIFFERENT MCP fragment: a running
-     session cannot attach a new server (`docs/mcp-setup.md`), so only a
-     relaunch can change the set — via `ROLLOVER_OPT_EXTRA="--mcp-config …"`.
-     Also the only path for handing the work to another runtime, or for `--bg`
-     when this session must keep working (ADR-0004).
+     session cannot attach a new server (CONTEXT.md), so only a relaunch can
+     change the set — via `ROLLOVER_OPT_EXTRA="--mcp-config …"`. Also the
+     only path for handing the work to another runtime, or for `--bg` when
+     this session must keep working (ADR-0004).
 
    Either way the counter advances at invocation, not at successor start. If
    you run one and then don't follow through, abandon the staged successor with
@@ -310,20 +320,57 @@ exchanges so STOP can't pass unnoticed.
    | 1 | not supervised | ordinary rollover; emit the paste-ready prompt |
    | 2 | ambiguous | **stage anyway**, and say so loudly in the handoff |
 
+   PREREQUISITE — **record completion first**:
+   `scripts/context-budget.sh record --label "rollover complete: <project>"`.
+   It stamps the budget ledger and nothing else; the supervisor never reads it.
+   It runs *before* staging because under the supervisor the SIGTERM lands at
+   the end of the `--emit` turn, so anything sequenced after staging would
+   simply never run.
+
    Do **not** branch on `TF_SESSION_LOOP`. A forked agent does not inherit it,
-   so its absence proves nothing. Exit 3 is not
+   so its absence proves nothing — that is the whole of defect D1. Exit 3 is not
    an answer: it means the query itself was malformed (missing `--project`, an
    unknown option), so fix the invocation and ask again. Only 0/1/2 are answers.
    Exit 2 means stage anyway — a spurious staged command is harmless, a missing
    one strands the chain. The query mutates nothing, so it is not a cleanup tool.
+
+   Since Round 2 (D6) this branch tells you *which* command to run; it is no
+   longer the thing that keeps the chain safe. `launch-next-session.sh` now runs
+   the same query itself and **refuses** a non-staging launch (a bare call, or
+   `--clear`) while a supervisor is positively live, so getting this step wrong
+   costs you one turn and a loud error instead of silently forking the chain.
+   The launcher refuses on exit 0 only: on exit 2 it warns and proceeds, which
+   is why *your* exit-2 rule is still stage-anyway — the script deliberately
+   does not enforce ambiguity, and you are the one who resolves it.
 
    **When you are staging, you do not launch.** Run the launcher with a **bare**
    `--emit`, which performs every real-run side effect and writes the successor's
    command to the file the supervisor is waiting on:
 
    ```sh
-   scripts/launch-next-session.sh <project> --emit
+   scripts/launch-next-session.sh <project> --emit \
+     --loop-mode <interactive|handsoff> --loop-reason "<why you rolled>"
    ```
+
+   **This is the last thing you do. Your session is terminated at the end of
+   this turn.** Staging *is* the rollover: `--emit` writes the verdict the
+   supervisor reads, and the turn-end hook sees that verdict and stops you.
+   There is no sentinel, no confirmation step, nothing to write afterwards. If
+   you find yourself about to run one more command "to finish the rollover",
+   that is the defect this step was rewritten to remove (D11).
+
+   Choose `--loop-mode` by what the moment is, not what the launch was:
+
+   | | `interactive` | `handsoff` |
+   | --- | --- | --- |
+   | You were | mid-conversation with a human | mid-execution of a plan, spec, or ticket |
+   | The successor | re-poses the open question and waits | resumes executing |
+   | Your launcher must | carry the live question **verbatim** | carry only *position* against a fixed artifact — never a re-told goal |
+
+   A human `touch work/<project>/.hands-off` or `.interactive` overrides you; the
+   launcher applies that itself, so do not check for those files. `--loop-mode`
+   and `--loop-reason` are accepted only alongside `--emit`, and default to
+   `handsoff` and empty.
 
    `--emit` with no argument resolves the target inside the launcher, from the
    launcher's own workspace root — the identical expression the supervisor uses.
@@ -350,43 +397,6 @@ exchanges so STOP can't pass unnoticed.
    (`/clear` and the SessionStart seed hook are Claude Code features — on
    codex/gemini it exits 3 rather than seeding a marker nothing will drain).
 
-7. **Record completion.** `scripts/context-budget.sh record --label "rollover complete: <project>"`.
-
-   **Red flag — this record is NOT the sentinel.** The label says "rollover
-   complete", but it only stamps the budget ledger; the supervisor never reads
-   it. If step 6 answered "supervised", step 8 below is still mandatory —
-   skipping it strands the chain (measured 2026-09-09 in a downstream
-   workspace: a supervised session ran this step, skipped step 8, and the
-   supervisor HALTed after the session idled ~5h; the Stop hook stayed inert
-   the whole time). Treat "I recorded completion" as a trigger to check
-   step 8, never as evidence it already happened.
-
-8. **Under the supervisor only — write the sentinel, last.** If step 6's
-   `supervised` query answered 0 or 2, the very last thing you do is:
-
-   ```sh
-   scripts/context-budget.sh rollover-complete --project <project> \
-     --mode <interactive|handsoff> --label "<why you rolled>"
-   ```
-
-   **Last** is load-bearing. The sentinel means *"this session ended on purpose,
-   with disk current."* Writing it before the flush would make a half-completed
-   rollover indistinguishable from a clean one, and the supervisor would relaunch
-   on top of stale disk (failure mode 8).
-
-   Choose `--mode` by what the moment is, not what the launch was:
-
-   | | `interactive` | `handsoff` |
-   | --- | --- | --- |
-   | You were | mid-conversation with a human | mid-execution of a plan, spec, or ticket |
-   | The successor | re-poses the open question and waits | resumes executing |
-   | Your launcher must | carry the live question **verbatim** | carry only *position* against a fixed artifact — never a re-told goal |
-
-   A human `touch work/<project>/.hands-off` or `.interactive` overrides you; the
-   script applies that itself, so do not check for those files.
-
-   Not supervised (step 6 exit 1) => skip this step entirely.
-
 ## Guardrails
 
 - **Resumed after staging? Follow through or unstage — never re-roll on top.**
@@ -398,13 +408,16 @@ exchanges so STOP can't pass unnoticed.
   evidence, and the next launch halts at the lineage gate blaming a phantom
   session.
 - **Specialized workflow state files win.** If a skill (onboard-repo, rlm, …) keeps
-  its own state/handoff files, they stay authoritative — `next-session.md` carries
-  thin pointers to them, never a fork of their content.
+  its own state/handoff files, they stay authoritative — so **update THOSE as the
+  source of truth** before you write the rollover artifacts, and keep
+  `handoff.md`/`next-session.md` as thin pointers to them, never a fork of their
+  content.
 - Prefer **file pointers over content summaries** — a summary spends the next
   session's budget on possibly-stale prose; a pointer lets it demand-load.
 - **No secrets** in any rollover artifact.
-- If no `work/<project>/` directory fits the current work, ask the user where to
-  persist rather than inventing a location.
+- If no `work/<project>/` directory fits the current work, ask the user where
+  to persist rather than inventing a location (per CONTEXT.md content-boundary
+  rules).
 
 ## Verification
 
@@ -420,10 +433,10 @@ exchanges so STOP can't pass unnoticed.
   (under worktree isolation this reads the worktree's tracked copy — a
   mismatch there means check the main checkout via `seq-sync`, not hand-edit).
   If it prints your number + 1, you wrote your successor's number; correct it
-  *now*, before launching — once the successor is minted the gap is in the
-  lineage for good, even though `seq-sync` can lower the counter itself
-  (ADR-0008). Step 6's `seq-sync` reports `noop` when this already holds —
-  never hand-write the file.
+  *now*, before launching — once the
+  successor is minted the gap is in the lineage for good, even though `seq-sync`
+  can lower the counter itself (ADR-0008). Step 6's `seq-sync` reports `noop`
+  when this already holds — never hand-write the file.
 - The launcher was REPLACED, not appended: `next-session.md` describes only the
   next session's mission. `launch-next-session.sh`'s lineage gate refuses to
   launch if the counter disagrees with the top handoff block.

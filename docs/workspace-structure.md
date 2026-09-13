@@ -534,7 +534,7 @@ scripts/
 ├── attach-session.sh              # Re-attach a chained rollover successor to its work item
 ├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
-├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
+├── diff-review.sh                 # Open a commit, range, or working tree as a directory diff (symlink-safe)
 ├── sync-vendored-skills.sh        # Refresh the vendored Matt Pocock skills from an upstream clone
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
 │   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
@@ -576,10 +576,10 @@ scripts/
   "The supervisor".
 
 **Recommended scripts** (add as the workspace matures):
-- `diff-review.sh` — open a commit or range as a directory diff for review;
-  wraps `git difftool` with the symlink-safe `--no-symlinks` flag and the
-  blocking `bcomp` launcher. See `docs/operational-knowledge.md` → "Diff
-  Review Workflow".
+- `diff-review.sh` — open a commit, a range, or the uncommitted working tree
+  (`-w`) as a directory diff for review; wraps `git difftool` with the
+  symlink-safe `--no-symlinks` flag and the blocking `bcomp` launcher. See
+  `docs/operational-knowledge.md` → "Diff Review Workflow".
 - `scripts/mcp/` — checked-in, credential-free local MCP servers or launchers
   that are safe to share across runtimes. The template ships a YouTube
   transcript server backed by `yt-dlp`.

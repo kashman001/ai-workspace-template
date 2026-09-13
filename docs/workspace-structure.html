@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: c84395002db572f294aa683b0ad99c29184542e0 -->
+  <!-- source-md-sha1: 54d016ffe281599ec4b997ec8c3276e180553ab6 -->
 </head>
 <body>
 <div class="src-banner">
@@ -889,7 +889,7 @@ Bootstrap and Utility Scripts</h2>
 ├── attach-session.sh              # Re-attach a chained rollover successor to its work item
 ├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
-├── diff-review.sh                 # Open a commit/range as a directory diff (symlink-safe)
+├── diff-review.sh                 # Open a commit, range, or working tree as a directory diff (symlink-safe)
 ├── sync-vendored-skills.sh        # Refresh the vendored Matt Pocock skills from an upstream clone
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
 │   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
@@ -938,8 +938,9 @@ than on the child's exit code. Bounded by a max-session count; see
 <p><strong>Recommended scripts</strong> (add as the workspace
 matures):</p>
 <ul>
-<li><code>diff-review.sh</code> — open a commit or range as a directory
-diff for review; wraps <code>git difftool</code> with the symlink-safe
+<li><code>diff-review.sh</code> — open a commit, a range, or the
+uncommitted working tree (<code>-w</code>) as a directory diff for
+review; wraps <code>git difftool</code> with the symlink-safe
 <code>--no-symlinks</code> flag and the blocking <code>bcomp</code>
 launcher. See <code>docs/operational-knowledge.md</code> → "Diff Review
 Workflow".</li>

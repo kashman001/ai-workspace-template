@@ -545,5 +545,143 @@ assert_eq "M16i: genuinely stale relocated holder still reclaimed" \
 run_as bbb release --project testproj --quiet >/dev/null
 rm -rf "$WTPROJ"
 
+echo "P: D8/R2.10 — the lock and the session record name a PROCESS, not only a transcript"
+# What these pin: register must resolve the runtime pid by walking its ANCESTRY
+# (its own parent is a throwaway hook shell, so $PPID is wrong), must record the
+# process start time alongside the pid (pids are recycled; the record outlives
+# the process), and must pick up the supervisor for free from the runtime's
+# parent. Mutations that make these red: P1 — replace the walk with $PPID (P1a
+# names the wrapper shell, not claude); P2 — record the pid without pid_start;
+# P3 — match the runtime name anywhere in the command line instead of at argv0;
+# P4 — drop the "no resolvable ancestor" degradation and record a wrong pid.
+#
+# The fixture needs a process whose argv[0] basename really is the runtime name.
+# A #! script cannot do it (the kernel puts the interpreter in argv[0]), so the
+# fake runtime is a symlink to bash: exec'ing it sets argv[0] to the link path.
+mkdir -p "$TMP/bin" "$TMP/fake"
+ln -sf "$(command -v bash)" "$TMP/bin/claude"
+ln -sf "$(command -v bash)" "$TMP/bin/copilot-vscode"
+export TMP CB
+# The `; :` is load-bearing: bash -c 'single simple command' execs in place,
+# which would replace the fake runtime process with the one being measured.
+cat > "$TMP/fake/session-loop.sh" <<'EOS'
+#!/usr/bin/env bash
+echo $$ > "$TMP/sup.pid"
+"$TMP/bin/$FAKE_RT" -c 'echo $$ > "$TMP/rt.pid"; "$CB" register --project testproj --runtime "$FAKE_RT" --quiet >/dev/null 2>&1; :'
+EOS
+chmod +x "$TMP/fake/session-loop.sh"
+
+echo "P1: ancestry walk — the lock names the runtime process and its supervisor"
+rm -f "$LOCK" "$TMP/sup.pid" "$TMP/rt.pid"
+mk_transcript ppp 40000
+FAKE_RT=claude CLAUDE_CODE_SESSION_ID=ppp \
+  env FAKE_RT=claude bash "$TMP/fake/session-loop.sh"
+assert_eq "P1a: lock pid is the runtime process, not the hook shell" \
+  "$(jq -r '.pid // "none"' "$LOCK" 2>/dev/null)" "$(cat "$TMP/rt.pid" 2>/dev/null || echo none)"
+assert_eq "P1b: lock supervisor_pid is the runtime's parent" \
+  "$(jq -r '.supervisor_pid // "none"' "$LOCK" 2>/dev/null)" "$(cat "$TMP/sup.pid" 2>/dev/null || echo none)"
+[ -n "$(jq -r '.pid_start // empty' "$LOCK" 2>/dev/null)" ] \
+  && ok "P1c: pid_start recorded beside the pid" \
+  || bad "P1c: pid without pid_start — a recycled pid would be named with confidence"
+assert_eq "P1d: the session record carries the same pid" \
+  "$(jq -r '.pid // "none"' "$TMP/.context-budget/sessions/claude-ppp.json" 2>/dev/null)" \
+  "$(cat "$TMP/rt.pid" 2>/dev/null || echo none)"
+
+echo "P2: no runtime ancestor — degrade to no pid, never to a wrong one"
+# Uses gemini deliberately. This suite is itself normally run from inside a
+# claude session, so a claude ancestor is genuinely present in the test's own
+# process tree and a runtime=claude fixture could never show the degradation.
+# Picking a runtime that is NOT in the ancestry is the only hermetic way to
+# reach the "walk found nothing" branch.
+rm -f "$LOCK"
+: > "$TMP/gemini-telemetry.log"
+"$CB" register --runtime gemini --project testproj --quiet >/dev/null 2>&1
+assert_eq "P2a: lock written" "$(jq -r '.runtime' "$LOCK" 2>/dev/null)" "gemini"
+assert_eq "P2b: no pid invented from the nearest ancestor" \
+  "$(jq -r 'has("pid")' "$LOCK")" "false"
+assert_eq "P2c: no supervisor invented either" \
+  "$(jq -r 'has("supervisor_pid")' "$LOCK")" "false"
+
+echo "P3: the walk matches argv[0], so a runtime named only in an argument is not adopted"
+rm -f "$LOCK"
+# The wrapper shell's command line contains the word gemini; its argv[0] is bash.
+bash -c '"$CB" register --runtime gemini --project testproj --quiet >/dev/null 2>&1 # gemini
+:'
+assert_eq "P3a: a mention in the argv tail resolves no pid" \
+  "$(jq -r 'has("pid")' "$LOCK")" "false"
+
+echo "P4: copilot-vscode has no process an operator may be told to end"
+rm -f "$LOCK" "$TMP/sup.pid" "$TMP/rt.pid"
+# Deliberately give it the ancestor the walk WOULD find, then require it absent:
+# the "session" for this runtime is VS Code itself, which must never be named.
+VSCODE_TARGET_SESSION_LOG="$TMP/copilot.log"; : > "$VSCODE_TARGET_SESSION_LOG"
+export VSCODE_TARGET_SESSION_LOG
+env FAKE_RT=copilot-vscode bash "$TMP/fake/session-loop.sh"
+if [ -f "$LOCK" ] && [ "$(jq -r '.runtime' "$LOCK" 2>/dev/null)" = "copilot-vscode" ]; then
+  assert_eq "P4a: no pid recorded for copilot-vscode" "$(jq -r 'has("pid")' "$LOCK")" "false"
+else
+  ok "P4a: copilot-vscode did not register in this fixture — no pid to record either way"
+fi
+unset VSCODE_TARGET_SESSION_LOG
+rm -f "$LOCK"
+
+echo "T21: D14 — a supervised successor takes its project from the environment, not file mtime"
+# The swap this guards against: two chains staging inside the 600s handshake TTL.
+# register runs with no --project from a SessionStart hook, so before D14 it
+# consumed the *freshest* pending file — which can belong to the other chain.
+mkdir -p "$TMP/work/otherproj"
+PEND_T="$TMP/.context-budget/successor-pending-testproj.json"
+PEND_O="$TMP/.context-budget/successor-pending-otherproj.json"
+mk_pending() {   # $1=project -> a fresh handshake file for that chain
+  mkdir -p "$TMP/.context-budget"
+  jq -n --arg p "$1" '{project:$p, seq:9, launched_at:"2026-01-01T00:00:00Z"}' \
+    > "$TMP/.context-budget/successor-pending-$1.json"
+}
+reset_pend() {   # otherproj's file is always the FRESHER of the two
+  rm -f "$TMP/work/testproj/.active-session" "$TMP/work/otherproj/.active-session" \
+        "$TMP/.context-budget/successor-pending-"*.json
+  mk_pending testproj; sleep 1; mk_pending otherproj
+}
+
+# T21a-c: TF_SESSION_LOOP_PROJECT set => adopt it, retire only our own file.
+reset_pend; mk_transcript sup1 40000
+TF_SESSION_LOOP_PROJECT=testproj run_as sup1 register --quiet >/dev/null
+assert_eq "T21a: adopted the supervised project, not the freshest file" \
+  "$(jq -r .project "$TMP/.context-budget/sessions/claude-sup1.json" 2>/dev/null)" "testproj"
+assert_eq "T21b: it locked its OWN work item" \
+  "$(jq -r .session_id "$TMP/work/testproj/.active-session" 2>/dev/null)" "sup1"
+[ ! -f "$TMP/work/otherproj/.active-session" ] \
+  && ok "T21c: the other chain's lock was not taken" \
+  || bad "T21c: it locked otherproj — D14 swap reproduced"
+[ ! -f "$PEND_T" ] && ok "T21d: its own handshake file was retired" \
+                   || bad "T21d: own handshake file survived"
+[ -f "$PEND_O" ] && ok "T21e: the other chain's fresher handshake survived unread" \
+                 || bad "T21e: the other chain's handshake was consumed"
+
+# T21f: the mtime heuristic is the UNSUPERVISED fallback and must still work.
+reset_pend; mk_transcript unsup1 40000
+unset TF_SESSION_LOOP_PROJECT
+run_as unsup1 register --quiet >/dev/null
+assert_eq "T21f: with no supervisor, the freshest handshake still wins" \
+  "$(jq -r .project "$TMP/.context-budget/sessions/claude-unsup1.json" 2>/dev/null)" "otherproj"
+
+# T21g: an env var naming no work directory must not invent a project.
+reset_pend; mk_transcript sup2 40000
+TF_SESSION_LOOP_PROJECT=nosuchproj run_as sup2 register --quiet >/dev/null
+assert_eq "T21g: a bogus env project falls back to the handshake" \
+  "$(jq -r .project "$TMP/.context-budget/sessions/claude-sup2.json" 2>/dev/null)" "otherproj"
+
+# T21h: children are excluded by construction — a sub-agent inheriting the same
+# variable must neither adopt a project nor eat the successor's handshake.
+reset_pend; mk_transcript sup3 40000
+run_as sup3 register --project testproj --quiet >/dev/null      # a parent to chain from
+mk_pending testproj
+mk_transcript agent-d14 1000
+TF_SESSION_LOOP_PROJECT=testproj run_as sup3 register \
+  --transcript "$PROJ_DIR/agent-d14.jsonl" --parent-session sup3 --quiet >/dev/null 2>&1
+[ -f "$PEND_T" ] && ok "T21h: a child left the handshake file for the real successor" \
+                 || bad "T21h: a child consumed the successor's handshake"
+rm -f "$TMP/work/testproj/.active-session" "$TMP/.context-budget/successor-pending-"*.json
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
