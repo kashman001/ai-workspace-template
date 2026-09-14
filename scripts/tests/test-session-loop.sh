@@ -1059,6 +1059,11 @@ cat > "$TMP/forked-session.sh" <<'FORK'
 #!/usr/bin/env bash
 set -u
 unset TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT     # the fork loses them
+# D17: a real claude session names itself by exporting this, and the launcher's
+# supervised identity refusal now keys on that positive identity rather than on
+# the newest record claiming the project. The record below is still required --
+# it is the other half of the same check.
+export CLAUDE_CODE_SESSION_ID=pre-fork
 cd "$V4_MAIN" || exit 9
 me="$(tr -cd '0-9' < work/testproj/.session-seq)"
 # 0. the flush (R2.17 section 7): the supervisor halts a rollover that left both
@@ -1120,6 +1125,7 @@ cat > "$TMP/nosync-session.sh" <<'NOSYNC'
 #!/usr/bin/env bash
 set -u
 cd "$V5_MAIN" || exit 9
+export CLAUDE_CODE_SESSION_ID=nosync     # D17: see the V4 fixture above
 printf '# launcher (V5 %s)\n' "$(tr -cd '0-9' < work/testproj/.session-seq)" \
   > work/testproj/next-session.md
 ./scripts/launch-next-session.sh testproj --emit || exit 9
@@ -1293,7 +1299,7 @@ mv "$MAIN/.context-budget/sessions/"*.json "$TMP/f1-aside/" 2>/dev/null || true
 # ...and no inherited session id either: the supervisor is started from a plain
 # terminal, never from inside a session, so the env leg must be empty too.
 PATH="$TMP/bin:$PATH" env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
-  -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
+  -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG -u OPENCODE_SESSION_ID \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
   >"$TMP/f1" 2>&1 </dev/null; rc=$?
 mv "$TMP/f1-aside/"*.json "$MAIN/.context-budget/sessions/" 2>/dev/null || true
