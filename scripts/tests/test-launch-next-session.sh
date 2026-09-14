@@ -1236,5 +1236,28 @@ assert_contains "K3d: and given a concrete exit" "$out" "kill $live"
 kill "$live" "$sup" 2>/dev/null; wait "$live" "$sup" 2>/dev/null
 rm -f "$LOCKF"
 
+# ---------------------------------------------------------------------------
+# CL: P6 — the launcher half of the .chain-closed gate (scenario table B2).
+# The supervisor carries its own copy of this gate, but it cannot be the only
+# one: an UNSUPERVISED rollover never runs session-loop.sh, so without a read
+# here the next session to roll over into a closed work item reopens it.
+#
+# Mutation: delete the CLOSEDF block from launch-next-session.sh -> CL1a-CL1c red.
+# ---------------------------------------------------------------------------
+echo "CL1: the launcher refuses to stage a successor into a closed chain"
+CLOSEDF="$TMP/work/testproj/.chain-closed"
+printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","top_ledger_seq":"","written_by":"session-loop.sh"}\n' > "$CLOSEDF"
+out=$(run_lns "$LNS" testproj --dry-run 2>&1); rc=$?
+assert_eq       "CL1a: refused with the launcher's refusal status" "$rc" "3"
+assert_contains "CL1b: it names the marker file"     "$out" ".chain-closed"
+assert_contains "CL1c: it names the session that closed the chain" "$out" "session #8"
+assert_contains "CL1d: it names the explicit reopen" "$out" "--reopen"
+assert_contains "CL1e: and says nothing was staged"  "$out" "Nothing has been staged"
+# The gate is a plain file test, so removing the marker restores the previous
+# behaviour exactly — no residue, which is what makes --reopen a complete undo.
+rm -f "$CLOSEDF"
+out=$(run_lns "$LNS" testproj --dry-run 2>&1); rc=$?
+assert_eq       "CL1f: with no marker the launcher is unaffected" "$rc" "0"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -225,6 +225,26 @@ assert_contains "T12c: parent WARN text" "$err" "CONTEXT BUDGET WARN"
 [ -f "$TMP/.context-budget/hook-claude-s12-sidechain.status" ] \
   && ok "T12e: sidechain state keyed separately" || bad "T12e: sidechain state file missing"
 
+echo "T13: the WARN/STOP messages name step 6 and the --emit invariant (P2)"
+# Three incidents prove that pointing at skills/session-rollover/SKILL.md is not
+# enough at the moment of need, so the STOP message carries the operative
+# sentence inline. Two facts, both from SKILL.md step 6: staging IS the
+# completion criterion, and --emit takes no path argument.
+libmsg() { ( . "$HOOKS/context-budget-hook-lib.sh"; budget_hook_message "$@" ); }
+out=$(libmsg STOP 151000 150000)
+assert_contains "T13a: STOP still opens with the budget fact" "$out" "CONTEXT BUDGET STOP: this session is at 151000 tokens"
+assert_contains "T13b: STOP names step 6 as the completion criterion" "$out" "step 6"
+assert_contains "T13c: STOP carries the bare --emit invariant inline" "$out" "BARE"
+assert_contains "T13d: STOP still points at the skill" "$out" "skills/session-rollover/SKILL.md"
+assert_contains "T13e: STOP still forbids new work" "$out" "Do not start new work in this session."
+out=$(libmsg WARN 125000 150000)
+assert_contains "T13f: WARN names step 6 too" "$out" "step 6"
+# WARN is not the moment to stage, so it keeps its prepare-to framing and does
+# NOT carry the invariant.
+case "$out" in *BARE*) bad "T13g: WARN must not carry the staging invariant" ;;
+               *) ok "T13g: WARN keeps its prepare-to framing" ;; esac
+assert_contains "T13h: WARN still asks the agent to tell the user" "$out" "Mention this warning"
+
 echo "X: session-loop turn-end exit (plan 2, Task 8)"
 # A vendor hook is a SEPARATE PROCESS spawned by the agent, so $PPID inside it is
 # the agent. Modelling that matters: calling budget_hook_exit in-process from the

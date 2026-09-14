@@ -72,12 +72,27 @@ budget_hook_check() {
   return 0
 }
 
+# P2 (session-chain-observability, B1). Both messages used to END at a pointer
+# to skills/session-rollover/SKILL.md; three incidents show the pointer is not
+# followed at the moment of need. So the STOP message now carries the operative
+# sentence inline: step 6 IS the completion criterion, and --emit takes no path
+# argument (a self-computed one resolves to the git root under nesting and to a
+# worktree under isolation, and the supervisor then reads the main checkout,
+# finds nothing, and reports a clean shutdown).
+#
+# WARN gains the step-6 clause only, not the invariant — WARN is not the moment
+# to stage. Known cost, stated rather than hidden: the hook is runtime-side and
+# project-agnostic, with no access to .next-command or supervision state at
+# message time, so a session deliberately ENDING the chain (H3) still reads
+# "stage your successor" at STOP. Making the hook project-aware is not worth a
+# new dependency for a prose nudge; context-budget.sh's successor_advisory is
+# the leg that IS two-sided.
 budget_hook_message() {
   local status="$1" tokens="$2" threshold="$3"
   if [ "$status" = "STOP" ]; then
-    echo "CONTEXT BUDGET STOP: this session is at $tokens tokens, past the $threshold-token dumb-zone threshold. Finish the current atomic step only, then tell the user and run the session-rollover workflow (skills/session-rollover/SKILL.md). Do not start new work in this session."
+    echo "CONTEXT BUDGET STOP: this session is at $tokens tokens, past the $threshold-token dumb-zone threshold. Finish the current atomic step only, then tell the user and run the session-rollover workflow (skills/session-rollover/SKILL.md). It is not finished until step 6 has staged your successor: run the launcher with a BARE --emit — never a path you computed yourself — and that is the last thing you do in this session. Do not start new work in this session."
   else
-    echo "CONTEXT BUDGET WARN: this session is at $tokens tokens, approaching the $threshold-token dumb-zone threshold. Wrap up the current work unit and avoid loading large files; prepare to run the session-rollover workflow (skills/session-rollover/SKILL.md) soon. Mention this warning to the user in your next reply."
+    echo "CONTEXT BUDGET WARN: this session is at $tokens tokens, approaching the $threshold-token dumb-zone threshold. Wrap up the current work unit and avoid loading large files; prepare to run the session-rollover workflow (skills/session-rollover/SKILL.md) soon — it is not finished until step 6 has staged your successor. Mention this warning to the user in your next reply."
   fi
 }
 

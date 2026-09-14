@@ -107,6 +107,11 @@ one place. A parallel script would have duplicated both.
 - `--clear` is honoured even under `ROLLOVER_RELAUNCH=off`. That knob means "do
   not spawn a successor behind my back"; an explicitly typed `--clear` is not
   that. Regression-tested (C5).
+  *(Amended 2026-09-14: `off` was widened to also refuse a `session-loop.sh`
+  start against that work item — scenario B3 in
+  `docs/session-chain-scenarios.md`. This bullet is unaffected: `--clear` is
+  still an explicitly typed act, and the widening only added a gate on the
+  supervisor's startup path.)*
 - The session keeps its old display name and registry entry, since the process
   is the same. Cosmetic, but `claude agents` listings show the pre-rollover
   number; ADR-0005's registry keying is unchanged.
