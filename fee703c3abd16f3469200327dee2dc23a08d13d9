@@ -1,0 +1,23 @@
+docs/template-workspace-backlog-archive.html
+  s_e00a29478e14dd::t_41efce00cdb5a6 779-781
+docs/context-budget.md
+  s_e00a29478e14dd::t_47328a9ef94664 381-386
+scripts/session-loop-notify.sh
+  s_e00a29478e14dd::t_c0eb993df379ac 4-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "fee703c3abd16f3469200327dee2dc23a08d13d9",
+  "prompts": {},
+  "sessions": {
+    "s_e00a29478e14dd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5afdd05-751d-4339-9f60-b3677b36f573",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}

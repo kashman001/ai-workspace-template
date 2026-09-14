@@ -1,0 +1,38 @@
+docs/template-workspace-backlog-archive.html
+  s_7393621433d48c::t_398eeffac51c2e 745-768
+docs/context-budget.md
+  s_7393621433d48c::t_d4a03667a37f37 274-284
+  s_7393621433d48c::t_8a7608b8e7df4a 259
+skills/session-rollover/SKILL.md
+  s_7393621433d48c::t_85b03dac48a580 383-390
+  s_7393621433d48c::t_388986224b64c2 293-299
+docs/adr/0009-clear-based-rollover-relaunch.md
+  s_7393621433d48c::t_7087b64eacca6d 102-106
+scripts/launch-next-session.sh
+  s_7393621433d48c::t_eb11c7f1620541 11,15-20,76,84,101-110,167-235,379-381,384,416-461,467-470,754-755
+docs/work-directory-conventions.md
+  s_7393621433d48c::t_9478320eae0f59 126-130
+scripts/tests/test-launch-next-session.sh
+  s_7393621433d48c::t_5b294525bf57db 310
+  s_7393621433d48c::t_31c60a0fa2075e 419-515
+  s_7393621433d48c::t_d461114a275d66 539
+docs/template-workspace-backlog.html
+  s_7393621433d48c::t_c327ca5e345b85 72
+  s_7393621433d48c::t_05cdba293877ac 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ee9c8546e3723f30311bf4f6b25aa330b9d37e02",
+  "prompts": {},
+  "sessions": {
+    "s_7393621433d48c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f989cd45-4221-45d1-affc-9f0aa6524633",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}

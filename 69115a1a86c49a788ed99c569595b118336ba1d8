@@ -1,0 +1,30 @@
+skills/session-rollover/SKILL.md
+  s_e00a29478e14dd::t_1e21028022a8e5 355-363
+scripts/session-loop-notify.sh
+  s_e00a29478e14dd::t_8b7fbea2ba73bd 1-13
+docs/template-workspace-backlog.html
+  s_e00a29478e14dd::t_99b26c70605530 72
+  s_e00a29478e14dd::t_47c90e23842916 79
+docs/template-workspace-backlog-archive.html
+  s_e00a29478e14dd::t_68b60500994b0a 769-792
+scripts/tests/test-session-loop-notify.sh
+  s_e00a29478e14dd::t_38aff9c4612241 1-50
+docs/context-budget.md
+  s_e00a29478e14dd::t_68ab60412bf558 380-395
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "69115a1a86c49a788ed99c569595b118336ba1d8",
+  "prompts": {},
+  "sessions": {
+    "s_e00a29478e14dd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5afdd05-751d-4339-9f60-b3677b36f573",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}

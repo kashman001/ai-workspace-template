@@ -1,0 +1,25 @@
+docs/operational-knowledge.md
+  s_d7fd9f4171b397::t_9270264b4ec0db 136
+docs/workspace-structure.md
+  s_d7fd9f4171b397::t_388e7af37f431e 563-566
+docs/workspace-structure.html
+  s_d7fd9f4171b397::t_7604df8f5a98d8 290,924-926
+scripts/diff-review.sh
+  s_d7fd9f4171b397::t_7d3bc5f09671cf 21,32-38,55-56,62-63,71,76-89,92-110,112,130,138,141-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "08bb5dc83e758c7706a2f0cec8dacd4b11300a33",
+  "prompts": {},
+  "sessions": {
+    "s_d7fd9f4171b397": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "90f30425-848f-4b68-bcd1-55cac0bb7085",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
