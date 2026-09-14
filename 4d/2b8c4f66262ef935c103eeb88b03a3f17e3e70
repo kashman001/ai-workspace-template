@@ -1,0 +1,38 @@
+scripts/session-loop.sh
+  s_a1df11d295c98f::t_7cf320a60ee229 88-96,537-624,628-643,676
+scripts/tests/test-launch-next-session.sh
+  s_410f5eb19a6142::t_a4dca7a51637b0 477-481,487
+scripts/tests/test-session-loop.sh
+  s_410f5eb19a6142::t_aca186c596e402 1342-1352
+  s_a1df11d295c98f::t_33b8b4421be6b4 167-180,182-197,377,412,448,463,514,567,632,642,656,671,704,737,826,916,988,1001,1033,1045,1115,1164,1244,1267,1537,1552,1609
+  s_a1df11d295c98f::t_fb873c16489053 1296-1341,1353-1402
+  s_a1df11d295c98f::t_ef87fa04c7a4a0 181
+.gitignore
+  s_a1df11d295c98f::t_32b4cba3f1fb1d 42-46
+scripts/launch-next-session.sh
+  s_a1df11d295c98f::t_be559ff48cffe1 298,1212-1213,1215,1220-1253,1256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4d2b8c4f66262ef935c103eeb88b03a3f17e3e70",
+  "prompts": {},
+  "sessions": {
+    "s_410f5eb19a6142": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00b0e03b-659f-4e56-9a43-00d043bb82f7",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    },
+    "s_a1df11d295c98f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c4e2b8a-8b01-497f-a2c1-6db34b2d4a01",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
