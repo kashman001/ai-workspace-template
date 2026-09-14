@@ -1,0 +1,47 @@
+scripts/hooks/context-budget-hook-lib.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 70-84,88,90
+scripts/tests/test-session-loop.sh
+  s_ddc794d31a5828::t_ff92e75aae20bc 1296
+  s_ddc794d31a5828::t_b8ade2b8598699 27,35,167,1261-1295,1297-1647
+  s_ddc794d31a5828::t_ff8fb894fb201d 1648
+scripts/tests/test-vendor-budget-hooks.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 228-247
+.gitignore
+  s_ddc794d31a5828::t_e77abc1437bd1d 48-53
+scripts/launch-next-session.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 331-343,650-693,696-700,702
+  s_ddc794d31a5828::t_ff92e75aae20bc 701
+scripts/context-budget.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 16,72-74,85,111-122,412-444,518-561,885-888,908
+scripts/session-loop.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 40,45-46,54,103-109,155-173,339-404,605,611-643,653-663,673-682,756-776
+context-budget.env
+  s_ddc794d31a5828::t_b8ade2b8598699 22-27
+scripts/tests/test-launch-next-session.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 1239-1261
+scripts/tests/test-context-budget-registry.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 686-850
+scripts/tests/test-emit-mode.sh
+  s_ddc794d31a5828::t_b8ade2b8598699 184-237
+docs/context-budget.md
+  s_ddc794d31a5828::t_b8ade2b8598699 206-207,222-233,388-389,392-404,685-709
+  s_ddc794d31a5828::t_bbc9ef669b2942 710
+docs/adr/0009-clear-based-rollover-relaunch.md
+  s_ddc794d31a5828::t_b8ade2b8598699 110-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9628b7836976502ffe017d553abeb490ee80ba09",
+  "prompts": {},
+  "sessions": {
+    "s_ddc794d31a5828": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "87590c29-6249-43e1-a448-a73ac522fa90",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
