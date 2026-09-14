@@ -1,0 +1,20 @@
+scripts/tests/test-session-loop.sh
+  s_86b7cf32143055::t_24a6d1a6617f67 1403-1560,1569,1573
+  s_86b7cf32143055::t_5942f592c4ca52 1561-1568,1570-1572,1574-1577
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "1a247269939d3ed8b9527060b92c2d941ab54dfe",
+  "prompts": {},
+  "sessions": {
+    "s_86b7cf32143055": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2beff1f-60ea-4168-924f-951dccfa56ec",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
