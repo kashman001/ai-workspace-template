@@ -295,6 +295,7 @@ if [ "$UNSTAGE" -eq 1 ]; then
   # debris this subcommand knowingly skipped.
   for u_f in "$WORKSPACE_ROOT/work/$PROJECT/.pending-clear-seed" \
              "$WORKSPACE_ROOT/work/$PROJECT/.next-command" \
+             "$WORKSPACE_ROOT/work/$PROJECT/.next-command.json" \
              "$WORKSPACE_ROOT/work/$PROJECT/.rollover-complete" \
              "$STATE_DIR/successor-pending-$PROJECT.json"; do
     [ -f "$u_f" ] || continue
@@ -1208,15 +1209,51 @@ if [ -n "$EMIT" ]; then
   # prevent. The counter is NOT auto-rewound — seq-sync is max-wins and
   # ADR-0008 governed, so the remedy is named rather than performed.
   emit_tmp="$EMIT.tmp.$$"
+  emit_id="$EMIT.json"
+  emit_id_tmp="$emit_id.tmp.$$"
   emit_fail() {
-    rm -f "$emit_tmp" "$PENDING"
+    rm -f "$emit_tmp" "$emit_id_tmp" "$PENDING"
     die "emit: could not stage the successor at $EMIT ($1); the counter advanced to $SEQ; if you retry, rewind first with scripts/context-budget.sh seq-sync --project $PROJECT --session $((SEQ - 1))"
   }
   printf '%s\n' "$(printf '%q ' "${CMD[@]}" | sed 's/ $//')" > "$emit_tmp" \
     || emit_fail "write failed"
+  # D18 — the identity sidecar. Until R2.20 a staged command was a bare command
+  # string: nothing recorded which session wrote it, which successor it launches,
+  # or when. The supervisor's bootstrap therefore had no freshness test to run and
+  # settled for `[ -s ]`, which is how a command that had ALREADY been run got run
+  # a second time and produced two session #18s (work/*/handoff-archive.md, the
+  # s18 addendum). Same shape as the bump record on purpose — the two are read by
+  # the same supervisor at the two ends of an iteration, and a reader who knows
+  # one knows the other.
+  #
+  # written_at is the load-bearing field, not seq/successor: a command staged for
+  # #N and a command staged for #N that has since been run are IDENTICAL by
+  # counter arithmetic (both leave .session-seq at N), so consumption is the only
+  # thing that separates them and a timestamp is the only thing that can date it.
+  # session-loop.sh reads it against the session registry.
+  #
+  # cksum, not a cryptographic digest: this catches a hand-edited half-pair, not
+  # an adversary, and `cksum` is what hash_file() in session-loop.sh already uses.
+  #
+  # Written BEFORE the command is mv'd into place: the supervisor treats the
+  # APPEARANCE of $EMIT as the signal that a successor is fully staged (the same
+  # reason write_pending runs above), so the sidecar must already be there.
+  jq -n \
+    --arg project "$PROJECT" \
+    --argjson seq "$LAST_SEQ" \
+    --argjson successor "$SEQ" \
+    --arg runtime "${_bump_rt:-unknown}" \
+    --arg session_id "${_bump_sid:-unknown}" \
+    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg command_cksum "$(cksum < "$emit_tmp")" \
+    '{project:$project, seq:$seq, successor:$successor, runtime:$runtime,
+      session_id:$session_id, written_at:$written_at,
+      command_cksum:$command_cksum, written_by:"launch-next-session.sh"}' \
+    > "$emit_id_tmp" || emit_fail "identity sidecar write failed"
+  mv "$emit_id_tmp" "$emit_id" || emit_fail "identity sidecar mv failed"
   mv "$emit_tmp" "$EMIT" || emit_fail "mv failed"
   [ -s "$EMIT" ] || emit_fail "target missing or empty after write"
-  note "emit: wrote the successor command to $EMIT"
+  note "emit: wrote the successor command to $EMIT (identity: ${emit_id##*/})"
   # R2.17 §1 — under a supervisor, staging IS the rollover, and the only
   # instruction left is to do nothing. D11 candidate 4, inverted: every earlier
   # wording told the agent to perform one more step, and "perform one more step"

@@ -85,6 +85,15 @@ case "$KILL_AFTER" in ''|*[!0-9]*)
   echo "error: SESSION_LOOP_KILL_AFTER must be a whole number of seconds, got '$KILL_AFTER'" >&2; exit 3 ;;
 esac
 LOOPF="$S/.session-loop"; NEXTF="$S/.next-command"; SENTF="$S/.rollover-complete"
+# D18 — the staged command's identity, written alongside it by
+# launch-next-session.sh --emit. Read at the bootstrap and nowhere else: every
+# later iteration consumes $NEXTF before its run, so a non-empty file there is
+# provably this chain's own work. Iteration 1 has no such proof and used to
+# assume one.
+NEXTIDF="$NEXTF.json"
+# Where a rejected staged command is parked. Kept rather than deleted: it is the
+# evidence of whatever wrote it, and the halt/log line names it.
+NEXTSTALEF="$NEXTF.stale"
 # R2.17 — the verdict. Written by launch-next-session.sh at the counter bump,
 # which is the only moment anything knows both the ending session's number and
 # its successor's. It replaces $SENTF entirely as the thing this supervisor
@@ -525,9 +534,113 @@ budget_read
 [ "$BUDGET_USED" -gt 0 ] \
   && say "resuming the chain budget at $BUDGET_USED of $MAX_SESSIONS used (opened $BUDGET_OPENED_AT)"
 
+# D18, the consumption leg. A staged command's whole purpose is to start the
+# session it names; if a session registered against this work item AFTER the
+# command was staged, that session IS the command's consumer and the file left
+# behind is spent. This is the only signal that separates "staged for #N" from
+# "staged for #N and already run" — see the sidecar comment in
+# launch-next-session.sh for why the counter cannot.
+#
+# Read-only, and it adds no writer to the emit channel: the registry records are
+# written by context-budget.sh register, which every session runs at its first
+# turn under every runtime. Timestamps are ISO-8601 Z, so a string compare is a
+# chronological one.
+#
+# Strictly greater-than, deliberately. The comparison is second-granular, and an
+# equal second is the tie between the staging session's own registration and its
+# emit; calling that "consumed" would reject a command nobody has run. The error
+# this direction can make is staging a fresh session one number early, which is
+# recoverable and announced; the other direction is the duplicate-session defect.
+consumer_since() {   # $1 = the ISO-8601 Z instant the command was staged at
+  cs_hit=""
+  for cs_f in "$ROOT/.context-budget/sessions/"*.json; do
+    [ -f "$cs_f" ] || continue
+    cs_out="$(jq -r --arg p "$PROJECT" --arg t "$1" \
+      'select(.project == $p and (.registered_at // "") > $t)
+       | "\(.runtime // "?")-\(.session_id // "?") (registered at \(.registered_at // "?"))"' \
+      "$cs_f" 2>/dev/null)" || continue
+    [ -n "$cs_out" ] || continue
+    cs_hit="$cs_out"
+    break
+  done
+  printf '%s' "$cs_hit"
+}
+
+# D18 — the bootstrap's freshness test, which until R2.20 was `[ -s "$NEXTF" ]`:
+# NON-EMPTY read as FRESH. That is not a freshness test, and the cost of the
+# mistake is in work/*/handoff-archive.md (the session-18 addendum) — a command
+# that had already been run was inherited by a supervisor started afterwards and
+# run a second time, producing two sessions with the same number, the second of
+# which took the work item's lock and committed nothing.
+#
+# Prints a reason and returns 0 when the staged command must NOT be inherited;
+# returns 1 (silently) when it is provably this chain's unconsumed work — the
+# genuine resume case, where a supervisor was killed between a child's --emit and
+# the next iteration's consume, and discarding the command would burn a session
+# number and lose the mode and options it carries.
+staged_stale_reason() {
+  if [ ! -f "$NEXTIDF" ]; then
+    printf 'it has no identity sidecar at %s, so nothing records which session wrote it, which successor it launches, or when' "${NEXTIDF#"$ROOT/"}"
+    return 0
+  fi
+  if ! jq -e 'type == "object"' "$NEXTIDF" >/dev/null 2>&1; then
+    printf 'its identity sidecar %s is missing or is not a JSON object' "${NEXTIDF#"$ROOT/"}"
+    return 0
+  fi
+  ss_by="$(jq -r '.written_by // empty' "$NEXTIDF" 2>/dev/null)"
+  if [ "$ss_by" != "launch-next-session.sh" ]; then
+    printf "its identity sidecar carries written_by='%s' — nothing sanctioned produced it" "${ss_by:-<none>}"
+    return 0
+  fi
+  ss_proj="$(jq -r '.project // empty' "$NEXTIDF" 2>/dev/null)"
+  if [ "$ss_proj" != "$PROJECT" ]; then
+    printf "its identity sidecar names work item '%s', not %s" "${ss_proj:-<none>}" "$PROJECT"
+    return 0
+  fi
+  ss_ck="$(jq -r '.command_cksum // empty' "$NEXTIDF" 2>/dev/null)"
+  ss_now="$(cksum < "$NEXTF" 2>/dev/null)"
+  if [ "$ss_ck" != "$ss_now" ]; then
+    printf 'the staged command does not match the checksum its sidecar recorded (%s vs %s) — the two were not written by the same run' "${ss_ck:-<none>}" "${ss_now:-<none>}"
+    return 0
+  fi
+  ss_succ="$(jq -r '.successor // empty' "$NEXTIDF" 2>/dev/null)"
+  ss_seq="$(read_seq)"; [ -n "$ss_seq" ] || ss_seq=0
+  if [ "$ss_succ" != "$ss_seq" ]; then
+    printf 'it stages session #%s but the counter stands at #%s — a later bump or a seq-sync retired it' "${ss_succ:-<none>}" "$ss_seq"
+    return 0
+  fi
+  ss_when="$(jq -r '.written_at // empty' "$NEXTIDF" 2>/dev/null)"
+  if [ -z "$ss_when" ]; then
+    printf 'its identity sidecar has no written_at, so nothing can date it against the sessions that have run'
+    return 0
+  fi
+  ss_ran="$(consumer_since "$ss_when")"
+  if [ -n "$ss_ran" ]; then
+    printf 'session %s started against this work item after it was staged at %s — the command has already been run, and running it again is the duplicate-session defect' "$ss_ran" "$ss_when"
+    return 0
+  fi
+  return 1
+}
+
 # Bootstrap: iteration 1 has no dying session to stage its command, so the
 # supervisor stages it. Every later iteration's command is written by the
 # previous session's rollover step 6.
+#
+# The two cases are not one: a genuinely unconsumed command IS inherited (a
+# supervisor restarted after a kill must not discard its predecessor's staging),
+# and everything else is parked and re-staged. Never silent either way — a
+# discarded command and an inherited one look identical in a log that says
+# nothing, and that is exactly how the original defect stayed invisible.
+if [ -s "$NEXTF" ]; then
+  if stale_why="$(staged_stale_reason)"; then
+    say "discarding the staged command: $stale_why"
+    mv -f "$NEXTF" "$NEXTSTALEF" 2>/dev/null || rm -f "$NEXTF"
+    rm -f "$NEXTIDF"
+    say "the discarded command is kept at ${NEXTSTALEF#"$ROOT/"}"
+  else
+    say "inheriting the staged command: session #$(read_seq) was staged by $(jq -r '.runtime + "-" + .session_id' "$NEXTIDF" 2>/dev/null) at $(jq -r '.written_at' "$NEXTIDF" 2>/dev/null) and has not been run"
+  fi
+fi
 if [ ! -s "$NEXTF" ]; then
   say "staging the first session"
   "$ROOT/scripts/launch-next-session.sh" "$PROJECT" \
@@ -560,7 +673,7 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
   # iteration is a runaway relaunch waiting to happen (failure mode 5).
   # $SENTF is removed for one release only — nothing reads it after R2.17, but
   # an in-flight session may still write one and it must not accumulate.
-  rm -f "$NEXTF" "$SENTF"
+  rm -f "$NEXTF" "$NEXTIDF" "$SENTF"
 
   # R2.17 §7 — the flush post-condition, taken here rather than inferred later
   # from mtimes. R2.15 proposed an mtime guard inside the rollover and it fails

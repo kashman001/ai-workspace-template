@@ -474,11 +474,17 @@ assert_contains "U3b: says so"                   "$out" "nothing staged"
 # rewind is refused and the explicit seq-sync remedy named.
 printf '12\n' > "$TMP/work/testproj/.session-seq"
 printf 'stale\n' > "$TMP/work/testproj/.next-command"
+# The identity sidecar --emit writes beside the command must go with it (R2.20).
+# A sidecar that outlives its command is not inert: it pairs with whatever is
+# hand-staged next, and the supervisor's checksum leg is then the only thing
+# standing between that mismatched pair and an inherited command.
+printf '{"project":"testproj"}\n' > "$TMP/work/testproj/.next-command.json"
 out=$(run_lns "$LNS" testproj --unstage 2>&1); rc=$?
 assert_eq       "U4a: files removed -> exit 0"    "$rc" "0"
 assert_contains "U4b: rewind refused"             "$out" "refusing to rewind"
 assert_eq "U4c: counter untouched" "$(cat "$TMP/work/testproj/.session-seq")" "12"
 assert_eq "U4d: staged command gone" "$(test -f "$TMP/work/testproj/.next-command" && echo present || echo gone)" "gone"
+assert_eq "U4e: identity sidecar gone with it" "$(test -f "$TMP/work/testproj/.next-command.json" && echo present || echo gone)" "gone"
 
 # Contradictory modes are refused at parse time.
 for bad in "--clear" "--emit /tmp/x" "--bg"; do
