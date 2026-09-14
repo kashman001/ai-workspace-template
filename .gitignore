@@ -39,6 +39,11 @@ work/*/.session-seq
 work/*/.session-seq.provenance.json
 work/*/.rollover-complete
 work/*/.next-command
+# D18 — the staged command's identity sidecar, and a staged command the
+# supervisor's bootstrap rejected as already-run. Both are machine-local
+# coordination state with exactly the lifetime of .next-command above.
+work/*/.next-command.json
+work/*/.next-command.stale
 work/*/.session-loop
 # The supervisor's own log. Load-bearing for stall detection, not just tidiness:
 # it is appended on every iteration by construction, so a tracked copy would make
