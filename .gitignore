@@ -37,6 +37,7 @@ work/*/.agent-dispatch/
 work/*/.rollover-options
 work/*/.session-seq
 work/*/.session-seq.provenance.json
+work/*/.session-seq.bump.json
 work/*/.rollover-complete
 work/*/.next-command
 work/*/.session-loop
@@ -45,6 +46,8 @@ work/*/.session-loop
 # "did this session commit something outside the bookkeeping set?" true forever
 # and the guard could never fire (scripts/session-loop.sh, session_made_progress).
 work/*/.session-loop.log
+work/*/.session-loop.alarm-stop
+work/*/.session-loop.budget
 work/*/.hands-off
 work/*/.interactive
 

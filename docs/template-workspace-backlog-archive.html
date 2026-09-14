@@ -1616,6 +1616,25 @@
       <code>operational-knowledge.md</code>. Probed live and merged to main <code>5fd5480</code> (session 4, 2026-09-10).</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L46</span> Session-loop round-2 runtime files not gitignored
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">.gitignore · scripts/session-loop.sh · scripts/launch-next-session.sh</span></h3>
+    <p><span class="k">Evidence</span> — after a supervised rollover, <code>git status</code> on a clean main showed
+      <code>work/&lt;item&gt;/.session-seq.bump.json</code> and <code>work/&lt;item&gt;/.session-loop.budget</code> as
+      untracked. Commit <code>a91c86c</code> (session-loop round 2, origin PR #47) added three writers —
+      <code>.session-seq.bump.json</code>, <code>.session-loop.budget</code>, <code>.session-loop.alarm-stop</code> —
+      without touching <code>.gitignore</code>. <code>test-session-loop.sh</code> models a repo whose ignore list
+      <em>does</em> carry all three, so the suite passed against a gitignore the template never shipped.</p>
+    <p><span class="k">Impact</span> — every supervised chain leaves a dirty tree; a session doing
+      <code>git add -A</code> commits coordination files that change on every iteration, which (per the suite's own
+      comment) makes the loop's <code>session_made_progress</code> guard see progress in every session and never fire.</p>
+    <p><span class="k">Fix</span> — add the three patterns to <code>.gitignore</code> beside the existing
+      session-seq / session-loop entries.</p>
+    <p><span class="k">Fixed</span> — 2026-09-14 (<code>work/template-improvement-review/</code> session 5): the three
+      <code>work/*/</code> patterns added to <code>.gitignore</code>; the stray files disappeared from
+      <code>git status</code> on this instance without further action.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">
