@@ -112,6 +112,10 @@ exchanges so STOP can't pass unnoticed.
 
 4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
    directly below the PURPOSE comment, above the single block prep left behind.
+   If your edit anchors on the previous block's `# Session Handoff` header line,
+   your replacement text must END with that same header line — dropping it
+   silently merges the old block into yours (observed downstream twice; the
+   block-count grep under "Verification" catches it).
    **Verify the comment actually closes where you think it does** — a prior
    rollover can leave a block jammed *inside* the PURPOSE comment, so the first
    `-->` in the file sits *below* the newest block and a naive "insert after the
