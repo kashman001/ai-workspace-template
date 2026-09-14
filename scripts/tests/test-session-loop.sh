@@ -1400,6 +1400,181 @@ assert_contains "N4a: discarded on the checksum"      "$out" "does not match the
 assert_contains "N4b: and a fresh session was staged" "$out" "staging the first session"
 reset
 
+# ---------------------------------------------------------------------------
+# W-series: the bootstrap run from inside a git WORKTREE. The N-series above is
+# single-checkout only — not one of its cases resolves ROOT from a worktree, and
+# the failure class is not hypothetical here: session-loop.sh:14-19 exists
+# because a bare relative work/<proj>/.rollover-complete once landed in an
+# isolated child's own worktree while the supervisor read the main checkout,
+# found nothing, and exited reporting a clean shutdown.
+#
+# What CANNOT break, and therefore has no case here: the command and its sidecar
+# cannot be separated by a worktree. The sidecar path is built by concatenation
+# from the command path (launch-next-session.sh, emit_id="$EMIT.json"), so it is
+# the same directory or neither file exists. There is no code path to test.
+#
+# The real question is WHICH work/<proj>/ the pair lives in, and the answer is
+# the resolver: session-loop.sh:21-31 and launch-next-session.sh:60-70 are the
+# same implementation byte for byte, and both anchor on SCRIPT_ROOT — the
+# script's own location — then go through `git rev-parse --git-common-dir`. So
+# even the WORKTREE'S OWN COPY of the supervisor resolves ROOT to the main
+# checkout. That is what these cases invoke: not the main script with a worktree
+# cwd (which the resolver never reads), but $WT/scripts/session-loop.sh, cwd
+# inside $WT. If the resolver regresses to SCRIPT_ROOT, W1/W3/W4 go red.
+#
+# L7 already probes a worktree cwd, but through the MAIN checkout's script,
+# where SCRIPT_ROOT is the main checkout whatever the resolver does — so it can
+# only catch a path built relative to cwd, never a bad resolution. These cases
+# are the other half: the resolver is the only thing standing between the
+# supervisor and the wrong work/<proj>/, and iteration 1 is the only iteration
+# that reads a pair it did not write.
+#
+# Deliberately named to parallel the W-series in test-launch-next-session.sh,
+# which covers the third worktree guard — the sync-the-main-checkout refusals at
+# launch-next-session.sh:233-252 — from the LAUNCHER's side. That one is already
+# tested there (its W1/W2/W8); nothing here duplicates it.
+#
+# Mutation: make resolve_workspace_root print "$SCRIPT_ROOT" unconditionally
+#   -> W1 (reads a worktree with no staged pair), W3 (registry invisible, the
+#      spent command is inherited), W4 (the worktree's stale pair IS picked up).
+# Mutation: relax the --emit absolute-path guard to accept a relative path
+#   -> W2 red.
+# ---------------------------------------------------------------------------
+# wt3, not wt: $TMP/wt is the bare directory L4's `stranded` stub writes into,
+# and $TMP/wt2 is L7's worktree. Reusing either name makes `worktree add` die
+# "already exists" and every case below fails on a missing script — a fixture
+# fault wearing a product fault's clothes, which is why the checkout is asserted
+# as a precondition rather than assumed.
+WT="$TMP/wt3"
+git -C "$MAIN" worktree add -q --detach "$WT" HEAD
+WTW="$WT/work/testproj"
+
+# The supervisor as a worktree sees it: its own checked-out copy, cwd inside the
+# worktree, same env hygiene every N case needs.
+run_bootstrap_wt() {   # -> $out, $rc
+  ( cd "$WT" && PATH="$TMP/bin:$PATH" env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
+      -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG -u OPENCODE_SESSION_ID \
+      "$WT/scripts/session-loop.sh" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+      >"$TMP/rout" 2>&1 </dev/null ); rc=$?
+  out="$(cat "$TMP/rout")"
+}
+# Runtime state the SUPERVISOR itself writes, as opposed to anything the stub
+# does: if ROOT ever resolved to the worktree, these are the files that would
+# appear there.
+wt_state() { ls -A "$WTW" 2>/dev/null | grep -c '^\.'; }
+
+echo "W1: the supervisor's own worktree copy still roots at the MAIN checkout"
+# N2's scenario — an unrun staged command is inherited — run through the
+# worktree. The pair exists only in the main checkout (.next-command is
+# gitignored, so the worktree has no copy of it and never could).
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+stage_next "$TMP/stub.sh"
+assert_eq       "W1a: precondition — the worktree has its own copy of the supervisor" \
+                "$([ -x "$WT/scripts/session-loop.sh" ] && echo present || echo missing)" "present"
+assert_eq       "W1b: precondition — but no staged pair (.next-command is gitignored)" \
+                "$([ -e "$WTW/.next-command" ] && echo present || echo absent)" "absent"
+run_bootstrap_wt
+assert_eq       "W1c: exit 0, not a halt"                    "$rc" "0"
+assert_contains "W1d: it found the MAIN checkout's staged command" "$out" "inheriting the staged command"
+assert_contains "W1e: and ran the session it names"          "$out" "starting session #8"
+assert_eq       "W1f: the MAIN counter advanced 8 -> 9"      "$(cat "$SEQF")" "9"
+assert_eq       "W1g: the supervisor's bookkeeping landed in the main checkout" \
+                "$([ -f "$BUDGET" ] && echo main || echo missing)" "main"
+assert_eq       "W1h: and NOTHING was written into the worktree's work dir" "$(wt_state)" "0"
+
+echo "W2: --emit refuses a relative path — from inside a worktree, where it matters"
+# The layer-1 invariant at launch-next-session.sh:129-133, pinned so it cannot be
+# quietly relaxed. Parse time, above every side effect: a relative path would be
+# resolved against the CALLER's cwd, which here is the worktree, and the pair
+# would land where no supervisor will ever look for it.
+( cd "$WT" && "$WT/scripts/launch-next-session.sh" testproj \
+    --emit work/testproj/.next-command ) >"$TMP/w2" 2>&1; rc=$?
+w2="$(cat "$TMP/w2")"
+assert_eq       "W2a: exit 3 (a startup refusal)"        "$rc" "3"
+assert_contains "W2b: refused for being relative"        "$w2" "requires an absolute path"
+assert_contains "W2c: and the reason names this hazard"  "$w2" "caller's own worktree"
+assert_eq       "W2d: no pair was written into the worktree" \
+                "$([ -e "$WTW/.next-command" ] && echo written || echo none)" "none"
+
+echo "W3: the consumption check reads the MAIN registry, not a worktree-local one"
+# N1's scenario — a command already spent by a session that ran after it was
+# staged — run through the worktree. The session registry lives at
+# $ROOT/.context-budget/sessions and is untracked, so the worktree has no copy:
+# a supervisor that rooted itself in the worktree would see an empty registry,
+# find nothing postdating the staging, and re-run the spent command. That is the
+# session-18 duplicate-session defect, reached by a different road.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+stage_next "$TMP/stub.sh" "2000-01-01T00:00:00Z"
+W3REC="$MAIN/.context-budget/sessions/stub-wt-already-ran.json"
+# "claude" rather than the suite-wide "stub" convention, for N1's reason: this
+# case drives the REAL launcher at the re-stage, and "stub" is not in its
+# valid-runtime enumeration.
+printf '{"runtime":"claude","session_id":"wt-already-ran","project":"testproj","registered_at":"2000-01-02T00:00:00Z"}\n' > "$W3REC"
+assert_eq       "W3a: precondition — the registry is invisible from the worktree" \
+                "$([ -e "$WT/.context-budget/sessions" ] && echo visible || echo invisible)" "invisible"
+run_bootstrap_wt
+assert_eq       "W3b: exit 0, not a halt"                   "$rc" "0"
+assert_contains "W3c: the spent command was discarded"      "$out" "discarding the staged command"
+assert_contains "W3d: named as already run"                 "$out" "already been run"
+assert_contains "W3e: and the session that ran is the NEW one" "$out" "starting session #9"
+case "$out" in *"starting session #8"*)
+    bad "W3f: session #8 ran a second time — the duplicate-session defect, via a worktree" ;;
+  *) ok "W3f: no session number ran twice" ;; esac
+# The bootstrap's own writes — the parked evidence and the re-staged pair — are
+# where --emit @auto put them, which is the main checkout. This is the end-to-end
+# proof that @auto resolves through the resolver and not through cwd.
+assert_eq       "W3g: the discarded command was parked in the MAIN checkout" \
+                "$([ -s "$NEXT.stale" ] && echo main || echo missing)" "main"
+# The re-staged pair itself is NOT observable after the chain: the supervisor
+# consumes $NEXTF and $NEXTIDF before the run (session-loop.sh:676), and the stub
+# that follows stages mid-chain, which by design writes no sidecar. So the
+# bootstrap's --emit @auto is proved by its effects on the MAIN checkout instead
+# — the counter it bumped, and the session that ran off the command it wrote.
+assert_eq       "W3h: the MAIN counter advanced 8 -> 10 (bootstrap + the session)" \
+                "$(cat "$SEQF")" "10"
+assert_eq       "W3i: the worktree's work dir is still untouched" "$(wt_state)" "0"
+rm -f "$W3REC"
+
+echo "W4: a stale pair sitting in a WORKTREE is never picked up by the main supervisor"
+# The negative, and the one case where the pair in the worktree is deliberately
+# perfect: fresh timestamp, matching checksum, sanctioned writer — everything the
+# freshness test looks for. It is ignored not because it fails a check but
+# because the supervisor never looks in that directory at all.
+reset; rm -f "$NEXT" "$NEXT.json"   # the main checkout has nothing staged
+export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+mkdir -p "$WTW"
+printf '%s\n' "$TMP/stub.sh --from-the-worktree" > "$WTW/.next-command"
+jq -n --arg project testproj \
+      --argjson seq 7 --argjson successor 8 \
+      --arg runtime claude --arg session_id "sid-worktree" \
+      --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --arg command_cksum "$(cksum < "$WTW/.next-command")" \
+      '{project:$project, seq:$seq, successor:$successor, runtime:$runtime,
+        session_id:$session_id, written_at:$written_at,
+        command_cksum:$command_cksum, written_by:"launch-next-session.sh"}' \
+  > "$WTW/.next-command.json"
+run_bootstrap_wt
+assert_eq       "W4a: exit 0, not a halt"                   "$rc" "0"
+assert_contains "W4b: it staged a first session of its own"  "$out" "staging the first session"
+case "$out" in *"inheriting the staged command"*)
+    bad "W4c: it inherited a command from the worktree — the main checkout staged nothing" ;;
+  *) ok "W4c: it inherited nothing" ;; esac
+case "$out" in *--from-the-worktree*)
+    bad "W4d: the worktree's command was executed" ;;
+  *) ok "W4d: the worktree's command was never executed" ;; esac
+assert_eq       "W4e: the MAIN counter advanced 8 -> 10 (bootstrap + the session)" \
+                "$(cat "$SEQF")" "10"
+assert_eq       "W4f: the worktree's pair was neither consumed nor parked" \
+                "$([ -s "$WTW/.next-command" ] && [ ! -e "$WTW/.next-command.stale" ] && echo intact || echo touched)" "intact"
+rm -f "$WTW/.next-command" "$WTW/.next-command.json"
+
+# Teardown inside the case, not at EXIT: the suite rm -rf's $TMP, and a worktree
+# registered against a directory that no longer exists leaves metadata behind in
+# $MAIN/.git/worktrees for every later git call in this suite to trip over.
+git -C "$MAIN" worktree remove --force "$WT" >/dev/null 2>&1 || rm -rf "$WT"
+git -C "$MAIN" worktree prune >/dev/null 2>&1 || true
+reset
+
 echo "F1: a chain starts from a fresh work item — the supervisor stages session 1 itself"
 # The bootstrap, end to end, and the only case in this suite that exercises it:
 # reset() pre-stages .next-command for every other case, so the real launcher
