@@ -37,11 +37,13 @@ ROOT="$(resolve_workspace_root)"
 [ -f "$ROOT/context-budget.env" ] && . "$ROOT/context-budget.env"
 
 PROJECT=""; RUNTIME=""; MAX_SESSIONS=""; MIN_LIFETIME=""; STALL_LIMIT=""
-RESET_CAP=0
+RESET_CAP=0; REOPEN=0; RELAUNCH_OVERRIDE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --reset-cap) RESET_CAP=1; shift ;;
+    --reopen) REOPEN=1; shift ;;
+    --relaunch-override) RELAUNCH_OVERRIDE=1; shift ;;
     --max-sessions) MAX_SESSIONS="$2"; shift 2 ;;
     --min-lifetime) MIN_LIFETIME="$2"; shift 2 ;;
     --stall-limit) STALL_LIMIT="$2"; shift 2 ;;
@@ -49,7 +51,7 @@ while [ $# -gt 0 ]; do
     *) [ -z "$PROJECT" ] && PROJECT="$1" || { echo "unexpected argument: $1" >&2; exit 3; }; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap]" >&2; exit 3; }
+[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap] [--reopen] [--relaunch-override]" >&2; exit 3; }
 
 S="$ROOT/work/$PROJECT"
 [ -d "$S" ] || { echo "error: no such work directory: work/$PROJECT" >&2; exit 3; }
@@ -98,6 +100,13 @@ LOGF="$S/.session-loop.log"; ALARM_STOPF="$S/.session-loop.alarm-stop"
 # of ten and it never once fired. The count therefore has to outlive the
 # supervisor, which means a file next to the work item.
 BUDGETF="$S/.session-loop.budget"
+# P6 (scenario table B2) — the record that this chain was DELIBERATELY ended.
+# Machine-local by decision (spec section 5): every work/*/ dotfile is gitignored
+# and .gitignore:71-102 is load-bearing for the lineage gate's dirty-evidence
+# leg, so widening this to a tracked file is its own change, not a drive-by.
+# What it buys is exactly B2 — this machine's supervisor will not restart a
+# chain this machine's supervisor ended.
+CLOSEDF="$S/.chain-closed"
 
 say()  { printf '[session-loop] %s\n' "$*" >&2; printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$LOGF"; }
 
@@ -141,6 +150,25 @@ child_probe() {
   [ -n "$_art" ] && [ -f "$_art" ] || return 1
   _m="$(mtime_of "$_art")"; [ -n "$_m" ] || return 1
   printf '%s %s\n' "$_pid" "$(( $(date +%s) - _m ))"
+}
+
+# P4a (session-chain-observability, spec.md 4.1) — "is the child past STOP?",
+# asked about the child BY NAME. rc 0 = yes; rc 1 = no, or unknowable.
+#
+# The pin is what makes this askable at all: an unpinned `check` here would
+# measure the SUPERVISOR's environment and answer about a session nobody asked
+# about (context-budget.sh, "Asking about another session"). Unknowable degrades
+# to no, so an unmeasurable child leaves the alarm saying exactly what it says
+# today — this branch adds a sharper page, never a new reason to be noisy.
+child_past_stop() {
+  _psrec="$S/.active-session"; [ -f "$_psrec" ] || return 1
+  _prt="$(jq -r '.runtime // empty' "$_psrec" 2>/dev/null)"
+  _psid="$(jq -r '.session_id // empty' "$_psrec" 2>/dev/null)"
+  [ -n "$_prt" ] && [ -n "$_psid" ] || return 1
+  _prc=0
+  "$ROOT/scripts/context-budget.sh" check --runtime "$_prt" \
+    --session-id "$_psid" --quiet >/dev/null 2>&1 || _prc=$?
+  [ "$_prc" -eq 2 ]
 }
 
 # R2.21 §1 — the two halves of "was this a vendor logout, or a human?". Both
@@ -306,6 +334,72 @@ if [ "$RESET_CAP" -eq 1 ]; then
   rm -f "$BUDGETF"
   say "chain budget reset (${rc_used:-?} of $MAX_SESSIONS had been used since ${rc_open:-?}) — the next start opens a fresh budget"
   exit 0
+fi
+
+# G1-a (scenario table B3) — a work item's own off switch stops a supervisor.
+#
+# B3: this very work item commits ROLLOVER_RELAUNCH=off and a chain started
+# against it anyway, because the knob was only ever read at the rollover's
+# CLOSING step — the dying session asked it whether to spawn a successor, and
+# nobody asked it whether to start one. The user's Q1 decision widens the knob
+# from "do not spawn a successor behind my back" to "do not run me unattended at
+# all"; this is that second reading, at the only place that can honour it.
+#
+# No new state: the knob is already resolved above from the item's committed
+# context-budget.env, and because it is committed it travels to another checkout
+# — which .chain-closed, a machine-local dotfile, does not.
+#
+# ABOVE the P6 block, not below it, and that is P6's own placement argument
+# taken one step further: --reopen DELETES .chain-closed before it returns, so a
+# G1-a refusal underneath would refuse a start that had already destroyed the
+# evidence P6 exists to keep. A refused start leaves the work item
+# byte-identical, and that has to include the marker. Test: GA4.
+if [ "${ROLLOVER_RELAUNCH:-}" = "off" ] && [ "$RELAUNCH_OVERRIDE" -eq 0 ]; then
+  notify "refusing to start: work/$PROJECT/context-budget.env commits ROLLOVER_RELAUNCH=off, which this work item uses to say it must not be run unattended. Nothing has been started, staged or spent. If you really do want a supervised chain against it, say so explicitly: scripts/session-loop.sh $PROJECT --relaunch-override"
+  exit 3
+fi
+[ "${ROLLOVER_RELAUNCH:-}" = "off" ] \
+  && say "starting despite ROLLOVER_RELAUNCH=off in work/$PROJECT/context-budget.env — --relaunch-override was passed"
+
+# P6 (scenario table B2) — a chain that was deliberately ended stays ended.
+#
+# B2 is the supervisor's half of this work item's blind spot: a session can end a
+# chain on purpose, and nothing that outlives it says so, so the next supervisor
+# start silently reopens finished work. Three rounds of prose in
+# skills/session-rollover/SKILL.md failed on exactly this, which is why the
+# countermeasure is a file rather than a paragraph.
+#
+# Placed HERE, above the lock and above budget_read, rather than at the bootstrap
+# where the design first put it, for two reasons measured while writing K2:
+#   (a) a refusal that has already acquired .session-loop or written a budget is
+#       not free — the operator pays a session number for asking — and the whole
+#       point is that a refused start leaves the work item byte-identical; and
+#   (b) below budget_read, a closed chain whose budget is also spent would be
+#       reported as a CAP problem and the operator told to run --reset-cap, which
+#       does not unblock it. The first thing said has to be the true thing.
+# The D16 constraint is untouched either way: this is a plain [ -f ] test and it
+# is nowhere near the bootstrap's launcher call, which must stay a DIRECT
+# invocation (test-session-loop.sh F1, test-emit-mode.sh E10).
+if [ -f "$CLOSEDF" ]; then
+  cc_seq="$(jq -r '.seq // empty' "$CLOSEDF" 2>/dev/null)"
+  cc_at="$(jq -r '.closed_at // empty' "$CLOSEDF" 2>/dev/null)"
+  cc_led="$(jq -r '.top_ledger_seq // empty' "$CLOSEDF" 2>/dev/null)"
+  if [ "$REOPEN" -eq 1 ]; then
+    # H9 must stay POSSIBLE — Round 2 of work/session-loop-hardening was exactly
+    # the act of reopening a closed item, so a gate with no override would have
+    # made that round unrunnable. It is an explicit human act and it is logged,
+    # never silent: the marker is evidence, and destroying evidence quietly is
+    # the same defect class one level down.
+    rm -f "$CLOSEDF"
+    say "reopening work/$PROJECT — session #${cc_seq:-?} had ended this chain at ${cc_at:-?}; --reopen cleared work/$PROJECT/.chain-closed"
+  else
+    if [ -z "$cc_led" ]; then cc_note="it left no ledger block"
+    elif [ "$cc_led" = "$cc_seq" ]; then cc_note="it wrote its ledger block"
+    else cc_note="the top ledger block is session $cc_led, not #$cc_seq"
+    fi
+    notify "refusing to start: session #${cc_seq:-?} deliberately ended this chain at ${cc_at:-?} ($cc_note), recorded in work/$PROJECT/.chain-closed. Nothing has been started, staged or spent. If this work item really does want another session, say so explicitly: scripts/session-loop.sh $PROJECT --reopen"
+    exit 3
+  fi
 fi
 
 # One supervisor per work item. Two chains driving the same counter would each
@@ -508,12 +602,45 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
     # The loop-top stop-flag check is the A2 respawn guard (see reap_alarm);
     # the post-sleep check only spares one spurious notify when the reap lands
     # exactly between a completed sleep and the notify.
-    ( _int="$ALARM"
+    ( _int="$ALARM"; _stagedticks=0
       while :; do
         [ -e "$ALARM_STOPF" ] && exit 0
         sleep "$_int" || exit 0
         [ -e "$ALARM_STOPF" ] && exit 0
         _probe="$(child_probe || true)"
+        # P4a — the one question asked per tick, and only of an identified
+        # child: three legs, all read by the supervisor itself. The budget leg
+        # is load-bearing. Without it the predicate is "alive and nothing
+        # staged", which is true of every healthy session for its whole life,
+        # because $NEXTF is consumed BEFORE the run. Cheapest test first.
+        _blocked=""
+        [ -n "$_probe" ] && [ ! -s "$NEXTF" ] && child_past_stop && _blocked=1
+        _blockmsg="session #$seq_before is past its context budget with no successor staged — it may believe its rollover is complete. Nothing is staged at $NEXTF; this chain is blocked until it stages one or quits."
+        # P4b — the mirror leg, and the mirror is exact: P4a asks about an
+        # EMPTY $NEXTF, this asks about a non-empty one, so the two can never
+        # both be set. $NEXTF is consumed before the run, so its presence here
+        # proves this child staged. Staging is the last thing a session does
+        # and the turn-end hook terminates it, so a child still alive after it
+        # staged means the self-kill never fired.
+        #
+        # The counter is what makes that "still", and it is the false-page
+        # guard rather than an optimisation: every healthy H2 rollover has a
+        # real window between --emit writing $NEXTF and SIGTERM landing, so one
+        # tick catches the handshake mid-flight. Two consecutive ticks mean it
+        # persisted. It counts ticks, not time — the timing of the alarm is
+        # untouched, exactly as in P4a. Consequence worth knowing: the silent
+        # branch doubles $_int after each page, so at the 900s default the
+        # second tick lands ~45 min in there and ~30 min in the writing branch,
+        # which resets. Both are trivial against the failure this catches — a
+        # stuck self-kill otherwise runs the chain to its cap with no report.
+        if [ -n "$_probe" ] && [ -s "$NEXTF" ]; then
+          _stagedticks=$(( _stagedticks + 1 ))
+        else
+          _stagedticks=0
+        fi
+        _staged=""
+        [ "$_stagedticks" -ge 2 ] && _staged=1
+        _stagedmsg="session #$seq_before staged a successor and is still running — the turn-end self-kill did not fire. Check .session-seq.bump.json's session_id against the live session (the D17 shape), or the runtime's turn-end hook."
         if [ -z "$_probe" ]; then
           # Unidentified: every pre-R2.18 chain, and any session that hangs
           # before it registers. Today's message, today's behaviour.
@@ -523,7 +650,17 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
           # these handoffs cite survives, but no bell and no hook: this is the
           # false page R2.18 exists to stop.
           _int="$ALARM"
-          say "session #$seq_before is still running (transcript written ${_probe#* }s ago)"
+          # Writing is not progress when the handshake is already blocked: a
+          # session busily writing its handoff whose successor was never staged
+          # is precisely B1, so this one case is a page rather than a log line.
+          # Timing is untouched — the branch still ticks at $ALARM.
+          if [ -n "$_blocked" ]; then
+            notify "$_blockmsg"
+          elif [ -n "$_staged" ]; then
+            notify "$_stagedmsg"
+          else
+            say "session #$seq_before is still running (transcript written ${_probe#* }s ago)"
+          fi
         elif [ "$KILL_AFTER" -gt 0 ] && [ "${_probe#* }" -ge "$KILL_AFTER" ]; then
           notify "session #$seq_before has written nothing for ${_probe#* }s (limit ${KILL_AFTER}s) — ending it"
           # No backgrounding, no job control, and so no SIGTTIN: the D5b tty
@@ -533,7 +670,16 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
           kill "${_probe% *}" 2>/dev/null
           exit 0
         else
-          notify "session #$seq_before has written nothing for ${_probe#* }s"
+          # Same backoff, same interval; only the words change. "Written nothing
+          # for Ns" is true here too, but it points at the wrong thing — the
+          # chain is not slow, it is stranded.
+          if [ -n "$_blocked" ]; then
+            notify "$_blockmsg"
+          elif [ -n "$_staged" ]; then
+            notify "$_stagedmsg"
+          else
+            notify "session #$seq_before has written nothing for ${_probe#* }s"
+          fi
           [ "$_int" -lt "$ALARM_MAX" ] && _int=$(( _int * 2 ))
           [ "$_int" -gt "$ALARM_MAX" ] && _int="$ALARM_MAX"
         fi
@@ -607,6 +753,27 @@ while [ "$n" -lt "$MAX_SESSIONS" ]; do
       else
         notify "chain ended: session #$seq_before quit WITHOUT a rollover or checkpoint — no ledger block for it (top block is session $top_n)"
       fi
+      # P6 — the marker, written at EXACTLY ONE SITE, and this is it.
+      #
+      # Its position is the single most important line in P6: it sits BELOW the
+      # vendor-logout discriminator above, which halts before reaching here. Hoist
+      # it above that block and a logged-out chain is recorded as deliberately
+      # closed, so its documented recovery — re-running session-loop.sh <proj> —
+      # is refused by the gate near the top of this script, and a credential
+      # expiry becomes an ended work item. test-session-loop.sh K4 is that
+      # tripwire; T22 owns the classification, K4 owns the ordering.
+      #
+      # One writer is also the whole argument that the silent rows stay silent:
+      # the cap exits through cap_stop, Ctrl-C and the pause exit at the
+      # interactive read, and an unsupervised rollover never runs this script at
+      # all — none of them reach this line, so none of them can end a work item
+      # (K5, K6). $top_n is reused rather than recomputed so the refusal can say
+      # whether the closing session left a ledger block behind.
+      jq -n --arg seq "$seq_before" --arg closed_at "$(date -u +%FT%TZ)" \
+            --arg top_ledger_seq "$top_n" --arg written_by "session-loop.sh" \
+            '{seq:$seq, closed_at:$closed_at, top_ledger_seq:$top_ledger_seq, written_by:$written_by}' \
+            > "$CLOSEDF" 2>/dev/null \
+        || say "warning: could not record the chain close at $CLOSEDF"
       exit 0
     fi
     # The worktree clause is gone with the sentinel: the bump record is written

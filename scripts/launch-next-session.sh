@@ -328,6 +328,19 @@ fi
 [ -f "$WORKSPACE_ROOT/work/$PROJECT/next-session.md" ] \
   || die "work/$PROJECT/next-session.md not found — run session-rollover first"
 
+# P6 (scenario table B2) — refuse to stage a successor into a work item whose
+# chain was deliberately ended. The supervisor has its own copy of this gate, but
+# it cannot be the only one: an UNSUPERVISED rollover never runs session-loop.sh,
+# so without this read a closed item is reopened by the next session that happens
+# to roll over into it. Mirrors the freshness guard below — a plain file test,
+# machine-local, escapable only by the explicit human act that reopens the chain.
+CLOSEDF="$WORKSPACE_ROOT/work/$PROJECT/.chain-closed"
+if [ -f "$CLOSEDF" ]; then
+  cc_seq="$(jq -r '.seq // empty' "$CLOSEDF" 2>/dev/null)"
+  cc_at="$(jq -r '.closed_at // empty' "$CLOSEDF" 2>/dev/null)"
+  die "chain closed: session #${cc_seq:-?} deliberately ended the chain for work/$PROJECT at ${cc_at:-?} (work/$PROJECT/.chain-closed). Nothing has been staged. Reopen it explicitly with: scripts/session-loop.sh $PROJECT --reopen"
+fi
+
 # Launcher freshness guard (backlog L33): a successor launched from a stale
 # next-session.md resumes an outdated plan (three strikes logged). Refuse to
 # launch when any local or remote ref carries a newer commit touching the
@@ -634,9 +647,59 @@ fi
 # Here, not at the bump: the counter bump is the first write in this script and
 # everything that can say "no" says it above (TE6 R3), so this refusal costs no
 # side effects. --dry-run writes no bump record and is therefore exempt.
+# The ONE caller of --emit that is not a session, and the one the refusal below
+# must not touch: the supervisor's own bootstrap. Iteration 1 has no dying
+# session to stage its command, so session-loop.sh stages it itself (its
+# `--emit "$NEXTF" || halt` call) — and a shell script has no session record and
+# never will. Both of the refusal's conditions are true there by construction:
+# the supervisor writes work/<proj>/.session-loop BEFORE it stages (deliberately
+# — context-budget.sh:850, an agent must never be able to race a mid-start
+# marker), so `supervised` says yes at the moment staging runs. Unexempted, the
+# refusal made every chain that starts without a pre-staged .next-command
+# unstartable: a fresh work item, and any chain resumed after --unstage.
+#
+# Exempting it gives up nothing the refusal was protecting, because nothing ever
+# reads the bootstrap's bump record. The supervisor reads it only at the END of
+# an iteration, and its verdict gate requires .seq == the session that just ran;
+# the bootstrap's record is written one number earlier and could never satisfy
+# that. By then the session has run its own rollover and overwritten the file
+# with a record that does carry identity. The self-kill hook keys on the same
+# thing (hooks/context-budget-hook-lib.sh:117-122, session_id == mine) and
+# additionally needs a staged .next-command, which the supervisor removes before
+# each run — so during session 1 there is nothing for it to match either way.
+#
+# The test is the STRICT parent, never an ancestor: session-loop.sh runs its
+# child in the FOREGROUND, so the supervisor pid is an ancestor of every tool
+# shell inside the session too, and an ancestor test would exempt exactly the
+# caller this refusal exists for. `--emit` is not the discriminator for the same
+# reason — under a supervisor a rollover is ALWAYS --emit (a non-emit launch is
+# refused far above, at the D6 out-of-band guard), so exempting on the flag
+# would void the refusal entirely.
+#
+# Consequence worth knowing before editing session-loop.sh: its bootstrap call
+# must stay a DIRECT call. Wrapping it in $(...) or a pipeline puts a subshell
+# between the two pids and the halt comes straight back —
+# test-session-loop.sh's F1 (a chain started from a fresh work item) is the
+# tripwire, and test-emit-mode.sh's E10 pins both legs.
+invoked_by_supervisor() {
+  local loopf pid
+  loopf="$WORKSPACE_ROOT/work/$PROJECT/.session-loop"
+  [ -f "$loopf" ] || return 1
+  pid="$(jq -r '.pid // empty' "$loopf" 2>/dev/null)"
+  [ -n "$pid" ] || return 1
+  [ "$pid" = "$PPID" ] || return 1
+  kill -0 "$pid" 2>/dev/null || return 1
+  return 0
+}
 if [ -z "$REC" ] && [ "$DRY" -eq 0 ] \
    && "$WORKSPACE_ROOT/scripts/context-budget.sh" supervised --project "$PROJECT" --quiet >/dev/null 2>&1; then
-  die "no session record for this session, and work/$PROJECT is under a live supervisor — the bump record would carry no identity, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
+  if invoked_by_supervisor; then
+    # Never silent: a skipped identity check that nobody can see reads exactly
+    # like a passed one (R2.17 §2).
+    note "bootstrap: this --emit came from the session-loop supervisor itself (pid $PPID), which is not a session and so has no record — the identity check does not apply, and the bump record it writes is superseded by the first session's own rollover"
+  else
+    die "no session record for this session, and work/$PROJECT is under a live supervisor — the bump record would carry no identity, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
+  fi
 fi
 
 # --emit x copilot-vscode (TE6 A5): `code chat` is detached BY NATURE — the

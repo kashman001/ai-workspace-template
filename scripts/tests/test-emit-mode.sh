@@ -181,5 +181,59 @@ assert_eq "E9a: mode=off + --emit exits 0 (staging is not refused)" "$rc" "0"
                || bad "E9c: no successor-pending record at $pend"
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
 
+echo "E10: the identity refusal (R2.17 s1) exempts the supervisor's own bootstrap"
+# The refusal below the runtime resolution asks a caller with no session record
+# to register before it may stage. Under a live supervisor there are exactly two
+# such callers, and only one of them can comply:
+#   a SESSION rolling over  -> can register, and must: the supervisor reads its
+#                              verdict off the bump record and the self-kill hook
+#                              fires only on a session_id match. Still refused.
+#   the SUPERVISOR ITSELF   -> session-loop.sh stages iteration 1 (no dying
+#                              session exists to do it), and a shell script has
+#                              no session record and never will. Exempt.
+# The two are told apart by the STRICT parent: session-loop.sh calls the launcher
+# directly, so $PPID is the pid in .session-loop; a session's rollover runs in a
+# tool shell whose parent is the runtime. Both legs are pinned here because the
+# exemption is what makes a fresh chain startable and the refusal is what keeps
+# an unidentifiable rollover out of a supervised chain.
+#
+# Mutation that makes E10a-d red: drop the invoked_by_supervisor clause from the
+# launcher's refusal -> every chain that starts without a pre-staged
+# .next-command halts at "could not stage the first session".
+# Mutation that makes E10e-g red: exempt on --emit alone (or on an ANCESTOR
+# rather than the strict parent) -> a session's rollover is exempt too and the
+# refusal protects nothing, since under a supervisor every launcher call is
+# --emit and the supervisor is an ancestor of every tool shell inside a session.
+LOOPF="$MAIN/work/testproj/.session-loop"
+mk_marker() { jq -n --argjson pid "$1" --arg project testproj --arg started_at now \
+  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"; }
+# Leg 1 — the bootstrap. NOT run inside $(...): a command substitution forks a
+# subshell and the launcher's parent becomes that subshell, which is precisely
+# the wrapping this exemption cannot see through. session-loop.sh's own call is
+# direct, and so is this one.
+mk_marker "$$"
+printf '7\n' > "$SEQF"; rm -f "$EMITF"
+run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >"$TMP/e10a" 2>&1; rc=$?
+assert_eq "E10a: the supervisor's own bootstrap is not refused" "$rc" "0"
+[ -s "$EMITF" ] && ok "E10b: the first session was staged" \
+                || bad "E10b: nothing staged at $EMITF"
+assert_eq "E10c: the counter advanced 7 -> 8" "$(cat "$SEQF")" "8"
+assert_contains "E10d: the exemption is visible, not silent" \
+  "$(cat "$TMP/e10a")" "not a session"
+# Leg 2 — a session rolling over with no record of its own. Same marker, same
+# absent record; only the caller differs, modelled by a live pid that is not
+# this process's parent.
+sleep 60 & other=$!
+mk_marker "$other"
+printf '7\n' > "$SEQF"; rm -f "$EMITF"
+run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >"$TMP/e10b" 2>&1; rc=$?
+assert_eq "E10e: a rollover with no session record is still refused" "$rc" "3"
+assert_contains "E10f: the refusal names the remedy" \
+  "$(cat "$TMP/e10b")" "register --project testproj"
+assert_eq "E10g: the refusal cost no counter bump" "$(cat "$SEQF")" "7"
+assert_eq "E10h: and staged nothing" "$([ -s "$EMITF" ] && echo staged || echo none)" "none"
+kill "$other" 2>/dev/null; wait "$other" 2>/dev/null
+rm -f "$LOOPF"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

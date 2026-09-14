@@ -45,6 +45,12 @@ work/*/.session-loop
 # "did this session commit something outside the bookkeeping set?" true forever
 # and the guard could never fire (scripts/session-loop.sh, session_made_progress).
 work/*/.session-loop.log
+# P6 (scenario table B2) — the record that a chain was deliberately ended.
+# Machine-local on purpose: it stops THIS machine's supervisor from restarting a
+# chain this machine's supervisor ended. Carrying closure across checkouts means
+# making a work/*/ dotfile tracked, and this block is load-bearing for the
+# lineage gate's dirty-evidence leg — its own change, not a widening here.
+work/*/.chain-closed
 work/*/.hands-off
 work/*/.interactive
 
