@@ -592,13 +592,30 @@ fi
 #              authorization hung on it once and misresolved attended
 #              primaries and forked auxes both (registration order is not
 #              identity).
+# The table is SIX runtimes, the same six context-budget.sh session_id_for()
+# registers under (:379-393), and they must stay in step: a runtime this table
+# omits has no positive identity here, and the refusal below keys on exactly
+# that. It carried four until D17's fix; design.md flagged the four-vs-six drift
+# in session 25 and R2.17 section 1 worked around it by widening own_record()
+# instead, which is what let the fallback grant authorization.
+#   opencode exports OPENCODE_SESSION_ID (context-budget.sh:346, :390) and
+#   registers under it, so its identity is as positive as claude's.
+#   gemini has no per-session identity at all: session_id_for() returns the
+#   constant "workspace" and register names the record gemini-workspace.json.
+#   That is workspace-scoped, not session-scoped -- two concurrent gemini
+#   sessions on one checkout are indistinguishable here, as they already are to
+#   the self-kill hook and the supervisor. Accepted deliberately: it is the
+#   strongest identity the runtime offers, and refusing it would instead end
+#   gemini's supervised chains outright.
 env_session_record() {
   local rt sid b
-  for rt in claude codex copilot-cli copilot-vscode; do
+  for rt in claude codex copilot-cli copilot-vscode gemini opencode; do
     case "$rt" in
       claude)      sid="${CLAUDE_CODE_SESSION_ID:-}" ;;
       codex)       sid="${CODEX_THREAD_ID:-}" ;;
       copilot-cli) sid="${COPILOT_AGENT_SESSION_ID:-}" ;;
+      gemini)      sid="workspace" ;;
+      opencode)    sid="${OPENCODE_SESSION_ID:-}" ;;
       copilot-vscode)
         sid=""; if [ -n "${VSCODE_TARGET_SESSION_LOG:-}" ]; then
           b="$(basename "$VSCODE_TARGET_SESSION_LOG")"; sid="${b%.jsonl}"
@@ -691,14 +708,14 @@ invoked_by_supervisor() {
   kill -0 "$pid" 2>/dev/null || return 1
   return 0
 }
-if [ -z "$REC" ] && [ "$DRY" -eq 0 ] \
+if [ -z "$OWN_ENV_REC" ] && [ "$DRY" -eq 0 ] \
    && "$WORKSPACE_ROOT/scripts/context-budget.sh" supervised --project "$PROJECT" --quiet >/dev/null 2>&1; then
   if invoked_by_supervisor; then
     # Never silent: a skipped identity check that nobody can see reads exactly
     # like a passed one (R2.17 §2).
     note "bootstrap: this --emit came from the session-loop supervisor itself (pid $PPID), which is not a session and so has no record — the identity check does not apply, and the bump record it writes is superseded by the first session's own rollover"
   else
-    die "no session record for this session, and work/$PROJECT is under a live supervisor — the bump record would carry no identity, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
+    die "this session cannot prove which session it is (no exported session id with a registry record under it), and work/$PROJECT is under a live supervisor — the bump record would carry an identity nothing can match, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
   fi
 fi
 
