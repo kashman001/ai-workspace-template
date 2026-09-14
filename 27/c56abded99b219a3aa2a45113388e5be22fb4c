@@ -1,0 +1,29 @@
+scripts/check-service-access.sh
+  s_0f3b13993ce4b8::t_fb9d727d21a4ca 61
+  s_0f3b13993ce4b8::t_5be947819937b3 46-60,62-142,144,150
+docs/service-access.md
+  s_0f3b13993ce4b8::t_65c49987c75c5e 40-129
+scripts/setup-github-repo-access.sh
+  s_0f3b13993ce4b8::t_2fd0bf7cc743b6 1-287
+CONTEXT.md
+  s_0f3b13993ce4b8::t_7577009c3a9999 170-176
+docs/runbooks/authentication.md
+  s_0f3b13993ce4b8::t_7577009c3a9999 42-63,70-72
+  s_0f3b13993ce4b8::t_c2445c2b76ce76 38-40,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "27c56abded99b219a3aa2a45113388e5be22fb4c",
+  "prompts": {},
+  "sessions": {
+    "s_0f3b13993ce4b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a2ce70e5-cdfa-42ae-98eb-dea242efda29",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
