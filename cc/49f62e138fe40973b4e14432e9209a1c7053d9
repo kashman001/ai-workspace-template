@@ -1,0 +1,22 @@
+docs/context-budget.md
+  s_f72dceaec28b0e::t_adf02bf351adaf 37-38,508-510,515,517,524-547,610-639
+  s_f72dceaec28b0e::t_d1ee9331cb8c97 640
+skills/session-rollover/SKILL.md
+  s_f72dceaec28b0e::t_adf02bf351adaf 400-424
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "cc49f62e138fe40973b4e14432e9209a1c7053d9",
+  "prompts": {},
+  "sessions": {
+    "s_f72dceaec28b0e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a8ac35b-6500-45c4-b579-7ad10c4b3aaf",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
