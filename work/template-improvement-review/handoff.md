@@ -6,6 +6,53 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 5 (2026-09-14): L46 shipped; session-management review findings done, rolled at WARN before the plan
+
+**Summary.** Item was closed; user reopened it with a new request. (1) Found
+and fixed **L46**: session-loop round-2 runtime files (`.session-seq.bump.json`,
+`.session-loop.budget`, `.session-loop.alarm-stop`) were never gitignored —
+`8d2d542`, card archived, scorecard 0/88/4/0/6, main pushed by user earlier
+(was 0 ahead; now 1 ahead). (2) User asked for a **holistic review of the
+session-management / context-budget / multi-session subsystem** (context decay,
+session-loop, launch-next-session, context tracking): findings → plan →
+execution. Ran three parallel Explore agents (internals; operating model +
+DevX; git history + incident evidence), spot-checked the load-bearing claims,
+and wrote the findings to `session-management-review-findings.md` (this dir;
+mirror of the plan-mode file `~/.claude/plans/now-what-i-want-cheerful-tide.md`).
+User reviewed the findings and gave direction (§5 of that file). Rolled at WARN
+(~125K) before the plan phase, at the user's choice. Session ran in **plan
+mode** (read-only) throughout the review.
+
+**Decisions (user, 2026-09-14).** Appetite = cleanup **and** structural
+redesign (single launcher-owned per-session lifecycle record). Runtimes
+first-class = Claude, Codex, GitHub Copilot, Gemini; opencode/others folded in
+only if cheap, else follow-up. Fleet dispatch machinery = **keep**; user asks
+how best to maintain it (plan must answer). No Tier-2 note yet — these are
+scope choices for a plan not yet written; capture as Tier-2 when the plan
+lands.
+
+**Learnings:**
+- The three review agents cost ~135–195K tokens each but returned dense
+  ~2.5K-word reports; running them in parallel from a fresh-ish session was the
+  right shape — the parent still hit WARN from reading the reports + spot
+  checks + writing findings.
+- `.pending-clear-seed` is not gitignored (found by the internals agent; not
+  fixed — plan-mode session). `SESSION_LOOP_NOTIFY` in `context-budget.env`
+  resolves `${ROOT:-.}` differently in its three sourcing sites. ADR-0009's
+  "/clear rotates the transcript?" question is still unverified.
+- `capture-rollover-options.sh` maps plan mode to `default` approval — fine.
+
+**Open / next.** Successor writes **Part 2 (the plan)** per §6 of the findings
+file, then presents it for approval; execution planning (tickets / new work
+item, likely `session-management-redesign`) follows approval. Uncommitted:
+nothing besides this rollover's own files. Supervisor live (pid 72900); this
+rollover emitted `--loop-mode interactive` because the plan ends in a
+user-approval question.
+
+**Suggested skills.** Plan agents (`Agent` type `Plan`, ≤3, perspectives in
+§6); `to-tickets` / `create-work-item` after approval; `decision` for the
+scope choices once the plan is accepted.
+
 # Session Handoff — 4 (2026-09-10): L45 probed live, merged to main, item complete (checkpoint)
 
 **Summary.** Live end-to-end probe of L45 via `Agent(isolation: worktree)`:
@@ -39,38 +86,3 @@ a stale real copy of that item (by design; delete it to get the link).
 **Suggested skills.** None — no successor session planned. If reopened:
 `checkpoint` after the push.
 
-# Session Handoff — 3 (2026-09-10): L45 built and committed on a branch; rollover at WARN
-
-**Summary.** Built backlog **L45** test-first in one commit `5f51898` on
-`fix/l45-gitignored-work-dirs` (off main `6f8c6c2`; not merged, not pushed).
-New `scripts/link-local-work.sh` symlinks every ignored `work/<item>/` from
-the main checkout into a git worktree; called unthrottled from the shared
-hook lib (all six runtimes' per-tool hooks) and from `context-budget.sh
-register`. Suite `test-link-local-work.sh` 30/30; all 22 suites green,
-structure + ledger checks clean; guide HTML rebuilt. Card L45 archived,
-scorecard 0 open / 87 resolved, change-log row added. Docs:
-`work-directory-conventions.md` (local-only items + worktrees),
-`operational-knowledge.md` (new entry), `workspace-structure.md` tree line.
-Rolled over at WARN (130K).
-
-**Decisions.** Tier-2 note (top of `decisions.md`): share-in by symlink; the
-card's "repo guard" does not exist in repo code — the redirect is the
-runtime's own worktree isolation — so exemption was impossible, and
-copy-back loses the auto-cleaned "unchanged" worktree case.
-
-**Learnings:**
-- A `work/<item>/` ignore pattern (trailing slash) matches directories only;
-  a symlink at that path shows as `??` in the worktree. The script registers
-  the exact path in the shared `.git/info/exclude` after linking.
-- Claude Code's Write/Edit tools write through a symlinked *directory*
-  (verified in scratchpad); the CONTEXT.md refusal is for symlinked files.
-- `work/learn-agentic-workflows` is excluded via `.git/info/exclude`, not
-  `.gitignore`; the fix handles both.
-
-**Open / next.** Not yet done: a live end-to-end probe in a real worktree
-session (register + hook wiring under Claude Code's isolation), merging the
-branch into main, and `checkpoint`. `.claude/worktrees/learn-agentic-workflows-s2`
-still holds a stale manual copy of that item — it will stay a real dir (by
-design) until deleted. Push of main remains the user's call.
-
-**Suggested skills.** verification-before-completion, checkpoint.
