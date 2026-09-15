@@ -1,9 +1,12 @@
 # Session-management subsystem review — findings (Part 1)
 
-> Status: Stage 1 ACCEPTED (Part 1b). **Stage 2 design DRAFTED (Part 2, session 7,
-> 2026-09-14) — awaiting the user's review before Stage 3.** Probe evidence for
-> Part 2 (V2 `/clear` = ROTATES; `claude --bg` env = captured and replayed, so the
-> handshake file stays) is in `evaluation/stage2-probes.md`.
+> Status: Stage 1 ACCEPTED (Part 1b). Stage 2 design drafted (Part 2, session 7).
+> **Stage 3 DONE (Part 3, session 8, 2026-09-15): three independent reviews, all
+> "sound with amendments"; design v2 drafted in plain language with the consensus
+> amendments applied (`evaluation/stage3-design-v2.md`, supersedes Part 2 once
+> accepted). Awaiting the user's three decisions (Part 3) and go for Stage 4.**
+> Probe evidence for Part 2 (V2 `/clear` = ROTATES; `claude --bg` env = captured
+> and replayed) is in `evaluation/stage2-probes.md`.
 > **Session 6 (2026-09-14) gate, set by the user mid-session:** local was checked
 > against origin (already up to date; PRs #54–#60 merged in session 5). NO
 > implementation planning until the suggested changes have been (1) re-evaluated
@@ -679,3 +682,82 @@ Exit codes: `cb check/record` 0/1/2 (OK/WARN/STOP); every verb 3 = usage, 4 = re
 3. **Codex / copilot-cli logout shapes** (f): `logout=unknowable` until a live logout is captured as a fixture — who captures it, and is a quit-with-unknowable acceptable to close a chain meanwhile?
 4. **`--unstage` spends a number** (h): an IDE restart after staging (V13) now costs a lineage gap (N+1 abandoned, N+2 minted). Accept, per ADR-0008's over-count precedent, or carve out "pending never consumed ⇒ reuse N+1" as the single exception to never-reclaim?
 5. **Vendor exit facts** (h): claude's `SessionEnd.reason` (probe A: `clear`, `prompt_input_exit`, `other`) is recorded in `session.ended` as advisory; should Stage 3 promote it to a liveness short-circuit for claude, or leave pid liveness as the only oracle for symmetry across runtimes?
+
+---
+
+# Part 3 — Stage 3: evaluation of the design (2026-09-15, session 8)
+
+> Three independent reviewers read the Stage 2 design (Part 2 above): an architect, a scenario-and-flow walker, and a developer who would implement it. Reports: `evaluation/stage3-architect-review.md`, `stage3-scenario-evaluation.md`, `stage3-developer-review.md`. This part synthesises them in plain language. The design rewritten with their amendments is `evaluation/stage3-design-v2.md`, which supersedes Part 2 once the user accepts it (Part 2 is left as the pre-review record rather than edited in place, because the user asked for a readable rewrite).
+
+## Verdict
+
+All three reviewers judged the design sound in its core and fit for implementation planning once a short list of amendments lands: architect "yes with amendments", scenario walker "sound with amendments", developer "yes after clarifications". The core they all endorse: one uncommitted state record per work item with three script writers; process liveness as the only ownership test; a supervisor with three verdicts; one runtime adapter table; fleet machinery isolated; every step a script that refuses with a reason code. Nothing found was structural. The scenario walk scored 30 rows: 15 handled, 12 partly (all fixable by the amendments below, or unchanged non-goals), 1 not (a team-shared repo, an explicit non-goal), 2 not applicable.
+
+## Glossary for this part
+
+Session (one run of an agent with one context window) · work item (a `work/` directory) · session number (never reused) · record (the one JSON state file per item) · owner (the session the record names) · rollover (handing work to a fresh session) · handoff ledger and launcher file (the two files a rollover writes) · staged command (the successor's launch command, left for the supervisor) · supervisor and chain (the script that runs sessions back to back) · verdict and reason code (the supervisor's outcome, and the token every refusal prints) · liveness (is the owner's process still running) · runtime adapter (one table row per agent runtime).
+
+## What all three reviewers agree on
+
+1. **The record and the supervisor contradicted each other.** The launcher empties the owner field when it advances the number, yet the supervisor's "staged" verdict then read that field. Fix: the launcher copies the outgoing owner into a predecessor block at the same atomic write, and the verdict reads only that block, the number before and after, and who staged the command.
+2. **Delete the background-daemon launch path.** The probe showed the environment is captured by the first daemon and replayed into later sessions, so the launch can never be bound exactly, and the fallback (newest unexpired launch within a time window) could be claimed by any plain session a human started. The in-place restart remains the only unsupervised hands-off path.
+3. **Delete the agent-run options sync.** The launcher captures the permission mode from the transcript at launch time; an agent that forgot the sync got no refusal, which violates the binding constraint.
+4. **Process id plus start time is the only liveness oracle.** The vendor's exit reason is advisory at best (the end and start hooks can land in the same second) and is dropped from the record.
+5. **At WARN the agent asks only when relaunch is set to manual or off.** No new consent knob.
+6. **Strip the citations and migration bookkeeping.** Roughly a third of the text by characters was file-and-line citations; two of three sentences carried a pointer only this repo can resolve. Migration columns, doc fates, ADR tables and probe catalogues move to a Stage 4 appendix.
+7. **Owner-only release.** The session-end hook changes nothing unless the record still names the calling session; it merges into the ended block, never replaces it.
+
+## Amendments
+
+| # | Change | Why | From | Status |
+|---|---|---|---|---|
+| A1 | Verdict reads the predecessor block written at the bump, not the owner field | owner field is empty by then; a watchdog snapshot could miss a short child | all three | consensus, in v2 |
+| A2 | Delete the background-daemon launch path and its time-window binding | cannot bind exactly; claimable by any human start | all three | consensus, in v2 |
+| A3 | Delete the separate prep and verify verbs; the launcher and close run the file checks inline, with a dry-run flag | the snapshot hashes trapped an agent that wrote the ledger before prep, and a verification stamp could go stale | architect (keep verify, drop snapshot) and scenario (inline) | consensus on direction; inline variant chosen, footnoted in v2 |
+| A4 | Delete the options block and its agent-run sync; launcher captures at launch | forgotten sync had no refusal | architect, scenario | consensus, in v2 |
+| A5 | Record helper takes a directory lock and every writer's filter carries a compare-and-set precondition | three real write races found (supervisor exit trap vs child, release vs register on restart, release vs close) | developer | uncontested, in v2 |
+| A6 | A child may end its turn with a signal only when a supervisor is recorded live; hand staging without one is refused | otherwise a hand-run stage kills the session with nobody to launch the next | scenario | uncontested, in v2 |
+| A7 | File checks fire only when the caller is a session, never on the supervisor's bootstrap launch; the number is exported per iteration; quit requires that the child registered | undefined in Part 2; a child that never registered and exited 0 would have closed the chain | scenario | uncontested, in v2 |
+| A8 | Name the git stale-launcher guard as kept, with a code | it exists today and no section carried it forward | scenario | uncontested, in v2 |
+| A9 | Cut unread record fields and merge the reason codes (about 45 to about 28) | nothing gates on them; stamps invite tests to pin them | architect, developer | consensus, in v2 |
+| A10 | The tool-missing message is printed by a check before any JSON parsing | a hook without the JSON tool cannot parse its own payload | developer | uncontested, in v2 |
+| A11 | The supervisor's stall guard watches the three markdown files, not the record | the record is uncommitted, so it drops out of the git-based guard | architect | uncontested, in v2 |
+| D1 | Logout on Codex and Copilot CLI: drop the "unknowable" code or keep it | reviewers split | all three | **user decides** |
+| D2 | A predecessor resumed after staging: occupy the open launch, or spend a number | architect vs the other two | all three | **user decides** |
+| D3 | Session identity on Copilot CLI and Gemini is a newest-transcript heuristic: accept or require an explicit id | only the developer raised it | developer | **user decides** |
+
+## Consolidated cut list
+
+| Cut | What breaks |
+|---|---|
+| Background-daemon launch path, its time window and two refusal codes | hands-off relaunch with a different tool set from inside an unsupervised session; it prints the command instead |
+| Separate prep and verify verbs, the rollover snapshot, the verification stamp, four codes | nothing; the launcher runs the same checks inline |
+| The unstage verb, its code and its probe (if D2 = occupy) | nothing |
+| Options block, agent-run sync, cross-checkout adoption | nothing; captured at launch |
+| Per-block author stamps, vendor exit reason, duplicate supervisor pid, launch path and reason strings, chain timestamps | nothing reads them |
+| About 17 reason codes merged into their families with a `key=value` detail | nothing; tests pin the detail the same way |
+| Supervisor flush-hash check | nothing; the launcher's file gate already guarantees it |
+| Follow-up runtime rows (VS Code agent mode, OpenCode) in the liveness and adapter tables | nothing; they are non-goals |
+| Replaces/retires columns, doc-fate table, ADR amendment tables, probe catalogue, all file-and-line citations | nothing in the design; they become a Stage 4 appendix |
+| A separate supervisor document | nothing, if the one session-management document stays under its line cap |
+
+Kept on purpose: the staged-already-spent check at supervisor restart, the explicit stop door, the watchdog pages, takeover, the schema check, the chain block, the silence-kill knob (default off, the user's earlier call).
+
+## Points needing the user's decision
+
+1. **Logout on Codex and Copilot CLI.** Nobody has captured what a logout looks like on those runtimes. The developer would drop the "unknowable" code path entirely (those quits read as plain quits; the support matrix says "not classified"; a wrongly closed chain is reopened with one command). The architect and scenario walker would keep a `logout=unknowable` suffix so the gap is visible in tests. *Recommendation: drop it. Less code for a gap the matrix already states; the fixture gets captured by whoever first runs the supervised probe on those runtimes.*
+2. **A predecessor resumed after it staged a successor** (for example an IDE restart). The architect proposes that whoever explicitly registers against an open launch simply becomes that session: no number spent, no unstage verb, no probe, and no judgement about whether anything was consumed. The developer and scenario walker would accept spending a number (refuse, mark abandoned, mint the next). *Recommendation: the architect's rule. It deletes a verb, a code and a probe, and is one sentence.*
+3. **Session identity on Copilot CLI and Gemini.** The session id there is "the newest transcript", so the owner test is a heuristic. Accept and say so in the matrix while those runtimes are unverified, or require an explicit id flag. *Recommendation: accept; both runtimes are unverified and Gemini is attended-only.*
+
+## Readability findings
+
+The architect estimates two-thirds of sentences carry a token only this repo can resolve and about 40 percent of the text has no meaning outside it; the developer counts roughly 120 file-and-line citations, 60 decision or ADR ids and 50 scenario or probe ids, about 35 to 40 percent of the characters. Both list some 40 undefined terms and agree on 12 essential ones (the glossary above). Both recommend the same one-page shape: four diagrams (lifecycle, record and writers, supervisor decision, three loops), two-sentence explanations for liveness, identity binding and runtimes, a glossary, and footnoted pointers. Design v2 follows that shape: 158 lines, no ids in the body.
+
+## What Stage 4 needs before planning
+
+- The three decisions above.
+- The live supervisor chain ended at its next pause before the supervisor script is edited; implementation done on a throwaway work item, not this one, since this item's own rollovers run through that supervisor.
+- A committed per-item override keeping this repo on automatic relaunch when the root default flips to manual, in the same change.
+- The one-time import of the old session counter scripted and tested before the flag day.
+- Implementation order all three reviewers converge on: record helper and its tests; fleet extraction (a pure move); measurer verbs; launcher; supervisor (wrapper commit first); hook dispatcher; skill, docs, ignore file, env defaults. First end-to-end slice: an attended rollover on a stub runtime with no supervisor.
+- Probe criteria to rewrite: the chain probe drops its prose criterion; the fleet probe drops the child-lock gate; two new suite-level cases (supervisor restart with a spent stage; the refused hand stage).

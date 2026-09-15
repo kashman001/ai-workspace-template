@@ -78,3 +78,18 @@ told to run.
 **Rejected:** relying on skill instructions ("record at every boundary") as the
 mechanism, with scripts only as helpers.
 **Promote?:** maybe — becomes an ADR when the Stage 2 design lands.
+
+## 2026-09-15 — Stage 3 (design evaluation) starts; three reviewers, with a simplicity mandate
+
+**Decision:** The user gave the go for Stage 3 on Part 2 without section-by-section
+review, after judging the design document too long. Stage 3 runs three parallel
+reviewers instead of the planned two: architect (AGREE/AMEND/REJECT per section),
+scenario/flow (S1–S10 / E / I + the three loops), and a new developer/implementer
+lens ("can I build this from the text; what is ambiguous or over-specified").
+All three carry a simplicity mandate: every section must justify its existence
+and Part 3 must include a cut list.
+**Why:** Part 2 was drafted by one agent and has had no independent review; the
+user's only review finding was length, which is itself a design smell under §1b.7.
+**Rejected:** the user reading Part 2 section by section first (too long); a
+one-page summary before review (deferred — Stage 3's cut list produces it).
+**Promote?:** no.
