@@ -6,6 +6,57 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 6 (2026-09-14): Stage 1 evaluation done and accepted; process re-sequenced to four stages
+
+**Summary.** Started on the launcher's "write Part 2 (the plan)" and dispatched
+three Plan agents; the user redirected mid-turn: update from origin (already
+current — PRs #54–#60 were merged in session 5; origin had nothing new), then
+**no implementation planning until the suggested changes are reviewed and
+evaluated**. Stopped the Plan agents, ran three evaluation agents instead
+(re-evaluation of F1–F10/S1–S10 against current main; independent architect
+review of D-A..D-G; scenario + flow evaluation vs S1–S10, E/I catalog, three
+loops). Synthesized as **Part 1b** in `session-management-review-findings.md`;
+full reports in `evaluation/stage1-*.md`. User then set the process to four
+stages (research/evaluate → design/architecture → evaluate the design vs
+scenarios/flows + architect → plan implementation), added the binding
+constraint **reliable/repeatable/reproducible without trusting the agent**
+(§1b.7 + Tier-2 note in decisions.md), and **accepted all 17 recommendations
+in §1b.5**. Committed Stage 1; rolled at WARN.
+
+**Decisions (user, 2026-09-14).** Four-stage process (findings status header);
+§1b.5 decisions 1–17 all accepted as recommended (three record writers with
+field ownership; never reclaim numbers; orphan → abandoned + N+1; pid liveness;
+run V2 before deciding `--clear`; delete both mode markers; keep `--takeover`;
+chain budget its own block; Copilot = CLI; Gemini attended-only; fleet →
+`scripts/fleet.sh`, delete `watch`, drop child-lock hierarchy; end the
+pid-72900 chain before editing `session-loop.sh` + `main "$@"` wrapper first;
+log text free-form, `reason=<code>`; D-F = escalation-time append; template
+defaults manual / KILL_AFTER=0 / jq req; record gitignored with `user`;
+authorise the `--bg` env probe). Tier-2 note written for the reliability
+constraint (Promote?: maybe).
+
+**Learnings:**
+- The three evaluation agents cost 223K / 359K / 357K tokens and returned
+  ≤600-word summaries + 165–282-line reports; the parent stayed under WARN only
+  by reading the summaries and one section of one report. Same shape next time.
+- Nothing in PRs #54–#60 invalidated a finding; #60 re-added an inference
+  mechanism (F2 got worse). `docs/session-chain-scenarios.md` and
+  `work/session-loop-hardening/` are cited but do not exist here.
+- **Live hazard:** supervisor pid 72900 started before a213b3d changed
+  `session-loop.sh` under it (bash reads by offset); it left an orphan
+  `.next-command.json`. This rollover still goes through it (no edits to that
+  file were made). End the chain deliberately before touching that file.
+- `rollover-prep.sh` takes `<project>` before `--reason`; the launcher's
+  "First actions" line had the order right, my first call did not.
+
+**Open / next.** Stage 2 = write the design and architecture (Part 2). See
+next-session.md. Counter: `seq-sync` noop expected (launcher started this
+session as #6).
+
+**Suggested skills.** Fresh `Agent` (general-purpose) to draft the design from
+the architect's §7(d) seed + accepted decisions; then Stage 3 = architect +
+scenario agents on the design; `decision` for anything new.
+
 # Session Handoff — 5 (2026-09-14): L46 shipped; session-management review findings done, rolled at WARN before the plan
 
 **Summary.** Item was closed; user reopened it with a new request. (1) Found
@@ -52,37 +103,4 @@ user-approval question.
 **Suggested skills.** Plan agents (`Agent` type `Plan`, ≤3, perspectives in
 §6); `to-tickets` / `create-work-item` after approval; `decision` for the
 scope choices once the plan is accepted.
-
-# Session Handoff — 4 (2026-09-10): L45 probed live, merged to main, item complete (checkpoint)
-
-**Summary.** Live end-to-end probe of L45 via `Agent(isolation: worktree)`:
-the `work/learn-agentic-workflows` symlink appeared in the worktree, the
-probe write landed in the real directory, `.git/info/exclude` gained the
-exact `work/learn-agentic-workflows` line, and the worktree was auto-cleaned
-as "unchanged" while the write survived — the exact case the card named.
-Result recorded as a bullet in `operational-knowledge.md` (`7a98718`), then
-`fix/l45-gitignored-work-dirs` merged into main `--no-ff` (`5fd5480`).
-23/23 suites green on merged main; structure + ledger checks clean. Backlog
-row and archived card updated with the merge; `work/README.md` status row
-flipped to Complete. Local fix branch deleted (merged).
-
-**Decisions.** None new; promotion scan clean (no `Promote?: yes|maybe`).
-
-**Learnings:**
-- The worktree's branch is cut from `origin/main`, which predates the fix,
-  so it had no `scripts/link-local-work.sh` — yet the link appeared. Hooks
-  run the *main checkout's* lib (`CLAUDE_PROJECT_DIR` in the hook wiring;
-  the lib's root resolver walks to the git common dir). The fix therefore
-  holds in worktrees cut from any base.
-- The harness's worktree guard refuses compound `git -C "$PWD" …; pwd`
-  commands inside an isolated subagent; single commands pass.
-
-**Open / next.** Item **complete**. Only outstanding: pushing main (13
-ahead of `origin/main`) — the user's call, not done. `review.md` §E lists
-user-only items. `.claude/worktrees/learn-agentic-workflows-s2` still holds
-a stale real copy of that item (by design; delete it to get the link).
-`review/template-improvement-review-s1` is merged but not deleted.
-
-**Suggested skills.** None — no successor session planned. If reopened:
-`checkpoint` after the push.
 

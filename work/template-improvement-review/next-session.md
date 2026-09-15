@@ -1,4 +1,4 @@
-# Next Session — template-improvement-review (session-management review: PLAN phase)
+# Next Session — template-improvement-review (session-management review: STAGE 2 — design + architecture)
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover. Past-tense provenance lives in `handoff.md`.
@@ -6,84 +6,80 @@
 
 ## Mission
 
-Write **Part 2 — the plan** for improving the session-management /
-context-budget / multi-session subsystem, on top of the finished findings
-(session 5) and the user's scope decisions, then present it for approval.
-The findings phase is CLOSED — do not re-review, do not re-run the review
-agents, do not re-ask the four direction questions.
+Write **Part 2 — the design and architecture** of the redesigned
+session-management / context-budget / multi-session subsystem, on top of the
+accepted Stage 1 evaluation. This is a DESIGN, not an implementation plan: no
+phases, tickets, or file-by-file edit lists. Stage 3 (evaluate the design vs
+scenarios/flows + architect review) follows in a later session; Stage 4 (plan
+implementation) only after the design is finalized.
 
-No-human-in-the-loop clause: everything up to and including writing the plan
-is unattended work. The one thing that needs a person is approving the plan;
-stop there with the plan presented (the chain is `interactive`, so the
-supervisor pauses for the human).
+Four-stage process (user, 2026-09-14): (1) research/evaluate ✔ accepted →
+(2) design/architecture ← YOU → (3) evaluate design → (4) plan implementation.
 
-## Read these, in order
+## Binding inputs (read in this order)
 
 1. `work/template-improvement-review/session-management-review-findings.md`
-   — the whole findings state, user decisions (§5), successor brief (§6).
-   Read it fully; it is ~250 lines.
-2. `work/template-improvement-review/handoff.md` — top block only.
+   — Part 1 §1–§5 (skim), **Part 1b entirely** (§1b.1–§1b.7). All 17
+   decisions in §1b.5 are ACCEPTED as recommended. §1b.7 is a binding
+   constraint: reliable / repeatable / reproducible — no load-bearing step may
+   depend on the agent remembering, judging or reporting; script-executed,
+   script-verified, coded verdicts.
+2. `work/template-improvement-review/evaluation/stage1-architect-review.md`
+   §7(d) "simplest design" (the seed) and §7(c) hidden couplings; §2a for what
+   each current state file encodes.
+3. `work/template-improvement-review/evaluation/stage1-scenario-evaluation.md`
+   §A (the three loops today vs proposed) and §D (13 probes).
+4. `work/template-improvement-review/handoff.md` — top block only.
 
 ## Do NOT reload
 
-- `review.md`, `decisions.md`, the backlog HTML files whole (settled; the
-  template-improvement item's original scope is complete).
-- `docs/context-budget.md`, the big scripts, the test suites — the Plan agents
-  read those; the parent reads only what a specific plan step needs.
-- `~/.claude/plans/now-what-i-want-cheerful-tide.md` — identical to item 1
-  above (it is the plan-mode file; if the session is in plan mode, that path
-  is the one you are allowed to write Part 2 into, then mirror it back here).
+`review.md`, `decisions.md` (append only), backlog HTML whole, the big scripts
+whole (delegate reads to agents; parent reads only what a design section
+needs), `stage1-reevaluation-vs-main.md` beyond its verdict table.
 
 ## State snapshot
 
-- `main` = L46 fix + session-5 rollover commit + merge of origin PRs #54–#60;
-  clean; ahead of `origin/main` by local commits only (do not push).
-- Supervisor live for this item (`.session-loop`, pid 72900, chain budget
-  used 1 of 10). This rollover emitted `--loop-mode interactive`.
-- Known unfixed small defects (fix inside the plan's first phase, not now):
-  `.pending-clear-seed` not gitignored; `SESSION_LOOP_NOTIFY` ROOT resolution;
-  ADR-0009 `/clear` transcript-rotation unverified.
+- `main` = Stage 1 commit on top of a213b3d; clean; ahead of origin by local
+  commits only (do not push).
+- Supervisor pid 72900 live but running pre-a213b3d `session-loop.sh` code
+  (hazard, §1b.2). Do NOT edit `session-loop.sh` this session. Decision 12:
+  end that chain deliberately (Ctrl-C at an interactive pause) before the
+  first edit, and make that edit a `main "$@"` wrapper.
+- No code changes yet. F10 small defects remain (fix in Stage 4's first
+  phase, not now).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
-2. Read item 1 above (findings file) end to end, then item 2.
-3. Launch ≤3 `Plan` agents in parallel, each given the findings file path and
-   the decisions in §5, from these perspectives: (a) the single per-session
-   lifecycle record — design, and a migration path from the 7 current state
-   files + the roles/lineage/logout inference cluster, with test-posture
-   (behaviour over golden strings); (b) maintainability: how to structure,
-   isolate, test and *verify* the kept fleet-dispatch machinery and the four
-   first-class runtime adapters (Claude, Codex, Copilot, Gemini), including
-   what "exercise a real rollover on each" costs; (c) docs/DevX consolidation
-   and downloader hygiene (one rule/one place, daily-loop vs fleet reference
-   split, assertion-only instruction files, guide section, neutral defaults).
-4. Synthesize into ONE phased plan: tracer-bullet order, each phase
-   independently shippable and green on the suites, verification per phase,
-   explicit answer to "best way to maintain the fleet machinery", explicit
-   call on which non-first-class runtimes fold in vs follow up. Write it as
-   Part 2 into the findings file (and the plan-mode file if in plan mode).
-5. **Architect review (user requirement, 2026-09-14).** Hand the synthesized
-   plan to an independent architect agent (fresh `Agent`, general-purpose,
-   with the findings file + plan + read access to the scripts) to review the
-   suggested changes for soundness, hidden coupling, migration risk and
-   simplicity; fold its verdicts into the plan and list what it rejected.
-6. **Scenario evaluation (user requirement, 2026-09-14).** Evaluate the plan
-   against usage scenarios and flows: the S1–S10 table in the findings file
-   (§3), plus the workspace's scenario catalog `work/usage-scenarios/`
-   (E1–E18 external, I1–I10 internal; `gaps-and-coverage.md`) and the three
-   control-flow loops (measure / rollover / supervise). For each scenario:
-   does the proposed design handle it, what changes for the user, what
-   verification proves it. Put the matrix in Part 2.
-7. Present the plan for approval (ExitPlanMode if in plan mode; otherwise a
-   tight summary + pointer to the file). Stop there. After approval: propose
-   `create-work-item session-management-redesign` + `to-tickets`.
-8. `scripts/context-budget.sh record --label "plan written"` before presenting.
-
-**Code moved under you.** Origin PRs #54–#60 (merged into main by session 5's
-rollover) changed the subsystem after the review agents read it: supervised
-launcher identity proof (#54/#55), chain-observability + stall-alarm doc
-corrections (#56/#57), handoff-anchor gotcha restored (#58), repo-scoped
-GitHub access (#59), bootstrap must prove a staged command is unrun (#60).
-Have Plan agent (a) skim `git log -p 22ed187..main -- scripts/ docs/` before
-designing, and note in Part 2 any finding those PRs already address.
+2. Read inputs 1–4 above.
+3. Cheap probes the user authorised (decisions 5 and 17), run them or
+   delegate to one agent, results into Part 2 as evidence:
+   - V2: does `/clear` rotate the transcript JSONL? (a throwaway claude
+     session with explicit low thresholds; check the artifact path before and
+     after `/clear`.) Decides keep-vs-drop of `--clear` / ADR-0009.
+   - `claude --bg` env survival (launch-next-session.sh ~:1184 claim): decides
+     whether the `successor-pending` handshake can be retired.
+4. Draft Part 2 with ONE general-purpose agent (or two, split record+liveness+
+   supervisor vs adapters+fleet+docs+tests), given inputs 1–3 and the probe
+   results. Required sections: (a) concepts kept (target ≤ 7, name each and
+   what it replaces); (b) `work/<p>/session-state.json` schema — every field,
+   its single writer, the moment written, the invariant it asserts, what it
+   retires; (c) liveness rule per runtime; (d) supervisor verdicts (staged /
+   quit / broken) and chain budget; (e) the launch→register identity binding
+   (coupling 1–2); (f) runtime adapter table + support matrix (attended /
+   supervised per runtime: claude, codex, copilot-CLI, gemini; VS Code and
+   opencode as follow-ups) + one hook dispatcher; (g) `scripts/fleet.sh`
+   boundary and its interface to the daily loop; (h) the boundary skill and
+   the mechanical gates per §1b.7 (each step's script, exit code, refusal
+   rule); (i) doc set (one rule / one place) and template defaults;
+   (j) test posture (behaviour tests, `reason=<code>`, fixture helper) and the
+   probe catalogue mapped to scenarios; (k) ADRs superseded/amended and the
+   new ADR(s); (l) explicit non-goals (multi-user, VS Code supervision,
+   opencode). Keep it minimal: a concept that is not earned by a scenario or
+   an incident is out.
+5. Append as **Part 2** to the findings file (keep Part 1/1b intact).
+6. `scripts/context-budget.sh record --label "Part 2 design drafted"`.
+7. Present a tight summary + pointer; STOP for the user's review. Do not start
+   Stage 3 unasked. On the user's go, Stage 3 = fresh architect agent +
+   scenario/flow agent over the design (same shape as Stage 1), verdicts into
+   Part 3.

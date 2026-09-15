@@ -66,3 +66,15 @@ the simplest posture where the brief left a choice:
 Ledger top block was session 32; ADR-0007 says the counter is canonical and
 drift is repaired toward the prompt number, so the counter was raised via
 `context-budget.sh seq-sync`. Machine-local file, no commit.
+
+## 2026-09-14 — Session-management redesign must be reliable, repeatable, reproducible without trusting the agent
+
+**Decision:** Every load-bearing step of the measure / rollover / supervise
+loops is script-executed and script-verified, with coded verdicts; skill text
+explains but never guarantees a transition. Recorded in findings Part 1b §1b.7.
+**Why:** The operator is an LLM agent that can forget or hallucinate; the
+history shows 63% of STOP sessions never saw the WARN checkpoint the agent was
+told to run.
+**Rejected:** relying on skill instructions ("record at every boundary") as the
+mechanism, with scripts only as helpers.
+**Promote?:** maybe — becomes an ADR when the Stage 2 design lands.

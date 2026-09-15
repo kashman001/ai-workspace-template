@@ -1,3 +1,36 @@
+# Session Handoff — 4 (2026-09-10): L45 probed live, merged to main, item complete (checkpoint)
+
+**Summary.** Live end-to-end probe of L45 via `Agent(isolation: worktree)`:
+the `work/learn-agentic-workflows` symlink appeared in the worktree, the
+probe write landed in the real directory, `.git/info/exclude` gained the
+exact `work/learn-agentic-workflows` line, and the worktree was auto-cleaned
+as "unchanged" while the write survived — the exact case the card named.
+Result recorded as a bullet in `operational-knowledge.md` (`7a98718`), then
+`fix/l45-gitignored-work-dirs` merged into main `--no-ff` (`5fd5480`).
+23/23 suites green on merged main; structure + ledger checks clean. Backlog
+row and archived card updated with the merge; `work/README.md` status row
+flipped to Complete. Local fix branch deleted (merged).
+
+**Decisions.** None new; promotion scan clean (no `Promote?: yes|maybe`).
+
+**Learnings:**
+- The worktree's branch is cut from `origin/main`, which predates the fix,
+  so it had no `scripts/link-local-work.sh` — yet the link appeared. Hooks
+  run the *main checkout's* lib (`CLAUDE_PROJECT_DIR` in the hook wiring;
+  the lib's root resolver walks to the git common dir). The fix therefore
+  holds in worktrees cut from any base.
+- The harness's worktree guard refuses compound `git -C "$PWD" …; pwd`
+  commands inside an isolated subagent; single commands pass.
+
+**Open / next.** Item **complete**. Only outstanding: pushing main (13
+ahead of `origin/main`) — the user's call, not done. `review.md` §E lists
+user-only items. `.claude/worktrees/learn-agentic-workflows-s2` still holds
+a stale real copy of that item (by design; delete it to get the link).
+`review/template-improvement-review-s1` is merged but not deleted.
+
+**Suggested skills.** None — no successor session planned. If reopened:
+`checkpoint` after the push.
+
 # Session Handoff — 3 (2026-09-10): L45 built and committed on a branch; rollover at WARN
 
 **Summary.** Built backlog **L45** test-first in one commit `5f51898` on
