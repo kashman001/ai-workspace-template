@@ -1,4 +1,4 @@
-# Next Session — template-improvement-review (session-management review: user reviews Part 2 → Stage 3 on go)
+# Next Session — template-improvement-review (user decides D1–D3 → Stage 4 plan on go)
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover. Past-tense provenance lives in `handoff.md`.
@@ -6,75 +6,72 @@
 
 ## Mission
 
-**Support the user's review of Part 2 (the design).** The user will read the
-design and ask clarifying questions as they go; answer them from the files
-(grep the cited lines; never guess), and record any decision they make as a
-Tier-2 note (`/decision`) and, where it changes the design, edit Part 2 in
-place with the date. Do not start Stage 3 unasked. On the user's explicit go,
-run Stage 3 as described under "Stage 3 recipe" below.
+**Get the user's three decisions on design v2 and their go for Stage 4, then
+plan the implementation (Part 4).** Do not start Stage 4 unasked. Answer
+questions about v2 from the files (grep; never guess). Record each decision
+as a Tier-2 note (`/decision`) and edit v2 in place (dated) where it changes
+the design.
 
-Four-stage process (user, 2026-09-14): (1) research/evaluate ✔ → (2) design
-✔ drafted → (3) evaluate design ← after the user's review → (4) plan.
+Four-stage process (user, 2026-09-14): (1) research ✔ → (2) design ✔ →
+(3) evaluate design ✔ (Part 3, session 8) → (4) plan ← after the user's go.
 
-**No-human-in-the-loop clause:** this mission IS the conversation. If nobody
-answers, present the URLs (First actions step 3), stop, and wait. Do not
-dispatch Stage 3 agents, do not edit the design, do not roll over on your own.
+**Readability rule (user, session 8, binding for every doc they read):**
+short; plain language; self-contained without the workspace (pointers only
+as footnotes); each concept introduced by a diagram or a two-sentence
+explanation. Memory `review-docs-plain-language` has the detail.
+
+**No-human-in-the-loop clause:** if nobody answers, present the page and the
+three decisions (First actions step 3), stop, and wait.
 
 ## Read these, in order
 
-1. `work/template-improvement-review/session-management-review-findings.md`
-   — status header (lines 1–25) and Part 1b §1b.5 + §1b.7 (the 17 accepted
-   decisions and the reliability constraint). Read **Part 2 (lines ~373–681)
-   by section on demand** as the user asks about it; do not load it whole
-   unless a question spans it.
-2. `work/template-improvement-review/evaluation/stage2-probes.md` — the probe
-   evidence Part 2 cites (V2 ROTATES; `--bg` env captured and replayed).
+1. `work/template-improvement-review/evaluation/stage3-design-v2.md` — the
+   design (158 lines; read whole, it is the user-facing text).
+2. `work/template-improvement-review/session-management-review-findings.md`
+   Part 3 only (from line 688, 76 lines): amendments, cut list, decisions.
 3. `work/template-improvement-review/handoff.md` — top block only.
-4. For Stage 3 only: `evaluation/stage1-architect-review.md` §7(c)/(d) and
-   `evaluation/stage1-scenario-evaluation.md` §B/§D.
+4. For Stage 4 only: `evaluation/stage3-developer-review.md` §4 (migration
+   order, first vertical slice) and §8; Part 3 "What Stage 4 needs".
 
 ## Do NOT reload
 
-`review.md`, `decisions.md` (append only), backlog HTML whole, the big scripts
-whole (grep the cited lines only), `stage1-reevaluation-vs-main.md`,
-`skills/session-rollover/SKILL.md` until you actually roll over.
+Part 2 (superseded), Part 1/1b, the stage1-* and stage3 architect/scenario
+reports (Part 3 has the synthesis), `review.md`, `decisions.md` (append
+only), backlog HTML whole, big scripts whole.
 
 ## State snapshot
 
-- `main` = session-7 commits on top of dfd2d58; clean after this rollover's
-  commit; ahead of origin by local commits only (do not push).
-- Supervisor pid 72900 live on pre-a213b3d `session-loop.sh` code (hazard).
-  Do NOT edit `session-loop.sh`; decision 12 applies before any edit.
-- No code changes yet. F10 small defects remain for Stage 4's first phase.
-- Review artifact published (private): see step 3.
+- `main` = 2dc0d6e + this rollover's commit; clean; ahead of origin locally
+  (do not push).
+- Supervisor pid 72900 still live on pre-a213b3d `session-loop.sh` (hazard).
+  No edit to that file before decision 12 (end the chain at an interactive
+  pause). No code changes yet; F10 small defects wait for Stage 4 phase 1.
+- Design v2 page (private): https://claude.ai/artifact/2VMbASSbqw1JN4JTeC9jrb. Part 2 page (superseded):
+  https://claude.ai/artifact/4KeTb5seRPdSS8AtEKQmmV
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
 2. Read inputs 1–3.
-3. **Open by presenting the review documents to the user**, verbatim:
-   - Rendered page (Part 2 + probe appendix, private):
-     https://claude.ai/artifact/4KeTb5seRPdSS8AtEKQmmV
-   - Source: `work/template-improvement-review/session-management-review-findings.md`
-     Part 2 (from the `# Part 2` heading, ~line 373) and
-     `work/template-improvement-review/evaluation/stage2-design-part2.md`
-     (standalone copy); probe evidence
-     `work/template-improvement-review/evaluation/stage2-probes.md`.
-   - Remind them of the five open questions in Part 2 §(m) and that Stage 3
-     starts only on their go. Then STOP and wait for questions.
-4. Answer review questions; log decisions; edit Part 2 in place if the user
-   changes something (dated). Every ~10 exchanges run
-   `scripts/context-budget.sh record --label "review Q&A"`.
+3. Present to the user, verbatim: the v2 page URL, the source path, and the
+   three decisions from v2 § "Decisions needed" with the recommendations
+   (D1 drop the unknowable logout code; D2 occupation rule, no number spent;
+   D3 accept the identity heuristic). Then STOP and wait.
+4. On each decision: `/decision`, edit v2 in place (dated), and if it changes
+   the support matrix or a gate, say so. Every ~10 exchanges:
+   `scripts/context-budget.sh record --label "v2 review Q&A"`.
 
-## Stage 3 recipe (only on the user's explicit go)
+## Stage 4 recipe (only on the user's explicit go)
 
-Dispatch two agents in parallel, same shape as Stage 1 (each returns a
-≤600-word summary + a report under `evaluation/stage3-*.md`; parent reads
-summaries only): (1) a fresh architect agent — AGREE/AMEND/REJECT per Part 2
-section with reasons, hidden couplings, simplicity; (2) a scenario/flow agent
-— per-scenario YES/PARTLY/NO over S1–S10 / E / I and walks of the three loops
-(measure / rollover / supervise) against Part 2. Give each Part 2, inputs 2
-and 4, §1b.5/§1b.7, the §(m) questions and any user decisions from the
-review. Synthesize into **Part 3** appended to the findings file, apply
-accepted amendments to Part 2 in place (dated), `record --label "Stage 3
-evaluation done"`, commit, STOP for the user's go on Stage 4.
+Write **Part 4 — implementation plan** (≤ ~120 lines, same readability
+rule) from v2 + Part 3 + developer review §4: ordered phases, each a
+vertical slice with its test; phase 0 = decision 12 (end pid 72900), root
+`ROLLOVER_RELAUNCH=manual` + this item's committed `auto` override, `jq` as
+hard `req`; phase 1 = record helper + its test; then fleet extraction (pure
+move), context-budget verbs, launcher, supervisor (`main "$@"` first),
+dispatcher, docs/skill/env; F10 defects folded into the phase that touches
+each file. Delegate the draft to one Plan agent (give it v2, Part 3, dev §4/§8,
+`docs/context-budget.md` headings, `tests/` listing); parent reads the
+summary + the plan. Append as Part 4, update the status header, `record
+--label "Stage 4 plan drafted"`, commit, STOP for the user's review. Then
+`/to-tickets` on the user's acceptance.
