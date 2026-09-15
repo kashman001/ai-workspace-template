@@ -683,5 +683,170 @@ TF_SESSION_LOOP_PROJECT=testproj run_as sup3 register \
                  || bad "T21h: a child consumed the successor's handshake"
 rm -f "$TMP/work/testproj/.active-session" "$TMP/.context-budget/successor-pending-"*.json
 
+echo "S1: P1' — record/register name an unstaged successor under a supervisor (B1)"
+# The predicate is "a supervised session is past its budget and the handshake
+# has not completed", read from the session's own end. Neither leg is
+# agent-authored: .next-command is written only by --emit, the budget is
+# measured from the transcript. Hermetic like T20 — a supervised test runner
+# would otherwise leak in through TF_SESSION_LOOP_PROJECT.
+unset TF_SESSION_LOOP_PROJECT
+S1LOOP="$TMP/work/testproj/.session-loop"
+S1NEXT="$TMP/work/testproj/.next-command"
+rm -f "$S1LOOP" "$S1NEXT" "$TMP/work/testproj/.active-session"
+assert_absent() { case "$2" in *"$3"*) bad "$1 (unwanted [$3] in [$2])" ;; *) ok "$1" ;; esac; }
+s1_supervisor() {   # a live supervisor marker for testproj
+  jq -n --argjson pid "$$" --arg p testproj --arg s "2026-01-01T00:00:00Z" \
+    '{pid:$pid, project:$p, started_at:$s}' > "$S1LOOP"
+}
+mk_transcript s1ok   50000
+mk_transcript s1warn 125000
+mk_transcript s1stop 155000
+
+# S1a: H1 — below WARN, silent. Mutation red: drop the budget leg and every
+# healthy session is told to stage, its whole life, because the supervisor
+# consumes .next-command BEFORE the run. That is exactly how P1 died.
+s1_supervisor
+err=$(run_as s1ok record --project testproj --label s1a 2>&1 >/dev/null)
+assert_eq "S1a: below WARN, silent" "$err" ""
+
+# S1b: H2 — WARN, nothing staged, live supervisor. It speaks, and it names BOTH
+# legitimate endings, because H3 (a session deliberately ending the chain) sits
+# inside the same predicate and is correct.
+err=$(run_as s1warn record --project testproj --label s1b 2>&1 >/dev/null)
+assert_contains "S1b: WARN names the unstaged successor" "$err" "successor: NOT STAGED"
+assert_contains "S1b2: it gives the staging command" "$err" "launch-next-session.sh testproj --emit"
+assert_contains "S1b3: it names quitting as a correct ending" "$err" "to end it:"
+
+# S1c: exit codes untouched — 0/1/2 keep meaning OK/WARN/STOP only. This is the
+# difference between P1' and the rejected P5: it never tells a compliant
+# rollover it did something wrong.
+run_as s1warn record --project testproj --label s1c >/dev/null 2>&1; rc=$?
+assert_eq "S1c: WARN still exits 1" "$rc" "1"
+run_as s1stop record --project testproj --label s1c2 >/dev/null 2>&1; rc=$?
+assert_eq "S1c2: STOP still exits 2" "$rc" "2"
+
+# S1d: stdout untouched — one status line, so no consumer parsing it breaks.
+out=$(run_as s1stop record --project testproj --label s1d 2>/dev/null)
+assert_eq "S1d: stdout is still a single line" "$(printf '%s' "$out" | wc -l | tr -d ' ')" "0"
+assert_contains "S1d2: stdout is the status line" "$out" "status=STOP"
+
+# S1e: leg 2 — once --emit has staged, the advisory goes quiet.
+printf 'claude -p "next"\n' > "$S1NEXT"
+err=$(run_as s1stop record --project testproj --label s1e 2>&1 >/dev/null)
+assert_eq "S1e: a staged successor silences it" "$err" ""
+rm -f "$S1NEXT"
+
+# S1f: H4 — unsupervised. No supervisor, no chain to strand.
+rm -f "$S1LOOP"
+err=$(run_as s1stop record --project testproj --label s1f 2>&1 >/dev/null)
+assert_eq "S1f: unsupervised, silent" "$err" ""
+
+# S1g: strictly exit 0 — an ambiguous supervision answer stays silent. A
+# spurious advisory is cheap; a wrong one trains the reader to ignore it.
+sleep 0 & s1dead=$!; wait "$s1dead" 2>/dev/null
+jq -n --argjson pid "$s1dead" --arg p testproj --arg s "2026-01-01T00:00:00Z" \
+  '{pid:$pid, project:$p, started_at:$s}' > "$S1LOOP"
+err=$(run_as s1stop record --project testproj --label s1g 2>&1 >/dev/null)
+assert_eq "S1g: ambiguous supervision, silent" "$err" ""
+s1_supervisor
+
+# S1h: no project named and none recorded — nothing to ask about. (s1stop is
+# still unregistered at this point; S1i registers it.)
+err=$(run_as s1stop record --label s1h 2>&1 >/dev/null)
+assert_eq "S1h: no project, silent" "$err" ""
+
+# S1i: the invocation the workspace discipline actually prescribes is
+# `record --label "<checkpoint>"` with NO --project. It resolves the project
+# from this session's own record — cmd_release's idiom, never a newest-mtime
+# guess.
+rm -f "$TMP/work/testproj/.active-session"
+run_as s1stop register --project testproj --quiet >/dev/null 2>&1
+err=$(run_as s1stop record --label s1i 2>&1 >/dev/null)
+assert_contains "S1i: bare record resolves its own project" "$err" "successor: NOT STAGED"
+
+# S1j: register speaks too — a supervised successor's first boundary.
+rm -f "$TMP/work/testproj/.active-session"
+err=$(run_as s1stop register --project testproj 2>&1 >/dev/null)
+assert_contains "S1j: register speaks" "$err" "successor: NOT STAGED"
+
+# S1k: --quiet suppresses it, like note().
+err=$(run_as s1stop record --project testproj --label s1k --quiet 2>&1 >/dev/null)
+assert_eq "S1k: --quiet suppresses it" "$err" ""
+
+# S1l: NOT in emit_check(). children/watch call it for OTHER sessions, where
+# .next-command says nothing about the caller; `check` is the reachable proxy.
+err=$(run_as s1stop check --project testproj 2>&1 >/dev/null)
+assert_eq "S1l: check does not speak" "$err" ""
+
+# S1m: a sub-agent is not the chain, and must never be told to stage the
+# parent's successor.
+run_as s1stop register --project testproj --quiet >/dev/null 2>&1   # parent holds the lock
+mk_transcript s1child 155000
+err=$(run_as s1stop register --transcript "$PROJ_DIR/s1child.jsonl" \
+        --parent-session s1stop --project testproj 2>&1 >/dev/null)
+assert_absent "S1m: a child says nothing about the chain" "$err" "successor: NOT STAGED"
+
+rm -f "$S1LOOP" "$S1NEXT" "$TMP/work/testproj/.active-session"
+
+echo "N1: --session-id — a read-only pin so check measures a NAMED session (Q3)"
+# P4a plumbing (session-chain-observability, spec.md 4.1). The supervisor has to
+# ask the budget question about its CHILD. Run in the supervisor's own env, check
+# answers about whatever session discovery lands on -- newest-mtime when no env
+# identity matches, which is the false-STOP bug this registry exists to stop. The
+# pin names the session instead of guessing at it, and it is read-only: a
+# supervisor asking a question must never re-pin, re-register, or touch a record
+# that belongs to the session it is asking about.
+CB_STATE="$TMP/.context-budget"
+snap_state() {  # every state file, with mtime and content — the read-only oracle
+  find "$CB_STATE" -type f 2>/dev/null | sort | while read -r f; do
+    printf '%s %s %s\n' "$f" \
+      "$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null)" "$(cksum < "$f")"
+  done
+}
+mk_transcript pin-live 155000
+run_as pin-live register --quiet >/dev/null 2>&1
+mk_transcript pin-asker 1000
+run_as pin-asker register --quiet >/dev/null 2>&1
+
+out=$(run_as pin-asker check --session-id pin-live); rc=$?
+assert_contains "N1a: the pin measures the named session, not the caller" "$out" "tokens=155000"
+assert_contains "N1b: and names the pinned session's artifact" "$out" "artifact=$PROJ_DIR/pin-live.jsonl"
+assert_eq "N1c: the exit code is the pinned session's status (STOP)" "$rc" "2"
+
+# The runtime of the session being ASKED about must not come from the asker's
+# env: a claude supervisor can run a codex child. The registry already knows it.
+printf '{"last_token_usage":{"total_tokens":4242}}\n' > "$TMP/home/codex-pin.jsonl"
+jq -n --arg af "$TMP/home/codex-pin.jsonl" \
+  '{runtime:"codex", session_id:"pin-codex", artifact:$af}' \
+  > "$CB_STATE/sessions/codex-pin-codex.json"
+out=$(CLAUDE_CODE_SESSION_ID=pin-asker "$CB" check --session-id pin-codex)
+assert_contains "N1d: runtime comes from the registry, not the caller's env" "$out" "runtime=codex"
+assert_contains "N1e: and the pinned codex session is measured" "$out" "tokens=4242"
+
+before="$(snap_state)"
+run_as pin-asker check --session-id pin-live >/dev/null 2>&1
+assert_eq "N1f: the pin writes nothing — no re-pin, no record, no ledger" \
+  "$(snap_state)" "$before"
+
+err=$(run_as pin-asker check --session-id no-such-session 2>&1 >/dev/null); rc=$?
+assert_eq "N1g: an unregistered id is refused, not guessed around" "$rc" "3"
+assert_contains "N1h: the refusal names the id it could not find" "$err" "no-such-session"
+
+# Writing commands must never take the pin: register/record would stamp the
+# caller's measurement onto a foreign identity, which is M13 with extra steps.
+err=$(run_as pin-asker record --session-id pin-live 2>&1 >/dev/null); rc=$?
+assert_eq "N1i: record refuses the pin (it writes)" "$rc" "3"
+assert_contains "N1j: and says the pin is check-only" "$err" "check"
+err=$(run_as pin-asker register --session-id pin-live --quiet 2>&1 >/dev/null); rc=$?
+assert_eq "N1k: register refuses the pin" "$rc" "3"
+
+# Two identities in one invocation is ambiguous; silently preferring either one
+# is how a read ends up measuring a session nobody asked about.
+err=$(run_as pin-asker check --session-id pin-live \
+        --transcript "$PROJ_DIR/pin-asker.jsonl" 2>&1 >/dev/null); rc=$?
+assert_eq "N1l: --session-id with --transcript is refused" "$rc" "3"
+
+rm -f "$CB_STATE/sessions/codex-pin-codex.json"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -167,6 +167,13 @@ External services are documented in `docs/service-access.md`. MCP setup is
 documented in `docs/mcp-setup.md`. Credentials live in the OS keychain —
 never in tracked files or `.env`.
 
+**GitHub auth has one exception.** The `gh` CLI login is the path for every
+GitHub repo — unless one machine carries two GitHub identities, in which case a
+single repo can be given its own fine-grained token plus a path-scoped git
+credential helper, so pushes to it stop prompting. Optional, macOS-only, and off
+by default: `scripts/setup-github-repo-access.sh --owner <o> --repo <r>` wires
+it, `docs/service-access.md` → "GitHub — repo-scoped access" explains it.
+
 ## First-run Setup
 
 Agents bringing this workspace up on a machine: run the `scripts/check-*.sh`

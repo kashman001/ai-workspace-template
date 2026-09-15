@@ -34,7 +34,7 @@ mk_record() {  # $1=runtime $2=session-id $3=project
 # All runtime-identity env vars cleared per call unless a test sets one.
 # CONTEXT_LOCK_STALE_SECS is scrubbed too: a developer shell exporting a small
 # value would make the live-holder fixtures (G1/G5/G9/G10) spuriously red.
-run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
+run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID -u OPENCODE_SESSION_ID \
   -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
   -u ROLLOVER_RELAUNCH -u ROLLOVER_RUNTIME -u CONTEXT_LOCK_STALE_SECS "$@"; }
 
@@ -53,7 +53,11 @@ out=$(run_lns CODEX_THREAD_ID=th-bbb "$LNS" testproj --dry-run 2>&1)
 assert_contains "T2a: runtime resolved" "$out" "runtime=codex"
 assert_contains "T2b: codex argv"       "$out" "cmd: codex"
 
-echo "T3: no env identity — newest record with matching project wins"
+# D17 note: gemini is now IN the env table (its id is the constant "workspace"),
+# so this case resolves through the env leg, not the fallback. It still pins
+# what it always pinned -- runtime resolved from the record rather than from
+# ROLLOVER_RUNTIME. G6 and D17h are the fallback's own tests.
+echo "T3: no exported session id — the record for this project resolves the runtime"
 rm -f "$SESS"/*.json; mk_record gemini workspace testproj
 out=$(run_lns "$LNS" testproj --dry-run 2>&1)
 assert_contains "T3a: runtime from project record" "$out" "runtime=gemini"
@@ -470,11 +474,17 @@ assert_contains "U3b: says so"                   "$out" "nothing staged"
 # rewind is refused and the explicit seq-sync remedy named.
 printf '12\n' > "$TMP/work/testproj/.session-seq"
 printf 'stale\n' > "$TMP/work/testproj/.next-command"
+# The identity sidecar --emit writes beside the command must go with it (R2.20).
+# A sidecar that outlives its command is not inert: it pairs with whatever is
+# hand-staged next, and the supervisor's checksum leg is then the only thing
+# standing between that mismatched pair and an inherited command.
+printf '{"project":"testproj"}\n' > "$TMP/work/testproj/.next-command.json"
 out=$(run_lns "$LNS" testproj --unstage 2>&1); rc=$?
 assert_eq       "U4a: files removed -> exit 0"    "$rc" "0"
 assert_contains "U4b: rewind refused"             "$out" "refusing to rewind"
 assert_eq "U4c: counter untouched" "$(cat "$TMP/work/testproj/.session-seq")" "12"
 assert_eq "U4d: staged command gone" "$(test -f "$TMP/work/testproj/.next-command" && echo present || echo gone)" "gone"
+assert_eq "U4e: identity sidecar gone with it" "$(test -f "$TMP/work/testproj/.next-command.json" && echo present || echo gone)" "gone"
 
 # Contradictory modes are refused at parse time.
 for bad in "--clear" "--emit /tmp/x" "--bg"; do
@@ -1063,8 +1073,11 @@ echo "S2: live supervisor + --emit — allowed; staging is the correct action"
 # supervisor the launcher refuses to bump without an identity, because the bump
 # record IS the rollover verdict and one with no session_id cannot be matched to
 # the session that wrote it. A registered session always has this file.
+# D17: the record alone is not identity -- the session must be able to name
+# itself, which a real claude session does by exporting CLAUDE_CODE_SESSION_ID.
+# Before D17's fix this fixture passed on the record alone, which is the hole.
 s_reset; mk_marker $$; mk_record claude sid-emit testproj; printf '7\n' > "$SEQF2"
-out=$(run_lns "$LNS" testproj --runtime claude --emit "$EMITF2" </dev/null 2>&1); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-emit "$LNS" testproj --runtime claude --emit "$EMITF2" </dev/null 2>&1); rc=$?
 assert_eq "S2a: exit 0"           "$rc" "0"
 assert_eq "S2b: counter bumped"   "$(cat "$SEQF2" 2>/dev/null)" "8"
 [ -s "$EMITF2" ] && ok "S2c: command staged" || bad "S2c: nothing staged at $EMITF2"
@@ -1169,6 +1182,82 @@ assert_contains     "S12e: names the dead pid"  "$out" "pid is not alive"
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$TMP/context-budget.env"
 s_reset
 
+# ---------------------------------------------------------------------------
+# D17 (work/session-loop-hardening/defects.md) — the supervised identity
+# refusal above keyed on $REC, which own_record() resolves by falling back to
+# the NEWEST record claiming this project when no env identity matches. That
+# fallback is documented at its own definition as "a HINT for runtime
+# resolution and logging only; it grants and denies nothing" — but the refusal
+# read it, so it granted. A session that never registered, rolling over under a
+# supervisor on a work item with ANY prior session record, passed the check and
+# stamped the bump with a stranger's runtime/session_id. The supervisor then
+# reads identity off that bump and the self-kill hook compares it to the live
+# session's, so neither ever matches: the chain runs to its cap, silently,
+# which is precisely the degradation R2.17 §1 exists to refuse.
+#
+# The refusal now keys on $OWN_ENV_REC — positive identity, an exported session
+# id with a registry record under that exact id. $REC keeps doing runtime
+# resolution and logging, where its own comment says it belongs.
+#
+# The tightening is only safe because env_session_record() was widened to the
+# same SIX runtimes context-budget.sh session_id_for() covers (it carried four;
+# design.md flagged the four-vs-six drift in session 25 and R2.17 §1 worked
+# around it by widening own_record instead). opencode exports
+# OPENCODE_SESSION_ID and registers under it, so it has real positive identity
+# and keeps its chain; gemini's id is the constant "workspace", which is
+# workspace-scoped rather than per-session — the strongest identity gemini has,
+# and the same one context-budget.sh already registers it under.
+#
+# Mutation that makes D17a-d red: key the refusal on $REC again.
+# Mutation that makes D17f/D17g red: drop the opencode/gemini rows from
+# env_session_record() — those runtimes lose supervised rollover entirely.
+# ---------------------------------------------------------------------------
+echo "D17: the supervised identity refusal keys on POSITIVE identity, not on the newest record"
+s_reset; mk_marker $$; mk_record claude sid-stranger testproj; printf '7\n' > "$SEQF2"
+out=$(run_lns "$LNS" testproj --runtime claude --emit "$EMITF2" </dev/null 2>&1); rc=$?
+assert_eq       "D17a: refused — a record this session cannot prove is its own grants nothing" "$rc" "3"
+assert_contains "D17b: the refusal names the remedy" "$out" "register --project testproj"
+assert_eq       "D17c: the refusal cost no counter bump" "$(cat "$SEQF2")" "7"
+assert_eq       "D17d: and staged nothing" \
+                "$([ -s "$EMITF2" ] && echo staged || echo none)" "none"
+
+echo "D17e: the same session WITH its exported id is allowed, and stages"
+s_reset; mk_marker $$; mk_record claude sid-own testproj; printf '7\n' > "$SEQF2"
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-own "$LNS" testproj --emit "$EMITF2" </dev/null 2>&1); rc=$?
+assert_eq "D17e1: exit 0"         "$rc" "0"
+assert_eq "D17e2: counter bumped" "$(cat "$SEQF2")" "8"
+[ -s "$EMITF2" ] && ok "D17e3: command staged" || bad "D17e3: nothing staged at $EMITF2"
+
+echo "D17f: opencode exports OPENCODE_SESSION_ID and registers under it — it keeps its chain"
+# The population the tightening could have cost. R2.17 §1 widened own_record()
+# for it on the belief that it had no env session id; context-budget.sh:390 and
+# :346 show it does, and `register` names the record opencode-$OPENCODE_SESSION_ID.json.
+s_reset; mk_marker $$; mk_record opencode oc-1 testproj; printf '7\n' > "$SEQF2"
+out=$(run_lns OPENCODE_SESSION_ID=oc-1 "$LNS" testproj --emit "$EMITF2" </dev/null 2>&1); rc=$?
+assert_eq "D17f1: exit 0"           "$rc" "0"
+assert_eq "D17f2: counter bumped"   "$(cat "$SEQF2")" "8"
+assert_eq "D17f3: the bump carries opencode's own id, not a stranger's" \
+          "$(jq -r '.session_id' "$TMP/work/testproj/.session-seq.bump.json" 2>/dev/null)" "oc-1"
+
+echo "D17g: gemini's constant id is the strongest identity it has, and it counts"
+# session_id_for() registers every gemini session as gemini-workspace (no
+# per-session identity exists for that runtime). Workspace-scoped, not
+# session-scoped — accepted deliberately: refusing it instead would end gemini's
+# supervised chains, and every other reader in the chain already keys on the
+# same constant.
+s_reset; mk_marker $$; mk_record gemini workspace testproj; printf '7\n' > "$SEQF2"
+out=$(run_lns "$LNS" testproj --runtime gemini --emit "$EMITF2" </dev/null 2>&1); rc=$?
+assert_eq "D17g1: exit 0"         "$rc" "0"
+assert_eq "D17g2: counter bumped" "$(cat "$SEQF2")" "8"
+
+echo "D17h: a stranger's record still resolves the RUNTIME — the fallback keeps its real job"
+# The fix removes the fallback's authority, not the fallback. G6 is the same
+# argument for the lock-release path.
+s_reset; mk_record codex th-hint testproj
+out=$(run_lns "$LNS" testproj --dry-run 2>&1)
+assert_contains "D17h1: runtime still resolved from the project record" "$out" "runtime=codex"
+s_reset
+
 echo "K: D8/R2.10 — the live-lock refusal names the holding PROCESS, or says why it cannot"
 # The refusal itself is G1's business; H pins what R2.10 added to it. Mutations
 # that make these red: K2 — report .pid without re-checking pid_start (K2a goes
@@ -1235,6 +1324,29 @@ assert_contains "K3c: orphan named as such"      "$out" "NO supervisor is runnin
 assert_contains "K3d: and given a concrete exit" "$out" "kill $live"
 kill "$live" "$sup" 2>/dev/null; wait "$live" "$sup" 2>/dev/null
 rm -f "$LOCKF"
+
+# ---------------------------------------------------------------------------
+# CL: P6 — the launcher half of the .chain-closed gate (scenario table B2).
+# The supervisor carries its own copy of this gate, but it cannot be the only
+# one: an UNSUPERVISED rollover never runs session-loop.sh, so without a read
+# here the next session to roll over into a closed work item reopens it.
+#
+# Mutation: delete the CLOSEDF block from launch-next-session.sh -> CL1a-CL1c red.
+# ---------------------------------------------------------------------------
+echo "CL1: the launcher refuses to stage a successor into a closed chain"
+CLOSEDF="$TMP/work/testproj/.chain-closed"
+printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","top_ledger_seq":"","written_by":"session-loop.sh"}\n' > "$CLOSEDF"
+out=$(run_lns "$LNS" testproj --dry-run 2>&1); rc=$?
+assert_eq       "CL1a: refused with the launcher's refusal status" "$rc" "3"
+assert_contains "CL1b: it names the marker file"     "$out" ".chain-closed"
+assert_contains "CL1c: it names the session that closed the chain" "$out" "session #8"
+assert_contains "CL1d: it names the explicit reopen" "$out" "--reopen"
+assert_contains "CL1e: and says nothing was staged"  "$out" "Nothing has been staged"
+# The gate is a plain file test, so removing the marker restores the previous
+# behaviour exactly — no residue, which is what makes --reopen a complete undo.
+rm -f "$CLOSEDF"
+out=$(run_lns "$LNS" testproj --dry-run 2>&1); rc=$?
+assert_eq       "CL1f: with no marker the launcher is unaffected" "$rc" "0"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

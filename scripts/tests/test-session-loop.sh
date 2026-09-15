@@ -24,7 +24,7 @@ printf '%s\n' 'work/*/.session-seq' 'work/*/.session-seq.provenance.json' \
   'work/*/.session-seq.bump.json' \
   'work/*/.rollover-complete' 'work/*/.next-command' 'work/*/.session-loop' \
   'work/*/.session-loop.log' 'work/*/.session-loop.alarm-stop' \
-  'work/*/.session-loop.budget' \
+  'work/*/.session-loop.budget' 'work/*/.chain-closed' \
   'work/*/.active-session' > "$MAIN/.gitignore"
 git -C "$MAIN" init -q
 git -C "$MAIN" config user.email t@t; git -C "$MAIN" config user.name t
@@ -32,7 +32,7 @@ git -C "$MAIN" add -A; git -C "$MAIN" commit -qm init
 SL="$MAIN/scripts/session-loop.sh"
 W="$MAIN/work/testproj"
 SEQF="$W/.session-seq"; SENT="$W/.rollover-complete"; NEXT="$W/.next-command"
-BUDGET="$W/.session-loop.budget"
+BUDGET="$W/.session-loop.budget"; CLOSED="$W/.chain-closed"
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
@@ -164,8 +164,37 @@ EOF
 mk_stub
 export STUB_W="$W" STUB_SELF="$TMP/stub.sh"
 
-reset() { printf '8\n' > "$SEQF"; rm -f "$SENT" "$NEXT" "$W/.session-loop" "$BUDGET";
-          printf '%s\n' "$TMP/stub.sh" > "$NEXT"; }
+# D18 — stage a command the way launch-next-session.sh --emit does: the command
+# itself AND the identity sidecar the supervisor's bootstrap reads to decide
+# whether a staged command is this chain's own unconsumed work or debris left by
+# an earlier one. Every PRE-START staging in this suite goes through here; hand-
+# writing the pair in twenty-five places is how the next edit forgets one, and a
+# forgotten sidecar is indistinguishable from the R3 case below.
+#
+# The stubs deliberately do NOT write one: they stage mid-chain, and the sidecar
+# is read at the bootstrap and nowhere else (every later iteration consumes
+# $NEXTF before its run, so a non-empty file there is provably the chain's own).
+#
+# $2 overrides written_at, which is what makes an ALREADY-CONSUMED command
+# expressible: a staging that predates a session record for the same work item.
+stage_next() {   # $1 = command line, $2 = written_at override (optional)
+  printf '%s\n' "$1" > "$NEXT"
+  jq -n --arg project testproj \
+        --argjson seq "$(( $(tr -cd '0-9' < "$SEQF") - 1 ))" \
+        --argjson successor "$(tr -cd '0-9' < "$SEQF")" \
+        --arg runtime stub \
+        --arg session_id "sid-staged" \
+        --arg written_at "${2:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" \
+        --arg command_cksum "$(cksum < "$NEXT")" \
+        '{project:$project, seq:$seq, successor:$successor, runtime:$runtime,
+          session_id:$session_id, written_at:$written_at,
+          command_cksum:$command_cksum, written_by:"launch-next-session.sh"}' \
+    > "$NEXT.json"
+}
+
+reset() { printf '8\n' > "$SEQF"; rm -f "$SENT" "$NEXT" "$NEXT.json" "$NEXT.stale" \
+                                        "$W/.session-loop" "$BUDGET" "$CLOSED";
+          stage_next "$TMP/stub.sh"; }
 
 # --min-lifetime 0 on every case that expects an iteration to be JUDGED CLEAN:
 # stubs return instantly, so the Task 6 guard (default 60s) would halt the chain
@@ -345,7 +374,7 @@ printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub
 stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-bookkeeping.sh"
-printf '%s\n' "$TMP/stub-bookkeeping.sh" > "$NEXT"
+stage_next "$TMP/stub-bookkeeping.sh"
 STUB_SELF="$TMP/stub-bookkeeping.sh" "$SL" testproj --max-sessions 9 --min-lifetime 0 \
   --stall-limit 3 >"$TMP/p1" 2>&1 </dev/null; rc=$?
 assert_eq       "P1a: exit 1 (halt)"                 "$rc" "1"
@@ -380,7 +409,7 @@ printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub
 stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-progress.sh"
-printf '%s\n' "$TMP/stub-progress.sh" > "$NEXT"
+stage_next "$TMP/stub-progress.sh"
 STUB_SELF="$TMP/stub-progress.sh" "$SL" testproj --max-sessions 5 --min-lifetime 0 \
   --stall-limit 3 >"$TMP/p2" 2>&1 </dev/null; rc=$?
 assert_eq "P2a: exit 0 — the chain ran to the cap" "$rc" "0"
@@ -416,7 +445,7 @@ printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub
 stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-ticket.sh"
-printf '%s\n' "$TMP/stub-ticket.sh" > "$NEXT"
+stage_next "$TMP/stub-ticket.sh"
 STUB_SELF="$TMP/stub-ticket.sh" "$SL" testproj --max-sessions 5 --min-lifetime 0 \
   --stall-limit 3 >"$TMP/p3" 2>&1 </dev/null; rc=$?
 assert_eq "P3a: exit 0 — ticket transitions are progress" "$rc" "0"
@@ -431,7 +460,7 @@ echo "P4: stall detection does not apply in interactive mode"
 # must not wait on it — and must not depend on the tty-less environment that
 # would let it exit on its own.
 reset
-printf '%s\n' "$TMP/stub-bookkeeping.sh" > "$NEXT"
+stage_next "$TMP/stub-bookkeeping.sh"
 STUB_SELF="$TMP/stub-bookkeeping.sh" STUB_MODE=interactive \
   "$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 1 \
   >"$TMP/p4" 2>&1 </dev/null &
@@ -482,7 +511,7 @@ printf '{"mode":"%s","seq":%s,"reason":"stub","session_id":"sid","runtime":"stub
 stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-alternating.sh"
-printf '%s\n' "$TMP/stub-alternating.sh" > "$NEXT"
+stage_next "$TMP/stub-alternating.sh"
 # Sessions 8,10,12 commit README.md; 9,11,13 commit only the ledger. With a limit
 # of 2 the chain must reach the cap: a cumulative counter would halt at #11.
 STUB_SELF="$TMP/stub-alternating.sh" "$SL" testproj --max-sessions 6 --min-lifetime 0 \
@@ -535,7 +564,7 @@ echo "A6: a child that fails to run (rc!=0, no sentinel, counter unmoved) halts 
 # cases.)
 # Mutation that makes A6a-A6c red: drop the rc gate from the
 # no-sentinel/delta-0 branch (restore the unconditional quit-path exit 0).
-reset; printf '%s\n' "$TMP/no-such-binary-anywhere" > "$NEXT"
+reset; stage_next "$TMP/no-such-binary-anywhere"
 "$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 >"$TMP/a6" 2>&1 </dev/null; rc=$?
 assert_eq       "A6a: exit 1 (halt), not 0" "$rc" "1"
 # Asserted on the HALT line, not the whole output: the routine per-session
@@ -600,7 +629,7 @@ chmod +x "$TMP/alarm-notify.sh"
 NOTED="$TMP/alarm-notify.log"; export TF_ALARM_LOG="$NOTED"
 
 echo "D5b-a-c: the stall alarm fires while the child is still running"
-reset; printf 'sleep 3\n' > "$NEXT"; : > "$NOTED"
+reset; stage_next 'sleep 3'; : > "$NOTED"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 [ -s "$NOTED" ] && ok "D5b-a: the alarm notified" || bad "D5b-a: the alarm was silent"
@@ -610,7 +639,7 @@ assert_contains "D5b-b: the message names the stall" "$(cat "$NOTED")" "running 
   || bad "D5b-c: the alarm fired once and gave up"
 
 echo "D5b-d: SESSION_LOOP_ALARM defaults to off -- today's behaviour, exactly"
-reset; printf 'sleep 2\n' > "$NEXT"; : > "$NOTED"
+reset; stage_next 'sleep 2'; : > "$NOTED"
 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 # The quit-path chain-ended notification lands in the log too (N-series);
@@ -624,7 +653,7 @@ echo "D5b-e: no alarm subshell outlives the child"
 # plan's pgrep probe cannot work: a bash subshell keeps its parent's argv, so the
 # alarm message never appears in a process line and the probe would pass
 # vacuously whether or not the subshell leaked.
-reset; printf 'sleep 2\n' > "$NEXT"; : > "$NOTED"
+reset; stage_next 'sleep 2'; : > "$NOTED"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 at_return="$(wc -l < "$NOTED" | tr -d ' ')"
@@ -639,7 +668,7 @@ echo "D5b-f: the alarm never holds its caller's pipe open after the loop returns
 # after a chain that has already finished. Measured through a command
 # substitution because that is the shape that exposes it: D5b-e cannot see this,
 # since an orphaned sleep writes nothing to the notify log.
-reset; printf 'sleep 1\n' > "$NEXT"
+reset; stage_next 'sleep 1'
 t0="$(date +%s)"
 out="$(SESSION_LOOP_ALARM=20 "$SL" testproj --max-sessions 1 --min-lifetime 0 \
        --stall-limit 0 2>&1 </dev/null)"
@@ -672,7 +701,7 @@ case "$1" in *"chain ended"*) exit 0 ;; esac
 exec sleep 4
 EOF
 chmod +x "$TMP/slow-hook.sh"
-reset; printf 'sleep 7\n' > "$NEXT"
+reset; stage_next 'sleep 7'
 t0="$(date +%s)"
 out="$(SESSION_LOOP_ALARM=6 SESSION_LOOP_NOTIFY="$TMP/slow-hook.sh" \
        "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null)"
@@ -705,7 +734,7 @@ echo "D5b-h: a plain kill of the supervisor does not leak the alarm forever (TE6
 # the deferred trap fires between the two commands. The 6s sleep gives the
 # kill (delivered ~1-2s in, after the first 1s alarm) >=3s of remaining
 # child runtime either way, per the D5b-g margin retune (TE6 R10(b)(ii)).
-reset; printf '%s\n' "sh -c 'sleep 6; : > $W/.h-child-done'" > "$NEXT"; : > "$NOTED"
+reset; stage_next "sh -c 'sleep 6; : > $W/.h-child-done'"; : > "$NOTED"
 rm -f "$W/.h-child-done"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null &
@@ -794,7 +823,7 @@ stub_r217 "$me"
 EOF
 chmod +x "$TMP/stub-int-survivor.sh"
 reset; rm -f "$W/.stub-int-running" "$W/.stub-int-caught"
-printf '%s\n' "$TMP/stub-int-survivor.sh" > "$NEXT"
+stage_next "$TMP/stub-int-survivor.sh"
 set -m
 STUB_SELF="$TMP/stub-int-survivor.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
@@ -884,7 +913,7 @@ reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
 # not ours. Safe: L7a only checks the file exists, and it runs long before this.
 : > "$W/.session-loop.log"
 _a_alarm=4        # one name for the constant a3's premise guard has to agree with
-printf '%s\n' "$TMP/probe-child.sh live 14 1 0" > "$NEXT"
+stage_next "$TMP/probe-child.sh live 14 1 0"
 SESSION_LOOP_ALARM="$_a_alarm" SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 # Vacuity guard: with no alarm tick at all, a-2 and a-3 pass while proving
@@ -956,7 +985,7 @@ fi
 
 echo "R2.18-b: a child that has stopped writing IS paged, and named as silent"
 reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
-printf '%s\n' "$TMP/probe-child.sh mute 1 0 6" > "$NEXT"
+stage_next "$TMP/probe-child.sh mute 1 0 6"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 [ -s "$NOTED" ] && ok "R2.18-b1: the silent child was paged" \
@@ -969,7 +998,7 @@ assert_contains "R2.18-b2: the page names transcript silence, not wall-clock" \
 
 echo "R2.18-c: SESSION_LOOP_KILL_AFTER ends a silent child, and the chain halts"
 reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
-printf '%s\n' "$TMP/probe-child.sh dead 1 0 60" > "$NEXT"
+stage_next "$TMP/probe-child.sh dead 1 0 60"
 c_start="$(date +%s)"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_KILL_AFTER=3 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/c18" 2>&1 </dev/null; c_rc=$?
@@ -1001,7 +1030,7 @@ printf '{"runtime":"stub","session_id":"foreign","project":"testproj","pid":1,"p
 printf '{"runtime":"stub","session_id":"foreign","artifact":"%s","project":"testproj"}\n' \
   "$TMP/foreign-transcript" > "$MAIN/.context-budget/sessions/stub-foreign.json"
 : > "$TMP/foreign-transcript"; touch -t 200001010000 "$TMP/foreign-transcript"
-printf '%s\n' "sh -c 'sleep 4; : > $W/.probe-child-done'" > "$NEXT"
+stage_next "sh -c 'sleep 4; : > $W/.probe-child-done'"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_KILL_AFTER=2 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 assert_contains "R2.18-d1: an unidentified child keeps the pre-R2.18 message" \
@@ -1013,7 +1042,7 @@ rm -f "$W/.active-session"
 
 echo "R2.18-e: repeat pages back off, so a multi-day hang is not 368 identical pages"
 reset; rm -f "$W/.active-session" "$W/.probe-child-done"; : > "$NOTED"
-printf '%s\n' "$TMP/probe-child.sh backoff 1 0 9" > "$NEXT"
+stage_next "$TMP/probe-child.sh backoff 1 0 9"
 SESSION_LOOP_ALARM=1 SESSION_LOOP_ALARM_MAX=4 SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >/dev/null 2>&1 </dev/null
 e_n="$(wc -l < "$NOTED" | tr -d ' ')"
@@ -1059,6 +1088,11 @@ cat > "$TMP/forked-session.sh" <<'FORK'
 #!/usr/bin/env bash
 set -u
 unset TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT     # the fork loses them
+# D17: a real claude session names itself by exporting this, and the launcher's
+# supervised identity refusal now keys on that positive identity rather than on
+# the newest record claiming the project. The record below is still required --
+# it is the other half of the same check.
+export CLAUDE_CODE_SESSION_ID=pre-fork
 cd "$V4_MAIN" || exit 9
 me="$(tr -cd '0-9' < work/testproj/.session-seq)"
 # 0. the flush (R2.17 section 7): the supervisor halts a rollover that left both
@@ -1078,7 +1112,7 @@ printf '# launcher (V4 session %s)\n' "$me" > work/testproj/next-session.md
 ./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff || exit 9
 FORK
 chmod +x "$TMP/forked-session.sh"
-printf '%s\n' "$TMP/forked-session.sh" > "$NEXT"
+stage_next "$TMP/forked-session.sh"
 "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/v4" 2>&1; rc=$?
 [ -s "$NEXT" ] && ok "V4a: the forked session staged a successor" \
                || bad "V4a: nothing staged -- C1/C2/C3 regression"
@@ -1120,13 +1154,14 @@ cat > "$TMP/nosync-session.sh" <<'NOSYNC'
 #!/usr/bin/env bash
 set -u
 cd "$V5_MAIN" || exit 9
+export CLAUDE_CODE_SESSION_ID=nosync     # D17: see the V4 fixture above
 printf '# launcher (V5 %s)\n' "$(tr -cd '0-9' < work/testproj/.session-seq)" \
   > work/testproj/next-session.md
 ./scripts/launch-next-session.sh testproj --emit || exit 9
 ./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff || exit 9
 NOSYNC
 chmod +x "$TMP/nosync-session.sh"
-printf '%s\n' "$TMP/nosync-session.sh" > "$NEXT"
+stage_next "$TMP/nosync-session.sh"
 "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/v5" 2>&1; rc=$?
 assert_eq       "V5a: the sentinel carries the number that actually ran" \
                 "$(jq -r '.seq' "$SENT" 2>/dev/null)" "8"
@@ -1206,7 +1241,7 @@ assert_eq "B1a: two sessions recorded as used" "$(jq -r '.used' "$BUDGET" 2>/dev
 assert_eq "B1b: the cap is recorded alongside" "$(jq -r '.cap'  "$BUDGET" 2>/dev/null)" "2"
 # Restart the SUPERVISOR without resetting the chain: exactly what an operator
 # does after a halt. Only .session-loop/.next-command are cleared, never $BUDGET.
-rm -f "$W/.session-loop"; printf '%s\n' "$TMP/stub.sh" > "$NEXT"
+rm -f "$W/.session-loop"; stage_next "$TMP/stub.sh"
 out="$("$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null || true)"
 assert_contains "B1c: the restart resumes, it does not reopen"        "$out" "resuming the chain budget at 2 of 5"
 assert_contains "B1d: the counter continues, it does not restart at 1" "$out" "(3 of 5)"
@@ -1229,7 +1264,7 @@ echo "B3: --reset-cap opens a new budget and the next start is fresh"
 out="$("$SL" testproj --reset-cap 2>&1 </dev/null || true)"
 assert_contains "B3a: the reset reports what it spent" "$out" "chain budget reset (5 of"
 assert_eq       "B3b: the budget file is gone"         "$([ -f "$BUDGET" ] && echo present || echo gone)" "gone"
-printf '%s\n' "$TMP/stub.sh" > "$NEXT"
+stage_next "$TMP/stub.sh"
 out="$("$SL" testproj --max-sessions 2 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null || true)"
 assert_contains "B3c: the fresh budget starts at one" "$out" "(1 of 2)"
 
@@ -1256,6 +1291,501 @@ assert_contains "B5c: the remedy is named"        "$out" "--reset-cap"
 assert_eq       "B5d: it did not stage a session" "$(cat "$SEQF")" "8"
 out="$("$SL" testproj --reset-cap 2>&1 </dev/null || true)"
 assert_contains "B5e: --reset-cap survives the corruption it is the remedy for" "$out" "chain budget reset"
+reset
+
+# ---------------------------------------------------------------------------
+# N-series (D18): the bootstrap's freshness test. Iteration 1 is the ONE place
+# the supervisor runs a command it did not stage itself, and until R2.20 its test
+# for "is this one safe to run" was `[ -s "$NEXTF" ]` — NON-EMPTY read as FRESH.
+#
+# The defect these pin is in work/*/handoff-archive.md (the session-18 addendum):
+# a rollover staged the command that launched #18, a human ran it, the rollover
+# that followed was hands-on and never refreshed the file, and a supervisor
+# started afterwards inherited the spent command and ran it a second time. Two
+# sessions numbered 18; the second took the work item's lock and committed
+# nothing.
+#
+# N1 and N2 are the two halves of the same judgement and must be read together.
+# The tempting one-line fix — stage unconditionally on iteration 1 — makes R1
+# green and R2 red, because a supervisor killed between a child's --emit and the
+# next iteration's consume leaves a command that is genuinely unrun. Discarding
+# THAT burns a session number and loses the mode and options it carries. So the
+# bootstrap does not ask "is something staged", it asks "has it been run".
+#
+# Mutation: replace the gate with `if [ ! -s "$NEXTF" ]` -> N1 and N3 red.
+# Mutation: replace it with an unconditional stage -> N2 red.
+# ---------------------------------------------------------------------------
+# The bootstrap reaches its child through a `claude` shim on PATH, for F1's
+# reason: what is under test is the command the LAUNCHER emits, not one this
+# suite wrote.
+mkdir -p "$TMP/bin"
+printf '#!/usr/bin/env bash\nexec "%s"\n' "$TMP/stub.sh" > "$TMP/bin/claude"
+chmod +x "$TMP/bin/claude"
+# Every N case starts from a plain terminal, never from inside a session — the
+# same env hygiene F1 needs, for the same reason.
+run_bootstrap() {   # -> $out, $rc
+  PATH="$TMP/bin:$PATH" env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
+    -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG -u OPENCODE_SESSION_ID \
+    "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+    >"$TMP/rout" 2>&1 </dev/null; rc=$?
+  out="$(cat "$TMP/rout")"
+}
+
+echo "N1: a staged command that has ALREADY been run is not inherited (the s18 defect)"
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+# The shape of a spent command: staged at T, and a session registered against
+# this work item after T. That session IS the consumer — nothing else can say so,
+# because "staged for #8" and "staged for #8 and already run" both leave the
+# counter at 8.
+stage_next "$TMP/stub.sh" "2000-01-01T00:00:00Z"
+N1REC="$MAIN/.context-budget/sessions/stub-already-ran.json"
+# runtime is "claude", NOT the suite-wide "stub" convention, and that is load-
+# bearing. N1 is one of the three cases that drive the REAL launcher (the rest
+# pre-stage .next-command in reset(), so --emit never runs), and there this
+# record is authoritative: own_record() picks the newest record for the project
+# and launch-next-session.sh reads RUNTIME off it. "stub" is not in the
+# launcher's valid-runtime enumeration, so the bootstrap's re-stage would die
+# with "unknown runtime: stub" and the supervisor would halt — testing the
+# enumeration instead of the consumption check. "claude" matches
+# ROLLOVER_RUNTIME in context-budget.env and the fake claude run_bootstrap puts
+# on PATH, and it is what a real consuming session's record would carry anyway.
+printf '{"runtime":"claude","session_id":"already-ran","project":"testproj","registered_at":"2000-01-02T00:00:00Z"}\n' > "$N1REC"
+run_bootstrap
+assert_eq       "N1a: exit 0, not a halt"                    "$rc" "0"
+assert_contains "N1b: the spent command was discarded"       "$out" "discarding the staged command"
+assert_contains "N1c: named as already run"                  "$out" "already been run"
+assert_contains "N1d: and a fresh session was staged"        "$out" "staging the first session"
+assert_contains "N1e: the session that ran is the NEW one"   "$out" "starting session #9"
+case "$out" in *"starting session #8"*)
+    bad "N1f: session #8 ran a second time — the duplicate-session defect" ;;
+  *) ok "N1f: no session number ran twice" ;; esac
+assert_eq       "N1g: the counter advanced 8 -> 10 (bootstrap + the session)" "$(cat "$SEQF")" "10"
+assert_eq       "N1h: the discarded command was kept as evidence" \
+                "$([ -s "$NEXT.stale" ] && echo kept || echo lost)" "kept"
+rm -f "$N1REC"
+
+echo "N2: a staged command nobody has run IS inherited (a killed supervisor resumes)"
+# The other half of R1. No session record postdates this staging, so the command
+# is this chain's own unconsumed work and discarding it would burn a number.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+stage_next "$TMP/stub.sh"
+run_bootstrap
+assert_eq       "N2a: exit 0, not a halt"                  "$rc" "0"
+assert_contains "N2b: the staged command was inherited"    "$out" "inheriting the staged command"
+case "$out" in *"staging the first session"*)
+    bad "N2c: it re-staged over an unrun command — a session number was burned" ;;
+  *) ok "N2c: it did not re-stage over an unrun command" ;; esac
+assert_contains "N2d: the staged session is the one that ran" "$out" "starting session #8"
+assert_eq       "N2e: the counter advanced 8 -> 9 (the session alone)" "$(cat "$SEQF")" "9"
+
+echo "N3: a staged command with no identity at all is not inherited"
+# The pre-R2.20 shape, and anything hand-written since: a bare command string
+# with nothing saying who wrote it or when. Unprovable is not fresh.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+rm -f "$NEXT.json"
+run_bootstrap
+assert_eq       "N3a: exit 0, not a halt"              "$rc" "0"
+assert_contains "N3b: discarded for want of identity"  "$out" "no identity sidecar"
+assert_contains "N3c: and a fresh session was staged"  "$out" "staging the first session"
+assert_eq       "N3d: the counter advanced 8 -> 10"    "$(cat "$SEQF")" "10"
+
+echo "N4: a staged command whose sidecar does not match it is not inherited"
+# A half-pair: the sidecar is valid and unconsumed but describes different bytes,
+# which is what a hand-edited .next-command looks like.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+stage_next "$TMP/stub.sh"
+printf '%s\n' "$TMP/stub.sh --tampered" > "$NEXT"
+run_bootstrap
+assert_contains "N4a: discarded on the checksum"      "$out" "does not match the checksum"
+assert_contains "N4b: and a fresh session was staged" "$out" "staging the first session"
+reset
+
+echo "F1: a chain starts from a fresh work item — the supervisor stages session 1 itself"
+# The bootstrap, end to end, and the only case in this suite that exercises it:
+# reset() pre-stages .next-command for every other case, so the real launcher
+# call at "staging the first session" never runs in them. That gap is how the
+# identity refusal in launch-next-session.sh came to make a fresh chain
+# unstartable while all 64 cases here stayed green — the supervisor writes
+# .session-loop before it stages, and the supervisor is not a session, so the
+# refusal fired on the one caller that cannot register.
+#
+# The child is reached through a `claude` shim on PATH rather than a staged
+# path, because what is under test is the command the LAUNCHER emits, not one
+# this suite wrote: the bootstrap's whole job is producing that command.
+#
+# Mutation: drop the invoked_by_supervisor clause from the launcher's identity
+# refusal -> F1a-F1d red on "HALT: could not stage the first session".
+# Mutation: wrap session-loop.sh's bootstrap call in $(...) or a pipeline -> the
+# launcher's parent becomes a subshell instead of the supervisor, and the same
+# halt returns. This case is that tripwire.
+reset; rm -f "$NEXT"   # the fresh-work-item state: nothing staged for iteration 1
+export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+mkdir -p "$TMP/bin"
+printf '#!/usr/bin/env bash\nexec "%s"\n' "$TMP/stub.sh" > "$TMP/bin/claude"
+chmod +x "$TMP/bin/claude"
+# A fresh work item has no session record ANYWHERE, and that is load-bearing
+# rather than tidiness: the launcher's identity read falls back past the env
+# table to the newest record claiming this project, so the records the cases
+# above leave behind would supply an identity a new work item cannot have — and
+# the refusal under test would never be reached (measured: with them in place
+# this case passes against the unfixed launcher). Moved aside, not deleted, so
+# the suite stays re-runnable in any order.
+mkdir -p "$TMP/f1-aside"
+mv "$MAIN/.context-budget/sessions/"*.json "$TMP/f1-aside/" 2>/dev/null || true
+# ...and no inherited session id either: the supervisor is started from a plain
+# terminal, never from inside a session, so the env leg must be empty too.
+PATH="$TMP/bin:$PATH" env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
+  -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG -u OPENCODE_SESSION_ID \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/f1" 2>&1 </dev/null; rc=$?
+mv "$TMP/f1-aside/"*.json "$MAIN/.context-budget/sessions/" 2>/dev/null || true
+out="$(cat "$TMP/f1")"
+assert_eq       "F1a: exit 0, not a halt"                    "$rc" "0"
+assert_contains "F1b: the supervisor staged the first session" "$out" "staging the first session"
+case "$out" in *"could not stage the first session"*)
+    bad "F1c: the bootstrap was refused — a fresh chain cannot start" ;;
+  *) ok "F1c: the bootstrap was not refused" ;; esac
+assert_contains "F1d: the staged session actually ran"       "$out" "starting session #9"
+assert_contains "F1e: and was judged a clean rollover"       "$out" "rolled over cleanly"
+assert_eq       "F1f: the counter advanced 8 -> 10 (bootstrap + the session)" "$(cat "$SEQF")" "10"
+reset
+
+# ---------------------------------------------------------------------------
+# K: P6 — .chain-closed. A chain that ended on a DELIBERATE QUIT leaves a
+# marker, and a supervisor refuses to restart that work item without an
+# explicit human act. This is scenario-table row B2: three prose countermeasures
+# in skills/session-rollover/SKILL.md failed on it, so the countermeasure here is
+# mechanical.
+#
+# The K-series is written around one asymmetry: there is exactly ONE writer
+# (the deliberate-quit branch, below the logout discriminator) and that is the
+# whole argument that every H-row stays silent. K4/K5/K6 are that argument as
+# tests — each is an exit path that must leave NO marker, and each was a live
+# chain-ending shape before P6 existed.
+# ---------------------------------------------------------------------------
+
+echo "K1: a deliberate quit leaves a .chain-closed marker naming the session"
+reset; export STUB_BEHAVIOUR=quit
+"$SL" testproj --max-sessions 3 >"$TMP/k1" 2>&1 </dev/null; rc=$?
+assert_eq       "K1a: still exit 0 — a quit is not an error"  "$rc" "0"
+assert_contains "K1b: still classified as a quit" "$(cat "$TMP/k1")" "deliberate quit"
+[ -f "$CLOSED" ] && ok "K1c: the marker was written" || bad "K1c: no .chain-closed marker"
+assert_eq       "K1d: it names the session that ended the chain" \
+  "$(jq -r '.seq' "$CLOSED" 2>/dev/null)" "8"
+assert_contains "K1e: it carries a UTC timestamp" \
+  "$(jq -r '.closed_at' "$CLOSED" 2>/dev/null)" "Z"
+# The ledger verdict already computed at the notify branches, reused rather than
+# recomputed: the refusal can then say whether the closing session left a block.
+assert_eq       "K1f: it carries the ledger verdict (no block for this stub)" \
+  "$(jq -r '.top_ledger_seq' "$CLOSED" 2>/dev/null)" ""
+assert_eq       "K1g: and says who wrote it" \
+  "$(jq -r '.written_by' "$CLOSED" 2>/dev/null)" "session-loop.sh"
+
+echo "K2: a supervisor refuses to restart a chain that was deliberately ended"
+# B2 itself. The refusal must land BEFORE anything is written, so the work item
+# is byte-identical afterwards — otherwise a refused restart still burns a
+# session number or leaves a lock, and the operator pays for asking.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","top_ledger_seq":"","written_by":"session-loop.sh"}\n' > "$CLOSED"
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 >"$TMP/k2" 2>&1 </dev/null; rc=$?
+out="$(cat "$TMP/k2")"
+assert_eq       "K2a: refused with a non-zero status"  "$rc" "3"
+assert_contains "K2b: it names the marker file"        "$out" ".chain-closed"
+assert_contains "K2c: it names the session that ended the chain" "$out" "session #8"
+assert_contains "K2d: it names the explicit override"  "$out" "--reopen"
+assert_eq       "K2e: the counter did not move"        "$(cat "$SEQF")" "8"
+[ -f "$W/.session-loop" ] && bad "K2f: a refused start left a lock behind" \
+  || ok "K2f: no lock left behind"
+[ -f "$BUDGET" ] && bad "K2g: a refused start spent a budget slot" \
+  || ok "K2g: no budget slot spent"
+case "$out" in *"staging the first session"*) bad "K2h: it staged despite the refusal" ;;
+                *) ok "K2h: nothing was staged" ;; esac
+
+echo "K3: --reopen is the explicit human act that reopens a closed chain (H9)"
+# H9 must stay POSSIBLE. Round 2 of work/session-loop-hardening was exactly this
+# act — deliberately reopening a closed item — so a gate with no override would
+# have made that round unrunnable.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","top_ledger_seq":"","written_by":"session-loop.sh"}\n' > "$CLOSED"
+"$SL" testproj --reopen --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/k3" 2>&1 </dev/null; rc=$?
+out="$(cat "$TMP/k3")"
+assert_eq       "K3a: the chain ran"                   "$rc" "0"
+assert_contains "K3b: the reopen is logged, not silent" "$out" "reopening"
+assert_contains "K3c: and it names the session that had closed it" "$out" "session #8"
+[ -f "$CLOSED" ] && bad "K3d: --reopen did not clear the marker" \
+  || ok "K3d: the marker was cleared"
+assert_contains "K3e: the session actually ran"        "$out" "starting session #8"
+
+echo "K4: a VENDOR LOGOUT leaves no marker — the ordering that matters most"
+# The single most important line in P6's implementation. The logout
+# discriminator halts at session-loop.sh:594-598, ABOVE the write site at :599+.
+# Move the write above the discriminator and a logged-out chain is recorded as
+# deliberately closed, which breaks its documented recovery — re-running
+# session-loop.sh <p> — because the supervisor would then refuse to start.
+# T22 owns the classification; this case owns the ordering.
+#
+# Mutation: hoist the .chain-closed write above the `if ... child_logged_out`
+# block -> K4b and K4c go red together.
+reset; export STUB_BEHAVIOUR=logout
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 >"$TMP/k4" 2>&1 </dev/null; rc=$?
+assert_eq       "K4a: still a halt, not a quit"        "$rc" "1"
+[ -f "$CLOSED" ] && bad "K4b: a logout was recorded as a deliberate close" \
+  || ok "K4b: a logout left no marker"
+# The recovery in T22e must still work, not merely be printed.
+export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+stage_next "$TMP/stub.sh"
+"$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/k4b" 2>&1 </dev/null; rc=$?
+assert_eq       "K4c: the documented recovery still starts the chain" "$rc" "0"
+
+echo "K5: the chain CAP leaves no marker (H5) — the item stays resumable"
+# cap_stop is a different exit path (:430/:720) and the table requires the work
+# item to remain resumable after it: the cap means "this budget is spent", never
+# "this work is finished".
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+"$SL" testproj --max-sessions 2 --min-lifetime 0 --stall-limit 0 >"$TMP/k5" 2>&1 </dev/null
+assert_contains "K5a: the cap ended the chain"         "$(cat "$TMP/k5")" "chain cap"
+[ -f "$CLOSED" ] && bad "K5b: the cap was recorded as a deliberate close" \
+  || ok "K5b: the cap left no marker"
+# ...and resumable means the next start is not refused.
+"$SL" testproj --reset-cap >/dev/null 2>&1 </dev/null
+stage_next "$TMP/stub.sh"
+"$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/k5b" 2>&1 </dev/null; rc=$?
+assert_eq       "K5c: and the item restarts after a cap" "$rc" "0"
+
+echo "K6: the interactive pause leaves no marker (H6)"
+# A human stepping out of an interactive chain at the pause exits at :707/:710,
+# never reaching the deliberate-quit branch. Ctrl-C and a closed stdin land on
+# the same two lines; the closed-stdin leg is the one a test can drive.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=interactive
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/k6" 2>&1 </dev/null; rc=$?
+assert_eq       "K6a: exit 0 at the pause"             "$rc" "0"
+[ -f "$CLOSED" ] && bad "K6b: leaving at the pause was recorded as a deliberate close" \
+  || ok "K6b: the pause left no marker"
+reset
+
+# ---------------------------------------------------------------------------
+# P4a (session-chain-observability, spec.md 4.1) — the supervisor says "blocked
+# on the handshake" instead of "still running". Three legs, all read by the
+# supervisor itself: the child is identified and alive, .next-command is empty,
+# and the child is past STOP when asked about BY NAME. The child cannot report
+# this: from the inside it believes its rollover completed.
+#
+# The fixture registers as runtime `claude` (the R2.18 probe-child registers as
+# `stub`, which has no measurement path) so the pinned budget read has a real
+# transcript to measure. Everything else is the R2.18 shape: the child writes
+# its own .active-session naming its pid under this supervisor.
+# ---------------------------------------------------------------------------
+cat > "$TMP/p4a-child.sh" <<'EOF'
+#!/usr/bin/env bash
+# $1 = session_id, $2 = input tokens to report, $3 = seconds alive,
+# $4 = touch|quiet (keep the transcript fresh, or let it go silent),
+# $5 = stage|nostage (stage a successor — i.e. look like B4, not B1)
+set -u
+sid="$1"; tokens="$2"; live="$3"; mode="$4"; stage="$5"
+art="$PC_TMP/transcript-$sid.jsonl"
+printf '{"message":{"usage":{"input_tokens":%s,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}},"isSidechain":false}\n' \
+  "$tokens" > "$art"
+printf '{"runtime":"claude","session_id":"%s","project":"testproj","pid":%s,"pid_start":"x","supervisor_pid":%s}\n' \
+  "$sid" "$$" "$PPID" > "$PC_W/.active-session"
+printf '{"runtime":"claude","session_id":"%s","artifact":"%s","project":"testproj","pid":%s}\n' \
+  "$sid" "$art" "$$" > "$PC_MAIN/.context-budget/sessions/claude-$sid.json"
+[ "$stage" = stage ] && printf 'true\n' > "$PC_W/.next-command"
+while [ "$live" -gt 0 ]; do
+  [ "$mode" = touch ] && touch "$art"
+  sleep 1; live=$((live - 1))
+done
+exit 0
+EOF
+chmod +x "$TMP/p4a-child.sh"
+
+p4a_run() {  # $1 = alarm interval, rest = p4a-child.sh args
+  _al="$1"; shift
+  reset; rm -f "$W/.active-session" "$NEXT"; : > "$NOTED"; : > "$W/.session-loop.log"
+  # N1 above unsets TF_ALARM_LOG; the hook is what proves these cases PAGE
+  # rather than merely log, so re-export it here instead of inheriting.
+  export TF_ALARM_LOG="$NOTED"
+  stage_next "$TMP/p4a-child.sh $*"
+  SESSION_LOOP_ALARM="$_al" SESSION_LOOP_NOTIFY="$TMP/alarm-notify.sh" \
+    "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+    >/dev/null 2>&1 </dev/null || true
+  rm -f "$W/.active-session" "$NEXT"
+}
+p4a_absent() { case "$2" in *"$3"*) bad "$1 (unwanted [$3] in [$2])" ;; *) ok "$1" ;; esac; }
+
+echo "P4a-a: a child past STOP with nothing staged is named as blocked, not as slow"
+p4a_run 2 p4a-stop 155000 9 quiet nostage
+p4a_absent "P4a-a1: fixture conclusive — the probe identified the child" \
+  "$(cat "$NOTED")" "has been running with no exit"
+assert_contains "P4a-a2: the page names the blocked handshake" \
+  "$(cat "$NOTED")" "past its context budget with no successor staged"
+assert_contains "P4a-a3: and the file that is empty" "$(cat "$NOTED")" "$NEXT"
+p4a_absent "P4a-a4: it replaces the silence report, which says nothing about why" \
+  "$(cat "$NOTED")" "has written nothing for"
+
+echo "P4a-b: the same child, still WRITING, is paged too — writing is not progress here"
+# The R2.18 log-only branch exists to stop false pages. This is not one: the
+# three legs are all true, and a session busily writing its handoff while its
+# successor was never staged is exactly B1. Timing is untouched — the writing
+# branch still ticks at ALARM, this only changes what it says.
+p4a_run 4 p4a-write 155000 11 touch nostage
+p4a_absent "P4a-b1: fixture conclusive — the probe identified the child" \
+  "$(cat "$NOTED")" "has been running with no exit"
+assert_contains "P4a-b2: the writing branch pages when the handshake is blocked" \
+  "$(cat "$NOTED")" "past its context budget with no successor staged"
+p4a_absent "P4a-b3: and does not merely log 'still running'" \
+  "$(cat "$W/.session-loop.log")" "is still running (transcript written"
+
+echo "P4a-c: a child INSIDE its budget keeps today's message (H1 stays silent)"
+# The budget leg is the load-bearing one: without it the predicate is true of
+# every healthy session for its whole life, because .next-command is consumed
+# BEFORE the run.
+p4a_run 2 p4a-ok 1000 9 quiet nostage
+assert_contains "P4a-c1: today's silence report, unchanged" \
+  "$(cat "$NOTED")" "has written nothing for"
+p4a_absent "P4a-c2: no blocked-handshake page for a healthy session" \
+  "$(cat "$NOTED")" "past its context budget with no successor staged"
+
+echo "P4a-d: a child past STOP that HAS staged is not P4a's case (that is B4/P4b)"
+p4a_run 2 p4a-staged 155000 9 quiet stage
+assert_contains "P4a-d1: today's silence report, unchanged" \
+  "$(cat "$NOTED")" "has written nothing for"
+p4a_absent "P4a-d2: a staged successor is not a blocked handshake" \
+  "$(cat "$NOTED")" "past its context budget with no successor staged"
+
+# ---------------------------------------------------------------------------
+# P4b (session-chain-observability, spec.md 4.2) — the mirror leg. Predicate:
+# the child is identified and alive AND .next-command is non-empty, observed on
+# TWO CONSECUTIVE intervals. Staging is the last thing a session does and the
+# turn-end hook terminates it, so a child that has staged and is still alive an
+# interval later means the self-kill never fired — D17's shape, or a plain hook
+# misconfiguration. From the inside that session believes it is done, so the
+# supervisor is the only party that can see it.
+#
+# The second interval is the false-page guard, NOT an optimisation: every
+# healthy H2 rollover has a real window between --emit writing .next-command
+# and SIGTERM landing, and one interval of grace makes a fire mean "this has
+# persisted" rather than "I caught the handshake mid-flight".
+#
+# Fixture is p4a-child.sh with `stage` — the same child case P4a-d uses.
+# ---------------------------------------------------------------------------
+echo "P4b-a: a child that staged and is STILL alive two intervals later is paged"
+# Tokens are deliberately INSIDE the budget: P4b must not borrow P4a's
+# past-STOP leg. Ticks land at ~3s and ~9s, NOT ~3s and ~6s: the silent branch
+# doubles its interval after each page, so "two consecutive intervals" is two
+# consecutive TICKS and the second one arrives late. The child must outlive it.
+p4a_run 3 p4b-stuck 1000 12 quiet stage
+p4a_absent "P4b-a1: fixture conclusive — the probe identified the child" \
+  "$(cat "$NOTED")" "has been running with no exit"
+assert_contains "P4b-a2: the page names the self-kill that did not fire" \
+  "$(cat "$NOTED")" "staged a successor and is still running"
+assert_contains "P4b-a3: and points at the bump record to check" \
+  "$(cat "$NOTED")" ".session-seq.bump.json"
+p4a_absent "P4b-a4: a staged successor is never a blocked handshake (P4a's leg)" \
+  "$(cat "$NOTED")" "past its context budget with no successor staged"
+
+echo "P4b-b: ONE interval is the healthy H2 window and must stay silent"
+# Exactly one tick lands (~6s) before the child exits (~8s). This is the guard:
+# the same predicate, one interval short, says nothing.
+p4a_run 6 p4b-brief 1000 8 quiet stage
+assert_contains "P4b-b1: today's silence report, unchanged" \
+  "$(cat "$NOTED")" "has written nothing for"
+p4a_absent "P4b-b2: no page after a single interval" \
+  "$(cat "$NOTED")" "staged a successor and is still running"
+
+echo "P4b-c: the same child, still WRITING, is paged too"
+# The R2.18 log-only branch exists to stop false pages. A child writing away
+# after it staged is not a false page — it is the same stuck handshake seen
+# from the other branch. Ticks at ~4s and ~8s; the child exits at ~11s.
+p4a_run 4 p4b-write 1000 11 touch stage
+assert_contains "P4b-c1: the writing branch pages once the staging persists" \
+  "$(cat "$NOTED")" "staged a successor and is still running"
+# The other half of the same rule, and the reason this is not P4a-b3's
+# assertion: P4a fires on its first tick, so "still running" never appears.
+# P4b's first tick MUST still be the healthy log line — that is the guard.
+assert_contains "P4b-c2: the first interval was still the plain log line — the guard held" \
+  "$(cat "$W/.session-loop.log")" "is still running (transcript written"
+
+echo "P4b-d: a child with NOTHING staged never draws a P4b page (H1 stays silent)"
+p4a_run 2 p4b-none 1000 9 quiet nostage
+p4a_absent "P4b-d1: no self-kill page for a session that has not staged" \
+  "$(cat "$NOTED")" "staged a successor and is still running"
+reset
+
+# ---------------------------------------------------------------------------
+# G1-a (session-chain-observability, spec.md 6.1, approved as 8 Q1) — a work
+# item's own off switch stops a supervisor. B3: this item committed
+# ROLLOVER_RELAUNCH=off and a chain started against it anyway, because the knob
+# was only ever read at the rollover's closing step. Q1 widened its meaning from
+# "do not spawn a successor behind my back" to "do not run me unattended at
+# all", so the supervisor reads the same committed knob at start.
+#
+# Placed ABOVE the P6 gate rather than below it, for P6's own reason taken one
+# step further: --reopen DELETES .chain-closed before it returns, so a G1-a
+# refusal underneath it would refuse a start that had already destroyed
+# evidence. A refused start leaves the work item byte-identical, and that has to
+# include the marker. GA4 is the test of exactly that ordering.
+# ---------------------------------------------------------------------------
+ENVF="$W/context-budget.env"
+
+echo "GA1: a committed ROLLOVER_RELAUNCH=off refuses the chain before anything moves"
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+printf 'ROLLOVER_RELAUNCH=off\n' > "$ENVF"
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/ga1" 2>&1 </dev/null; rc=$?
+out="$(cat "$TMP/ga1")"
+assert_eq       "GA1a: refused with a non-zero status"  "$rc" "3"
+assert_contains "GA1b: it names the knob"               "$out" "ROLLOVER_RELAUNCH=off"
+assert_contains "GA1c: and the committed file it came from"   "$out" "work/testproj/context-budget.env"
+assert_contains "GA1d: and the explicit override"       "$out" "--relaunch-override"
+assert_eq       "GA1e: the counter did not move"        "$(cat "$SEQF")" "8"
+[ -f "$W/.session-loop" ] && bad "GA1f: a refused start left a lock behind" \
+  || ok "GA1f: no lock left behind"
+[ -f "$BUDGET" ] && bad "GA1g: a refused start spent a budget slot" \
+  || ok "GA1g: no budget slot spent"
+case "$out" in *"staging the first session"*) bad "GA1h: it staged despite the refusal" ;;
+                *) ok "GA1h: nothing was staged" ;; esac
+
+echo "GA2: --relaunch-override is the explicit human act that starts it anyway"
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+printf 'ROLLOVER_RELAUNCH=off\n' > "$ENVF"
+"$SL" testproj --relaunch-override --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/ga2" 2>&1 </dev/null; rc=$?
+out="$(cat "$TMP/ga2")"
+assert_eq       "GA2a: the chain ran"                   "$rc" "0"
+assert_contains "GA2b: the override is logged, not silent" "$out" "ROLLOVER_RELAUNCH=off"
+assert_contains "GA2c: the session actually ran"        "$out" "starting session #8"
+
+echo "GA3: any other value leaves today's behaviour exactly as it is"
+# The root context-budget.env in this fixture commits `manual`; an item that
+# says `auto`, or says nothing, must not be refused. Only the literal `off`.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+printf 'ROLLOVER_RELAUNCH=auto\n' > "$ENVF"
+"$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/ga3" 2>&1 </dev/null; rc=$?
+assert_eq       "GA3a: the chain ran"                   "$rc" "0"
+assert_contains "GA3b: no refusal"                      "$(cat "$TMP/ga3")" "starting session #8"
+rm -f "$ENVF"
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+"$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/ga3b" 2>&1 </dev/null; rc=$?
+assert_eq       "GA3c: no per-item file at all — still runs" "$rc" "0"
+
+echo "GA4: a refused start must not have already cleared .chain-closed"
+# The ordering invariant. Both gates are armed and --reopen is passed: G1-a
+# refuses first, so P6's marker — the evidence — is still on disk afterwards.
+reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
+printf 'ROLLOVER_RELAUNCH=off\n' > "$ENVF"
+printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","top_ledger_seq":"","written_by":"session-loop.sh"}\n' > "$CLOSED"
+"$SL" testproj --reopen --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/ga4" 2>&1 </dev/null; rc=$?
+assert_eq       "GA4a: refused"                         "$rc" "3"
+assert_contains "GA4b: and the refusal is the knob's, not the marker's" \
+  "$(cat "$TMP/ga4")" "ROLLOVER_RELAUNCH=off"
+[ -f "$CLOSED" ] && ok "GA4c: the .chain-closed evidence survived the refusal" \
+  || bad "GA4c: a refused start destroyed the .chain-closed marker"
+rm -f "$ENVF"
 reset
 
 echo "passed=$PASS failed=$FAIL"

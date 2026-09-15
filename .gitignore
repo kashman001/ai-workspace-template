@@ -40,6 +40,11 @@ work/*/.session-seq.provenance.json
 work/*/.session-seq.bump.json
 work/*/.rollover-complete
 work/*/.next-command
+# D18 — the staged command's identity sidecar, and a staged command the
+# supervisor's bootstrap rejected as already-run. Both are machine-local
+# coordination state with exactly the lifetime of .next-command above.
+work/*/.next-command.json
+work/*/.next-command.stale
 work/*/.session-loop
 # The supervisor's own log. Load-bearing for stall detection, not just tidiness:
 # it is appended on every iteration by construction, so a tracked copy would make
@@ -48,6 +53,12 @@ work/*/.session-loop
 work/*/.session-loop.log
 work/*/.session-loop.alarm-stop
 work/*/.session-loop.budget
+# P6 (scenario table B2) — the record that a chain was deliberately ended.
+# Machine-local on purpose: it stops THIS machine's supervisor from restarting a
+# chain this machine's supervisor ended. Carrying closure across checkouts means
+# making a work/*/ dotfile tracked, and this block is load-bearing for the
+# lineage gate's dirty-evidence leg — its own change, not a widening here.
+work/*/.chain-closed
 work/*/.hands-off
 work/*/.interactive
 

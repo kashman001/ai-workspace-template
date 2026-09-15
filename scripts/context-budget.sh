@@ -13,6 +13,7 @@
 #            [--report <path>] [--brief <path>] [--gen <n>] [--task <slug>]
 #            [--agent-type <t>] [--model <m>] [--effort <e>] [--status <S>]
 #            [--interval <secs>] [--quiet] [--mode interactive|handsoff]
+#            [--session-id <sid>]   (check only; read-only pin on a NAMED session)
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
 # Design notes: D1–D9 in docs/archive/context-budget-design.html + docs/context-budget.md.
@@ -68,6 +69,9 @@ COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30;
 # session is concurrently active (no authoritative id) — an unsafe guess.
 COPILOT_PIN_AMBIGUOUS=0
 PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
+# --session-id: ask the budget question about a session that is NOT this
+# process. check only, and never a writer — see the guard below resolve_session.
+PIN_SESSION_ID=""
 REPORT_FILE=""; BRIEF_FILE=""; GEN=1; GEN_SET=0
 TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""; SESSION_NUM=""; LOOP_MODE=""
 EXTRA_OPTS=""; APPROVAL=""
@@ -78,6 +82,7 @@ while [ $# -gt 0 ]; do
     --transcript) ARTIFACT="$2"; shift 2 ;;
     --project) PROJECT="$2"; shift 2 ;;
     --parent-session) PARENT_SESSION="$2"; shift 2 ;;
+    --session-id) PIN_SESSION_ID="$2"; shift 2 ;;
     --agent-id) AGENT_ID="$2"; shift 2 ;;
     --takeover) TAKEOVER=1; shift ;;
     --all) ALL=1; shift ;;
@@ -102,6 +107,18 @@ done
 
 note() { [ "$QUIET" -eq 1 ] || echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
+
+# The pin names a session other than this one, so every command that WRITES is
+# refused: register/record under a pin would stamp this process's measurement
+# onto a foreign identity, which is M13 with extra steps. And two identities in
+# one invocation is ambiguous -- silently preferring either is how a read ends
+# up measuring a session nobody asked about.
+if [ -n "$PIN_SESSION_ID" ]; then
+  [ "$COMMAND" = check ] \
+    || die "--session-id is a read-only pin and works with check only (got: $COMMAND)"
+  [ -z "$ARTIFACT" ] \
+    || die "--session-id and --transcript both name a session; pass one"
+fi
 
 newest_of() { ls -t "$@" 2>/dev/null | head -1; }
 
@@ -392,6 +409,39 @@ session_id_for_artifact_only() {
 }
 
 resolve_session() {
+  # The --session-id pin (P4a plumbing, session-chain-observability spec.md 4.1).
+  # A supervisor needs its child's budget level, and it cannot get it by running
+  # check in its own environment: that resolves to the caller, or -- when no env
+  # identity matches -- to the newest artifact by mtime, which is the false-STOP
+  # bug. The pin answers about the session NAMED, or refuses; it never guesses.
+  # Read-only by construction: it returns before the re-pin below, and every
+  # writing command was refused at the guard after die().
+  if [ -n "$PIN_SESSION_ID" ]; then
+    local rec cand
+    if [ "$RUNTIME" = "auto" ]; then
+      # NOT detect_runtime: that reads the ASKER's environment, and a claude
+      # supervisor can be running a codex child. The record knows its own.
+      rec=$(parent_record_path "$PIN_SESSION_ID") \
+        || die "no registered session $PIN_SESSION_ID in $STATE_DIR/sessions"
+      RUNTIME=$(jq -r '.runtime // empty' "$rec" 2>/dev/null)
+      [ -n "$RUNTIME" ] || die "session record ${rec##*/} names no runtime"
+    else
+      rec="$STATE_DIR/sessions/$RUNTIME-$PIN_SESSION_ID.json"
+      [ -f "$rec" ] || die "no registered session $RUNTIME-$PIN_SESSION_ID in $STATE_DIR/sessions"
+    fi
+    SESSION_ID="$PIN_SESSION_ID"
+    ARTIFACT=$(jq -r '.artifact // empty' "$rec" 2>/dev/null)
+    # M16: the recorded path stales when a transcript is relocated mid-session.
+    # Adopt the freshest id-keyed match as the read below does -- but do not
+    # write the record back, which is the one thing the pinned path must not do.
+    if cand=$(glob_artifact_for "$RUNTIME" "$SESSION_ID") \
+       && { [ ! -f "$ARTIFACT" ] || [ "$cand" -nt "$ARTIFACT" ]; }; then
+      ARTIFACT="$cand"
+    fi
+    [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
+      || die "session $RUNTIME-$PIN_SESSION_ID has no readable artifact"
+    return 0
+  fi
   if [ "$RUNTIME" = "auto" ]; then
     RUNTIME=$(detect_runtime)
     [ -n "$RUNTIME" ] || die "could not detect runtime; pass --runtime"
@@ -463,6 +513,50 @@ emit_check() {
   echo "runtime=$RUNTIME method=$method tokens=$tokens threshold=$THRESHOLD warn=$WARN pct=$pct status=$status artifact=$ARTIFACT"
   LAST_TOKENS="$tokens"; LAST_METHOD="$method"; LAST_STATUS="$status"
   case "$status" in OK) return 0 ;; WARN) return 1 ;; STOP) return 2 ;; esac
+}
+
+# P1' (session-chain-observability, B1) — a supervised session that is past its
+# budget with nothing staged cannot see, from the inside, that its chain is
+# about to strand: the handshake it believes it completed left no successor.
+# record/register are the two commands the workspace discipline already makes an
+# agent run at every boundary, so the fact is delivered there rather than in a
+# skill file that three incidents show is not opened at the moment of need.
+#
+# Three legs, all necessary. The budget leg is load-bearing: without it the
+# predicate is "supervisor live AND nothing staged", which is true of every
+# healthy session for its whole life, because session-loop.sh consumes
+# .next-command BEFORE the run. Neither of the other two is agent-authored --
+# .next-command is written only by --emit, the budget is measured from the
+# transcript -- so there is nothing here to talk your way past.
+#
+# stderr only (like note(), and suppressed by --quiet), and exit codes are
+# untouched: 0/1/2 keep meaning OK/WARN/STOP. That is deliberate, and it is the
+# difference from the rejected P5 -- this never tells a compliant rollover it
+# did something wrong.
+#
+# NOT in emit_check(): cmd_children and cmd_watch call that for OTHER sessions,
+# where .next-command says nothing about the caller.
+successor_advisory() {
+  case "$LAST_STATUS" in WARN|STOP) ;; *) return 0 ;; esac
+  local proj="$PROJECT" rec="$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
+  # `record --label "<checkpoint>"` is prescribed without --project, so fall
+  # back to this session's OWN record -- cmd_release's idiom, never a
+  # newest-mtime guess at whose project this is.
+  [ -n "$proj" ] || proj=$(jq -r '.project // empty' "$rec" 2>/dev/null)
+  [ -n "$proj" ] || return 0
+  # A sub-agent is not the chain: it has no successor to stage, and telling it
+  # to stage the parent's would be the wrong signal.
+  [ -n "$(jq -r '.parent_session_id // empty' "$rec" 2>/dev/null)" ] && return 0
+  # Strictly 0. An ambiguous 2 stays silent: a spurious advisory is cheap, but a
+  # wrong one trains the reader to ignore the signal. Subshell so a die() inside
+  # the query cannot take the caller down with it.
+  ( PROJECT="$proj" cmd_supervised ) >/dev/null 2>&1 || return 0
+  [ -s "$WORKSPACE_ROOT/work/$proj/.next-command" ] && return 0
+  # Two-sided by necessity: the predicate is also true throughout H3, a session
+  # that has decided to END the chain -- which is a correct ending, not a fault.
+  note "successor: NOT STAGED — this chain continues only if you stage one."
+  note "  to continue: scripts/launch-next-session.sh $proj --emit --loop-mode <interactive|handsoff> --loop-reason \"<why>\""
+  note "  to end it:   quit. A deliberate quit with nothing staged ends the chain (that is a correct ending)."
 }
 
 lock_holder_age() {
@@ -792,7 +886,10 @@ cmd_register() {
     echo "runtime=$RUNTIME method=deferred tokens=0 threshold=$THRESHOLD warn=$WARN pct=0 status=OK artifact=$ARTIFACT"
     return 0
   fi
-  emit_check
+  local rc=0
+  emit_check || rc=$?
+  successor_advisory
+  return $rc
 }
 
 cmd_record() {
@@ -812,6 +909,7 @@ cmd_record() {
     --argjson tokens "$LAST_TOKENS" --argjson threshold "$THRESHOLD" \
     '{ts:$ts, runtime:$rt, session:$session, tokens:$tokens, method:$method,
       threshold:$threshold, status:$status, label:$label}' >> "$LEDGER"
+  successor_advisory
   return $rc
 }
 

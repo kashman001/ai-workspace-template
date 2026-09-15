@@ -112,6 +112,10 @@ exchanges so STOP can't pass unnoticed.
 
 4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
    directly below the PURPOSE comment, above the single block prep left behind.
+   If your edit anchors on the previous block's `# Session Handoff` header line,
+   your replacement text must END with that same header line — dropping it
+   silently merges the old block into yours (observed downstream twice; the
+   block-count grep under "Verification" catches it).
    **Verify the comment actually closes where you think it does** — a prior
    rollover can leave a block jammed *inside* the PURPOSE comment, so the first
    `-->` in the file sits *below* the newest block and a naive "insert after the
@@ -396,6 +400,31 @@ exchanges so STOP can't pass unnoticed.
    new process, and `--clear` starts none), and any runtime other than `claude`
    (`/clear` and the SessionStart seed hook are Claude Code features — on
    codex/gemini it exits 3 rather than seeding a marker nothing will drain).
+
+### Signals you can meet while running this rollover
+
+Three, all from the machinery around step 6. Each names its own remedy when it
+fires; this is the one-line version and the action.
+
+- **`successor: NOT STAGED` in your own `record` output** — step 6 has not
+  happened, so the rollover is not finished. It is the Verification section's
+  "the successor exists" check arriving from the other direction, not a second
+  requirement. Stage one with the command the message prints on the next line,
+  or quit deliberately to end the chain.
+- **A refusal at step 6 saying this session "cannot prove which session it
+  is"** — the work item is under a live supervisor and this session never
+  registered, so the bump record would carry an identity nothing can match. Run
+  `scripts/context-budget.sh register --project <project>`, then `--emit`
+  again; the refusal ends with that exact command. Nothing was staged and the
+  counter did not move.
+- **Quitting with nothing staged ends the chain** — the supervisor writes
+  `work/<project>/.chain-closed` and stops. That is the correct way to end a
+  chain on purpose, not a fault, but it is one-way for the next start: the
+  supervisor refuses to run that work item again until someone passes
+  `--reopen`. Do not quit this way to pause a chain.
+
+Full signal list, including the pages a human gets while you are running:
+`docs/context-budget.md` → "What the chain tells you".
 
 ## Guardrails
 

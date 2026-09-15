@@ -34,6 +34,8 @@ Section index:
 - **Thresholds** — WARN/STOP values and where they live.
 - **Rollover trigger policy** — what to do on exit 1 (WARN) vs 2 (STOP).
 - **Relaunch knobs** — `ROLLOVER_RELAUNCH` modes; per-work-item override.
+- **What the chain tells you** — each signal the supervisor and the budget
+  commands emit, what it means, and what to do about it.
 - **Multi-session model** *(fleet-only)* — session-keyed registry,
   per-project lock, session roles.
 - **Worktrees** *(fleet-only)* — workspace-root anchoring.
@@ -203,7 +205,8 @@ inside `auto`).
 
 ```sh
 # Relaunch behavior at session-rollover's closing step:
-#   off    — emit the paste-ready bootstrap prompt only
+#   off    — emit the paste-ready bootstrap prompt only, and refuse a supervisor
+#            start against this work item (scripts/session-loop.sh)
 #   manual — consent-gated: the agent asks, then runs launch-next-session.sh itself
 #   auto   — background-launch the successor where the runtime supports it
 #            (claude --bg); fall back to manual elsewhere
@@ -217,6 +220,18 @@ written only when `launch-next-session.sh` actually starts a successor; with
 `ROLLOVER_RELAUNCH=off` — or when the printed command is run by hand — the
 manually started successor registers project-less by design and picks up its
 work item at its first `--project` invocation.
+
+**What `off` means (widened 2026-09-14).** It used to mean only "do not spawn a
+successor behind my back", and a work item that committed it could still be
+handed to `scripts/session-loop.sh` and run unattended for ten sessions —
+`session-chain-observability` was, while its own `context-budget.env` said `off`
+(scenario **B3**, `docs/session-chain-scenarios.md`). A knob believed to protect
+that does not is worse than no knob, so `off` now means **"do not run me
+unattended at all"**: the supervisor reads the same committed file at start and
+refuses, naming `--relaunch-override` as the explicit human way in. The
+rollover-step behaviour is unchanged, and so is the `--emit` staging exemption
+the supervisor's own bootstrap depends on (`test-emit-mode.sh` E9a–E9c) — the
+refusal happens before any of that is reached.
 
 **Per-work-item override:** an optional `work/<project>/context-budget.env`
 may set `ROLLOVER_RELAUNCH` (and/or `ROLLOVER_RUNTIME`) for that work item
@@ -372,8 +387,22 @@ terminal, never talks to a model:
 
 ```sh
 scripts/session-loop.sh <project> [--runtime <rt>] \
-  [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>]
+  [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] \
+  [--reset-cap] [--reopen] [--relaunch-override]
 ```
+
+**Two startup refusals, both before the lock and before any budget is read**, so
+a refused start leaves the work item byte-identical — nothing started, staged or
+spent:
+
+| Condition | Refusal | Explicit way in |
+| --- | --- | --- |
+| the item's `context-budget.env` commits `ROLLOVER_RELAUNCH=off` | that item says it must not be run unattended (scenario **B3**) | `--relaunch-override` |
+| `work/<proj>/.chain-closed` exists | a session deliberately ended this chain (scenario **B2**) | `--reopen`, which clears the marker and logs that it did |
+
+The relaunch gate is checked **first**, because `--reopen` deletes the marker
+before it returns: underneath, a refusal would already have destroyed the
+evidence the marker exists to keep.
 
 Each iteration it `eval`s the command the dying session staged into
 `work/<proj>/.next-command` (written by `launch-next-session.sh --emit`), waits on
@@ -476,19 +505,45 @@ a progress ticker, but it must never be a trigger. What does separate them is
 whether the runtime is still **writing** — so the alarm identifies the child
 first (pid from `work/<proj>/.active-session`, which must be live *and* a child
 of this supervisor) and then ages the transcript that child's session record
-names. Each tick lands in one of four places:
+names. Each tick lands in one of four places — and the two rows for a child
+that is still alive carry an exception, because being alive is not the same as
+the chain going anywhere:
 
 | The probe says | What happens |
 | --- | --- |
 | cannot identify the child | `session #N has been running with no exit` — the pre-R2.18 message and behaviour, kept for chains that predate the probe and for a session that hangs before it registers |
-| written within the last `SESSION_LOOP_ALARM` seconds | a **log line only** — no bell, no hook. This is the false page R2.18 exists to stop |
+| written within the last `SESSION_LOOP_ALARM` seconds | normally a **log line only** — no bell, no hook. This is the false page R2.18 exists to stop. **Exception:** if the chain is stranded (either shape below), this branch pages instead — a session writing busily with no successor staged is the failure itself, not a reason to stay quiet |
 | silent, and `SESSION_LOOP_KILL_AFTER` is set and exceeded | the child is **killed**, and the page names the limit |
-| silent | `session #N has written nothing for Xs`, and the interval **doubles** toward `SESSION_LOOP_ALARM_MAX` |
+| silent | `session #N has written nothing for Xs`, and the interval **doubles** toward `SESSION_LOOP_ALARM_MAX`. **If the chain is stranded, only the words change** — one of the two messages below instead, on the same cadence and with the same doubling |
 
 The doubling is why a dead session no longer floods you: 3d 20h of silence at a
 flat 900s is ~368 identical pages. The interval resets the moment the session is
 seen alive again. **No identification means no verdict and never a kill** —
 nothing here acts on missing evidence.
+
+**The two stranded-chain messages**, quoted so you can search for the words you
+were paged with. They are mutually exclusive — one asks about an empty staging
+slot, the other about a full one — and both are only ever asked of a child the
+supervisor has positively identified:
+
+> session #N is past its context budget with no successor staged — it may
+> believe its rollover is complete. Nothing is staged at `<path>`; this chain is
+> blocked until it stages one or quits.
+
+The session is over its STOP threshold and has staged nothing. Left alone the
+chain does not advance: the supervisor will not start a successor that does not
+exist. Either finish the rollover (its closing step stages one) or quit
+deliberately, which ends the chain cleanly.
+
+> session #N staged a successor and is still running — the turn-end self-kill
+> did not fire. Check .session-seq.bump.json's session_id against the live
+> session (the D17 shape), or the runtime's turn-end hook.
+
+Staging is the last thing a session does, so a child still alive after it staged
+means the mechanism that should have ended it did not. This one needs **two
+consecutive ticks** before it pages: every healthy rollover has a real window
+between staging the successor and the child exiting, and one tick can land
+inside it.
 
 **It can now kill the child** (`SESSION_LOOP_KILL_AFTER`, default 0 = off, which
 is the older behaviour exactly). The tty objection that deferred this is
@@ -551,6 +606,37 @@ broken, and the instinct is to revert something correct. After committing a
 supervisor change, expect one more iteration of the previous behaviour, and say
 so in the handoff you leave. Check `git log -1 scripts/session-loop.sh` against
 the running supervisor's start time before diagnosing a surprising halt.
+
+## What the chain tells you — signals and what to do
+
+Every signal below names its own remedy at the point it fires, so this section
+is for reading *before* one surprises you or *after* one already has. What it
+adds is the part a one-line message cannot carry: when a signal stays quiet, and
+what that quiet does and does not mean.
+
+| What you see | What it means | What to do |
+| --- | --- | --- |
+| `successor: NOT STAGED — this chain continues only if you stage one.`, from `record` or `register` | nothing is queued to run after this session, and this session is already at WARN or STOP | stage one — the exact command is printed on the next line — or quit deliberately to end the chain. This row has a second half; see below |
+| `CONTEXT BUDGET STOP: … It is not finished until step 6 has staged your successor` (and the same clause at WARN) | the rollover is not complete when the handoff is written. It is complete when the successor is staged | run the rollover workflow (`skills/session-rollover/SKILL.md`) through its closing step, and invoke the launcher with a **bare** `--emit`, never a path you worked out yourself |
+| a page saying a session `is past its context budget with no successor staged` | the chain is stranded — the supervisor has nothing to start next, and will not invent one | the stall-alarm section above quotes the message in full and says what to do |
+| a page saying a session `staged a successor and is still running` | the successor is queued, but the session that queued it never exited | as above — the stall-alarm section covers both stranded shapes |
+| `this session cannot prove which session it is …`, refusing to stage a successor | this session never registered, so the supervisor could not tell its rollover from a stranger's | run `scripts/context-budget.sh register --project <project>`, then stage again. The refusal itself ends with that command |
+| the supervisor refuses to start because `work/<proj>/.chain-closed` exists | a session ended this chain on purpose | `--reopen` — see the startup-refusals table above |
+| the supervisor refuses to start because the item commits `ROLLOVER_RELAUNCH=off` | this work item says it must not be run unattended | `--relaunch-override` — see "Relaunch knobs" above |
+
+**`successor: NOT STAGED` needs one more paragraph**, because what it cannot
+tell you is when it stays silent. It is asked only of a session that is at WARN
+or STOP, running under a live supervisor, and not a sub-agent. So **not seeing
+it proves nothing.** A healthy session below WARN never sees it; nor does a
+session with no supervisor watching — and in neither case is anything staged.
+Silence here is never "staged". It is only ever "not asked yet". If you want to
+know whether a successor exists, look for `work/<proj>/.next-command`.
+
+Its second limb matters as much as its first: **a deliberate quit with nothing
+staged is a correct ending, not a fault.** A session that has decided to end the
+chain meets this signal on its way out, and should not read it as an error —
+which is why it prints both ways out, the command to continue *and* the sentence
+saying that quitting is allowed.
 
 ## Multi-session model (session-keyed registry + per-project lock)
 
@@ -659,6 +745,32 @@ Every element must hold under N concurrent sessions:
 - **Gemini exception:** exact counts come from the shared workspace telemetry
   log, which is architecturally single-session-per-workspace; a second
   concurrent gemini session falls back to estimate-only.
+
+### Asking about another session — `check --session-id <sid>`
+
+`check` normally answers about the caller. `check --session-id <sid>` answers
+about the session **named**, reading its artifact out of the registry record:
+
+```bash
+scripts/context-budget.sh check --session-id "$sid"            # runtime from the record
+scripts/context-budget.sh check --runtime claude --session-id "$sid"
+```
+
+Exit code and output are the pinned session's, not the caller's (0 OK / 1 WARN /
+2 STOP). Three properties make it safe to point at a session you do not own:
+
+- **It never guesses.** An unregistered id is refused with exit 3 rather than
+  falling back to the newest artifact by mtime — that fallback is the false-STOP
+  bug the session-keyed registry exists to prevent.
+- **It never writes.** No re-pin, no record, no ledger line. A relocated
+  transcript (M16) is still followed to its id-keyed match, in memory only.
+- **`check` only.** `register`/`record` refuse the pin (exit 3): under a pin they
+  would stamp the caller's own measurement onto a foreign identity. `--session-id`
+  with `--transcript` is refused for the same reason — two identities, one call.
+
+The caller is `session-loop.sh`: its stall alarm has to know whether the child it
+is watching is past STOP, and it can only ask about that child by name (P4a,
+`docs/session-chain-scenarios.md` B1).
 
 ## Worktrees (workspace-root anchoring)
 

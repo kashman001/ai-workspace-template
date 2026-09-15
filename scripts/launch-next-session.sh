@@ -295,6 +295,7 @@ if [ "$UNSTAGE" -eq 1 ]; then
   # debris this subcommand knowingly skipped.
   for u_f in "$WORKSPACE_ROOT/work/$PROJECT/.pending-clear-seed" \
              "$WORKSPACE_ROOT/work/$PROJECT/.next-command" \
+             "$WORKSPACE_ROOT/work/$PROJECT/.next-command.json" \
              "$WORKSPACE_ROOT/work/$PROJECT/.rollover-complete" \
              "$STATE_DIR/successor-pending-$PROJECT.json"; do
     [ -f "$u_f" ] || continue
@@ -327,6 +328,19 @@ fi
 
 [ -f "$WORKSPACE_ROOT/work/$PROJECT/next-session.md" ] \
   || die "work/$PROJECT/next-session.md not found — run session-rollover first"
+
+# P6 (scenario table B2) — refuse to stage a successor into a work item whose
+# chain was deliberately ended. The supervisor has its own copy of this gate, but
+# it cannot be the only one: an UNSUPERVISED rollover never runs session-loop.sh,
+# so without this read a closed item is reopened by the next session that happens
+# to roll over into it. Mirrors the freshness guard below — a plain file test,
+# machine-local, escapable only by the explicit human act that reopens the chain.
+CLOSEDF="$WORKSPACE_ROOT/work/$PROJECT/.chain-closed"
+if [ -f "$CLOSEDF" ]; then
+  cc_seq="$(jq -r '.seq // empty' "$CLOSEDF" 2>/dev/null)"
+  cc_at="$(jq -r '.closed_at // empty' "$CLOSEDF" 2>/dev/null)"
+  die "chain closed: session #${cc_seq:-?} deliberately ended the chain for work/$PROJECT at ${cc_at:-?} (work/$PROJECT/.chain-closed). Nothing has been staged. Reopen it explicitly with: scripts/session-loop.sh $PROJECT --reopen"
+fi
 
 # Launcher freshness guard (backlog L33): a successor launched from a stale
 # next-session.md resumes an outdated plan (three strikes logged). Refuse to
@@ -579,13 +593,30 @@ fi
 #              authorization hung on it once and misresolved attended
 #              primaries and forked auxes both (registration order is not
 #              identity).
+# The table is SIX runtimes, the same six context-budget.sh session_id_for()
+# registers under (:379-393), and they must stay in step: a runtime this table
+# omits has no positive identity here, and the refusal below keys on exactly
+# that. It carried four until D17's fix; design.md flagged the four-vs-six drift
+# in session 25 and R2.17 section 1 worked around it by widening own_record()
+# instead, which is what let the fallback grant authorization.
+#   opencode exports OPENCODE_SESSION_ID (context-budget.sh:346, :390) and
+#   registers under it, so its identity is as positive as claude's.
+#   gemini has no per-session identity at all: session_id_for() returns the
+#   constant "workspace" and register names the record gemini-workspace.json.
+#   That is workspace-scoped, not session-scoped -- two concurrent gemini
+#   sessions on one checkout are indistinguishable here, as they already are to
+#   the self-kill hook and the supervisor. Accepted deliberately: it is the
+#   strongest identity the runtime offers, and refusing it would instead end
+#   gemini's supervised chains outright.
 env_session_record() {
   local rt sid b
-  for rt in claude codex copilot-cli copilot-vscode; do
+  for rt in claude codex copilot-cli copilot-vscode gemini opencode; do
     case "$rt" in
       claude)      sid="${CLAUDE_CODE_SESSION_ID:-}" ;;
       codex)       sid="${CODEX_THREAD_ID:-}" ;;
       copilot-cli) sid="${COPILOT_AGENT_SESSION_ID:-}" ;;
+      gemini)      sid="workspace" ;;
+      opencode)    sid="${OPENCODE_SESSION_ID:-}" ;;
       copilot-vscode)
         sid=""; if [ -n "${VSCODE_TARGET_SESSION_LOG:-}" ]; then
           b="$(basename "$VSCODE_TARGET_SESSION_LOG")"; sid="${b%.jsonl}"
@@ -634,9 +665,59 @@ fi
 # Here, not at the bump: the counter bump is the first write in this script and
 # everything that can say "no" says it above (TE6 R3), so this refusal costs no
 # side effects. --dry-run writes no bump record and is therefore exempt.
-if [ -z "$REC" ] && [ "$DRY" -eq 0 ] \
+# The ONE caller of --emit that is not a session, and the one the refusal below
+# must not touch: the supervisor's own bootstrap. Iteration 1 has no dying
+# session to stage its command, so session-loop.sh stages it itself (its
+# `--emit "$NEXTF" || halt` call) — and a shell script has no session record and
+# never will. Both of the refusal's conditions are true there by construction:
+# the supervisor writes work/<proj>/.session-loop BEFORE it stages (deliberately
+# — context-budget.sh:850, an agent must never be able to race a mid-start
+# marker), so `supervised` says yes at the moment staging runs. Unexempted, the
+# refusal made every chain that starts without a pre-staged .next-command
+# unstartable: a fresh work item, and any chain resumed after --unstage.
+#
+# Exempting it gives up nothing the refusal was protecting, because nothing ever
+# reads the bootstrap's bump record. The supervisor reads it only at the END of
+# an iteration, and its verdict gate requires .seq == the session that just ran;
+# the bootstrap's record is written one number earlier and could never satisfy
+# that. By then the session has run its own rollover and overwritten the file
+# with a record that does carry identity. The self-kill hook keys on the same
+# thing (hooks/context-budget-hook-lib.sh:117-122, session_id == mine) and
+# additionally needs a staged .next-command, which the supervisor removes before
+# each run — so during session 1 there is nothing for it to match either way.
+#
+# The test is the STRICT parent, never an ancestor: session-loop.sh runs its
+# child in the FOREGROUND, so the supervisor pid is an ancestor of every tool
+# shell inside the session too, and an ancestor test would exempt exactly the
+# caller this refusal exists for. `--emit` is not the discriminator for the same
+# reason — under a supervisor a rollover is ALWAYS --emit (a non-emit launch is
+# refused far above, at the D6 out-of-band guard), so exempting on the flag
+# would void the refusal entirely.
+#
+# Consequence worth knowing before editing session-loop.sh: its bootstrap call
+# must stay a DIRECT call. Wrapping it in $(...) or a pipeline puts a subshell
+# between the two pids and the halt comes straight back —
+# test-session-loop.sh's F1 (a chain started from a fresh work item) is the
+# tripwire, and test-emit-mode.sh's E10 pins both legs.
+invoked_by_supervisor() {
+  local loopf pid
+  loopf="$WORKSPACE_ROOT/work/$PROJECT/.session-loop"
+  [ -f "$loopf" ] || return 1
+  pid="$(jq -r '.pid // empty' "$loopf" 2>/dev/null)"
+  [ -n "$pid" ] || return 1
+  [ "$pid" = "$PPID" ] || return 1
+  kill -0 "$pid" 2>/dev/null || return 1
+  return 0
+}
+if [ -z "$OWN_ENV_REC" ] && [ "$DRY" -eq 0 ] \
    && "$WORKSPACE_ROOT/scripts/context-budget.sh" supervised --project "$PROJECT" --quiet >/dev/null 2>&1; then
-  die "no session record for this session, and work/$PROJECT is under a live supervisor — the bump record would carry no identity, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
+  if invoked_by_supervisor; then
+    # Never silent: a skipped identity check that nobody can see reads exactly
+    # like a passed one (R2.17 §2).
+    note "bootstrap: this --emit came from the session-loop supervisor itself (pid $PPID), which is not a session and so has no record — the identity check does not apply, and the bump record it writes is superseded by the first session's own rollover"
+  else
+    die "this session cannot prove which session it is (no exported session id with a registry record under it), and work/$PROJECT is under a live supervisor — the bump record would carry an identity nothing can match, so the supervisor could not tell this rollover from a stranger's and the self-kill hook would never fire. Register first: scripts/context-budget.sh register --project $PROJECT"
+  fi
 fi
 
 # --emit x copilot-vscode (TE6 A5): `code chat` is detached BY NATURE — the
@@ -1128,15 +1209,51 @@ if [ -n "$EMIT" ]; then
   # prevent. The counter is NOT auto-rewound — seq-sync is max-wins and
   # ADR-0008 governed, so the remedy is named rather than performed.
   emit_tmp="$EMIT.tmp.$$"
+  emit_id="$EMIT.json"
+  emit_id_tmp="$emit_id.tmp.$$"
   emit_fail() {
-    rm -f "$emit_tmp" "$PENDING"
+    rm -f "$emit_tmp" "$emit_id_tmp" "$PENDING"
     die "emit: could not stage the successor at $EMIT ($1); the counter advanced to $SEQ; if you retry, rewind first with scripts/context-budget.sh seq-sync --project $PROJECT --session $((SEQ - 1))"
   }
   printf '%s\n' "$(printf '%q ' "${CMD[@]}" | sed 's/ $//')" > "$emit_tmp" \
     || emit_fail "write failed"
+  # D18 — the identity sidecar. Until R2.20 a staged command was a bare command
+  # string: nothing recorded which session wrote it, which successor it launches,
+  # or when. The supervisor's bootstrap therefore had no freshness test to run and
+  # settled for `[ -s ]`, which is how a command that had ALREADY been run got run
+  # a second time and produced two session #18s (work/*/handoff-archive.md, the
+  # s18 addendum). Same shape as the bump record on purpose — the two are read by
+  # the same supervisor at the two ends of an iteration, and a reader who knows
+  # one knows the other.
+  #
+  # written_at is the load-bearing field, not seq/successor: a command staged for
+  # #N and a command staged for #N that has since been run are IDENTICAL by
+  # counter arithmetic (both leave .session-seq at N), so consumption is the only
+  # thing that separates them and a timestamp is the only thing that can date it.
+  # session-loop.sh reads it against the session registry.
+  #
+  # cksum, not a cryptographic digest: this catches a hand-edited half-pair, not
+  # an adversary, and `cksum` is what hash_file() in session-loop.sh already uses.
+  #
+  # Written BEFORE the command is mv'd into place: the supervisor treats the
+  # APPEARANCE of $EMIT as the signal that a successor is fully staged (the same
+  # reason write_pending runs above), so the sidecar must already be there.
+  jq -n \
+    --arg project "$PROJECT" \
+    --argjson seq "$LAST_SEQ" \
+    --argjson successor "$SEQ" \
+    --arg runtime "${_bump_rt:-unknown}" \
+    --arg session_id "${_bump_sid:-unknown}" \
+    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg command_cksum "$(cksum < "$emit_tmp")" \
+    '{project:$project, seq:$seq, successor:$successor, runtime:$runtime,
+      session_id:$session_id, written_at:$written_at,
+      command_cksum:$command_cksum, written_by:"launch-next-session.sh"}' \
+    > "$emit_id_tmp" || emit_fail "identity sidecar write failed"
+  mv "$emit_id_tmp" "$emit_id" || emit_fail "identity sidecar mv failed"
   mv "$emit_tmp" "$EMIT" || emit_fail "mv failed"
   [ -s "$EMIT" ] || emit_fail "target missing or empty after write"
-  note "emit: wrote the successor command to $EMIT"
+  note "emit: wrote the successor command to $EMIT (identity: ${emit_id##*/})"
   # R2.17 §1 — under a supervisor, staging IS the rollover, and the only
   # instruction left is to do nothing. D11 candidate 4, inverted: every earlier
   # wording told the agent to perform one more step, and "perform one more step"
