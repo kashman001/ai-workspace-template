@@ -93,3 +93,16 @@ user's only review finding was length, which is itself a design smell under §1b
 **Rejected:** the user reading Part 2 section by section first (too long); a
 one-page summary before review (deferred — Stage 3's cut list produces it).
 **Promote?:** no.
+
+## 2026-09-15 — Design v2 decisions D1–D3 settled (user accepted the reviewers' recommendations)
+
+**Decision:** D1 drop the "unknowable" logout code path on Codex/Copilot CLI (quits
+read as plain quits; the support matrix says "logout not classified"). D2 a predecessor
+resumed after staging: whoever registers against the open launch becomes that session
+(no number spent, no unstage verb). D3 accept the newest-transcript identity heuristic
+on Copilot CLI / Gemini while unverified, stated in the matrix.
+**Why:** each is the least code for a gap the support matrix already states; D2 removes
+a verb, a code and a probe and needs no judgement about consumption.
+**Rejected:** D1(b) `logout=unknowable` suffix; D2(b) refuse + spend a number; D3(b)
+mandatory `--session-id`.
+**Promote?:** with the design ADRs at Stage 4.

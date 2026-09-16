@@ -1,6 +1,6 @@
 # Session management — design v2 (2026-09-15)
 
-> Rewrite of the Stage 2 design after three independent reviews (architect, scenario walk, developer). Consensus amendments and cuts are applied; the few points that need the user's decision are marked **DECISION** in place. Supersedes Part 2 once accepted. Pointers into the workspace are footnotes only.
+> Rewrite of the Stage 2 design after three independent reviews (architect, scenario walk, developer). Consensus amendments and cuts are applied; the three points that needed the user's decision were settled on 2026-09-15 (option (a) each; see the Decisions section). Accepted design; supersedes Part 2. Pointers into the workspace are footnotes only.
 
 ## What this is
 
@@ -127,7 +127,7 @@ Tests pin three observable things and nothing else: the exit code, record fields
 
 Multiple people on one item; supervising VS Code agent mode or Gemini; the OpenCode runtime beyond a shim; per-turn ledger records; Windows; long compatibility shims (one-time import of the old counter only); a background-daemon launch path; a JSON output mode.
 
-## Decisions needed from the user
+## Decisions (settled by the user, 2026-09-15: option (a) in all three)
 
 1. **Logout on Codex / Copilot CLI.** The reviewers split. (a) Drop the "unknowable" code path: those quits read as plain quits and the support matrix says "logout not classified"; reopening a wrongly closed chain is one command. (b) Keep a `logout=unknowable` suffix so the gap is visible in tests. *Recommended: (a), less code for a gap the matrix already states.*
 2. **A predecessor resumed after it staged a successor.** (a) Whoever registers against the open launch becomes that session: no number spent, no unstage verb, no probe for it. (b) Refuse the second launch, mark the number abandoned, mint the next one. *Recommended: (a); it removes a verb, a code and a question, and involves no judgement about whether anything was consumed.*

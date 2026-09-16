@@ -1,4 +1,4 @@
-# Next Session — template-improvement-review (user decides D1–D3 → Stage 4 plan on go)
+# Next Session — template-improvement-review (D1–D3 settled; Stage 4 plan on the user's go)
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover. Past-tense provenance lives in `handoff.md`.
@@ -6,8 +6,9 @@
 
 ## Mission
 
-**Get the user's three decisions on design v2 and their go for Stage 4, then
-plan the implementation (Part 4).** Do not start Stage 4 unasked. Answer
+**Get the user's go for Stage 4, then plan the implementation (Part 4).**
+D1–D3 were settled 2026-09-15 (option (a) each; decisions.md); design v2 is
+accepted and supersedes Part 2. Do not start Stage 4 unasked. Answer
 questions about v2 from the files (grep; never guess). Record each decision
 as a Tier-2 note (`/decision`) and edit v2 in place (dated) where it changes
 the design.
@@ -53,10 +54,9 @@ only), backlog HTML whole, big scripts whole.
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
 2. Read inputs 1–3.
-3. Present to the user, verbatim: the v2 page URL, the source path, and the
-   three decisions from v2 § "Decisions needed" with the recommendations
-   (D1 drop the unknowable logout code; D2 occupation rule, no number spent;
-   D3 accept the identity heuristic). Then STOP and wait.
+3. Republish the v2 page from the source (the published page still shows
+   D1–D3 as open; the source is updated), then present the URL and ask for
+   the go on Stage 4. STOP and wait.
 4. On each decision: `/decision`, edit v2 in place (dated), and if it changes
    the support matrix or a gate, say so. Every ~10 exchanges:
    `scripts/context-budget.sh record --label "v2 review Q&A"`.
