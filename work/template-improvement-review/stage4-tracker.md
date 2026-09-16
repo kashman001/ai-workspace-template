@@ -6,13 +6,13 @@
 > boundary and every rollover; the launcher (`next-session.md`) points here.
 > Status vocabulary: `todo` · `in progress` · `blocked: <why>` · `done`.
 
-**Now:** Plan written (Part 4) and reviewed; awaiting the user's acceptance. No phase started. Next: on acceptance, run `/to-tickets` on Part 4, then phase 0.
+**Now:** Tickets cut (issues/01–10, commit 0c1dd35). Phase 0 in progress: tasks 2–5 done and tested (env flip + per-item override, jq pin, notify path, import script); task 1 (end the chain) completes when session 10 is closed by hand with nothing staged. Next: session 11 (started by hand) confirms the chain ended, marks phase 0 done, starts phase 1 on a branch.
 
-**Sessions used so far in Stage 4:** 1 (session 9, planning). Estimate: 15–19 parent sessions if the parent edits; ~10–12 if phases are delegated to subagents. Re-estimate after phase 3.
+**Sessions used so far in Stage 4:** 2 (session 9 planning; session 10 tickets + phase 0). Estimate: 15–19 parent sessions if the parent edits; ~10–12 if phases are delegated to subagents. Re-estimate after phase 3.
 
 | Phase | Deliverable | Status | Est. | Used | Started | Done | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 0 | Live chain ended; relaunch default manual + per-item auto; counter import | todo | 1 | 0 | | | | pid 72900 still live |
+| 0 | Live chain ended; relaunch default manual + per-item auto; counter import | in progress | 1 | 1 | 2026-09-16 | | | chain ended session 10 (quit with nothing staged); tasks 2–5 done, see plans/phase-0.md |
 | 1 | Record helper `scripts/lib/session-lib.sh` + test | todo | 1 | 0 | | | | |
 | 2 | Fleet extraction `scripts/fleet.sh` (pure move) | todo | 1 | 0 | | | | |
 | 3 | Measurer verbs on the record | todo | 3 | 0 | | | | |

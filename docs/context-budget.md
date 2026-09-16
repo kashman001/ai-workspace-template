@@ -466,15 +466,18 @@ before invoking the hook, so there the hook only adds the desktop
 notification. Wire it in an env file as
 
 ```sh
-SESSION_LOOP_NOTIFY="${ROOT:-.}/scripts/session-loop-notify.sh"
+SESSION_LOOP_NOTIFY="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")" && pwd)/scripts/session-loop-notify.sh"
 ```
 
-The `${ROOT:-.}` guard is load-bearing, not style: `session-loop.sh` sets
-`ROOT` before sourcing the env files, but `launch-next-session.sh` sources the
-same files under `set -u` with no `ROOT` — a bare `$ROOT` there kills the
-launcher itself, not just the hook (measured 2026-09-09 in a downstream
-workspace). The same applies to any variable referenced in a
-`context-budget.env` value: expand it with a `${VAR:-fallback}` default.
+The path is resolved from the env file's own location (since 2026-09-16), so
+`session-loop.sh`, `launch-next-session.sh` and `context-budget.sh` all get the
+same file whatever variables they set before sourcing. Before that the value
+read `${ROOT:-.}/...`: only the supervisor sets `ROOT`, so from every other
+caller the hook resolved against the current directory. Any other variable
+referenced in a `context-budget.env` value must still carry a
+`${VAR:-fallback}` default — the launcher sources the file under `set -u`, and
+a bare unset variable kills the launcher itself, not just the hook (measured
+2026-09-09 in a downstream workspace).
 
 **Stall detection** counts *consecutive* hands-off sessions whose commits touched
 nothing outside the rollover bookkeeping set — `next-session.md`, `handoff.md`,

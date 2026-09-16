@@ -82,6 +82,29 @@ else
   bad "D4: expected exit 1 + no-runtime message; rc=$rc, hooks line: $(echo "$out" | grep hooks)"
 fi
 
+echo "D5: jq is a hard requirement (Stage 4 phase 0 pin) — absent fails, present passes"
+# A PATH with everything in /usr/bin and /bin except jq: macOS ships /usr/bin/jq
+# since 15, so BASE_PATH alone cannot prove absence.
+NOJQ="$TMP/nojq"; mkdir -p "$NOJQ"
+for p in /usr/bin/* /bin/*; do
+  [ -x "$p" ] && [ "$(basename "$p")" != jq ] && ln -s "$p" "$NOJQ/$(basename "$p")" 2>/dev/null
+done
+unwire_all; wire_committed
+out="$(PATH="$NOJQ" "$WS/scripts/check-dependencies.sh" 2>&1)"; rc=$?
+if [ "$rc" -ne 0 ] && echo "$out" | grep -q 'jq .*MISSING (required)'; then
+  ok "D5a: jq absent -> exit $rc with the required-MISSING line"
+else
+  bad "D5a: expected exit 1 + 'jq ... MISSING (required)'; rc=$rc, jq line: $(echo "$out" | grep jq)"
+fi
+printf '#!/bin/sh\necho jq-1.7 stub\n' > "$STUB/jq"; chmod +x "$STUB/jq"
+out="$(PATH="$STUB:$NOJQ" "$WS/scripts/check-dependencies.sh" 2>&1)"
+if echo "$out" | grep -q 'jq .*MISSING'; then
+  bad "D5b: jq present but still reported MISSING: $(echo "$out" | grep jq)"
+else
+  ok "D5b: jq present -> no MISSING line for jq"
+fi
+rm -f "$STUB/jq"
+
 echo
 echo "check-dependencies tests: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

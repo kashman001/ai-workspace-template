@@ -45,6 +45,12 @@ calls="$(cat "$TMP/osascript.calls" 2>/dev/null)"
 assert_eq "N3 osascript called once" "$(wc -l < "$TMP/osascript.calls" | tr -d ' ')" "1"
 assert_contains "N3 quotes escaped" "$calls" 'say \"hi\" C:\\path'
 
+echo "N4: root context-budget.env resolves SESSION_LOOP_NOTIFY from its own location — no ROOT, any cwd, under set -u"
+out="$(cd "$TMP" && env -u ROOT bash -u -c '. "$1/context-budget.env" && printf %s "$SESSION_LOOP_NOTIFY"' _ "$SRC_ROOT" 2>&1)"; rc=$?
+assert_eq "N4 sourcing succeeds under set -u" "$rc" "0"
+assert_eq "N4 path is the workspace hook"     "$out" "$SRC_ROOT/scripts/session-loop-notify.sh"
+[ -x "$out" ] && ok "N4 hook exists and is executable" || bad "N4 hook missing at [$out]"
+
 echo
 echo "pass=$PASS fail=$FAIL"
 [ "$FAIL" -eq 0 ]

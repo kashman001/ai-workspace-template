@@ -122,3 +122,19 @@ the reading budget.
 stale by phase 3, unreadable); tracking via tickets only (`/to-tickets` still runs on
 acceptance, but tickets do not answer "where are we" in one line).
 **Promote?:** no.
+
+## 2026-09-16 — Phase 0: record file shape, import semantics, notify path resolution
+
+**Decision:** the per-item record is `work/<item>/session-state.json`; the counter import
+writes `{"schema": 1, "seq": N}` and phase 1 inherits schema version 1 as that shape.
+Import: record absent or behind the counter → write; equal → no-op; ahead → refuse
+`seq_conflict`; the old counter is never deleted before cutover. `SESSION_LOOP_NOTIFY`
+resolves from the env file's own location via `${BASH_SOURCE[0]}`.
+**Why:** the design names `schema_mismatch` but no version field, so the import had to
+pick one; comparing rather than consuming the counter keeps the import retryable while
+old scripts still bump the counter; every sourcer of the env file is bash, and a
+caller-variable path resolved against the cwd for every caller but the supervisor.
+**Rejected:** writing `{"seq": N}` only (phase 1's schema check would reject imported
+records); consuming the counter on import (breaks the old scripts before cutover);
+`${WORKSPACE_ROOT:-${ROOT:-.}}` (still a caller variable, still wrong from a hook).
+**Promote?:** no — phase 8 promotes the record itself.
