@@ -106,3 +106,19 @@ a verb, a code and a probe and needs no judgement about consumption.
 **Rejected:** D1(b) `logout=unknowable` suffix; D2(b) refuse + spend a number; D3(b)
 mandatory `--session-id`.
 **Promote?:** with the design ADRs at Stage 4.
+
+## 2026-09-15 — Stage 4 plan shape: phase-level Part 4 + just-in-time per-phase task plans + a tracker file
+
+**Decision:** Part 4 is a ≤120-line phase plan (9 phases + cutover, one vertical slice and
+its proving test each, a session estimate). Task-level detail (files, test code, commands)
+is written by the executing session into `plans/phase-<n>.md` when that phase starts.
+Progress lives in `stage4-tracker.md` (a "Now" line + one row per phase with status,
+estimate, sessions used, commit).
+**Why:** the user's readability rule (short, plain, self-contained) and the user's ask for
+"what is the plan / where are we / what remains" at any point; task-level detail for
+eight phases over 4,000 lines of bash would go stale before it ran and would exceed
+the reading budget.
+**Rejected:** one full task-level plan now (the writing-plans skill's default shape:
+stale by phase 3, unreadable); tracking via tickets only (`/to-tickets` still runs on
+acceptance, but tickets do not answer "where are we" in one line).
+**Promote?:** no.

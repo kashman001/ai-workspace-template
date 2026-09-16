@@ -40,3 +40,5 @@ item is a bounded review program with an explicit end state.
   to `handoff-archive.md` when it exceeds the two most recent sessions.
 - `review.md` — the pooled, prioritized review list (the working deliverable).
 - `decisions.md` — Tier-2 decision notes (assumptions made autonomously).
+- `stage4-tracker.md` — Stage 4 progress: "Now" line + one row per phase (what is the plan / where are we / what remains). Plan itself: `session-management-review-findings.md` Part 4.
+- `plans/phase-<n>.md` — task-level plan for one implementation phase, written when that phase starts.

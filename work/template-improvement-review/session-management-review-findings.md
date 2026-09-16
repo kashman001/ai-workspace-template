@@ -4,7 +4,9 @@
 > **Stage 3 DONE (Part 3, session 8, 2026-09-15): three independent reviews, all
 > "sound with amendments"; design v2 drafted in plain language with the consensus
 > amendments applied (`evaluation/stage3-design-v2.md`, supersedes Part 2 once
-> accepted). Awaiting the user's three decisions (Part 3) and go for Stage 4.**
+> accepted). D1–D3 settled 2026-09-15 (option (a) each); v2 accepted.
+> **Stage 4 PLANNED (Part 4, session 9, line 765): 9 phases + cutover, 15–19 sessions;
+> progress in `stage4-tracker.md`. Awaiting the user's acceptance of Part 4.**
 > Probe evidence for Part 2 (V2 `/clear` = ROTATES; `claude --bg` env = captured
 > and replayed) is in `evaluation/stage2-probes.md`.
 > **Session 6 (2026-09-14) gate, set by the user mid-session:** local was checked
@@ -761,3 +763,85 @@ The architect estimates two-thirds of sentences carry a token only this repo can
 - The one-time import of the old session counter scripted and tested before the flag day.
 - Implementation order all three reviewers converge on: record helper and its tests; fleet extraction (a pure move); measurer verbs; launcher; supervisor (wrapper commit first); hook dispatcher; skill, docs, ignore file, env defaults. First end-to-end slice: an attended rollover on a stub runtime with no supervisor.
 - Probe criteria to rewrite: the chain probe drops its prose criterion; the fleet probe drops the child-lock gate; two new suite-level cases (supervisor restart with a spent stage; the refused hand stage).
+
+# Part 4 — Stage 4: implementation plan (2026-09-15, session 9)
+
+> Drafted by one Plan agent from design v2, Part 3 and the developer review's migration section; reviewed and corrected by the session (three corrections, listed at the end). Progress against this plan is tracked in `stage4-tracker.md` in this directory: that file answers "where are we" and "what remains"; this part answers "what is the plan".
+
+This is the phase plan for building the accepted session-management design.[^p4v2] It fixes the order of work, what each phase delivers as a working vertical slice, what proves the slice, what it deletes, and how many sessions it should take. Each phase's detailed task-level plan (exact files, test code, commands) is written just-in-time by the session that executes that phase, under `work/template-improvement-review/plans/phase-<n>.md`, so this document stays readable and does not go stale.
+
+**How to read this.** The subsystem has three scripts that write one state record per work item: the *measurer* (reads the transcript, registers and releases a session), the *launcher* (advances the session number and launches or stages the successor), and the *supervisor* (runs sessions as a chain and reaches a verdict after each). Each phase below adds one working piece and its test; a phase is done when its slice's test passes and every existing test still passes. Phases 3 and 4 together make the first end-to-end slice: an attended rollover on a stub runtime with no supervisor.
+
+## Phase table
+
+| Phase | Deliverable (vertical slice) | Proves it with | Touches | Deletes | Sessions (est.) |
+|---|---|---|---|---|---|
+| 0 | Live chain ended; root relaunch default flipped to manual with a per-item override; old-counter import scripted | import test: record `seq` equals old `.session-seq` value, run twice is a no-op | `context-budget.env`, new `work/template-improvement-review/context-budget.env`, `scripts/check-dependencies.sh`, one import script + test | nothing | 1 |
+| 1 | Record helper: read, filter, temp-write, rename; directory lock; compare-and-set; schema refusal | two writers racing produce one valid record; a failing precondition leaves the file byte-identical; bad schema exits 4 `reason=schema_mismatch` | new `scripts/lib/session-lib.sh`, new `scripts/tests/test-session-record.sh` | nothing | 1 |
+| 2 | Fleet machinery moved to its own script (pure move) | the three fleet suites pass unchanged against the new path | new `scripts/fleet.sh`, `scripts/context-budget.sh`, three fleet tests renamed | fleet verbs from the measurer | 1 |
+| 3 | Measurer on the record: register, release, close, `--check` | register fills `session`; release by a non-owner changes nothing; close exits 4 `reason=ledger_seq_mismatch` on a wrong block | `scripts/context-budget.sh`, its tests | `seq-sync`, `opts-sync`, `rollover-complete`, `scripts/rollover-prep.sh`, `scripts/capture-rollover-options.sh`, their tests | 3 |
+| 4 | Launcher on the record: bump, launch, staged, pending; every gate | the first end-to-end slice (see phase paragraph) | `scripts/launch-next-session.sh`, `scripts/tests/test-launch-next-session.sh` rewritten | `--bg`, `--unstage`, options replay, snapshot files, the clear-seed hook and its seed file, their tests | 3 |
+| 5 | Supervisor with three verdicts; stub-child suite | stub child rolls over: verdict `staged`; stub child exits 0 unstaged: `quit_plain`; restart with a spent stage and a hand stage without a supervisor both refuse | `scripts/session-loop.sh`, `scripts/tests/test-session-loop.sh` rewritten | sentinel and flush-hash checks, the `.session-loop` state files | 3 |
+| 6 | One hook dispatcher over an adapter table | each vendor payload byte-identical to today's; `jq_missing` printed before any parsing | new dispatcher under `scripts/hooks/`, `context-budget-hook-lib.sh`, `test-vendor-budget-hooks.sh` | the per-vendor hook wrappers | 2 |
+| 7 | Probes rewritten; acceptance on Claude Code | chain probe passes on record fields only; fleet probe passes without the child-lock gate; stub twins green in CI | probe scripts under `evaluation/` | the prose criterion; the child-lock gate | 2 |
+| 8 | Skill, docs, ADRs, ignore file, env defaults, doc-consistency test | doc test: every verb and reason code in the doc exists in the scripts and vice versa | `docs/context-budget.md`, the `session-rollover` skill, `docs/adr/`, `.gitignore`, `context-budget.env` | twelve doc sections rewritten or removed[^p4docs] | 2 |
+
+## The phases
+
+**Phase 0 — precondition, no script code.** The live supervisor (pid 72900, running `session-loop.sh` for this work item since 2026-09-14) is ended at its next interactive pause, because bash reads a script incrementally and editing a running script corrupts it. In one commit: root `ROLLOVER_RELAUNCH` flips to `manual`, a committed `work/template-improvement-review/context-budget.env` keeps this item on `auto`, `jq` stays a hard requirement in the dependency check (it already is; pin it with a test), and the `SESSION_LOOP_NOTIFY` path in `context-budget.env` stops depending on a `ROOT` variable that differs per caller. The one-time import of `work/<item>/.session-seq` into the record's `seq` block is written and tested here, against a throwaway work item. From this phase until cutover, no implementation session rolls over through the supervisor.
+
+**Phase 1 — the record helper.** `scripts/lib/session-lib.sh` gives every writer one function: read the record, apply a filter, write a temp file in the same directory, rename over the original, under a `mkdir` lock. Each caller passes a precondition; a false precondition is a silent no-op, an empty result is a refusal. It introduces `schema_mismatch` and `record_unreadable`. It has no callers yet, so its test is purely unit-level; the block names and sanctioned cross-block writes come from the record table verbatim.[^p4v2]
+
+**Phase 2 — fleet extraction.** The sub-agent fleet verbs (`children`, `dispatch-contract`, `dispatch-open`, `dispatch-close`, `dispatch-list`) move from the measurer into `scripts/fleet.sh` with no behaviour change; their three suites are renamed and re-pointed. This shrinks the measurer by roughly 400 lines before anyone edits it. Hazard: the implementing session's own hooks call the measurer every turn, so a half-edited script silently loses that session its measurement; commit only from green.
+
+**Phase 3 — measurer verbs.** `register` writes the `session` block (and binds to an open launch via the two environment variables or a matching `pending` pid); `release` merges into `ended` only if the record still names the caller; `close` is the stop door and runs the ledger checks inline; `--check` is the dry run. Codes: `not_owner`, `owner_live`, `adopted`, `jq_missing`, `ledger_seq_mismatch`, `ledger_shape`. Deleted: `seq-sync`, `opts-sync`, `rollover-complete`, the prep script and options capture, and their tests (`test-seq-sync.sh`, `test-rollover-prep.sh`, `test-rollover-sentinel.sh`); `test-context-budget-registry.sh` and `test-session-numbering.sh` are rewritten against the record. Fate of `record`, `watch` and `supervised` as verbs: decide in phase 3's plan.
+
+**Phase 4 — launcher.** The launcher checks both files itself, then in one atomic write advances `seq`, copies the outgoing owner into `launch.predecessor`, empties `session`, and writes `staged` (or `launch.pending` for an in-place restart). Codes: `not_owner`, `owner_live`, `chain_closed`, `supervised_stage_only`, `ledger_seq_mismatch`, `ledger_shape`, `launcher_unchanged`, `launcher_stale`, `worktree_unsynced`, `runtime_path_unsupported`, `no_supervisor`, `schema_mismatch`. Deleted: `--bg` and its confirmation poll, `--unstage`, the `.rollover-options` replay, the clear-seed hook with its `.pending-clear-seed` file (the prompt now travels in `launch.pending.prompt`), and the tests that pin them. The first end-to-end slice lands here, on a stub runtime with no supervisor: register, write the two files, `--check`, launch with `--emit`; assert `seq` +1, `launch.predecessor.disposition=rolled_over`, `staged.by` is the caller's session id, `session` is null; then a stub successor registers with the two environment variables and fills `session`. This exercises every launcher gate except `supervised_stage_only`.
+
+**Phase 5 — supervisor.** First commit wraps the existing script in `main "$@"` with no other change, so that later edits are safe to make while any old copy runs. Then the body: check the chain budget, stage through the launcher if nothing is staged, export the number, record the child in `chain`, run it, and reach `staged`, `quit_stop`, `quit_plain` or `cap`, else broken with `rc_nonzero`, `logout`, `staged_invalid leg=<which>`, `no_own_measurement`, `record_unreadable`, `schema_mismatch` or `stall`; start refusals `record_unreadable`, `schema_mismatch`, `chain_closed`, `supervisor_live`, `relaunch_off`. The stall guard watches the three markdown files, not the record. The suite uses stub children and adds the two new cases: restart with an already-spent stage, and the refused hand stage. Deleted: the sentinel, the flush-hash check, the `.session-loop` state files.
+
+**Phase 6 — hook dispatcher.** One script reads the adapter table (transcript location, token method, session-id source, which hook registers, which ends a turn, what logout looks like) and produces each vendor's payload; the six per-vendor wrappers become one-line shims or go. The `jq_missing` check runs before any parsing. Proof is byte-for-byte equality with today's payloads. Whether `copilot-vscode` and `opencode` keep a shim: decide in phase 6's plan (both are non-goals).
+
+**Phase 7 — probes and acceptance.** The chain probe drops its prose criterion and passes on record fields; the fleet probe drops the child-lock gate. Each probe that needs a vendor login gets a stub-runtime twin that is the CI contract; the Claude Code acceptance runs (attended rollover, then a two-session supervised chain on the throwaway item) are the evidence the cutover needs.
+
+**Phase 8 — skill, docs, ADRs, ignore file, env defaults.** The `session-rollover` skill is rewritten to the new verbs; `docs/context-budget.md` sections on relaunch knobs, the supervisor, chain signals, the multi-session model, sweeps and dispatch (now fleet), adapters, registration and ledger are rewritten to the design's vocabulary; `.gitignore` adds `work/*/session-state.json` and drops entries for files that no longer exist; the three change-log entries still saying "Open" in prose are closed. Decision records: the design's settled points (one record with three writers, process liveness as the only ownership test, the supervisor's verdict, the three settled user decisions) are promoted from the decision notes to ADRs; the session-counter ADRs are superseded by the record, and the `/clear` open item in the relaunch ADR closes on the Stage 2 probe evidence (the transcript rotates). Exact ADR set: decide in phase 8's plan. A doc-consistency test pins that every verb and reason code named in the doc exists in the scripts and vice versa.
+
+## Session estimate
+
+A session here means one context window of the parent agent. Basis: about 70K tokens of work per session (120K usable before WARN, minus about 50K context load), of which about 10K goes to rollover, so about 60K net; roughly one session per 300–400 changed lines of a 1,000–1,500-line bash script including test runs; a rewritten test suite is at least one session on its own.
+
+Phases 3, 4, 5: about 600–800 changed lines each, so 2 sessions, plus 1 for the suite rewrite = 3 each (9). Phases 0, 1, 2: 1 each (3). Phases 6, 7, 8: 2 each (6).
+Total: 18 sessions likely; 14 optimistic (if the big scripts change less than expected); plus 1 session for cutover. Range: 15–19.
+
+Reviewer's note: that basis assumes the parent session edits the scripts itself. If each phase's tasks are delegated to fresh subagents (each with its own context) and the parent only writes the phase plan, reviews diffs and runs the suites, the parent-session count drops to roughly 10–12, because the bulk of the token cost moves out of the parent window. Wall-clock and total tokens do not drop. The tracker records actual sessions per phase, so the estimate is corrected after phase 3, the first big one.
+
+## Order and gates
+
+- Phase 0 completes before any script is edited; no supervisor may be running any `session-loop.sh`.
+- Phases run in numeric order; 1 before 3, 2 before 3, 3 and 4 before the first end-to-end slice, 5 not before 4, 6 not before 3, 7 not before 5, 8 last.
+- Every commit: `scripts/tests/*.sh` green plus the phase's new suite; a phase ends only on green, with its plan file and the throwaway item's record as evidence.
+- All implementation on a branch or worktree against a throwaway work item; `template-improvement-review` stays on the old scripts until cutover.
+
+## Cutover
+
+1. With phases 0–8 merged, run the phase 0 import on `template-improvement-review` (old counter currently reads 9; the record's `seq` must equal the value at that moment).
+2. The next rollover of this item is attended: no supervisor, the agent writes the two files and runs the new launcher; assert the same fields as the phase 4 slice, then confirm the successor registered against the open launch.
+3. Start the new supervisor on this item with `--max-sessions 2`; expect verdict `staged` once, then `quit_plain` or `cap`. Only then is the item supervised again.
+4. Retire the import script and the `.session-seq*` ignore entries in a follow-up commit once every live item has been imported.
+
+## Risks
+
+- **Editing a script a live process is running.** Bash reads incrementally. Mitigation: phase 0 ends the chain; phase 5's `main "$@"` wrapper commit; never edit on the checkout a supervisor runs from.
+- **The implementing session measures itself with the script under edit.** A broken measurer means no WARN for that session. Mitigation: hooks fail open; commit only from green; watch the statusline.
+- **Silent record corruption from two writers.** Mitigation: phase 1's lock and preconditions are tested with a deliberate race before any caller exists.
+- **Suite rewrites balloon past the estimate.** Mitigation: tests pin only exit code, record fields and reason code; free-form log text is never asserted.
+- **Cutover on the real item finds a gap the stub did not.** Mitigation: phase 7's Claude Code acceptance runs on the throwaway item first; the import is idempotent, so a failed step can be retried.
+
+## Review corrections applied to the agent's draft
+
+1. The draft folded "check whether `/clear` rotates the transcript" into phase 3. That question was answered by the Stage 2 probe (it rotates); the remaining work is to close the ADR's open item, moved to phase 8.
+2. The draft deleted the clear-seed hook nowhere and added its seed file to `.gitignore` in phase 8. The design replaces the seed file with `launch.pending.prompt`, so the hook, its seed file and its test are deleted in phase 4 and the ignore defect disappears with them.
+3. The draft had no ADR work at all; Part 3 moved the ADR tables to Stage 4 and the settled decisions are marked for promotion. Added to phase 8.
+
+[^p4v2]: The accepted design is `work/template-improvement-review/evaluation/stage3-design-v2.md`; its record table, gate table and runtime table are the source of every block, verb and code named here. Amendments, cut list and the binding "What Stage 4 needs" section are in Part 3 above; the implementation order and first slice come from `evaluation/stage3-developer-review.md` §4.
+[^p4docs]: Sections of `docs/context-budget.md` affected: Quickstart (agent), Relaunch knobs, The supervisor, What the chain tells you, Multi-session model, Per-child sweep, Dispatching long-running children, Per-runtime adapters, Vendor hook deployments, Session registration, Ledger, Known limitations.
