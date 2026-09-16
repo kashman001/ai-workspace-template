@@ -1,4 +1,4 @@
-# Next Session — template-improvement-review (D1–D3 settled; Stage 4 plan on the user's go)
+# Next Session — template-improvement-review (Stage 4: tickets, then phase 0)
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover. Past-tense provenance lives in `handoff.md`.
@@ -6,72 +6,58 @@
 
 ## Mission
 
-**Get the user's go for Stage 4, then plan the implementation (Part 4).**
-D1–D3 were settled 2026-09-15 (option (a) each; decisions.md); design v2 is
-accepted and supersedes Part 2. Do not start Stage 4 unasked. Answer
-questions about v2 from the files (grep; never guess). Record each decision
-as a Tier-2 note (`/decision`) and edit v2 in place (dated) where it changes
-the design.
+**Stage 4 is live.** Part 4 (the implementation plan) is accepted by the user
+(2026-09-16). Cut tickets from it, then start phase 0. Position: phase 0 of 9
++ cutover, 0 done; see `stage4-tracker.md`.
 
-Four-stage process (user, 2026-09-14): (1) research ✔ → (2) design ✔ →
-(3) evaluate design ✔ (Part 3, session 8) → (4) plan ← after the user's go.
+**Readability rule (user, binding for every doc they read):** short; plain
+language; self-contained; each concept introduced by a diagram or a
+two-sentence explanation. Memory `review-docs-plain-language`.
 
-**Readability rule (user, session 8, binding for every doc they read):**
-short; plain language; self-contained without the workspace (pointers only
-as footnotes); each concept introduced by a diagram or a two-sentence
-explanation. Memory `review-docs-plain-language` has the detail.
-
-**No-human-in-the-loop clause:** if nobody answers, present the page and the
-three decisions (First actions step 3), stop, and wait.
+**No-human-in-the-loop clause:** tickets and phase 0's plan file need no
+user input. Ending the supervisor chain does: if nobody answers, finish the
+tickets, write `plans/phase-0.md`, update the tracker, commit, and stop.
 
 ## Read these, in order
 
-1. `work/template-improvement-review/evaluation/stage3-design-v2.md` — the
-   design (158 lines; read whole, it is the user-facing text).
+1. `work/template-improvement-review/stage4-tracker.md` (whole; ~40 lines).
 2. `work/template-improvement-review/session-management-review-findings.md`
-   Part 3 only (from line 688, 76 lines): amendments, cut list, decisions.
+   from line 765 (Part 4, ~80 lines) — the plan.
 3. `work/template-improvement-review/handoff.md` — top block only.
-4. For Stage 4 only: `evaluation/stage3-developer-review.md` §4 (migration
-   order, first vertical slice) and §8; Part 3 "What Stage 4 needs".
+4. For phase 0 only: `evaluation/stage3-design-v2.md` record table (the
+   `seq` block) and `scripts/tests/test-session-numbering.sh` header.
 
 ## Do NOT reload
 
-Part 2 (superseded), Part 1/1b, the stage1-* and stage3 architect/scenario
-reports (Part 3 has the synthesis), `review.md`, `decisions.md` (append
-only), backlog HTML whole, big scripts whole.
+Parts 1–3, the stage1-*/stage3-* reports, `review.md`, `decisions.md`
+(append only), backlog HTML whole, the three big scripts whole (grep them).
 
 ## State snapshot
 
-- `main` = 2dc0d6e + this rollover's commit; clean; ahead of origin locally
-  (do not push).
-- Supervisor pid 72900 still live on pre-a213b3d `session-loop.sh` (hazard).
-  No edit to that file before decision 12 (end the chain at an interactive
-  pause). No code changes yet; F10 small defects wait for Stage 4 phase 1.
-- Design v2 page (private): https://claude.ai/artifact/2VMbASSbqw1JN4JTeC9jrb. Part 2 page (superseded):
-  https://claude.ai/artifact/4KeTb5seRPdSS8AtEKQmmV
+- `main` = 07a47bb + this rollover's commit; clean; ahead of origin (do not
+  push).
+- Supervisor pid 72900 live on the pre-a213b3d `session-loop.sh`. **This
+  session (10) is its next interactive pause.** Do not edit `session-loop.sh`.
+- Old counter `.session-seq` = 10 after this launch. Design v2 page:
+  https://claude.ai/artifact/2VMbASSbqw1JN4JTeC9jrb
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
 2. Read inputs 1–3.
-3. Republish the v2 page from the source (the published page still shows
-   D1–D3 as open; the source is updated), then present the URL and ask for
-   the go on Stage 4. STOP and wait.
-4. On each decision: `/decision`, edit v2 in place (dated), and if it changes
-   the support matrix or a gate, say so. Every ~10 exchanges:
-   `scripts/context-budget.sh record --label "v2 review Q&A"`.
-
-## Stage 4 recipe (only on the user's explicit go)
-
-Write **Part 4 — implementation plan** (≤ ~120 lines, same readability
-rule) from v2 + Part 3 + developer review §4: ordered phases, each a
-vertical slice with its test; phase 0 = decision 12 (end pid 72900), root
-`ROLLOVER_RELAUNCH=manual` + this item's committed `auto` override, `jq` as
-hard `req`; phase 1 = record helper + its test; then fleet extraction (pure
-move), context-budget verbs, launcher, supervisor (`main "$@"` first),
-dispatcher, docs/skill/env; F10 defects folded into the phase that touches
-each file. Delegate the draft to one Plan agent (give it v2, Part 3, dev §4/§8,
-`docs/context-budget.md` headings, `tests/` listing); parent reads the
-summary + the plan. Append as Part 4, update the status header, `record
---label "Stage 4 plan drafted"`, commit, STOP for the user's review. Then
-`/to-tickets` on the user's acceptance.
+3. `/to-tickets` on Part 4: one ticket per phase (0–8 + cutover), blocking
+   edges per "Order and gates", under `work/template-improvement-review/issues/`.
+   Commit. `scripts/context-budget.sh record --label "Stage 4 tickets"`.
+4. Phase 0, step 1 — **end the chain**: tell the user this session is the
+   interactive pause; on their ok, do NOT stage a successor at the end of this
+   session (a deliberate quit with nothing staged closes the chain correctly).
+   Record it in the tracker (phase 0 `in progress`, Notes: "chain ended
+   session 10") and the ledger.
+5. Phase 0, step 2 — write `plans/phase-0.md` (task-level: env flip + per-item
+   override commit; `jq` req test; `.session-seq` import script + test on a
+   throwaway work item; `SESSION_LOOP_NOTIFY` ROOT fix). Execute what fits;
+   every commit with `scripts/tests/*.sh` green.
+6. At each boundary: update `stage4-tracker.md` ("Now" line, row, Used),
+   `record --label "<phase> <step>"`. At WARN: `session-rollover` — but if the
+   chain has been ended, **stage nothing**; write the files, commit, and tell
+   the user to start session 11 by hand with the bootstrap prompt.
