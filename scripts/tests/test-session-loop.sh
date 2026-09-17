@@ -1062,7 +1062,7 @@ echo "V4: a FORKED agent under a supervisor still stages its successor"
 # with TF_SESSION_LOOP and TF_SESSION_LOOP_PROJECT scrubbed from its environment,
 # and the work-item lock is held under a DIFFERENT session id than the one that
 # will release it. Unlike every stub above, this child drives the REAL
-# single-writers -- context-budget.sh supervised/seq-sync/rollover-complete and
+# single-writers -- context-budget.sh supervised and
 # launch-next-session.sh --emit -- so the four lanes are exercised as shipped:
 #   C1 (lane A) the fork decides supervision from disk, not from the environment
 #   C2 (lane B) it stages with a BARE --emit; it cannot compute the path
@@ -1103,13 +1103,10 @@ printf '# launcher (V4 session %s)\n' "$me" > work/testproj/next-session.md
 #    both stage (design.md R3); 1 unsupervised here means C1 read the env.
 ./scripts/context-budget.sh supervised --project testproj; sup=$?
 [ "$sup" -eq 0 ] || [ "$sup" -eq 2 ] || { echo "V4: read itself as unsupervised (rc=$sup)"; exit 9; }
-# 2. the counter's single writer, which also leaves the provenance sidecar
-#    rollover-complete reads for its own number (SKILL.md step 5).
-./scripts/context-budget.sh seq-sync --project testproj --session "$me" || exit 9
-# 3. C2/C3: stage with a bare --emit, loudly (SKILL.md step 6).
+# 2. C2/C3: stage with a bare --emit, loudly (SKILL.md step 6). seq-sync and
+#    rollover-complete were retired in Stage 4 phase 3; nothing reads the
+#    sentinel (R2.17), so the fork ends here.
 ./scripts/launch-next-session.sh testproj --emit || exit 9
-# 4. the sentinel, SKILL.md step 8.
-./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff || exit 9
 FORK
 chmod +x "$TMP/forked-session.sh"
 stage_next "$TMP/forked-session.sh"
@@ -1137,56 +1134,6 @@ assert_contains "V4f: 'chain cap' printed — the chain ended on the cap path, n
                 "$(cat "$TMP/v4")" "chain cap"
 unset V4_MAIN; rm -f "$W/.active-session"
 
-echo "V5 (D10): a chain where seq-sync has NEVER run still produces an acceptable sentinel"
-# The regression D10 names. V4 above passes only because its child calls
-# seq-sync, which writes the provenance sidecar rollover-complete used to read.
-# An ordinary chain never needs a counter repair, so that sidecar is never
-# refreshed and the sentinel stamped a months-old number — the supervisor then
-# halted a chain in which nothing was wrong. This child is V4's minus step 5:
-# same REAL single-writers, no seq-sync anywhere, and (below) no sidecar on disk
-# at all, which is the state a fresh work item is actually in.
-reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
-rm -f "$W/.session-seq.provenance.json" "$W/.session-seq.bump.json"
-jq -n '{session_id:"nosync",runtime:"claude",project:"testproj"}' \
-  > "$MAIN/.context-budget/sessions/claude-nosync.json"
-export V5_MAIN="$MAIN"
-cat > "$TMP/nosync-session.sh" <<'NOSYNC'
-#!/usr/bin/env bash
-set -u
-cd "$V5_MAIN" || exit 9
-export CLAUDE_CODE_SESSION_ID=nosync     # D17: see the V4 fixture above
-printf '# launcher (V5 %s)\n' "$(tr -cd '0-9' < work/testproj/.session-seq)" \
-  > work/testproj/next-session.md
-./scripts/launch-next-session.sh testproj --emit || exit 9
-./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff || exit 9
-NOSYNC
-chmod +x "$TMP/nosync-session.sh"
-stage_next "$TMP/nosync-session.sh"
-"$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/v5" 2>&1; rc=$?
-assert_eq       "V5a: the sentinel carries the number that actually ran" \
-                "$(jq -r '.seq' "$SENT" 2>/dev/null)" "8"
-assert_contains "V5b: the supervisor accepted the handover" "$(cat "$TMP/v5")" "rolled over cleanly"
-assert_eq       "V5c: the chain ended on the cap, not a halt" "$rc" "0"
-[ ! -f "$W/.session-seq.provenance.json" ] \
-  && ok "V5d: no seq-sync ran — the sidecar the old code read does not even exist" \
-  || bad "V5d: something ran seq-sync; the case is not testing what it claims"
-
-echo "V5e-g (D10): a seq-sync repair retires the bump record rather than losing to it"
-# The precedence has to run both ways. After a repair the counter no longer
-# matches what the bump recorded, so the stale bump record must step aside for
-# the sidecar the repair just wrote.
-reset
-rm -f "$W/.session-seq.provenance.json" "$W/.session-seq.bump.json" "$SENT"
-( cd "$MAIN" && ./scripts/launch-next-session.sh testproj --emit >/dev/null 2>&1 )
-assert_eq "V5e: --emit recorded its own number in the bump record" \
-          "$(jq -r '.seq' "$W/.session-seq.bump.json" 2>/dev/null)" "8"
-"$MAIN/scripts/context-budget.sh" seq-sync --project testproj --session 12 >/dev/null 2>&1
-( cd "$MAIN" && ./scripts/context-budget.sh rollover-complete --project testproj --mode handsoff >/dev/null 2>&1 )
-assert_eq "V5f: the repaired number wins over the retired bump record" \
-          "$(jq -r '.seq' "$SENT" 2>/dev/null)" "12"
-assert_eq "V5g: and the bump record itself was left alone, not rewritten" \
-          "$(jq -r '.successor' "$W/.session-seq.bump.json" 2>/dev/null)" "9"
-unset V5_MAIN; rm -f "$W/.session-seq.provenance.json" "$W/.session-seq.bump.json"
 
 # Unconditional teardown: leave the exported fixture state as the suite's
 # default so a later case can never inherit stage-nothing or a live alarm.
