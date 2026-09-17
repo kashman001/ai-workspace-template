@@ -150,3 +150,11 @@ to avoid editing scripts a live process runs — freezing `main` removes that ha
 **Rejected:** ending the chain and relying on the old launcher's `auto`/`--bg` path (the
 design found its successor binding inexact); one long session per several waves (context).
 **Promote?:** no.
+
+## 2026-09-17 — Rollovers between waves are hands-off (user)
+
+**What:** every rollover in Stage 4 uses `--loop-mode handsoff`; fleet waves are launched without a per-wave okay. **Why:** the user asked that the next session start on its own rather than wait for Enter. **Rejected:** `interactive` mode per wave (session 10's launcher), so the user could approve each fleet launch — it stalls the chain on an absent human.
+
+## 2026-09-17 — stage4 integration happens in a worktree, never in the primary tree
+
+**What:** `stage4` is only ever checked out at `.claude/worktrees/stage4`; the primary tree stays on `main`. **Why:** the live supervisor and this session's hooks read the old scripts from the primary tree; a checkout would swap them under a running bash. **Rejected:** `git checkout stage4` in place between merges — cheaper, but exactly the "editing a script a live process is running" risk from Part 4.
