@@ -310,10 +310,11 @@ if [ "$UNSTAGE" -eq 1 ]; then
   if u_hf="$(ledger_file)"; then u_top="$(top_ledger_session "$u_hf")"; fi
   if [ -n "$u_top" ] && [ -n "$u_cur" ] && [ "$u_cur" = "$((u_top + 1))" ]; then
     if [ "$DRY" -eq 1 ]; then
-      note "unstage: would rewind .session-seq $u_cur -> $u_top (via seq-sync)"
+      note "unstage: would rewind .session-seq $u_cur -> $u_top"
     else
-      "$WORKSPACE_ROOT/scripts/context-budget.sh" seq-sync --project "$PROJECT" --session "$u_top" \
-        || die "unstage: seq-sync rewind failed — counter still at $u_cur"
+      printf '%s\n' "$u_top" > "$WORKSPACE_ROOT/work/$PROJECT/.session-seq" \
+        || die "unstage: rewind failed — counter still at $u_cur"
+      note "unstage: rewound .session-seq $u_cur -> $u_top"
     fi
     u_did=1
   elif [ -n "$u_top" ] && [ "$u_cur" = "$u_top" ]; then
