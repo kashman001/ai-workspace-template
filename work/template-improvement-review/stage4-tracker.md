@@ -6,7 +6,7 @@
 > boundary and every rollover; the launcher (`next-session.md`) points here.
 > Status vocabulary: `todo` · `in progress` · `blocked: <why>` · `done`.
 
-**Now:** Tickets cut (issues/01–10, commit 0c1dd35). Phase 0 in progress: tasks 2–5 done and tested (env flip + per-item override, jq pin, notify path, import script); task 1 (end the chain) completes when session 10 is closed by hand with nothing staged. Next: session 11 (started by hand) confirms the chain ended, marks phase 0 done, starts phase 1 on a branch.
+**Now:** Tickets cut (issues/01–10, commit 0c1dd35). Phase 0 in progress: tasks 2–5 done and tested (env flip + per-item override, jq pin, notify path, import script); task 1 (end the chain) completes when session 10 is closed by hand with nothing staged. Next: session 11 (by hand) confirms the chain ended, marks phase 0 done, writes `plans/fleet-plan.md` and runs the phases as a fleet in waves (1∥2 → 3 → 4∥6 → 5 → 7 → 8 → cutover), user's direction 2026-09-17.
 
 **Sessions used so far in Stage 4:** 2 (session 9 planning; session 10 tickets + phase 0). Estimate: 15–19 parent sessions if the parent edits; ~10–12 if phases are delegated to subagents. Re-estimate after phase 3.
 

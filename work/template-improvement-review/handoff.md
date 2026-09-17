@@ -32,9 +32,11 @@ compares rather than consumes the counter; notify path via `BASH_SOURCE`
 - Tickets + phase 0 + bookkeeping fit one session (WARN at ~125K) only
   because the big scripts were grepped, never read.
 
-**Open / next.** Session 11 is started by hand (no supervisor): confirm pid
-72900 is gone and the log shows the quit verdict, mark phase 0 `done`, then
-phase 1 (record helper) on a branch against a throwaway item.
+**Open / next.** User direction after the session summary (2026-09-17): plan
+the remaining phases as a dependency graph and execute them in parallel with
+a fleet of agents. Session 11 (started by hand, no supervisor): confirm pid
+72900 is gone, mark phase 0 `done`, write `plans/fleet-plan.md` (waves
+1∥2 → 3 → 4∥6 → 5 → 7 → 8 → cutover), get the go, launch wave A.
 
 # Session Handoff — 9 (2026-09-15/16): Stage 4 planned (Part 4) and ACCEPTED; tracker in place; rollover at WARN
 
