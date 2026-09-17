@@ -33,7 +33,13 @@ has ended. The other three tasks are small preconditions that need no chain.
 - The notify path resolves from the env file's own location
   (`${BASH_SOURCE[0]}`), not from a caller variable. Every sourcer is bash.
 
-## Ending the chain
+## Ending the chain — amended 2026-09-17: chain kept
+
+**Amendment (user, 2026-09-17):** each wave runs in its own session and the
+successor is kicked off automatically, so the live chain is kept. It is safe
+because the waves build on an integration branch (`stage4`) and `main`, which
+the supervisor and the parent's hooks run from, stays frozen until cutover.
+Cutover stops the chain first (plain quit), then merges. The original text:
 
 The old supervisor's verdict for "child exited 0, nothing staged, counter
 unmoved" is a deliberate quit (`session-loop.sh`, the `delta -eq 0` branch):

@@ -138,3 +138,15 @@ caller-variable path resolved against the cwd for every caller but the superviso
 records); consuming the counter on import (breaks the old scripts before cutover);
 `${WORKSPACE_ROOT:-${ROOT:-.}}` (still a caller variable, still wrong from a hook).
 **Promote?:** no — phase 8 promotes the record itself.
+
+## 2026-09-17 — Stage 4 execution: one wave per session, live supervisor kept, `main` frozen until cutover
+
+**Decision:** phases run as a fleet in waves (1∥2 → 3 → 4∥6 → 5 → 7 → 8 → cutover), one
+wave per parent session, rolling over through the existing supervisor chain (pid 72900).
+Waves merge to an integration branch `stage4`; `main` keeps the old scripts until cutover.
+**Why:** the user wants each wave in a fresh session with the next kicked off automatically;
+the supervisor already does that and is proven on this item. Phase 0 ended the chain only
+to avoid editing scripts a live process runs — freezing `main` removes that hazard.
+**Rejected:** ending the chain and relying on the old launcher's `auto`/`--bg` path (the
+design found its successor binding inexact); one long session per several waves (context).
+**Promote?:** no.
