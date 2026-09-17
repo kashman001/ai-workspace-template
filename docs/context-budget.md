@@ -56,7 +56,7 @@ Section index:
 scripts/context-budget.sh check                  # auto-detect runtime, one status line
 scripts/context-budget.sh check --runtime codex  # or claude|copilot-vscode|copilot-cli|gemini
 scripts/context-budget.sh watch --interval 30    # hook-less runtimes: poll + macOS notification
-scripts/context-budget.sh children               # per-subagent sweep, WARN/STOP only (claude)
+scripts/fleet.sh children                        # per-subagent sweep, WARN/STOP only (claude)
 ```
 
 Output is one line: `runtime= method= tokens= threshold= warn= pct= status= artifact=`.
@@ -121,7 +121,7 @@ is what keeps concurrent sessions from reading each other's counts.
   trigger policy"). **Exit 2 (STOP):** finish only the current atomic step,
   then run `skills/session-rollover/SKILL.md` — no ask. Never start a new work
   unit in WARN/STOP state.
-- **Dispatching a long-running subagent:** `scripts/context-budget.sh
+- **Dispatching a long-running subagent:** `scripts/fleet.sh
   dispatch-open --project <p> --task <slug> --report <path>` — persist the
   dispatch record and emit the rollover contract for the child's prompt in
   one step; `dispatch-close --status <S>` at yield (see "Dispatching

@@ -5,15 +5,14 @@
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
 # Usage:   context-budget.sh check|register|record|watch|release|supervised|
-#            children|dispatch-contract|dispatch-open|dispatch-close|
-#            dispatch-list|seq-sync|opts-sync|rollover-complete
+#            seq-sync|opts-sync|rollover-complete
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
-#            [--parent-session <sid>] [--agent-id <id>] [--takeover] [--all]
-#            [--report <path>] [--brief <path>] [--gen <n>] [--task <slug>]
-#            [--agent-type <t>] [--model <m>] [--effort <e>] [--status <S>]
-#            [--interval <secs>] [--quiet] [--mode interactive|handsoff]
+#            [--parent-session <sid>] [--agent-id <id>] [--takeover]
+#            [--model <m>] [--interval <secs>] [--quiet]
+#            [--mode interactive|handsoff]
 #            [--session-id <sid>]   (check only; read-only pin on a NAMED session)
+#          The fleet verbs (children, dispatch-*) live in scripts/fleet.sh.
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
 # Design notes: D1–D9 in docs/archive/context-budget-design.html + docs/context-budget.md.
@@ -68,14 +67,17 @@ COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30;
 # Set by copilot_vscode_discover when it pins by newest-mtime while >1 Copilot
 # session is concurrently active (no authoritative id) — an unsafe guess.
 COPILOT_PIN_AMBIGUOUS=0
-PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
+PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0
 # --session-id: ask the budget question about a session that is NOT this
 # process. check only, and never a writer — see the guard below resolve_session.
 PIN_SESSION_ID=""
-REPORT_FILE=""; BRIEF_FILE=""; GEN=1; GEN_SET=0
-TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""; SESSION_NUM=""; LOOP_MODE=""
+MODEL=""; SESSION_NUM=""; LOOP_MODE=""
 EXTRA_OPTS=""; APPROVAL=""
-case "${1:-}" in check|register|record|watch|release|supervised|children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list|seq-sync|opts-sync|rollover-complete) COMMAND="$1"; shift ;; esac
+case "${1:-}" in
+  check|register|record|watch|release|supervised|seq-sync|opts-sync|rollover-complete) COMMAND="$1"; shift ;;
+  children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list)
+    echo "error: $1 moved to scripts/fleet.sh — run: scripts/fleet.sh $1 [options]" >&2; exit 3 ;;
+esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -85,15 +87,7 @@ while [ $# -gt 0 ]; do
     --session-id) PIN_SESSION_ID="$2"; shift 2 ;;
     --agent-id) AGENT_ID="$2"; shift 2 ;;
     --takeover) TAKEOVER=1; shift ;;
-    --all) ALL=1; shift ;;
-    --report) REPORT_FILE="$2"; shift 2 ;;
-    --brief) BRIEF_FILE="$2"; shift 2 ;;
-    --gen) GEN="$2"; GEN_SET=1; shift 2 ;;
-    --task) TASK="$2"; shift 2 ;;
-    --agent-type) AGENT_TYPE="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
-    --effort) EFFORT="$2"; shift 2 ;;
-    --status) CLOSE_STATUS="$2"; shift 2 ;;
     --session) SESSION_NUM="$2"; shift 2 ;;
     --mode) LOOP_MODE="$2"; shift 2 ;;
     --extra) EXTRA_OPTS="$2"; shift 2 ;;
@@ -534,7 +528,7 @@ emit_check() {
 # difference from the rejected P5 -- this never tells a compliant rollover it
 # did something wrong.
 #
-# NOT in emit_check(): cmd_children and cmd_watch call that for OTHER sessions,
+# NOT in emit_check(): cmd_watch calls that for OTHER sessions,
 # where .next-command says nothing about the caller.
 successor_advisory() {
   case "$LAST_STATUS" in WARN|STOP) ;; *) return 0 ;; esac
@@ -1047,68 +1041,6 @@ cmd_release() {
   fi
 }
 
-claude_child_measure() {
-  # Sidechain-INCLUSIVE variant of claude_measure: a subagent transcript's
-  # entries are all isSidechain:true, so the self-measure filter would
-  # silently degrade every child to size-estimate.
-  local f="$1" jq_prog tokens
-  jq_prog='[.[] | select(.message.usage.input_tokens != null)]
-    | last | if . == null then empty else
-      (.message.usage.input_tokens + (.message.usage.cache_read_input_tokens // 0)
-       + (.message.usage.cache_creation_input_tokens // 0)) end'
-  tokens=$(tail -n 2000 "$f" | jq -s -r "$jq_prog" 2>/dev/null)
-  [ -z "$tokens" ] && tokens=$(jq -s -r "$jq_prog" "$f" 2>/dev/null)
-  [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
-}
-
-cmd_children() {
-  # R1 sweep (research §10): no runtime reports per-child usage to the parent;
-  # measure the child transcript artifacts directly. Escalation-only output —
-  # WARN/STOP children print, OK children don't (unless --all). Exit code is
-  # the worst child status, check-style. Direct children only (R8).
-  if [ "$RUNTIME" != "auto" ] && [ "$RUNTIME" != "claude" ]; then
-    die "children: only implemented for runtime=claude (got $RUNTIME)"
-  fi
-  if [ -n "$PARENT_SESSION" ]; then
-    local prec
-    prec=$(parent_record_path "$PARENT_SESSION") \
-      || die "children: parent session $PARENT_SESSION is not registered"
-    RUNTIME=$(jq -r '.runtime // empty' "$prec")
-    ARTIFACT=$(jq -r '.artifact // empty' "$prec")
-    [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
-      || die "children: no artifact on record for parent $PARENT_SESSION"
-  else
-    resolve_session
-  fi
-  [ "$RUNTIME" = "claude" ] || die "children: only implemented for runtime=claude (got $RUNTIME)"
-  local subdir="${ARTIFACT%.jsonl}/subagents"
-  local worst=0 measured=0 escalated=0
-  local f b tokens method status pct mt age atype
-  if [ -d "$subdir" ]; then
-    for f in "$subdir"/agent-*.jsonl; do
-      [ -f "$f" ] || continue
-      read -r tokens method < <(claude_child_measure "$f") || continue
-      [ -n "$tokens" ] || continue
-      measured=$((measured+1))
-      if [ "$tokens" -ge "$THRESHOLD" ]; then status="STOP"; worst=2
-      elif [ "$tokens" -ge "$WARN" ]; then status="WARN"; [ "$worst" -lt 1 ] && worst=1
-      else status="OK"; fi
-      [ "$status" = "OK" ] || escalated=$((escalated+1))
-      if [ "$status" != "OK" ] || [ "$ALL" -eq 1 ]; then
-        pct=$(( tokens * 100 / THRESHOLD ))
-        mt=$(stat -f%m "$f" 2>/dev/null || stat -c%Y "$f" 2>/dev/null) || mt=$(date +%s)
-        age=$(( $(date +%s) - mt ))
-        atype=$(jq -r '.agentType // empty' "${f%.jsonl}.meta.json" 2>/dev/null)
-        [ -n "$atype" ] || atype="?"
-        b="${f##*/}"; b="${b%.jsonl}"
-        echo "agent=$b tokens=$tokens threshold=$THRESHOLD warn=$WARN pct=$pct status=$status age=$age type=$atype artifact=$f"
-      fi
-    done
-  fi
-  note "children: $measured measured, $escalated escalated"
-  return "$worst"
-}
-
 cmd_watch() {
   resolve_session
   note "watching $RUNTIME session every ${INTERVAL}s; threshold=$THRESHOLD warn=$WARN"
@@ -1124,122 +1056,6 @@ cmd_watch() {
     prev="$LAST_STATUS"
     sleep "$INTERVAL"
   done
-}
-
-# R2 dispatch contract (subagent-rollover research §8/§10): the block a parent
-# injects into a long-running child's dispatch prompt. Stateless, ASCII-only
-# (dispatch prompts traverse %q and BSD sed in launch paths), runtime-agnostic
-# — the portable-core tier, load-bearing on disk protocol not hooks.
-cmd_dispatch_contract() {
-  [ -n "$REPORT_FILE" ] || die "dispatch-contract requires --report <path>"
-  case "$GEN" in ''|*[!0-9]*|0) die "--gen must be a positive integer" ;; esac
-  echo "=== Dispatch contract (context-budget R2/R3) ==="
-  echo "You are generation $GEN on this task."
-  [ -n "$BRIEF_FILE" ] && echo "Brief: $BRIEF_FILE"
-  echo "Report file: $REPORT_FILE"
-  if [ "$GEN" -ge 2 ]; then
-    cat <<'EOF'
-- Read the report file before starting: earlier generations' progress and
-  open items are recorded there. Finish the open items first.
-EOF
-  fi
-  echo "- At every work-unit boundary, append a progress block to the report file"
-  echo "  (what finished, what is next, open items), labeled [gen $GEN]. This"
-  echo "  doubles as your heartbeat."
-  cat <<'EOF'
-- Keep your final return message to at most 15 lines; detail belongs in the
-  report file, not the return.
-- The first line of your return must be one of:
-  DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED
-- ROLLOVER_NEEDED means: context spent, task incomplete, report current as
-  of your last checkpoint, open items listed there. Emit it only when asked
-  to checkpoint or when a WARN/STOP line is pushed into your session -
-  never from self-assessment of your own context usage.
-- If asked to checkpoint: flush state to the report file, then return your
-  status and open items. Do not push on.
-EOF
-}
-
-# R4 dispatch records (subagent-rollover research §5/§8): the parent persists
-# each child dispatch spec so a successor parent can reconstruct the
-# orchestration and re-dispatch unfinished subtrees fresh — resume is keyed to
-# the (dead) predecessor's session id. Generation fencing lives in
-# dispatch-open: gen N+1 exists only after gen N was closed (clean yield or a
-# parent KILLED ruling), so each report file has at most one live writer.
-# Records are workspace-root-anchored runtime state (ADR-0006), one JSON per
-# task under work/<proj>/.agent-dispatch/, same class as .agent-locks/.
-dispatch_record_path() {
-  local dir="$WORKSPACE_ROOT/work/$PROJECT"
-  [ -n "$PROJECT" ] || die "$COMMAND requires --project <work-item>"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  echo "$dir/.agent-dispatch/$TASK.json"
-}
-
-cmd_dispatch_open() {
-  [ -n "$TASK" ] || die "dispatch-open requires --task <slug>"
-  [ -n "$REPORT_FILE" ] || die "dispatch-open requires --report <path>"
-  [ "$GEN_SET" -eq 0 ] || die "dispatch-open: --gen is computed from the record, never passed"
-  local rec gen
-  rec=$(dispatch_record_path) || exit 3
-  mkdir -p "${rec%/*}"
-  if [ -f "$rec" ]; then
-    gen=$(jq -r '.generations | length' "$rec")
-    [ "$(jq -r '.generations[-1].status // empty' "$rec")" != "open" ] \
-      || die "dispatch-open: generation $gen of $TASK is still open — dispatch-close it first (yield or KILLED ruling)"
-    gen=$((gen + 1))
-  else
-    gen=1
-    jq -n --arg t "$TASK" --arg proj "$PROJECT" \
-      '{task:$t, project:$proj, generations:[]}' > "$rec"
-  fi
-  jq --arg ts "$(date -u +%FT%TZ)" --arg rp "$REPORT_FILE" --arg bf "$BRIEF_FILE" \
-     --arg at "$AGENT_TYPE" --arg md "$MODEL" --arg ef "$EFFORT" \
-     --arg aid "$AGENT_ID" --argjson gen "$gen" --arg user "$USER@$(hostname -s)" \
-    '.report = $rp
-     | (if $bf == "" then . else .brief = $bf end)
-     | (if $at == "" then . else .agent_type = $at end)
-     | (if $md == "" then . else .model = $md end)
-     | (if $ef == "" then . else .effort = $ef end)
-     | .generations += [{gen:$gen, dispatched_at:$ts, status:"open", user:$user}
-                        + (if $aid == "" then {} else {agent_id:$aid} end)]' \
-    "$rec" > "$rec.tmp" && mv "$rec.tmp" "$rec"
-  GEN="$gen"
-  cmd_dispatch_contract
-  note "dispatch: opened generation $gen of $TASK (work/$PROJECT/.agent-dispatch/$TASK.json)"
-}
-
-cmd_dispatch_close() {
-  [ -n "$TASK" ] || die "dispatch-close requires --task <slug>"
-  case "$CLOSE_STATUS" in
-    DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT|ROLLOVER_NEEDED|KILLED) : ;;
-    "") die "dispatch-close requires --status <S>" ;;
-    *) die "dispatch-close: invalid --status $CLOSE_STATUS (DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT|ROLLOVER_NEEDED|KILLED)" ;;
-  esac
-  local rec
-  rec=$(dispatch_record_path) || exit 3
-  [ -f "$rec" ] || die "dispatch-close: no dispatch record for task $TASK"
-  [ "$(jq -r '.generations[-1].status // empty' "$rec")" = "open" ] \
-    || die "dispatch-close: no open generation for $TASK"
-  jq --arg ts "$(date -u +%FT%TZ)" --arg st "$CLOSE_STATUS" --arg aid "$AGENT_ID" \
-    '.generations[-1] |= (.status = $st | .closed_at = $ts
-                          | (if $aid == "" then . else .agent_id = $aid end))' \
-    "$rec" > "$rec.tmp" && mv "$rec.tmp" "$rec"
-  note "dispatch: closed generation $(jq -r '.generations | length' "$rec") of $TASK status=$CLOSE_STATUS"
-}
-
-cmd_dispatch_list() {
-  # One line per task record; exit 1 iff any generation is still open — the
-  # drain-check a rolling parent consults before its own rollover.
-  local dir="$WORKSPACE_ROOT/work/$PROJECT" f any_open=0
-  [ -n "$PROJECT" ] || die "dispatch-list requires --project <work-item>"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  for f in "$dir/.agent-dispatch/"*.json; do
-    [ -f "$f" ] || continue
-    jq -r '"task=\(.task) gen=\(.generations | length) status=\(.generations[-1].status // "none") report=\(.report // "?")"
-           + (if .brief then " brief=\(.brief)" else "" end)' "$f"
-    [ "$(jq -r '.generations[-1].status // empty' "$f")" = "open" ] && any_open=1
-  done
-  return "$any_open"
 }
 
 # seq-sync: the counter's single writer (spec: numbering rules 1-2; ADR-0008).
@@ -1443,11 +1259,6 @@ case "$COMMAND" in
   watch) cmd_watch ;;
   release) cmd_release ;;
   supervised) cmd_supervised ;;
-  children) cmd_children ;;
-  dispatch-contract) cmd_dispatch_contract ;;
-  dispatch-open) cmd_dispatch_open ;;
-  dispatch-close) cmd_dispatch_close ;;
-  dispatch-list) cmd_dispatch_list ;;
   seq-sync) cmd_seq_sync ;;
   opts-sync) cmd_opts_sync ;;
   rollover-complete) cmd_rollover_complete ;;
