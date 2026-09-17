@@ -525,6 +525,7 @@ scripts/
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── fleet.sh                       # Sub-agent fleet: per-child sweep + dispatch records/contract
 ├── context-inspect.sh             # Break down what fills a session's context window
 ├── context-experiment.sh          # Reproducible headless context experiment harness
 ├── link-local-work.sh             # Share ignored work/<item>/ dirs into a worktree by symlink (L45)
