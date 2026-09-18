@@ -3,9 +3,9 @@
 # Purpose: launch-next-session.sh --emit on the session record. Golden-files the
 #          emitted command against --dry-run for the five attached runtimes
 #          (copilot-vscode is refused under --emit), and pins the side effects
-#          --dry-run skips: the record's `staged` block plus the files the
-#          phase-5 supervisor still reads (the command, its identity sidecar,
-#          the counter mirror). Throwaway git workspace; nested so the bare
+#          --dry-run skips: the record's `staged` block plus the two files the
+#          turn-end hook still reads (the command, the bump record). Throwaway
+#          git workspace; nested so the bare
 #          --emit resolution (WORKSPACE_ROOT, not the git root) is observable.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -73,14 +73,11 @@ assert_eq "E2d: staged.by is the caller"         "$(rec .staged.by)" "sid-me"
 assert_eq "E2e: session emptied"                 "$(rec .session)" "null"
 assert_eq "E2f: predecessor rolled_over"         "$(rec .launch.predecessor.disposition)" "rolled_over"
 assert_eq "E2g: launch.mode default handsoff"    "$(rec .launch.mode)" "handsoff"
-assert_eq "E2h: counter mirror 8 (phase-5 supervisor)" "$(cat "$SEQF")" "8"
+[ ! -f "$SEQF" ] && ok "E2h: no counter mirror" || bad "E2h: the counter mirror was written"
 assert_eq "E2i: bump record for the supervisor"  \
   "$(jq -r '"\(.seq)/\(.successor)/\(.runtime)/\(.session_id)/\(.mode)/\(.written_by)"' "$SEQF.bump.json")" \
   "7/8/claude/sid-me/handsoff/launch-next-session.sh"
-assert_eq "E2j: identity sidecar"                \
-  "$(jq -r '"\(.project)/\(.seq)/\(.successor)/\(.session_id)/\(.written_by)"' "$EMITF.json")" \
-  "testproj/7/8/sid-me/launch-next-session.sh"
-assert_eq "E2k: sidecar checksum matches"        "$(jq -r .command_cksum "$EMITF.json")" "$(cksum < "$EMITF")"
+[ ! -f "$EMITF.json" ] && ok "E2j: no identity sidecar" || bad "E2j: the sidecar was written"
 [ ! -f "$MAIN/.context-budget/successor-pending-testproj.json" ] \
   && ok "E2l: no successor-pending handshake file" || bad "E2l: handshake file written"
 reset

@@ -30,10 +30,11 @@
 #          runtime_path_unsupported, supervised_stage_only, no_supervisor,
 #          owner_live, not_owner, worktree_unsynced, launcher_stale,
 #          launcher_unchanged, ledger_shape, ledger_seq_mismatch.
-# Kept for the phase-5 supervisor (session-loop.sh, unchanged this wave) and
-# written AFTER the record, never read here: work/<project>/.session-seq (a
-# mirror of `seq`), .session-seq.bump.json, and on --emit the command file plus
-# its .json identity sidecar. Phase 5 retires them.
+# Also written AFTER the record, never read here: .session-seq.bump.json and
+# on --emit the command file — the turn-end self-kill in
+# scripts/hooks/context-budget-hook-lib.sh (budget_hook_should_exit) reads
+# both, and the measurer's successor_advisory reads the command file. The
+# supervisor reads neither (it consumes the record's `staged`).
 # Vendor flags verified against live --help 2026-08-05/06: claude [prompt]
 # --name; codex [PROMPT]; gemini -i; opencode --prompt; copilot -i; code chat.
 
@@ -460,9 +461,8 @@ case "$rc" in
 esac
 note "record: seq $LAST_SEQ -> $SEQ, predecessor=${DISPOSITION:-none}, by=$BY (work/$PROJECT/session-state.json)"
 
-# ---- kept for the phase-5 supervisor (write-only mirror) ---------------------
+# ---- the bump record the turn-end hook reads (write-only here) ---------------
 SEQF="$WORKSPACE_ROOT/work/$PROJECT/.session-seq"
-printf '%s\n' "$SEQ" > "$SEQF" 2>/dev/null || note "warning: could not mirror the counter to $SEQF"
 _bump_rt="$RUNTIME"; _bump_sid="${ME_SID:-unknown}"
 [ "$BY" = "supervisor" ] && _bump_sid="unknown"
 jq -n --argjson seq "$LAST_SEQ" --argjson successor "$SEQ" --arg runtime "$_bump_rt" \
@@ -474,15 +474,6 @@ jq -n --argjson seq "$LAST_SEQ" --argjson successor "$SEQ" --arg runtime "$_bump
 
 if [ -n "$EMIT" ]; then
   printf '%s\n' "$CMD_LINE" > "$emit_tmp" || die "emit: write failed at $emit_tmp (the record already advanced to $SEQ; stage by hand: $EMIT)"
-  # The identity sidecar the supervisor's bootstrap reads, written BEFORE the
-  # command appears (the supervisor treats the command's appearance as "staged").
-  jq -n --arg project "$PROJECT" --argjson seq "$LAST_SEQ" --argjson successor "$SEQ" \
-    --arg runtime "$_bump_rt" --arg session_id "$_bump_sid" --arg written_at "$NOW" \
-    --arg command_cksum "$(cksum < "$emit_tmp")" \
-    '{project:$project, seq:$seq, successor:$successor, runtime:$runtime,
-      session_id:$session_id, written_at:$written_at,
-      command_cksum:$command_cksum, written_by:"launch-next-session.sh"}' > "$EMIT.json" 2>/dev/null \
-    || note "warning: could not write the identity sidecar $EMIT.json"
   mv "$emit_tmp" "$EMIT" || die "emit: mv failed at $EMIT (the record already advanced to $SEQ; stage by hand)"
   note "emit: staged the successor command at $EMIT"
   [ "${TF_SESSION_LOOP:-}" = "1" ] \

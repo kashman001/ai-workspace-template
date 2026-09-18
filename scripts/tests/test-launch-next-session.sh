@@ -121,14 +121,12 @@ assert_eq "E4c: session.seq == seq"              "$(rec .session.seq)" "9"
 assert_eq "E4d: seq unchanged by registration"   "$(rec .seq)" "9"
 assert_eq "E4e: predecessor block survives"      "$(rec .launch.predecessor.session_id)" "sid-a"
 
-echo "E5: the phase-5 supervisor's files are mirrored after the record"
-assert_eq "E5a: .session-seq mirrors seq" "$(cat "$MAIN/work/testproj/.session-seq")" "9"
+echo "E5: the bump record the turn-end hook reads is written after the record; the counter mirror and sidecar are gone"
+[ ! -f "$MAIN/work/testproj/.session-seq" ] && ok "E5a: no .session-seq counter mirror" || bad "E5a: the counter mirror was written"
 assert_eq "E5b: bump record seq/successor" \
   "$(jq -r '"\(.seq)/\(.successor)/\(.session_id)/\(.written_by)"' "$MAIN/work/testproj/.session-seq.bump.json")" \
   "8/9/sid-a/launch-next-session.sh"
-assert_eq "E5c: identity sidecar beside the command" \
-  "$(jq -r '"\(.successor)/\(.session_id)/\(.written_by)"' "$EMITF.json")" "9/sid-a/launch-next-session.sh"
-assert_eq "E5d: sidecar checksum matches the command" "$(jq -r .command_cksum "$EMITF.json")" "$(cksum < "$EMITF")"
+[ ! -f "$EMITF.json" ] && ok "E5c: no identity sidecar beside the command" || bad "E5c: the sidecar was written"
 
 # ---------------------------------------------------------------------------
 echo "P: prompt, runtime resolution, dry-run"
@@ -138,7 +136,6 @@ assert_eq       "P1a: dry-run exit 0"          "$rc" "0"
 assert_contains "P1b: verbatim prompt"         "$out" "$PROMPT"
 assert_contains "P1c: claude argv with --name" "$out" "cmd: TF_SESSION_PROJECT=testproj TF_SESSION_SEQ=9 claude --name testproj"
 assert_eq       "P1d: dry-run wrote nothing"   "$(rec .seq)" "8"
-[ ! -f "$MAIN/work/testproj/.session-seq" ] && ok "P1e: no counter mirror on dry-run" || bad "P1e: dry-run wrote the counter"
 out=$(as_me --runtime codex --dry-run 2>&1)
 assert_contains "P2a: --runtime flag wins"   "$out" "runtime=codex"
 assert_contains "P2b: codex argv"            "$out" "TF_SESSION_SEQ=9 codex "
@@ -354,7 +351,6 @@ assert_contains "M1b: run: line with the env pair" "$out" "run: TF_SESSION_PROJE
 assert_eq       "M1c: seq 9"                       "$(rec .seq)" "9"
 assert_eq       "M1d: staged null (nothing to consume)" "$(rec .staged)" "null"
 assert_eq       "M1e: pending null"                "$(rec .launch.pending)" "null"
-assert_eq       "M1f: mirror counter"              "$(cat "$MAIN/work/testproj/.session-seq")" "9"
 reset
 out=$(run_lns ROLLOVER_RELAUNCH=off CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj 2>&1 </dev/null); rc=$?
 assert_eq           "M2a: off exit 0"            "$rc" "0"
