@@ -48,14 +48,14 @@ pin goes to stderr (and the log) in the measurer's shape:
 
 ### Each iteration
 
-1. Re-read the record. `staged == null` → the bootstrap: a DIRECT call of `launch-next-session.sh <p> [--runtime] --emit` (the launcher's `invoked_by_supervisor` tests the strict parent pid); a refusal there is relayed as `session-loop: refused reason=<the launcher's code>` exit 4.
+1. Re-read the record. `staged == null` → the bootstrap: a DIRECT call of `launch-next-session.sh <p> [--runtime] --emit` (the launcher's `invoked_by_supervisor` tests the strict parent pid); a refusal there is relayed as `session-loop: refused reason=<the launcher's code>` exit 4 (the code is read from the launcher's stderr line; `stage_failed` only if it printed none).
 2. `staged != null` and `session != null` → `staged_invalid leg=spent` refusal (exit 4): the successor number already has a registered owner, so the staged command has been run by hand or by another chain (the s18 duplicate-session defect).
 3. `chain.used >= cap` → verdict `cap`, exit 0 (the staged command stays for the restart after `--reset-cap`).
 4. Consume: one `session_record_update` (precondition `.staged.successor == $seq`) sets `.staged = null`, `.chain.used += 1`; `rm -f work/<p>/.next-command` (decision 2). Export `TF_SESSION_PROJECT`, `TF_SESSION_SEQ`, `TF_SESSION_LOOP=1`, `TF_SESSION_LOOP_PROJECT`. Record `HEAD` and the start instant; start the alarm subshell; `eval` the command in the foreground.
 5. Verdict on the re-read record (`record_unreadable` / `schema_mismatch` are broken here):
    - `seq_after == seq + 1` and `launch.predecessor.{seq == seq, disposition == "rolled_over"}` and `staged.by == launch.predecessor.session_id` → `staged` (the child's exit status is ignored: the turn-end hook ends it with TERM). Then `staged_invalid leg=lifetime` if the session ran under `--min-lifetime` seconds; the stall guard.
    - number moved otherwise → `staged_invalid leg=seq`; predecessor wrong → `leg=predecessor`; staged absent → `leg=staged`; `staged.by` wrong → `leg=by`.
-   - number unchanged, nothing staged: `session == null` or `session.seq != seq` or `session.registered_at < started` → `no_own_measurement`; `rc != 0` → `rc_nonzero`; the transcript at `session.artifact` ends in a terminal `authentication_failed` → `logout`; else `session.ended.door == "stop"` → `quit_stop`, else `quit_plain`. A quit writes `chain.closed = {at, by_seq, reason}`, exit 0.
+   - number unchanged, nothing staged: `rc != 0` → `rc_nonzero`; `session == null` or `session.seq != seq` or `session.registered_at < started` → `no_own_measurement`; the transcript at `session.artifact` ends in a terminal `authentication_failed` → `logout`; else `session.ended.door == "stop"` → `quit_stop`, else `quit_plain`. A quit writes `chain.closed = {at, by_seq, reason}`, exit 0.
 6. Stall (hands-off only, `launch.mode`): a session whose commits touched only `work/<p>/README.md`, `next-session.md`, `handoff.md` (and its archive) made no progress; `--stall-limit` consecutive → `stall`.
 7. `launch.mode == interactive` → the Enter pause, as today.
 
@@ -65,7 +65,14 @@ pin goes to stderr (and the log) in the measurer's shape:
 `.session-loop.alarm-stop`, `.chain-closed`, `.next-command.json`,
 `.next-command.stale`, the registry scan (`consumer_since`,
 `dead_child_artifact`), and in the launcher the `.session-seq` mirror and the
-emit `.json` sidecar. `.session-loop.log` stays: it is a log, not state.
+emit `.json` sidecar (with their pins E5a/E5c/M1f/P1e and E2h/E2j).
+`.session-loop.log` stays: it is a log, not state. The launcher's legacy
+`.chain-closed` read (gate 2, second leg) is left in place: nothing new
+writes the marker, but the old supervisor still running on the main checkout
+does when its chain quits, and the read is not this phase's mirror.
+
+The watchdog's pages carry a token the suite greps: `page=unidentified`,
+`page=silent`, `page=blocked`, `page=staged_alive`.
 
 ## Decisions (Tier 2 candidates; `decisions.md` is off-limits to this agent)
 
@@ -81,4 +88,97 @@ emit `.json` sidecar. `.session-loop.log` stays: it is a log, not state.
 
 ## Evidence
 
-(filled at the end)
+Run 2026-09-18 in the worktree (bash 3.2.57), every suite with `bash`, no
+`timeout` wrapper. One bash 3.2 parse trap found while writing the body: a
+literal `(` before `$(… "?" …)` inside double quotes fails with "unexpected
+EOF while looking for matching `'`"; avoided, not worked around.
+
+Suites for this phase: `test-session-loop.sh` **105 passed, 0 failed**
+(V1–V4, B1–B7, R1–R8, C1–C2, F1, A1–A4; 394 lines, was 1747; no timing
+flake seen in five runs); `test-launch-next-session.sh` **190 passed**
+(was 193: E5a/E5c flipped to absence pins, M1f and P1e deleted);
+`test-emit-mode.sh` **53 passed** (was 54: E2h flipped, E2j/E2k → one
+absence pin); `test-session-loop-notify.sh` unchanged, green. The `main "$@"`
+wrapper commit (f771dd4) ran the old suite 222/222 before and after.
+
+Every suite plus the Python ledger check:
+
+```
+scripts/tests/test-agent-entrypoints.sh rc=0
+scripts/tests/test-attach-session.sh rc=0
+scripts/tests/test-check-dependencies.sh rc=0
+scripts/tests/test-context-budget-registry.sh rc=0
+scripts/tests/test-emit-mode.sh rc=0
+scripts/tests/test-fleet-children.sh rc=0
+scripts/tests/test-fleet-dispatch-contract.sh rc=0
+scripts/tests/test-fleet-dispatch-records.sh rc=0
+scripts/tests/test-import-session-seq.sh rc=0
+scripts/tests/test-launch-next-session.sh rc=0
+scripts/tests/test-link-local-work.sh rc=0
+scripts/tests/test-parameterization.sh rc=0
+scripts/tests/test-session-lib.sh rc=0
+scripts/tests/test-session-loop-notify.sh rc=0
+scripts/tests/test-session-loop.sh rc=0
+scripts/tests/test-session-numbering.sh rc=0
+scripts/tests/test-statusline-context-budget.sh rc=0
+scripts/tests/test-template-instantiation.sh rc=0
+scripts/tests/test-turn-end-exit.sh rc=0
+scripts/tests/test-vendor-budget-hooks.sh rc=0
+python3 scripts/tests/test-check-ledger.py rc=0
+```
+
+`test-session-lib.sh` S8 and the old D5b-g are the known flakes; neither
+fired. `scripts/session-loop.sh` is 381 lines (was 1002).
+
+Record after V1 (a two-session chain that ran to its cap; #8 and #9 each
+rolled over through the real launcher, killed by TERM as the hook would):
+
+```json
+{"schema": 1, "seq": 10,
+ "launch": {"launched_at": "2026-09-18T07:53:16Z", "by": "session", "mode": "handsoff",
+            "predecessor": {"seq": 9, "session_id": "sid-9", "registered_at": "2026-09-18T07:53:15Z", "disposition": "rolled_over"},
+            "pending": null},
+ "session": null,
+ "staged": {"successor": 10, "command": "TF_SESSION_PROJECT=testproj TF_SESSION_SEQ=10 claude --name testproj\\ #10 Work\\ item\\ …", "by": "sid-9"},
+ "chain": {"supervisor": null, "used": 2, "cap": 2, "closed": null}}
+```
+
+Its log (`work/testproj/.session-loop.log`):
+
+```
+starting session #8 (1 of 2)
+session #8 ended rc=143
+verdict=staged seq=8 successor=9 mode=handsoff
+starting session #9 (2 of 2)
+session #9 ended rc=143
+verdict=staged seq=9 successor=10 mode=handsoff
+verdict=cap seq=10 used=2 cap=2 — chain cap reached; open a new budget with: scripts/session-loop.sh testproj --reset-cap
+```
+
+Record after V2 (#8 registered and quit; `chain.closed` written, `staged`
+consumed, `chain.supervisor` cleared at exit):
+
+```json
+{"schema": 1, "seq": 8,
+ "launch": {…, "predecessor": {"seq": 7, "session_id": "sid-7", …, "disposition": "rolled_over"}, "pending": null},
+ "session": {"seq": 8, "runtime": "claude", "session_id": "sid-8", "pid": 63532, "pid_start": "Fri Sep 18 02:53:16 2026",
+             "artifact": "<tmp>/transcript-8.jsonl", "registered_at": "2026-09-18T07:53:16Z", "launcher_hash": "seeded", "user": "t", "ended": null},
+ "staged": null,
+ "chain": {"supervisor": null, "used": 1, "cap": 3, "closed": {"at": "2026-09-18T07:53:16Z", "by_seq": 8, "reason": "quit_plain"}}}
+```
+
+Mid-run (the stub's copy of the record while #8 ran, V1k–V1m): `staged`
+null, `chain.used` 1, `chain.supervisor` = `{pid, pid_start, started_at}`.
+
+## Concerns for the parent
+
+1. `context-budget.sh supervised` still reads `.session-loop`; the marker is
+   written beside `chain.supervisor` until the measurer reads the record
+   (decision 1). The ticket's "state files are gone" holds for the budget,
+   alarm-stop, closed and sentinel files, not for the marker.
+2. `scripts/hooks/context-budget-hook-lib.sh` `budget_hook_should_exit` reads
+   `.next-command` + `.session-seq.bump.json`, so the launcher keeps writing
+   both (decision 2); the record's `staged.by` is the field it should read.
+3. The dangling `.gitignore` lines for the deleted files (`.rollover-complete`,
+   `.session-loop.budget`, `.session-loop.alarm-stop`, `.chain-closed`,
+   `.next-command.json`/`.stale`, `.session-seq`) are left as they are.
