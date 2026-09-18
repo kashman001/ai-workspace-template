@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # File: scripts/tests/test-emit-mode.sh
-# Purpose: launch-next-session.sh --emit (spec: "Architecture" -> 2). Golden-files
-#          the emitted command against --dry-run for the five attached runtimes
-#          (copilot-vscode is refused under --emit — TE6 A5), and pins the side
-#          effects --dry-run deliberately skips: counter bump, options adopt,
-#          lock release, successor-pending record.
+# Purpose: launch-next-session.sh --emit on the session record. Golden-files the
+#          emitted command against --dry-run for the five attached runtimes
+#          (copilot-vscode is refused under --emit), and pins the side effects
+#          --dry-run skips: the record's `staged` block plus the files the
+#          phase-5 supervisor still reads (the command, its identity sidecar,
+#          the counter mirror). Throwaway git workspace; nested so the bare
+#          --emit resolution (WORKSPACE_ROOT, not the git root) is observable.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+TMP="$(mktemp -d)"; TMP="$(cd "$TMP" && pwd -P)"; trap 'rm -rf "$TMP"' EXIT
 MAIN="$TMP/main"
-mkdir -p "$MAIN/scripts" "$MAIN/work/testproj" "$MAIN/.context-budget/sessions"
+mkdir -p "$MAIN/scripts/lib" "$MAIN/work/testproj" "$MAIN/.context-budget/sessions"
 cp "$SRC_ROOT/scripts/launch-next-session.sh" "$SRC_ROOT/scripts/context-budget.sh" "$MAIN/scripts/"
+cp "$SRC_ROOT/scripts/lib/session-lib.sh" "$MAIN/scripts/lib/"
 chmod +x "$MAIN/scripts/"*.sh
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
 echo "# launcher" > "$MAIN/work/testproj/next-session.md"
@@ -18,220 +21,162 @@ git -C "$TMP" init -q
 git -C "$TMP" config user.email t@t; git -C "$TMP" config user.name t
 git -C "$TMP" add -A; git -C "$TMP" commit -qm init
 LNS="$MAIN/scripts/launch-next-session.sh"
+REC="$MAIN/work/testproj/session-state.json"
 SEQF="$MAIN/work/testproj/.session-seq"
 EMITF="$MAIN/work/testproj/.next-command"
+LOOPF="$MAIN/work/testproj/.session-loop"
+unset TF_SESSION_PROJECT TF_SESSION_SEQ TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1" >&2; }
 assert_eq()       { [ "$2" = "$3" ] && ok "$1" || bad "$1 (want [$3] got [$2])"; }
 assert_contains() { case "$2" in *"$3"*) ok "$1" ;; *) bad "$1 (no [$3] in [$2])" ;; esac; }
-run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID \
-  -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
+assert_same() { cmp -s "$2" "$3" && ok "$1" || bad "$1 (record changed)"; }
+reason_of() { printf '%s\n' "$1" | sed -n 's/.*launch-next-session: refused reason=\([a-z_]*\).*/\1/p' | head -1; }
+run_lns() { env -u CLAUDE_CODE_SESSION_ID -u CODEX_THREAD_ID -u OPENCODE_SESSION_ID \
+  -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG -u TF_SESSION_LOOP \
   -u ROLLOVER_RELAUNCH -u ROLLOVER_RUNTIME "$@"; }
+as_me() { run_lns CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj "$@"; }
+rec() { jq -r "$1" "$REC" 2>/dev/null; }
+# The owner: seq 7, transcript live by age (no pid), launcher rewritten since
+# registration, ledger block 7 in place.
+reset() {
+  rm -f "$EMITF" "$EMITF.json" "$SEQF" "$SEQF.bump.json" "$LOOPF"
+  echo live > "$TMP/art-me"
+  jq -n --arg af "$TMP/art-me" \
+    '{schema:1, seq:7, launch:{launched_at:"2026-01-01T00:00:00Z", by:"session", mode:"handsoff", predecessor:null, pending:null},
+      session:{seq:7, runtime:"claude", session_id:"sid-me", artifact:$af, registered_at:"2026-09-18T00:00:00Z",
+               launcher_hash:"old-launcher-hash", user:"t", ended:null}}' > "$REC"
+  printf '# Session Handoff — 7 (2026-09-18): the block\n' > "$MAIN/work/testproj/handoff.md"
+}
 
 echo "E1: --emit produces the same command --dry-run prints, for the five attached runtimes"
-# copilot-vscode is absent by contract, not oversight: --emit with a
-# detached-by-nature runtime is refused outright (TE6 A5) — asserted as E4d-f.
-# --dry-run for copilot-vscode remains legal; only the --emit leg is gone.
+# copilot-vscode is absent by contract: --emit with a detached-by-nature runtime
+# is refused (E4d-f). Its --dry-run remains legal.
 for rt in claude codex gemini opencode copilot; do
-  printf '7\n' > "$SEQF"
-  # --dry-run prints the bootstrap-prompt banner before the command
-  # (launch-next-session.sh:319), so pull the "cmd: " line specifically rather
-  # than stripping a prefix off the whole of stdout.
-  dry="$(run_lns "$LNS" testproj --runtime "$rt" --dry-run 2>/dev/null | sed -n 's/^cmd: //p')"
-  printf '7\n' > "$SEQF"; rm -f "$EMITF"
-  run_lns "$LNS" testproj --runtime "$rt" --emit "$EMITF" >/dev/null 2>&1
+  reset
+  dry="$(as_me --runtime "$rt" --dry-run 2>/dev/null | sed -n 's/^cmd: //p')"
+  reset
+  as_me --runtime "$rt" --emit "$EMITF" >/dev/null 2>&1
   assert_eq "E1-$rt: emitted command matches --dry-run" "$(cat "$EMITF" 2>/dev/null)" "$dry"
+  assert_eq "E1-$rt: staged.command is the same line" "$(rec .staged.command)" "$dry"
 done
 
 echo "E2: --emit performs the side effects --dry-run skips"
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >/dev/null 2>&1
-assert_eq "E2a: the counter advanced 7 -> 8" "$(cat "$SEQF")" "8"
-pend="$MAIN/.context-budget/successor-pending-testproj.json"
-[ -f "$pend" ] && ok "E2b: the successor-pending record was written" \
-               || bad "E2b: no successor-pending record at $pend"
-assert_eq "E2c: pending carries the successor's number" \
-  "$(jq -r '.seq' "$pend" 2>/dev/null)" "8"
+reset
+as_me --emit "$EMITF" >/dev/null 2>&1; rc=$?
+assert_eq "E2a: exit 0"                          "$rc" "0"
+assert_eq "E2b: seq advanced 7 -> 8"             "$(rec .seq)" "8"
+assert_eq "E2c: staged.successor"                "$(rec .staged.successor)" "8"
+assert_eq "E2d: staged.by is the caller"         "$(rec .staged.by)" "sid-me"
+assert_eq "E2e: session emptied"                 "$(rec .session)" "null"
+assert_eq "E2f: predecessor rolled_over"         "$(rec .launch.predecessor.disposition)" "rolled_over"
+assert_eq "E2g: launch.mode default handsoff"    "$(rec .launch.mode)" "handsoff"
+assert_eq "E2h: counter mirror 8 (phase-5 supervisor)" "$(cat "$SEQF")" "8"
+assert_eq "E2i: bump record for the supervisor"  \
+  "$(jq -r '"\(.seq)/\(.successor)/\(.runtime)/\(.session_id)/\(.mode)/\(.written_by)"' "$SEQF.bump.json")" \
+  "7/8/claude/sid-me/handsoff/launch-next-session.sh"
+assert_eq "E2j: identity sidecar"                \
+  "$(jq -r '"\(.project)/\(.seq)/\(.successor)/\(.session_id)/\(.written_by)"' "$EMITF.json")" \
+  "testproj/7/8/sid-me/launch-next-session.sh"
+assert_eq "E2k: sidecar checksum matches"        "$(jq -r .command_cksum "$EMITF.json")" "$(cksum < "$EMITF")"
+[ ! -f "$MAIN/.context-budget/successor-pending-testproj.json" ] \
+  && ok "E2l: no successor-pending handshake file" || bad "E2l: handshake file written"
+reset
+as_me --emit "$EMITF" --loop-mode interactive --loop-reason "asked" >/dev/null 2>&1
+assert_eq "E2m: --loop-mode reaches the record"      "$(rec .launch.mode)" "interactive"
+assert_eq "E2n: --loop-reason reaches the bump record" "$(jq -r .reason "$SEQF.bump.json")" "asked"
 
-echo "E3: --dry-run still mutates nothing (the contract --emit must not break)"
-printf '7\n' > "$SEQF"
-run_lns "$LNS" testproj --runtime claude --dry-run >/dev/null 2>&1
-assert_eq "E3a: the counter is untouched" "$(cat "$SEQF")" "7"
+echo "E3: --dry-run still mutates nothing"
+reset; cp "$REC" "$TMP/rec.before"
+as_me --dry-run >/dev/null 2>&1
+assert_same "E3a: record untouched" "$TMP/rec.before" "$REC"
+[ ! -f "$SEQF" ] && ok "E3b: no counter mirror" || bad "E3b: dry-run wrote the counter"
 
 echo "E4: --emit refuses inputs that would strand or contradict it"
-out="$(run_lns "$LNS" testproj --runtime claude --emit "work/testproj/.next-command" 2>&1 || true)"
-assert_contains "E4a: a relative --emit path is refused" "$out" "absolute"
-out="$(run_lns "$LNS" testproj --runtime claude --emit "$EMITF" --dry-run 2>&1 || true)"
-assert_contains "E4b: --emit with --dry-run is refused" "$out" "--dry-run"
-out="$(run_lns "$LNS" testproj --runtime claude --emit "$EMITF" --bg 2>&1 || true)"
-assert_contains "E4c: --emit with --bg is refused" "$out" "--bg"
-# TE6 A5: copilot-vscode's CMD (`code chat`) is detached BY NATURE — the
-# launcher forces BG=1 for it AFTER the parse-time --emit/--bg check, so E4c
-# never sees it. The supervisor runs the emitted line in the foreground and
-# waits: an instant clean return reads as delta 0 / deliberate quit, marker
-# deleted, and the real session runs unsupervised (the 2026-08-27 --bg bug in
-# a second costume). Mutation that makes E4d and E4e red: drop the
-# emit x copilot-vscode refusal after runtime resolution
-# (launch-next-session.sh) — staging then succeeds, rc=0, no message.
-# Mutation that makes E4f red: move that refusal below the counter bump —
-# the refusal then costs a bump (TE6 R3: a refusal must be side-effect-free).
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-out="$(run_lns "$LNS" testproj --runtime copilot-vscode --emit "$EMITF" 2>&1)"; rc=$?
-assert_eq "E4d: --emit with detached-by-nature copilot-vscode exits 3" "$rc" "3"
-# "detached", not "copilot-vscode": the runtime name appears in the normal
-# project=/runtime= readout too, so matching on it could never go red.
-assert_contains "E4e: the refusal names the detachment as the reason" "$out" "detached"
-assert_eq "E4f: the refusal is side-effect-free — counter untouched" "$(cat "$SEQF")" "7"
+reset; cp "$REC" "$TMP/rec.before"
+out="$(as_me --emit "work/testproj/.next-command" 2>&1)"; rc=$?
+assert_eq       "E4a: a relative --emit path is a usage error" "$rc" "3"
+assert_contains "E4a2: says absolute"                         "$out" "absolute"
+out="$(as_me --emit "$EMITF" --dry-run 2>&1)"; rc=$?
+assert_eq       "E4b: --emit with --dry-run is a usage error" "$rc" "3"
+out="$(as_me --runtime copilot-vscode --emit "$EMITF" 2>&1)"; rc=$?
+assert_eq "E4d: --emit x copilot-vscode is refused"  "$rc" "4"
+assert_eq "E4e: reason runtime_path_unsupported"     "$(reason_of "$out")" "runtime_path_unsupported"
+assert_same "E4f: refusals write nothing"            "$TMP/rec.before" "$REC"
+[ ! -f "$EMITF" ] && ok "E4g: nothing staged" || bad "E4g: a refusal staged a command"
 
-echo "E5: the emitted line is directly evaluable"
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >/dev/null 2>&1
-# Replace the real binary with an echo so eval is safe, and confirm the prompt
-# survives %q quoting intact — a mis-quoted prompt is the failure that would
-# silently launch a successor with a truncated mission.
-got="$(eval "set -- $(sed 's/^claude //' "$EMITF")"; echo "$*")"
-assert_contains "E5a: the bootstrap prompt survived quoting" "$got" "rollover session #8"
-assert_contains "E5b: the launcher wording is verbatim" "$got" "continue from **First actions**"
+echo "E5: the emitted line is directly evaluable, env pair first"
+reset
+as_me --emit "$EMITF" >/dev/null 2>&1
+line="$(cat "$EMITF")"
+case "$line" in "TF_SESSION_PROJECT=testproj TF_SESSION_SEQ=8 claude "*) ok "E5a: env pair leads the command" ;;
+  *) bad "E5a: no env pair prefix ([$line])" ;; esac
+got="$(eval "set -- $(sed 's/^TF_SESSION_PROJECT=testproj TF_SESSION_SEQ=8 claude //' "$EMITF")"; echo "$*")"
+assert_contains "E5b: the bootstrap prompt survived quoting" "$got" "rollover session #8"
+assert_contains "E5c: the launcher wording is verbatim"     "$got" "continue from **First actions**"
 
-echo "E6: ROLLOVER_RELAUNCH=auto must not slip --bg into the emitted command"
-# The regression this pins: --bg is refused as a flag (E4c), but BG is ALSO set
-# from the mode, later in the script. The supervisor evals the emitted line in
-# the foreground and waits on it, so a --bg there returns at once and the chain
-# reads the missing sentinel as a deliberate quit. Every case above runs under
-# the fixture's ROLLOVER_RELAUNCH=manual, which is exactly why this went unseen.
+echo "E6: ROLLOVER_RELAUNCH=auto emits the same foreground command"
 printf 'ROLLOVER_RELAUNCH=auto\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >/dev/null 2>&1
-emitted="$(cat "$EMITF" 2>/dev/null)"
-case "$emitted" in
-  *--bg*) bad "E6a: emitted command carries --bg under auto ([$emitted])" ;;
+reset
+as_me --emit "$EMITF" >/dev/null 2>&1
+case "$(cat "$EMITF" 2>/dev/null)" in
+  *--bg*) bad "E6a: emitted command carries --bg" ;;
   '') bad "E6a: nothing was emitted under auto" ;;
   *) ok "E6a: emitted command is foreground under auto" ;;
 esac
-# %q-quoted, like E5 — unquote by eval before matching on the prompt text.
-got="$(eval "set -- $(sed 's/^claude //' "$EMITF")"; echo "$*")"
-assert_contains "E6b: it is still a real launch command" "$got" "rollover session #8"
-# --bg remains correct for a NON-emit auto launch: that path backgrounds by
-# design (ADR-0003) and confirms the successor via the poll loop.
-printf '7\n' > "$SEQF"
-dry="$(run_lns "$LNS" testproj --runtime claude --dry-run 2>/dev/null | sed -n 's/^cmd: //p')"
-assert_contains "E6c: a non-emit auto launch still backgrounds" "$dry" "--bg"
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
 
-# --- Lane B: C2 and C3 -------------------------------------------------------
-# plan.md numbers these T16-T19; renumbered to the suite's own E-series.
-# The plan's T17 ("--emit <abs-path> still honoured") and T18 ("a relative
-# --emit is refused") are already asserted above — T17 six times over by E1
-# plus E2a-c, T18 verbatim by E4a — so they are not duplicated here.
-
-echo "E7: --emit bare resolves from WORKSPACE_ROOT, not the git root (C2)"
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-# TE6 B1: the git-root landing zone must EXIST, or E7b is vacuous — with no
-# $TMP/work/testproj directory, a git-root-resolving mutation just fails its
-# write and E7b stays green while asserting nothing (E7a is then the only
-# detector). Mutation that makes E7b red (and E7a with it): resolve the bare
-# --emit path from `git rev-parse --show-toplevel` instead of WORKSPACE_ROOT
-# (launch-next-session.sh, the EMIT="@auto" resolution) — the D2 shape.
-mkdir -p "$TMP/work/testproj"
+echo "E7: --emit bare resolves from WORKSPACE_ROOT, not the git root"
+reset; mkdir -p "$TMP/work/testproj"
 GITROOT_EMITF="$TMP/work/testproj/.next-command"; rm -f "$GITROOT_EMITF"
-( cd "$MAIN" && run_lns ./scripts/launch-next-session.sh testproj --emit >/dev/null 2>&1 )
+( cd "$MAIN" && as_me --emit >/dev/null 2>&1 )
 [ -s "$EMITF" ] && ok "E7a: bare --emit wrote $EMITF" || bad "E7a: nothing at $EMITF"
-[ ! -e "$GITROOT_EMITF" ] \
-  && ok "E7b: nothing written at the git root" \
-  || bad "E7b: wrote to the git root — the D2 shape"
+[ ! -e "$GITROOT_EMITF" ] && ok "E7b: nothing written at the git root" || bad "E7b: wrote to the git root"
 
-echo "E8: a failed emit is loud and rolls back the pending record (C3)"
+echo "E8: a failed emit is loud and leaves the record untouched"
 if [ "$(id -u)" -eq 0 ]; then
   echo "  skipped (root: chmod 500 does not deny writes)"
 else
   RO="$TMP/ro"; mkdir -p "$RO"; chmod 500 "$RO"
-  PENDF="$MAIN/.context-budget/successor-pending-testproj.json"
-  printf '7\n' > "$SEQF"; rm -f "$PENDF"
-  ( cd "$MAIN" && run_lns ./scripts/launch-next-session.sh testproj --emit "$RO/.next-command" >/dev/null 2>&1 ); rc=$?
+  reset; cp "$REC" "$TMP/rec.before"
+  err=$(as_me --emit "$RO/.next-command" 2>&1 >/dev/null); rc=$?
   [ "$rc" -ne 0 ] && ok "E8a: failed emit exits non-zero" || bad "E8a: failed emit reported success"
-  [ ! -f "$PENDF" ] && ok "E8b: pending record rolled back" || bad "E8b: stale pending record left behind"
-  printf '7\n' > "$SEQF"; rm -f "$PENDF"
-  err=$( cd "$MAIN" && run_lns ./scripts/launch-next-session.sh testproj --emit "$RO/.next-command" 2>&1 >/dev/null )
+  assert_same     "E8b: record untouched (the emit path is probed before the write)" "$TMP/rec.before" "$REC"
   assert_contains "E8c: error names the attempted path" "$err" "$RO/.next-command"
-  assert_contains "E8d: error names the rewind remedy" "$err" "seq-sync"
-  chmod 700 "$RO"; rm -f "$PENDF"
+  case "$err" in *seq-sync*) bad "E8d: remedy still names seq-sync" ;; *) ok "E8d: no seq-sync remedy" ;; esac
+  chmod 700 "$RO"
 fi
 
-echo "E9: ROLLOVER_RELAUNCH=off must not swallow --emit (TE6 A4)"
-# --emit stages a command for a supervisor and launches nothing itself, so a
-# committed mode=off has nothing to refuse — the supervisor bootstrap
-# (session-loop.sh, the `--emit "$NEXTF" || halt` call) relies on this: its
-# `|| halt` only fires on a non-zero exit, and an exit-0-with-nothing-staged
-# dissolves the chain later with a fabricated story.
-# Mutation that makes E9b/E9c red: reinstate the unconditional MODE=off
-# early exit-0 (drop the `[ -z "$EMIT" ]` clause from the launcher's MODE=off
-# branch) — --emit then reports success having staged nothing.
-# Mutation that makes E9a red: the REJECTED alternative fix — refuse
-# mode=off + --emit at parse time (exit 3). Rejected because the supervisor's
-# own bootstrap would break under a committed `off`; staging must succeed.
+echo "E9: ROLLOVER_RELAUNCH=off must not swallow --emit"
 printf 'ROLLOVER_RELAUNCH=off\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
-printf '7\n' > "$SEQF"; rm -f "$EMITF" "$pend"
-run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >/dev/null 2>&1; rc=$?
-assert_eq "E9a: mode=off + --emit exits 0 (staging is not refused)" "$rc" "0"
-[ -s "$EMITF" ] && ok "E9b: the successor command was staged under mode=off" \
-                || bad "E9b: mode=off swallowed --emit — nothing staged at $EMITF"
-[ -f "$pend" ] && ok "E9c: the successor-pending record was written under mode=off" \
-               || bad "E9c: no successor-pending record at $pend"
+reset
+as_me --emit "$EMITF" >/dev/null 2>&1; rc=$?
+assert_eq "E9a: mode=off + --emit exits 0" "$rc" "0"
+[ -s "$EMITF" ] && ok "E9b: staged under mode=off" || bad "E9b: mode=off swallowed --emit"
+assert_eq "E9c: record staged" "$(rec .staged.successor)" "8"
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
 
-echo "E10: the identity refusal (R2.17 s1) exempts the supervisor's own bootstrap"
-# The refusal below the runtime resolution asks a caller with no session record
-# to register before it may stage. Under a live supervisor there are exactly two
-# such callers, and only one of them can comply:
-#   a SESSION rolling over  -> can register, and must: the supervisor reads its
-#                              verdict off the bump record and the self-kill hook
-#                              fires only on a session_id match. Still refused.
-#   the SUPERVISOR ITSELF   -> session-loop.sh stages iteration 1 (no dying
-#                              session exists to do it), and a shell script has
-#                              no session record and never will. Exempt.
-# The two are told apart by the STRICT parent: session-loop.sh calls the launcher
-# directly, so $PPID is the pid in .session-loop; a session's rollover runs in a
-# tool shell whose parent is the runtime. Both legs are pinned here because the
-# exemption is what makes a fresh chain startable and the refusal is what keeps
-# an unidentifiable rollover out of a supervised chain.
-#
-# Mutation that makes E10a-d red: drop the invoked_by_supervisor clause from the
-# launcher's refusal -> every chain that starts without a pre-staged
-# .next-command halts at "could not stage the first session".
-# Mutation that makes E10e-g red: exempt on --emit alone (or on an ANCESTOR
-# rather than the strict parent) -> a session's rollover is exempt too and the
-# refusal protects nothing, since under a supervisor every launcher call is
-# --emit and the supervisor is an ancestor of every tool shell inside a session.
-LOOPF="$MAIN/work/testproj/.session-loop"
-mk_marker() { jq -n --argjson pid "$1" --arg project testproj --arg started_at now \
-  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"; }
-# Leg 1 — the bootstrap. NOT run inside $(...): a command substitution forks a
-# subshell and the launcher's parent becomes that subshell, which is precisely
-# the wrapping this exemption cannot see through. session-loop.sh's own call is
-# direct, and so is this one.
-mk_marker "$$"
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >"$TMP/e10a" 2>&1; rc=$?
-assert_eq "E10a: the supervisor's own bootstrap is not refused" "$rc" "0"
-[ -s "$EMITF" ] && ok "E10b: the first session was staged" \
-                || bad "E10b: nothing staged at $EMITF"
-assert_eq "E10c: the counter advanced 7 -> 8" "$(cat "$SEQF")" "8"
-assert_contains "E10d: the exemption is visible, not silent" \
-  "$(cat "$TMP/e10a")" "not a session"
-# Leg 2 — a session rolling over with no record of its own. Same marker, same
-# absent record; only the caller differs, modelled by a live pid that is not
-# this process's parent.
+echo "E10: the ownership gate exempts the supervisor's own bootstrap (strict parent), nothing else"
+mk_marker() { jq -n --argjson pid "$1" '{pid:$pid, project:"testproj", started_at:"now"}' > "$LOOPF"; }
+# Leg 1 — the bootstrap. Direct call, never $(...): a command substitution puts a
+# subshell between the launcher and this shell, and the exemption keys on the
+# strict parent. No session identity, no owner.
+reset; rm -f "$REC"; mk_marker "$$"
+run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/e10a" 2>&1; rc=$?
+assert_eq "E10a: the bootstrap is not refused"   "$rc" "0"
+[ -s "$EMITF" ] && ok "E10b: the first session was staged" || bad "E10b: nothing staged"
+assert_eq "E10c: seq opened from the ledger (7 -> 8)" "$(rec .seq)" "8"
+assert_eq "E10d: staged.by=supervisor"           "$(rec .staged.by)" "supervisor"
+assert_contains "E10e: the exemption is visible" "$(cat "$TMP/e10a")" "not a session"
+# Leg 2 — a session with no identity under a live supervisor that is not its parent.
 sleep 60 & other=$!
-mk_marker "$other"
-printf '7\n' > "$SEQF"; rm -f "$EMITF"
-run_lns "$LNS" testproj --runtime claude --emit "$EMITF" >"$TMP/e10b" 2>&1; rc=$?
-assert_eq "E10e: a rollover with no session record is still refused" "$rc" "3"
-assert_contains "E10f: the refusal names the remedy" \
-  "$(cat "$TMP/e10b")" "register --project testproj"
-assert_eq "E10g: the refusal cost no counter bump" "$(cat "$SEQF")" "7"
-assert_eq "E10h: and staged nothing" "$([ -s "$EMITF" ] && echo staged || echo none)" "none"
+reset; rm -f "$REC"; mk_marker "$other"
+run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/e10b" 2>&1; rc=$?
+assert_eq "E10f: refused"              "$rc" "4"
+assert_eq "E10g: reason not_owner"     "$(reason_of "$(cat "$TMP/e10b")")" "not_owner"
+[ ! -f "$REC" ] && ok "E10h: nothing written" || bad "E10h: refusal wrote a record"
 kill "$other" 2>/dev/null; wait "$other" 2>/dev/null
 rm -f "$LOOPF"
 

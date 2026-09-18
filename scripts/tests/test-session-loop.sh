@@ -11,6 +11,7 @@ MAIN="$TMP/main"
 mkdir -p "$MAIN/scripts" "$MAIN/work/testproj" "$MAIN/.context-budget/sessions"
 cp "$SRC_ROOT/scripts/session-loop.sh" "$SRC_ROOT/scripts/launch-next-session.sh" \
    "$SRC_ROOT/scripts/context-budget.sh" "$MAIN/scripts/"
+mkdir -p "$MAIN/scripts/lib"; cp "$SRC_ROOT/scripts/lib/session-lib.sh" "$MAIN/scripts/lib/"
 chmod +x "$MAIN/scripts/"*.sh
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
 echo "# launcher" > "$MAIN/work/testproj/next-session.md"
@@ -25,7 +26,7 @@ printf '%s\n' 'work/*/.session-seq' 'work/*/.session-seq.provenance.json' \
   'work/*/.rollover-complete' 'work/*/.next-command' 'work/*/.session-loop' \
   'work/*/.session-loop.log' 'work/*/.session-loop.alarm-stop' \
   'work/*/.session-loop.budget' 'work/*/.chain-closed' \
-  'work/*/.active-session' > "$MAIN/.gitignore"
+  'work/*/.active-session' 'work/*/session-state.json*' > "$MAIN/.gitignore"
 git -C "$MAIN" init -q
 git -C "$MAIN" config user.email t@t; git -C "$MAIN" config user.name t
 git -C "$MAIN" add -A; git -C "$MAIN" commit -qm init
@@ -192,9 +193,19 @@ stage_next() {   # $1 = command line, $2 = written_at override (optional)
     > "$NEXT.json"
 }
 
+# The session record (Stage 4 phase 4): the launcher takes its number from
+# `seq`, not the counter, so a launcher-driven case (G4, V4, F1, N1) needs the
+# record to say what .session-seq says. No owner: an open launch nobody consumed.
+seed_record() {  # $1=seq $2=owner-sid ("" = none)
+  jq -n --argjson seq "$1" --arg sid "$2" --arg af "$TMP/art-$2" \
+    '{schema:1, seq:$seq, launch:{launched_at:"2026-01-01T00:00:00Z", by:"session", mode:"handsoff", predecessor:null, pending:null},
+      session:(if $sid == "" then null else
+        {seq:$seq, runtime:"claude", session_id:$sid, artifact:$af, registered_at:"2026-09-18T00:00:00Z",
+         launcher_hash:"seeded", user:"t", ended:null} end)}' > "$W/session-state.json"
+}
 reset() { printf '8\n' > "$SEQF"; rm -f "$SENT" "$NEXT" "$NEXT.json" "$NEXT.stale" \
                                         "$W/.session-loop" "$BUDGET" "$CLOSED";
-          stage_next "$TMP/stub.sh"; }
+          seed_record 8 ""; stage_next "$TMP/stub.sh"; }
 
 # --min-lifetime 0 on every case that expects an iteration to be JUDGED CLEAN:
 # stubs return instantly, so the Task 6 guard (default 60s) would halt the chain
@@ -1075,14 +1086,11 @@ echo "V4: a FORKED agent under a supervisor still stages its successor"
 # --max-sessions 1 deliberately: the successor --emit stages is the real
 # `claude ...` command, and a second iteration would eval it for real.
 reset; export STUB_BEHAVIOUR=normal STUB_MODE=handsoff
-jq -n '{session_id:"pre-fork",runtime:"claude",project:"testproj",role:"primary"}' \
-  > "$W/.active-session"
-# R2.17 section 1: the launcher refuses to bump without an identity while a
-# supervisor is live. A real session has one because `register` writes BOTH the
-# lock and this record; the fixture wrote only the lock, so it modelled a state
-# no registered session is ever in.
-jq -n '{session_id:"pre-fork",runtime:"claude",project:"testproj"}' \
-  > "$MAIN/.context-budget/sessions/claude-pre-fork.json"
+# Stage 4 phase 4: the launcher rolls over only the record's owner and checks
+# the ledger's top block against `seq`, so the fork must own the record (its
+# session id is the exported one) and its block must already be written.
+seed_record 8 pre-fork
+printf '# Session Handoff — 8 (2026-09-18): the block\n' > "$W/handoff.md"
 export V4_MAIN="$MAIN"
 cat > "$TMP/forked-session.sh" <<'FORK'
 #!/usr/bin/env bash
@@ -1113,8 +1121,8 @@ stage_next "$TMP/forked-session.sh"
 "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/v4" 2>&1; rc=$?
 [ -s "$NEXT" ] && ok "V4a: the forked session staged a successor" \
                || bad "V4a: nothing staged -- C1/C2/C3 regression"
-[ ! -f "$W/.active-session" ] && ok "V4b: the pre-fork lock was released" \
-                             || bad "V4b: lock survived -- C5 regression"
+assert_eq "V4b: the record's session was emptied by the rollover" \
+          "$(jq -r '.session' "$W/session-state.json")" "null"
 # The emitted prompt is %q-quoted, so the successor's number is matched in the
 # quoted form the file actually holds -- not the prose form it reads as.
 assert_contains "V4c: what it staged is the real successor command" \
@@ -1132,7 +1140,7 @@ assert_eq       "V4e: and the chain ended on the cap, not a halt" "$rc" "0"
 # quit shapes.
 assert_contains "V4f: 'chain cap' printed — the chain ended on the cap path, not the quit path" \
                 "$(cat "$TMP/v4")" "chain cap"
-unset V4_MAIN; rm -f "$W/.active-session"
+unset V4_MAIN; rm -f "$W/handoff.md"
 
 
 # Unconditional teardown: leave the exported fixture state as the suite's
