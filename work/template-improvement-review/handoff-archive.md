@@ -1,3 +1,35 @@
+# Session Handoff — 10 (2026-09-16): Stage 4 tickets cut; phase 0 tasks 2–5 done; chain ended by a plain quit
+
+**Summary.** Cut ten tickets from Part 4 (`issues/01`–`10`, one per phase +
+cutover, edges per "Order and gates"; commit 0c1dd35, no user quiz — the
+launcher fixed the granularity). Phase 0 (`plans/phase-0.md`): root
+`ROLLOVER_RELAUNCH` flipped to `manual` with a committed per-item `auto`
+override for this item; `jq` pinned by `test-check-dependencies.sh` D5;
+`SESSION_LOOP_NOTIFY` now resolves from the env file's own location
+(`test-session-loop-notify.sh` N4; doc paragraph corrected);
+`scripts/import-session-seq.sh` + `test-import-session-seq.sh` (26 asserts)
+on a throwaway item. All suites green before commit. **Chain ended:** this
+session staged no successor; closing it by hand with nothing staged makes the
+old supervisor (pid 72900) log a deliberate quit and exit 0. Nothing pushed.
+
+**Decisions.** Record file `session-state.json` with `schema: 1`; import
+compares rather than consumes the counter; notify path via `BASH_SOURCE`
+(decisions.md 2026-09-16).
+
+**Learnings:**
+- macOS has no `timeout`; a suite loop wrapped in it reports rc=127 for every
+  suite and looks like a run. Check the per-suite rc line before trusting it.
+- macOS 15+ ships `/usr/bin/jq`, so a "jq absent" test needs a PATH built
+  without it, not just a bare PATH.
+- Tickets + phase 0 + bookkeeping fit one session (WARN at ~125K) only
+  because the big scripts were grepped, never read.
+
+**Open / next.** User direction after the session summary (2026-09-17): plan
+the remaining phases as a dependency graph and execute them in parallel with
+a fleet of agents. Then: one wave per session, rolling over through the LIVE
+supervisor (chain kept; `main` frozen, waves on `stage4`). Session 11: mark phase 0 `done`, write `plans/fleet-plan.md` (waves
+1∥2 → 3 → 4∥6 → 5 → 7 → 8 → cutover), get the go, launch wave A.
+
 # Session Handoff — 9 (2026-09-15/16): Stage 4 planned (Part 4) and ACCEPTED; tracker in place; rollover at WARN
 
 **Summary.** Republished design v2 page (version 2) with D1–D3 shown as

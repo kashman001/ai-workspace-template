@@ -6,6 +6,45 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 12 (2026-09-17): Stage 4 wave B (phase 3, measurer on the record) done by one agent; merged to `stage4`
+
+**Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-3` (off
+`stage4`) with the dispatch contract in its prompt. Returned DONE: measurer
+`register`/`release`/`close`/`--check` now write the per-item record through
+`session_record_update`; registry suite rewritten (187 asserts), numbering
+suite rewritten (18); `seq-sync`/`opts-sync`/`rollover-complete` refuse with
+a pointer; `rollover-prep.sh`, `capture-rollover-options.sh` and three suites
+deleted; measurer 1265→1017 lines. Commit d4fb3b6, merged `--no-ff` 0a117c6.
+Full suite on `stage4`: 21 suites, one red (`test-session-loop.sh` D5b-g, a
+reap/notify timing race phase 3 never touched), rerun 221/221 green — treated
+as a flake (bookkeeping commit e1778da on `main` says so). Agent worktree and
+branch removed. Tracker row 3 done; two Tier-2 notes in `decisions.md`;
+report in `dispatch/phase-3.md`; plan + Evidence in `plans/phase-3.md` (on
+`stage4`). Nothing pushed; `main` ahead 19.
+
+**Decisions.** Registry record stays, per-item side files go; `record`/
+`watch`/`supervised` unchanged; `owner_live` is logged not refused;
+non-owner `release` exits 1; env binding needs both vars and an equal seq
+(decisions.md 2026-09-17, phase 3 notes). D5b-g flake not sent back to the
+agent (commit e1778da trailer).
+
+**Learnings:**
+- One agent per wave cost the parent ~40K (57K→97K at prep); the agent
+  itself spent ~285K tokens over 75 min, most of it the two suite rewrites.
+- `test-session-loop.sh` D5b-g can fail under load with a 97 s hold; first
+  strike — if it bites again, the alarm-reap race is real, not the test.
+- Phase 3 left prose naming `seq-sync` in `launch-next-session.sh` remedy
+  text (lines ~323/582/1217, pinned by T23i4/E8d) for phase 4, and skill/
+  README/.gitignore mentions for phase 8. Child locks are no longer written
+  by `register` (fleet, phase 7).
+- The primary session's `cd` into a worktree inside a compound Bash command
+  moves the harness cwd there; use `git -C` and absolute paths instead.
+
+**Open / next.** Wave C: phases 4 ∥ 6, two agents on `s4-phase-4` and
+`s4-phase-6` from `stage4`; merge 4 before 6. Hazard: phase 4 deletes the
+clear-seed hook + its test; phase 6 owns every other hook. Chain: session 12
+was 8 of 10; cap lands around session 14.
+
 # Session Handoff — 11 (2026-09-17): Stage 4 wave A (phases 1 ∥ 2) done by a two-agent fleet; merged to `stage4`
 
 **Summary.** Phase 0 marked done (131142a). `stage4` branched from `main`
@@ -40,36 +79,4 @@ copy-not-share choices (decisions.md 2026-09-17, four notes).
 
 **Open / next.** Wave B: phase 3 (measurer on the record), one agent on
 `s4-phase-3` from `stage4`; then wave C. Chain: session 11 was 7 of 10.
-
-# Session Handoff — 10 (2026-09-16): Stage 4 tickets cut; phase 0 tasks 2–5 done; chain ended by a plain quit
-
-**Summary.** Cut ten tickets from Part 4 (`issues/01`–`10`, one per phase +
-cutover, edges per "Order and gates"; commit 0c1dd35, no user quiz — the
-launcher fixed the granularity). Phase 0 (`plans/phase-0.md`): root
-`ROLLOVER_RELAUNCH` flipped to `manual` with a committed per-item `auto`
-override for this item; `jq` pinned by `test-check-dependencies.sh` D5;
-`SESSION_LOOP_NOTIFY` now resolves from the env file's own location
-(`test-session-loop-notify.sh` N4; doc paragraph corrected);
-`scripts/import-session-seq.sh` + `test-import-session-seq.sh` (26 asserts)
-on a throwaway item. All suites green before commit. **Chain ended:** this
-session staged no successor; closing it by hand with nothing staged makes the
-old supervisor (pid 72900) log a deliberate quit and exit 0. Nothing pushed.
-
-**Decisions.** Record file `session-state.json` with `schema: 1`; import
-compares rather than consumes the counter; notify path via `BASH_SOURCE`
-(decisions.md 2026-09-16).
-
-**Learnings:**
-- macOS has no `timeout`; a suite loop wrapped in it reports rc=127 for every
-  suite and looks like a run. Check the per-suite rc line before trusting it.
-- macOS 15+ ships `/usr/bin/jq`, so a "jq absent" test needs a PATH built
-  without it, not just a bare PATH.
-- Tickets + phase 0 + bookkeeping fit one session (WARN at ~125K) only
-  because the big scripts were grepped, never read.
-
-**Open / next.** User direction after the session summary (2026-09-17): plan
-the remaining phases as a dependency graph and execute them in parallel with
-a fleet of agents. Then: one wave per session, rolling over through the LIVE
-supervisor (chain kept; `main` frozen, waves on `stage4`). Session 11: mark phase 0 `done`, write `plans/fleet-plan.md` (waves
-1∥2 → 3 → 4∥6 → 5 → 7 → 8 → cutover), get the go, launch wave A.
 
