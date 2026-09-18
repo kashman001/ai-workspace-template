@@ -10,6 +10,7 @@
 #          130/143/129 honest signal deaths (INT untrapped; TERM/HUP re-raised)
 # Spec:    docs/superpowers/specs/2026-08-21-session-loop-design.md
 set -u
+main() {
 
 # Workspace identity = repository identity, not checkout path. Every path below
 # is anchored to $ROOT, and that is not a style choice: a bare relative
@@ -1000,3 +1001,5 @@ if [ "$n" -ge "$MAX_SESSIONS" ]; then
   cap_stop "$n"
 fi
 exit 0
+}
+main "$@"
