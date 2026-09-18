@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # File: scripts/hooks/context-budget-hook-lib.sh
-# Purpose: shared core for the per-runtime context-budget hook wrappers
-#          (claude/codex/gemini/opencode/copilot). Sourced, not executed.
-#          Escalation-only, throttled, fail-open — the wrapper owns stdin
-#          parsing and the vendor output envelope, nothing else.
+# Purpose: shared core for the context-budget hook dispatcher
+#          (context-budget-hook.sh over context-budget-adapters.conf). Sourced,
+#          not executed. Escalation-only, throttled, fail-open — the dispatcher
+#          owns stdin parsing and the vendor output envelope, nothing else.
 #   budget_hook_check <runtime> <session_id> [transcript]
 #     prints "STATUS TOKENS THRESHOLD" on escalation, else nothing; rc 0 always.
 #   budget_hook_message <STATUS> <tokens> <threshold>
