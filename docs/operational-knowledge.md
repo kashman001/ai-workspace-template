@@ -71,6 +71,15 @@ Consequences (observed 2026-08-05, session 7):
   a session.** Never cache it; read `artifact=` out of every `record` and
   confirm the slug before acting on the number.
 
+## Claude Code — a `cd` into a worktree inside a Bash call moves the harness cwd
+
+From the primary (non-isolated) session, `cd /path/.claude/worktrees/<x> && …`
+in a Bash tool call leaves the harness working directory in that worktree for
+every later call (the tool reports "Primary working directory: … (was …)" and
+starts treating the session as worktree-isolated). Bit sessions 12 and 13 of
+`template-improvement-review`. Use `git -C <worktree>` and absolute paths; if
+a `cd` is unavoidable, run a bare `cd <main-root>` as the next call.
+
 ## Claude Code — worktree-isolated Bash guard refuses compound commands
 
 In a worktree-isolated session (background jobs after `EnterWorktree`), the

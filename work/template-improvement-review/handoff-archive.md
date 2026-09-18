@@ -1,3 +1,38 @@
+# Session Handoff — 11 (2026-09-17): Stage 4 wave A (phases 1 ∥ 2) done by a two-agent fleet; merged to `stage4`
+
+**Summary.** Phase 0 marked done (131142a). `stage4` branched from `main`
+and checked out only in `.claude/worktrees/stage4`. Wrote
+`plans/fleet-plan.md` (waves A–F + cutover, per-agent contract, parent's
+merge loop, hazards). Launched two general-purpose agents in parallel, each
+in its own worktree (`s4-phase-1`, `s4-phase-2` off `stage4`), with the
+dispatch contract from `dispatch-open` in their prompt. Both returned DONE:
+phase 1 = `scripts/lib/session-lib.sh` + `test-session-lib.sh` (55 asserts,
+race 3×20 → seq 60), commit 8cb363d; phase 2 = `scripts/fleet.sh` (five verbs,
+pure move), measurer 1454→1265 lines, three suites renamed `test-fleet-*`,
+commit f07f5ea. Merged with `--no-ff` (1e6f857, 5a4aec6); every suite run on
+`stage4` after each merge: 24/24 rc=0. Agent worktrees and branches removed.
+Dispatch reports in `dispatch/phase-{1,2}.md`. Nothing pushed; main ahead 16+.
+
+**Decisions.** Rollovers hands-off, no per-wave okay (user, mid-session);
+`stage4` never checked out in the primary tree; agents' interface/lock and
+copy-not-share choices (decisions.md 2026-09-17, four notes).
+
+**Learnings:**
+- Two parallel agents plus merges and suites cost the parent ~60K (56K→118K);
+  the agent prompts themselves are the big item. One agent per wave is cheap.
+- `git branch -d` judges "merged" against the current branch (`main`), so it
+  refuses branches merged into `stage4`; check `git branch --merged stage4`
+  then `-D`.
+- A branch named `stage4/phase-1` cannot coexist with branch `stage4` (ref
+  namespace); hence `s4-phase-<n>`.
+- The full suite run takes ~8–10 min (`test-session-loop.sh` is ~4 min);
+  background it and never merge into the worktree while it runs.
+- Phase 2 found Part 4's "~400 lines" was ~190; `fleet.sh` depends on the
+  measurer's `check` printing `runtime=`/`artifact=` — phase 3 must keep them.
+
+**Open / next.** Wave B: phase 3 (measurer on the record), one agent on
+`s4-phase-3` from `stage4`; then wave C. Chain: session 11 was 7 of 10.
+
 # Session Handoff — 10 (2026-09-16): Stage 4 tickets cut; phase 0 tasks 2–5 done; chain ended by a plain quit
 
 **Summary.** Cut ten tickets from Part 4 (`issues/01`–`10`, one per phase +

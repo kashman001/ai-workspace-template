@@ -6,6 +6,45 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 13 (2026-09-18): Stage 4 wave C (phases 4 ∥ 6) done by two agents; merged to `stage4`
+
+**Summary.** Two general-purpose agents in `.claude/worktrees/s4-phase-{4,6}`
+(off `stage4` 0a117c6), dispatch contracts in their prompts, file split from
+the fleet plan. Phase 6 (hook dispatcher, 67dc8a9) returned DONE in 16 min;
+phase 4 (launcher on the record, 5330f86) DONE_WITH_CONCERNS in 23 min — four
+handoff notes, no defects. Merged 4 first (26b214c, 21/21 green on `stage4`),
+then 6 (4bb8a5d, 20/21: `test-session-lib.sh` S8 lock race, rerun 55/55).
+Tracker rows 4 and 6 done; two Tier-2 notes in `decisions.md`; reports in
+`dispatch/phase-{4,6}.md`; plans + Evidence in `plans/phase-{4,6}.md` (on
+`stage4`). Bookkeeping commit 6ce5d8a on `main`. Agent worktrees and branches
+removed. Nothing pushed; `main` ahead 21 after this rollover's commit.
+
+**Decisions.** Phase 6 merge held until phase 4 was green (6ce5d8a trailer).
+Phase 4: twelve gates, one record write, `no_supervisor` only for a
+`TF_SESSION_LOOP=1` session, `.session-seq` + sidecars write-only for phase 5.
+Phase 6: adapter table is a data file, seven wrappers become one-line shims
+at their old paths, `jq_missing` on stderr exit 0 (decisions.md 2026-09-18).
+S8 flake not sent back (no wave C branch touched the lib or its suite).
+
+**Learnings:**
+- Two agents per wave cost the parent ~53K (58K→111K at bookkeeping); agents
+  spent ~325K (phase 4) and ~152K (phase 6). Fits one session with headroom.
+- `test-session-lib.sh` S8 (3-writer lock race): second sighting, now in the
+  tracker row 1 notes for phase 7. Strike three means fix the lock, not rerun.
+- `cd` into a worktree moving the harness cwd: bit again, promoted to
+  `docs/operational-knowledge.md`.
+- Harness agents: "Agent finished" can arrive before its report when the
+  agent still has background work; the hand-back message is the real signal.
+
+**Open / next.** Wave D = phase 5 alone (supervisor, three verdicts), one
+agent; first commit is the `main "$@"` wrapper on `session-loop.sh`. Carry-
+overs for later phases: stage4 `.claude/settings.json` SessionStart entry for
+the deleted clear-seed hook (guarded no-op; phase 8), `--clear` prompt in
+`launch.pending.prompt` has no injector (phase 5/7 decide), prose naming
+`--bg`/`--unstage`/`.rollover-options`/seed file in the skill, docs, ADR-0009,
+`CONTEXT.md` (phase 8), vendor configs still name the shim paths (optional).
+Chain: session 13 is 9 of 10 — the cap lands at session 14's rollover.
+
 # Session Handoff — 12 (2026-09-17): Stage 4 wave B (phase 3, measurer on the record) done by one agent; merged to `stage4`
 
 **Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-3` (off
@@ -44,39 +83,4 @@ agent (commit e1778da trailer).
 `s4-phase-6` from `stage4`; merge 4 before 6. Hazard: phase 4 deletes the
 clear-seed hook + its test; phase 6 owns every other hook. Chain: session 12
 was 8 of 10; cap lands around session 14.
-
-# Session Handoff — 11 (2026-09-17): Stage 4 wave A (phases 1 ∥ 2) done by a two-agent fleet; merged to `stage4`
-
-**Summary.** Phase 0 marked done (131142a). `stage4` branched from `main`
-and checked out only in `.claude/worktrees/stage4`. Wrote
-`plans/fleet-plan.md` (waves A–F + cutover, per-agent contract, parent's
-merge loop, hazards). Launched two general-purpose agents in parallel, each
-in its own worktree (`s4-phase-1`, `s4-phase-2` off `stage4`), with the
-dispatch contract from `dispatch-open` in their prompt. Both returned DONE:
-phase 1 = `scripts/lib/session-lib.sh` + `test-session-lib.sh` (55 asserts,
-race 3×20 → seq 60), commit 8cb363d; phase 2 = `scripts/fleet.sh` (five verbs,
-pure move), measurer 1454→1265 lines, three suites renamed `test-fleet-*`,
-commit f07f5ea. Merged with `--no-ff` (1e6f857, 5a4aec6); every suite run on
-`stage4` after each merge: 24/24 rc=0. Agent worktrees and branches removed.
-Dispatch reports in `dispatch/phase-{1,2}.md`. Nothing pushed; main ahead 16+.
-
-**Decisions.** Rollovers hands-off, no per-wave okay (user, mid-session);
-`stage4` never checked out in the primary tree; agents' interface/lock and
-copy-not-share choices (decisions.md 2026-09-17, four notes).
-
-**Learnings:**
-- Two parallel agents plus merges and suites cost the parent ~60K (56K→118K);
-  the agent prompts themselves are the big item. One agent per wave is cheap.
-- `git branch -d` judges "merged" against the current branch (`main`), so it
-  refuses branches merged into `stage4`; check `git branch --merged stage4`
-  then `-D`.
-- A branch named `stage4/phase-1` cannot coexist with branch `stage4` (ref
-  namespace); hence `s4-phase-<n>`.
-- The full suite run takes ~8–10 min (`test-session-loop.sh` is ~4 min);
-  background it and never merge into the worktree while it runs.
-- Phase 2 found Part 4's "~400 lines" was ~190; `fleet.sh` depends on the
-  measurer's `check` printing `runtime=`/`artifact=` — phase 3 must keep them.
-
-**Open / next.** Wave B: phase 3 (measurer on the record), one agent on
-`s4-phase-3` from `stage4`; then wave C. Chain: session 11 was 7 of 10.
 
