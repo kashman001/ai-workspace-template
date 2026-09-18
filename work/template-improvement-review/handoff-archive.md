@@ -1,3 +1,42 @@
+# Session Handoff — 12 (2026-09-17): Stage 4 wave B (phase 3, measurer on the record) done by one agent; merged to `stage4`
+
+**Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-3` (off
+`stage4`) with the dispatch contract in its prompt. Returned DONE: measurer
+`register`/`release`/`close`/`--check` now write the per-item record through
+`session_record_update`; registry suite rewritten (187 asserts), numbering
+suite rewritten (18); `seq-sync`/`opts-sync`/`rollover-complete` refuse with
+a pointer; `rollover-prep.sh`, `capture-rollover-options.sh` and three suites
+deleted; measurer 1265→1017 lines. Commit d4fb3b6, merged `--no-ff` 0a117c6.
+Full suite on `stage4`: 21 suites, one red (`test-session-loop.sh` D5b-g, a
+reap/notify timing race phase 3 never touched), rerun 221/221 green — treated
+as a flake (bookkeeping commit e1778da on `main` says so). Agent worktree and
+branch removed. Tracker row 3 done; two Tier-2 notes in `decisions.md`;
+report in `dispatch/phase-3.md`; plan + Evidence in `plans/phase-3.md` (on
+`stage4`). Nothing pushed; `main` ahead 19.
+
+**Decisions.** Registry record stays, per-item side files go; `record`/
+`watch`/`supervised` unchanged; `owner_live` is logged not refused;
+non-owner `release` exits 1; env binding needs both vars and an equal seq
+(decisions.md 2026-09-17, phase 3 notes). D5b-g flake not sent back to the
+agent (commit e1778da trailer).
+
+**Learnings:**
+- One agent per wave cost the parent ~40K (57K→97K at prep); the agent
+  itself spent ~285K tokens over 75 min, most of it the two suite rewrites.
+- `test-session-loop.sh` D5b-g can fail under load with a 97 s hold; first
+  strike — if it bites again, the alarm-reap race is real, not the test.
+- Phase 3 left prose naming `seq-sync` in `launch-next-session.sh` remedy
+  text (lines ~323/582/1217, pinned by T23i4/E8d) for phase 4, and skill/
+  README/.gitignore mentions for phase 8. Child locks are no longer written
+  by `register` (fleet, phase 7).
+- The primary session's `cd` into a worktree inside a compound Bash command
+  moves the harness cwd there; use `git -C` and absolute paths instead.
+
+**Open / next.** Wave C: phases 4 ∥ 6, two agents on `s4-phase-4` and
+`s4-phase-6` from `stage4`; merge 4 before 6. Hazard: phase 4 deletes the
+clear-seed hook + its test; phase 6 owns every other hook. Chain: session 12
+was 8 of 10; cap lands around session 14.
+
 # Session Handoff — 11 (2026-09-17): Stage 4 wave A (phases 1 ∥ 2) done by a two-agent fleet; merged to `stage4`
 
 **Summary.** Phase 0 marked done (131142a). `stage4` branched from `main`
