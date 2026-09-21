@@ -177,8 +177,10 @@ probe_session() {
 }
 
 # Run the supervisor; DRIVER=expect gives it a pty (a TUI child needs one) and
-# answers Claude Code's folder-trust dialog if it appears. Output at
-# work/<p>/supervisor.out; the exit code is the supervisor's.
+# answers Claude Code's folder-trust dialog if it appears (its words arrive
+# interleaved with cursor escapes, so the match is loose; the cursor starts on
+# "No, exit" — Down then Enter picks "Yes"). Output at work/<p>/supervisor.out;
+# the exit code is the supervisor's.
 probe_supervise() {
   if [ "$DRIVER" = expect ]; then
     command -v expect >/dev/null 2>&1 || { echo "$PROBE_NAME: --driver expect needs expect(1)" >&2; return 3; }
@@ -189,7 +191,7 @@ set cmd [lrange $argv 0 end]
 eval spawn -noecho $cmd
 stty rows 40 columns 140 < $spawn_out(slave,name)
 expect {
-  -re {trust this folder} { sleep 1; send "\033\[B"; sleep 1; send "\r"; exp_continue }
+  -re {safety.{0,20}check} { sleep 2; send "\033\[B"; sleep 1; send "\r"; exp_continue }
   timeout { puts stderr "probe: expect timed out"; exec kill -TERM [exp_pid]; exit 124 }
   eof
 }
