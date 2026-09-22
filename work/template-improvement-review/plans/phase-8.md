@@ -35,12 +35,107 @@ the `--clear` prompt injector (phase 5 decision 4), and two operational lines.
 
 ## Evidence
 
-(filled at the end)
+Run 2026-09-21/22 in the worktree, every suite with `bash` (no `timeout`
+wrapper), the four `TF_SESSION_*` variables unset (the shell inherits the
+parent's live chain), logs in the scratch dir. All rc 0; `test-session-lib.sh`
+green first time (no lock-race rerun).
+
+```
+scripts/tests/test-agent-entrypoints.sh rc=0
+scripts/tests/test-attach-session.sh rc=0
+scripts/tests/test-check-dependencies.sh rc=0
+scripts/tests/test-context-budget-registry.sh rc=0
+scripts/tests/test-doc-consistency.sh rc=0
+scripts/tests/test-emit-mode.sh rc=0
+scripts/tests/test-fleet-children.sh rc=0
+scripts/tests/test-fleet-dispatch-contract.sh rc=0
+scripts/tests/test-fleet-dispatch-records.sh rc=0
+scripts/tests/test-import-session-seq.sh rc=0
+scripts/tests/test-launch-next-session.sh rc=0
+scripts/tests/test-link-local-work.sh rc=0
+scripts/tests/test-parameterization.sh rc=0
+scripts/tests/test-probe-twins.sh rc=0
+scripts/tests/test-session-lib.sh rc=0
+scripts/tests/test-session-loop-notify.sh rc=0
+scripts/tests/test-session-loop.sh rc=0
+scripts/tests/test-session-numbering.sh rc=0
+scripts/tests/test-statusline-context-budget.sh rc=0
+scripts/tests/test-template-instantiation.sh rc=0
+scripts/tests/test-turn-end-exit.sh rc=0
+scripts/tests/test-vendor-budget-hooks.sh rc=0
+scripts/tests/test-check-ledger.py rc=0
+```
+
+Counts: registry 189/0, launcher 188/0, emit-mode 48/0, session-loop 105/0,
+vendor-hooks 150/0, probe-twins 37/0, doc-consistency 7/0 (12 verbs, 43 codes,
+both directions empty). Red-before-green: after the pin rewrite and before the
+script change the six mirror suites failed 9/15/28/1/5/1 assertions
+(`red-*.log` in the scratch dir).
+
+Retired names left anywhere outside `work/` and the ADR history: none
+(`grep` over CONTEXT.md, docs/, skills/session-rollover, context-budget.env,
+.gitignore, mcp-fragments) except the deliberate ones: the import script's
+`.session-seq` mention, the `.session-loop.log` ignore line, and the retired
+lock note in operational-knowledge.
+
+### Record contents, throwaway item `work/item` (scratch clone of the scripts, paths shortened)
+
+The attended stage: a live owner (seq 7) runs `--emit`; the record is the only
+file written (`ls -a` at the end), the command is printed as `cmd:`, and the
+supervised query on a record with no `chain.supervisor` answers 1:
+
+```
+$ CLAUDE_CODE_SESSION_ID=sid-7 scripts/launch-next-session.sh item --emit --loop-mode interactive --loop-reason "evidence"
+Bootstrap prompt (paste into the successor if needed):
+----
+Work item item - rollover session #8. Read `work/item/next-session.md` and continue from **First actions**.
+----
+project=item runtime=claude mode=manual path=emit seq=8
+record: seq 7 -> 8, predecessor=rolled_over, by=session (work/item/session-state.json)
+cmd: TF_SESSION_PROJECT=item TF_SESSION_SEQ=8 claude --name item\ #8 Work\ item\ item\ -\ rollover\ session\ #8.\ Read\ \`work/item/next-session.md\`\ and\ continue\ from\ \*\*First\ actions\*\*.
+emit: staged successor #8 in work/item/session-state.json (staged.command)
+rc=0
+$ cat work/item/session-state.json
+{"schema":1,"seq":8,"launch":{"launched_at":"2026-09-22T04:34:31Z","by":"session","mode":"interactive","reason":"evidence","predecessor":{"seq":7,"session_id":"sid-7","registered_at":"2026-09-21T00:00:00Z","disposition":"rolled_over"},"pending":null},"session":null,"staged":{"successor":8,"command":"TF_SESSION_PROJECT=item TF_SESSION_SEQ=8 claude --name item\\ #8 Work\\ item\\ item\\ -\\ rollover\\ session\\ #8.\\ Read\\ \\`work/item/next-session.md\\`\\ and\\ continue\\ from\\ \\*\\*First\\ actions\\*\\*.","by":"sid-7"}}
+$ scripts/context-budget.sh supervised --project item; echo rc=$?
+unsupervised
+rc=1
+$ ls -a work/item
+. .. handoff.md next-session.md session-state.json 
+```
+
+The `/clear` binding is pinned by registry P6 (`launch.pending` pid match →
+`via=pending`, `launch.pending` nulled, the prompt `seed` on stdout; a
+`--project` bind prints nothing).
 
 ## Concerns for the parent
 
-(filled at the end)
+1. **`--emit` no longer takes a path** (decision 1). The old supervisor on
+   `main` (pid-72900 chain) calls `--emit <abs-path>` in its bootstrap; that
+   supervisor runs `main`'s launcher, not stage4's, so nothing live breaks,
+   but the cutover must land the supervisor and launcher together (they do,
+   on `stage4`).
+2. **The `/clear` injector is unverified against a real Claude session**
+   (decision 5). The stub twin pins that `register` prints the pending prompt
+   on stdout when it binds via pending; whether Claude Code shows that stdout
+   as context after `/clear` (the doc's standing claim about `SessionStart`
+   hook stdout) needs one attended `--clear` on the cutover. If it does not,
+   the fallback is a `hookSpecificOutput.additionalContext` envelope from the
+   same `register` call.
+3. **`--loop-reason` now lands in `launch.reason`** — a small schema addition
+   (string, empty when absent) not in the design's block table; the bump
+   record was its only previous home and nothing else read it. Alternative
+   was deleting the flag, which the skill and the hook message both name.
+4. **`scripts/attach-session.sh` and `scripts/statusline-context-budget.sh`
+   still read `work/<p>/.active-session`** (their suites pass on fixtures that
+   write it). Out of this ticket's scope and not a mirror; both need a
+   follow-up onto the record's `session` block or the statusline shows no
+   project segment for record-bound sessions.
+5. **The three "still Open" change-log entries do not exist** (decision 7);
+   the tracker row for that acceptance item should say so rather than "done".
+6. **Vendor configs still name the shims** (decision 10); the optional
+   repoint was skipped for the codex trust-hash re-prompt.
 
 ## Questions for the user
 
-(none so far)
+(none)
