@@ -4,6 +4,13 @@ Tier-2 decision notes, newest on top. Format and promotion rules:
 `skills/decision-log/SKILL.md`. Each ticket that rejects an alternative
 appends one note here before its commit.
 
+## 2026-09-22 — the addendum heading form stays, as grandfathered history
+**Chose:** keep `# Session Handoff addendum — …` accepted by `check-ledger.py` and teach the launcher's `top_ledger_session` the same opener (plus the same strict `# Session Handoff` start the checker requires); the rule is stated once in `docs/work-directory-conventions.md` → "Ledger" and both parsers cite it; a fixture set in `test-check-ledger.py` fails when they disagree.
+**Because:** the ticket's recommendation to drop the form rested on "no remaining use", but M36 records a real downstream ledger (the history this grammar was ported from, session 166) that carries an addendum block, and the checker's own rule is never to rewrite history to modernize headings. Dropping the form would make that adopter's ledger fail the gate again.
+**Rejected:** dropping the form from the checker and its test (the ticket's recommendation) — breaks a grandfathered downstream history for no gain; leaving the launcher looser than the checker (it read a number from `#  Session Handoff …`, which the checker rejects) — the two must agree on every heading, not just the addendum one.
+**Blast radius:** `scripts/launch-next-session.sh` (`top_ledger_session`), `scripts/check-ledger.py` (comment only), `scripts/tests/test-check-ledger.py`, `docs/work-directory-conventions.md`.
+**Promote?:** no.
+
 ## 2026-09-22 — where the "who owns this item, is it alive" readers live
 **Chose:** two reader functions in `scripts/lib/session-lib.sh` (`session_record_owner`, `session_owner_live`), sourced by `attach-session.sh` and `statusline-context-budget.sh`; `context-budget.sh` keeps its own `owner_live()` untouched.
 **Because:** the ticket named the lib as the read path, and `context-budget.sh` cannot be sourced (it dispatches a command on execution), so the rule had to live somewhere sourceable; leaving `context-budget.sh` alone keeps the change inside the ticket's remit.

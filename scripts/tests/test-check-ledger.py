@@ -12,6 +12,7 @@ Run: scripts/tests/test-check-ledger.py
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 import tempfile
@@ -19,6 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 CHECK = ROOT / "scripts" / "check-ledger.py"
+LAUNCHER = ROOT / "scripts" / "launch-next-session.sh"
 
 PURPOSE = """<!--
 PURPOSE: This is the LEDGER (provenance log). Append-only, newest block on TOP.
@@ -201,6 +203,63 @@ MUTATIONS = [
 ]
 
 
+# One heading rule, two parsers (docs/work-directory-conventions.md → "Ledger"):
+# the launcher's `top_ledger_session` must read the same session number from a
+# top heading that check-ledger.py reads, and must read none from a heading
+# the checker rejects. Expected numbers come from the convention's worked
+# forms; REJECT marks a heading the convention does not accept.
+REJECT = "reject"
+HEADING_FIXTURES = [
+    ("plain numbered", "# Session Handoff — 76 (2026-08-22): what happened", 76),
+    ("letter suffix", "# Session Handoff — 74b (2026-08-22): a second block", 74),
+    ("dated, session N", "# Session Handoff — 2026-08-22 (session 68, bg: what happened)", 68),
+    ("dated, session #N", "# Session Handoff — 2026-08-29 (session #8: what happened)", 8),
+    ("dateless sNNN", "# Session Handoff — s201 (what happened)", 201),
+    ("date-only", "# Session Handoff — 2026-08-07 (what happened)", None),
+    ("midnight span", "# Session Handoff — 2026-08-22/23 (what happened)", None),
+    ("year is not a number", "# Session Handoff — 2026-08-22 (what happened in 2026)", None),
+    ("addendum, numbered", "# Session Handoff addendum — 23 (2026-09-22): what happened", 23),
+    ("addendum, dated session N", "# Session Handoff addendum — 2026-08-22 (session 166: what happened)", 166),
+    ("no dash", "# Session Handoff 76 (2026-08-22): what happened", REJECT),
+    ("keyless", "# Session Handoff — (what happened)", REJECT),
+    ("doubled space", "#  Session Handoff — 76 (2026-08-22): what happened", REJECT),
+]
+
+
+def load_checker():
+    sys.dont_write_bytecode = True  # no scripts/__pycache__ from the import
+    spec = importlib.util.spec_from_file_location("check_ledger", CHECK)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def checker_reads(tmp: Path, checker, heading: str):
+    """What check-ledger.py reads from a ledger whose top block is `heading`:
+    REJECT when the check fails, else the session number (None if dateless)."""
+    code, _ = run_check(write_project(tmp, PURPOSE + "\n" + heading + "\n\nBody prose.\n", ""))
+    if code != 0:
+        return REJECT
+    num, _ = checker.parse_heading(checker.HEAD.match(heading).group("rest"))
+    return num
+
+
+def launcher_reads(tmp: Path, heading: str):
+    """What the launcher's top_ledger_session reads from the same ledger: the
+    session number, or None when it yields nothing."""
+    ledger = tmp / "work" / "fixture" / "handoff.md"
+    fn = subprocess.run(
+        ["awk", "/^top_ledger_session\\(\\) \\{/,/^\\}/", str(LAUNCHER)],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    assert fn.strip(), "top_ledger_session not found in launch-next-session.sh"
+    out = subprocess.run(
+        ["bash", "-c", fn + '\ntop_ledger_session "$1"', "_", str(ledger)],
+        capture_output=True, text=True,
+    ).stdout.strip()
+    return int(out) if out else None
+
+
 def run_check(project: Path) -> tuple[int, str]:
     proc = subprocess.run(
         [sys.executable, str(CHECK), str(project)],
@@ -220,7 +279,7 @@ def write_project(tmp: Path, ledger: str, archive: str) -> Path:
 
 def main() -> int:
     passed = 0
-    total = len(MUTATIONS) + 2
+    total = len(MUTATIONS) + 2 + len(HEADING_FIXTURES)
 
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
@@ -256,7 +315,21 @@ def main() -> int:
             else:
                 print(f"  {name:52} MISSED")
 
-    print(f"\n{passed}/{total} ledger mutations caught")
+        # One heading rule: both parsers read the same thing from every fixture.
+        checker = load_checker()
+        for name, heading, expect in HEADING_FIXTURES:
+            got_c = checker_reads(tmp, checker, heading)
+            got_l = launcher_reads(tmp, heading)
+            label = f"heading agreement: {name}"
+            if got_c != expect:
+                print(f"  {label:52} CHECKER reads {got_c!r}, convention says {expect!r}")
+            elif (got_c == REJECT and got_l is None) or got_c == got_l:
+                print(f"  {label:52} agree")
+                passed += 1
+            else:
+                print(f"  {label:52} DISAGREE (checker {got_c!r}, launcher {got_l!r})")
+
+    print(f"\n{passed}/{total} ledger checks passed")
     return 0 if passed == total else 1
 
 

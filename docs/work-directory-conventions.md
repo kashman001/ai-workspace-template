@@ -78,6 +78,18 @@ the top block; the rest is history. That title form is the preferred one for
 grandfathered — the checker accepts them, so don't rewrite history to
 "modernize" headings.
 
+**One heading rule, two parsers.** A block heading opens with exactly
+`# Session Handoff` (or `# Session Handoff addendum`, a grandfathered form
+some downstream histories carry — never write a new one) followed by a dash,
+and must yield a session number, a date, or both. With ISO dates stripped
+first (so a year is never a number), the number is the one right after the
+dash (`76`, `74b`, `s201`) or else the first `session N` / `session #N` in
+the title. `scripts/check-ledger.py` and the launcher's `top_ledger_session`
+(`scripts/launch-next-session.sh`) both implement this paragraph and nothing
+more; `scripts/tests/test-check-ledger.py` runs a fixture set of headings
+through both and fails when they disagree. Change the rule here first, then
+both parsers.
+
 **Session numbering — one source of truth (ADR-0010, keeping ADR-0007's
 ruling):** N is the number from your own bootstrap prompt, **verbatim**. The
 canonical source is the record's `seq` (the launcher advances it and derives

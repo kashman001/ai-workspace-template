@@ -346,13 +346,17 @@ ledger_file() {
   done
   return 1
 }
-# Grammar mirrors check-ledger.py: strip ISO dates first (so "2026" is never a
-# session number), then "session N" / "session #N" anywhere, or "— N"/"— sN"
-# right after the heading dash.
+# One heading rule, shared with check-ledger.py — the paragraph under
+# docs/work-directory-conventions.md → "Ledger"; test-check-ledger.py proves
+# the two parsers agree. The top `# Session Handoff` line must open exactly
+# as the rule says (optionally `addendum`, grandfathered) plus a dash; then
+# strip ISO dates first (so "2026" is never a session number), then "session
+# N" / "session #N" anywhere, or "— N"/"— sN" right after the heading dash.
 top_ledger_session() {
   grep -m1 -E '^#[[:space:]]*Session Handoff' "$1" 2>/dev/null \
+    | grep -E '^# Session Handoff( addendum)?[[:space:]]*[—-]' \
     | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}//g' \
-    | grep -oiE 'session[[:space:]]+#?[0-9]+|^#[[:space:]]*session handoff[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
+    | grep -oiE 'session[[:space:]]+#?[0-9]+|^# session handoff( addendum)?[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
     | head -1 | grep -oE '[0-9]+' | head -1 || true
 }
 launcher_hash() {

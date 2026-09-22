@@ -37,6 +37,12 @@ def rel(path: Path) -> str:
     except ValueError:
         return str(path)
 
+# One heading rule, shared with the launcher's `top_ledger_session`
+# (scripts/launch-next-session.sh) — the paragraph under
+# docs/work-directory-conventions.md → "Ledger"; test-check-ledger.py runs a
+# fixture set through both parsers and fails when they disagree. Change the
+# rule there first, then both parsers.
+#
 # Several title conventions are in use and all are legitimate history —
 # preferred for NEW blocks:
 #       # Session Handoff — 76 (2026-08-22): what happened
@@ -49,9 +55,10 @@ def rel(path: Path) -> str:
 #       # Session Handoff addendum — 2026-08-22 (session 166: what happened)
 #
 # Rather than one regex per form, parse tolerantly: the heading must open
-# `# Session Handoff` (or `# Session Handoff addendum`, when a session files
-# a second block for itself — equal session numbers are already legal, so an
-# addendum is a well-formed block, not a defect) plus a dash, and must yield
+# `# Session Handoff` (or `# Session Handoff addendum` — grandfathered from a
+# downstream history where a session filed a second block for itself; equal
+# session numbers are already legal, so an addendum is a well-formed block,
+# not a defect, but never write a new one) plus a dash, and must yield
 # a session number, a date, or both. A session number may carry a letter
 # suffix ("74b") or a continuation word ("session 9 cont.") when one session
 # wrote more than one block; a midnight-span date range orders by its first

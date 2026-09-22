@@ -886,6 +886,25 @@
       carried no lock-based description of either script, so no prose changed. 2026-09-22.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M41</span> The ledger checker and the launcher's heading parser disagreed on which <code># Session Handoff</code> headings carry a session number
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh · scripts/check-ledger.py · scripts/tests/test-check-ledger.py · docs/work-directory-conventions.md</span></h3>
+    <p><span class="k">Evidence:</span> <code>check-ledger.py</code> (M36) accepts <code># Session Handoff addendum — N (date): …</code>;
+      <code>top_ledger_session</code> in <code>launch-next-session.sh</code> read no number from it, so a ledger the checker passed
+      made <code>--emit</code> refuse <code>ledger_shape</code> (<code>work/template-improvement-review/</code> session 22). The launcher
+      was also looser the other way: it read a number from <code>#&nbsp;&nbsp;Session Handoff — 76 …</code>, which the checker rejects.
+      Ticket 02 of <code>work/session-management-followups/</code>.</p>
+    <p><span class="k">Impact:</span> two copies of one grammar drifting independently; a rollover refused on a ledger the gate had just passed.</p>
+    <p><span class="k">Fix:</span> one rule, stated once, both parsers implement it, a test proves they agree.</p>
+    <p><span class="fix">Fixed:</span> the rule is now the "One heading rule, two parsers" paragraph in
+      <code>docs/work-directory-conventions.md</code> → Ledger, cited by both parsers. <code>top_ledger_session</code> requires the
+      same strict opener as the checker (<code># Session Handoff</code>, optional grandfathered <code>addendum</code>, then a dash)
+      before extracting the number. <code>test-check-ledger.py</code> runs 13 heading fixtures (plain numbered, letter suffix, the
+      grandfathered dated/hash/sNNN/date-only/span forms, both addendum forms, three malformed) through both parsers and fails on
+      any disagreement — red on the old launcher (two disagreements), green after. The addendum form stays as grandfathered
+      history rather than being dropped: M36's downstream ledger still carries one (decision note in the item). 2026-09-22.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

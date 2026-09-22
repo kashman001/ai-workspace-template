@@ -16,13 +16,13 @@ parsers must agree, proven by a test.
 
 **Blocked by:** nothing (do after 01 so one session does not carry both).
 
-**Status:** todo
+**Status:** done
 
-- [ ] Fixture set of headings (plain numbered, dated-with-session, addendum,
+- [x] Fixture set of headings (plain numbered, dated-with-session, addendum,
       malformed) run through both `check-ledger.py` and `top_ledger_session`;
       failing test shows the disagreement first
-- [ ] Both parsers agree on every fixture; the existing 13 ledger mutations
+- [x] Both parsers agree on every fixture; the existing 13 ledger mutations
       still caught (minus the one that the dropped form makes moot, if dropped)
-- [ ] Rule stated once in `docs/work-directory-conventions.md`; Decision note
+- [x] Rule stated once in `docs/work-directory-conventions.md`; Decision note
       in `decisions.md`; backlog card opened and resolved in the same commit
-- [ ] All suites green; `Decision:` trailer on the commit
+- [x] All suites green; `Decision:` trailer on the commit
