@@ -1,3 +1,44 @@
+# Session Handoff — 17 (2026-09-21): Stage 4 cutover rehearsed in a scratch clone (merge clean, import ok, 23 suites green); runbook written; human-only steps handed over
+
+**Summary.** No agents. Rehearsal in a scratch clone of `main` (a0dbf15):
+`git merge --no-ff origin/stage4` clean (115 files, one automatic merge in
+`docs/operational-knowledge.md`, no conflict); counter import from a copy of
+the live `.session-seq` (17) gave record `{"schema": 1, "seq": 17}`, second
+run a no-op; every suite (22 shell with `bash`, plus `test-check-ledger.py`)
+rc 0, no `FAIL` line. Wrote `cutover-runbook.md` (one page: the human's steps
+0–6 in order, done criteria, rehearsal evidence). Tracker: cutover row
+`in progress`, "Now" rewritten. Bookkeeping commit 9ab55ab on `main`.
+Nothing pushed; nothing touched on `stage4` or any live script. Cost ~58K
+at register → ~125K at WARN (targeted reads of the old and new scripts).
+
+**Findings (all in the runbook).** (1) The merged `.gitignore` no longer
+hides `.session-seq*`, so the old counter files must be deleted after the
+import; step 2 lists every old state file. (2) The old supervisor is ended
+with Ctrl-C at its interactive pause, never by pressing Enter: session 18
+must start fresh on the new scripts, unsupervised, or it cannot run the
+`--clear` rollover. (3) The chain's bootstrap refuses `owner_live` while a
+live session owns the item, so session 19 ends through `close` + `/exit`
+before the human starts `session-loop.sh --max-sessions 2`. (4) After the
+import the record reads `seq` 18, not 17: this rollover advanced the old
+counter when it staged session 18.
+
+**Decisions.** Rehearse in a clone, never the worktree or the live `main`
+(Tier 1 trailer on 9ab55ab). Runbook order Ctrl-C → merge → import → delete
+old state files → attended session 18 → `--clear` → session 19 `close` →
+chain of 2. Rejected: pressing Enter (session 18 would run old scripts from
+the tree being merged); keeping session 19 alive while starting the chain
+(bootstrap `owner_live`).
+
+**Learnings:**
+- The old launcher's `--emit` advances `.session-seq` at staging time, so an
+  import taken after a rollover reads the successor's number.
+- The rehearsal clone gets `stage4` as `origin/stage4`; merge that ref there.
+
+**Open / next.** Session 18 is attended: wait for the human, run
+`cutover-runbook.md` with them from step 0. Chain: the old supervisor
+consumes this `--emit --loop-mode interactive` and pauses for Enter; the
+runbook's step 0 tells the human to press Ctrl-C at that pause instead.
+
 # Session Handoff — 16 (2026-09-21): Stage 4 wave F (phase 8: mirrors removed, skill/docs/ADRs on the record, doc-consistency test) done by one agent; merged to `stage4`
 
 **Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-8` (off

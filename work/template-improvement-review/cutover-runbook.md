@@ -116,8 +116,10 @@ It prints the bootstrap prompt for #19 and
 **What to look for:** the first thing in the cleared session is the
 SessionStart hook output, and it must contain the line
 `Work item template-improvement-review - rollover session #19. Read ...`.
-That line is the seed. If the session then waits for input, type `continue`;
-the seed is already in its context. Check the record:
+That line is the seed. It is hook `additionalContext`: the agent sees it,
+the human's terminal shows nothing after `/clear` (verified 2026-09-22), so
+ask the agent whether it received it. If the session then waits for input,
+type `continue`; the seed is already in its context. Check the record:
 
 ```sh
 jq '.session.seq, .launch.pending, .launch.predecessor.disposition' work/template-improvement-review/session-state.json

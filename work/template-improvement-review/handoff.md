@@ -6,6 +6,40 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 19 (2026-09-22): Stage 4 live cutover, attended: `--clear` rollover confirmed (runbook step 4); closed through the stop door for the chain (step 5)
+
+**Summary.** No agents; human at the keyboard. Same Claude Code process as
+session 18 after `/clear`. Step 4 evidence: the SessionStart:clear hook
+fired and its output carried the seed line (`Work item
+template-improvement-review - rollover session #19. Read
+work/template-improvement-review/next-session.md and continue from First
+actions`); record `.session.seq` 19, `.launch.pending` null,
+`.launch.predecessor.disposition` `rolled_over`, predecessor seq 18 with
+session 18's session id; `register` re-run → `seq=19 via=project
+(refreshed)`, pid 34573 unchanged (same process). Tracker: cutover row Used
+3, "Now" rewritten. Ledger block 17 archived. Launcher for 20 written. Then
+step 5: `close` (exit 0) and the human runs `/exit`, then
+`scripts/session-loop.sh template-improvement-review --max-sessions 2`.
+
+**Findings.** (1) The seed line is delivered as hook `additionalContext`,
+which reaches the agent's context and not the human's terminal: after
+`/clear` the human saw nothing and reported "the expected hook did not
+fire", while the agent had the seed. The mechanism works; the runbook's
+"what to look for" was addressed to the wrong reader. Runbook step 4
+amended with one sentence (the agent confirms the seed; the human sees
+nothing). No script change needed.
+
+**Decisions.** None new.
+
+**Learnings:**
+- Session 19 measured ~60K at `register` before work (hook context floor,
+  consistent with session 18's ~64K).
+
+**Open / next.** Human: `/exit`, then start the chain (runbook step 6).
+Session 20 confirms the supervisor; 21 records the final evidence and ticks
+ticket 10. Follow-up outside this item unchanged: import the six other
+items, then retire `scripts/import-session-seq.sh`.
+
 # Session Handoff — 18 (2026-09-22): Stage 4 live cutover, attended: runbook steps 0–3 verified on the live checkout; attended `--clear` rollover run (step 4)
 
 **Summary.** No agents; human at the keyboard. Started fresh on the new
@@ -44,44 +78,3 @@ item's counter).
 line and the record fields (runbook step 4), then step 5 (`close` +
 `/exit`). Chain of 2 follows (steps 6). Follow-up outside this item: retire
 `scripts/import-session-seq.sh` after every live item is imported.
-
-# Session Handoff — 17 (2026-09-21): Stage 4 cutover rehearsed in a scratch clone (merge clean, import ok, 23 suites green); runbook written; human-only steps handed over
-
-**Summary.** No agents. Rehearsal in a scratch clone of `main` (a0dbf15):
-`git merge --no-ff origin/stage4` clean (115 files, one automatic merge in
-`docs/operational-knowledge.md`, no conflict); counter import from a copy of
-the live `.session-seq` (17) gave record `{"schema": 1, "seq": 17}`, second
-run a no-op; every suite (22 shell with `bash`, plus `test-check-ledger.py`)
-rc 0, no `FAIL` line. Wrote `cutover-runbook.md` (one page: the human's steps
-0–6 in order, done criteria, rehearsal evidence). Tracker: cutover row
-`in progress`, "Now" rewritten. Bookkeeping commit 9ab55ab on `main`.
-Nothing pushed; nothing touched on `stage4` or any live script. Cost ~58K
-at register → ~125K at WARN (targeted reads of the old and new scripts).
-
-**Findings (all in the runbook).** (1) The merged `.gitignore` no longer
-hides `.session-seq*`, so the old counter files must be deleted after the
-import; step 2 lists every old state file. (2) The old supervisor is ended
-with Ctrl-C at its interactive pause, never by pressing Enter: session 18
-must start fresh on the new scripts, unsupervised, or it cannot run the
-`--clear` rollover. (3) The chain's bootstrap refuses `owner_live` while a
-live session owns the item, so session 19 ends through `close` + `/exit`
-before the human starts `session-loop.sh --max-sessions 2`. (4) After the
-import the record reads `seq` 18, not 17: this rollover advanced the old
-counter when it staged session 18.
-
-**Decisions.** Rehearse in a clone, never the worktree or the live `main`
-(Tier 1 trailer on 9ab55ab). Runbook order Ctrl-C → merge → import → delete
-old state files → attended session 18 → `--clear` → session 19 `close` →
-chain of 2. Rejected: pressing Enter (session 18 would run old scripts from
-the tree being merged); keeping session 19 alive while starting the chain
-(bootstrap `owner_live`).
-
-**Learnings:**
-- The old launcher's `--emit` advances `.session-seq` at staging time, so an
-  import taken after a rollover reads the successor's number.
-- The rehearsal clone gets `stage4` as `origin/stage4`; merge that ref there.
-
-**Open / next.** Session 18 is attended: wait for the human, run
-`cutover-runbook.md` with them from step 0. Chain: the old supervisor
-consumes this `--emit --loop-mode interactive` and pauses for Enter; the
-runbook's step 0 tells the human to press Ctrl-C at that pause instead.
