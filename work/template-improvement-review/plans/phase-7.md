@@ -60,8 +60,180 @@ hooks and a real transcript.
 
 ## Evidence
 
-(filled at the end)
+Run 2026-09-21/22 in the worktree (bash 3.2.57, `claude` 2.1.278), every
+suite with `bash`, no `timeout` wrapper. Commits on `s4-phase-7`: 54b623c
+(plan), fae4746 (lock fix), 30f2632 (probes + twins), f2cebb2 (trust-dialog
+pattern), then this one.
+
+### The lock fix (task 1)
+
+S10i/S10j red on the old loop (`record_unwritable`, seq unchanged), green
+after; S10l–S10q pin the two refusals that stay (absent directory, a file at
+the lock path) and that the absent directory refuses at once. Five runs:
+
+```
+run 1: scripts/tests/test-session-lib.sh rc=0 test-session-lib: 64 passed, 0 failed
+run 2: scripts/tests/test-session-lib.sh rc=0 test-session-lib: 64 passed, 0 failed
+run 3: scripts/tests/test-session-lib.sh rc=0 test-session-lib: 64 passed, 0 failed
+run 4: scripts/tests/test-session-lib.sh rc=0 test-session-lib: 64 passed, 0 failed
+run 5: scripts/tests/test-session-lib.sh rc=0 test-session-lib: 64 passed, 0 failed
+```
+
+### Twins (tasks 3–4)
+
+`test-probe-twins.sh` **37 passed, 0 failed**, three consecutive runs plus
+the full-suite run: T1 (V1 under the stub: 18 criteria; #1 opened the record
+by an explicit `register`, #2 bound `via=env (filled)` through the SessionStart
+hook, `release --quiet` set `ended.at`), T3 (V3 to the cap and to a quit: both
+children ended `rc=143` by the dispatcher's self-kill, "terminating claude
+session" in the hook output), T10 (V10: 19 criteria), H1 (the launcher-written
+staged command run by hand registered #2; a supervisor restart exits 4 with
+`refused reason=staged_invalid leg=spent`, ran nothing, left `staged` intact,
+cleared `chain.supervisor`), H2 (`--emit` again by the session that staged →
+4 `not_owner`; `--emit` by a stranger while a fresh transcript makes the owner
+live → 4 `owner_live`; record byte-identical both times).
+
+### Claude Code acceptance (task 6)
+
+Workspace: `git clone` of this branch at f2cebb2 under the scratchpad
+(`…/scratchpad/s4-accept`, `git rev-parse HEAD` equal to the worktree's),
+item `work/s4-scratch/` (untracked, never committed), a local
+`.claude/settings.local.json` allowing `Bash(bash work/s4-scratch/session-turn.sh:*)`
+and `Read`. Login proven first: `claude -p "Reply with exactly: ok"` from the
+worktree → `ok`, rc 0. Every session was driven without a human: V1's two
+sessions with `claude -p … --allowedTools …`, V3's two children exactly as
+the launcher staged them (TUI), under `expect`.
+
+**V1 attended rollover — `v1-attended-rollover.sh --root <clone> --project s4-scratch`: 18 passed, 0 failed, rc 0.**
+Session #1 (sid `9409f261-…`) bound the item by `register --project`, wrote
+block 1 and the launcher for #2, and ran the launcher attached from its tool
+shell; the launcher's log:
+
+```
+project=s4-scratch runtime=claude mode=manual path=exec seq=2
+record: seq 1 -> 2, predecessor=rolled_over, by=session (work/s4-scratch/session-state.json)
+not an interactive terminal — run this in one:
+run: TF_SESSION_PROJECT=s4-scratch TF_SESSION_SEQ=2 claude --name s4-scratch\ #2 Work\ item\ s4-scratch\ -\ rollover\ session\ #2.\ Read\ \`work/s4-scratch/next-session.md\`\ and\ continue\ from\ \*\*First\ actions\*\*.
+```
+
+The probe ran that line (`-p` and the tool list appended) as session #2
+(sid `03fba971-…`), which registered by the env pair, wrote block 2 and
+stopped. Record after V1:
+
+```json
+{"schema":1,"seq":2,
+ "session":{"seq":2,"runtime":"claude","session_id":"03fba971-45fd-49e2-8c8f-5318a6938d4d","pid":61322,"pid_start":"Mon Sep 21 18:51:51 2026",
+            "artifact":"~/.claude/projects/…-s4-accept/03fba971-45fd-49e2-8c8f-5318a6938d4d.jsonl","registered_at":"2026-09-21T23:51:51Z",
+            "launcher_hash":"a543818d13ff…","user":"kashif@…","ended":{"at":"2026-09-21T23:55:50Z"}},
+ "launch":{"launched_at":"2026-09-21T23:51:49Z","by":"session","mode":"handsoff",
+           "predecessor":{"seq":1,"session_id":"9409f261-7282-458f-8bc3-b54bc24d8ba7","registered_at":"2026-09-21T23:51:49Z","disposition":"rolled_over"},
+           "pending":null},
+ "staged":null}
+```
+
+Ledger: `# Session Handoff — 2 …` over `# Session Handoff — 1 …`;
+`check-ledger.py work/s4-scratch` rc 0; files under `work/s4-scratch/`:
+`.probe-stop-at .session-seq.bump.json README.md handoff.md launcher-1.log
+next-session.md session-1.out session-2.out session-state.json
+session-turn.sh turns.log` — no retired name. Both sessions replied `done`.
+
+**V3 supervised chain — `v3-chain.sh --root <clone> --project s4-scratch --driver expect --max-sessions 2`: 15 passed, 0 failed, rc 0** (the supervisor's own exit 0). `work/s4-scratch/.session-loop.log`:
+
+```
+2026-09-22T00:00:10Z staging the first session
+2026-09-22T00:00:10Z starting session #1 (1 of 2)
+2026-09-22T00:00:27Z session #1 ended rc=143
+2026-09-22T00:00:27Z verdict=staged seq=1 successor=2 mode=handsoff
+2026-09-22T00:00:27Z starting session #2 (2 of 2)
+2026-09-22T00:05:54Z session #2 ended rc=143
+2026-09-22T00:05:55Z verdict=staged seq=2 successor=3 mode=handsoff
+2026-09-22T00:05:55Z verdict=cap seq=3 used=2 cap=2 — chain cap reached; open a new budget with: scripts/session-loop.sh s4-scratch --reset-cap
+```
+
+Both children were real TUI sessions (sids `4535d67b-…`, `7b262be0-…`),
+each ended by the turn-end hook after its `--emit` (rc 143). Record after V3:
+
+```json
+{"schema":1,"seq":3,
+ "chain":{"supervisor":null,"used":2,"cap":2,"closed":null},
+ "launch":{"launched_at":"2026-09-22T00:05:52Z","by":"session","mode":"handsoff",
+           "predecessor":{"seq":2,"session_id":"7b262be0-97bd-4798-a31e-da21fce75621","registered_at":"2026-09-22T00:00:27Z","disposition":"rolled_over"},
+           "pending":null},
+ "session":null,
+ "staged":{"successor":3,"command":"TF_SESSION_PROJECT=s4-scratch TF_SESSION_SEQ=3 claude --name s4-scratch\\ #3 Work\\ item\\ s4-scratch\\ -\\ rollover\\ session\\ #3.\\ …","by":"7b262be0-97bd-4798-a31e-da21fce75621"}}
+```
+
+`staged.by == launch.predecessor.session_id`; ledger blocks 2, `check-ledger.py`
+rc 0; no retired file. The folder-trust dialog was answered once by the
+driver before the chain (Concern 4); no `claude`, `expect` or supervisor
+process was left running after either run (`ps` checked). The clone stays in
+the scratchpad for inspection; nothing under it was committed.
+
+### Every suite (task 7)
+
+```
+scripts/tests/test-agent-entrypoints.sh rc=0
+scripts/tests/test-attach-session.sh rc=0
+scripts/tests/test-check-dependencies.sh rc=0
+scripts/tests/test-context-budget-registry.sh rc=0
+scripts/tests/test-emit-mode.sh rc=0                 (53 asserts)
+scripts/tests/test-fleet-children.sh rc=0
+scripts/tests/test-fleet-dispatch-contract.sh rc=0
+scripts/tests/test-fleet-dispatch-records.sh rc=0
+scripts/tests/test-import-session-seq.sh rc=0
+scripts/tests/test-launch-next-session.sh rc=0       (190 asserts)
+scripts/tests/test-link-local-work.sh rc=0
+scripts/tests/test-parameterization.sh rc=0
+scripts/tests/test-probe-twins.sh rc=0               (37 asserts, new)
+scripts/tests/test-session-lib.sh rc=0               (64 asserts, was 55)
+scripts/tests/test-session-loop-notify.sh rc=0
+scripts/tests/test-session-loop.sh rc=0              (105 asserts)
+scripts/tests/test-session-numbering.sh rc=0
+scripts/tests/test-statusline-context-budget.sh rc=0
+scripts/tests/test-template-instantiation.sh rc=0
+scripts/tests/test-turn-end-exit.sh rc=0             (5 asserts, no skips)
+scripts/tests/test-vendor-budget-hooks.sh rc=0
+python3 scripts/tests/test-check-ledger.py rc=0
+```
+
+`git diff --stat stage4..s4-phase-7`: `scripts/lib/session-lib.sh` (+12/−2),
+`scripts/tests/test-session-lib.sh` (+20), `scripts/tests/test-probe-twins.sh`
+(new, 174), `evaluation/probes/{lib,v1-attended-rollover,v3-chain,v10-fleet}.sh`
+(new), this plan. No measurer, hook, launcher or supervisor edit.
 
 ## Concerns for the parent
 
-(filled at the end)
+1. **Mirror removal, for phase 8 (decision 5).** The exact places, with their
+   readers: (a) `.session-loop` — written by `session-loop.sh` (after the
+   `chain.supervisor` write) and removed in `cleanup`; read by
+   `context-budget.sh cmd_supervised` and by the launcher's
+   `invoked_by_supervisor` (gate 6's bootstrap exemption compares the marker's
+   `pid` to `$PPID`), pinned by `test-session-loop.sh` V1n, R7,
+   `test-launch-next-session.sh` (B series, `LOOPF`), `test-emit-mode.sh`
+   (`LOOPF`), `test-context-budget-registry.sh` (`LOOPF`, `S1LOOP`); the
+   record's `chain.supervisor.{pid,pid_start}` carries the same facts.
+   (b) `.next-command` + `.session-seq.bump.json` — written by the launcher's
+   `--emit`; read by `budget_hook_should_exit` (`.next-command` non-empty and
+   the bump's `session_id` == mine) and by `successor_advisory`
+   (`.next-command` non-empty); pinned by `test-vendor-budget-hooks.sh`
+   (lines ~488–489), `test-emit-mode.sh` (E2m/E2n on the bump, the `EMITF`
+   pins), `test-launch-next-session.sh` (line ~127), `test-session-loop.sh`
+   (the `reset` cleanup); the record's `staged.by` and `staged != null` carry
+   the same facts. `.next-command` is also `--emit`'s user-visible output.
+2. **The acceptance ran in a clone, not in `$WT/work/s4-scratch/`** (decision
+   3): every script resolves its root through `git rev-parse --git-common-dir`,
+   so from the worktree the supervisor and launcher would have driven the main
+   checkout's `work/`. The clone's HEAD equals the branch commit under test
+   (Evidence). The item was never committed anywhere.
+3. **A supervised session's tool shells inherit the chain env.** This agent's
+   shell carried `TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=template-improvement-review`
+   from the parent's live chain, so a hand `--emit` from inside it is refused
+   `no_supervisor` (correct for the chain, surprising for a probe run from a
+   subagent). The probe lib and the twin suite unset the four `TF_SESSION_*`
+   variables; nothing in the scripts changed. Worth a line in the phase-8 docs.
+4. **The folder-trust dialog.** A real TUI child in a folder Claude Code has
+   not seen refuses to start until the dialog is answered; `claude -p` neither
+   shows nor records it (`hasTrustDialogAccepted` stayed null after V1). The
+   probe driver answers it (Down, Enter), and its words arrive interleaved
+   with cursor escapes, so the match is `safety.{0,20}check`, not the literal
+   text. Any future fresh-clone chain needs the same one-time answer.
