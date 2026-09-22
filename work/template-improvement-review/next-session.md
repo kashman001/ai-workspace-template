@@ -1,4 +1,4 @@
-# Next Session — template-improvement-review (Stage 4: cutover, session 17)
+# Next Session — template-improvement-review (Stage 4: attended cutover, session 18)
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover. Past-tense provenance lives in `handoff.md`.
@@ -6,104 +6,89 @@
 
 ## Mission
 
-All eight Stage 4 phases are merged on `stage4` (head 9cfa3d5, 30 commits
-ahead of `main`, every suite green there). **This session is the cutover:**
-bring `stage4` into `main`, import the session counter into the record, and
-prove the new scripts with one attended `--clear` rollover and a two-session
-supervised chain on this item.
+You are the attended cutover session. A human is at the keyboard. Run
+`work/template-improvement-review/cutover-runbook.md` with them, from
+wherever they are in it. They do the human steps (Ctrl-C on the old
+supervisor, the merge, the import, pressing `/clear`, starting the chain);
+you do the agent steps (register, verify, ledger block, launcher, `--check`,
+`--clear`). Session 17 rehearsed every step in a scratch clone: merge clean,
+import ok, all 23 suites green. Nothing has been run on the live checkout yet.
 
-**Rules (user, binding, 2026-09-21):** the user is away overnight and checks
-back in the morning. Keep running. Do every step that is safe without a
-human, then hand the human-only steps over by rolling over with
-`--loop-mode interactive` (the successor waits for the human at a fresh
-window). **Never sit idle waiting**: the old supervisor's watchdog kills an
-idle child after 4h (`SESSION_LOOP_KILL_AFTER`). Every doc the user reads:
-short, plain, self-contained (memory `review-docs-plain-language`).
+**Which scripts are you on?** `ls scripts/fleet.sh`. Present: the merge is
+done, you are session 18 of runbook step 3, on the new scripts, unsupervised.
+Absent: someone pressed Enter under the old supervisor and you run the old
+scripts from the tree that is about to be merged. Say so, do nothing else,
+and ask the human to type `/exit` and follow runbook step 0.
 
-## What is safe unattended, what is not
-
-Safe (do it): reading, a scratch `git clone` of `main` with `stage4` merged
-into it, running suites and the counter import there, writing the runbook,
-bookkeeping commits on `main` (tracker, ledger, launcher, runbook).
-
-Not safe unattended (hand over): merging `stage4` into the live `main`
-checkout (this session's own hooks and the running supervisor pid 47660
-execute scripts from that tree; the new hooks expect a record that does not
-exist yet), ending the old chain, the attended `--clear`, starting the new
-chain. These are the human's steps, with you at the keyboard next to them.
+**Nobody there?** Do not idle and do not improvise: say what you are waiting
+for, end your turn, and let the human continue when they are back. No step
+in the runbook is safe without them.
 
 ## Read these, in order
 
-1. `work/template-improvement-review/plans/fleet-plan.md` (whole; one screen).
-2. `work/template-improvement-review/stage4-tracker.md` ("Now" + rows 8 and
-   cutover).
-3. `issues/10-cutover.md` (under `work/template-improvement-review/`; its
-   checkboxes are the acceptance list), then
-   `session-management-review-findings.md`: grep `cutover` and read those
-   paragraphs (Part 4, ~lines 765–830) — what the cutover was designed to do,
-   in which order, and the counter import verb.
-4. In the `stage4` worktree (`.claude/worktrees/stage4/`):
-   `work/template-improvement-review/plans/phase-8.md` "Concerns for the
-   parent" (1: launcher+supervisor land together; 2: the `/clear` seed needs
-   one attended `--clear`, fallback named; 4: two scripts still read
-   `.active-session`); the rewritten `skills/session-rollover/SKILL.md`
-   and `docs/context-budget.md` "Verbs and reason codes" (the new vocabulary
-   you will run the cutover with); `scripts/tests/test-import-session-seq.sh`
-   header (how the import is exercised).
-5. `handoff.md` top block only.
+1. `work/template-improvement-review/cutover-runbook.md` (whole; one page).
+2. `work/template-improvement-review/stage4-tracker.md`: the "Now" line and
+   the cutover row only.
+3. `work/template-improvement-review/issues/10-cutover.md` (the acceptance
+   checkboxes).
+4. `work/template-improvement-review/handoff.md`, top block only (session 17:
+   findings and the runbook's reasons).
+5. On the new scripts only: `skills/session-rollover/SKILL.md` step 6, the
+   `--clear` paragraph and the refusal-code table.
 
 ## Do NOT reload
 
-Findings Parts 1–3, stage1/2/3 reports, `review.md`, `decisions.md` (append
-only), backlog HTML whole, any script whole (grep them), `plans/phase-{1..7}.md`,
-`dispatch/*.md`.
+Findings Parts 1–4, stage reports, `review.md`, `decisions.md` (append only),
+backlog HTML, any script whole (grep them), `plans/*.md`, `dispatch/*.md`,
+`plans/fleet-plan.md` (its job is done).
 
-## State snapshot
+## State snapshot (end of session 17)
 
-- `main` = c47edeb (session 16 bookkeeping) + this rollover's commit; clean;
-  ahead of origin (do not push).
-- `stage4` = 9cfa3d5, checked out ONLY at `.claude/worktrees/stage4` (clean).
-  Never check it out in the primary tree.
-- Old chain live: supervisor pid 47660 (`--max-sessions 15`, old
-  `session-loop.sh` from frozen `main`); this session is its child. Confirm:
-  `pgrep -f session-loop.sh`; `scripts/context-budget.sh supervised --project template-improvement-review`.
-- Root `ROLLOVER_RELAUNCH=manual`, item override `auto`. `.session-seq` = 17
-  after this launch.
-- Session 16 cost ~60K→~112K with one agent (~420K agent tokens).
+- `main` = 9ab55ab (rehearsal bookkeeping) + session 17's rollover commit;
+  clean; ahead of origin (do not push).
+- `stage4` = 9cfa3d5, checked out only at `.claude/worktrees/stage4`.
+- Old chain: supervisor pid 47660 (`--max-sessions 15`, old scripts from
+  `main`) pauses after session 17 with "Press Enter to start #18". The
+  runbook's step 0 is Ctrl-C there, not Enter.
+- Old counter `.session-seq` = 18 after session 17's rollover; the import
+  therefore writes `seq` 18. Root `ROLLOVER_RELAUNCH=manual`, item override
+  `auto`.
+- Session 17 cost ~58K → ~125K with no agents.
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project template-improvement-review`.
-2. Confirm the state snapshot (`git -C .claude/worktrees/stage4 status --short`
-   empty; `git log --oneline main..stage4 | wc -l` = 30; supervisor live).
-3. Tracker: cutover row → `in progress`, Started today; rewrite "Now".
-4. **Rehearse in a clone** (never the worktree, never the main checkout —
-   scripts resolve their root via `git rev-parse --git-common-dir`):
-   `git clone -q . <scratchpad>/cutover-rehearsal`, there `git merge --no-ff stage4`
-   (from `main`), resolve nothing by hand — a conflict is a finding, record it.
-   Copy `work/template-improvement-review/.session-seq` (and only that) into
-   the clone's item, run the counter import verb the way
-   `test-import-session-seq.sh` does, show the resulting record. Run every
-   suite in the clone with `bash` (no `timeout`), all rc=0, plus the Python
-   ledger suite, in the background (~10 min). Unset the four `TF_SESSION_*`
-   variables first.
-5. Write `work/template-improvement-review/cutover-runbook.md` (one page,
-   plain): the exact commands for the human's steps in order — end the old
-   chain cleanly, merge `stage4` into `main`, import the counter, attended
-   `--clear` rollover (what to look for: the seed line in the fresh session's
-   context; the fallback if absent, per phase-8 Concern 2), start the new
-   chain with `--max-sessions 2`, and what "done" looks like (verdict codes).
-   Include the rehearsal evidence (suite rc lines, record contents).
-6. Bookkeeping commit on `main` (tracker, runbook; never a script).
-   `record --label "cutover rehearsal"`.
-7. Roll over: `session-rollover` steps (prep → handoff block → this launcher
-   rewritten as "session 18: attended cutover, wait for the human, then run
-   the runbook with them" → `seq-sync --session 17` → `record` → if
-   supervised, `scripts/launch-next-session.sh template-improvement-review --emit --loop-mode interactive --loop-reason "cutover needs the human at the keyboard: live merge, attended --clear, new chain"`
-   as the very last command; if not supervised, end with the paste-ready
-   prompt.
+1. `scripts/context-budget.sh register --project template-improvement-review`
+   (new scripts: expect `filled`; `jq '.session.seq, .session.pid'
+   work/template-improvement-review/session-state.json` → 18 and a number).
+2. Confirm with the human, per runbook "Step 3": `pgrep -f session-loop.sh`
+   prints nothing; `git log --oneline -1` is the merge; `git status --short`
+   empty; `scripts/context-budget.sh supervised --project template-improvement-review`
+   exits 1.
+3. Tracker: cutover row Used → 2; "Now" → "live cutover in progress with the
+   human; session 18 at runbook step 4".
+4. Runbook step 4, with the human: write your ledger block (`# Session
+   Handoff — 18`: what you verified, short), rewrite this launcher for
+   session 19 (below), `--check` (exit 0), then `--clear`, and tell the
+   human to press `/clear` and type nothing. That is your last command.
+5. A refusal (`refused reason=<code>`): read the code in the skill's table
+   and the runbook; never edit a script. A script bug is a finding for the
+   tracker Notes and the runbook's "Blockers"; the human decides on a fix
+   agent.
 
-If the rehearsal merge conflicts or a suite is red in the clone: do not
-touch `stage4` or `main` scripts yourself. Record it in the runbook under
-"Blockers", in the tracker Notes, and still roll over interactive; the human
-decides whether to dispatch a fix agent.
+## The chain after you (carry this into each launcher you write)
+
+- **19** (same process, after `/clear`): confirm the seed line appeared and
+  `.session.seq` = 19, `.launch.pending` null, predecessor `rolled_over`
+  (runbook step 4; the fallback if not). Record the evidence in the tracker
+  row and the ledger. Write block 19 and the launcher for 20, then runbook
+  step 5: `scripts/context-budget.sh close --project template-improvement-review`
+  and ask the human to `/exit`. Do not roll over.
+- **20** (first child of `session-loop.sh --max-sessions 2`, hands-off):
+  confirm `.chain.supervisor.pid` is live and `.chain.used` = 1; block 20;
+  launcher for 21; `record`; `--emit --loop-mode handsoff`.
+- **21**: confirm `verdict=staged seq=20` in `.session-loop.log`; tick the
+  boxes in `issues/10-cutover.md`; tracker cutover row `done` with the merge
+  commit; ledger evidence; commit; block 21; launcher for 22 ("chain capped;
+  nothing to do until the human restarts with `--reset-cap`; open follow-up:
+  retire `scripts/import-session-seq.sh` + its test + its doc row");
+  `--emit --loop-mode handsoff` → the supervisor reports `cap seq=22`.

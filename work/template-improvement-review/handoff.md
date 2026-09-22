@@ -6,6 +6,47 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 17 (2026-09-21): Stage 4 cutover rehearsed in a scratch clone (merge clean, import ok, 23 suites green); runbook written; human-only steps handed over
+
+**Summary.** No agents. Rehearsal in a scratch clone of `main` (a0dbf15):
+`git merge --no-ff origin/stage4` clean (115 files, one automatic merge in
+`docs/operational-knowledge.md`, no conflict); counter import from a copy of
+the live `.session-seq` (17) gave record `{"schema": 1, "seq": 17}`, second
+run a no-op; every suite (22 shell with `bash`, plus `test-check-ledger.py`)
+rc 0, no `FAIL` line. Wrote `cutover-runbook.md` (one page: the human's steps
+0–6 in order, done criteria, rehearsal evidence). Tracker: cutover row
+`in progress`, "Now" rewritten. Bookkeeping commit 9ab55ab on `main`.
+Nothing pushed; nothing touched on `stage4` or any live script. Cost ~58K
+at register → ~125K at WARN (targeted reads of the old and new scripts).
+
+**Findings (all in the runbook).** (1) The merged `.gitignore` no longer
+hides `.session-seq*`, so the old counter files must be deleted after the
+import; step 2 lists every old state file. (2) The old supervisor is ended
+with Ctrl-C at its interactive pause, never by pressing Enter: session 18
+must start fresh on the new scripts, unsupervised, or it cannot run the
+`--clear` rollover. (3) The chain's bootstrap refuses `owner_live` while a
+live session owns the item, so session 19 ends through `close` + `/exit`
+before the human starts `session-loop.sh --max-sessions 2`. (4) After the
+import the record reads `seq` 18, not 17: this rollover advanced the old
+counter when it staged session 18.
+
+**Decisions.** Rehearse in a clone, never the worktree or the live `main`
+(Tier 1 trailer on 9ab55ab). Runbook order Ctrl-C → merge → import → delete
+old state files → attended session 18 → `--clear` → session 19 `close` →
+chain of 2. Rejected: pressing Enter (session 18 would run old scripts from
+the tree being merged); keeping session 19 alive while starting the chain
+(bootstrap `owner_live`).
+
+**Learnings:**
+- The old launcher's `--emit` advances `.session-seq` at staging time, so an
+  import taken after a rollover reads the successor's number.
+- The rehearsal clone gets `stage4` as `origin/stage4`; merge that ref there.
+
+**Open / next.** Session 18 is attended: wait for the human, run
+`cutover-runbook.md` with them from step 0. Chain: the old supervisor
+consumes this `--emit --loop-mode interactive` and pauses for Enter; the
+runbook's step 0 tells the human to press Ctrl-C at that pause instead.
+
 # Session Handoff — 16 (2026-09-21): Stage 4 wave F (phase 8: mirrors removed, skill/docs/ADRs on the record, doc-consistency test) done by one agent; merged to `stage4`
 
 **Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-8` (off
@@ -55,54 +96,3 @@ write a one-page cutover runbook. The attended `--clear` (confirms the
 `/clear` seed) and the new 2-session chain need the human; hand those over
 with `--loop-mode interactive`. Chain: the old supervisor (`--max-sessions
 15`, restarted at session 15) consumes this `--emit` normally.
-
-# Session Handoff — 15 (2026-09-21): Stage 4 wave E (phase 7: probes, stub twins, lock fix, Claude Code acceptance) done by one agent; merged to `stage4`
-
-**Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-7` (off
-`stage4` 256b36b), dispatch contract in its prompt. Returned DONE in 68 min,
-~295K agent tokens: five commits (plan 54b623c; lock fix fae4746; probes +
-twins 30f2632; trust-dialog match f2cebb2; evidence 909dc14). Probes V1/V3/V10
-are self-checking scripts under `evaluation/probes/` (one assertion lib);
-`scripts/tests/test-probe-twins.sh` (37 asserts) runs the same scripts under a
-stub `claude` that honours the real hooks; H1 spent stage + H2 refused hand
-`--emit`; `session-lib.sh` lock loop retries a lost race (64 asserts, 5× green).
-Claude Code acceptance passed headless in a scratch clone: V1 18/18, V3
-`--max-sessions 2` 15/15 (`staged`, `staged`, `cap`). Merged `--no-ff` 5c7edc0;
-full run on `stage4`: 21 shell suites + Python ledger suite all green, no lock
-flake. Tracker row 7 done; Tier-2 note in `decisions.md`; report
-`dispatch/phase-7.md`; plan + Evidence + Concerns in `plans/phase-7.md` (on
-`stage4`). Bookkeeping commit 8b4837e on `main`. Agent worktree and branch
-removed. Nothing pushed; `main` ahead 25 after this rollover's commit. Parent
-cost ~59K at register → ~117K at the wave record.
-
-**Decisions.** Phase 7 (decisions.md 2026-09-21): twin = same probe script
-under a stub runtime; stub honours the hooks contract; acceptance in a `git
-clone`, not the worktree; V1 via `claude -p` on the launcher's own command,
-V3 under `expect`; lock retry only for a lost race; **mirror removal deferred
-to phase 8** (third `.session-loop` reader = launcher `invoked_by_supervisor`;
-`.next-command` is also `--emit`'s output contract). Parent: merged on the
-agent's green run, re-ran every suite on `stage4` before closing (5c7edc0
-trailer).
-
-**Learnings:**
-- Every script resolves its root via `git rev-parse --git-common-dir`, so
-  scripts run from a worktree drive the MAIN checkout's `work/` (only hook-lib
-  honours `WORKSPACE_ROOT`). A clone is the safe sandbox for acceptance runs.
-  Candidate for `docs/operational-knowledge.md` (phase 8 owns docs prose).
-- A supervised session's tool shells (and its subagents) inherit
-  `TF_SESSION_LOOP=1` + `TF_SESSION_LOOP_PROJECT`; a hand `--emit` from a
-  subagent is refused `no_supervisor`. Phase 8 docs line.
-- A real TUI child in a fresh folder needs the folder-trust dialog answered
-  once; `claude -p` neither shows nor records it. The probe driver answers it.
-- Lock race S8/S10a: fixed, not a flake anymore — any lock-race red is real.
-
-**Open / next.** Wave F = phase 8 alone (ticket 09: skill, docs, ADRs,
-ignore file, env, doc test) plus the deferred mirror removal (exact readers +
-pins in `plans/phase-7.md` Concerns 1, on `stage4`). Carry-overs into phase 8:
-stage4 `.claude/settings.json` clear-seed SessionStart entry; prose naming
-`--bg`/`--unstage`/`.rollover-options`; stale `.gitignore` lines; the
-`--clear` prompt injector (phase 5 decision 4); vendor configs naming shim
-paths (optional). Then session 17 = cutover (attended). Chain: restarted by
-the human at session 15 with `--reset-cap` (`--max-sessions 15`), so this
-rollover's `--emit` is consumed normally.
-
