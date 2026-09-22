@@ -150,6 +150,26 @@ rmdir "$REC.lock"
 assert_eq       "S10f: live lock beyond the wait → 4" "$rc" "4"
 assert_contains "S10g: reason"     "$out" "reason=lock_timeout"
 cmp -s "$REC" "$TMP/before" && ok "S10h: byte-identical" || bad "S10h: record changed"
+# The lost race (three flake sightings in S8/S10a): the holder released the
+# lock between this writer's failed mkdir and its `-d` check. Deterministic
+# here: a mkdir shadow fails once without creating anything, then defers.
+( . "$LIB"; _n=0
+  mkdir() { _n=$((_n+1)); [ "$_n" -gt 1 ] || return 1; command mkdir "$@"; }
+  session_record_update "$REC" 'true' '.seq += 1' 2>"$TMP/s10i.err" ); rc=$?
+assert_eq       "S10i: lock gone by the existence check → retried, return 0" "$rc" "0"
+assert_eq       "S10j: seq == 4"   "$(jq -r '.seq' "$REC")" "4"
+no_leftovers "S10k"
+t0=$(date +%s)
+out="$(session_record_update "$TMP/nodir/session-state.json" 'true' '.seq = 1' 2>&1)"; rc=$?
+assert_eq       "S10l: a record whose directory does not exist → 4" "$rc" "4"
+assert_contains "S10m: reason"     "$out" "reason=record_unwritable"
+[ $(( $(date +%s) - t0 )) -lt 5 ] && ok "S10n: refused at once, not after the lock wait" || bad "S10n: waited for a lock that cannot exist"
+touch "$REC.lock"; cp "$REC" "$TMP/before"
+out="$(session_record_update "$REC" 'true' '.seq += 1' 2>&1)"; rc=$?
+rm -f "$REC.lock"
+assert_eq       "S10o: a file at the lock path → 4" "$rc" "4"
+assert_contains "S10p: reason"     "$out" "reason=record_unwritable"
+cmp -s "$REC" "$TMP/before" && ok "S10q: byte-identical" || bad "S10q: record changed"
 
 echo "S11: jq missing — refused before anything is read or written"
 mkdir -p "$TMP/bin"

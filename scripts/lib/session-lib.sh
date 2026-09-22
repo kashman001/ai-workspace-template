@@ -55,10 +55,20 @@ _session_record_refuse() { # <reason> <record> [detail]
 
 _session_record_lock() { # <record>; returns 0 held / 4 refused (reason printed)
   local record="$1" lock="$1.lock" wait="${SESSION_RECORD_LOCK_WAIT_SECS:-15}"
-  local stale="${SESSION_RECORD_LOCK_STALE_SECS:-10}" left mt now
+  local stale="${SESSION_RECORD_LOCK_STALE_SECS:-10}" left mt now dir
   left=$((wait * 20))
   while ! mkdir "$lock" 2>/dev/null; do
-    [ -d "$lock" ] || _session_record_refuse record_unwritable "$record" "cannot create $lock" || return 4
+    if [ ! -d "$lock" ]; then
+      # mkdir failed yet no lock directory exists: the holder released it
+      # between the two calls (a lost race — retry, on the same wait budget),
+      # unless the record's directory itself refuses or something that is not
+      # a directory sits at the lock path.
+      dir="$(dirname "$record")"
+      { [ -d "$dir" ] && [ -w "$dir" ] && [ ! -e "$lock" ]; } \
+        || _session_record_refuse record_unwritable "$record" "cannot create $lock" || return 4
+      [ "$left" -gt 0 ] || _session_record_refuse lock_timeout "$record" "$lock held for ${wait}s" || return 4
+      left=$((left - 1)); continue
+    fi
     mt=$(stat -f%m "$lock" 2>/dev/null || stat -c%Y "$lock" 2>/dev/null) || continue
     now=$(date +%s)
     if [ $((now - mt)) -ge "$stale" ]; then rmdir "$lock" 2>/dev/null; continue; fi
