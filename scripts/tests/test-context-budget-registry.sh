@@ -496,7 +496,7 @@ cat > "$TMP/fake/pending.sh" <<'EOS'
 #!/usr/bin/env bash
 "$TMP/bin/claude" -c 'st="$(ps -o lstart= -p $$ | sed "s/^ *//;s/ *$//")"
 jq -n --argjson pid $$ --arg st "$st" "{schema:1, seq:8, launch:{launched_at:\"x\", pending:{pid:\$pid, pid_start:\$st, prompt:\"seed\"}}, session:null}" > "$REC"
-CLAUDE_CODE_SESSION_ID=rrr "$CB" register --runtime claude 2>"$TMP/p6.err" >/dev/null; :'
+CLAUDE_CODE_SESSION_ID=rrr "$CB" register --runtime claude 2>"$TMP/p6.err" >"$TMP/p6.out"; :'
 EOS
 chmod +x "$TMP/fake/pending.sh"
 mk_transcript rrr 1000
@@ -506,6 +506,10 @@ assert_eq       "P6b: session.seq is the record's seq" "$(rec .session.seq)" "8"
 assert_eq       "P6c: launch.pending emptied" "$(rec .launch.pending)" "null"
 assert_contains "P6d: bound via pending" "$(cat "$TMP/p6.err")" "via=pending"
 assert_eq       "P6e: registry record carries the project" "$(jq -r .project "$SESS/claude-rrr.json")" "testproj"
+assert_contains "P6f: the pending prompt is printed on stdout (the /clear seed, SessionStart hook stdout -> context)" "$(cat "$TMP/p6.out")" "seed"
+jq -n '{schema:1, seq:8, launch:{launched_at:"x", pending:{pid:1, pid_start:"x", prompt:"seed"}}, session:null}' > "$REC"
+out=$(run_as sss register --project testproj 2>/dev/null)
+assert_absent   "P6g: a --project bind prints no prompt" "$out" "seed"
 
 echo "P2: no runtime ancestor — degrade to no pid, never to a wrong one"
 rm -f "$REC"

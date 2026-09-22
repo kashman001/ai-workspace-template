@@ -26,39 +26,22 @@ references/*
 # mining it for analysis, never track the live file).
 .context-budget/
 
-# Live-session runtime state under work/ — meaningful only while a session is
-# alive on this machine (liveness = artifact mtime, not file content); tracking
-# it dirties every session and a checkout would resurrect stale locks.
-# Durable work/ files (README, next-session.md, handoff.md, decisions.md,
-# committed per-item context-budget.env) stay tracked.
-work/*/.active-session
-work/*/.agent-locks/
-work/*/.agent-dispatch/
-work/*/.rollover-options
-work/*/.session-seq
-work/*/.session-seq.provenance.json
-work/*/.session-seq.bump.json
-work/*/.rollover-complete
-work/*/.next-command
-# D18 — the staged command's identity sidecar, and a staged command the
-# supervisor's bootstrap rejected as already-run. Both are machine-local
-# coordination state with exactly the lifetime of .next-command above.
-work/*/.next-command.json
-work/*/.next-command.stale
-work/*/.session-loop
-# The supervisor's own log. Load-bearing for stall detection, not just tidiness:
-# it is appended on every iteration by construction, so a tracked copy would make
+# Live-session state under work/ — machine-local by design (ADR-0010): the
+# session record names processes on THIS machine, so a tracked copy would dirty
+# every session and resurrect a dead owner on checkout. Durable work/ files
+# (README, next-session.md, handoff.md, decisions.md, the committed per-item
+# context-budget.env) stay tracked.
+# The one record per work item (scripts/lib/session-lib.sh) and its write lock.
+work/*/session-state.json
+work/*/session-state.json.lock/
+# The supervisor's log. Load-bearing for stall detection, not just tidiness: it
+# is appended on every iteration by construction, so a tracked copy would make
 # "did this session commit something outside the bookkeeping set?" true forever
 # and the guard could never fire (scripts/session-loop.sh, session_made_progress).
 work/*/.session-loop.log
-work/*/.session-loop.alarm-stop
-work/*/.session-loop.budget
-# P6 (scenario table B2) — the record that a chain was deliberately ended.
-# Machine-local on purpose: it stops THIS machine's supervisor from restarting a
-# chain this machine's supervisor ended. Carrying closure across checkouts means
-# making a work/*/ dotfile tracked, and this block is load-bearing for the
-# lineage gate's dirty-evidence leg — its own change, not a widening here.
-work/*/.chain-closed
+# Sub-agent dispatch records (scripts/fleet.sh).
+work/*/.agent-dispatch/
+# A human's mode override for the next rollover (scripts/launch-next-session.sh).
 work/*/.hands-off
 work/*/.interactive
 

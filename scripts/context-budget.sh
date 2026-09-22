@@ -730,13 +730,18 @@ bind_work_item() {
 # Register never blocks: every outcome is a note, and the exit code stays the
 # measurement's. Sets BOUND=$PROJECT when this session now owns the item.
 bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or empty
-  local rec cur seq owner osid ort action loser="" seen_sid=null seen_seq=null hf top block rc=0
+  local rec cur seq owner osid ort action loser="" seen_sid=null seen_seq=null hf top block rc=0 prompt=""
   rec="$(record_path "$PROJECT")"
   if [ -f "$rec" ]; then
     cur=$(cat "$rec" 2>/dev/null) || cur=""
     printf '%s' "$cur" | jq -e 'type=="object" and .schema == 1' >/dev/null 2>&1 \
       || { note "register: work/$PROJECT/session-state.json is unreadable or not schema 1 — not bound"; return 0; }
     seq=$(printf '%s' "$cur" | jq -r '.seq // empty')
+    # The /clear seed (ADR-0009 as amended): the launcher's --clear left the
+    # bootstrap prompt in launch.pending. Binding nulls the block, so the
+    # prompt is taken here and printed once, below, for the pending binding
+    # only — Claude Code adds SessionStart hook stdout to the session context.
+    [ "$1" = pending ] && prompt=$(printf '%s' "$cur" | jq -r '.launch.pending.prompt // empty')
   else
     seq=""
   fi
@@ -792,7 +797,8 @@ bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or e
        case "$action" in
          takeover|adopted) note "register: reason=$action loser=$loser seq=$seq" ;;
        esac
-       note "register: bound work/$PROJECT seq=$seq via=$1 ($action)" ;;
+       note "register: bound work/$PROJECT seq=$seq via=$1 ($action)"
+       [ -n "$prompt" ] && [ "$QUIET" -eq 0 ] && printf '%s\n' "$prompt" ;;
     1) note "register: work/$PROJECT/session-state.json changed underneath — not bound" ;;
     *) note "register: could not write work/$PROJECT/session-state.json — not bound" ;;
   esac
