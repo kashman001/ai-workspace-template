@@ -6,6 +6,56 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 16 (2026-09-21): Stage 4 wave F (phase 8: mirrors removed, skill/docs/ADRs on the record, doc-consistency test) done by one agent; merged to `stage4`
+
+**Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-8` (off
+`stage4` 5c7edc0). It was cut off once by a transient API 529 after its sixth
+commit, resumed with one message and finished: seven commits (plan f381eb0;
+mirrors 12ba7d8; settings/ignore/env f685889; doc + doc test 8c3d6d9; skill
+7512cf2; CONTEXT/ops-knowledge/ADRs 4621ae7; evidence e84ac10), ~420K agent
+tokens. Returned DONE_WITH_CONCERNS, no user questions. Merged `--no-ff`
+9cfa3d5; full run on `stage4`: 22 shell suites + Python ledger suite all
+green, no lock flake. Tracker row 8 done; Tier-2 note in `decisions.md`;
+report `dispatch/phase-8.md`; plan + Evidence + Concerns in
+`plans/phase-8.md` (on `stage4`). Bookkeeping commit c47edeb on `main`.
+Agent worktree and branch removed. `stage4` is 30 commits ahead of `main`;
+all eight phases merged. Nothing pushed; `main` ahead 27 after this
+rollover's commit. Parent cost ~60K at register → ~112K at the wave record.
+
+**User instruction (2026-09-21, binding):** keep running overnight, roll
+over and start the next session automatically; the user checks back in the
+morning. So this rollover is `--loop-mode handsoff` even though the cutover
+was planned attended: session 17 does every unattended-safe cutover step and
+expresses the human-only step by rolling over `--loop-mode interactive`,
+never by idling (the watchdog kills an idle child after
+`SESSION_LOOP_KILL_AFTER`=4h).
+
+**Decisions.** Phase 8 (decisions.md 2026-09-21): record is the only state;
+`--emit` takes no path and prints `cmd: <line>`; `/clear` seed = `register`
+stdout on a pending bind (stub-verified only); doc-consistency test over one
+doc section and two script surfaces; ADR-0010/0011/0012 new, 0007/0008
+superseded, 0004/0005/0006/0009 amended; the "three Open change-log entries"
+never existed. Parent: merged on the agent's green run, re-ran every suite
+on `stage4` before closing.
+
+**Learnings:**
+- A 529-terminated agent keeps its worktree and transcript; one SendMessage
+  with "re-read disk, continue from your last report block" resumed it
+  cleanly. Check `git log` and the dispatch report before resuming.
+- The cutover must land launcher and supervisor together: stage4's `--emit`
+  takes no path, the old supervisor on `main` passes one.
+- `scripts/attach-session.sh` and `scripts/statusline-context-budget.sh`
+  still read `.active-session` (their suites use fixtures). Not a mirror;
+  follow-up onto the record's `session` block, else the statusline shows no
+  project segment for record-bound sessions.
+
+**Open / next.** Session 17 = cutover. Unattended-safe first: rehearse
+`main`+`stage4` merge, counter import and every suite in a scratch clone;
+write a one-page cutover runbook. The attended `--clear` (confirms the
+`/clear` seed) and the new 2-session chain need the human; hand those over
+with `--loop-mode interactive`. Chain: the old supervisor (`--max-sessions
+15`, restarted at session 15) consumes this `--emit` normally.
+
 # Session Handoff — 15 (2026-09-21): Stage 4 wave E (phase 7: probes, stub twins, lock fix, Claude Code acceptance) done by one agent; merged to `stage4`
 
 **Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-7` (off
@@ -55,53 +105,4 @@ stage4 `.claude/settings.json` clear-seed SessionStart entry; prose naming
 paths (optional). Then session 17 = cutover (attended). Chain: restarted by
 the human at session 15 with `--reset-cap` (`--max-sessions 15`), so this
 rollover's `--emit` is consumed normally.
-
-# Session Handoff — 14 (2026-09-18): Stage 4 wave D (phase 5, supervisor with three verdicts) done by one agent; merged to `stage4`; chain cap reached
-
-**Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-5` (off
-`stage4` 4bb8a5d), dispatch contract in its prompt. Returned DONE_WITH_CONCERNS
-in 28 min, ~288K agent tokens: five commits (plan 1966929; `main "$@"` wrapper
-f771dd4 with no other change, old suite 222/222 before and after; body +
-stub-child suite 4299159; launcher mirror deletions bbd31e6; evidence 6418a82).
-Supervisor 1002→381 lines; `test-session-loop.sh` 105 asserts, stub children
-staged through the real launcher `--emit`. Merged `--no-ff` 256b36b; full run on
-`stage4`: 20 shell suites + Python ledger suite, one red (`test-session-lib.sh`
-S10a lock race, lib untouched by the branch), green on two reruns. Tracker row 5
-done; Tier-2 note in `decisions.md`; report `dispatch/phase-5.md`; plan +
-Evidence + "Concerns for the parent" in `plans/phase-5.md` (on `stage4`).
-Bookkeeping commit d14cc8e on `main`. Agent worktree and branch removed.
-Nothing pushed; `main` ahead 23 after this rollover's commit. Parent cost ~58K→
-~101K at prep.
-
-**Decisions.** Phase 5 (decisions.md 2026-09-18): spent stage = `staged_invalid
-leg=spent`; `no_own_measurement` from the record's `registered_at`; stall guard
-watches the three markdown files + `handoff-archive.md`; watchdog kept on the
-record; `--reset-cap` standalone; the `--clear` prompt is not the supervisor's.
-Two mirrors STILL written because their readers are files phase 5 may not edit:
-`.session-loop` marker (measurer `supervised`) and `.next-command` +
-`.session-seq.bump.json` (hook-lib turn-end self-kill). Parent: S10a not sent
-back (d14cc8e trailer) — third lock-race sighting, the lock fix is phase 7's.
-
-**Learnings:**
-- `test-session-lib.sh` lock race, strike three (S8 ×2, S10a ×1): the loop's
-  `[ -d "$lock" ] || refuse record_unwritable` fires when the holder releases
-  between the failed `mkdir` and the check (`scripts/lib/session-lib.sh:60-61`
-  on `stage4`). Fix = retry, not refuse. In tracker row 1 notes.
-- Parked (agent, plans/phase-5.md Evidence): bash 3.2 fails to parse a literal
-  `(` before `$(… "?" …)` inside double quotes.
-- The harness cwd moved into the stage4 worktree again from a `cd` in a
-  compound command; `cd` back to the root restores it. Already in
-  `docs/operational-knowledge.md`.
-
-**Open / next.** Wave E = phase 7 alone (ticket 08: probes on record fields,
-stub-runtime twins, Claude Code acceptance on the throwaway item), plus the
-lock fix. Phase 7's plan decides whether it also moves `supervised` to
-`chain.supervisor` and hook-lib to `staged.by` (then deletes the two mirrors)
-or leaves that to phase 8. Carry-overs unchanged: stage4 `.claude/settings.json`
-clear-seed SessionStart entry (phase 8); prose naming `--bg`/`--unstage`/
-`.rollover-options` (phase 8); vendor configs naming shim paths (optional);
-stale `.gitignore` lines for deleted state files (phase 8). **Chain: this
-session was 10 of 10 — the `--emit` at this rollover trips the cap; the
-supervisor reports `cap` and stops. Restart: `scripts/session-loop.sh
-template-improvement-review --reset-cap`.**
 
