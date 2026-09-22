@@ -1,3 +1,42 @@
+# Session Handoff — 18 (2026-09-22): Stage 4 live cutover, attended: runbook steps 0–3 verified on the live checkout; attended `--clear` rollover run (step 4)
+
+**Summary.** No agents; human at the keyboard. Started fresh on the new
+scripts, unsupervised (runbook step 3). Verified live: `scripts/fleet.sh`
+present; HEAD = 37d4100 (`cutover: merge stage4 into main`); `pgrep -f
+session-loop.sh` empty (old supervisor gone); record before register
+`{"schema": 1, "seq": 18}` (import done; this item's dir holds only
+`.agent-dispatch/` and `.session-loop.log`); `register` → `bound
+work/template-improvement-review seq=18 via=project (filled)`, `.session.pid`
+34573; `supervised` → `unsupervised`, rc 1. Tracker: cutover row Used 2,
+"Now" rewritten. Ledger block 16 archived. Then step 4: this block, the
+launcher for 19, one bookkeeping commit, `--check`, `--clear`. Whether the
+seed line appeared after `/clear` is session 19's evidence, not mine.
+
+**Findings.** (1) `git status --short` was not empty at step 3: 13
+untracked old-script state files (`.rollover-options`, `.session-seq`,
+`.session-seq.provenance.json`) in six *other* work items
+(automatic-session-rollover, context-decay, devex-review, sdlc-ai-mapping,
+template-maintenance, usage-scenarios). The merged `.gitignore` no longer
+hides them; runbook step 2 cleaned only this item. Not a blocker here
+(nothing on this item reads them). Left untouched: some of those items may
+still need `scripts/import-session-seq.sh <item>` before the import script
+is retired (ticket 10's last box); the human decides per item. Recorded in
+the tracker's cutover row.
+
+**Decisions.** None new. Rejected: deleting the other items' stale files
+now (outside this item; deleting `.session-seq` before an import loses that
+item's counter).
+
+**Learnings:**
+- Session 18 cost ~64K at `register` before any work: the SessionStart
+  hooks' injected context (plugin skill text, tool schemas) is the floor
+  for a fresh Claude Code session here.
+
+**Open / next.** Session 19, same process after `/clear`: confirm the seed
+line and the record fields (runbook step 4), then step 5 (`close` +
+`/exit`). Chain of 2 follows (steps 6). Follow-up outside this item: retire
+`scripts/import-session-seq.sh` after every live item is imported.
+
 # Session Handoff — 17 (2026-09-21): Stage 4 cutover rehearsed in a scratch clone (merge clean, import ok, 23 suites green); runbook written; human-only steps handed over
 
 **Summary.** No agents. Rehearsal in a scratch clone of `main` (a0dbf15):

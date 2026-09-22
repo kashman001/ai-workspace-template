@@ -6,6 +6,37 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 20 (2026-09-22): Stage 4 live cutover, chain leg 1: supervisor confirmed live under `session-loop.sh --max-sessions 2`; rolled over hands-off
+
+**Summary.** No agents; nobody at the keyboard. First child of the chain the
+human started at runbook step 6. `register` → `seq=20 via=project
+(refreshed)`, ~63K at register. Chain evidence: `.chain.supervisor.pid`
+74444 live (`kill -0` rc 0, started 2026-09-22T15:14:23Z), `.chain.used` 1,
+`.chain.cap` 2, `.chain.closed` null; `supervised` rc 0;
+`.session-loop.log` shows `staging the first session` then `starting session
+#20 (1 of 2)`. Record: `.session.seq` 20, `.launch.pending` null,
+`.launch.predecessor.disposition` `stopped` (session 19 left through
+`close`), predecessor seq 19. Tracker: cutover row Used 4 with the evidence,
+"Now" rewritten. Ledger block 18 archived. Launcher for 21 written. Ended
+with `record` then `launch-next-session.sh --emit --loop-mode handsoff`.
+
+**Findings.** None new. Note only: the log file's lines carry a timestamp
+and no `session-loop:` prefix; the runbook's table shows the terminal form.
+Same lines, not a discrepancy worth a runbook edit.
+
+**Decisions.** None new.
+
+**Learnings:**
+- A hands-off chain leg with no new work costs ~63K at register plus the
+  bookkeeping; well under WARN.
+
+**Open / next.** Session 21: confirm `verdict=staged seq=20` and
+`.chain.used` 2; tick ticket 10; cutover row `done` with 37d4100; roll over
+`--emit --loop-mode handsoff` so the supervisor reports `cap seq=22`.
+Follow-up outside this item unchanged: import the six other items, then
+retire `scripts/import-session-seq.sh`.
+
+
 # Session Handoff — 19 (2026-09-22): Stage 4 live cutover, attended: `--clear` rollover confirmed (runbook step 4); closed through the stop door for the chain (step 5)
 
 **Summary.** No agents; human at the keyboard. Same Claude Code process as
@@ -39,42 +70,3 @@ nothing). No script change needed.
 Session 20 confirms the supervisor; 21 records the final evidence and ticks
 ticket 10. Follow-up outside this item unchanged: import the six other
 items, then retire `scripts/import-session-seq.sh`.
-
-# Session Handoff — 18 (2026-09-22): Stage 4 live cutover, attended: runbook steps 0–3 verified on the live checkout; attended `--clear` rollover run (step 4)
-
-**Summary.** No agents; human at the keyboard. Started fresh on the new
-scripts, unsupervised (runbook step 3). Verified live: `scripts/fleet.sh`
-present; HEAD = 37d4100 (`cutover: merge stage4 into main`); `pgrep -f
-session-loop.sh` empty (old supervisor gone); record before register
-`{"schema": 1, "seq": 18}` (import done; this item's dir holds only
-`.agent-dispatch/` and `.session-loop.log`); `register` → `bound
-work/template-improvement-review seq=18 via=project (filled)`, `.session.pid`
-34573; `supervised` → `unsupervised`, rc 1. Tracker: cutover row Used 2,
-"Now" rewritten. Ledger block 16 archived. Then step 4: this block, the
-launcher for 19, one bookkeeping commit, `--check`, `--clear`. Whether the
-seed line appeared after `/clear` is session 19's evidence, not mine.
-
-**Findings.** (1) `git status --short` was not empty at step 3: 13
-untracked old-script state files (`.rollover-options`, `.session-seq`,
-`.session-seq.provenance.json`) in six *other* work items
-(automatic-session-rollover, context-decay, devex-review, sdlc-ai-mapping,
-template-maintenance, usage-scenarios). The merged `.gitignore` no longer
-hides them; runbook step 2 cleaned only this item. Not a blocker here
-(nothing on this item reads them). Left untouched: some of those items may
-still need `scripts/import-session-seq.sh <item>` before the import script
-is retired (ticket 10's last box); the human decides per item. Recorded in
-the tracker's cutover row.
-
-**Decisions.** None new. Rejected: deleting the other items' stale files
-now (outside this item; deleting `.session-seq` before an import loses that
-item's counter).
-
-**Learnings:**
-- Session 18 cost ~64K at `register` before any work: the SessionStart
-  hooks' injected context (plugin skill text, tool schemas) is the floor
-  for a fresh Claude Code session here.
-
-**Open / next.** Session 19, same process after `/clear`: confirm the seed
-line and the record fields (runbook step 4), then step 5 (`close` +
-`/exit`). Chain of 2 follows (steps 6). Follow-up outside this item: retire
-`scripts/import-session-seq.sh` after every live item is imported.
