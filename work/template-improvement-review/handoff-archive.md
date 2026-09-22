@@ -1,3 +1,42 @@
+# Session Handoff — 13 (2026-09-18): Stage 4 wave C (phases 4 ∥ 6) done by two agents; merged to `stage4`
+
+**Summary.** Two general-purpose agents in `.claude/worktrees/s4-phase-{4,6}`
+(off `stage4` 0a117c6), dispatch contracts in their prompts, file split from
+the fleet plan. Phase 6 (hook dispatcher, 67dc8a9) returned DONE in 16 min;
+phase 4 (launcher on the record, 5330f86) DONE_WITH_CONCERNS in 23 min — four
+handoff notes, no defects. Merged 4 first (26b214c, 21/21 green on `stage4`),
+then 6 (4bb8a5d, 20/21: `test-session-lib.sh` S8 lock race, rerun 55/55).
+Tracker rows 4 and 6 done; two Tier-2 notes in `decisions.md`; reports in
+`dispatch/phase-{4,6}.md`; plans + Evidence in `plans/phase-{4,6}.md` (on
+`stage4`). Bookkeeping commit 6ce5d8a on `main`. Agent worktrees and branches
+removed. Nothing pushed; `main` ahead 21 after this rollover's commit.
+
+**Decisions.** Phase 6 merge held until phase 4 was green (6ce5d8a trailer).
+Phase 4: twelve gates, one record write, `no_supervisor` only for a
+`TF_SESSION_LOOP=1` session, `.session-seq` + sidecars write-only for phase 5.
+Phase 6: adapter table is a data file, seven wrappers become one-line shims
+at their old paths, `jq_missing` on stderr exit 0 (decisions.md 2026-09-18).
+S8 flake not sent back (no wave C branch touched the lib or its suite).
+
+**Learnings:**
+- Two agents per wave cost the parent ~53K (58K→111K at bookkeeping); agents
+  spent ~325K (phase 4) and ~152K (phase 6). Fits one session with headroom.
+- `test-session-lib.sh` S8 (3-writer lock race): second sighting, now in the
+  tracker row 1 notes for phase 7. Strike three means fix the lock, not rerun.
+- `cd` into a worktree moving the harness cwd: bit again, promoted to
+  `docs/operational-knowledge.md`.
+- Harness agents: "Agent finished" can arrive before its report when the
+  agent still has background work; the hand-back message is the real signal.
+
+**Open / next.** Wave D = phase 5 alone (supervisor, three verdicts), one
+agent; first commit is the `main "$@"` wrapper on `session-loop.sh`. Carry-
+overs for later phases: stage4 `.claude/settings.json` SessionStart entry for
+the deleted clear-seed hook (guarded no-op; phase 8), `--clear` prompt in
+`launch.pending.prompt` has no injector (phase 5/7 decide), prose naming
+`--bg`/`--unstage`/`.rollover-options`/seed file in the skill, docs, ADR-0009,
+`CONTEXT.md` (phase 8), vendor configs still name the shim paths (optional).
+Chain: session 13 is 9 of 10 — the cap lands at session 14's rollover.
+
 # Session Handoff — 12 (2026-09-17): Stage 4 wave B (phase 3, measurer on the record) done by one agent; merged to `stage4`
 
 **Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-3` (off

@@ -6,6 +6,56 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 15 (2026-09-21): Stage 4 wave E (phase 7: probes, stub twins, lock fix, Claude Code acceptance) done by one agent; merged to `stage4`
+
+**Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-7` (off
+`stage4` 256b36b), dispatch contract in its prompt. Returned DONE in 68 min,
+~295K agent tokens: five commits (plan 54b623c; lock fix fae4746; probes +
+twins 30f2632; trust-dialog match f2cebb2; evidence 909dc14). Probes V1/V3/V10
+are self-checking scripts under `evaluation/probes/` (one assertion lib);
+`scripts/tests/test-probe-twins.sh` (37 asserts) runs the same scripts under a
+stub `claude` that honours the real hooks; H1 spent stage + H2 refused hand
+`--emit`; `session-lib.sh` lock loop retries a lost race (64 asserts, 5× green).
+Claude Code acceptance passed headless in a scratch clone: V1 18/18, V3
+`--max-sessions 2` 15/15 (`staged`, `staged`, `cap`). Merged `--no-ff` 5c7edc0;
+full run on `stage4`: 21 shell suites + Python ledger suite all green, no lock
+flake. Tracker row 7 done; Tier-2 note in `decisions.md`; report
+`dispatch/phase-7.md`; plan + Evidence + Concerns in `plans/phase-7.md` (on
+`stage4`). Bookkeeping commit 8b4837e on `main`. Agent worktree and branch
+removed. Nothing pushed; `main` ahead 25 after this rollover's commit. Parent
+cost ~59K at register → ~117K at the wave record.
+
+**Decisions.** Phase 7 (decisions.md 2026-09-21): twin = same probe script
+under a stub runtime; stub honours the hooks contract; acceptance in a `git
+clone`, not the worktree; V1 via `claude -p` on the launcher's own command,
+V3 under `expect`; lock retry only for a lost race; **mirror removal deferred
+to phase 8** (third `.session-loop` reader = launcher `invoked_by_supervisor`;
+`.next-command` is also `--emit`'s output contract). Parent: merged on the
+agent's green run, re-ran every suite on `stage4` before closing (5c7edc0
+trailer).
+
+**Learnings:**
+- Every script resolves its root via `git rev-parse --git-common-dir`, so
+  scripts run from a worktree drive the MAIN checkout's `work/` (only hook-lib
+  honours `WORKSPACE_ROOT`). A clone is the safe sandbox for acceptance runs.
+  Candidate for `docs/operational-knowledge.md` (phase 8 owns docs prose).
+- A supervised session's tool shells (and its subagents) inherit
+  `TF_SESSION_LOOP=1` + `TF_SESSION_LOOP_PROJECT`; a hand `--emit` from a
+  subagent is refused `no_supervisor`. Phase 8 docs line.
+- A real TUI child in a fresh folder needs the folder-trust dialog answered
+  once; `claude -p` neither shows nor records it. The probe driver answers it.
+- Lock race S8/S10a: fixed, not a flake anymore — any lock-race red is real.
+
+**Open / next.** Wave F = phase 8 alone (ticket 09: skill, docs, ADRs,
+ignore file, env, doc test) plus the deferred mirror removal (exact readers +
+pins in `plans/phase-7.md` Concerns 1, on `stage4`). Carry-overs into phase 8:
+stage4 `.claude/settings.json` clear-seed SessionStart entry; prose naming
+`--bg`/`--unstage`/`.rollover-options`; stale `.gitignore` lines; the
+`--clear` prompt injector (phase 5 decision 4); vendor configs naming shim
+paths (optional). Then session 17 = cutover (attended). Chain: restarted by
+the human at session 15 with `--reset-cap` (`--max-sessions 15`), so this
+rollover's `--emit` is consumed normally.
+
 # Session Handoff — 14 (2026-09-18): Stage 4 wave D (phase 5, supervisor with three verdicts) done by one agent; merged to `stage4`; chain cap reached
 
 **Summary.** One general-purpose agent in `.claude/worktrees/s4-phase-5` (off
@@ -54,43 +104,4 @@ stale `.gitignore` lines for deleted state files (phase 8). **Chain: this
 session was 10 of 10 — the `--emit` at this rollover trips the cap; the
 supervisor reports `cap` and stops. Restart: `scripts/session-loop.sh
 template-improvement-review --reset-cap`.**
-
-# Session Handoff — 13 (2026-09-18): Stage 4 wave C (phases 4 ∥ 6) done by two agents; merged to `stage4`
-
-**Summary.** Two general-purpose agents in `.claude/worktrees/s4-phase-{4,6}`
-(off `stage4` 0a117c6), dispatch contracts in their prompts, file split from
-the fleet plan. Phase 6 (hook dispatcher, 67dc8a9) returned DONE in 16 min;
-phase 4 (launcher on the record, 5330f86) DONE_WITH_CONCERNS in 23 min — four
-handoff notes, no defects. Merged 4 first (26b214c, 21/21 green on `stage4`),
-then 6 (4bb8a5d, 20/21: `test-session-lib.sh` S8 lock race, rerun 55/55).
-Tracker rows 4 and 6 done; two Tier-2 notes in `decisions.md`; reports in
-`dispatch/phase-{4,6}.md`; plans + Evidence in `plans/phase-{4,6}.md` (on
-`stage4`). Bookkeeping commit 6ce5d8a on `main`. Agent worktrees and branches
-removed. Nothing pushed; `main` ahead 21 after this rollover's commit.
-
-**Decisions.** Phase 6 merge held until phase 4 was green (6ce5d8a trailer).
-Phase 4: twelve gates, one record write, `no_supervisor` only for a
-`TF_SESSION_LOOP=1` session, `.session-seq` + sidecars write-only for phase 5.
-Phase 6: adapter table is a data file, seven wrappers become one-line shims
-at their old paths, `jq_missing` on stderr exit 0 (decisions.md 2026-09-18).
-S8 flake not sent back (no wave C branch touched the lib or its suite).
-
-**Learnings:**
-- Two agents per wave cost the parent ~53K (58K→111K at bookkeeping); agents
-  spent ~325K (phase 4) and ~152K (phase 6). Fits one session with headroom.
-- `test-session-lib.sh` S8 (3-writer lock race): second sighting, now in the
-  tracker row 1 notes for phase 7. Strike three means fix the lock, not rerun.
-- `cd` into a worktree moving the harness cwd: bit again, promoted to
-  `docs/operational-knowledge.md`.
-- Harness agents: "Agent finished" can arrive before its report when the
-  agent still has background work; the hand-back message is the real signal.
-
-**Open / next.** Wave D = phase 5 alone (supervisor, three verdicts), one
-agent; first commit is the `main "$@"` wrapper on `session-loop.sh`. Carry-
-overs for later phases: stage4 `.claude/settings.json` SessionStart entry for
-the deleted clear-seed hook (guarded no-op; phase 8), `--clear` prompt in
-`launch.pending.prompt` has no injector (phase 5/7 decide), prose naming
-`--bg`/`--unstage`/`.rollover-options`/seed file in the skill, docs, ADR-0009,
-`CONTEXT.md` (phase 8), vendor configs still name the shim paths (optional).
-Chain: session 13 is 9 of 10 — the cap lands at session 14's rollover.
 
