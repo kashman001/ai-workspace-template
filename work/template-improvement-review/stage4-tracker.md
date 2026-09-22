@@ -6,7 +6,7 @@
 > boundary and every rollover; the launcher (`next-session.md`) points here.
 > Status vocabulary: `todo` · `in progress` · `blocked: <why>` · `done`.
 
-**Now:** Stage 4 complete: cutover done (37d4100), chain capped at 2. Nothing to do until the human restarts with `--reset-cap`. Open follow-up: retire the import script after the six other items are imported.
+**Now:** Stage 4 complete: cutover done (37d4100), chain capped at 2; session 22 (post-`--reset-cap`) found the retire-import follow-up still blocked: six items remain on the old counter (automatic-session-rollover, context-decay, devex-review, learn-agentic-workflows, template-maintenance, usage-scenarios). Nothing to do until those are imported and the human restarts with `--reset-cap`.
 
 **Sessions used so far in Stage 4:** 8 (session 9 planning; session 10 tickets + phase 0; session 11 fleet plan + wave A; session 12 wave B; session 13 wave C; session 14 wave D; session 15 wave E; session 16 wave F). Re-estimated after phase 3: one parent session per wave holds, so ~7 more (waves C–F + cutover, plus one spare); the delegated estimate of ~10–12 total stands.
 

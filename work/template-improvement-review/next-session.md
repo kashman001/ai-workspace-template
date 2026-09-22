@@ -1,4 +1,4 @@
-# Next Session — template-improvement-review (Stage 4 complete, session 22)
+# Next Session — template-improvement-review (Stage 4 complete, session 23)
 
 > **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
 > each rollover. Past-tense provenance lives in `handoff.md`.
@@ -9,15 +9,16 @@
 Stage 4 is complete: the cutover to the new session scripts is done (merge
 37d4100) and the supervised chain reached its cap of 2 (sessions 20 and 21).
 You exist only because the human restarted the supervisor with
-`scripts/session-loop.sh template-improvement-review --reset-cap`. There is
-no planned work for this item. Do the one open follow-up below if its
+`scripts/session-loop.sh template-improvement-review --reset-cap`. Session
+22 (the first post-cap restart) checked the follow-up and found it blocked.
+There is no planned work for this item. Do the one open follow-up below if its
 precondition holds; otherwise register, confirm the record, and end via
 `scripts/context-budget.sh close` (the stop door), not a rollover.
 
 ## Read these, in order
 
 1. `work/template-improvement-review/handoff.md`, top block only (session
-   21: final chain evidence).
+   22: follow-up blocked, why).
 2. `work/template-improvement-review/stage4-tracker.md`: the "Now" line only.
 3. `work/template-improvement-review/issues/10-cutover.md` (one box open).
 
@@ -27,36 +28,38 @@ Findings Parts 1–4, stage reports, `review.md`, `decisions.md` (append only),
 backlog HTML, any script whole (grep them), `plans/*.md`, `dispatch/*.md`,
 `cutover-runbook.md`, other `issues/*`.
 
-## State snapshot (end of session 21)
+## State snapshot (end of session 22)
 
-- `main` = 7701785 + session 21's bookkeeping commit; clean apart from 13
+- `main` = fee0f81 + session 22's bookkeeping commit; clean apart from 13
   untracked old-script state files in six *other* work items (leave them);
   ahead of origin (do not push).
-- Record: `.chain.used` 2 of cap 2, `.launch.predecessor` seq 21
-  `rolled_over`. Supervisor from the capped chain (pid 74444) has exited.
+- Record: seq 22 closed through the stop door (no rollover, no successor
+  launch).
 - Cost floor: ~58–63K at `register` for a fresh Claude Code session here.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
-   (expect `seq=22`).
+   (expect `seq=23`).
 2. Check the precondition for the follow-up: every live work item with a
-   `.session-seq` file must already be imported. Today six are not:
-   automatic-session-rollover, context-decay, devex-review, sdlc-ai-mapping,
-   template-maintenance, usage-scenarios (`ls work/*/.session-seq`). If any
-   remain, do NOT retire the import script; note it in the ledger and stop.
+   `.session-seq` file must already be imported (a sibling
+   `session-state.json` exists). As of session 22 six are not:
+   automatic-session-rollover, context-decay, devex-review,
+   learn-agentic-workflows, template-maintenance, usage-scenarios
+   (`ls work/*/.session-seq`). If any remain, do NOT retire the import
+   script; note it in the ledger and stop.
 3. If all are imported (one agent commit): delete
    `scripts/import-session-seq.sh`, `scripts/tests/test-import-session-seq.sh`,
    and its row under "Reason codes" in `docs/context-budget.md` (the
    doc-consistency test pins that row). Run the shell suites and the ledger
    check. Tick the last box in `issues/10-cutover.md`; ticket status `done`.
-4. Ledger block `# Session Handoff — 22`, short; keep two blocks in
-   `handoff.md` (archive block 20). `python3 scripts/check-ledger.py
+4. Ledger block `# Session Handoff — 23`, short; keep two blocks in
+   `handoff.md` (archive block 21). `python3 scripts/check-ledger.py
    work/template-improvement-review` exit 0. Commit
-   (`work(template-improvement-review): session 22 — ...`).
-5. `scripts/context-budget.sh record --label "session 22 done: template-improvement-review"`,
+   (`work(template-improvement-review): session 23 — ...`).
+5. `scripts/context-budget.sh record --label "session 23 done: template-improvement-review"`,
    then `scripts/context-budget.sh close --project template-improvement-review`
-   and end your turn. No rollover: there is no session 23 to plan.
+   and end your turn. No rollover: there is no session 24 to plan.
 6. A refusal (`refused reason=<code>`): read the code in the skill's table
    and the runbook; never edit a script. A script bug is a finding for the
    tracker Notes; the human decides on a fix agent.
