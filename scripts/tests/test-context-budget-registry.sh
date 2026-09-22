@@ -376,25 +376,28 @@ CONTEXT_LOCK_STALE_SECS=999999999 CLAUDE_CODE_SESSION_ID=bbb \
 assert_eq "T16a: huge explicit stale-secs keeps the owner live — slot not taken" \
   "$(rec .session.session_id)" "aaa"
 
-echo "T20: supervised — on-disk supervision query (C1)"
-LOOPF="$TMP/work/testproj/.session-loop"
-rm -f "$LOOPF"
+echo "T20: supervised — the record's chain.supervisor block (C1)"
+sup_block() {  # $1 = pid; merges a chain.supervisor block naming it into the record
+  local ps; ps="$(ps -o lstart= -p "$1" 2>/dev/null | sed 's/^ *//;s/ *$//')"
+  [ -f "$REC" ] || echo '{"schema":1}' > "$REC"
+  jq --argjson pid "$1" --arg ps "$ps" \
+    '.chain.supervisor = {pid:$pid, pid_start:$ps, started_at:"2026-01-01T00:00:00Z"}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
+}
+rm -f "$REC"
 out=$(run_as aaa supervised --project testproj 2>/dev/null); rc=$?
 assert_eq "T20a: unsupervised line" "$out" "unsupervised"
 assert_eq "T20a: unsupervised rc"   "$rc"  "1"
-jq -n --argjson pid "$$" --arg project testproj --arg started_at "2026-01-01T00:00:00Z" \
-  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"
+sup_block "$$"
 out=$(run_as aaa supervised --project testproj 2>/dev/null); rc=$?
 assert_eq "T20b: supervised rc" "$rc" "0"
 case "$out" in "supervised pid=$$ project=testproj started_at="*) ok "T20b: supervised line" ;;
                *) bad "T20b: supervised line was: $out" ;; esac
-jq -n --argjson pid "$DEAD_PID" --arg project testproj --arg started_at "2026-01-01T00:00:00Z" \
-  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"
+sup_block "$DEAD_PID"
 out=$(run_as aaa supervised --project testproj 2>/dev/null); rc=$?
 assert_eq "T20c: ambiguous rc" "$rc" "2"
 case "$out" in ambiguous*) ok "T20c: ambiguous line" ;; *) bad "T20c: line was: $out" ;; esac
-[ -f "$LOOPF" ] && ok "T20c: stale marker NOT deleted" || bad "T20c: marker was deleted"
-rm -f "$LOOPF"
+assert_eq "T20c: stale block NOT cleared" "$(rec .chain.supervisor.pid)" "$DEAD_PID"
+rm -f "$REC"
 out=$(TF_SESSION_LOOP_PROJECT=testproj run_as aaa supervised --project testproj 2>/dev/null); rc=$?
 assert_eq "T20d: env-only ambiguous rc" "$rc" "2"
 out=$(run_as aaa supervised --project testproj --quiet 2>/dev/null); rc=$?
@@ -532,13 +535,9 @@ unset VSCODE_TARGET_SESSION_LOG
 rm -f "$REC"
 
 echo "S1: P1' — record/register name an unstaged successor under a supervisor (B1)"
-S1LOOP="$TMP/work/testproj/.session-loop"
-S1NEXT="$TMP/work/testproj/.next-command"
-rm -f "$S1LOOP" "$S1NEXT" "$REC"
-s1_supervisor() {
-  jq -n --argjson pid "$$" --arg p testproj --arg s "2026-01-01T00:00:00Z" \
-    '{pid:$pid, project:$p, started_at:$s}' > "$S1LOOP"
-}
+rm -f "$REC"
+s1_supervisor() { sup_block "$$"; }
+s1_edit() { jq "$1" "$REC" > "$REC.t" && mv "$REC.t" "$REC"; }
 mk_transcript s1ok   50000
 mk_transcript s1warn 125000
 mk_transcript s1stop 155000
@@ -556,15 +555,13 @@ assert_eq "S1c2: STOP still exits 2" "$rc" "2"
 out=$(run_as s1stop record --project testproj --label s1d 2>/dev/null)
 assert_eq "S1d: stdout is still a single line" "$(printf '%s' "$out" | wc -l | tr -d ' ')" "0"
 assert_contains "S1d2: stdout is the status line" "$out" "status=STOP"
-printf 'claude -p "next"\n' > "$S1NEXT"
+s1_edit '.staged = {successor: 9, command: "claude -p next", by: "s1stop"}'
 err=$(run_as s1stop record --project testproj --label s1e 2>&1 >/dev/null)
-assert_eq "S1e: a staged successor silences it" "$err" ""
-rm -f "$S1NEXT"
-rm -f "$S1LOOP"
+assert_eq "S1e: a staged successor (the record's staged block) silences it" "$err" ""
+s1_edit '.staged = null | .chain.supervisor = null'
 err=$(run_as s1stop record --project testproj --label s1f 2>&1 >/dev/null)
 assert_eq "S1f: unsupervised, silent" "$err" ""
-jq -n --argjson pid "$DEAD_PID" --arg p testproj --arg s "2026-01-01T00:00:00Z" \
-  '{pid:$pid, project:$p, started_at:$s}' > "$S1LOOP"
+sup_block "$DEAD_PID"
 err=$(run_as s1stop record --project testproj --label s1g 2>&1 >/dev/null)
 assert_eq "S1g: ambiguous supervision, silent" "$err" ""
 s1_supervisor
@@ -572,9 +569,10 @@ err=$(run_as s1stop record --label s1h 2>&1 >/dev/null)
 assert_eq "S1h: no project, silent" "$err" ""
 rm -f "$REC"
 run_as s1stop register --project testproj --quiet >/dev/null 2>&1
+s1_supervisor
 err=$(run_as s1stop record --label s1i 2>&1 >/dev/null)
 assert_contains "S1i: bare record resolves its own project" "$err" "successor: NOT STAGED"
-rm -f "$REC"
+s1_edit '.session = null'
 err=$(run_as s1stop register --project testproj 2>&1 >/dev/null)
 assert_contains "S1j: register speaks" "$err" "successor: NOT STAGED"
 err=$(run_as s1stop record --project testproj --label s1k --quiet 2>&1 >/dev/null)
@@ -585,7 +583,7 @@ mk_transcript s1child 155000
 err=$(run_as s1stop register --transcript "$PROJ_DIR/s1child.jsonl" \
         --parent-session s1stop --project testproj 2>&1 >/dev/null)
 assert_absent "S1m: a child says nothing about the chain" "$err" "successor: NOT STAGED"
-rm -f "$S1LOOP" "$S1NEXT" "$REC"
+rm -f "$REC"
 
 echo "N1: --session-id — a read-only pin so check measures a NAMED session (Q3)"
 CB_STATE="$TMP/.context-budget"

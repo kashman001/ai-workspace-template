@@ -163,7 +163,8 @@ assert_eq "V1j: the child saw its number and item"        "$(cat "$TMP/env-8")" 
 assert_eq "V1k: staged was consumed before the child ran" "$(jq -r .staged "$TMP/seen-8.json")" "null"
 assert_eq "V1l: chain.used was written before the child"  "$(jq -r .chain.used "$TMP/seen-8.json")" "1"
 assert_eq "V1m: chain.supervisor named this supervisor"   "$(jq -r '.chain.supervisor | has("pid") and has("pid_start") and has("started_at")' "$TMP/seen-8.json")" "true"
-[ -f "$LOOPF" ] && bad "V1n: the .session-loop marker outlived the supervisor" || ok "V1n: marker removed at exit"
+[ ! -f "$LOOPF" ] && [ ! -f "$W/.next-command" ] && [ ! -f "$W/.session-seq.bump.json" ] \
+  && ok "V1n: no marker, command file or bump record written (the record is the only state)" || bad "V1n: a retired mirror file was written"
 
 echo "V2: quit_plain — a child that registered and exited 0 with nothing staged"
 reset; export STUB_BEHAVIOUR=quit
@@ -313,7 +314,7 @@ assert_eq "R6b: reason staged_invalid leg=spent"   "$(refused)" "staged_invalid 
 assert_eq "R6d: staged left in place as evidence"  "$(rec '.staged.successor')" "8"
 
 echo "R7: a hand stage from a supervised session with no live supervisor is refused (no_supervisor)"
-reset; rm -f "$LOOPF"
+reset
 jq '.session = {seq: 8, runtime: "claude", session_id: "sid-8", registered_at: "2026-09-18T00:00:00Z", launcher_hash: "x", user: "t", ended: null} | .staged = null' \
   "$REC" > "$REC.new" && mv "$REC.new" "$REC"
 printf '# Session Handoff — session 8\n' > "$W/handoff.md"

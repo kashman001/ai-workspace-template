@@ -528,10 +528,10 @@ emit_check() {
 #
 # Three legs, all necessary. The budget leg is load-bearing: without it the
 # predicate is "supervisor live AND nothing staged", which is true of every
-# healthy session for its whole life, because session-loop.sh consumes
-# .next-command BEFORE the run. Neither of the other two is agent-authored --
-# .next-command is written only by --emit, the budget is measured from the
-# transcript -- so there is nothing here to talk your way past.
+# healthy session for its whole life, because session-loop.sh consumes the
+# record's `staged` block BEFORE the run. Neither of the other two is
+# agent-authored -- `staged` is written only by --emit, the budget is measured
+# from the transcript -- so there is nothing here to talk your way past.
 #
 # stderr only (like note(), and suppressed by --quiet), and exit codes are
 # untouched: 0/1/2 keep meaning OK/WARN/STOP. That is deliberate, and it is the
@@ -539,7 +539,7 @@ emit_check() {
 # did something wrong.
 #
 # NOT in emit_check(): cmd_watch calls that for OTHER sessions,
-# where .next-command says nothing about the caller.
+# where the record's `staged` says nothing about the caller.
 successor_advisory() {
   case "$LAST_STATUS" in WARN|STOP) ;; *) return 0 ;; esac
   local proj="$PROJECT" rec="$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
@@ -555,7 +555,7 @@ successor_advisory() {
   # wrong one trains the reader to ignore the signal. Subshell so a die() inside
   # the query cannot take the caller down with it.
   ( PROJECT="$proj" cmd_supervised ) >/dev/null 2>&1 || return 0
-  [ -s "$WORKSPACE_ROOT/work/$proj/.next-command" ] && return 0
+  jq -e '.staged != null' "$(record_path "$proj")" >/dev/null 2>&1 && return 0
   # Two-sided by necessity: the predicate is also true throughout H3, a session
   # that has decided to END the chain -- which is a correct ending, not a fault.
   note "successor: NOT STAGED — this chain continues only if you stage one."
@@ -888,30 +888,35 @@ cmd_record() {
   successor_advisory
   return $rc
 }
-# C1 — the supervision query (design.md §3). Read-only, and it NEVER deletes a
-# stale marker: sweeping belongs to the supervisor (session-loop.sh:76-82), and
-# an agent deleting a marker belonging to a supervisor mid-start would create
-# the exact failure this work item exists to remove.
+# C1 — the supervision query. Read-only: it reads the record's chain.supervisor
+# block (written by session-loop.sh at start, nulled at its exit) and NEVER
+# clears a stale one — an agent clearing a block mid-start would create the
+# exact failure this work item exists to remove. Liveness is the supervisor's
+# own rule: pid running and started when the record says.
 #
 # Exit 0 supervised / 1 not supervised / 2 ambiguous. Ambiguity resolves to
 # "stage" at the caller (R3): a spurious staged command is harmless, a missing
 # one strands the chain. Note die() exits 3, so ambiguity must return, not die.
 cmd_supervised() {
   [ -n "$PROJECT" ] || die "supervised: --project is required"
-  local loopf="$WORKSPACE_ROOT/work/$PROJECT/.session-loop"
-  local pid="" started=""
-  if [ -f "$loopf" ]; then
-    pid="$(jq -r '.pid // empty' "$loopf" 2>/dev/null)"
-    started="$(jq -r '.started_at // empty' "$loopf" 2>/dev/null)"
+  local rec pid="" pstart="" started="" cur
+  rec="$(record_path "$PROJECT")"
+  if jq -e '.chain.supervisor != null' "$rec" >/dev/null 2>&1; then
+    pid="$(jq -r '.chain.supervisor.pid // empty' "$rec" 2>/dev/null)"
+    pstart="$(jq -r '.chain.supervisor.pid_start // empty' "$rec" 2>/dev/null)"
+    started="$(jq -r '.chain.supervisor.started_at // empty' "$rec" 2>/dev/null)"
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      [ "$QUIET" -eq 1 ] || echo "supervised pid=$pid project=$PROJECT started_at=$started"
-      return 0
+      cur=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//;s/ *$//')
+      if [ "$cur" = "$pstart" ]; then
+        [ "$QUIET" -eq 1 ] || echo "supervised pid=$pid project=$PROJECT started_at=$started"
+        return 0
+      fi
     fi
-    [ "$QUIET" -eq 1 ] || echo "ambiguous marker work/$PROJECT/.session-loop exists but pid ${pid:-unknown} is not alive"
+    [ "$QUIET" -eq 1 ] || echo "ambiguous work/$PROJECT/session-state.json names supervisor pid ${pid:-unknown} but it is not alive"
     return 2
   fi
   if [ "${TF_SESSION_LOOP_PROJECT:-}" = "$PROJECT" ]; then
-    [ "$QUIET" -eq 1 ] || echo "ambiguous TF_SESSION_LOOP_PROJECT names $PROJECT but no .session-loop marker exists"
+    [ "$QUIET" -eq 1 ] || echo "ambiguous TF_SESSION_LOOP_PROJECT names $PROJECT but the record names no supervisor"
     return 2
   fi
   [ "$QUIET" -eq 1 ] || echo "unsupervised"

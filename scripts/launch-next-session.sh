@@ -30,11 +30,10 @@
 #          runtime_path_unsupported, supervised_stage_only, no_supervisor,
 #          owner_live, not_owner, worktree_unsynced, launcher_stale,
 #          launcher_unchanged, ledger_shape, ledger_seq_mismatch.
-# Also written AFTER the record, never read here: .session-seq.bump.json and
-# on --emit the command file — the turn-end self-kill in
-# scripts/hooks/context-budget-hook-lib.sh (budget_hook_should_exit) reads
-# both, and the measurer's successor_advisory reads the command file. The
-# supervisor reads neither (it consumes the record's `staged`).
+# The record is the only thing written. --emit leaves the successor's command
+# in `staged` (and prints it as `cmd: …`); the supervisor consumes it, the
+# turn-end self-kill (scripts/hooks/context-budget-hook-lib.sh) and the
+# measurer's successor_advisory read `staged.by` / `staged` from the record.
 # Vendor flags verified against live --help 2026-08-05/06: claude [prompt]
 # --name; codex [PROMPT]; gemini -i; opencode --prompt; copilot -i; code chat.
 
@@ -78,27 +77,14 @@ while [ $# -gt 0 ]; do
     # a different axis.
     --loop-mode)   LOOP_MODE="$2"; shift 2 ;;
     --loop-reason) LOOP_REASON="$2"; shift 2 ;;
-    # --emit takes an OPTIONAL argument; the bare form resolves from this
-    # script's own WORKSPACE_ROOT (the expression the supervisor uses too), so
-    # the agent never computes the path.
-    --emit)
-      if [ $# -ge 2 ] && case "$2" in -*|"") false ;; *) true ;; esac; then
-        EMIT="$2"; shift 2
-      else
-        EMIT="@auto"; shift
-      fi ;;
+    --emit) EMIT=1; shift ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$PROJECT" ] && PROJECT="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--emit [<abs-path>] [--loop-mode interactive|handsoff] [--loop-reason <text>]] [--clear] [--check] [--dry-run] [--skip-freshness]"
+[ -n "$PROJECT" ] || die "usage: launch-next-session.sh <project> [--runtime <rt>] [--emit [--loop-mode interactive|handsoff] [--loop-reason <text>]] [--clear] [--check] [--dry-run] [--skip-freshness]"
 
-[ "$EMIT" = "@auto" ] && EMIT="$WORKSPACE_ROOT/work/$PROJECT/.next-command"
 if [ -n "$EMIT" ]; then
-  case "$EMIT" in
-    /*) : ;;
-    *)  die "--emit requires an absolute path (a relative path lands in the caller's own worktree)" ;;
-  esac
   [ "$DRY" -eq 0 ]   || die "--emit cannot be combined with --dry-run (--dry-run writes nothing)"
   [ "$CLEAR" -eq 0 ] || die "--clear cannot be combined with --emit (no new process is started to run the emitted command)"
 else
@@ -140,15 +126,11 @@ if [ -n "$REC_JSON" ]; then
 fi
 owner_q() { printf '%s' "$OWNER_JSON" | jq -r "$@" 2>/dev/null; }
 
-# chain_closed: the record's chain block (phase 5's writer) or the legacy
-# marker the unchanged supervisor still writes. An UNSUPERVISED rollover never
-# runs session-loop.sh, so this read cannot live only there.
+# chain_closed: the record's chain block (the supervisor writes it at a quit).
+# An UNSUPERVISED rollover never runs session-loop.sh, so this read cannot
+# live only there.
 if [ -n "$REC_JSON" ] && [ "$(rec_q '.chain.closed // null')" != null ]; then
   refuse chain_closed "seq=$(rec_q '.chain.closed.by_seq // "?"') at=$(rec_q '.chain.closed.at // "?"') — the chain for work/$PROJECT was deliberately ended; reopen it explicitly: scripts/session-loop.sh $PROJECT --reopen"
-fi
-CLOSEDF="$WORKSPACE_ROOT/work/$PROJECT/.chain-closed"
-if [ -f "$CLOSEDF" ]; then
-  refuse chain_closed "seq=$(jq -r '.seq // "?"' "$CLOSEDF" 2>/dev/null) at=$(jq -r '.closed_at // "?"' "$CLOSEDF" 2>/dev/null) — session ended the chain for work/$PROJECT (work/$PROJECT/.chain-closed); reopen it explicitly: scripts/session-loop.sh $PROJECT --reopen"
 fi
 
 # Relaunch knobs: explicit env > per-item work/$PROJECT/context-budget.env >
@@ -265,10 +247,8 @@ owner_live() {
 # session too. Consequence: session-loop.sh's bootstrap call must stay a DIRECT
 # call (no $(...) or pipeline); test-session-loop.sh F1 is the tripwire.
 invoked_by_supervisor() {
-  local loopf pid
-  loopf="$WORKSPACE_ROOT/work/$PROJECT/.session-loop"
-  [ -f "$loopf" ] || return 1
-  pid="$(jq -r '.pid // empty' "$loopf" 2>/dev/null)"
+  local pid
+  pid="$(rec_q '.chain.supervisor.pid // empty')"
   [ -n "$pid" ] && [ "$pid" = "$PPID" ] && kill -0 "$pid" 2>/dev/null
 }
 OWNER_KEY=""
@@ -432,11 +412,6 @@ if [ "$DRY" -eq 1 ]; then
 fi
 
 # ---- the write ---------------------------------------------------------------
-# Probe the emit target BEFORE the record is touched: a refusal must cost nothing.
-if [ -n "$EMIT" ]; then
-  emit_tmp="$EMIT.tmp.$$"
-  : > "$emit_tmp" 2>/dev/null || die "emit: cannot write $EMIT (directory refuses the temp file); nothing was written — fix the path and retry"
-fi
 STAGED_JSON=null
 [ -n "$EMIT" ] && STAGED_JSON="$(jq -cn --argjson s "$SEQ" --arg c "$CMD_LINE" --arg by "$ME_SID" --arg sup "$BY" \
   '{successor:$s, command:$c, by:(if $sup == "supervisor" then "supervisor" else $by end)}')"
@@ -448,34 +423,23 @@ rc=0
 session_record_update "$REC" \
   '(.seq // null) == $seen_seq and ((.session.session_id) // null) == $seen_sid' \
   '.seq = $seq
-   | .launch = {launched_at: $ts, by: $by, mode: $mode, predecessor: $pred, pending: $pending}
+   | .launch = {launched_at: $ts, by: $by, mode: $mode, reason: $reason, predecessor: $pred, pending: $pending}
    | .session = null
    | .staged = $staged' \
   --argjson seen_seq "$SEEN_SEQ" --argjson seen_sid "$SEEN_SID" \
-  --argjson seq "$SEQ" --arg ts "$NOW" --arg by "$BY" --arg mode "$LOOP_MODE" \
+  --argjson seq "$SEQ" --arg ts "$NOW" --arg by "$BY" --arg mode "$LOOP_MODE" --arg reason "$LOOP_REASON" \
   --argjson pred "$PRED_JSON" --argjson pending "$PENDING_JSON" --argjson staged "$STAGED_JSON" || rc=$?
 case "$rc" in
   0) ;;
-  1) rm -f "${emit_tmp:-}"; refuse not_owner "project=$PROJECT — the record changed underneath; re-run" ;;
-  *) rm -f "${emit_tmp:-}"; exit 4 ;;
+  1) refuse not_owner "project=$PROJECT — the record changed underneath; re-run" ;;
+  *) exit 4 ;;
 esac
 note "record: seq $LAST_SEQ -> $SEQ, predecessor=${DISPOSITION:-none}, by=$BY (work/$PROJECT/session-state.json)"
 
-# ---- the bump record the turn-end hook reads (write-only here) ---------------
-SEQF="$WORKSPACE_ROOT/work/$PROJECT/.session-seq"
-_bump_rt="$RUNTIME"; _bump_sid="${ME_SID:-unknown}"
-[ "$BY" = "supervisor" ] && _bump_sid="unknown"
-jq -n --argjson seq "$LAST_SEQ" --argjson successor "$SEQ" --arg runtime "$_bump_rt" \
-  --arg session_id "$_bump_sid" --arg cwd "$(pwd -P)" --arg written_at "$NOW" \
-  --arg mode "$LOOP_MODE" --arg reason "$LOOP_REASON" \
-  '{seq:$seq, successor:$successor, runtime:$runtime, session_id:$session_id, cwd:$cwd,
-    written_at:$written_at, mode:$mode, reason:$reason, written_by:"launch-next-session.sh"}' \
-  > "$SEQF.bump.json" 2>/dev/null || note "warning: could not write $SEQF.bump.json"
-
 if [ -n "$EMIT" ]; then
-  printf '%s\n' "$CMD_LINE" > "$emit_tmp" || die "emit: write failed at $emit_tmp (the record already advanced to $SEQ; stage by hand: $EMIT)"
-  mv "$emit_tmp" "$EMIT" || die "emit: mv failed at $EMIT (the record already advanced to $SEQ; stage by hand)"
-  note "emit: staged the successor command at $EMIT"
+  # The staged command, for the eye: the supervisor reads it from the record.
+  echo "cmd: $CMD_LINE"
+  note "emit: staged successor #$SEQ in work/$PROJECT/session-state.json (staged.command)"
   [ "${TF_SESSION_LOOP:-}" = "1" ] \
     && note "staged — this session ends at the end of this turn; there is no sentinel step."
   exit 0

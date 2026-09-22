@@ -14,8 +14,7 @@ cp "$SRC_ROOT/scripts/lib/session-lib.sh" "$MAIN/scripts/lib/"
 chmod +x "$MAIN/scripts/"*.sh
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
 echo "# launcher" > "$MAIN/work/testproj/next-session.md"
-printf '%s\n' '.context-budget/' 'work/*/session-state.json*' 'work/*/.session-seq*' \
-  'work/*/.next-command*' 'work/*/.session-loop' 'work/*/.chain-closed' > "$MAIN/.gitignore"
+printf '%s\n' '.context-budget/' 'work/*/session-state.json' 'work/*/session-state.json.lock/' > "$MAIN/.gitignore"
 GITC() { git -c user.email=t@t -c user.name=t "$@"; }
 GITC -C "$MAIN" init -q -b main
 GITC -C "$MAIN" add -A; GITC -C "$MAIN" commit -qm init
@@ -25,8 +24,7 @@ CB="$MAIN/scripts/context-budget.sh"
 REC="$MAIN/work/testproj/session-state.json"
 HF="$MAIN/work/testproj/handoff.md"
 NEXTF="$MAIN/work/testproj/next-session.md"
-EMITF="$MAIN/work/testproj/.next-command"
-LOOPF="$MAIN/work/testproj/.session-loop"
+EMITF="$MAIN/work/testproj/.next-command"   # retired (phase 8): asserted absent
 export HOME="$TMP/home"
 SLUG="$(pwd | tr '/.' '--')"
 PROJ_DIR="$HOME/.claude/projects/$SLUG"; mkdir -p "$PROJ_DIR"
@@ -76,8 +74,7 @@ seed() {  # $1=seq $2=owner-sid $3=pid $4=pid_start $5=launcher_hash
           launcher_hash:$lh, user:"t", ended:null}
          + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$ps} end)) end)}' > "$REC"
 }
-reset() { rm -f "$REC" "$HF" "$EMITF" "$EMITF.json" "$LOOPF" "$MAIN/work/testproj/.session-seq"* \
-            "$MAIN/work/testproj/.chain-closed" "$PROJ_DIR"/*.jsonl
+reset() { rm -f "$REC" "$HF" "$PROJ_DIR"/*.jsonl
           echo "# launcher" > "$NEXTF"; seed 8 sid-me; ledger 8; }
 PROMPT='Work item testproj - rollover session #9. Read `work/testproj/next-session.md` and continue from **First actions**.'
 
@@ -96,7 +93,7 @@ assert_eq       "E2a: --check exit 0"           "$rc" "0"
 assert_contains "E2b: check ok names the successor" "$out" "check ok"
 assert_contains "E2c: successor number"         "$out" "successor=9"
 assert_same     "E2d: --check wrote nothing"    "$TMP/rec.before" "$REC"
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-a "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-a "$LNS" testproj --emit 2>&1); rc=$?
 assert_eq "E3a: --emit exit 0"                       "$rc" "0"
 assert_eq "E3b: seq advanced to 9"                   "$(rec .seq)" "9"
 assert_eq "E3c: predecessor disposition rolled_over" "$(rec .launch.predecessor.disposition)" "rolled_over"
@@ -110,7 +107,7 @@ assert_eq "E3j: staged.successor"                    "$(rec .staged.successor)" 
 assert_contains "E3k: staged.command carries the prompt" "$(rec .staged.command)" 'rollover\ session\ #9'
 assert_contains "E3l: staged.command carries the env pair" "$(rec .staged.command)" "TF_SESSION_PROJECT=testproj TF_SESSION_SEQ=9 "
 assert_eq "E3m: launch.pending is null"              "$(rec .launch.pending)" "null"
-assert_eq "E3n: the emitted file holds the same command" "$(cat "$EMITF")" "$(rec .staged.command)"
+assert_contains "E3n: --emit prints the staged command" "$out" "cmd: $(rec .staged.command)"
 # The stub successor registers with the two environment variables.
 mk_transcript sid-b
 out=$(run_lns TF_SESSION_PROJECT=testproj TF_SESSION_SEQ=9 CLAUDE_CODE_SESSION_ID=sid-b \
@@ -121,12 +118,10 @@ assert_eq "E4c: session.seq == seq"              "$(rec .session.seq)" "9"
 assert_eq "E4d: seq unchanged by registration"   "$(rec .seq)" "9"
 assert_eq "E4e: predecessor block survives"      "$(rec .launch.predecessor.session_id)" "sid-a"
 
-echo "E5: the bump record the turn-end hook reads is written after the record; the counter mirror and sidecar are gone"
+echo "E5: the record is the only thing written — no counter, bump record or command file"
 [ ! -f "$MAIN/work/testproj/.session-seq" ] && ok "E5a: no .session-seq counter mirror" || bad "E5a: the counter mirror was written"
-assert_eq "E5b: bump record seq/successor" \
-  "$(jq -r '"\(.seq)/\(.successor)/\(.session_id)/\(.written_by)"' "$MAIN/work/testproj/.session-seq.bump.json")" \
-  "8/9/sid-a/launch-next-session.sh"
-[ ! -f "$EMITF.json" ] && ok "E5c: no identity sidecar beside the command" || bad "E5c: the sidecar was written"
+[ ! -f "$MAIN/work/testproj/.session-seq.bump.json" ] && ok "E5b: no bump record" || bad "E5b: the bump record was written"
+[ ! -f "$EMITF" ] && [ ! -f "$EMITF.json" ] && ok "E5c: no command file, no sidecar" || bad "E5c: a command file or sidecar was written"
 
 # ---------------------------------------------------------------------------
 echo "P: prompt, runtime resolution, dry-run"
@@ -153,27 +148,27 @@ assert_contains "P5: copilot -i argv" "$out" "copilot -i"
 # ---------------------------------------------------------------------------
 echo "S: schema_mismatch"
 reset; jq '.schema = 2' "$REC" > "$REC.t" && mv "$REC.t" "$REC"; cp "$REC" "$TMP/rec.before"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "S1" "$rc" "$out" schema_mismatch
 assert_same "S1c: record untouched" "$TMP/rec.before" "$REC"
 printf 'not json\n' > "$REC"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "S2 (unreadable)" "$rc" "$out" schema_mismatch
 
 echo "C: chain_closed"
 reset; jq '.chain = {supervisor:null, used:3, cap:10, closed:{at:"2026-09-18T00:00:00Z", by_seq:8, reason:"quit"}}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "C1 (record)" "$rc" "$out" chain_closed
 reset; printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","written_by":"session-loop.sh"}\n' > "$MAIN/work/testproj/.chain-closed"
 out=$(as_me --dry-run 2>&1); rc=$?
-assert_refused "C2 (legacy marker)" "$rc" "$out" chain_closed
-assert_eq "C2c: nothing written" "$(rec .seq)" "8"
+assert_eq "C2 (the retired .chain-closed marker is not read)" "$rc" "0"
+rm -f "$MAIN/work/testproj/.chain-closed"
 
 echo "R: runtime_path_unsupported"
 reset
 out=$(as_me --runtime bogus --dry-run 2>&1); rc=$?
 assert_refused "R1 (unknown runtime)" "$rc" "$out" runtime_path_unsupported
-out=$(as_me --runtime copilot-vscode --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --runtime copilot-vscode --emit 2>&1); rc=$?
 assert_refused "R2 (--emit x copilot-vscode)" "$rc" "$out" runtime_path_unsupported
 out=$(as_me --runtime codex --clear 2>&1); rc=$?
 assert_refused "R3 (--clear off claude)" "$rc" "$out" runtime_path_unsupported
@@ -185,8 +180,12 @@ assert_eq       "R6a: copilot-vscode dry-run is legal" "$rc" "0"
 assert_contains "R6b: code chat argv"                  "$out" "code chat -r -m agent"
 
 echo "V: supervised_stage_only"
-mk_marker() { printf '{"pid":%s,"project":"testproj","started_at":"2026-09-10T00:00:00Z"}\n' "$1" > "$LOOPF"; }
-reset; mk_marker "$LIVE_PID"
+mk_sup() {  # $1 = pid: a chain.supervisor block naming it, merged into the record (created if absent)
+  [ -f "$REC" ] || echo '{"schema":1}' > "$REC"
+  jq --argjson pid "$1" --arg ps "$(ps -o lstart= -p "$1" 2>/dev/null | sed 's/^ *//;s/ *$//')" \
+    '.chain.supervisor = {pid:$pid, pid_start:$ps, started_at:"2026-09-10T00:00:00Z"}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
+}
+reset; mk_sup "$LIVE_PID"
 out=$(as_me 2>&1 </dev/null); rc=$?
 assert_refused "V1 (bare launch)" "$rc" "$out" supervised_stage_only
 out=$(as_me --clear 2>&1); rc=$?
@@ -194,81 +193,81 @@ assert_refused "V2 (--clear)" "$rc" "$out" supervised_stage_only
 out=$(as_me --dry-run 2>&1); rc=$?
 assert_refused "V3 (--dry-run runs the same gate)" "$rc" "$out" supervised_stage_only
 assert_eq "V4: nothing written" "$(rec .seq)" "8"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_eq "V5a: --emit under a live supervisor stages" "$rc" "0"
 assert_eq "V5b: staged"                                "$(rec .staged.successor)" "9"
-reset; mk_marker "$DEAD_PID"
+reset; mk_sup "$DEAD_PID"
 out=$(as_me 2>&1 </dev/null); rc=$?
 assert_eq       "V6a: dead-pid marker + bare launch proceeds" "$rc" "0"
 assert_contains "V6b: with a warning"                         "$out" "warning"
 
 echo "N: no_supervisor"
 reset
-out=$(run_lns TF_SESSION_LOOP=1 CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns TF_SESSION_LOOP=1 CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "N1 (supervised session, no supervisor)" "$rc" "$out" no_supervisor
 assert_eq "N1c: nothing written" "$(rec .seq)" "8"
-mk_marker "$LIVE_PID"
-out=$(run_lns TF_SESSION_LOOP=1 CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+mk_sup "$LIVE_PID"
+out=$(run_lns TF_SESSION_LOOP=1 CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj --emit 2>&1); rc=$?
 assert_eq "N2: with a live supervisor it stages" "$rc" "0"
 reset
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_eq "N3: an unsupervised session may stage by hand (the slice)" "$rc" "0"
 
 echo "O: not_owner / owner_live"
 reset
-out=$(run_lns "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "O1 (no identity, owner live)" "$rc" "$out" owner_live
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "O2 (other, owner live by transcript age)" "$rc" "$out" owner_live
 assert_contains "O2c: names the owner" "$out" "owner=claude-sid-me"
 reset; seed 8 sid-me "$LIVE_PID" "$LIVE_START"
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "O3 (other, owner live by pid)" "$rc" "$out" owner_live
 reset; seed 8 sid-me "$DEAD_PID" "Tue Aug  5 00:00:00 2026"
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "O4 (other, owner dead by pid)" "$rc" "$out" not_owner
 reset; touch -t 202001010000 "$PROJ_DIR/sid-me.jsonl"
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-other "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "O5 (other, owner dead by transcript age)" "$rc" "$out" not_owner
 reset; seed 8 ""
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "O6 (session null)" "$rc" "$out" not_owner
 reset; touch -t 202001010000 "$PROJ_DIR/sid-me.jsonl"
-out=$(run_lns "$LNS" testproj --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns "$LNS" testproj --emit 2>&1); rc=$?
 assert_refused "O6b (no identity, owner dead)" "$rc" "$out" not_owner
 reset; rm -f "$REC"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "O7 (no record)" "$rc" "$out" not_owner
 [ ! -f "$REC" ] && ok "O7c: a refusal creates no record" || bad "O7c: refusal wrote a record"
 reset; seed 8 sid-me "$LIVE_PID" "$LIVE_START"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_eq "O8: the owner itself (live pid) proceeds" "$rc" "0"
 reset; jq '.session.runtime = "gemini" | .session.session_id = "workspace"' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
-out=$(run_lns "$LNS" testproj --runtime gemini --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns "$LNS" testproj --runtime gemini --emit 2>&1); rc=$?
 assert_eq "O9a: gemini's constant identity counts when the runtime is gemini" "$rc" "0"
 reset; jq '.session.runtime = "gemini" | .session.session_id = "workspace"' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
-out=$(run_lns "$LNS" testproj --runtime claude --emit "$EMITF" 2>&1); rc=$?
+out=$(run_lns "$LNS" testproj --runtime claude --emit 2>&1); rc=$?
 assert_refused "O9b (a claude caller is not gemini-workspace; the owner is live)" "$rc" "$out" owner_live
 
 echo "A: artefact checks (launcher_unchanged, ledger_shape, ledger_seq_mismatch)"
 reset; cur="$(shasum -a 256 "$NEXTF" | cut -d' ' -f1)"; seed 8 sid-me "" "" "$cur"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "A1 (launcher unchanged since registration)" "$rc" "$out" launcher_unchanged
 reset; rm -f "$NEXTF"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "A2 (launcher absent)" "$rc" "$out" launcher_unchanged
 assert_contains "A2c: names the file" "$out" "next-session.md"
 reset; rm -f "$HF"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "A3 (no ledger)" "$rc" "$out" ledger_shape
 reset; printf 'no heading here\n' > "$HF"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "A4 (no Session Handoff heading)" "$rc" "$out" ledger_shape
 reset; printf '# Session Handoff — 2026-09-18 (date only)\n' > "$HF"
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "A5 (unnumbered top heading)" "$rc" "$out" ledger_shape
 reset; ledger 7
-out=$(as_me --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --emit 2>&1); rc=$?
 assert_refused "A6 (ledger 7 vs seq 8)" "$rc" "$out" ledger_seq_mismatch
 assert_contains "A6c: detail" "$out" "ledger=7 seq=8"
 assert_eq "A7: none of them wrote" "$(rec .seq)" "8"
@@ -281,11 +280,11 @@ out=$(as_me --check 2>&1); rc=$?
 assert_eq "A9: sNNN form passes" "$rc" "0"
 
 # ---------------------------------------------------------------------------
-echo "B: the supervisor's own bootstrap (strict parent == .session-loop pid) is exempt from ownership"
+echo "B: the supervisor's own bootstrap (strict parent == chain.supervisor.pid) is exempt from ownership"
 # Direct calls, never $(...): a command substitution puts a subshell between the
 # launcher and this shell, and the exemption keys on the strict parent.
-reset; rm -f "$REC"; ledger 7; mk_marker "$$"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b1" 2>&1; rc=$?
+reset; rm -f "$REC"; ledger 7; mk_sup "$$"
+run_lns "$LNS" testproj --emit >"$TMP/b1" 2>&1; rc=$?
 assert_eq "B1a: exit 0"                     "$rc" "0"
 assert_eq "B1b: seq opened from the ledger" "$(rec .seq)" "8"
 assert_eq "B1c: launch.by=supervisor"       "$(rec .launch.by)" "supervisor"
@@ -293,38 +292,38 @@ assert_eq "B1d: staged.by=supervisor"       "$(rec .staged.by)" "supervisor"
 assert_eq "B1e: no predecessor"             "$(rec .launch.predecessor)" "null"
 assert_eq "B1f: session null"               "$(rec .session)" "null"
 assert_contains "B1g: exemption is visible" "$(cat "$TMP/b1")" "not a session"
-reset; rm -f "$REC" "$HF"; mk_marker "$$"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b2" 2>&1; rc=$?
+reset; rm -f "$REC" "$HF"; mk_sup "$$"
+run_lns "$LNS" testproj --emit >"$TMP/b2" 2>&1; rc=$?
 assert_eq "B2a: no record, no ledger — exit 0" "$rc" "0"
 assert_eq "B2b: seq opens at 1"                "$(rec .seq)" "1"
 assert_contains "B2c: stages session #1"       "$(rec .staged.command)" 'session\ #1.'
-reset; seed 8 sid-me "$DEAD_PID" "Tue Aug  5 00:00:00 2026"; mk_marker "$$"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b3" 2>&1; rc=$?
+reset; seed 8 sid-me "$DEAD_PID" "Tue Aug  5 00:00:00 2026"; mk_sup "$$"
+run_lns "$LNS" testproj --emit >"$TMP/b3" 2>&1; rc=$?
 assert_eq "B3a: dead owner — exit 0"                 "$rc" "0"
 assert_eq "B3b: predecessor abandoned"               "$(rec .launch.predecessor.disposition)" "abandoned"
 assert_eq "B3c: predecessor names the dead owner"    "$(rec .launch.predecessor.session_id)" "sid-me"
 assert_eq "B3d: seq 9"                               "$(rec .seq)" "9"
-reset; seed 8 sid-me "$DEAD_PID" "Tue Aug  5 00:00:00 2026"; mk_marker "$$"
+reset; seed 8 sid-me "$DEAD_PID" "Tue Aug  5 00:00:00 2026"; mk_sup "$$"
 jq '.session.ended = {at:"2026-09-18T01:00:00Z", door:"stop"}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b4" 2>&1; rc=$?
+run_lns "$LNS" testproj --emit >"$TMP/b4" 2>&1; rc=$?
 assert_eq "B4a: owner closed through the stop door — exit 0" "$rc" "0"
 assert_eq "B4b: predecessor stopped" "$(rec .launch.predecessor.disposition)" "stopped"
-reset; seed 8 sid-me "$LIVE_PID" "$LIVE_START"; mk_marker "$$"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b5" 2>&1; rc=$?
+reset; seed 8 sid-me "$LIVE_PID" "$LIVE_START"; mk_sup "$$"
+run_lns "$LNS" testproj --emit >"$TMP/b5" 2>&1; rc=$?
 assert_eq "B5a: live owner — the bootstrap is refused too" "$rc" "4"
 assert_eq "B5b: reason owner_live" "$(reason_of "$(cat "$TMP/b5")")" "owner_live"
 # Artefact checks never fire on the bootstrap: a stale launcher hash and an
 # unnumbered ledger are the rolling session's business, not the supervisor's.
 reset; cur="$(shasum -a 256 "$NEXTF" | cut -d' ' -f1)"; seed 8 sid-me "$DEAD_PID" "Tue Aug  5 00:00:00 2026" "$cur"
-printf '# Session Handoff — no number\n' > "$HF"; mk_marker "$$"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b6" 2>&1; rc=$?
+printf '# Session Handoff — no number\n' > "$HF"; mk_sup "$$"
+run_lns "$LNS" testproj --emit >"$TMP/b6" 2>&1; rc=$?
 assert_eq "B6: artefact checks skipped on the bootstrap" "$rc" "0"
 # A marker naming another live pid is not this caller's parent: no exemption.
-reset; rm -f "$REC"; mk_marker "$LIVE_PID"
-run_lns "$LNS" testproj --emit "$EMITF" >"$TMP/b7" 2>&1; rc=$?
+reset; rm -f "$REC"; mk_sup "$LIVE_PID"
+run_lns "$LNS" testproj --emit >"$TMP/b7" 2>&1; rc=$?
 assert_eq "B7a: a session with no record under a supervisor is refused" "$rc" "4"
 assert_eq "B7b: reason not_owner" "$(reason_of "$(cat "$TMP/b7")")" "not_owner"
-[ ! -f "$REC" ] && ok "B7c: nothing written" || bad "B7c: refusal wrote a record"
+assert_eq "B7c: nothing written (no seq opened)" "$(rec .seq)" "null"
 
 # ---------------------------------------------------------------------------
 echo "L: --clear writes launch.pending for the same process"
@@ -365,13 +364,13 @@ rm -f "$MAIN/work/testproj/context-budget.env"
 
 echo "D: deleted flags and usage errors are exit 3 and write nothing"
 reset
-for f in "--bg" "--unstage" "--emit relative/path" "--loop-mode handsoff" "--clear --emit $EMITF" "--emit $EMITF --dry-run"; do
+for f in "--bg" "--unstage" "--emit relative/path" "--loop-mode handsoff" "--clear --emit" "--emit --dry-run"; do
   # shellcheck disable=SC2086
   out=$(as_me $f 2>&1 </dev/null); rc=$?
   assert_eq "D1: [$f] exit 3" "$rc" "3"
 done
 assert_eq "D2: nothing written" "$(rec .seq)" "8"
-out=$(as_me --loop-mode bogus --emit "$EMITF" 2>&1); rc=$?
+out=$(as_me --loop-mode bogus --emit 2>&1); rc=$?
 assert_eq "D3: bad loop mode exit 3" "$rc" "3"
 
 # ---------------------------------------------------------------------------
@@ -392,7 +391,7 @@ git -C "$MAIN/wt" push -q origin session-branch:main
 out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-me "$WLNS" testproj --check 2>&1 </dev/null); rc=$?
 assert_eq "W3a: --check from a worktree passes without pulling" "$rc" "0"
 assert_eq "W3b: main not pulled by --check" "$(cat "$NEXTF")" "# launcher"
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-me "$WLNS" testproj --emit "$EMITF" 2>&1 </dev/null); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-me "$WLNS" testproj --emit 2>&1 </dev/null); rc=$?
 assert_eq "W4a: real launch from the worktree — exit 0"  "$rc" "0"
 assert_eq "W4b: main checkout ff-pulled"                 "$(cat "$NEXTF")" "# launcher v2"
 assert_eq "W4c: record written in the main checkout"     "$(rec .seq)" "9"
@@ -405,7 +404,7 @@ git -C "$MAIN" checkout -q -- work/testproj
 echo "# main-local" > "$NEXTF"; GITC -C "$MAIN" commit -qam "main-local"
 echo "# launcher v4" > "$MAIN/wt/work/testproj/next-session.md"; GITC -C "$MAIN/wt" commit -qam "rollover v4"
 git -C "$MAIN/wt" push -q origin session-branch:main
-out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-me "$WLNS" testproj --emit "$EMITF" 2>&1 </dev/null); rc=$?
+out=$(run_lns CLAUDE_CODE_SESSION_ID=sid-me "$WLNS" testproj --emit 2>&1 </dev/null); rc=$?
 assert_refused "W6 (diverged main: ff-only pull fails)" "$rc" "$out" worktree_unsynced
 assert_eq "W6c: nothing written" "$(rec .seq)" "8"
 git -C "$MAIN" reset -q --hard origin/main
