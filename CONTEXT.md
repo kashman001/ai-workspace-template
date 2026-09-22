@@ -275,7 +275,7 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
   (`docs/context-budget.md` → "Vendor hook deployments").
 - Dispatching a long-running subagent: open a dispatch record and emit the
   rollover contract for its prompt in one step —
-  `scripts/context-budget.sh dispatch-open --project <p> --task <slug>
+  `scripts/fleet.sh dispatch-open --project <p> --task <slug>
   --report <path>`; close it at yield (`dispatch-close --status <S>`); at
   child WARN/STOP, roll (fresh `dispatch-open`), never resume
   (`docs/context-budget.md` → "Dispatching long-running children").
@@ -283,14 +283,14 @@ live in the API envelope, on disk; never estimate them. Thresholds are in
 Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in
 `context-budget.env` via `scripts/launch-next-session.sh` (see
 `docs/context-budget.md` → "Relaunch knobs"); a committed
-`work/<proj>/context-budget.env` overrides it per work item. The successor
-inherits the predecessor's launch options via `work/<proj>/.rollover-options`.
+`work/<proj>/context-budget.env` overrides it per work item. The one state
+file is `work/<proj>/session-state.json` (machine-local; never hand-edited).
 
 **`ROLLOVER_RELAUNCH=auto` is standing authorization to launch the successor —
 do not ask, and do not stop to be told.** It is committed to disk precisely so
 agent work continues across session boundaries without a human restarting it
 each time. Needing the user's input is expressed by rolling over with
-`--mode interactive`, so the successor re-poses the question on a fresh window;
+`--loop-mode interactive`, so the successor re-poses the question on a fresh window;
 it is never expressed by declining to launch, which burns the handoff and
 strands the work. And before concluding you *cannot* launch, run
 `scripts/launch-next-session.sh <project> --dry-run` — a believed blocker is not

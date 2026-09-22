@@ -7,7 +7,7 @@ set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/scripts/hooks" "$TMP/.context-budget"
-cp "$SRC_ROOT"/scripts/hooks/context-budget-*.sh "$TMP/scripts/hooks/" 2>/dev/null || true
+cp "$SRC_ROOT"/scripts/hooks/context-budget-* "$TMP/scripts/hooks/" 2>/dev/null || true
 cat > "$TMP/scripts/context-budget.sh" <<'STUB'
 #!/usr/bin/env bash
 [ "${1:-}" = "check" ] || exit 0
@@ -253,10 +253,8 @@ echo "X: session-loop turn-end exit (plan 2, Task 8)"
 # The supervisor flag is passed as an argument, never as a `VAR=1 func` prefix —
 # bash leaks such an assignment past the call when the callee is a function.
 XTMP="$(mktemp -d)"; mkdir -p "$XTMP/work/p"
-xsent() {
-  cat > "$XTMP/work/p/.rollover-complete" <<XEOF
-{"mode":"handsoff","seq":8,"reason":"t","session_id":"$1","runtime":"claude","cwd":"/x"}
-XEOF
+xsent() {  # the record after $1 staged its successor (what --emit writes)
+  jq -n --arg by "$1" '{schema:1, seq:9, staged:{successor:9, command:"true", by:$by}}' > "$XTMP/work/p/session-state.json"
 }
 cat > "$XTMP/hook.sh" <<XEOF
 #!/usr/bin/env bash
@@ -293,15 +291,15 @@ xrun 0 sid-1
 assert_empty "X1a: silent with TF_SESSION_LOOP unset" "$(xsaid)"
 assert_contains "X1b: the agent survived" "$(xerr)" "STILL ALIVE"
 
-echo "X2: it is inert when the sentinel belongs to another session"
+echo "X2: it is inert when the staged block belongs to another session"
 xrun 1 sid-OTHER
-assert_empty "X2a: silent for a foreign sentinel" "$(xsaid)"
+assert_empty "X2a: silent for a foreign stage" "$(xsaid)"
 assert_contains "X2b: the agent survived" "$(xerr)" "STILL ALIVE"
 
-echo "X3: it is inert when no sentinel exists"
-rm -f "$XTMP/work/p/.rollover-complete"
+echo "X3: it is inert when nothing is staged"
+jq '.staged = null' "$XTMP/work/p/session-state.json" > "$XTMP/r.t" && mv "$XTMP/r.t" "$XTMP/work/p/session-state.json"
 xrun 1 sid-1
-assert_empty "X3a: silent with no sentinel" "$(xsaid)"
+assert_empty "X3a: silent with nothing staged" "$(xsaid)"
 assert_contains "X3b: the agent survived" "$(xerr)" "STILL ALIVE"
 
 echo "X4: it terminates its agent when all three conditions hold"
@@ -323,8 +321,8 @@ xpred() {
     . "$1/scripts/hooks/context-budget-hook-lib.sh"
     budget_hook_should_exit "$2" p; echo "rc=$?"' _ "$SRC_ROOT" "$2" 2>&1
 }
-assert_eq "X5a: rc 0 when the sentinel is mine" "$(xpred 1 sid-1)" "rc=0"
-assert_eq "X5b: rc 1 for a foreign sentinel" "$(xpred 1 sid-OTHER)" "rc=1"
+assert_eq "X5a: rc 0 when the staged block is mine" "$(xpred 1 sid-1)" "rc=0"
+assert_eq "X5b: rc 1 for a foreign stage" "$(xpred 1 sid-OTHER)" "rc=1"
 assert_eq "X5c: rc 1 outside the supervisor" "$(xpred 0 sid-1)" "rc=1"
 
 echo "X6: the Stop wrapper is inert unless the supervisor set it up"
@@ -397,5 +395,123 @@ else bad "X10e: statusLine wired with the resolver prefix"; fi
 if [ "$(jq 'has("hooks") or has("statusLine")' "$CSE" 2>/dev/null)" = "false" ]
 then ok "X10f: example carries no hooks/statusLine (double-fire guard)"
 else bad "X10f: example carries no hooks/statusLine (double-fire guard)"; fi
+
+echo "F: byte-for-byte equality with the captured wrapper payloads (phase 6)"
+# The wrappers at 0a117c6 were run through THIS harness and their rc/stdout/
+# stderr captured under scripts/tests/fixtures/vendor-hooks/. The dispatcher
+# behind today's shim paths must reproduce every byte. Regenerate only when the
+# payload contract deliberately changes: HOOK_FIXTURE_WRITE=<dir> bash <this>.
+FIX="${HOOK_FIXTURE_WRITE:-$SRC_ROOT/scripts/tests/fixtures/vendor-hooks}"
+[ -n "${HOOK_FIXTURE_WRITE:-}" ] && mkdir -p "$FIX"
+# fcase <name> <stdin> "<env words>" <hook> [args...]; FNORESET=1 keeps state.
+fcase() {
+  local name="$1" stdin="$2" envw="$3"; shift 3
+  local h="$1"; shift
+  [ -n "${FNORESET:-}" ] || reset_state
+  printf '%s' "$stdin" | env -u TF_SESSION_LOOP -u TF_SESSION_LOOP_PROJECT \
+      CHECK_EVERY=0 WORKSPACE_ROOT="$TMP" $envw "$HOOKS/$h" "$@" \
+      >"$TMP/f.out" 2>"$TMP/f.err"; local rc=$?
+  { echo "rc=$rc"; echo "--- stdout"; cat "$TMP/f.out"
+    echo "--- stderr"; cat "$TMP/f.err"; } > "$TMP/f.got"
+  if [ -n "${HOOK_FIXTURE_WRITE:-}" ]; then
+    cp "$TMP/f.got" "$FIX/$name.txt"; ok "F: wrote $name"; return
+  fi
+  if cmp -s "$TMP/f.got" "$FIX/$name.txt"; then ok "F: $name"
+  else bad "F: $name differs from the fixture"; diff "$FIX/$name.txt" "$TMP/f.got" >&2; fi
+}
+touch "$TMP/f1.jsonl" "$TMP/side-f1.jsonl"
+WARN="FAKE_STATUS=WARN FAKE_TOKENS=125000"; STOP="FAKE_STATUS=STOP FAKE_TOKENS=151000"; OK="FAKE_STATUS=OK"
+SUP="TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p"
+# claude: PostToolUse check hook, Stop turn-end hook
+pc="{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/f1.jsonl\"}"
+fcase claude-post-ok   "$pc" "$OK"   context-budget-claude-hook.sh
+fcase claude-post-warn "$pc" "$WARN" context-budget-claude-hook.sh
+FNORESET=1 fcase claude-post-warn-again "$pc" "$WARN" context-budget-claude-hook.sh
+FNORESET=1 fcase claude-post-warn-then-stop "$pc" "$STOP" context-budget-claude-hook.sh
+fcase claude-post-stop "$pc" "$STOP" context-budget-claude-hook.sh
+fcase claude-post-sidechain-warn "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/side-f1.jsonl\"}" "$WARN" context-budget-claude-hook.sh
+fcase claude-post-missing-transcript "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/nope.jsonl\"}" "$WARN" context-budget-claude-hook.sh
+fcase claude-stop-unsupervised '{"session_id":"f1","stop_hook_active":false}' "$WARN" context-budget-stop-hook.sh claude
+fcase claude-stop-active '{"session_id":"f1","stop_hook_active":true}' "$SUP" context-budget-stop-hook.sh claude
+fcase claude-stop-no-sentinel '{"session_id":"f1","stop_hook_active":false}' "$SUP" context-budget-stop-hook.sh claude
+# codex: UserPromptSubmit check hook, Stop turn-end hook
+fcase codex-ups-ok   "$pc" "$OK"   context-budget-codex-hook.sh
+fcase codex-ups-warn "$pc" "$WARN" context-budget-codex-hook.sh
+fcase codex-ups-stop "$pc" "$STOP" context-budget-codex-hook.sh
+fcase codex-ups-missing-transcript "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/nope.jsonl\"}" "$STOP" context-budget-codex-hook.sh
+fcase codex-stop-unsupervised '{"session_id":"f1","stop_hook_active":false}' "$STOP" context-budget-stop-hook.sh codex
+fcase codex-stop-no-sentinel '{"session_id":"f1","stop_hook_active":false}' "$SUP" context-budget-stop-hook.sh codex
+# copilot CLI: sessionStart check hook, agentStop turn-end hook
+mkdir -p "$TMP/copilot-state/fc"; touch "$TMP/copilot-state/fc/events.jsonl"
+CS="COPILOT_STATE_DIR=$TMP/copilot-state"
+cstart='{"sessionId":"fc","cwd":"/x","source":"resume"}'
+cstop="{\"sessionId\":\"fc\",\"transcriptPath\":\"$TMP/f1.jsonl\",\"stopReason\":\"end_turn\",\"stop_hook_active\":false}"
+fcase copilot-start-ok   "$cstart" "$OK $CS"   context-budget-copilot-hook.sh sessionStart
+fcase copilot-start-warn "$cstart" "$WARN $CS" context-budget-copilot-hook.sh sessionStart
+fcase copilot-start-stop "$cstart" "$STOP $CS" context-budget-copilot-hook.sh sessionStart
+fcase copilot-start-fresh '{"sessionId":"fresh","cwd":"/x"}' "$STOP $CS" context-budget-copilot-hook.sh sessionStart
+fcase copilot-stop-ok   "$cstop" "$OK"   context-budget-copilot-hook.sh agentStop
+fcase copilot-stop-warn "$cstop" "$WARN" context-budget-copilot-hook.sh agentStop
+fcase copilot-stop-stop "$cstop" "$STOP" context-budget-copilot-hook.sh agentStop
+fcase copilot-stop-active "{\"sessionId\":\"fc\",\"transcriptPath\":\"$TMP/f1.jsonl\",\"stop_hook_active\":true}" "$STOP" context-budget-copilot-hook.sh agentStop
+fcase copilot-stop-no-sentinel "$cstop" "$STOP $SUP" context-budget-copilot-hook.sh agentStop
+fcase copilot-no-sid '{"cwd":"/x"}' "$STOP $CS" context-budget-copilot-hook.sh sessionStart
+fcase copilot-unknown-event "$cstart" "$STOP $CS" context-budget-copilot-hook.sh bogus
+# copilot VS Code: SessionStart check hook, Stop turn-end hook, hook registration
+VW="$TMP/vscode-f/User/workspaceStorage/h"
+mkdir -p "$VW/GitHub.copilot-chat/transcripts" "$VW/chatSessions"
+touch "$VW/GitHub.copilot-chat/transcripts/fv.jsonl" "$VW/chatSessions/fv.jsonl" "$VW/GitHub.copilot-chat/transcripts/fresh.jsonl"
+vp="{\"session_id\":\"fv\",\"transcript_path\":\"$VW/GitHub.copilot-chat/transcripts/fv.jsonl\",\"cwd\":\"/x\"}"
+vpa="{\"session_id\":\"fv\",\"transcript_path\":\"$VW/GitHub.copilot-chat/transcripts/fv.jsonl\",\"stop_hook_active\":true}"
+fcase vscode-start-ok   "$vp" "$OK"   context-budget-copilot-vscode-hook.sh SessionStart
+fcase vscode-start-warn "$vp" "$WARN" context-budget-copilot-vscode-hook.sh SessionStart
+fcase vscode-start-stop "$vp" "$STOP" context-budget-copilot-vscode-hook.sh SessionStart
+fcase vscode-stop-ok   "$vp" "$OK"   context-budget-copilot-vscode-hook.sh Stop
+fcase vscode-stop-warn "$vp" "$WARN" context-budget-copilot-vscode-hook.sh Stop
+fcase vscode-stop-stop "$vp" "$STOP" context-budget-copilot-vscode-hook.sh Stop
+fcase vscode-stop-active "$vpa" "$STOP" context-budget-copilot-vscode-hook.sh Stop
+fcase vscode-camelcase "{\"sessionId\":\"fv\",\"transcript_path\":\"$VW/GitHub.copilot-chat/transcripts/fv.jsonl\"}" "$STOP" context-budget-copilot-vscode-hook.sh Stop
+fcase vscode-fresh "{\"session_id\":\"fresh\",\"transcript_path\":\"$VW/GitHub.copilot-chat/transcripts/fresh.jsonl\"}" "$STOP" context-budget-copilot-vscode-hook.sh SessionStart
+fcase vscode-no-transcript '{"session_id":"fv"}' "$STOP" context-budget-copilot-vscode-hook.sh SessionStart
+# gemini: BeforeAgent check hook, JSON-only stdout
+fcase gemini-ok   '{"session_id":"fg"}' "$OK"   context-budget-gemini-hook.sh
+fcase gemini-warn '{"session_id":"fg"}' "$WARN" context-budget-gemini-hook.sh
+fcase gemini-stop '{"session_id":"fg"}' "$STOP" context-budget-gemini-hook.sh
+# opencode: chat.message check hook (sid on argv, no stdin), session.idle decide
+fcase opencode-msg-ok   '' "$OK"   context-budget-opencode-hook.sh ses_f
+fcase opencode-msg-warn '' "$WARN" context-budget-opencode-hook.sh ses_f
+fcase opencode-msg-stop '' "$STOP" context-budget-opencode-hook.sh ses_f
+fcase opencode-no-sid   '' "$STOP" context-budget-opencode-hook.sh
+fcase opencode-exit-unsupervised '' "$OK" context-budget-opencode-hook.sh --exit-check ses_f
+mkdir -p "$TMP/work/p"
+jq -n '{schema:1, seq:10, staged:{successor:10, command:"claude --resume x", by:"ses_f"}}' > "$TMP/work/p/session-state.json"
+fcase opencode-exit-mine    '' "$SUP" context-budget-opencode-hook.sh --exit-check ses_f
+fcase opencode-exit-foreign '' "$SUP" context-budget-opencode-hook.sh --exit-check ses_other
+rm -rf "$TMP/work"
+
+echo "J: jq_missing is printed before any parsing (phase 6)"
+# PATH holds bash and dirname only: enough to reach the check, nothing to parse
+# with. Garbage stdin proves nothing was parsed; the absent state file proves
+# nothing was measured. Gemini must still keep its JSON-only stdout.
+NOJQ="$TMP/nojq"; mkdir -p "$NOJQ"
+ln -s "$(command -v bash)" "$NOJQ/bash"; ln -s "$(command -v dirname)" "$NOJQ/dirname"
+reset_state
+out=$(printf 'not json' | env -i PATH="$NOJQ" HOME="$HOME" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 FAKE_STATUS=STOP \
+      "$HOOKS/context-budget-claude-hook.sh" 2>"$TMP/j.err"); rc=$?
+assert_eq "J1a: claude exits 0 (never blocks a turn)" "$rc" "0"
+assert_empty "J1b: claude stdout silent" "$out"
+assert_contains "J1c: jq_missing on stderr" "$(cat "$TMP/j.err")" "reason=jq_missing"
+assert_eq "J1d: exactly one stderr line (no parse error, nothing else ran)" "$(wc -l < "$TMP/j.err" | tr -d ' ')" "1"
+[ -z "$(ls "$TMP/.context-budget" 2>/dev/null)" ] \
+  && ok "J1e: no hook state written (nothing measured)" || bad "J1e: hook state written without jq"
+out=$(printf 'not json' | env -i PATH="$NOJQ" HOME="$HOME" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 FAKE_STATUS=STOP \
+      "$HOOKS/context-budget-gemini-hook.sh" 2>"$TMP/j.err"); rc=$?
+assert_eq "J2a: gemini keeps JSON-only stdout" "$out" "{}"
+assert_eq "J2b: gemini exits 0" "$rc" "0"
+assert_contains "J2c: jq_missing on stderr" "$(cat "$TMP/j.err")" "reason=jq_missing"
+out=$(env -i PATH="$NOJQ" HOME="$HOME" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 FAKE_STATUS=STOP \
+      "$HOOKS/context-budget-opencode-hook.sh" ses_j 2>"$TMP/j.err"); rc=$?
+assert_empty "J3a: opencode stdout silent (nothing injected)" "$out"
+assert_contains "J3b: jq_missing on stderr" "$(cat "$TMP/j.err")" "reason=jq_missing"
 
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

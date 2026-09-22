@@ -1,9 +1,16 @@
 # ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers
 
-- Status: accepted — **amended by [ADR-0008](0008-session-counter-assertion-not-write.md)**
+- Status: superseded by ADR-0010 (mechanism) — the canonical-source ruling stands; amended by [ADR-0008](0008-session-counter-assertion-not-write.md)
 - Date: 2026-08-06
 - Deciders: Kashif (user) + agent, session 30 of automatic-session-rollover
 
+> **Superseded (2026-09-21, ADR-0010).** `.session-seq`, its bootstrap-prompt
+> sync and `seq-sync` are gone; the session number is the record's `seq`
+> (`work/<proj>/session-state.json`), advanced only by the launcher and never
+> reused. The ruling that the bootstrap prompt's number is canonical and the
+> ledger is repaired to match it still holds, enforced by the launcher's
+> `ledger_seq_mismatch` gate. Kept for the history below.
+>
 > **Amendment (2026-08-25).** The canonical-source ruling below stands. The
 > step-6 *mechanism* — an unconditional `echo <N> >` by the dying session — was
 > replaced: it is redundant for launcher-launched sessions and drifted the

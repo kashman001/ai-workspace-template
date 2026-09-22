@@ -1,0 +1,4 @@
+rc=2
+--- stdout
+--- stderr
+CONTEXT BUDGET WARN: this session is at 125000 tokens, approaching the 150000-token dumb-zone threshold. Wrap up the current work unit and avoid loading large files; prepare to run the session-rollover workflow (skills/session-rollover/SKILL.md) soon — it is not finished until step 6 has staged your successor. Mention this warning to the user in your next reply.

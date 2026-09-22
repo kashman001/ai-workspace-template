@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # File: scripts/hooks/context-budget-hook-lib.sh
-# Purpose: shared core for the per-runtime context-budget hook wrappers
-#          (claude/codex/gemini/opencode/copilot). Sourced, not executed.
-#          Escalation-only, throttled, fail-open — the wrapper owns stdin
-#          parsing and the vendor output envelope, nothing else.
+# Purpose: shared core for the context-budget hook dispatcher
+#          (context-budget-hook.sh over context-budget-adapters.conf). Sourced,
+#          not executed. Escalation-only, throttled, fail-open — the dispatcher
+#          owns stdin parsing and the vendor output envelope, nothing else.
 #   budget_hook_check <runtime> <session_id> [transcript]
 #     prints "STATUS TOKENS THRESHOLD" on escalation, else nothing; rc 0 always.
 #   budget_hook_message <STATUS> <tokens> <threshold>
@@ -82,8 +82,8 @@ budget_hook_check() {
 #
 # WARN gains the step-6 clause only, not the invariant — WARN is not the moment
 # to stage. Known cost, stated rather than hidden: the hook is runtime-side and
-# project-agnostic, with no access to .next-command or supervision state at
-# message time, so a session deliberately ENDING the chain (H3) still reads
+# project-agnostic, with no access to the record's `staged` or supervision
+# state at message time, so a session deliberately ENDING the chain (H3) still reads
 # "stage your successor" at STOP. Making the hook project-aware is not worth a
 # new dependency for a prose nudge; context-budget.sh's successor_advisory is
 # the leg that IS two-sided.
@@ -99,53 +99,35 @@ budget_hook_message() {
 # --- session-loop supervisor: turn-end exit ---------------------------------
 #
 # The hook does NOT decide whether the session should end — the agent already
-# did, by completing its rollover and writing a sentinel naming itself. The
-# hook's whole job is to notice that its own sentinel is on disk and act. That
+# did, by staging its successor through the launcher. The hook's whole job is
+# to notice that the record's `staged` block names this session and act. That
 # is what keeps this vendor-specific surface as thin as it is: one condition,
-# read from a file the design already requires.
+# read from the one record the design already requires.
 #
 # Three conditions, all necessary:
 #   TF_SESSION_LOOP=1        — nobody is supervising otherwise (opt-in contract)
-#   the sentinel exists      — a rollover actually completed
-#   its session_id is MINE   — not a predecessor's leftover, not a sibling's
+#   staged != null           — a successor is staged (launch-next-session.sh --emit
+#                              is the only writer, and the supervisor consumes the
+#                              block BEFORE each run, so it can only be this run's)
+#   staged.by is MINE        — not a predecessor's leftover, not a sibling's
 #
 # The decision and the signal are separate functions because not every runtime
 # signals: opencode's exit path runs inside its own plugin process and self-kills
 # with process.pid, so it needs the predicate without the SIGTERM.
 
 # budget_hook_should_exit <session_id> <project>
-#   rc 0 when this session's own rollover sentinel is on disk under the
+#   rc 0 when the record says this session staged its successor under the
 #   supervisor; rc 1 in every other case, including every error.
 budget_hook_should_exit() {
-  local sid="${1:-}" proj="${2:-}" dir bumpf sentf owner
+  local sid="${1:-}" proj="${2:-}" rec
   [ "${TF_SESSION_LOOP:-}" = "1" ] || return 1
   [ -n "$sid" ] && [ -n "$proj" ] || return 1
   command -v jq >/dev/null 2>&1 || return 1
   # WORKSPACE_ROOT, not budget_hook_resolve_root(): the resolver deliberately
   # ignores the env override so it can find the main checkout from a worktree,
   # and every other reader in this lib goes through WORKSPACE_ROOT.
-  dir="$WORKSPACE_ROOT/work/$proj"
-  # R2.17 section 3 — two script-written facts, no agent-written one. .next-command
-  # non-empty means a successor is staged; the bump record's session_id being
-  # MINE means I am the session that staged it. Both are written by
-  # launch-next-session.sh --emit, which is the only thing that can stage.
-  #
-  # Persistence is safe here where a persistent sentinel was not: the bump record
-  # outlives the session, but no past session's id can equal a live one's, so a
-  # stale record can never match. .next-command is additionally removed by the
-  # supervisor before each run, which bounds it further.
-  bumpf="$dir/.session-seq.bump.json"
-  if [ -s "$dir/.next-command" ] && [ -f "$bumpf" ]; then
-    owner="$(jq -r '.session_id // empty' "$bumpf" 2>/dev/null)"
-    [ "$owner" = "$sid" ] && return 0
-  fi
-  # Transitional, one release: a session that was already in flight when R2.17
-  # landed still runs the demoted rollover-complete, and must still self-kill.
-  sentf="$dir/.rollover-complete"
-  [ -f "$sentf" ] || return 1
-  owner="$(jq -r '.session_id // empty' "$sentf" 2>/dev/null)"
-  [ "$owner" = "$sid" ] || return 1
-  return 0
+  rec="$WORKSPACE_ROOT/work/$proj/session-state.json"
+  jq -e --arg sid "$sid" '.staged != null and .staged.by == $sid' "$rec" >/dev/null 2>&1
 }
 
 # budget_hook_exit <runtime> <session_id> <project>

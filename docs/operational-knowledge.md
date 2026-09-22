@@ -18,7 +18,7 @@ live in `docs/postmortems/` (see its README for the threshold and workflow).
 (e.g. 47K OK vs 128K WARN), citing another session's artifact. **Cause:** the
 registry is one file per *runtime* (`.context-budget/session-claude.json`);
 any concurrent same-runtime session in this workspace (including a
-`claude --bg` agent) overwrites it at register, and non-register commands
+background agent) overwrites it at register, and non-register commands
 prefer the registry over re-discovery. **Rule:** if another session may have
 registered since yours did, pass your own transcript explicitly
 (`--transcript "$HOME/.claude/projects/<slug>/<session-id>.jsonl"`), or
@@ -207,8 +207,8 @@ Kill the server when done (it's a background task otherwise).
 
 Background/worktree sessions push tracked work to `origin/main` while the
 MAIN checkout stays behind and holds all machine-local runtime state
-(`.context-budget/` registry, `work/*/.active-session` locks, ledger,
-`.session-seq`, live `.claude/settings.json` references). Two consequences,
+(`.context-budget/` registry, `work/*/session-state.json` records, ledger,
+live `.claude/settings.json` references). Two consequences,
 both hit twice (sessions 15 and 16):
 
 - Anything the user's live session executes (statusline script, hooks) only
@@ -357,7 +357,13 @@ identifies this suite, not the runner.
 
 ## A fork leaves the work-item lock naming the pre-fork session id
 
-`work/<project>/.active-session` is written once, at `register`. A
+> **Retired (Stage 4, ADR-0010):** the lock is gone. The record
+> (`work/<project>/session-state.json`) names the owner, liveness is the
+> owner's process id, and a forked session simply runs
+> `register --project <project>` (it adopts the slot when the old process is
+> gone, `--takeover` when it is not). Kept for the attach-session history.
+
+`work/<project>/.active-session` was written once, at `register`. A
 `SessionStart:fork` re-keys the session (see the transcript section above) and
 `record` self-heals onto the new id — but **the lock does not**. It goes on
 naming the pre-fork id for the rest of the work item.
@@ -457,3 +463,28 @@ half was the one that ended up wrong.
   what was not.
 - Same trap in any generated summary: a scorecard, a row count, a table of
   contents, a "N findings" line, a version bump both sides made identically.
+
+## Session scripts resolve their root through the repository — a worktree run drives the main checkout
+
+Every session script (`context-budget.sh`, `launch-next-session.sh`,
+`session-loop.sh`, `fleet.sh`, the hooks) resolves `WORKSPACE_ROOT` through
+`git rev-parse --git-common-dir`, by design (ADR-0006): a worktree converges on
+the main checkout's `.context-budget/` and `work/<item>/session-state.json`.
+The sharp edge: a supervisor or launcher started **from a worktree** for a
+"live-ish" try-out is not sandboxed — it stages, launches and records against
+the MAIN checkout's work items. The suites already run against temp
+directories; for anything live, `git clone` the branch into a scratch
+directory and run there (phase 7 of `template-improvement-review` did exactly
+that), never the worktree and never the main checkout.
+
+## Supervised sessions' tool shells inherit `TF_SESSION_LOOP=1` — a hand `--emit` from a sub-agent is refused `no_supervisor`
+
+`session-loop.sh` exports `TF_SESSION_LOOP=1` and `TF_SESSION_LOOP_PROJECT=<p>`
+to its child session, and every tool shell inside that session — including a
+sub-agent's — inherits them. A sub-agent that runs `launch-next-session.sh
+<other-item> --emit` by hand (a probe, a test) is therefore refused
+`no_supervisor`: the launcher reads "started by a supervisor" from the env and
+finds no live supervisor for that item. Correct for the chain, surprising from
+inside it. The probe lib and the stub-twin suite `unset TF_SESSION_LOOP
+TF_SESSION_LOOP_PROJECT TF_SESSION_PROJECT TF_SESSION_SEQ` first; do the same
+in any ad-hoc run.

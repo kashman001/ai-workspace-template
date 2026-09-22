@@ -1,0 +1,4 @@
+rc=2
+--- stdout
+--- stderr
+CONTEXT BUDGET STOP: this session is at 151000 tokens, past the 150000-token dumb-zone threshold. Finish the current atomic step only, then tell the user and run the session-rollover workflow (skills/session-rollover/SKILL.md). It is not finished until step 6 has staged your successor: run the launcher with a BARE --emit — never a path you computed yourself — and that is the last thing you do in this session. Do not start new work in this session.

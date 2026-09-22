@@ -4,18 +4,22 @@
 #          on-disk transcript and compare it against the workspace "dumb zone"
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
-# Usage:   context-budget.sh check|register|record|watch|release|supervised|
-#            children|dispatch-contract|dispatch-open|dispatch-close|
-#            dispatch-list|seq-sync|opts-sync|rollover-complete
+# Usage:   context-budget.sh check|register|record|watch|release|close|supervised
 #            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
-#            [--parent-session <sid>] [--agent-id <id>] [--takeover] [--all]
-#            [--report <path>] [--brief <path>] [--gen <n>] [--task <slug>]
-#            [--agent-type <t>] [--model <m>] [--effort <e>] [--status <S>]
-#            [--interval <secs>] [--quiet] [--mode interactive|handsoff]
+#            [--parent-session <sid>] [--agent-id <id>] [--takeover]
+#            [--interval <secs>] [--quiet]
 #            [--session-id <sid>]   (check only; read-only pin on a NAMED session)
+#            [--check]              (close only; run the checks, write nothing)
+#          The fleet verbs (children, dispatch-*) live in scripts/fleet.sh.
+#          register/release/close write the work item's session record
+#          (work/<item>/session-state.json, block `session`) through
+#          scripts/lib/session-lib.sh; seq-sync/opts-sync/rollover-complete
+#          were retired with the side files they wrote (Stage 4 phase 3).
 # Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
-# Exit:    0 OK / 1 WARN / 2 STOP / 3 error. Requires jq.
+# Exit:    0 OK / 1 WARN / 2 STOP / 3 error / 4 refused (`reason=<code>` on
+#          stderr: jq_missing, not_owner, ledger_seq_mismatch, ledger_shape,
+#          and the record library's codes). release exits 1 for a non-owner.
 # Design notes: D1–D9 in docs/archive/context-budget-design.html + docs/context-budget.md.
 
 set -u
@@ -40,6 +44,9 @@ resolve_workspace_root() {  # $1 = script-relative candidate root
 WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 LEDGER="$STATE_DIR/context-ledger.jsonl"
+# The record helper: one function, `session_record_update` (Stage 4 phase 1).
+# Sourced from beside this script, so a worktree copy finds its own.
+. "$(cd "$(dirname "$0")" && pwd -P)/lib/session-lib.sh"
 # One-time migration (2026-08-11, backlog M19): the ledger used to live in
 # work/context-decay/ — a research dir adopters prune. Fold any old ledger
 # into the new location so measurement history stays in one file.
@@ -68,14 +75,17 @@ COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30;
 # Set by copilot_vscode_discover when it pins by newest-mtime while >1 Copilot
 # session is concurrently active (no authoritative id) — an unsafe guess.
 COPILOT_PIN_AMBIGUOUS=0
-PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; ALL=0
+PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; CHECK=0
 # --session-id: ask the budget question about a session that is NOT this
 # process. check only, and never a writer — see the guard below resolve_session.
 PIN_SESSION_ID=""
-REPORT_FILE=""; BRIEF_FILE=""; GEN=1; GEN_SET=0
-TASK=""; AGENT_TYPE=""; MODEL=""; EFFORT=""; CLOSE_STATUS=""; SESSION_NUM=""; LOOP_MODE=""
-EXTRA_OPTS=""; APPROVAL=""
-case "${1:-}" in check|register|record|watch|release|supervised|children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list|seq-sync|opts-sync|rollover-complete) COMMAND="$1"; shift ;; esac
+case "${1:-}" in
+  check|register|record|watch|release|close|supervised) COMMAND="$1"; shift ;;
+  children|dispatch-contract|dispatch-open|dispatch-close|dispatch-list)
+    echo "error: $1 moved to scripts/fleet.sh — run: scripts/fleet.sh $1 [options]" >&2; exit 3 ;;
+  seq-sync|opts-sync|rollover-complete)
+    echo "error: $1 was retired (Stage 4 phase 3) — the session record work/<item>/session-state.json replaced the counter, the options file and the sentinel; see register/release/close" >&2; exit 3 ;;
+esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
@@ -85,19 +95,7 @@ while [ $# -gt 0 ]; do
     --session-id) PIN_SESSION_ID="$2"; shift 2 ;;
     --agent-id) AGENT_ID="$2"; shift 2 ;;
     --takeover) TAKEOVER=1; shift ;;
-    --all) ALL=1; shift ;;
-    --report) REPORT_FILE="$2"; shift 2 ;;
-    --brief) BRIEF_FILE="$2"; shift 2 ;;
-    --gen) GEN="$2"; GEN_SET=1; shift 2 ;;
-    --task) TASK="$2"; shift 2 ;;
-    --agent-type) AGENT_TYPE="$2"; shift 2 ;;
-    --model) MODEL="$2"; shift 2 ;;
-    --effort) EFFORT="$2"; shift 2 ;;
-    --status) CLOSE_STATUS="$2"; shift 2 ;;
-    --session) SESSION_NUM="$2"; shift 2 ;;
-    --mode) LOOP_MODE="$2"; shift 2 ;;
-    --extra) EXTRA_OPTS="$2"; shift 2 ;;
-    --approval) APPROVAL="$2"; shift 2 ;;
+    --check) CHECK=1; shift ;;
     --label) LABEL="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
@@ -107,6 +105,12 @@ done
 
 note() { [ "$QUIET" -eq 1 ] || echo "$@" >&2; }
 die()  { echo "error: $*" >&2; exit 3; }
+# Refusal: exit 4 with a reason code, detail as key=value on the same line.
+refuse() { echo "context-budget: refused reason=$1${2:+ $2}" >&2; exit 4; }
+# jq is a hard requirement (phase 0), checked before anything is read or written.
+command -v jq >/dev/null 2>&1 || refuse jq_missing "jq is required"
+[ "$CHECK" -eq 0 ] || [ "$COMMAND" = close ] \
+  || die "--check is the dry run of close only (got: $COMMAND)"
 
 # The pin names a session other than this one, so every command that WRITES is
 # refused: register/record under a pin would stamp this process's measurement
@@ -524,18 +528,18 @@ emit_check() {
 #
 # Three legs, all necessary. The budget leg is load-bearing: without it the
 # predicate is "supervisor live AND nothing staged", which is true of every
-# healthy session for its whole life, because session-loop.sh consumes
-# .next-command BEFORE the run. Neither of the other two is agent-authored --
-# .next-command is written only by --emit, the budget is measured from the
-# transcript -- so there is nothing here to talk your way past.
+# healthy session for its whole life, because session-loop.sh consumes the
+# record's `staged` block BEFORE the run. Neither of the other two is
+# agent-authored -- `staged` is written only by --emit, the budget is measured
+# from the transcript -- so there is nothing here to talk your way past.
 #
 # stderr only (like note(), and suppressed by --quiet), and exit codes are
 # untouched: 0/1/2 keep meaning OK/WARN/STOP. That is deliberate, and it is the
 # difference from the rejected P5 -- this never tells a compliant rollover it
 # did something wrong.
 #
-# NOT in emit_check(): cmd_children and cmd_watch call that for OTHER sessions,
-# where .next-command says nothing about the caller.
+# NOT in emit_check(): cmd_watch calls that for OTHER sessions,
+# where the record's `staged` says nothing about the caller.
 successor_advisory() {
   case "$LAST_STATUS" in WARN|STOP) ;; *) return 0 ;; esac
   local proj="$PROJECT" rec="$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
@@ -551,7 +555,7 @@ successor_advisory() {
   # wrong one trains the reader to ignore the signal. Subshell so a die() inside
   # the query cannot take the caller down with it.
   ( PROJECT="$proj" cmd_supervised ) >/dev/null 2>&1 || return 0
-  [ -s "$WORKSPACE_ROOT/work/$proj/.next-command" ] && return 0
+  jq -e '.staged != null' "$(record_path "$proj")" >/dev/null 2>&1 && return 0
   # Two-sided by necessity: the predicate is also true throughout H3, a session
   # that has decided to END the chain -- which is a correct ending, not a fault.
   note "successor: NOT STAGED — this chain continues only if you stage one."
@@ -586,98 +590,6 @@ parent_record_path() {
   done
   return 1
 }
-
-parent_chain_holds_lock() {
-  # Transitive validity (research §6): the chain of parent pointers must
-  # terminate at the current project-lock holder. Structural check only;
-  # liveness is enforced by the stale sweep at release time.
-  local sid="$1" holder hops f found
-  holder=$(jq -r '.session_id // empty' \
-    "$WORKSPACE_ROOT/work/$PROJECT/.active-session" 2>/dev/null)
-  [ -n "$holder" ] || return 1
-  hops=0
-  while [ "$hops" -lt 10 ]; do
-    [ "$sid" = "$holder" ] && return 0
-    found=""
-    for f in "$WORKSPACE_ROOT/work/$PROJECT/.agent-locks/"*.json; do
-      [ -f "$f" ] || continue
-      if [ "$(jq -r '.session_id // empty' "$f" 2>/dev/null)" = "$sid" ]; then
-        found=$(jq -r '.parent_session_id // empty' "$f" 2>/dev/null); break
-      fi
-    done
-    [ -n "$found" ] || return 1
-    sid="$found"; hops=$((hops+1))
-  done
-  return 1
-}
-
-acquire_child_lock() {
-  local dir="$WORKSPACE_ROOT/work/$PROJECT"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  if ! parent_chain_holds_lock "$PARENT_SESSION"; then
-    ROLE="auxiliary"
-    note "child lock: parent $PARENT_SESSION does not hold work/$PROJECT/.active-session (directly or via a valid chain); NOT granted — continuing as role=auxiliary"
-    return 0
-  fi
-  mkdir -p "$dir/.agent-locks"
-  jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg aid "$AGENT_ID" \
-    --arg psid "$PARENT_SESSION" --arg proj "$PROJECT" --argjson depth "$DEPTH" \
-    --arg ts "$(date -u +%FT%TZ)" \
-    '{runtime:$rt, session_id:$sid, parent_session_id:$psid, depth:$depth,
-      project:$proj, acquired_at:$ts}
-     + (if $aid == "" then {} else {agent_id:$aid} end)' \
-    > "$dir/.agent-locks/$RUNTIME-$SESSION_ID.json"
-  ROLE="child"
-  note "lock: acquired work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json under parent $PARENT_SESSION role=child"
-}
-
-backstamp_superseded() {
-  # Successor side of the rollover chain: launch-next-session.sh stamps the
-  # dying record role=superseded; the successor's primary acquisition completes
-  # it with superseded_by — newest same-project superseded record not yet
-  # claimed by a successor.
-  local f ts best="" best_ts=""
-  for f in "$STATE_DIR/sessions/"*.json; do
-    [ -f "$f" ] || continue
-    [ "$f" = "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" ] && continue
-    ts=$(jq -r --arg proj "$PROJECT" \
-      'select(.project == $proj and .role == "superseded"
-              and (.superseded_by // "") == "")
-       | .superseded_at // .registered_at // ""' "$f" 2>/dev/null)
-    [ -n "$ts" ] || continue
-    if [ -z "$best" ] || [ "$ts" \> "$best_ts" ]; then best="$f"; best_ts="$ts"; fi
-  done
-  [ -n "$best" ] || return 0
-  jq --arg by "$RUNTIME-$SESSION_ID" '.superseded_by = $by' "$best" \
-    > "$best.tmp" && mv "$best.tmp" "$best"
-  note "role: ${best##*/} back-stamped superseded_by=$RUNTIME-$SESSION_ID"
-}
-
-sweep_stale_primaries() {
-  # Registry hygiene: sessions that die without release/rollover (or lose the
-  # lock to a stale reclaim) leave role=primary records behind. Once a new
-  # primary holds the lock, stamp any other same-project primary whose
-  # liveness is stale (same rule as the lock) with the takeover stamp; live
-  # ones are left alone — liveness beats bookkeeping.
-  local f rt sid age
-  for f in "$STATE_DIR/sessions/"*.json; do
-    [ -f "$f" ] || continue
-    [ "$f" = "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" ] && continue
-    jq -e --arg proj "$PROJECT" \
-      'select(.project == $proj and .role == "primary")' "$f" >/dev/null 2>&1 \
-      || continue
-    rt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
-    sid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
-    if age=$(lock_holder_age "$rt" "$sid") && [ "$age" -lt "$LOCK_STALE" ]; then
-      continue
-    fi
-    jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
-      '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
-      "$f" > "$f.tmp" && mv "$f.tmp" "$f"
-    note "register: swept stale primary ${f##*/} (stamped superseded_by=$RUNTIME-$SESSION_ID)"
-  done
-}
-
 # D8/R2.10 — give the project lock a process identity. The refusal in
 # launch-next-session.sh ("held by LIVE session …, roll over from the holding
 # session instead") is correct but unactionable when the holder is a detached
@@ -722,58 +634,181 @@ resolve_runtime_pid() {
   return 0
 }
 
-acquire_lock() {
-  local dir="$WORKSPACE_ROOT/work/$PROJECT" lock hrt hsid age
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  lock="$dir/.active-session"
-  if [ -f "$lock" ]; then
-    hrt=$(jq -r '.runtime // empty' "$lock" 2>/dev/null)
-    hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
-    if [ "$hrt-$hsid" != "$RUNTIME-$SESSION_ID" ]; then
-      if age=$(lock_holder_age "$hrt" "$hsid") && [ "$age" -lt "$LOCK_STALE" ]; then
-        if [ "$TAKEOVER" -eq 1 ]; then
-          # Explicit recorded steal (S33 — human authority beats liveness):
-          # the old holder's record is stamped, never silently orphaned.
-          # The stamp is bookkeeping — the takeover proceeds whether or not it
-          # lands, but the note must say what actually happened (and a failed
-          # jq must not strand its half-written .tmp).
-          local hrec="$STATE_DIR/sessions/$hrt-$hsid.json" stamp
-          if [ ! -f "$hrec" ]; then
-            stamp="holder record absent — nothing to stamp"
-          elif jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
-              '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
-              "$hrec" > "$hrec.tmp" && mv "$hrec.tmp" "$hrec"; then
-            stamp="old holder stamped superseded"
-          else
-            rm -f "$hrec.tmp"
-            stamp="WARNING: failed to stamp holder record superseded — ${hrec##*/} left unstamped"
-          fi
-          note "lock: takeover — stealing work/$PROJECT/.active-session from live holder $hrt-$hsid (artifact active ${age}s ago); $stamp"
-        else
-          ROLE="auxiliary"
-          note "lock: work/$PROJECT/.active-session held by $hrt-$hsid (artifact active ${age}s ago); NOT acquired — one primary session per work item; continuing as role=auxiliary"
-          return 0
-        fi
+# ---- the work item's session record (work/<item>/session-state.json) --------
+record_path() { printf '%s' "$WORKSPACE_ROOT/work/$1/session-state.json"; }
+
+# Ledger grammar, copied from launch-next-session.sh (which mirrors
+# check-ledger.py): the top "# Session Handoff" heading's session number.
+ledger_file() {  # $1 = project
+  local hf
+  for hf in "$WORKSPACE_ROOT/work/$1/handoff.md" "$WORKSPACE_ROOT/work/$1/session_handoff.md"; do
+    [ -f "$hf" ] && { printf '%s' "$hf"; return 0; }
+  done
+  return 1
+}
+top_ledger_session() {
+  grep -m1 -E '^#[[:space:]]*Session Handoff' "$1" 2>/dev/null \
+    | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}//g' \
+    | grep -oiE 'session[[:space:]]+#?[0-9]+|^#[[:space:]]*session handoff[[:space:]]*[—-][[:space:]]*s?[0-9]+' \
+    | head -1 | grep -oE '[0-9]+' | head -1 || true
+}
+
+launcher_hash() {  # $1 = project; digest of next-session.md, empty when absent
+  local f="$WORKSPACE_ROOT/work/$1/next-session.md"
+  [ -f "$f" ] || return 0
+  if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$f" | cut -d' ' -f1
+  elif command -v sha256sum >/dev/null 2>&1; then sha256sum "$f" | cut -d' ' -f1
+  else cksum "$f" | cut -d' ' -f1; fi
+}
+
+session_block_json() {  # $1 = seq -> this session's `session` block
+  jq -cn --argjson seq "$1" --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
+    --arg ts "$(date -u +%FT%TZ)" --arg lh "$(launcher_hash "$PROJECT")" \
+    --arg user "$USER@$(hostname -s)" --arg pid "$RUNTIME_PID" --arg pstart "$RUNTIME_PID_START" \
+    '{seq:$seq, runtime:$rt, session_id:$sid}
+     + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$pstart} end)
+     + {artifact:$af, registered_at:$ts, launcher_hash:$lh, user:$user, ended:null}'
+}
+
+# Liveness of a recorded owner: the pid is running AND started when the record
+# says (pids recycle). A record without a pid (registered from outside the
+# process tree: copilot-vscode, gemini, or a hook whose walk found nothing)
+# falls back to the owner's transcript age, as the old lock did.
+owner_live() {  # $1 = session block json; 0 live / 1 dead or unknowable
+  local pid pstart cur rt sid age
+  pid=$(printf '%s' "$1" | jq -r '.pid // empty')
+  pstart=$(printf '%s' "$1" | jq -r '.pid_start // empty')
+  if [ -n "$pid" ]; then
+    kill -0 "$pid" 2>/dev/null || return 1
+    cur=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//;s/ *$//')
+    [ -n "$cur" ] && [ "$cur" = "$pstart" ]
+    return
+  fi
+  rt=$(printf '%s' "$1" | jq -r '.runtime // empty')
+  sid=$(printf '%s' "$1" | jq -r '.session_id // empty')
+  age=$(lock_holder_age "$rt" "$sid") || return 1
+  [ "$age" -lt "$LOCK_STALE" ]
+}
+
+# How the successor finds its number (stage3-design-v2 "How the successor finds
+# its number"): explicit --project; else TF_SESSION_PROJECT + TF_SESSION_SEQ
+# (attached launch, supervisor); else a record whose launch.pending names this
+# very process (in-place restart); else nothing — registered project-less,
+# measures only. Never a guess from file mtimes.
+BOUND=""
+bind_work_item() {
+  local via="" want_seq="" rec p
+  if [ -n "$PROJECT" ]; then
+    [ -d "$WORKSPACE_ROOT/work/$PROJECT" ] || die "no such work directory: work/$PROJECT"
+    via="project"
+  elif [ -n "${TF_SESSION_PROJECT:-}" ]; then
+    if [ -z "${TF_SESSION_SEQ:-}" ]; then
+      note "register: TF_SESSION_PROJECT=$TF_SESSION_PROJECT without TF_SESSION_SEQ — not bound"
+    elif [ ! -d "$WORKSPACE_ROOT/work/$TF_SESSION_PROJECT" ]; then
+      note "register: TF_SESSION_PROJECT=$TF_SESSION_PROJECT names no work directory — not bound"
+    elif [ ! -f "$(record_path "$TF_SESSION_PROJECT")" ]; then
+      note "register: work/$TF_SESSION_PROJECT has no record to bind TF_SESSION_SEQ=$TF_SESSION_SEQ to — not bound"
+    else
+      PROJECT="$TF_SESSION_PROJECT"; via="env"; want_seq="$TF_SESSION_SEQ"
+    fi
+  fi
+  if [ -z "$via" ] && [ -n "$RUNTIME_PID" ]; then
+    for rec in "$WORKSPACE_ROOT"/work/*/session-state.json; do
+      [ -f "$rec" ] || continue
+      jq -e --argjson pid "$RUNTIME_PID" --arg ps "$RUNTIME_PID_START" \
+        '.session == null and .launch.pending.pid == $pid and .launch.pending.pid_start == $ps' \
+        "$rec" >/dev/null 2>&1 || continue
+      p="${rec%/session-state.json}"; PROJECT="${p##*/}"; via="pending"; break
+    done
+  fi
+  [ -n "$via" ] || return 0
+  bind_record "$via" "$want_seq"
+  PROJECT="$BOUND"
+}
+
+# Fill the `session` block of work/$PROJECT's record, or leave it alone.
+# Register never blocks: every outcome is a note, and the exit code stays the
+# measurement's. Sets BOUND=$PROJECT when this session now owns the item.
+bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or empty
+  local rec cur seq owner osid ort action loser="" seen_sid=null seen_seq=null hf top block rc=0 prompt=""
+  rec="$(record_path "$PROJECT")"
+  if [ -f "$rec" ]; then
+    cur=$(cat "$rec" 2>/dev/null) || cur=""
+    printf '%s' "$cur" | jq -e 'type=="object" and .schema == 1' >/dev/null 2>&1 \
+      || { note "register: work/$PROJECT/session-state.json is unreadable or not schema 1 — not bound"; return 0; }
+    seq=$(printf '%s' "$cur" | jq -r '.seq // empty')
+    # The /clear seed (ADR-0009 as amended): the launcher's --clear left the
+    # bootstrap prompt in launch.pending. Binding nulls the block, so the
+    # prompt is taken here and printed once, below, for the pending binding
+    # only — Claude Code adds SessionStart hook stdout to the session context.
+    [ "$1" = pending ] && prompt=$(printf '%s' "$cur" | jq -r '.launch.pending.prompt // empty')
+  else
+    seq=""
+  fi
+  if [ -z "$seq" ]; then
+    # Registration may open seq once, on an item that has no record yet, and
+    # only when the item was named explicitly: ledger top block + 1, else 1.
+    [ "$1" = project ] || { note "register: work/$PROJECT has no numbered record — not bound"; return 0; }
+    seq=1
+    if hf=$(ledger_file "$PROJECT"); then
+      top=$(top_ledger_session "$hf"); [ -n "$top" ] && seq=$((top + 1))
+    fi
+    action="opened"
+  else
+    seen_seq="$seq"
+    if [ -n "$2" ] && [ "$2" != "$seq" ]; then
+      note "register: TF_SESSION_SEQ=$2 but work/$PROJECT record seq=$seq — not bound"; return 0
+    fi
+    owner=$(printf '%s' "$cur" | jq -c '.session // null')
+    if [ "$owner" = null ]; then
+      action="filled"
+    else
+      osid=$(printf '%s' "$owner" | jq -r '.session_id // empty')
+      ort=$(printf '%s' "$owner" | jq -r '.runtime // empty')
+      seen_sid=$(printf '%s' "$osid" | jq -R .)
+      loser="$ort-$osid"
+      if [ "$loser" = "$RUNTIME-$SESSION_ID" ]; then
+        action="refreshed"
+      elif [ "$TAKEOVER" -eq 1 ]; then
+        action="takeover"
+      elif [ -n "$RUNTIME_PID" ] \
+           && [ "$(printf '%s' "$owner" | jq -r '.pid // empty')" = "$RUNTIME_PID" ] \
+           && [ "$(printf '%s' "$owner" | jq -r '.pid_start // empty')" = "$RUNTIME_PID_START" ]; then
+        action="adopted"     # same process, new session id: an in-place restart
+      elif owner_live "$owner"; then
+        note "register: reason=owner_live owner=$loser — work/$PROJECT is measured, not owned by $RUNTIME-$SESSION_ID (--takeover to override)"
+        return 0
       else
-        note "lock: reclaiming stale lock from $hrt-$hsid"
+        action="adopted"     # owner dead: the number is kept, the slot is taken
       fi
     fi
   fi
-  jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg proj "$PROJECT" \
-    --arg ts "$(date -u +%FT%TZ)" --arg user "$USER@$(hostname -s)" \
-    --arg pid "$RUNTIME_PID" --arg pstart "$RUNTIME_PID_START" \
-    --arg sup "$SUPERVISOR_PID" \
-    '{runtime:$rt, session_id:$sid, project:$proj, acquired_at:$ts, user:$user}
-     + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$pstart} end)
-     + (if $sup == "" then {} else {supervisor_pid:($sup|tonumber)} end)' > "$lock"
-  ROLE="primary"
-  note "lock: acquired work/$PROJECT/.active-session as $RUNTIME-$SESSION_ID role=primary"
+  block=$(session_block_json "$seq")
+  # Compare-and-set on what was just read: a record that moved in between is a
+  # silent no-op (rc 1), never a blind overwrite. Binding also empties
+  # launch.pending — the one cross-block write registration is allowed.
+  session_record_update "$rec" \
+    '(.seq // null) == $seen_seq and ((.session.session_id) // null) == $seen_sid' \
+    '.seq = $seq | .session = $s | (if (.launch | type) == "object" then .launch.pending = null else . end)' \
+    --argjson seen_seq "$seen_seq" --argjson seen_sid "$seen_sid" \
+    --argjson seq "$seq" --argjson s "$block" || rc=$?
+  case "$rc" in
+    0) BOUND="$PROJECT"
+       case "$action" in
+         takeover|adopted) note "register: reason=$action loser=$loser seq=$seq" ;;
+       esac
+       note "register: bound work/$PROJECT seq=$seq via=$1 ($action)"
+       [ -n "$prompt" ] && [ "$QUIET" -eq 0 ] && printf '%s\n' "$prompt" ;;
+    1) note "register: work/$PROJECT/session-state.json changed underneath — not bound" ;;
+    *) note "register: could not write work/$PROJECT/session-state.json — not bound" ;;
+  esac
+  return 0
 }
 
 cmd_register() {
   resolve_session
-  # D8/R2.10 — resolved once, here, and used by both record writers below
-  # (the project lock and the session record). Must run BEFORE acquire_lock.
+  # D8/R2.10 — resolved once, here, and used by the session block, the
+  # registry record and the pending-pid binding below.
   resolve_runtime_pid
   # From a worktree, share local-only work/<item>/ dirs in before the session
   # reads its launcher (backlog L45); prints one line per new link.
@@ -800,74 +835,22 @@ cmd_register() {
   mkdir -p "$STATE_DIR/sessions"
   rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
   find "$STATE_DIR/sessions" -name '*.json' -mtime +7 -delete 2>/dev/null  # dead sessions
-  # Registration handshake (rollover-automation-fix): launch-next-session.sh
-  # drops successor-pending-<project>.json just before launching; SessionStart
-  # hooks invoke register with no --project, so consume the freshest
-  # non-expired pending file (TTL 600s by mtime — a crashed launch's stale
-  # file must not mis-stamp a later unrelated session) and stamp its project
-  # into this record. Every top-level register sweeps expired files; a
-  # top-level register with explicit --project wins and retires only its own
-  # pending file unread. Child registrations (--parent-session) are by
-  # construction never the launched successor: they neither consume nor
-  # retire a handshake — the real successor's file must survive a child
-  # registering first.
-  local pf pnow pmt page pproj
-  # D14: a supervised successor inherits TF_SESSION_LOOP_PROJECT from
-  # session-loop.sh, so it KNOWS its work item and must never guess one. Adopting
-  # it here drops this registration onto the explicit-PROJECT path below, which
-  # retires this project's own pending file unread and leaves every other chain's
-  # alone — so two chains staging inside the same TTL can no longer swap locks by
-  # mtime. The freshest-file heuristic survives only for launches with no
-  # supervisor to inherit from (unsupervised and attached starts).
-  if [ -z "$PROJECT" ] && [ -z "$PARENT_SESSION" ] \
-     && [ -n "${TF_SESSION_LOOP_PROJECT:-}" ] \
-     && [ -d "$WORKSPACE_ROOT/work/$TF_SESSION_LOOP_PROJECT" ]; then
-    PROJECT="$TF_SESSION_LOOP_PROJECT"
-    note "register: adopted supervised project=$PROJECT from TF_SESSION_LOOP_PROJECT"
-  fi
-  if [ -z "$PARENT_SESSION" ]; then
-    pnow=$(date +%s)
-    while IFS= read -r pf; do
-      [ -f "$pf" ] || continue
-      pmt=$(stat -f%m "$pf" 2>/dev/null || stat -c%Y "$pf" 2>/dev/null || echo 0)
-      page=$(( pnow - pmt ))
-      if [ "$page" -ge 600 ]; then
-        rm -f "$pf"
-        note "register: swept expired successor handshake ${pf##*/} (${page}s old)"
-        continue
-      fi
-      if [ -n "$PROJECT" ]; then
-        # Explicit --project wins: retire this project's own pending file
-        # unread; fresh files for other projects belong to concurrent
-        # launches' successors — leave them.
-        [ "$pf" = "$STATE_DIR/successor-pending-$PROJECT.json" ] && rm -f "$pf"
-        continue
-      fi
-      pproj=$(jq -r '.project // empty' "$pf" 2>/dev/null)
-      # Consume only the freshest fresh file (ls -t: newest first); a second
-      # fresh file belongs to a concurrent launch's successor — leave it.
-      if [ -n "$pproj" ] && [ -d "$WORKSPACE_ROOT/work/$pproj" ]; then
-        PROJECT="$pproj"
-        rm -f "$pf"
-        note "register: consumed successor handshake ${pf##*/} — project=$PROJECT"
-      fi
-    done < <(ls -t "$STATE_DIR"/successor-pending-*.json 2>/dev/null)
-  fi
   DEPTH=0
   if [ -n "$PARENT_SESSION" ]; then
     local prec
     prec=$(parent_record_path "$PARENT_SESSION") \
       || die "parent session $PARENT_SESSION is not registered"
     DEPTH=$(( $(jq -r '.depth // 0' "$prec" 2>/dev/null) + 1 ))
+  else
+    # Children never own a work item (fleet is its own module): only a
+    # top-level registration binds.
+    bind_work_item
   fi
-  ROLE=""
-  if [ -n "$PROJECT" ]; then
-    # Children never contend for the project lock (research §6).
-    if [ -n "$PARENT_SESSION" ]; then acquire_child_lock; else acquire_lock; fi
-    [ "$ROLE" = "primary" ] && { backstamp_superseded; sweep_stale_primaries; }
-  fi
+  # The per-session measurement record: what check/record measure from, what
+  # the launcher, the supervisor and fleet.sh read. `project` names the item
+  # this session OWNS (bound above), never one it merely asked about.
   jq -n --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg af "$ARTIFACT" \
-    --arg proj "$PROJECT" --arg ts "$(date -u +%FT%TZ)" --arg role "$ROLE" \
+    --arg proj "$BOUND" --arg ts "$(date -u +%FT%TZ)" \
     --arg psid "$PARENT_SESSION" --arg aid "$AGENT_ID" --argjson depth "$DEPTH" \
     --arg user "$USER@$(hostname -s)" \
     --arg pid "$RUNTIME_PID" --arg pstart "$RUNTIME_PID_START" \
@@ -875,7 +858,6 @@ cmd_register() {
     '{runtime:$rt, session_id:$sid, artifact:$af, project:$proj, registered_at:$ts, user:$user}
      + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$pstart} end)
      + (if $sup == "" then {} else {supervisor_pid:($sup|tonumber)} end)
-     + (if $role == "" then {} else {role:$role} end)
      + (if $psid == "" then {} else {parent_session_id:$psid, depth:$depth} end)
      + (if $aid == "" then {} else {agent_id:$aid} end)' \
     > "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
@@ -912,201 +894,109 @@ cmd_record() {
   successor_advisory
   return $rc
 }
-
-sweep_child_locks() {
-  # Sweep stale child locks (holder artifact older than LOCK_STALE, same
-  # liveness rule as the project lock); the survivors — live child locks —
-  # land in LIVE_CHILD_LOCKS, one path per line.
-  local lockdir="$WORKSPACE_ROOT/work/$PROJECT/.agent-locks" f crt csid age
-  LIVE_CHILD_LOCKS=""
-  [ -d "$lockdir" ] || return 0
-  for f in "$lockdir"/*.json; do
-    [ -f "$f" ] || continue
-    crt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
-    csid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
-    if age=$(lock_holder_age "$crt" "$csid") && [ "$age" -lt "$LOCK_STALE" ]; then
-      LIVE_CHILD_LOCKS="$LIVE_CHILD_LOCKS$f
-"
-    else
-      rm -f "$f"; note "release: swept stale child lock ${f##*/}"
-    fi
-  done
-}
-
-live_locks_naming_parent() {
-  # $1 = session id. Live child locks whose parent pointer names it
-  # (basenames, space-joined) — the I4 release-order blockers.
-  local f out=""
-  while IFS= read -r f; do
-    [ -n "$f" ] || continue
-    [ "$(jq -r '.parent_session_id // empty' "$f" 2>/dev/null)" = "$1" ] \
-      && out="$out ${f##*/}"
-  done <<EOF
-$LIVE_CHILD_LOCKS
-EOF
-  printf '%s' "${out# }"
-}
-
-# C1 — the supervision query (design.md §3). Read-only, and it NEVER deletes a
-# stale marker: sweeping belongs to the supervisor (session-loop.sh:76-82), and
-# an agent deleting a marker belonging to a supervisor mid-start would create
-# the exact failure this work item exists to remove.
+# C1 — the supervision query. Read-only: it reads the record's chain.supervisor
+# block (written by session-loop.sh at start, nulled at its exit) and NEVER
+# clears a stale one — an agent clearing a block mid-start would create the
+# exact failure this work item exists to remove. Liveness is the supervisor's
+# own rule: pid running and started when the record says.
 #
 # Exit 0 supervised / 1 not supervised / 2 ambiguous. Ambiguity resolves to
 # "stage" at the caller (R3): a spurious staged command is harmless, a missing
 # one strands the chain. Note die() exits 3, so ambiguity must return, not die.
 cmd_supervised() {
   [ -n "$PROJECT" ] || die "supervised: --project is required"
-  local loopf="$WORKSPACE_ROOT/work/$PROJECT/.session-loop"
-  local pid="" started=""
-  if [ -f "$loopf" ]; then
-    pid="$(jq -r '.pid // empty' "$loopf" 2>/dev/null)"
-    started="$(jq -r '.started_at // empty' "$loopf" 2>/dev/null)"
+  local rec pid="" pstart="" started="" cur
+  rec="$(record_path "$PROJECT")"
+  if jq -e '.chain.supervisor != null' "$rec" >/dev/null 2>&1; then
+    pid="$(jq -r '.chain.supervisor.pid // empty' "$rec" 2>/dev/null)"
+    pstart="$(jq -r '.chain.supervisor.pid_start // empty' "$rec" 2>/dev/null)"
+    started="$(jq -r '.chain.supervisor.started_at // empty' "$rec" 2>/dev/null)"
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      [ "$QUIET" -eq 1 ] || echo "supervised pid=$pid project=$PROJECT started_at=$started"
-      return 0
+      cur=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//;s/ *$//')
+      if [ "$cur" = "$pstart" ]; then
+        [ "$QUIET" -eq 1 ] || echo "supervised pid=$pid project=$PROJECT started_at=$started"
+        return 0
+      fi
     fi
-    [ "$QUIET" -eq 1 ] || echo "ambiguous marker work/$PROJECT/.session-loop exists but pid ${pid:-unknown} is not alive"
+    [ "$QUIET" -eq 1 ] || echo "ambiguous work/$PROJECT/session-state.json names supervisor pid ${pid:-unknown} but it is not alive"
     return 2
   fi
   if [ "${TF_SESSION_LOOP_PROJECT:-}" = "$PROJECT" ]; then
-    [ "$QUIET" -eq 1 ] || echo "ambiguous TF_SESSION_LOOP_PROJECT names $PROJECT but no .session-loop marker exists"
+    [ "$QUIET" -eq 1 ] || echo "ambiguous TF_SESSION_LOOP_PROJECT names $PROJECT but the record names no supervisor"
     return 2
   fi
   [ "$QUIET" -eq 1 ] || echo "unsupervised"
   return 1
 }
 
+# The item this session owns: --project, else its own registry record. The
+# registry stamps `project` only on a binding registration, so a non-owner
+# resolves nothing here (cmd_release's idiom, never a newest-mtime guess).
+resolve_own_project() {
+  [ -n "$PROJECT" ] && return 0
+  PROJECT=$(jq -r '.project // empty' "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" 2>/dev/null)
+  [ -n "$PROJECT" ]
+}
+record_owner() {  # $1 = record path -> "<rt>-<sid>" of the recorded owner ("-" when none)
+  jq -r '"\(.session.runtime // "")-\(.session.session_id // "")"' "$1" 2>/dev/null
+}
+
+# release: the session-end door (SessionEnd hook, `|| true`). Merges ended.at
+# into the record iff it still names the caller; a non-owner is a no-op that
+# says so (exit 1 — the lib's "answer was no"), never a write, never a
+# refusal a hook would report as a failure.
 cmd_release() {
+  [ "$TAKEOVER" -eq 0 ] || die "release: --takeover is not a release option — takeover belongs to register (and the launcher)"
   resolve_session
-  if [ -z "$PROJECT" ]; then
-    PROJECT=$(jq -r '.project // empty' "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" 2>/dev/null)
-    [ -n "$PROJECT" ] || die "release: no --project given and none recorded for this session"
-  fi
-  sweep_child_locks
-  # A child releases its own per-child lock, never the project lock — and
-  # only bottom-up: refused while live child locks name it as parent (I4).
-  local own_child_lock="$WORKSPACE_ROOT/work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json"
-  if [ -f "$own_child_lock" ]; then
-    local blockers
-    blockers=$(live_locks_naming_parent "$SESSION_ID")
-    [ -z "$blockers" ] \
-      || die "release: refusing — live child locks under $RUNTIME-$SESSION_ID: $blockers"
-    rm -f "$own_child_lock"
-    note "release: released work/$PROJECT/.agent-locks/$RUNTIME-$SESSION_ID.json"
+  resolve_own_project || { note "release: no work item bound to $RUNTIME-$SESSION_ID — nothing to release"; return 0; }
+  local rec rc=0
+  rec="$(record_path "$PROJECT")"
+  session_record_update "$rec" \
+    '.session.runtime == $rt and .session.session_id == $sid' \
+    '.session.ended = ((.session.ended // {}) + {at: $ts})' \
+    --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg ts "$(date -u +%FT%TZ)" || rc=$?
+  case "$rc" in
+    0) note "release: ended work/$PROJECT session $(jq -r '.session.seq // "?"' "$rec" 2>/dev/null) ($RUNTIME-$SESSION_ID)"; return 0 ;;
+    1) note "release: no-op reason=not_owner owner=$(record_owner "$rec") — work/$PROJECT is not this session's ($RUNTIME-$SESSION_ID); nothing written"; return 1 ;;
+    *) return "$rc" ;;
+  esac
+}
+
+# close: the stop door. The ledger checks the launcher runs at a rollover run
+# here, inline, at the moment the session ends the chain: the top block of
+# work/<item>/handoff.md must carry this session's number. --check runs the
+# same checks and writes nothing, for the agent to use while writing.
+cmd_close() {
+  resolve_session
+  resolve_own_project || die "close: no --project given and none recorded for this session"
+  local rec owner seq hf top rc=0
+  rec="$(record_path "$PROJECT")"
+  [ -f "$rec" ] || refuse not_owner "project=$PROJECT — no record; nothing registered on this item"
+  owner=$(record_owner "$rec") || refuse record_unreadable "record=$rec"
+  [ "$owner" = "$RUNTIME-$SESSION_ID" ] \
+    || refuse not_owner "project=$PROJECT owner=${owner#-} me=$RUNTIME-$SESSION_ID"
+  seq=$(jq -r '.seq // empty' "$rec" 2>/dev/null)
+  [ -n "$seq" ] || refuse record_unreadable "record=$rec — no seq"
+  hf=$(ledger_file "$PROJECT") \
+    || refuse ledger_shape "project=$PROJECT — no handoff.md (nor session_handoff.md)"
+  grep -q -E '^#[[:space:]]*Session Handoff' "$hf" 2>/dev/null \
+    || refuse ledger_shape "file=$hf — no '# Session Handoff' heading"
+  top=$(top_ledger_session "$hf")
+  [ -n "$top" ] || refuse ledger_shape "file=$hf — the top heading carries no session number"
+  [ "$top" = "$seq" ] || refuse ledger_seq_mismatch "ledger=$top seq=$seq file=$hf"
+  if [ "$CHECK" -eq 1 ]; then
+    echo "close: check ok seq=$seq project=$PROJECT"
     return 0
   fi
-  local lock="$WORKSPACE_ROOT/work/$PROJECT/.active-session" hrt hsid
-  [ -f "$lock" ] || { note "release: no lock at work/$PROJECT/.active-session"; return 0; }
-  hrt=$(jq -r '.runtime // empty' "$lock" 2>/dev/null)
-  hsid=$(jq -r '.session_id // empty' "$lock" 2>/dev/null)
-  # C5 — lock authority (design.md §3). --takeover is symmetric with the
-  # acquisition side (:558-567), where an explicit recorded steal from a LIVE
-  # holder already exists as "human authority beats liveness". The non-owner
-  # branch now exits non-zero: a scripted release must never silently no-op,
-  # because a forked session has a new session id and can never satisfy the
-  # equality test (D4).
-  if [ "$hrt-$hsid" = "$RUNTIME-$SESSION_ID" ] || [ "$TAKEOVER" -eq 1 ]; then
-    # Release-order guard (I4): every live child lock descends from the
-    # project lock, so any survivor blocks the holder's release. --takeover
-    # does NOT bypass it — lock authority moves; lock ordering does not.
-    [ -z "$LIVE_CHILD_LOCKS" ] \
-      || die "release: refusing — live child locks in work/$PROJECT/.agent-locks: $(printf '%s' "$LIVE_CHILD_LOCKS" | while IFS= read -r f; do printf '%s ' "${f##*/}"; done)"
-    if [ "$hrt-$hsid" != "$RUNTIME-$SESSION_ID" ]; then
-      # A7 — symmetric with the acquisition-side steal above: the dispossessed
-      # holder's record is stamped, never left in the registry as a primary
-      # with no lock behind it.
-      # The stamp is bookkeeping — the takeover proceeds whether or not it
-      # lands, but the note must say what actually happened (and a failed
-      # jq must not strand its half-written .tmp).
-      local hrec="$STATE_DIR/sessions/$hrt-$hsid.json" stamp
-      if [ ! -f "$hrec" ]; then
-        stamp="holder record absent — nothing to stamp"
-      elif jq --arg ts "$(date -u +%FT%TZ)" --arg by "$RUNTIME-$SESSION_ID" \
-          '.role="superseded" | .superseded_at=$ts | .superseded_by=$by' \
-          "$hrec" > "$hrec.tmp" && mv "$hrec.tmp" "$hrec"; then
-        stamp="holder stamped superseded"
-      else
-        rm -f "$hrec.tmp"
-        stamp="WARNING: failed to stamp holder record superseded — ${hrec##*/} left unstamped"
-      fi
-      note "release: takeover — releasing work/$PROJECT/.active-session recorded to $hrt-$hsid; $stamp"
-    fi
-    rm -f "$lock"; note "release: released work/$PROJECT/.active-session"
-  else
-    # A7 — the refusal names the holder's liveness (same signal as the lock's
-    # stale rule) so the operator can tell "takeover is safe" from "you may be
-    # the wrong session". Refusal is unconditional either way — only the
-    # message differs.
-    local hage
-    if hage=$(lock_holder_age "$hrt" "$hsid") && [ "$hage" -lt "$LOCK_STALE" ]; then
-      die "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID) — holder is live (artifact active ${hage}s ago), you may be the wrong session; re-run with --takeover to release it anyway"
-    else
-      die "release: lock held by $hrt-$hsid, not by this session ($RUNTIME-$SESSION_ID) — holder looks stale/dead (no artifact activity within ${LOCK_STALE}s), takeover is safe; re-run with --takeover to release it"
-    fi
-  fi
-}
-
-claude_child_measure() {
-  # Sidechain-INCLUSIVE variant of claude_measure: a subagent transcript's
-  # entries are all isSidechain:true, so the self-measure filter would
-  # silently degrade every child to size-estimate.
-  local f="$1" jq_prog tokens
-  jq_prog='[.[] | select(.message.usage.input_tokens != null)]
-    | last | if . == null then empty else
-      (.message.usage.input_tokens + (.message.usage.cache_read_input_tokens // 0)
-       + (.message.usage.cache_creation_input_tokens // 0)) end'
-  tokens=$(tail -n 2000 "$f" | jq -s -r "$jq_prog" 2>/dev/null)
-  [ -z "$tokens" ] && tokens=$(jq -s -r "$jq_prog" "$f" 2>/dev/null)
-  [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
-}
-
-cmd_children() {
-  # R1 sweep (research §10): no runtime reports per-child usage to the parent;
-  # measure the child transcript artifacts directly. Escalation-only output —
-  # WARN/STOP children print, OK children don't (unless --all). Exit code is
-  # the worst child status, check-style. Direct children only (R8).
-  if [ "$RUNTIME" != "auto" ] && [ "$RUNTIME" != "claude" ]; then
-    die "children: only implemented for runtime=claude (got $RUNTIME)"
-  fi
-  if [ -n "$PARENT_SESSION" ]; then
-    local prec
-    prec=$(parent_record_path "$PARENT_SESSION") \
-      || die "children: parent session $PARENT_SESSION is not registered"
-    RUNTIME=$(jq -r '.runtime // empty' "$prec")
-    ARTIFACT=$(jq -r '.artifact // empty' "$prec")
-    [ -n "$ARTIFACT" ] && [ -f "$ARTIFACT" ] \
-      || die "children: no artifact on record for parent $PARENT_SESSION"
-  else
-    resolve_session
-  fi
-  [ "$RUNTIME" = "claude" ] || die "children: only implemented for runtime=claude (got $RUNTIME)"
-  local subdir="${ARTIFACT%.jsonl}/subagents"
-  local worst=0 measured=0 escalated=0
-  local f b tokens method status pct mt age atype
-  if [ -d "$subdir" ]; then
-    for f in "$subdir"/agent-*.jsonl; do
-      [ -f "$f" ] || continue
-      read -r tokens method < <(claude_child_measure "$f") || continue
-      [ -n "$tokens" ] || continue
-      measured=$((measured+1))
-      if [ "$tokens" -ge "$THRESHOLD" ]; then status="STOP"; worst=2
-      elif [ "$tokens" -ge "$WARN" ]; then status="WARN"; [ "$worst" -lt 1 ] && worst=1
-      else status="OK"; fi
-      [ "$status" = "OK" ] || escalated=$((escalated+1))
-      if [ "$status" != "OK" ] || [ "$ALL" -eq 1 ]; then
-        pct=$(( tokens * 100 / THRESHOLD ))
-        mt=$(stat -f%m "$f" 2>/dev/null || stat -c%Y "$f" 2>/dev/null) || mt=$(date +%s)
-        age=$(( $(date +%s) - mt ))
-        atype=$(jq -r '.agentType // empty' "${f%.jsonl}.meta.json" 2>/dev/null)
-        [ -n "$atype" ] || atype="?"
-        b="${f##*/}"; b="${b%.jsonl}"
-        echo "agent=$b tokens=$tokens threshold=$THRESHOLD warn=$WARN pct=$pct status=$status age=$age type=$atype artifact=$f"
-      fi
-    done
-  fi
-  note "children: $measured measured, $escalated escalated"
-  return "$worst"
+  session_record_update "$rec" \
+    '.session.runtime == $rt and .session.session_id == $sid' \
+    '.session.ended = ((.session.ended // {}) + {at: $ts, door: "stop"})' \
+    --arg rt "$RUNTIME" --arg sid "$SESSION_ID" --arg ts "$(date -u +%FT%TZ)" || rc=$?
+  case "$rc" in
+    0) echo "close: ok seq=$seq project=$PROJECT door=stop"; return 0 ;;
+    1) refuse not_owner "project=$PROJECT — the record changed underneath" ;;
+    *) return "$rc" ;;
+  esac
 }
 
 cmd_watch() {
@@ -1126,329 +1016,12 @@ cmd_watch() {
   done
 }
 
-# R2 dispatch contract (subagent-rollover research §8/§10): the block a parent
-# injects into a long-running child's dispatch prompt. Stateless, ASCII-only
-# (dispatch prompts traverse %q and BSD sed in launch paths), runtime-agnostic
-# — the portable-core tier, load-bearing on disk protocol not hooks.
-cmd_dispatch_contract() {
-  [ -n "$REPORT_FILE" ] || die "dispatch-contract requires --report <path>"
-  case "$GEN" in ''|*[!0-9]*|0) die "--gen must be a positive integer" ;; esac
-  echo "=== Dispatch contract (context-budget R2/R3) ==="
-  echo "You are generation $GEN on this task."
-  [ -n "$BRIEF_FILE" ] && echo "Brief: $BRIEF_FILE"
-  echo "Report file: $REPORT_FILE"
-  if [ "$GEN" -ge 2 ]; then
-    cat <<'EOF'
-- Read the report file before starting: earlier generations' progress and
-  open items are recorded there. Finish the open items first.
-EOF
-  fi
-  echo "- At every work-unit boundary, append a progress block to the report file"
-  echo "  (what finished, what is next, open items), labeled [gen $GEN]. This"
-  echo "  doubles as your heartbeat."
-  cat <<'EOF'
-- Keep your final return message to at most 15 lines; detail belongs in the
-  report file, not the return.
-- The first line of your return must be one of:
-  DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED
-- ROLLOVER_NEEDED means: context spent, task incomplete, report current as
-  of your last checkpoint, open items listed there. Emit it only when asked
-  to checkpoint or when a WARN/STOP line is pushed into your session -
-  never from self-assessment of your own context usage.
-- If asked to checkpoint: flush state to the report file, then return your
-  status and open items. Do not push on.
-EOF
-}
-
-# R4 dispatch records (subagent-rollover research §5/§8): the parent persists
-# each child dispatch spec so a successor parent can reconstruct the
-# orchestration and re-dispatch unfinished subtrees fresh — resume is keyed to
-# the (dead) predecessor's session id. Generation fencing lives in
-# dispatch-open: gen N+1 exists only after gen N was closed (clean yield or a
-# parent KILLED ruling), so each report file has at most one live writer.
-# Records are workspace-root-anchored runtime state (ADR-0006), one JSON per
-# task under work/<proj>/.agent-dispatch/, same class as .agent-locks/.
-dispatch_record_path() {
-  local dir="$WORKSPACE_ROOT/work/$PROJECT"
-  [ -n "$PROJECT" ] || die "$COMMAND requires --project <work-item>"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  echo "$dir/.agent-dispatch/$TASK.json"
-}
-
-cmd_dispatch_open() {
-  [ -n "$TASK" ] || die "dispatch-open requires --task <slug>"
-  [ -n "$REPORT_FILE" ] || die "dispatch-open requires --report <path>"
-  [ "$GEN_SET" -eq 0 ] || die "dispatch-open: --gen is computed from the record, never passed"
-  local rec gen
-  rec=$(dispatch_record_path) || exit 3
-  mkdir -p "${rec%/*}"
-  if [ -f "$rec" ]; then
-    gen=$(jq -r '.generations | length' "$rec")
-    [ "$(jq -r '.generations[-1].status // empty' "$rec")" != "open" ] \
-      || die "dispatch-open: generation $gen of $TASK is still open — dispatch-close it first (yield or KILLED ruling)"
-    gen=$((gen + 1))
-  else
-    gen=1
-    jq -n --arg t "$TASK" --arg proj "$PROJECT" \
-      '{task:$t, project:$proj, generations:[]}' > "$rec"
-  fi
-  jq --arg ts "$(date -u +%FT%TZ)" --arg rp "$REPORT_FILE" --arg bf "$BRIEF_FILE" \
-     --arg at "$AGENT_TYPE" --arg md "$MODEL" --arg ef "$EFFORT" \
-     --arg aid "$AGENT_ID" --argjson gen "$gen" --arg user "$USER@$(hostname -s)" \
-    '.report = $rp
-     | (if $bf == "" then . else .brief = $bf end)
-     | (if $at == "" then . else .agent_type = $at end)
-     | (if $md == "" then . else .model = $md end)
-     | (if $ef == "" then . else .effort = $ef end)
-     | .generations += [{gen:$gen, dispatched_at:$ts, status:"open", user:$user}
-                        + (if $aid == "" then {} else {agent_id:$aid} end)]' \
-    "$rec" > "$rec.tmp" && mv "$rec.tmp" "$rec"
-  GEN="$gen"
-  cmd_dispatch_contract
-  note "dispatch: opened generation $gen of $TASK (work/$PROJECT/.agent-dispatch/$TASK.json)"
-}
-
-cmd_dispatch_close() {
-  [ -n "$TASK" ] || die "dispatch-close requires --task <slug>"
-  case "$CLOSE_STATUS" in
-    DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT|ROLLOVER_NEEDED|KILLED) : ;;
-    "") die "dispatch-close requires --status <S>" ;;
-    *) die "dispatch-close: invalid --status $CLOSE_STATUS (DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT|ROLLOVER_NEEDED|KILLED)" ;;
-  esac
-  local rec
-  rec=$(dispatch_record_path) || exit 3
-  [ -f "$rec" ] || die "dispatch-close: no dispatch record for task $TASK"
-  [ "$(jq -r '.generations[-1].status // empty' "$rec")" = "open" ] \
-    || die "dispatch-close: no open generation for $TASK"
-  jq --arg ts "$(date -u +%FT%TZ)" --arg st "$CLOSE_STATUS" --arg aid "$AGENT_ID" \
-    '.generations[-1] |= (.status = $st | .closed_at = $ts
-                          | (if $aid == "" then . else .agent_id = $aid end))' \
-    "$rec" > "$rec.tmp" && mv "$rec.tmp" "$rec"
-  note "dispatch: closed generation $(jq -r '.generations | length' "$rec") of $TASK status=$CLOSE_STATUS"
-}
-
-cmd_dispatch_list() {
-  # One line per task record; exit 1 iff any generation is still open — the
-  # drain-check a rolling parent consults before its own rollover.
-  local dir="$WORKSPACE_ROOT/work/$PROJECT" f any_open=0
-  [ -n "$PROJECT" ] || die "dispatch-list requires --project <work-item>"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  for f in "$dir/.agent-dispatch/"*.json; do
-    [ -f "$f" ] || continue
-    jq -r '"task=\(.task) gen=\(.generations | length) status=\(.generations[-1].status // "none") report=\(.report // "?")"
-           + (if .brief then " brief=\(.brief)" else "" end)' "$f"
-    [ "$(jq -r '.generations[-1].status // empty' "$f")" = "open" ] && any_open=1
-  done
-  return "$any_open"
-}
-
-# seq-sync: the counter's single writer (spec: numbering rules 1-2; ADR-0008).
-# The agent no longer writes .session-seq by hand — a bare relative path lands
-# in the caller's own worktree and strands, which is how session 3 of
-# session-loop-automation left a `4` behind. Resolve, validate, then write.
-cmd_seq_sync() {
-  local dir seqf stored action _rt _sid _ident
-  [ -n "$PROJECT" ] || die "seq-sync requires --project <work-item>"
-  [ -n "$SESSION_NUM" ] || die "seq-sync requires --session <N>"
-  case "$SESSION_NUM" in
-    ''|*[!0-9]*) die "seq-sync: --session must be a positive integer, got: $SESSION_NUM" ;;
-  esac
-  [ "$SESSION_NUM" -ge 1 ] || die "seq-sync: --session must be >= 1, got: $SESSION_NUM"
-
-  dir="$WORKSPACE_ROOT/work/$PROJECT"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  seqf="$dir/.session-seq"
-
-  if [ -f "$seqf" ]; then
-    stored="$(tr -cd '0-9' < "$seqf" 2>/dev/null)"
-  else
-    stored=""
-  fi
-
-  if [ -z "$stored" ]; then
-    action="created"
-  elif [ "$stored" -eq "$SESSION_NUM" ]; then
-    # The launcher already wrote this number before starting the session.
-    # A write that is not a correction is a bug — so do not touch the file,
-    # and leave the mtime alone (.rollover-options reconciliation is
-    # mtime-ordered; a gratuitous touch here is a lie to that reader).
-    action="noop"
-  elif [ "$stored" -lt "$SESSION_NUM" ]; then
-    action="raised"
-  else
-    action="lowered"
-  fi
-
-  [ "$action" = "noop" ] || printf '%s\n' "$SESSION_NUM" > "$seqf"
-
-  # Provenance sidecar (numbering rule 4). The counter stays a bare integer —
-  # launch-next-session.sh:191 parses it with `tr -cd '0-9'`, which would turn a
-  # JSON body into a garbage number — so identity lives beside it, not in it.
-  # Written even on a noop: "session N ran and agreed" is the evidence that makes
-  # a later over-count attributable.
-  # resolve_session can `die`, and `die` is `exit 3` — `|| true` does NOT catch
-  # an exit. Run it in a subshell so failing to identify the writer degrades the
-  # sidecar to "unknown" instead of failing the counter sync, which is the part
-  # that actually matters.
-  _rt="unknown"; _sid="unknown"
-  _ident="$( (resolve_session >/dev/null 2>&1 && printf '%s|%s' "$RUNTIME" "$SESSION_ID") 2>/dev/null )" || true
-  if [ -n "$_ident" ]; then
-    _rt="${_ident%%|*}"; _sid="${_ident##*|}"
-    [ -n "$_rt" ] || _rt="unknown"
-    [ -n "$_sid" ] || _sid="unknown"
-  fi
-
-  jq -n \
-    --argjson session "$SESSION_NUM" \
-    --arg action "$action" \
-    --arg runtime "$_rt" \
-    --arg session_id "$_sid" \
-    --arg cwd "$(pwd -P)" \
-    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    '{session:$session, action:$action, runtime:$runtime,
-      session_id:$session_id, cwd:$cwd, written_at:$written_at}' \
-    > "$seqf.provenance.json"
-
-  printf 'seq-sync: %s project=%s session=%s stored=%s path=%s\n' \
-    "$action" "$PROJECT" "$SESSION_NUM" "${stored:-none}" "$seqf"
-  return 0
-}
-
-# opts-sync: the successor-options file's single writer. Same layer-1 rule as
-# seq-sync — a hand-edit from a worktree lands in the caller's own checkout.
-# Rewrites the file whole rather than merging: the launcher initialises all
-# three keys to "" before sourcing (launch-next-session.sh:275), so an omitted
-# key means "unset", and a merge would make an option impossible to clear.
-cmd_opts_sync() {
-  local dir optf
-  [ -n "$PROJECT" ] || die "opts-sync requires --project <work-item>"
-  dir="$WORKSPACE_ROOT/work/$PROJECT"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-  # Four levels, matching launch-next-session.sh:277-311. Keep these in step:
-  # a level the writer cannot set is a level that still needs a hand-edit.
-  case "$APPROVAL" in
-    ''|default|edits|auto|full) : ;;
-    *) die "opts-sync: --approval must be default|edits|auto|full, got: $APPROVAL" ;;
-  esac
-  optf="$dir/.rollover-options"
-  : > "$optf"
-  [ -n "$APPROVAL" ]   && printf 'ROLLOVER_OPT_APPROVAL=%s\n' "$APPROVAL" >> "$optf"
-  [ -n "$MODEL" ]      && printf 'ROLLOVER_OPT_MODEL=%s\n' "$MODEL" >> "$optf"
-  [ -n "$EXTRA_OPTS" ] && printf 'ROLLOVER_OPT_EXTRA=%s\n' "$EXTRA_OPTS" >> "$optf"
-  printf 'opts-sync: wrote %s\n' "$optf"
-  return 0
-}
-
-command -v jq >/dev/null 2>&1 || die "jq is required"
-
-# rollover-complete: the sentinel's single writer (spec: "Architecture" -> 3;
-# "Worktrees" -> layer 3, rules 1-2). Written LAST in the rollover, after flush
-# and verification, so a rollover that dies partway leaves none (failure mode 8).
-#
-# Not a flag — a record. Absence is the meaningful signal ("nobody rolled over"),
-# so a stranded copy does not merge wrong, it lies. Hence: resolved through the
-# common dir like every other coordination file, and carrying enough identity for
-# a supervisor to tell "no session ended" from "a session ended somewhere I did
-# not look."
-cmd_rollover_complete() {
-  local dir sentf seq_own _rt _sid _ident hands inter _bumpf _bump_succ _cur_seq
-  [ -n "$PROJECT" ] || die "rollover-complete requires --project <work-item>"
-  [ -n "$LOOP_MODE" ] || die "rollover-complete requires --mode interactive|handsoff"
-
-  dir="$WORKSPACE_ROOT/work/$PROJECT"
-  [ -d "$dir" ] || die "no such work directory: work/$PROJECT"
-
-  # Human override wins over the agent's inference (spec: "Modes"). Mode is a
-  # property of the moment, and the human is the authority on which moment it is.
-  hands=0; inter=0
-  [ -f "$dir/.hands-off" ]   && hands=1
-  [ -f "$dir/.interactive" ] && inter=1
-  if [ "$hands" -eq 1 ] && [ "$inter" -eq 1 ]; then
-    die "rollover-complete: both .hands-off and .interactive exist in work/$PROJECT — remove one"
-  fi
-  [ "$hands" -eq 1 ] && LOOP_MODE="handsoff"
-  [ "$inter" -eq 1 ] && LOOP_MODE="interactive"
-
-  case "$LOOP_MODE" in
-    interactive|handsoff) : ;;
-    *) die "rollover-complete: --mode must be interactive|handsoff, got: $LOOP_MODE" ;;
-  esac
-
-  # seq is the WRITER's own number, not its successor's. By the time this runs,
-  # --emit has already bumped the counter for the successor (failure mode 8), so
-  # reading .session-seq here would record N+1 and the supervisor's
-  # sentinel.seq == seq_before assertion would never hold.
-  #
-  # Three sources, in the order of which one is CURRENT (D10):
-  #  1. .session-seq.bump.json — written by launch-next-session.sh at the bump
-  #     itself, and the bump is the only moment anything knows both numbers. Used
-  #     only while its recorded `successor` is still the live counter; a later
-  #     seq-sync repair moves the counter away and retires this record.
-  #  2. the provenance sidecar — the number seq-sync validated. Authoritative
-  #     right after a repair, but seq-sync runs ONLY on a repair, so in an
-  #     ordinary chain it freezes at whatever session last needed one. Reading it
-  #     first was D10: three consecutive rollovers stamped a months-old number
-  #     and halted a chain in which nothing was wrong.
-  #  3. the bare counter — last resort, and knowingly N+1 once --emit has run.
-  seq_own=""
-  _bumpf="$dir/.session-seq.bump.json"
-  if [ -f "$_bumpf" ]; then
-    _bump_succ="$(jq -r '.successor // empty' "$_bumpf" 2>/dev/null)"
-    _cur_seq="$(tr -cd '0-9' < "$dir/.session-seq" 2>/dev/null)"
-    if [ -n "$_bump_succ" ] && [ "$_bump_succ" = "$_cur_seq" ]; then
-      seq_own="$(jq -r '.seq // empty' "$_bumpf" 2>/dev/null)"
-    fi
-  fi
-  [ -n "$seq_own" ] || seq_own="$(jq -r '.session // empty' "$dir/.session-seq.provenance.json" 2>/dev/null)"
-  [ -n "$seq_own" ] || seq_own="$(tr -cd '0-9' < "$dir/.session-seq" 2>/dev/null)"
-  [ -n "$seq_own" ] || seq_own=0
-
-  # Same subshell guard as seq-sync: resolve_session can `die`, and `die` is
-  # `exit 3`, which `|| true` does not catch.
-  _rt="unknown"; _sid="unknown"
-  _ident="$( (resolve_session >/dev/null 2>&1 && printf '%s|%s' "$RUNTIME" "$SESSION_ID") 2>/dev/null )" || true
-  if [ -n "$_ident" ]; then
-    _rt="${_ident%%|*}"; _sid="${_ident##*|}"
-    [ -n "$_rt" ] || _rt="unknown"
-    [ -n "$_sid" ] || _sid="unknown"
-  fi
-
-  sentf="$dir/.rollover-complete"
-  jq -n \
-    --arg mode "$LOOP_MODE" \
-    --argjson seq "$seq_own" \
-    --arg reason "$LABEL" \
-    --arg session_id "$_sid" \
-    --arg runtime "$_rt" \
-    --arg cwd "$(pwd -P)" \
-    --arg written_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    '{mode:$mode, seq:$seq, reason:$reason, session_id:$session_id,
-      runtime:$runtime, cwd:$cwd, written_at:$written_at}' \
-    > "$sentf"
-
-  printf 'rollover-complete: mode=%s seq=%s path=%s\n' "$LOOP_MODE" "$seq_own" "$sentf"
-  # R2.17 section 4 — demoted, not deleted. It still writes, so an in-flight
-  # session that runs it succeeds; nothing reads the file any more, so a session
-  # that skips it succeeds too, where before R2.17 it stalled the chain. That
-  # two-sided no-op is what makes R2.17 safe to land against live chains. Delete
-  # the subcommand once both live chains have rolled past this change.
-  note "rollover-complete: DEPRECATED (R2.17) — the rollover verdict is now the bump record written by launch-next-session.sh --emit, and nothing reads $sentf. Staging IS the rollover; there is no sentinel step."
-  return 0
-}
-
 case "$COMMAND" in
   check) resolve_session; emit_check ;;
   register) cmd_register ;;
   record) cmd_record ;;
   watch) cmd_watch ;;
   release) cmd_release ;;
+  close) cmd_close ;;
   supervised) cmd_supervised ;;
-  children) cmd_children ;;
-  dispatch-contract) cmd_dispatch_contract ;;
-  dispatch-open) cmd_dispatch_open ;;
-  dispatch-close) cmd_dispatch_close ;;
-  dispatch-list) cmd_dispatch_list ;;
-  seq-sync) cmd_seq_sync ;;
-  opts-sync) cmd_opts_sync ;;
-  rollover-complete) cmd_rollover_complete ;;
 esac

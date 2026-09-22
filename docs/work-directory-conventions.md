@@ -32,15 +32,16 @@ launcher, with the full record in the ledger. Because the bootstrap ritual reads
 **both** files, the launcher never needs to inline history to be self-sufficient
 — it points into the ledger and the state files instead.
 
-**One primary session per work item.** The launcher/ledger REPLACE/APPEND
-semantics assume a single writer. That writer is the **primary** session —
-the holder of the `work/<proj>/.active-session` lock, acquired at engagement
-via `scripts/context-budget.sh register --project <proj>`. Any other session
-registering against the item while the primary is live becomes an
-**auxiliary**: it may read and work, but must not write the launcher/ledger
-or roll the item over. At rollover the predecessor is stamped **superseded**
-and the successor becomes primary. Full model:
-`docs/context-budget.md` → "Session roles".
+**One owner per work item.** The launcher/ledger REPLACE/APPEND semantics
+assume a single writer. That writer is the session the item's record
+(`work/<proj>/session-state.json`) names as its `session`, bound at
+`scripts/context-budget.sh register --project <proj>` and alive while its
+process is. Any other session registering while the owner is alive is
+measured but must not write the launcher/ledger or roll the item over (the
+launcher refuses `owner_live`); a human hands the item over with
+`register --project <proj> --takeover`. At rollover the launcher records the
+predecessor and the successor binds to the open launch. Full model:
+`docs/context-budget.md` → "Who owns a work item".
 
 ### Launcher (`next-session.md`)
 
@@ -77,15 +78,17 @@ the top block; the rest is history. That title form is the preferred one for
 grandfathered — the checker accepts them, so don't rewrite history to
 "modernize" headings.
 
-**Session numbering — one source of truth (ADR-0007):** N is the number from
-your own bootstrap prompt, **verbatim**. The canonical source is machine-local
-`work/<project>/.session-seq` (the launcher derives the prompt number from it);
-ledger block titles and worktree/branch names copy the prompt number — never
-re-derive N from ledger prose. If the ledger disagrees with your prompt number,
-repair the ledger note; seq wins. Drift self-heals at rollover: the dying
-session syncs `.session-seq` to its own number before launching the successor
-(`session-rollover` step 6). If your prompt carries no number (ad-hoc start),
-use `.session-seq` + 1 as your N and the sync write counts you in.
+**Session numbering — one source of truth (ADR-0010, keeping ADR-0007's
+ruling):** N is the number from your own bootstrap prompt, **verbatim**. The
+canonical source is the record's `seq` (the launcher advances it and derives
+the prompt number from it); ledger block titles and worktree/branch names copy
+the prompt number — never re-derive N from ledger prose. If the ledger
+disagrees with your prompt number, repair the ledger note; `seq` wins, and the
+launcher refuses `ledger_seq_mismatch` until they agree. Numbers are never
+reused. If your prompt carries no number (ad-hoc start),
+`scripts/context-budget.sh register --project <project>` binds you: to the open
+launch if one is waiting (its number is yours), else it opens `seq` at the
+ledger's top block + 1.
 
 **Archival (prevents unbounded growth):** keep only the two most recent session
 blocks live in `handoff.md`; move older blocks to `handoff-archive.md` (read on
@@ -127,18 +130,12 @@ write the ledger before the lights go out:
   close the ledger block.
 
 A plain exit (`/exit`, closing the terminal) is neither door, but it is
-**recoverable**, not fatal. The launcher's lineage gate notices the signature
-it leaves — a counter one ahead of the ledger's top block — and splits on
-evidence: a session that left **no trace** (no work-unit records, no commits,
-a clean work item) gets its number silently reclaimed at the next launch; a
-session that **did work** but wrote no ledger block makes the launcher refuse
-with a reconstruction brief (the evidence it found, and
-`launch-next-session.sh <project> --unstage` — remove the staged artifacts
-and rewind the counter in one command — as the abandon alternative; evidence
-that is all rollover bookkeeping gets the resumed-predecessor diagnosis with
-`--unstage` first). Under `session-loop.sh`, a quit additionally pushes a
-chain-ended notification saying whether the ledger recorded the session.
-Mechanics: `docs/context-budget.md`.
+**recoverable**, not fatal. The record still names the dead owner; the next
+`register --project <project>` adopts the slot (same number — nothing was
+launched), and a supervisor's bootstrap records the owner as `abandoned` and
+mints the next number. Numbers are never reclaimed; a missing ledger block is
+a gap the next session notes. Under `session-loop.sh`, a quit closes the chain
+(`quit_plain`) and notifies. Mechanics: `docs/context-budget.md`.
 
 ## Required and optional files
 
@@ -186,11 +183,10 @@ Covers: S1–S4   <!-- spec items this evidence covers, when a spec exists -->
 
 **Tracked vs. untracked:** everything a *future session* must read to continue
 the work is committed (the whole table above, plus a per-item
-`context-budget.env` policy file). Live-session runtime state is gitignored —
-`.active-session` (advisory lock; validity = holder's artifact mtime, so a
-committed copy is a stale claim waiting to be checked out) and
-`.rollover-options` (per-launch flags for this machine's runtime, rewritten
-each rollover).
+`context-budget.env` policy file). Live-session state is gitignored —
+`session-state.json` (the record: it names processes on this machine, so a
+committed copy would resurrect a dead owner on checkout) and the supervisor's
+`.session-loop.log`.
 
 **Local-only items and worktrees:** an item can be kept off the repo entirely
 (personal learning, client-confidential notes) by ignoring its whole directory

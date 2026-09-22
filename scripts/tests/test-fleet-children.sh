@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
-# File: scripts/tests/test-children-sweep.sh
+# File: scripts/tests/test-fleet-children.sh
 # Purpose: Regression tests for the per-child transcript sweep (`children`
-#          subcommand) in context-budget.sh — R1 of the subagent-rollover
-#          research (work/automatic-session-rollover, slice 2). Self-contained:
-#          builds a throwaway workspace + fake $HOME in mktemp -d.
+#          subcommand) in fleet.sh — R1 of the subagent-rollover research
+#          (work/automatic-session-rollover, slice 2); moved out of
+#          context-budget.sh in Stage 4 phase 2, which still owns `register`
+#          and refuses the fleet verbs (C10). Self-contained: builds a
+#          throwaway workspace + fake $HOME in mktemp -d.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/scripts" "$TMP/work/testproj" "$TMP/home"
-cp "$SRC_ROOT/scripts/context-budget.sh" "$TMP/scripts/"
+cp "$SRC_ROOT/scripts/context-budget.sh" "$SRC_ROOT/scripts/fleet.sh" "$TMP/scripts/"
 printf 'CONTEXT_DUMB_ZONE_TOKENS=150000\nCONTEXT_DUMB_ZONE_WARN_TOKENS=120000\n' \
   > "$TMP/context-budget.env"
 export HOME="$TMP/home"
 cd "$TMP"
 CB="$TMP/scripts/context-budget.sh"
+FLEET="$TMP/scripts/fleet.sh"
 SLUG="$(pwd | tr '/.' '--')"
 PROJ_DIR="$HOME/.claude/projects/$SLUG"; mkdir -p "$PROJ_DIR"
 
@@ -40,14 +43,17 @@ mk_child() {  # $1=parent-session-id $2=agent-hash $3=tokens [$4=agentType]
       > "$dir/agent-$2.meta.json"
   fi
 }
-run_as() {  # $1=claude-session-id, rest = context-budget.sh args
+run_as() {  # $1=claude-session-id, rest = fleet.sh args
   local sid="$1"; shift
-  CLAUDE_CODE_SESSION_ID="$sid" "$CB" "$@" --runtime claude
+  CLAUDE_CODE_SESSION_ID="$sid" "$FLEET" "$@" --runtime claude
+}
+register_as() {  # $1=claude-session-id — the measurer still owns registration
+  CLAUDE_CODE_SESSION_ID="$1" "$CB" register --quiet --runtime claude >/dev/null
 }
 
 echo "C1: children under WARN — no lines, exit 0, summary counts"
 mk_transcript ppp 50000
-run_as ppp register --quiet >/dev/null
+register_as ppp
 mk_child ppp aaa111 30000 general-purpose
 mk_child ppp bbb222 60000 Explore
 out=$(run_as ppp children 2>"$TMP/c1.err"); rc=$?
@@ -92,7 +98,7 @@ assert_not_contains "C6a: no estimate fallback for children" "$out" "method=esti
 
 echo "C7: parent with no subagents dir — exit 0, note"
 mk_transcript qqq 40000
-run_as qqq register --quiet >/dev/null
+register_as qqq
 out=$(run_as qqq children 2>"$TMP/c7.err"); rc=$?
 assert_eq "C7a: exit 0 with no children" "$rc" "0"
 assert_eq "C7b: no lines" "$out" ""
@@ -107,9 +113,14 @@ assert_eq "C8c: unregistered parent dies" "$rc" "3"
 assert_contains "C8d: loud error" "$err" "not registered"
 
 echo "C9: non-claude runtime — loud die, exit 3"
-err=$(CODEX_THREAD_ID=zzz "$CB" children --runtime codex 2>&1 >/dev/null); rc=$?
+err=$(CODEX_THREAD_ID=zzz "$FLEET" children --runtime codex 2>&1 >/dev/null); rc=$?
 assert_eq "C9a: exit 3 for non-claude runtime" "$rc" "3"
 assert_contains "C9b: loud claude-only error" "$err" "only implemented for runtime=claude"
+
+echo "C10: the measurer refuses the moved verb and names the new script"
+err=$(CLAUDE_CODE_SESSION_ID=ppp "$CB" children --runtime claude 2>&1 >/dev/null); rc=$?
+assert_eq "C10a: exit 3 through the measurer" "$rc" "3"
+assert_contains "C10b: message names scripts/fleet.sh children" "$err" "scripts/fleet.sh children"
 
 echo "results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
