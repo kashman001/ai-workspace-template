@@ -6,6 +6,33 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 23 (2026-09-22): post-commit verification: every suite green after 9bac406/aa25002; leftover old-script files deleted on the human's yes; closed through the stop door
+
+**Summary.** Attended, one agent. `register` → `seq=23 via=project
+(refreshed)` (M39 fix confirmed live: the stop-door close of 22 minted 23,
+no addendum needed). Ran all 23 `scripts/tests/test-*.sh` suites and
+`test-check-ledger.py` (13/13): no failure, so nothing traced to the two
+commits. `import-session-seq.sh --status`: every item fresh or new, exit 0.
+Asked the human about the leftovers; on "delete all" removed the six
+untracked `.rollover-options` (automatic-session-rollover, context-decay,
+devex-review, sdlc-ai-mapping, template-maintenance, usage-scenarios) and
+the gitignored `work/template-maintenance/.session-loop.log` (last written
+Sep 3). `--status` now shows `leftovers=-` on all 12 items. Session 21
+block archived. Closed via `close`.
+
+**Findings.**
+- The session 22 launcher said seven `.rollover-options` and that `--status`
+  lists `.session-loop.log`; in fact six existed, and `--status` never
+  reports the log (it is gitignored and the current `session-loop.sh` still
+  writes the same file, so it is not an old-script marker). Counting error
+  in the launcher, not a script defect.
+
+**Decisions.** None new.
+
+**Open / next.** Nothing in this item. Outside scope, unchanged:
+`attach-session.sh` and `statusline-context-budget.sh` still read
+`.active-session`; no template version marker exists.
+
 # Session Handoff — 22 (2026-09-22): addendum: human redirected after the close; six items imported, import script kept with a `--status` classifier, ticket 10 done
 
 **Summary.** After the stop-door close the human asked (attended) to run
@@ -89,36 +116,3 @@ or their own sessions run `scripts/import-session-seq.sh <project>` on
 each). Outside scope: `attach-session.sh` and
 `statusline-context-budget.sh` still read `.active-session`.
 
-# Session Handoff — 21 (2026-09-22): Stage 4 live cutover, chain leg 2: chain capped, cutover row and ticket 10 closed; rolled over hands-off
-
-**Summary.** No agents; nobody at the keyboard. Second and last child of
-the `session-loop.sh --max-sessions 2` chain (runbook step 6). `register`
-→ `seq=21 via=project (refreshed)`, 58K at register. Chain evidence:
-`.session-loop.log` `session #20 ended rc=143` → `verdict=staged seq=20
-successor=21 mode=handsoff` → `starting session #21 (2 of 2)`; record
-`.chain.used` 2 of cap 2, `.chain.closed` null, supervisor pid 74444 live
-(`kill -0` rc 0); `.launch.predecessor` seq 20, disposition `rolled_over`;
-`supervised` rc 0. Ticket 10: import, attended rollover, chain, and
-tracker/ledger boxes ticked; retire-import box left open. Tracker: cutover
-row `done`, Done 2026-09-22, Commit 37d4100, Used 5; "Now" says Stage 4
-complete. Ledger block 19 archived. Launcher for 22 written (capped;
-nothing to do). Ended with `record` then `launch-next-session.sh --emit
---loop-mode handsoff`; the supervisor should print `verdict=cap seq=22` and
-exit 0.
-
-**Findings.** None new. Session 20 ended `rc=143` (SIGTERM) in the log and
-the supervisor still judged it `staged`; that is the hands-off self-kill
-path working as designed, not a fault.
-
-**Decisions.** None new.
-
-**Learnings:**
-- The whole two-leg chain ran unattended in about two minutes per leg;
-  each leg well under WARN.
-
-**Open / next.** Chain capped. Nothing until the human restarts with
-`session-loop.sh template-improvement-review --reset-cap`. Follow-up (one
-agent commit, after the six other items are imported): retire
-`scripts/import-session-seq.sh`, its test, and its "Reason codes" row.
-Outside scope: `attach-session.sh` and `statusline-context-budget.sh`
-still read `.active-session`.
