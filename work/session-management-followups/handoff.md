@@ -6,6 +6,48 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+
+# Session Handoff — 3 (2026-09-22): ticket 02 done — one ledger-heading rule shared by check-ledger.py and the launcher's parser (M41)
+
+**Summary.** Second loop session (hands-off, supervised). Ticket 02 landed in
+8a14af3: the rule is stated once in `docs/work-directory-conventions.md` →
+Ledger ("One heading rule, two parsers"); `check-ledger.py`'s comment and
+`top_ledger_session` in `launch-next-session.sh` cite it; the shell parser
+now requires the checker's strict opener (`# Session Handoff`, optional
+grandfathered `addendum`, then a dash) before extracting a number.
+`test-check-ledger.py` gained 13 heading fixtures run through both parsers
+(the checker via its CLI plus `parse_heading`; the launcher via the function
+extracted with awk). Red on the old launcher with two disagreements (numbered
+addendum: checker 23, launcher none — the session 22 refusal; doubled-space
+opener: checker rejects, launcher 76), green after. Backlog M41 opened and
+resolved (archived; Resolved 92). Decision note in `decisions.md`. All shell
+suites, the ledger test (26/26) and `check-workspace-structure.sh` green
+before the commit. 58K at register (the runtime's own overhead); ~95K at the
+ticket's commit.
+
+**Decisions.** The addendum form stays as grandfathered history instead of
+being dropped as the ticket recommended: M36's downstream ledger (session
+166) still carries one, and the checker's rule is never to rewrite history —
+`decisions.md` 2026-09-22 (top note).
+
+**Findings.** `check-workspace-structure.sh` warns `docs/workspace-structure.html
+is stale — run scripts/build-guide-html.sh`; pre-existing (this session did
+not touch `workspace-structure.md`), left alone. Importing `check-ledger.py`
+from the test wrote `scripts/__pycache__/`; the test now sets
+`sys.dont_write_bytecode` before the import.
+
+**Learnings:**
+- Before dropping a grandfathered form, read the archived card that
+  introduced it (M36 here): the ticket's "no remaining use" described
+  producers, not the downstream histories the gate exists to protect.
+- A shell function inside a script that runs top-level code is testable by
+  extracting it with `awk '/^name\(\) \{/,/^\}/'` and running the text in
+  `bash -c` — no need to source the script.
+
+**Open / next.** Ticket 03 (`issues/03-template-version-marker.md`), the one debatable ticket:
+decision note first, build under a stated assumption. main is 4 commits ahead
+of origin after this rollover's commit; not pushed (the human's call).
+
 # Session Handoff — 2 (2026-09-22): ticket 01 done — attach-session.sh and the statusline read the owner from the record (M40)
 
 **Summary.** First loop session (hands-off, supervised). Ticket 01 landed in
@@ -37,26 +79,3 @@ successor should read the ticket and only the files it names, in that order.
 
 **Open / next.** Ticket 02 (`issues/02-one-ledger-heading-rule.md`). main is
 ahead of origin; not pushed (the human's call).
-
-# Session Handoff — 1 (2026-09-22): scaffolded from template-improvement-review's open threads; three tickets written, item ready for a session loop
-
-**Summary.** Created by the session that closed `template-improvement-review`
-(seq 23 of that item), attended, on the human's request to categorize the
-open work and make a work item for it. Four categories sorted (README); only
-the engineering follow-through is in scope: tickets 01 (`.active-session`
-readers onto the record), 02 (one ledger-heading rule), 03 (template version
-marker). `context-budget.env` set to `auto` for the loop. This session did
-**not** register on this item, so no record exists: the loop's launcher will
-open `seq=2` from this block. No code changed.
-
-**Findings.** `grep -rn '\.active-session' scripts/` confirms the two readers
-in ticket 01 read a file the cutover retired; `import-session-seq.sh` deletes
-it as an old-script file.
-
-**Decisions.** Ticket 03 is built under a stated assumption rather than
-waiting for the human's choice of marker shape; the Decision note is the
-reversal point. Rejected: leaving it as a human-only item, because the human
-asked for a loop-driven item that finishes the open work.
-
-**Open / next.** Ticket 01. Start the loop with
-`scripts/session-loop.sh session-management-followups --max-sessions 3`.
