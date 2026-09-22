@@ -1,8 +1,17 @@
 # ADR-0004: Operate rollover automation under a multi-session model — session-keyed budget state, per-project locks, hybrid trigger
 
-- Status: accepted
+- Status: accepted — amended by ADR-0010 (2026-09-21)
 - Date: 2026-08-05
 - Deciders: Kashif + Claude Code session (automatic-session-rollover project)
+
+> **Amendment (2026-09-21, ADR-0010).** The per-project lock
+> (`.active-session`) is the record's owner slot in
+> `work/<proj>/session-state.json`; staleness is process liveness (pid +
+> start time), not artifact age. The WARN ask is keyed to `ROLLOVER_RELAUNCH`
+> (ask under `manual`/`off`, not under `auto`). Runtimes in scope are the
+> support matrix of ADR-0012; the background launch (`--bg`) is gone. The
+> "no per-project override" rule was reversed earlier by the committed
+> `work/<proj>/context-budget.env`; the root default is `manual`.
 
 Companion to ADR-0003, which decided *that* the rollover→relaunch pipeline is
 automated by a workspace script. This ADR records *how it behaves*: under what

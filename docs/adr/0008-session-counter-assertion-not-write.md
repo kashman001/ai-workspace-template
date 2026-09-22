@@ -1,9 +1,15 @@
 # ADR-0008: Rollover step 6 asserts the session counter rather than writing it
 
-- Status: accepted
+- Status: superseded by ADR-0010 (mechanism) — the assert-not-write ruling stands
 - Date: 2026-08-25
 - Deciders: Kashif + Claude Code session 5 (session-loop-automation project)
 
+> **Superseded (2026-09-21, ADR-0010).** There is no counter to assert and no
+> `seq-sync`: the launcher advances the record's `seq` in the same atomic write
+> that records the rollover, and refuses `ledger_seq_mismatch` when the ledger's
+> top block disagrees. The ruling — a session asserts its number, never writes
+> it — survives as that gate. Kept for the history below.
+>
 > **Amendment (2026-08-29).** The first Decision consequence
 > below prescribes a hand-run `git rev-parse --path-format=absolute
 > --git-common-dir` recipe for the correction write. That recipe is superseded:

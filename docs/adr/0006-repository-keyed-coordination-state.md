@@ -56,10 +56,14 @@ discipline are retired.
   It *is* how vendors do it — and Claude Code's cwd-derived transcript slug
   (a `~`-side path that silently forks per checkout) is the cautionary tale,
   not the model.
-- **A shared sourced library for the resolver** — rejected: the test suites
-  and the vendor-hook deployment copy scripts around as self-contained units;
-  ~12 duplicated lines per script is the cheaper cost. (Revisit if the
-  resolver grows.)
+- **A shared sourced library for the resolver** — rejected at the time: the
+  test suites and the vendor-hook deployment copy scripts around as
+  self-contained units; ~12 duplicated lines per script was the cheaper cost.
+  *(Amended 2026-09-21, ADR-0010: the root resolver stays duplicated per
+  script, but the record writer is one sourced library,
+  `scripts/lib/session-lib.sh`, and the suites copy it beside the scripts they
+  copy. A worktree run therefore drives the main checkout's `work/` — use a
+  clone for live runs; `docs/operational-knowledge.md`.)*
 
 ## Consequences
 

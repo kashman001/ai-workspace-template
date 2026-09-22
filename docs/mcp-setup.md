@@ -54,9 +54,10 @@ needing a capability finds it in the fragment table
   - **Subagents** inherit the parent's MCP connections; a custom agent
     definition in `.claude/agents/*.md` can add servers via `mcpServers`
     frontmatter — the child carries the server, the parent stays lean.
-  - **Rollover successors** inherit a fragment via
-    `ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<name>.json"` in
-    `work/<project>/.rollover-options` (`mcp-fragments/README.md`).
+  - **Rollover successors:** the launcher passes no MCP flags. `--clear`
+    keeps the running session's server set; for a different set, take the
+    `run:` line the launcher prints and add
+    `--mcp-config mcp-fragments/<name>.json` (`mcp-fragments/README.md`).
 - **CLI-first:** capabilities ride CLIs wherever one exists — `gh` for GitHub
   (the only GitHub path), `scripts/mcp/`'s `yt-dlp` wrapper for transcripts.
   A fragment is only for structured MCP tools a CLI can't match.

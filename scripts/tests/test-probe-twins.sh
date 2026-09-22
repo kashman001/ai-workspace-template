@@ -29,8 +29,8 @@ cp "$SRC_ROOT"/scripts/hooks/* "$MAIN/scripts/hooks/"
 cp "$SRC_ROOT/.claude/settings.json" "$MAIN/.claude/"
 chmod +x "$MAIN/scripts/"*.sh "$MAIN/scripts/hooks/"*.sh
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\nCONTEXT_DUMB_ZONE_TOKENS=150000\nCONTEXT_DUMB_ZONE_WARN_TOKENS=120000\n' > "$MAIN/context-budget.env"
-printf '%s\n' 'work/*/session-state.json*' 'work/*/.session-loop*' 'work/*/.next-command*' \
-  'work/*/.session-seq*' 'work/*/.agent-dispatch/' 'work/*/.probe-stop-at' 'work/*/turns.log' \
+printf '%s\n' 'work/*/session-state.json' 'work/*/session-state.json.lock/' 'work/*/.session-loop.log' \
+  'work/*/.agent-dispatch/' 'work/*/.probe-stop-at' 'work/*/turns.log' \
   'work/*/launcher-*.log' 'work/*/session-*.out' 'work/*/supervisor.out' '.context-budget/' > "$MAIN/.gitignore"
 export HOME="$TMP/home"      # the stub's transcripts live under $HOME/.claude/projects/<slug>/
 git -C "$MAIN" init -q
@@ -139,12 +139,12 @@ as hand-1 bash work/testproj/session-turn.sh --no-launch
 as hand-1 "$LN" testproj --emit >"$TMP/emit1.out" 2>&1; rc=$?
 probe_assert_eq "H2a: the owner's hand stage is accepted"  "$rc" "0"
 probe_assert_eq "H2b: staged #2 by hand-1"                 "$(rec '.staged.successor')/$(rec '.staged.by')" "2/hand-1"
-cp "$REC" "$TMP/before"; cp "$W/.next-command" "$TMP/next-before"
+cp "$REC" "$TMP/before"
 out="$(as hand-1 "$LN" testproj --emit 2>&1)"; rc=$?
 probe_assert_eq "H2c: --emit again by the session that staged → 4" "$rc" "4"
 case "$out" in *"refused reason=not_owner"*) probe_ok "H2d: reason not_owner (it is no longer the owner)" ;; *) probe_bad "H2d: no not_owner in [$out]" ;; esac
 cmp -s "$REC" "$TMP/before" && probe_ok "H2e: record byte-identical" || probe_bad "H2e: the refused stage wrote the record"
-cmp -s "$W/.next-command" "$TMP/next-before" && probe_ok "H2f: the staged command untouched" || probe_bad "H2f: the staged command changed"
+[ ! -e "$W/.next-command" ] && probe_ok "H2f: no command file beside the record" || probe_bad "H2f: a command file was written"
 
 echo "H1: the staged command run by hand; a supervisor restart refuses staged_invalid leg=spent"
 staged_cmd="$(rec '.staged.command')"

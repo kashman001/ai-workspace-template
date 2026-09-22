@@ -253,10 +253,8 @@ echo "X: session-loop turn-end exit (plan 2, Task 8)"
 # The supervisor flag is passed as an argument, never as a `VAR=1 func` prefix —
 # bash leaks such an assignment past the call when the callee is a function.
 XTMP="$(mktemp -d)"; mkdir -p "$XTMP/work/p"
-xsent() {
-  cat > "$XTMP/work/p/.rollover-complete" <<XEOF
-{"mode":"handsoff","seq":8,"reason":"t","session_id":"$1","runtime":"claude","cwd":"/x"}
-XEOF
+xsent() {  # the record after $1 staged its successor (what --emit writes)
+  jq -n --arg by "$1" '{schema:1, seq:9, staged:{successor:9, command:"true", by:$by}}' > "$XTMP/work/p/session-state.json"
 }
 cat > "$XTMP/hook.sh" <<XEOF
 #!/usr/bin/env bash
@@ -293,15 +291,15 @@ xrun 0 sid-1
 assert_empty "X1a: silent with TF_SESSION_LOOP unset" "$(xsaid)"
 assert_contains "X1b: the agent survived" "$(xerr)" "STILL ALIVE"
 
-echo "X2: it is inert when the sentinel belongs to another session"
+echo "X2: it is inert when the staged block belongs to another session"
 xrun 1 sid-OTHER
-assert_empty "X2a: silent for a foreign sentinel" "$(xsaid)"
+assert_empty "X2a: silent for a foreign stage" "$(xsaid)"
 assert_contains "X2b: the agent survived" "$(xerr)" "STILL ALIVE"
 
-echo "X3: it is inert when no sentinel exists"
-rm -f "$XTMP/work/p/.rollover-complete"
+echo "X3: it is inert when nothing is staged"
+jq '.staged = null' "$XTMP/work/p/session-state.json" > "$XTMP/r.t" && mv "$XTMP/r.t" "$XTMP/work/p/session-state.json"
 xrun 1 sid-1
-assert_empty "X3a: silent with no sentinel" "$(xsaid)"
+assert_empty "X3a: silent with nothing staged" "$(xsaid)"
 assert_contains "X3b: the agent survived" "$(xerr)" "STILL ALIVE"
 
 echo "X4: it terminates its agent when all three conditions hold"
@@ -323,8 +321,8 @@ xpred() {
     . "$1/scripts/hooks/context-budget-hook-lib.sh"
     budget_hook_should_exit "$2" p; echo "rc=$?"' _ "$SRC_ROOT" "$2" 2>&1
 }
-assert_eq "X5a: rc 0 when the sentinel is mine" "$(xpred 1 sid-1)" "rc=0"
-assert_eq "X5b: rc 1 for a foreign sentinel" "$(xpred 1 sid-OTHER)" "rc=1"
+assert_eq "X5a: rc 0 when the staged block is mine" "$(xpred 1 sid-1)" "rc=0"
+assert_eq "X5b: rc 1 for a foreign stage" "$(xpred 1 sid-OTHER)" "rc=1"
 assert_eq "X5c: rc 1 outside the supervisor" "$(xpred 0 sid-1)" "rc=1"
 
 echo "X6: the Stop wrapper is inert unless the supervisor set it up"
@@ -485,8 +483,8 @@ fcase opencode-msg-warn '' "$WARN" context-budget-opencode-hook.sh ses_f
 fcase opencode-msg-stop '' "$STOP" context-budget-opencode-hook.sh ses_f
 fcase opencode-no-sid   '' "$STOP" context-budget-opencode-hook.sh
 fcase opencode-exit-unsupervised '' "$OK" context-budget-opencode-hook.sh --exit-check ses_f
-mkdir -p "$TMP/work/p"; echo "claude --resume x" > "$TMP/work/p/.next-command"
-echo '{"session_id":"ses_f","seq":9}' > "$TMP/work/p/.session-seq.bump.json"
+mkdir -p "$TMP/work/p"
+jq -n '{schema:1, seq:10, staged:{successor:10, command:"claude --resume x", by:"ses_f"}}' > "$TMP/work/p/session-state.json"
 fcase opencode-exit-mine    '' "$SUP" context-budget-opencode-hook.sh --exit-check ses_f
 fcase opencode-exit-foreign '' "$SUP" context-budget-opencode-hook.sh --exit-check ses_other
 rm -rf "$TMP/work"

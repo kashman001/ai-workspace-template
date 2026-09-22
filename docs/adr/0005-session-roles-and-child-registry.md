@@ -1,8 +1,15 @@
 # ADR-0005: Session roles with the lock as primary marker, and a parent/child session registry
 
-- Status: accepted
+- Status: superseded by ADR-0010 (roles, lineage stamps, child locks); the child registry moved to `scripts/fleet.sh` unchanged (ADR-0012)
 - Date: 2026-08-06
 - Deciders: Kashif + Claude Code sessions 15–17 (automatic-session-rollover project)
+
+> **Superseded (2026-09-21, ADR-0010).** Roles, `superseded_*` stamps and
+> per-child locks are gone: the record names one owner, liveness is its
+> process, and the back-stamped lineage is `launch.predecessor`. The
+> parent/child registry (`register --parent-session … --agent-id …`) and the
+> child sweep survive unchanged in `scripts/fleet.sh` (ADR-0012). Kept for
+> the history below.
 
 Extends ADR-0004's multi-session model. That ADR made measurement and
 work-item ownership hold under N concurrent sessions; this one records what a

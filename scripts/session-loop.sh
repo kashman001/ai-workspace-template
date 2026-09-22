@@ -26,9 +26,6 @@
 #          quit_plain, cap; broken rc_nonzero, logout, staged_invalid
 #          leg=<seq|staged|predecessor|by|lifetime>, no_own_measurement,
 #          record_unreadable, schema_mismatch, stall.
-# Also written, for readers this phase may not change: the .session-loop
-# marker (`context-budget.sh supervised` and the launcher's bootstrap exemption
-# read it) — see plans/phase-5.md decision 1.
 set -u
 main() {
 
@@ -85,7 +82,7 @@ for _k in ALARM ALARM_MAX KILL_AFTER; do
 done
 [ "$ALARM_MAX" -ge "$ALARM" ] || ALARM_MAX="$ALARM"
 
-REC="$S/session-state.json"; LOOPF="$S/.session-loop"; NEXTF="$S/.next-command"; LOGF="$S/.session-loop.log"
+REC="$S/session-state.json"; LOGF="$S/.session-loop.log"
 SUP_PID=$$
 SUP_START="$(ps -o lstart= -p "$SUP_PID" 2>/dev/null | sed 's/^ *//;s/ *$//')"
 
@@ -168,8 +165,6 @@ rec_write true \
   '.chain = {supervisor: {pid: $pid, pid_start: $ps, started_at: $at},
              used: ((.chain // {}).used // 0), cap: $cap, closed: ((.chain // {}).closed // null)}' \
   --argjson pid "$SUP_PID" --arg ps "$SUP_START" --arg at "$(date -u +%FT%TZ)" --argjson cap "$MAX_SESSIONS" || exit 4
-jq -n --argjson pid "$SUP_PID" --arg project "$PROJECT" --arg started_at "$(date -u +%FT%TZ)" \
-  '{pid:$pid, project:$project, started_at:$started_at}' > "$LOOPF"
 
 # ---- the watchdog ------------------------------------------------------------
 # A background subshell per child: the child is foreground and tty-inheriting,
@@ -235,7 +230,6 @@ reap_alarm() {
 cleanup() {
   reap_alarm
   rec_write '.chain.supervisor.pid == $pid' '.chain.supervisor = null' --argjson pid "$SUP_PID" >/dev/null 2>&1
-  rm -f "$LOOPF"
 }
 trap cleanup EXIT
 # TERM/HUP: clean up, then die BY the signal — a killed chain is never a verdict.
@@ -302,7 +296,6 @@ while :; do
   # killed mid-session must not hand that session back for free.
   rec_write '.staged.successor == $seq' '.staged = null | .chain.used = ((.chain.used // 0) + 1)' --argjson seq "$seq" \
     || broken staged_invalid "leg=staged seq=$seq — the staged block changed underneath the consume"
-  rm -f "$NEXTF"
   USED=$((USED + 1))
   export TF_SESSION_PROJECT="$PROJECT" TF_SESSION_SEQ="$seq"
   say "starting session #$seq ($USED of $MAX_SESSIONS)"
