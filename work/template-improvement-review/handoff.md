@@ -22,7 +22,9 @@ unreadable, `loop=` for which generation of the loop ran, `leftovers=` for
 the dead files, exit 1 when anything still needs the import); tests I10;
 migration table in `docs/context-budget.md` → "Migrating work items from
 the old scripts". Ticket 10 last box rewritten and ticked, status `done`.
-Backlog: L47 (resolved, archived), M39 (open). No rollover: the record was
+Backlog: L47 (resolved, archived); M39 opened, then fixed on the human's
+call the same session (`minted`: a stop-door owner yields `seq + 1`, test
+R6i–k, one sentence in each doc). No rollover: the record was
 already closed; this block is an addendum, not a new number.
 
 **Findings.**

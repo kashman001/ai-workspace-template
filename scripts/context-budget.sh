@@ -778,6 +778,9 @@ bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or e
       elif owner_live "$owner"; then
         note "register: reason=owner_live owner=$loser — work/$PROJECT is measured, not owned by $RUNTIME-$SESSION_ID (--takeover to override)"
         return 0
+      elif [ "$(printf '%s' "$owner" | jq -r '.ended.door // empty')" = stop ]; then
+        action="minted"      # owner closed through the stop door: its session is
+        seq=$((seq + 1))     # complete, so the next number is minted, never reused
       else
         action="adopted"     # owner dead: the number is kept, the slot is taken
       fi
@@ -795,7 +798,7 @@ bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or e
   case "$rc" in
     0) BOUND="$PROJECT"
        case "$action" in
-         takeover|adopted) note "register: reason=$action loser=$loser seq=$seq" ;;
+         takeover|adopted|minted) note "register: reason=$action loser=$loser seq=$seq" ;;
        esac
        note "register: bound work/$PROJECT seq=$seq via=$1 ($action)"
        [ -n "$prompt" ] && [ "$QUIET" -eq 0 ] && printf '%s\n' "$prompt" ;;

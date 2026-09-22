@@ -846,6 +846,27 @@
       one could break the launcher.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M39</span> Attended <code>register</code> after a stop-door <code>close</code> re-binds the closed session's number
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence:</span> <code>bind_record()</code> adopts a dead owner's <code>seq</code> whatever door it left by
+      (<code>action="adopted"</code>: "owner dead: the number is kept"); it never reads <code>session.ended.door</code>. The
+      launcher path does (<code>launch-next-session.sh</code> disposition <code>stopped</code> mints <code>seq+1</code>). The record
+      table in <code>docs/context-budget.md</code> says <code>seq</code> is "never reused"; the two-doors text in
+      <code>docs/work-directory-conventions.md</code> documents same-number adoption only for a plain exit.</p>
+    <p><span class="k">Impact:</span> a human who checkpoints an item (block N written, <code>close</code>) and later opens it
+      attended gets session N again; <code>close</code>/<code>--emit</code> then demand the top ledger block be N, so the
+      agent must write an addendum block instead of N+1. Surfaced 2026-09-22 while auditing what the counter import
+      hands the next session (<code>work/template-improvement-review/</code> session 22 addendum).</p>
+    <p><span class="k">Fix:</span> in <code>bind_record</code>, treat a dead owner whose <code>ended.door</code> is <code>stop</code>
+      like the launcher does — open <code>seq+1</code> (a new "minted" outcome) — and say so in both docs; or, if same-number
+      adoption after a checkpoint is intended, fix the "never reused" line and document the addendum block. Human's call.</p>
+    <p><span class="fix">Fixed:</span> minted — <code>bind_record</code> reads <code>session.ended.door</code>; a dead owner that
+      closed through the stop door yields <code>seq + 1</code> (outcome <code>minted</code>), a plain exit still adopts the same
+      number. Test R6i–k in <code>test-context-budget-registry.sh</code>; one sentence each in <code>docs/context-budget.md</code>
+      and <code>docs/work-directory-conventions.md</code>. 2026-09-22.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

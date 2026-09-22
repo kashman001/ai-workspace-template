@@ -279,8 +279,8 @@ apart from the files on disk — it writes nothing:
 Stop any old `session-loop.sh` on the item first. The import sets `seq` to
 the counter — the number of the last session that registered under the old
 scripts — so the next session numbers itself exactly as a session after a
-plain exit does (`adopted`/`filled`: the same number when that session left
-no ledger block, else the launcher mints the next). Exit 1 from `--status`
+plain exit does (`adopted`/`filled`: the same number; after a stop-door
+`close`, `minted`: the next). Exit 1 from `--status`
 means at least one item still needs the import or a look.
 
 ## The launcher — `scripts/launch-next-session.sh`
@@ -351,7 +351,9 @@ within `CONTEXT_LOCK_STALE_SECS`. No roles, no locks, no stamps.
 one per `register: bound … (<outcome>)` line: `opened` (a record-less item,
 `--project` given: `seq` opens at the ledger's top block + 1, else 1), `filled`
 (an open launch with no owner), `refreshed` (the same session again), `adopted`
-(the owner is dead, or is this very process after `/clear`), `takeover`
+(the owner is dead, or is this very process after `/clear`), `minted` (the
+owner left through the stop door — `close` — so its number is finished and
+the next one is opened, `seq + 1`), `takeover`
 (`--takeover`, the explicit human steal, logged with the loser). A live
 different owner keeps the slot: `register: reason=owner_live …`, and this session
 is measured but cannot roll the item over (`not_owner` at the launcher).
@@ -514,7 +516,7 @@ free-form and never a test contract.
 | Emitter | Codes |
 | --- | --- |
 | record library (relayed by every writer) | `record_unreadable`, `schema_mismatch`, `record_unwritable`, `lock_timeout`, `precondition_invalid`, `filter_invalid`, `filter_empty`, `jq_missing` |
-| register, binding outcomes (info) | `opened`, `filled`, `refreshed`, `adopted`, `takeover`; a kept slot is `owner_live` |
+| register, binding outcomes (info) | `opened`, `filled`, `refreshed`, `adopted`, `minted`, `takeover`; a kept slot is `owner_live` |
 | release and close | `not_owner`, `ledger_shape`, `ledger_seq_mismatch` |
 | launcher gates, in order | `chain_closed`, `runtime_path_unsupported`, `supervised_stage_only`, `no_supervisor`, `owner_live`, `not_owner`, `worktree_unsynced`, `launcher_stale`, `launcher_unchanged`, `ledger_shape`, `ledger_seq_mismatch` (plus `schema_mismatch` and `jq_missing` first) |
 | supervisor start | `relaunch_off`, `chain_closed`, `supervisor_live`, `stage_failed` (the bootstrap launcher refused without a code), `staged_invalid` (leg spent) |

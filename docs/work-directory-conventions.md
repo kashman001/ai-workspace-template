@@ -133,7 +133,7 @@ A plain exit (`/exit`, closing the terminal) is neither door, but it is
 **recoverable**, not fatal. The record still names the dead owner; the next
 `register --project <project>` adopts the slot (same number — nothing was
 launched), and a supervisor's bootstrap records the owner as `abandoned` and
-mints the next number. Numbers are never reclaimed; a missing ledger block is
+mints the next number. After a `close` (the checkpoint door) the next `register` mints the next number instead: that session finished. Numbers are never reclaimed; a missing ledger block is
 a gap the next session notes. Under `session-loop.sh`, a quit closes the chain
 (`quit_plain`) and notifies. Mechanics: `docs/context-budget.md`.
 

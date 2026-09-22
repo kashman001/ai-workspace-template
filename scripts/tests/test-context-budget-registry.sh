@@ -168,6 +168,13 @@ err=$(run_as aaa register --project testproj 2>&1 >/dev/null)
 assert_eq       "R6a: dead owner adopted"        "$(rec .session.session_id)" "aaa"
 assert_eq       "R6b: seq kept"                  "$(rec .seq)" "5"
 assert_contains "R6c: reason=adopted with the loser" "$err" "reason=adopted loser=claude-ccc"
+# an owner that left through the stop door is complete: the next number is minted
+seed_owner ccc "$DEAD_PID" "Thu Jan  1 00:00:00 2026" 5
+jq '.session.ended = {at:"2026-01-01T00:00:01Z", door:"stop"}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
+err=$(run_as aaa register --project testproj 2>&1 >/dev/null)
+assert_eq       "R6i: stop-door owner -> slot taken"  "$(rec .session.session_id)" "aaa"
+assert_eq       "R6j: stop-door owner -> seq minted"  "$(rec .seq)" "6"
+assert_contains "R6k: reason=minted with the loser"   "$err" "reason=minted loser=claude-ccc"
 # pid-less owner (registered from outside the process tree): transcript age decides.
 mk_transcript ddd 1000
 run_as ddd register --project testproj --quiet >/dev/null; strip_pid   # ddd owns, no pid
