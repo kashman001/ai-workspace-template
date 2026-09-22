@@ -37,10 +37,10 @@ structured tools, recreate the fragment: hosted server at
 - **Claude Code (subagent):** a custom agent definition in
   `.claude/agents/*.md` can add servers via `mcpServers` frontmatter — the
   child carries the server, the parent stays lean.
-- **Rollover successor:** hand the next session a fragment via
-  `ROLLOVER_OPT_EXTRA="--mcp-config mcp-fragments/<name>.json"` in
-  `work/<project>/.rollover-options` (see
-  `scripts/capture-rollover-options.sh`).
+- **Rollover successor:** the launcher passes no MCP flags; `--clear` keeps
+  the running session's set. For a different set, take the `run:` line
+  `scripts/launch-next-session.sh` prints and add
+  `--mcp-config mcp-fragments/<name>.json`.
 - **Durable opt-in (any runtime reading `.mcp.json`):** merge the fragment's
   server entry into your local `.mcp.json` (gitignored).
 - **OpenCode:** servers are pre-declared in root `opencode.json` with

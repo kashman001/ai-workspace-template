@@ -75,13 +75,13 @@ Session locks, registries, and dispatch records identify sessions by
 person breaks these assumptions **silently** — nothing errors, state just
 gets stolen or collides:
 
-- **Lock liveness is local artifact mtime.** Another machine's
-  `.active-session` lock always reads stale, so a primary role can be
-  swept and taken over without the other person noticing.
+- **Owner liveness is a local process id.** Another machine's owner in
+  `work/<item>/session-state.json` always reads dead, so the item can be
+  adopted without the other person noticing.
 - **Coordination state is gitignored** (`.context-budget/`), so there is
   zero cross-machine mutual exclusion.
 - **Machine-local counters collide in committed files**: session numbers
-  (`.session-seq`) in ledgers, ADR numbers in `docs/adr/`.
+  (the record's `seq`) in ledgers, ADR numbers in `docs/adr/`.
 - **Launcher/ledger are single-writer**: two people rolling over the same
   work item produce merge conflicts in `next-session.md`/`handoff.md`.
 

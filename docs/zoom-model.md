@@ -65,7 +65,7 @@ lives at intersections of the two ("a session (O3) zooms into a module
 | **O0 — Team/product org** | Everyone on the product | Who works on this, with what shared services and non-negotiable tooling? | Workspace repo remote, shared registries (repos, services), the required-tooling manifest (`scripts/check-dependencies.sh` + `docs/recommended-tooling.md` → "Required for everyone") | Shared, committed; the only level all people see |
 | **O1 — Person/machine** | One developer on one computer | What do *I* have configured here — secrets, optional tools, runtimes? | Untracked local settings, OS keychain, `*.example`→local copies | Never committed; discovered/repaired by check scripts + runbooks |
 | **O2 — Work item** | One ongoing effort | What is this effort, what's decided, what's next? | `work/<project>/` (README, launcher, ledger, decisions) | Engaged deliberately; launcher read whole, ledger top block only; one primary session |
-| **O3 — Session** | One agent conversation | What's in my context window; when do I roll over? | Session artifact, budget registry, `.active-session` lock | Measured never guessed; WARN/STOP → rollover |
+| **O3 — Session** | One agent conversation | What's in my context window; when do I roll over? | Session artifact, budget registry, `session-state.json` record | Measured never guessed; WARN/STOP → rollover |
 | **O4 — Work unit** | One step in a session | What did this step change and why? | Commits + `Decision:` trailers, budget `record` entries, dispatch records | Recorded at every boundary; the grain of provenance |
 
 **Context budget is spent across both dimensions**: a session's window

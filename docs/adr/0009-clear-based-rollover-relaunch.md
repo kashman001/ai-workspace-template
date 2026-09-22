@@ -1,7 +1,22 @@
 # ADR-0009: `/clear`-based rollover relaunch
 
-- **Status:** Accepted
+- **Status:** Accepted — amended by ADR-0010 (2026-09-21)
 - **Date:** 2026-08-28
+
+> **Amendment (2026-09-21, ADR-0010).** The mechanism moved into the record:
+> `--clear` writes the prompt, this process's pid and start time to
+> `launch.pending` (no `.pending-clear-seed`, no `rollover-clear-seed.sh`);
+> on `/clear` the existing `SessionStart` `register` matches the pid, binds the
+> new session id to the open launch and prints the prompt into the cleared
+> context. `--bg`, `--unstage` and `seq-sync` no longer exist; an abandoned
+> `--clear` leaves an open launch that the next `register --project` adopts
+> (no number spent). The open item below is closed: Stage 2 probe A
+> (`work/template-improvement-review/evaluation/stage2-probes.md`) showed
+> `/clear` **rotates** the transcript — new session id, new JSONL, hooks fire
+> `SessionEnd(reason=clear)` then `SessionStart(source=clear)` — so the budget
+> resets with no further work. Measurement caveat: the old transcript is frozen
+> at the clear instant, so a `record` in the cleared session reads near zero
+> until its first response lands.
 - **Supersedes:** nothing. **Extends:** ADR-0003 (automate rollover relaunch).
 - **Related:** ADR-0004 (multi-session model), ADR-0005 (session roles and
   child registry), ADR-0007 (session-number single source).
