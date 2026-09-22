@@ -3,8 +3,9 @@
 # Purpose: Contract of the one-time counter import (scripts/import-session-seq.sh):
 #          record `seq` equals the old .session-seq value; a second run is a
 #          no-op; a moved-on counter is re-imported; a record already ahead is
-#          refused; every refusal names its reason. Runs against a throwaway
-#          work item in a temp tree.
+#          refused; every refusal names its reason; `--status` classifies an
+#          item (fresh / old / imported / new / conflict) without writing.
+#          Runs against a throwaway work item in a temp tree.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
@@ -84,6 +85,43 @@ out="$(PATH="$TMP/bin" "$IMP" throwaway 2>&1)"; rc=$?
 assert_eq       "I9a: exit 4"            "$rc" "4"
 assert_contains "I9b: reason"            "$out" "reason=jq_missing"
 [ ! -e "$REC" ] && ok "I9c: no record written" || bad "I9c: record was created"
+
+echo "I10: --status classifies the item without writing"
+rm -f "$CTR" "$REC" "$TMP/work/throwaway/.session-seq.provenance.json"
+out="$("$IMP" --status throwaway 2>&1)"; rc=$?
+assert_eq       "I10a: fresh exit 0"        "$rc" "0"
+assert_contains "I10b: fresh"               "$out" "throwaway state=fresh loop=no counter=- seq=- next=nothing leftovers=-"
+printf '4\n' > "$CTR"
+out="$("$IMP" --status throwaway 2>&1)"; rc=$?
+assert_eq       "I10c: old exit 1"          "$rc" "1"
+assert_contains "I10d: old attended"        "$out" "state=old loop=no counter=4 seq=- next=import leftovers=.session-seq"
+touch "$TMP/work/throwaway/.session-seq.provenance.json"
+out="$("$IMP" --status throwaway 2>&1)"
+assert_contains "I10e: old loop"            "$out" "state=old loop=yes counter=4"
+[ ! -e "$REC" ] && ok "I10f: status wrote no record" || bad "I10f: status wrote a record"
+"$IMP" throwaway >/dev/null 2>&1
+out="$("$IMP" --status throwaway 2>&1)"; rc=$?
+assert_eq       "I10g: imported exit 0"     "$rc" "0"
+assert_contains "I10h: imported"            "$out" "state=imported loop=yes counter=4 seq=4 next=delete-leftovers leftovers=.session-seq,.session-seq.provenance.json"
+printf '9\n' > "$CTR"
+out="$("$IMP" --status throwaway 2>&1)"; rc=$?
+assert_eq       "I10i: moved-on exit 1"     "$rc" "1"
+assert_contains "I10j: moved-on is old"     "$out" "state=old loop=yes counter=9 seq=4 next=import"
+printf '2\n' > "$CTR"
+out="$("$IMP" --status throwaway 2>&1)"; rc=$?
+assert_eq       "I10k: conflict exit 1"     "$rc" "1"
+assert_contains "I10l: conflict"            "$out" "state=conflict loop=yes counter=2 seq=4 next=check"
+rm -f "$CTR" "$TMP/work/throwaway/.session-seq.provenance.json"
+out="$("$IMP" --status throwaway 2>&1)"; rc=$?
+assert_eq       "I10m: new exit 0"          "$rc" "0"
+assert_contains "I10n: new attended"        "$out" "state=new loop=no counter=- seq=4 next=nothing leftovers=-"
+jq '.chain = {used: 1, cap: 10}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
+out="$("$IMP" --status throwaway 2>&1)"
+assert_contains "I10o: new loop"            "$out" "state=new loop=yes"
+out="$("$IMP" --status 2>&1)"; rc=$?
+assert_eq       "I10p: all items exit 0"    "$rc" "0"
+assert_contains "I10q: all items lists it"  "$out" "throwaway state=new"
+"$IMP" --status a b >/dev/null 2>&1; assert_eq "I10r: too many args exit 3" "$?" "3"
 
 echo
 echo "test-import-session-seq: $PASS passed, $FAIL failed"

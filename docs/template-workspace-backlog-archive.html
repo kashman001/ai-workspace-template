@@ -849,6 +849,21 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L47</span> Counter-import script slated for retirement, but downstream workspaces still need it to migrate
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/import-session-seq.sh</span></h3>
+    <p><span class="k">Evidence:</span> the script header said "retired after cutover" and ticket 10 of
+      <code>work/template-improvement-review/</code> planned its deletion; <code>docs/context-budget.md</code> covered the
+      migration in one sentence and named nothing for items that never ran the old scripts, or ran the current ones.</p>
+    <p><span class="k">Impact:</span> a workspace pulling the new session scripts would have had no way to bring its
+      old-counter work items over, and no way to tell which items needed it.</p>
+    <p><span class="fix">Fixed:</span> script kept; <code>--status [&lt;project&gt;]</code> classifies every item from disk
+      (<code>fresh</code> / <code>old</code> with <code>loop=</code> for the old <code>session-loop.sh</code> / <code>imported</code> /
+      <code>new</code> / <code>conflict</code> / <code>unreadable</code>, plus <code>leftovers=</code>), exit 1 while anything still
+      needs the import; tests I10; "Migrating work items from the old scripts" table in <code>docs/context-budget.md</code>.
+      The six remaining live items imported (2026-09-22).</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L1</span> Two OpenCode config files (root + <code>.opencode/</code>)
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">mcp-setup.md</span></h3>
     <p><span class="fix">Fixed:</span> documented the intended split (root <code>opencode.json</code> = MCP server;

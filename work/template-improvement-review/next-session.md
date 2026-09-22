@@ -10,17 +10,17 @@ Stage 4 is complete: the cutover to the new session scripts is done (merge
 37d4100) and the supervised chain reached its cap of 2 (sessions 20 and 21).
 You exist only because the human restarted the supervisor with
 `scripts/session-loop.sh template-improvement-review --reset-cap`. Session
-22 (the first post-cap restart) checked the follow-up and found it blocked.
-There is no planned work for this item. Do the one open follow-up below if its
-precondition holds; otherwise register, confirm the record, and end via
+22 (the first post-cap restart) closed the last follow-up: the six other items
+are imported and the import script stays, with `--status`. There is no
+planned work for this item: register, confirm the record, and end via
 `scripts/context-budget.sh close` (the stop door), not a rollover.
 
 ## Read these, in order
 
 1. `work/template-improvement-review/handoff.md`, top block only (session
-   22: follow-up blocked, why).
+   22 addendum: imports done, ticket 10 closed).
 2. `work/template-improvement-review/stage4-tracker.md`: the "Now" line only.
-3. `work/template-improvement-review/issues/10-cutover.md` (one box open).
+3. `work/template-improvement-review/issues/10-cutover.md` (done).
 
 ## Do NOT reload
 
@@ -41,31 +41,20 @@ backlog HTML, any script whole (grep them), `plans/*.md`, `dispatch/*.md`,
 
 1. `scripts/context-budget.sh register --project template-improvement-review`
    (expect `seq=23`).
-2. Check the precondition for the follow-up: every live work item with a
-   `.session-seq` file must already be imported (a sibling
-   `session-state.json` exists). As of session 22 six are not:
-   automatic-session-rollover, context-decay, devex-review,
-   learn-agentic-workflows, template-maintenance, usage-scenarios
-   (`ls work/*/.session-seq`). If any remain, do NOT retire the import
-   script; note it in the ledger and stop.
-3. If all are imported (one agent commit): delete
-   `scripts/import-session-seq.sh`, `scripts/tests/test-import-session-seq.sh`,
-   and its row under "Reason codes" in `docs/context-budget.md` (the
-   doc-consistency test pins that row). Run the shell suites and the ledger
-   check. Tick the last box in `issues/10-cutover.md`; ticket status `done`.
-4. Ledger block `# Session Handoff — 23`, short; keep two blocks in
+2. Ledger block `# Session Handoff — 23`, short; keep two blocks in
    `handoff.md` (archive block 21). `python3 scripts/check-ledger.py
    work/template-improvement-review` exit 0. Commit
    (`work(template-improvement-review): session 23 — ...`).
-5. `scripts/context-budget.sh record --label "session 23 done: template-improvement-review"`,
+3. `scripts/context-budget.sh record --label "session 23 done: template-improvement-review"`,
    then `scripts/context-budget.sh close --project template-improvement-review`
    and end your turn. No rollover: there is no session 24 to plan.
-6. A refusal (`refused reason=<code>`): read the code in the skill's table
+4. A refusal (`refused reason=<code>`): read the code in the skill's table
    and the runbook; never edit a script. A script bug is a finding for the
    tracker Notes; the human decides on a fix agent.
 
 ## Open, outside this item's scope
 
 `attach-session.sh` and `statusline-context-budget.sh` still read
-`.active-session`. Not this item's job; a separate ticket if the human
+`.active-session`; backlog M39 (an attended `register` after a stop-door
+close adopts the closed session's number). Not this item's job; a separate ticket if the human
 wants it.

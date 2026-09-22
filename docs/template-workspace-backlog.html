@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-09-16 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-09-22 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">88</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">89</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -139,6 +139,23 @@
 
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
+
+  <div class="find med">
+    <h3><span class="id">M39</span> Attended <code>register</code> after a stop-door <code>close</code> re-binds the closed session's number
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence:</span> <code>bind_record()</code> adopts a dead owner's <code>seq</code> whatever door it left by
+      (<code>action="adopted"</code>: "owner dead: the number is kept"); it never reads <code>session.ended.door</code>. The
+      launcher path does (<code>launch-next-session.sh</code> disposition <code>stopped</code> mints <code>seq+1</code>). The record
+      table in <code>docs/context-budget.md</code> says <code>seq</code> is "never reused"; the two-doors text in
+      <code>docs/work-directory-conventions.md</code> documents same-number adoption only for a plain exit.</p>
+    <p><span class="k">Impact:</span> a human who checkpoints an item (block N written, <code>close</code>) and later opens it
+      attended gets session N again; <code>close</code>/<code>--emit</code> then demand the top ledger block be N, so the
+      agent must write an addendum block instead of N+1. Surfaced 2026-09-22 while auditing what the counter import
+      hands the next session (<code>work/template-improvement-review/</code> session 22 addendum).</p>
+    <p><span class="k">Fix:</span> in <code>bind_record</code>, treat a dead owner whose <code>ended.door</code> is <code>stop</code>
+      like the launcher does — open <code>seq+1</code> (a new "minted" outcome) — and say so in both docs; or, if same-number
+      adoption after a checkpoint is intended, fix the "never reused" line and document the addendum block. Human's call.</p>
+  </div>
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
@@ -252,6 +269,7 @@
       <tr><td>2026-09-13</td><td>Integrated <strong>origin PRs #45–#53</strong> into this instance (merge commit; rows added here because the delivering commits carried no backlog update): <strong>#45</strong> <code>diff-review.sh -w/--worktree</code> reviews the uncommitted working tree; <strong>#46</strong> launcher convention — mandatory work must sit in the First-actions block (conventions doc + <code>session-rollover</code>); <strong>#47</strong> session-loop round 2 — bump record is the rollover verdict (<code>rollover-complete</code> sentinel retired from docs), vendor-logout classification, persisted chain budget with <code>--reset-cap</code>; <strong>#48</strong> duplicated notify-hook block dropped from <code>context-budget.md</code>; <strong>#49</strong> ADR-0009 indexed; <strong>#50</strong> <code>create-work-item</code> registers the new project in <code>work/README.md</code>; <strong>#51</strong> <code>session-rollover</code> says to update specialized state files; <strong>#52</strong> <code>checkpoint</code> gains untracked-<code>work/</code> check, launcher re-read, ADR scope rule, handoff/decision-log as prerequisites; <strong>#53</strong> Copilot entrypoint <code>.github/copilot-instructions.md</code> shipped (entrypoint registries take <code>path:target</code> pairs). Merge conflicts: L45's <code>link-local-work</code> call kept alongside <code>resolve_runtime_pid</code> in <code>cmd_register</code>; scripts tree kept both new lines. No card-count change.</td></tr>
       <tr><td>2026-09-16</td><td>Template changes pulled from <code>work/template-improvement-review/</code> Stage 4 phase 0 (session 10), no card: root <code>ROLLOVER_RELAUNCH</code> default flipped <code>auto</code> → <code>manual</code> while the session scripts are rebuilt (per-item override keeps that item on <code>auto</code>); <code>SESSION_LOOP_NOTIFY</code> now resolves from the env file's own location via <code>BASH_SOURCE</code> instead of the <code>${ROOT:-.}</code> guard, which resolved against the cwd for every caller but the supervisor (<code>test-session-loop-notify.sh</code> N4); <code>jq</code> pinned as a hard requirement (<code>test-check-dependencies.sh</code> D5); one-time <code>scripts/import-session-seq.sh</code> + suite, to be retired after cutover. Scorecard unchanged.</td></tr>
 <tr><td>2026-09-14</td><td>New finding <strong>L46</strong>, fixed in the same pass (archived; <code>work/template-improvement-review/</code> session 5): the session-loop round-2 runtime files <code>.session-seq.bump.json</code>, <code>.session-loop.budget</code> and <code>.session-loop.alarm-stop</code> were never added to <code>.gitignore</code> (commit <code>a91c86c</code> / PR #47 added the writers only; <code>test-session-loop.sh</code> models an ignore list the template did not ship), so every supervised chain left a dirty tree and a <code>git add -A</code> session would defeat the progress guard. Three patterns added. Scorecard now 0/88/4/0/6.</td></tr>
+      <tr><td>2026-09-22</td><td>New finding <strong>L47</strong>, fixed in the same pass (archived; <code>work/template-improvement-review/</code> session 22): the counter-import script was slated for retirement after the Stage 4 cutover, but every downstream workspace pulling the new scripts has work items on the old <code>.session-seq</code> counter — kept it, added <code>--status [&lt;project&gt;]</code> (fresh / old / imported / new / conflict, which generation of <code>session-loop.sh</code> ran, leftover files), tests, and a migration table in <code>docs/context-budget.md</code>; the six remaining live items imported. Opened <strong>M39</strong> (attended <code>register</code> after a stop-door <code>close</code> re-binds the closed session's number). Scorecard now 1/89/4/0/6.</td></tr>
     </tbody>
   </table>
 

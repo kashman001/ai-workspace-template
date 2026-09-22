@@ -262,9 +262,26 @@ are gone. The lib refuses with `record_unreadable`, `schema_mismatch`,
 `record_unwritable`, `lock_timeout`, `precondition_invalid`, `filter_invalid`,
 `filter_empty` or `jq_missing`; every writer relays the code.
 
-A pre-record item carrying the old `work/<item>/.session-seq` counter is
-imported once with `scripts/import-session-seq.sh <item>` (`no_old_counter`,
-`counter_unreadable`, `seq_conflict`); the counter is then deleted.
+### Migrating work items from the old scripts
+
+A workspace that pulls these scripts has work items in one of three shapes,
+and `scripts/import-session-seq.sh --status` (all items, or one) tells them
+apart from the files on disk — it writes nothing:
+
+| `state=` | What the item ran | Do |
+| --- | --- | --- |
+| `fresh` | never any session script — no counter, no record | nothing; `register --project <item>` opens the record from the ledger's top block |
+| `old` (`loop=no` attended, `loop=yes` the old `session-loop.sh`) | the old scripts: a `.session-seq` counter, no record | `scripts/import-session-seq.sh <item>` (`no_old_counter`, `counter_unreadable`, `seq_conflict`) |
+| `imported` | the import; counter and record agree | delete the `leftovers=` files (nothing reads them) |
+| `new` (`loop=yes` when the current `session-loop.sh` has run it) | the current scripts | nothing |
+| `conflict` / `unreadable` | record ahead of the counter, or a file that does not parse | look before touching |
+
+Stop any old `session-loop.sh` on the item first. The import sets `seq` to
+the counter — the number of the last session that registered under the old
+scripts — so the next session numbers itself exactly as a session after a
+plain exit does (`adopted`/`filled`: the same number when that session left
+no ledger block, else the launcher mints the next). Exit 1 from `--status`
+means at least one item still needs the import or a look.
 
 ## The launcher — `scripts/launch-next-session.sh`
 

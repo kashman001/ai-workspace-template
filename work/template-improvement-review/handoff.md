@@ -6,6 +6,51 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff addendum — 22 (2026-09-22): human redirected after the close: six items imported, import script kept with a `--status` classifier, ticket 10 done
+
+**Summary.** After the stop-door close the human asked (attended) to run
+the import on all six items and to keep the import script: downstream
+workspaces pulling the new scripts carry old-counter work items too. Done:
+`import-session-seq.sh` on automatic-session-rollover (32), context-decay
+(7), devex-review (8), learn-agentic-workflows (3), template-maintenance
+(16), usage-scenarios (6); a second run is `noop`. Old counters backed up
+to the scratchpad and deleted per the doc ("the counter is then deleted").
+The human also asked the script to tell three shapes apart — never ran
+`session-loop.sh`, ran the old one, ran the current one — so `--status
+[<project>]` was added (states fresh / old / imported / new / conflict /
+unreadable, `loop=` for which generation of the loop ran, `leftovers=` for
+the dead files, exit 1 when anything still needs the import); tests I10;
+migration table in `docs/context-budget.md` → "Migrating work items from
+the old scripts". Ticket 10 last box rewritten and ticked, status `done`.
+Backlog: L47 (resolved, archived), M39 (open). No rollover: the record was
+already closed; this block is an addendum, not a new number.
+
+**Findings.**
+- No template/framework version marker exists anywhere; the only versioned
+  thing is the record's `schema: 1`. The migration does not need one (the
+  files are self-describing), but downstream upgrades in general would
+  benefit from a workspace-level version — the human's call, not opened.
+- M39: `bind_record` adopts a dead owner's number whatever door it left by,
+  so an attended `register --project` after a stop-door `close` re-binds
+  the closed session's number and the ledger check then wants an addendum
+  block. The supervisor path mints the next number (`stopped`). Doc line
+  "never reused" disagrees with the attended path. Finding only.
+- Three of the six counters were one ahead of their ledger top (the last
+  session registered but never wrote its block); the import reproduces that
+  session's number, which is the `adopted`/`filled` rule anyway.
+
+**Decisions.** Keep the import script (human). Rejected: retiring it per
+the original ticket 10 wording — downstream workspaces need it.
+
+**Learnings:**
+- The doc-consistency suite extracts `reason=`/`action="` tokens from every
+  script; new key=value output must avoid those two keys or be documented.
+
+**Open / next.** Nothing in this item. Leftover old files (`.rollover-options`
+in seven items, `.session-loop.log` in template-maintenance) are untracked
+noise nothing reads; `--status` lists them. M39 and the `.active-session`
+readers are outside this item.
+
 # Session Handoff — 22 (2026-09-22): post-cap restart; retire-import follow-up checked and found blocked (six items still on the old counter); closed through the stop door
 
 **Summary.** No agents; hands-off session started by the human via
