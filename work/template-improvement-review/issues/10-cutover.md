@@ -6,8 +6,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] Import on this item: record `seq` equals the old counter; a second run is a no-op
-- [ ] Attended rollover passes the phase 4 field assertions; the successor's `session` block names it and binds to the launch
-- [ ] Supervised chain with `--max-sessions 2`: verdict `staged` once, then `quit_plain` or `cap`
+- [x] Import on this item: record `seq` equals the old counter; a second run is a no-op
+- [x] Attended rollover passes the phase 4 field assertions; the successor's `session` block names it and binds to the launch
+- [x] Supervised chain with `--max-sessions 2`: verdict `staged` once, then `quit_plain` or `cap`
 - [ ] Import script and old counter ignore entries retired in a follow-up commit
-- [ ] Tracker: every phase row `done` with commit; ledger records the cutover evidence
+- [x] Tracker: every phase row `done` with commit; ledger records the cutover evidence
