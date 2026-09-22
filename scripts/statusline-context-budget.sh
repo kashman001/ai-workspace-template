@@ -37,11 +37,15 @@ PROJECT=""
 
 SEGMENT=""
 if [ -n "$PROJECT" ]; then
-  # The lock is authoritative for primary; the record's role is a cached claim.
+  # The item's record is authoritative for primary: its open `session` block
+  # is the owner, alive while its pid is (ADR-0010, read through
+  # scripts/lib/session-lib.sh). The registry record's role is a cached claim.
   ROLE=$(jq -r '.role // "none"' "$REC" 2>/dev/null)
-  LOCK="$ROOT/work/$PROJECT/.active-session"
-  if [ -f "$LOCK" ] && \
-     [ "$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)" = "$SID" ]; then
+  LIB="$ROOT/scripts/lib/session-lib.sh"
+  if [ -f "$LIB" ] && . "$LIB" 2>/dev/null \
+     && OWNER=$(session_record_owner "$ROOT/work/$PROJECT/session-state.json") \
+     && [ "$(printf '%s' "$OWNER" | jq -r '.session_id // empty' 2>/dev/null)" = "$SID" ] \
+     && session_owner_live "$OWNER"; then
     ROLE="primary"
   fi
 

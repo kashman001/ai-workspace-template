@@ -180,6 +180,53 @@ assert_eq       "S11a: return 4"   "$rc" "4"
 assert_contains "S11b: reason"     "$out" "reason=jq_missing"
 cmp -s "$REC" "$TMP/before" && ok "S11c: byte-identical" || bad "S11c: record changed"
 
+# ---- Readers (ticket 01, work/session-management-followups): the owner is
+# the record's `session` block; alive while its pid runs and was started when
+# `pid_start` says; a pid-less block falls back to its artifact's age.
+LIVE_PID=$$
+LIVE_START="$(ps -o lstart= -p "$LIVE_PID" | sed 's/^ *//;s/ *$//')"
+sh -c 'exit 0' & DEAD_PID=$!; wait "$DEAD_PID"
+OREC="$TMP/owner-record.json"
+owner_json() { # $1=pid ("" = none) $2=pid_start $3=artifact $4=ended json
+  jq -n --arg pid "$1" --arg ps "$2" --arg af "$3" --argjson ended "$4" \
+    '{seq:4, runtime:"claude", session_id:"sid-o", artifact:$af, ended:$ended}
+     + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$ps} end)'
+}
+
+echo "O1: session_record_owner — absent, unreadable, or ownerless record -> 1, nothing printed"
+rm -f "$OREC"
+out="$(session_record_owner "$OREC" 2>&1)"; rc=$?
+assert_eq "O1a: absent -> 1" "$rc" "1"; assert_eq "O1b: silent" "$out" ""
+echo 'not json' > "$OREC"
+out="$(session_record_owner "$OREC" 2>&1)"; rc=$?
+assert_eq "O1c: unreadable -> 1" "$rc" "1"; assert_eq "O1d: silent" "$out" ""
+echo '{"schema":1,"seq":3,"session":null}' > "$OREC"
+session_record_owner "$OREC" >/dev/null 2>&1; assert_eq "O1e: session null -> 1" "$?" "1"
+jq -n --argjson s "$(owner_json "$LIVE_PID" "$LIVE_START" "$TMP/none" '{"at":"2026-09-22T01:00:00Z","door":"stop"}')" \
+  '{schema:1, seq:4, session:$s}' > "$OREC"
+session_record_owner "$OREC" >/dev/null 2>&1; assert_eq "O1f: ended owner -> 1" "$?" "1"
+
+echo "O2: session_record_owner — an open session block is printed as JSON"
+jq -n --argjson s "$(owner_json "$LIVE_PID" "$LIVE_START" "$TMP/none" null)" \
+  '{schema:1, seq:4, session:$s}' > "$OREC"
+out="$(session_record_owner "$OREC")"; rc=$?
+assert_eq "O2a: return 0" "$rc" "0"
+assert_eq "O2b: the block" "$(printf '%s' "$out" | jq -r '.session_id')" "sid-o"
+
+echo "O3: session_owner_live — pid rule"
+session_owner_live "$(owner_json "$LIVE_PID" "$LIVE_START" "$TMP/none" null)"; assert_eq "O3a: live pid + matching start -> 0" "$?" "0"
+session_owner_live "$(owner_json "$DEAD_PID" "$LIVE_START" "$TMP/none" null)"; assert_eq "O3b: dead pid -> 1" "$?" "1"
+session_owner_live "$(owner_json "$LIVE_PID" "Mon Jan  1 00:00:00 2001" "$TMP/none" null)"; assert_eq "O3c: recycled pid (start differs) -> 1" "$?" "1"
+session_owner_live "$(owner_json "$LIVE_PID" "$LIVE_START" "$TMP/none" '{"at":"x","door":"stop"}')"; assert_eq "O3d: ended -> 1 even with a live pid" "$?" "1"
+
+echo "O4: session_owner_live — no pid falls back to the artifact's age against the stale window"
+echo hi > "$TMP/fresh.jsonl"
+echo hi > "$TMP/old.jsonl"; touch -t 202601010000 "$TMP/old.jsonl"
+session_owner_live "$(owner_json "" "" "$TMP/fresh.jsonl" null)" 10800; assert_eq "O4a: fresh artifact -> 0" "$?" "0"
+session_owner_live "$(owner_json "" "" "$TMP/old.jsonl" null)" 10800;   assert_eq "O4b: stale artifact -> 1" "$?" "1"
+session_owner_live "$(owner_json "" "" "$TMP/missing.jsonl" null)" 10800; assert_eq "O4c: no artifact -> 1" "$?" "1"
+session_owner_live "$(owner_json "" "" "$TMP/fresh.jsonl" null)"; assert_eq "O4d: default window (3 h) -> 0" "$?" "0"
+
 echo
 echo "test-session-lib: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

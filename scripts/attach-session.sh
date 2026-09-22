@@ -3,8 +3,10 @@
 # Purpose: Re-attach step of session-rollover (ADR-0003) for chained claude
 #          successors: find the latest session for a work item and, when it
 #          is alive and holds the work-item lock, connect this terminal to
-#          it. Resolution: work/<project>/.active-session lock (corrected for a
-#          fork that re-keyed the held session — see fork_of() below) >
+#          it. Resolution: the owner named by work/<project>/session-state.json
+#          (its `session` block, alive while its pid is — ADR-0010; read via
+#          scripts/lib/session-lib.sh; corrected for a fork that re-keyed the
+#          owning session — see fork_of() below) >
 #          newest .context-budget/sessions/*.json record for the project
 #          (fallback, same convention as own_record() in
 #          launch-next-session.sh) > newest live `claude agents --json` entry
@@ -44,6 +46,7 @@ resolve_workspace_root() {  # $1 = script-relative candidate root
 }
 WORKSPACE_ROOT="$(resolve_workspace_root "$(dirname "$0")/..")"
 STATE_DIR="$WORKSPACE_ROOT/.context-budget"
+. "$WORKSPACE_ROOT/scripts/lib/session-lib.sh" || { echo "error: scripts/lib/session-lib.sh missing" >&2; exit 3; }
 
 if [ -z "${CONTEXT_LOCK_STALE_SECS:-}" ] && [ -f "$WORKSPACE_ROOT/context-budget.env" ]; then
   . "$WORKSPACE_ROOT/context-budget.env" >/dev/null 2>&1 || true
@@ -65,27 +68,27 @@ done
 
 command -v jq >/dev/null 2>&1 || die "jq is required"
 
-# Resolution: the work-item lock first, else the newest registry record for
-# the project (fallback — same convention as own_record() in
+# Resolution: the item's record first (its open `session` block is the owner;
+# LOCKED=1 keeps the old name for the output shape), else the newest registry
+# record for the project (fallback — same convention as own_record() in
 # launch-next-session.sh, minus its env-var self-identification, which does
 # not apply here: we want the project's latest session, not "my own").
-RUNTIME=""; SID=""; LOCKED=0
-LOCK="$WORKSPACE_ROOT/work/$PROJECT/.active-session"
-if [ -f "$LOCK" ]; then
-  RUNTIME="$(jq -r '.runtime // empty' "$LOCK" 2>/dev/null)"
-  SID="$(jq -r '.session_id // empty' "$LOCK" 2>/dev/null)"
+RUNTIME=""; SID=""; LOCKED=0; OWNER=""
+if OWNER="$(session_record_owner "$WORKSPACE_ROOT/work/$PROJECT/session-state.json")"; then
+  RUNTIME="$(printf '%s' "$OWNER" | jq -r '.runtime // empty' 2>/dev/null)"
+  SID="$(printf '%s' "$OWNER" | jq -r '.session_id // empty' 2>/dev/null)"
   [ -n "$RUNTIME" ] && [ -n "$SID" ] && LOCKED=1
 fi
 # A fork (Claude's SessionStart:fork) RE-KEYS a live session: the transcript
-# moves to a new session id and `record` self-heals onto it, but the lock still
-# names the pre-fork id. Because the lock resolves first, the naming step below
+# moves to a new session id and `record` self-heals onto it, but the record may
+# still name the pre-fork id. Because the record resolves first, the naming step below
 # — which would have found the live session — never got a chance to run, so the
 # script printed a `--resume` for a dead id. The fork inherits the launcher's
 # `-n "<project> #<N>"` name, so an entry sharing that exact name with a strictly
-# later start IS the fork of the held session, not a different one. Adopt it:
-# the lock is still validly held (a fork is the same logical session), only its
+# later start IS the fork of the owning session, not a different one. Adopt it:
+# the item is still validly owned (a fork is the same logical session), only its
 # id moved. Positive evidence only — no oracle, no name, no timestamps, or any
-# jq/CLI failure all leave the locked id exactly as it was.
+# jq/CLI failure all leave the owner's id exactly as it was.
 fork_of() {  # $1 = session id -> id of the fork that superseded it, or empty
   claude agents --json 2>/dev/null | jq -r --arg s "$1" '
       (map(select(.sessionId == $s)) | .[0]) as $h
@@ -100,7 +103,7 @@ fork_of() {  # $1 = session id -> id of the fork that superseded it, or empty
 if [ "$LOCKED" -eq 1 ] && [ "$RUNTIME" = "claude" ]; then
   FORK="$(fork_of "$SID")" || FORK=""
   if [ -n "$FORK" ] && [ "$FORK" != "$SID" ]; then
-    note "lock names $SID, which a fork superseded; following it to $FORK (same session, re-keyed)"
+    note "record names $SID, which a fork superseded; following it to $FORK (same session, re-keyed)"
     SID="$FORK"
   fi
 fi
@@ -117,11 +120,11 @@ if [ "$LOCKED" -eq 0 ]; then
   done < <(ls -t "$STATE_DIR/sessions/"*.json 2>/dev/null)
 fi
 # Third resolution step. The two above depend on state the session must write
-# about itself: the lock, and `project` in its budget record. The registration
+# about itself: the item's record, and `project` in its budget record. The registration
 # handshake normally supplies it, but it cannot in every case — the launcher's
 # own note records that a successor started from the printed command (the
 # non-tty branch, which launches nothing) still registers project-less, and so
-# does any session predating the handshake. Such a session holds no lock and
+# does any session predating the handshake. Such a session owns no item and
 # matches no record. Fall back to the launcher's OWN naming: it starts every
 # successor with `-n "<project> #<N>"`, which `claude agents --json` reports as
 # `name`, so a live session stays discoverable. Newest start wins. Claude-only,
@@ -136,24 +139,30 @@ fi
 
 [ -n "$RUNTIME" ] && [ -n "$SID" ] || die "no session known for work/$PROJECT"
 
-# Liveness: mirror lock_holder_age() in scripts/context-budget.sh (read it
-# first — canonical logic; NOT sourced here, it dispatches a command on
-# execution) — age of the session's registered artifact vs LOCK_STALE.
+# Liveness: the owner is alive while its pid is (session_owner_live, ADR-0010;
+# a pid-less owner falls back to its artifact's age vs LOCK_STALE). A session
+# found through the fallbacks has no pid on record, so it keeps the artifact-
+# age rule — mirror of lock_holder_age() in scripts/context-budget.sh (NOT
+# sourced here, it dispatches a command on execution). `age` is reported
+# either way, for the human reading the line.
 AGE=""; LIVE="no"
 REC="$STATE_DIR/sessions/$RUNTIME-$SID.json"
-if [ -f "$REC" ]; then
+if [ "$LOCKED" -eq 1 ]; then
+  session_owner_live "$OWNER" "$LOCK_STALE" && LIVE="yes"
+  AF="$(printf '%s' "$OWNER" | jq -r '.artifact // empty' 2>/dev/null)"
+else
   AF="$(jq -r '.artifact // empty' "$REC" 2>/dev/null)"
-  if [ -n "$AF" ] && [ -f "$AF" ]; then
-    MT="$(stat -f%m "$AF" 2>/dev/null || stat -c%Y "$AF" 2>/dev/null)" || MT=""
-    if [ -n "$MT" ]; then
-      AGE=$(( $(date +%s) - MT ))
-      [ "$AGE" -lt "$LOCK_STALE" ] && LIVE="yes"
-    fi
+fi
+if [ -n "$AF" ] && [ -f "$AF" ]; then
+  MT="$(stat -f%m "$AF" 2>/dev/null || stat -c%Y "$AF" 2>/dev/null)" || MT=""
+  if [ -n "$MT" ]; then
+    AGE=$(( $(date +%s) - MT ))
+    [ "$LOCKED" -eq 0 ] && [ "$AGE" -lt "$LOCK_STALE" ] && LIVE="yes"
   fi
 fi
 
-# Role: the lock is authoritative (holder = primary); otherwise the session
-# record's cached role claim (auxiliary/superseded), else none.
+# Role: the record's owner is primary; otherwise the session record's cached
+# role claim (auxiliary/superseded), else none.
 ROLE="none"
 if [ "$LOCKED" -eq 1 ]; then
   ROLE="primary"

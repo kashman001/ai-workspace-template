@@ -867,6 +867,25 @@
       and <code>docs/work-directory-conventions.md</code>. 2026-09-22.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M40</span> <code>attach-session.sh</code> and the statusline still resolved a work item's owner through the retired <code>.active-session</code> lock
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/attach-session.sh · scripts/statusline-context-budget.sh · scripts/lib/session-lib.sh</span></h3>
+    <p><span class="k">Evidence:</span> <code>attach-session.sh:73</code> and <code>statusline-context-budget.sh:42</code> read
+      <code>work/&lt;p&gt;/.active-session</code>; nothing has written that file since the Stage 4 cutover (37d4100) and
+      <code>import-session-seq.sh</code> deletes it. The comment at <code>link-local-work.sh:33</code> still used it as its example.</p>
+    <p><span class="k">Impact:</span> both scripts saw every item as unowned — <code>attach-session.sh</code> never attached
+      (<code>locked=no</code> always) and the statusline never showed PRIMARY. Ticket 01 of
+      <code>work/session-management-followups/</code>.</p>
+    <p><span class="k">Fix:</span> read the owner from the record (<code>work/&lt;p&gt;/session-state.json</code>, its open
+      <code>session</code> block) with the ADR-0010 liveness rule (pid running and <code>pid_start</code> matches).</p>
+    <p><span class="fix">Fixed:</span> two readers added to <code>scripts/lib/session-lib.sh</code>
+      (<code>session_record_owner</code>, <code>session_owner_live</code>; contract tests O1–O4 in <code>test-session-lib.sh</code>);
+      both scripts source the lib and keep their output shape; a stray <code>.active-session</code> file is proven inert
+      (attach T8, statusline T3e); dead, recycled, or ended owners are not owners (attach T2, statusline T3b–d).
+      The <code>link-local-work.sh</code> comment now cites <code>session-state.json</code>. <code>docs/context-budget.md</code>
+      carried no lock-based description of either script, so no prose changed. 2026-09-22.</p>
+  </div>
+
   <h2>Low</h2>
 
   <div class="find low resolved">

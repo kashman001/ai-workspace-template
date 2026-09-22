@@ -15,14 +15,22 @@ the prose that describes the two scripts in `docs/context-budget.md`
 
 **Blocked by:** nothing.
 
-**Status:** todo
+**Status:** done
 
-- [ ] Failing test first in `scripts/tests/test-attach-session.sh` and
+- [x] Failing test first in `scripts/tests/test-attach-session.sh` and
       `scripts/tests/test-statusline-context-budget.sh`: an item whose record
       names a live pid is owned; a dead pid or no record is not; a stray
       `.active-session` file changes nothing
-- [ ] Both scripts green on the new tests; `grep -rn '\.active-session' scripts/`
+- [x] Both scripts green on the new tests; `grep -rn '\.active-session' scripts/`
       hits only `import-session-seq.sh` and its test
-- [ ] Doc prose updated; backlog card opened and resolved in the same commit
+- [x] Doc prose updated; backlog card opened and resolved in the same commit
       (next free ID from the backlog header; archive the card)
-- [ ] All suites green; `Decision:` trailer on the commit
+- [x] All suites green; `Decision:` trailer on the commit
+
+**Done (2026-09-22, session 2).** Backlog card M40 (archived). Two notes against the
+boxes: `grep -rn '\.active-session' scripts/` also hits the stray-file tests this
+ticket asked for (attach T8, statusline T3e) and two pre-existing negative
+assertions (`test-link-local-work.sh` fixture, `test-context-budget-registry.sh`
+R1n) — every hit is a script that deletes the file or a test proving it inert.
+`docs/context-budget.md` carried no lock-based prose for either script (grep of
+both names), so nothing changed there.

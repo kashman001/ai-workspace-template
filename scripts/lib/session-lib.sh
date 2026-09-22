@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # File: scripts/lib/session-lib.sh
 # Purpose: The one way to write a work item's session record
-#          (work/<item>/session-state.json, schema 1). Sourced, not executed;
-#          bash 3.2. Every writer (launcher, measurer, supervisor) goes through
+#          (work/<item>/session-state.json, schema 1), plus the two readers
+#          that answer "who owns this item, and is it alive" (ADR-0010;
+#          `session_record_owner`, `session_owner_live` at the end). Sourced,
+#          not executed; bash 3.2. Every writer (launcher, measurer, supervisor) goes through
 #          `session_record_update`: read the record, apply a jq filter, write a
 #          temp file in the same directory, rename it over the original, all
 #          under a `mkdir` lock beside the record (`flock` is absent on macOS;
@@ -123,4 +125,40 @@ session_record_update() { # <record> <precondition> <filter> [jq-args...]
     rm -f "$tmp"; _session_record_unlock "$record"; _session_record_refuse record_unwritable "$record" "cannot rename over the record"; return 4
   fi
   _session_record_unlock "$record"
+}
+
+# ---- Readers (ticket 01, work/session-management-followups). The owner is
+# the record's `session` block while `ended` is null; it is alive while its
+# process id is running and was started when `pid_start` says (pids are
+# recycled, so the start time is part of the identity). A block with no pid
+# (a runtime without a process of its own) falls back to its transcript's age
+# against the stale window, as the retired lock did. Mirrors owner_live() in
+# scripts/context-budget.sh, which cannot be sourced (it dispatches on execution).
+
+session_record_owner() { # <record>; prints the open `session` block / 1 no owner (silent)
+  [ $# -eq 1 ] || { echo "usage: session_record_owner <record>" >&2; return 3; }
+  local out
+  [ -f "$1" ] || return 1
+  out=$(jq -c 'if type == "object" and (.session | type) == "object" and .session.ended == null
+               then .session else empty end' "$1" 2>/dev/null) || return 1
+  [ -n "$out" ] || return 1
+  printf '%s\n' "$out"
+}
+
+session_owner_live() { # <session-block-json> [stale-secs, default 10800]; 0 live / 1 dead or unknowable
+  [ $# -ge 1 ] || { echo "usage: session_owner_live <session-json> [stale-secs]" >&2; return 3; }
+  local pid pstart cur af mt stale="${2:-10800}"
+  printf '%s' "$1" | jq -e '.ended == null' >/dev/null 2>&1 || return 1
+  pid=$(printf '%s' "$1" | jq -r '.pid // empty' 2>/dev/null)
+  pstart=$(printf '%s' "$1" | jq -r '.pid_start // empty' 2>/dev/null)
+  if [ -n "$pid" ]; then
+    kill -0 "$pid" 2>/dev/null || return 1
+    cur=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//;s/ *$//')
+    [ -n "$cur" ] && [ "$cur" = "$pstart" ]
+    return
+  fi
+  af=$(printf '%s' "$1" | jq -r '.artifact // empty' 2>/dev/null)
+  [ -n "$af" ] && [ -f "$af" ] || return 1
+  mt=$(stat -f%m "$af" 2>/dev/null || stat -c%Y "$af" 2>/dev/null) || return 1
+  [ $(( $(date +%s) - mt )) -lt "$stale" ]
 }

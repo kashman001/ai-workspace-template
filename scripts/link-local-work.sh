@@ -30,7 +30,7 @@ main="$(cd "$common/.." 2>/dev/null && pwd -P)" || exit 0
 [ -d "$main/work" ] && [ -d "$top/work" ] || exit 0
 # Ignored top-level work/<item>/ directories only. --directory collapses a
 # fully-ignored dir to one "work/<item>/" line; ignored files or subdirs
-# inside a tracked item come out deeper (work/<item>/.active-session,
+# inside a tracked item come out deeper (work/<item>/session-state.json,
 # work/<item>/.agent-locks/) and are skipped by the depth filter.
 git -C "$main" ls-files --others --ignored --exclude-standard --directory -- work/ 2>/dev/null \
 | while IFS= read -r p; do
