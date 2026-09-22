@@ -6,7 +6,7 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff addendum — 22 (2026-09-22): human redirected after the close: six items imported, import script kept with a `--status` classifier, ticket 10 done
+# Session Handoff — 22 (2026-09-22): addendum: human redirected after the close; six items imported, import script kept with a `--status` classifier, ticket 10 done
 
 **Summary.** After the stop-door close the human asked (attended) to run
 the import on all six items and to keep the import script: downstream
@@ -37,6 +37,10 @@ already closed; this block is an addendum, not a new number.
   the closed session's number and the ledger check then wants an addendum
   block. The supervisor path mints the next number (`stopped`). Doc line
   "never reused" disagrees with the attended path. Finding only.
+- `launch-next-session.sh --emit` refused `ledger_shape` on a `# Session
+  Handoff addendum — 22` heading that `check-ledger.py` accepts; the shell
+  parser `top_ledger_session` knows only the plain form. Retitled the block
+  to `# Session Handoff — 22 (…): addendum: …`. Finding only.
 - Three of the six counters were one ahead of their ledger top (the last
   session registered but never wrote its block); the import reproduces that
   session's number, which is the `adopted`/`filled` rule anyway.
