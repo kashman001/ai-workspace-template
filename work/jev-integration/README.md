@@ -6,6 +6,10 @@ Governing skill(s): `research-wave` (session 1), then `grill-with-docs` →
 **Start here:** `next-session.md` (catch-up launcher) → `handoff.md`
 (session ledger, top block).
 
+**Status (2026-09-23):** research wave 1 complete — synthesis at
+`research/synthesis.md`; fit decision pending (to be recorded in
+`decisions.md`).
+
 ## What this is
 
 [Jev](https://typesafe.ai) is TypeSafe's "first public System One Model,
