@@ -3,62 +3,68 @@
 We're resuming `plans`. Works in any runtime (Claude Code, Codex, Gemini,
 OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
-> **This file is the LAUNCHER (catch-up prompt).** Forward-only, and REPLACED
-> at each rollover: it holds what to do next, still-binding constraints, and
-> pointers — never session history. Past-tense provenance lives in
-> `handoff.md` (the append-only ledger). Convention:
-> docs/work-directory-conventions.md.
+> **This file is the LAUNCHER (catch-up prompt).** Forward-only, REPLACED at
+> each rollover: what to do next, still-binding constraints, pointers — never
+> session history. Past-tense provenance lives in `handoff.md` (the ledger).
+> Convention: docs/work-directory-conventions.md.
 
-## >>> START HERE <<<
+## Mission
 
-Position: item scaffolded, nothing explored yet. Objective for this session:
-turn the loose idea of a **plan** (graph of steps + loops + sessions,
-parallelism-aware and LLM-tier-aware) into a sharp concept the user has
-agreed to, grounded in what the workspace already does. Exploration only —
-no runner, no format spec until the concept is settled.
+Turn the settled concept of a **plan** into `concept.md` (one-page
+definition, glossary, one worked example in the proposed form) and record the
+build/no-build verdict. Session 1 settled most of the concept in conversation
+and wrote it to `decisions.md`; only the OPEN items remain to be grilled.
 
-1. `scripts/context-budget.sh register --project plans` (first registered
-   session of this item; expect `seq=1`).
-2. Read `README.md` here ("What this is" + success criteria).
-3. Build the seam inventory **before** interviewing the user (facts are the
-   agent's job): for each of `skills/to-tickets/SKILL.md` (blocking edges),
-   `skills/wayfinder/SKILL.md` (map + frontier), the Workflow tool and
-   `skills/workflow-authoring` reference (agent graphs, `pipeline`,
-   `parallel`), `skills/research-wave/SKILL.md`, the `loop` skill,
-   `scripts/session-loop.sh` + `scripts/launch-next-session.sh` (session
-   chaining), `scripts/fleet.sh` (dispatch records), `skills/rlm/SKILL.md`
-   (root/leaf tiers), and `docs/work-directory-conventions.md`
-   (launcher/ledger), note: what plan property it covers, what it lacks.
-   Write `seams.md`. Delegate the reading to a subagent if it is heavy;
-   verify on disk before recording.
-4. Run `grill-with-docs` on the concept with `seams.md` in hand. Frontier
-   questions to open with (recommended answers in the round): what a plan
-   *is* (a file? a map of tickets? a Workflow script?); one plan per work
-   item or many; how a step declares its tier and its parallel group; what a
-   loop's exit check looks like; how a plan resumes from a rollover; whether
-   a plan wraps existing skills or replaces them; what is out of scope.
-   Every settled answer lands as a `/decision` note in `decisions.md`.
-5. Write `concept.md`: the one-page definition, glossary, and one worked
-   example written in the proposed form. If the open questions clearly
-   exceed this session, chart them as a `wayfinder` map instead of
-   guessing.
-6. `scripts/context-budget.sh record --label "<unit done>"` at each step
-   boundary. At the end or at WARN/STOP: ledger block on `handoff.md`
-   (`# Session Handoff — 1 (<date>): …`), rewrite this launcher, update the
-   `work/README.md` row, commit. Do not push main; report how far ahead it is.
+## Read these, in order
 
-## Constraints already decided (do not re-litigate)
+1. `work/plans/decisions.md` — the settled notes are binding; the two OPEN
+   items at the bottom are the grill's agenda.
+2. `work/plans/seams.md` — "Coverage at a glance" table and "What is
+   genuinely missing"; read a mechanism's section only when a question
+   touches it.
+3. `work/plans/README.md` — success criteria.
+4. `skills/grill-with-docs/SKILL.md` — when First actions reach step 3.
 
-- Exploration before build: no runner, no format implementation until
-  `decisions.md` records a build verdict.
-- Whatever ships is agent-agnostic (Codex, Gemini, OpenCode, downloaders) and
-  plain files on disk — a plan must be readable without any one runtime.
-- Reuse over reinvention: the seam inventory decides what a plan wraps versus
-  replaces; do not design a plan format that ignores `to-tickets` edges,
-  `wayfinder` maps, or the launcher/ledger.
+## Do NOT reload
 
-## Read these first, in order
+- The nine **settled** decisions — agreed with the user; do not re-open them.
+- A runner — rejected; `session-loop.sh` + an orchestrator reading the
+  frontier is the runner.
+- Parallel sessions on separate checkouts — out of scope for v1.
+- The word "worktree" in plan vocabulary — use "work item".
+- The sources behind `seams.md` — every claim there was verified on disk.
 
-1. `work/plans/README.md`
-2. `work/plans/handoff.md` (top block)
-3. `skills/grill-with-docs/SKILL.md` (when step 4 reaches it)
+## State snapshot
+
+Branch `main`, clean after this rollover's commit; nothing pushed. No
+`concept.md`, `spec.md`, or `issues/`. README status line still says no
+build verdict. Chain supervised by `session-loop.sh` (seq 1 → 2), staged
+`interactive` because the grill needs the user.
+
+## First actions
+
+1. `scripts/context-budget.sh register --project plans` (expect `seq=2`).
+2. Read `decisions.md`; list the OPEN items and the one **proposed** note.
+3. Grill the user on exactly these, recommended answers first, one round:
+   (a) build/no-build; (b) confirm node-file format + status set
+   `todo|doing|done|blocked|dropped`; (c) `check` semantics for HITL nodes
+   (proposal: HITL nodes have no `check`, acceptance is the human's tick);
+   (d) marker convention for generated blocks (proposal:
+   `<!-- plan:begin <name> -->` … `<!-- plan:end <name> -->`);
+   (e) the integration proposal under OPEN. Record each answer with
+   `/decision` in `decisions.md`; flip "proposed" to "settled".
+   **If nobody is present:** write the recommended answers as proposed
+   notes, write `concept.md` on those assumptions, and stop with the
+   questions posed at the top of the ledger block.
+4. Write `concept.md`: definition of a plan and its five properties;
+   glossary (node, edge, wave, reconcile node, loop node, check, tier,
+   orchestrator session, frontier, capture/replan) reusing the vocabulary
+   in `seams.md` → "Vocabulary already in use"; one worked example: this
+   very item as a plan (waves: ground → write → verdict) in node-file form.
+5. If build: set the README status line, then `to-spec` → `spec.md`. If
+   the spec is clear, `to-tickets` under `issues/`. If no-build: README
+   status line + concept.md stand as the reference.
+6. `scripts/context-budget.sh record --label "<unit done>"` at each step.
+   At the end or at WARN/STOP: ledger block, rewrite this launcher, update
+   the `work/README.md` row, commit. Do not push main; report how far
+   ahead it is.
