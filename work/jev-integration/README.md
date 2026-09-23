@@ -51,3 +51,4 @@ decision note says where Jev fits.
 - `research/<subject>/` — one directory per research-wave subject (pass,
   fact-check, corrections), created by session 1.
 - `decisions.md` — Tier-2 decision notes, created when the first decision lands.
+- `context-budget.env` — per-item relaunch policy (`auto`) so `scripts/session-loop.sh jev-integration` chains unattended.

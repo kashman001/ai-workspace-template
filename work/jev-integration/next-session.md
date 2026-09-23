@@ -44,10 +44,19 @@ fits this template. Research only — no integration code, no spec yet.
    session-loop stall/halt judgement, ledger/backlog checks) with what each
    would need from the API. The fit **decision** is the next session's job
    (`grill-with-docs`, then a `decisions.md` note), not this one's.
-5. At `scripts/context-budget.sh record` WARN/STOP or when the wave is done:
-   ledger block on `handoff.md` (`# Session Handoff — 1 (<date>): …`),
-   rewrite this launcher for the fit-decision session, update the
-   `work/README.md` row, commit. Do not push main; report how far ahead it is.
+5. `scripts/context-budget.sh record --label "<phase done>"` at every phase
+   boundary; a wave is agent-heavy, so expect WARN. When the wave is done or
+   at WARN/STOP: ledger block on `handoff.md` (`# Session Handoff — 1
+   (<date>): …`, plain numbered form), rewrite this launcher for what is
+   next (finished subjects stay finished — name them and the ones still
+   open), update the `work/README.md` row, commit. Then, under the
+   supervisor, roll over per `skills/session-rollover/SKILL.md`: record
+   "rollover complete", then `scripts/launch-next-session.sh jev-integration
+   --emit --loop-mode handsoff --loop-reason "…"` as the last action of the
+   turn. The fit-decision session needs the human: when the research is
+   complete, roll over with `--loop-mode interactive` so the successor poses
+   the decision on a fresh window instead of assuming it. Do not push main;
+   report how far ahead it is.
 
 ## Constraints already decided (do not re-litigate)
 
@@ -58,6 +67,12 @@ fits this template. Research only — no integration code, no spec yet.
 - Research before design: no integration code or spec until a fit decision
   is recorded in `decisions.md`.
 - `research-wave` is the session-1 workflow (user's choice, 2026-09-22).
+
+## State snapshot
+
+- Branch `main`; the scaffold is 54b6d01. No `session-state.json` yet — the
+  supervisor's bootstrap creates it and stages session 1.
+- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto` for the loop.
 
 ## Read these first, in order
 
