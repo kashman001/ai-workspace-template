@@ -20,6 +20,7 @@ excluded by rule, not by oversight.
 | Work item | What it is | Status |
 |---|---|---|
 | [`automatic-session-rollover`](automatic-session-rollover/README.md) | Hands-free successor relaunch after a context-budget rollover | Dormant — shipped and merged; decision map fully drained |
+| [`jev-integration`](jev-integration/README.md) | Evaluate and, if it fits, integrate TypeSafe's Jev typed-decision model into the template | Scaffolded (2026-09-22) — session 1 is a `research-wave` on Jev; no fit decision yet |
 | [`kimi-k3-agent-integration`](kimi-k3-agent-integration/README.md) | Bring Kimi K3 (Moonshot) in as an agent runtime | Stalled since 2026-08-10 — waiting on the user's runtime choice (4 options in its launcher) |
 | [`feedback-intake`](feedback-intake/README.md) | Route production/user signal into discovery (SDLC gap G1) | Scaffolded — design work not started |
 | [`context-decay`](context-decay/README.md) | The context-budget system (measure, warn, roll over) | Dormant — all backlog findings resolved; remaining items externally gated |
