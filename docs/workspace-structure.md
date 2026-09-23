@@ -102,6 +102,8 @@ work item.
 ├── CLAUDE.md -> CONTEXT.md     # Symlink — Claude Code entrypoint
 ├── AGENTS.md -> CONTEXT.md     # Symlink — Codex / generic agent entrypoint
 ├── README.md                   # Workspace one-pager — short pitch + pointer to CONTEXT.md
+├── TEMPLATE_VERSION            # Template generation this workspace was cut from (ISO date;
+│                               #   bumped by the template maintainer; docs/template-usage.md §6)
 ├── .gitignore                  # See "Gitignored vs. Checked In" + Agent Bootstrap section
 ├── <Project>.code-workspace    # VS Code multi-root workspace definition (if using VS Code)
 │

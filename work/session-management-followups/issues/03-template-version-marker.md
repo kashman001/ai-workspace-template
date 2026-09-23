@@ -15,13 +15,13 @@ can reverse it cheaply. Do not build an upgrade tool; the marker only.
 
 **Blocked by:** nothing (do last; it is the one debatable ticket).
 
-**Status:** todo
+**Status:** done
 
-- [ ] Decision note first: chosen file name and value scheme, the
+- [x] Decision note first: chosen file name and value scheme, the
       alternatives considered, and what the human would change to reverse it
-- [ ] Failing test first (`scripts/tests/test-template-instantiation.sh` or a
+- [x] Failing test first (`scripts/tests/test-template-instantiation.sh` or a
       new small suite): the marker exists, parses, and survives the
       instantiation / prune path in `docs/template-usage.md`
-- [ ] Marker shipped; `docs/template-usage.md` names it; `docs/workspace-structure.md`
+- [x] Marker shipped; `docs/template-usage.md` names it; `docs/workspace-structure.md`
       tree gains its one line; backlog card opened and resolved in the same commit
-- [ ] All suites green; `Decision:` trailer on the commit
+- [x] All suites green; `Decision:` trailer on the commit

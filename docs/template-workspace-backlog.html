@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc green"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">92</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">93</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -256,6 +256,7 @@
       <tr><td>2026-09-22</td><td>Resolved <strong>M39</strong> (archived): <code>bind_record</code> now mints <code>seq + 1</code> when the dead owner left through the stop door (outcome <code>minted</code>, logged with the loser), matching the launcher's <code>stopped</code> path; plain-exit adoption unchanged. Regression R6i–k; both docs say it in a sentence. Scorecard now 0/90/4/0/6.</td></tr>
       <tr><td>2026-09-22</td><td>New finding <strong>M40</strong>, fixed in the same pass (archived; <code>work/session-management-followups/</code> ticket 01): <code>attach-session.sh</code> and the statusline resolved an item's owner through the retired <code>.active-session</code> lock, so every item read as unowned. Both now read the record's <code>session</code> block through two new <code>session-lib.sh</code> readers with the ADR-0010 pid liveness rule; suites rewritten onto record fixtures.</td></tr>
       <tr><td>2026-09-22</td><td>New finding <strong>M41</strong>, fixed in the same pass (archived; <code>work/session-management-followups/</code> ticket 02): the ledger checker and the launcher's <code>top_ledger_session</code> disagreed on which headings carry a session number (the numbered addendum form passed the gate, then refused <code>ledger_shape</code> at rollover). One rule now stated in <code>docs/work-directory-conventions.md</code> → Ledger, both parsers cite it, and <code>test-check-ledger.py</code> runs a heading fixture set through both. Scorecard now 0/92/4/0/6.</td></tr>
+      <tr><td>2026-09-22</td><td>New finding <strong>M42</strong>, fixed in the same pass (archived; <code>work/session-management-followups/</code> ticket 03): no workspace-level template version marker existed. Root <code>TEMPLATE_VERSION</code> (one ISO date behind <code>#</code> comments, bumped at each template release, read by nothing yet), named in <code>docs/template-usage.md</code> §6 "Upgrading later" and the structure tree; <code>test-template-version.sh</code> proves it parses and survives the §5 prune. Shape recorded as an assumption in the item's <code>decisions.md</code>. Scorecard now 0/93/4/0/6.</td></tr>
     </tbody>
   </table>
 

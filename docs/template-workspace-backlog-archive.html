@@ -905,6 +905,23 @@
       history rather than being dropped: M36's downstream ledger still carries one (decision note in the item). 2026-09-22.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M42</span> A workspace built from the template could not tell which generation of the template it carried
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">TEMPLATE_VERSION · scripts/tests/test-template-version.sh · docs/template-usage.md · docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence:</span> the only versioned thing in an instantiated workspace was the session record's <code>schema: 1</code>.
+      The work-item migration in <code>docs/context-budget.md</code> gets by because its files are self-describing, but a general
+      upgrade has nothing to compare against. Ticket 03 of <code>work/session-management-followups/</code>.</p>
+    <p><span class="k">Impact:</span> every future upgrade note has to start with "figure out which template you have"; downstream drift is unmeasurable.</p>
+    <p><span class="k">Fix:</span> one root file with a monotonic value, read by nothing yet, bumped by whoever cuts a template release; no upgrade tool.</p>
+    <p><span class="fix">Fixed:</span> <code>TEMPLATE_VERSION</code> at the root — <code>#</code> comment lines plus one value line holding the ISO
+      date the template state was cut (<code>2026-09-22</code>). Named in <code>docs/template-usage.md</code> → new §6 "Upgrading later"
+      (Reference is now §7) and in the <code>docs/workspace-structure.md</code> tree. New suite <code>test-template-version.sh</code>:
+      the marker exists and parses, both docs name it, and it survives the §5 prune run (no-git form, wholesale command lifted from the
+      doc itself) on a copy of the working tree — red before the file existed, green after. Shape chosen under a stated assumption
+      (the human had not picked one): date over integer/semver, visible ALLCAPS root file over a dotfile or a key in
+      <code>context-budget.env</code>/<code>CONTEXT.md</code>, comments allowed so the file explains itself once the usage doc is
+      pruned; reversal path and rejected shapes in the item's <code>decisions.md</code>.</p>
+  </div>
   <h2>Low</h2>
 
   <div class="find low resolved">

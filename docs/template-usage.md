@@ -190,7 +190,21 @@ All record where a claim or decision came from, not content you need.
 `scripts/setup.sh` reminds you about this section while the backlog pair is
 still present.
 
-## 6. Reference
+## 6. Upgrading later
+
+`TEMPLATE_VERSION` at the workspace root records which generation of the
+template this workspace was created from: `#` comment lines, then one value
+line holding the ISO date (`YYYY-MM-DD`) the template state was cut. The
+template maintainer bumps it at each release; your workspace never edits it,
+and §5 leaves it in place. Nothing reads it yet — it is the value a future
+upgrade compares against (`git log --since=<value>` on the template lists
+what changed after your workspace was cut), and the one fact you cannot
+otherwise recover once `docs/template-usage.md` is pruned. Upgrades today are
+by hand: pull the template changes you want; the session scripts' own
+migration notes are in `docs/context-budget.md` → "Migrating work items from
+the old scripts".
+
+## 7. Reference
 
 `docs/workspace-structure.md` is the authoritative map of the whole layout
 and includes step-by-step **Agent Bootstrap Instructions** — point an agent
