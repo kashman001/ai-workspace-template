@@ -1,0 +1,32 @@
+# Open verification — `what-jev-is` (what public sources could not settle)
+
+Each item: what is unknown, why the public record stops there, and the access
+that would settle it. Tags: **account** (console login), **key** (one API
+call), **email** (ask TypeSafe / sales@ / support@), **browser** (JS-rendered
+page, no login needed — was out of this pass's tool scope), **none** (nobody
+publishes it; only TypeSafe can).
+
+| # | Unknown | Where the public record stops | Access to settle |
+|---|---|---|---|
+| O1 | **Exact production formula for `confidence`** | confidence.md calls it "a statistic computed from the probability distribution" and labels the demo's `(3 × largest probability − 1) / 2` an approximation; that approximation matches all four documented examples within 0.01 (see verification V7) but is not stated as the formula. | **key** — a handful of Choice calls with 2, 3, 5 and 10 options would fit the function; or **email**. |
+| O2 | **Any calibration measurement** (ECE, reliability plot, accuracy-by-confidence) | Docs define calibration and state it is a group property; no numbers on any docs page. The evals site has accuracy/cost/time only. | **key** (own eval on a labelled set) or **none**. |
+| O3 | **Behaviour at the 32k/64k token limits and on >255 options / >10 levels** | api.md lists 401/422/429/529; the OpenAPI schema has no `maxItems`/`maxProperties`; no page says which status a too-large request returns. | **key** — one deliberately oversized request. |
+| O4 | **Maximum number of questions per request** | Only the token budgets; `questions` has `minProperties: 1` and no maximum. | **key** or **email**. |
+| O5 | **Server-side timeout / latency SLA / p50–p95 by region** | Vendor gives "about 100 ms", "150ms", "70ms-500ms" with no configuration; third-party medians ~0.3 s are all via gateways. | **key** (direct-to-API timing from the integration's own region) — cheap; or **email** for an SLA. |
+| O6 | **Whether `jev-1.12` is still served** | Cited by 16 cookbook pages (corrected 2026-09-23; previously: "14 cookbooks"); models.md lists only `jev-1.13.0` and says versioned IDs "are accepted ... whether or not they appear in the list". | **key** — `GET /v1/models` (lists aliases only) plus one call with `model: "jev-1.12"`. |
+| O7 | **Model deprecation / support-window policy** | Absent from the full docs corpus (llms-full.txt) and the API reference; only the alias-movement note exists. | **email** or **none**. |
+| O8 | **Model release dates** (`release_date` field) | Exposed only by `GET /v1/models`, which needs a key. | **key** (one GET). |
+| O9 | **Homepage and launch-post FAQ answer bodies** ("Is Jev deterministic?", "Are these prices temporary or subsidized?", "Can Jev still get things wrong?", "Where does our training data come from?") | Framer accordions; only headings are in served HTML. The launch post's FAQ answers were recoverable from inlined JSON; the homepage's were not. | **browser** (Chrome tools were excluded from this pass by the brief). |
+| O10 | **Founding year; investors beyond DCVC; the "$200M valuation"** | Site says "backed by top-tier investors"; The New Stack/FinSMEs give $40M led by DCVC; the valuation appears only in a Forbes headline (403) and Forkast's restatement, not in the press release. | **browser** for Forbes; otherwise **none**. |
+| O11 | ~~Meaning of "Published Sep 22, 2026" in the launch-post HTML~~ **CLOSED 2026-09-23** | Settled from the raw HTML: line 3 of the launch post is `<!-- Published Sep 22, 2026, 4:54 AM UTC -->`, Framer's site-publish stamp, matching `data-framer-page-optimized-at="2026-09-22T04:54:27.064Z"` — the time the site was last rebuilt, not an article date. The CMS date field is `"date","2026-09-15T00:00:00.000Z"`; rendered date "Sep 15, 2026" [3]; launch date stays 2026-09-15. (corrected 2026-09-23; previously: "Rendered date is Sep 15, 2026; HN submission 2026-09-15T19:25Z confirms. The 09-22 string is not rendered — probably a CMS last-modified field." / "**email** or ignore.") | none needed. |
+| O12 | **Every's independent test** ("25x faster and 580x cheaper than Claude Fable 5.1") | Cited by Forkast; article not located by two clusters. | **browser**/search with more budget; otherwise treat as `unknown`. |
+| O13 | **Reddit discussion** (exists? sentiment?) | Every route bot-walled (403/429/empty shell; search UA blocked). No claim either way. | **browser**. |
+| O14 | **Third-party latency without a gateway in the path** | All hands-on reports ran through OpenRouter or an unstated gateway; PriorBench says it "cannot separate model latency from gateway latency". | **key** (see O5). |
+| O15 | **Copyright holder of the Python SDK** | LICENSE at `main` is the unfilled MIT template "Copyright (c) [year] [fullname]"; all metadata says MIT. | **email**/GitHub issue — cosmetic, but a downloader-facing licence file should not be a template. |
+| O16 | **Whether `instructions` is actually required** | api.md says required on all three question types; OpenAPI, both SDKs and advanced.md say optional/nullable. | **key** — one call without `instructions`. |
+| O17 | **The "reference files" the agent-skill page says to copy** | The `typesafe-ai/skills` tree has only SKILL.md + LICENSE at `main`. | **none** (repo state) — re-check the repo at integration time. |
+| O18 | **Discord community content** (100,000 members claimed on Latent Space) | Login required. | **account** (Discord, not TypeSafe). |
+
+Cheapest bundle if the fit decision needs it: one free-tier key (if the `terms`
+subject finds one) settles O1, O3, O4, O5, O6, O8, O14, O16 in under twenty
+calls, no spend beyond cents.

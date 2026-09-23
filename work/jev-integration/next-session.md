@@ -11,71 +11,74 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Position: item scaffolded, no research done. Objective for this session:
-run a `research-wave` on Jev (TypeSafe's typed-decision "System One Model",
-<https://typesafe.ai>) so the next session can rule on whether and where it
-fits this template. Research only — no integration code, no spec yet.
+Position: research wave 1 is in Phase 3/4. **Finished and closed:** the three
+passes, the three fact-checks, and the corrections passes for `what-jev-is` and `integration-paths` (gen 1 DONE). **Still open:** `corr-terms` (gen 1 closed ROLLOVER_NEEDED, nothing applied — open gen 2), the second-round rulings R12–R15 (`what-jev-is`) and R10 (`integration-paths`).
+Phase 4 (cross-subject sweep) and the synthesis are not started.
 
-1. `scripts/context-budget.sh register --project jev-integration` (first
-   registered session of this item; expect `seq=1`).
-2. Read `README.md` here ("What this is" + success criteria), then open
-   `skills/research-wave/SKILL.md` and follow it as the orchestrator: rule,
-   do not research. Subject directories go under
-   `work/jev-integration/research/<subject>/`.
-3. Fix the subject list before launching anything. Proposed (adjust, do not
-   expand past four — each subject costs five to eight agents):
-   - **what-jev-is** — what a "System One Model" is per TypeSafe's own docs
-     and launch post (`typesafe.ai/blog/introducing-system-one-models-and-jev`);
-     the API surface: endpoints, request/response schema, how a decision and
-     its confidence come back, SDKs, latency, model versions.
-   - **terms** — pricing (the site claims "$42 per billion input tokens" and
-     "production prices"), rate limits, auth (console API keys), data
-     retention and privacy, licence/terms of service, any free or evaluation
-     tier.
-   - **integration-paths** — how TypeSafe intends Jev to be called (SDKs,
-     plain HTTP, MCP server, CLI), what examples exist, and how it behaves on
-     inputs outside its decision schema.
-   Landmines to put in each pass brief: the site is marketing copy — every
-   number must trace to docs or the console; "no hallucinations" is a claim,
-   not a finding; do not confuse Jev with other products named jev/JEV.
-4. Phase 4 synthesis lands in `research/synthesis.md`: the corrected facts,
-   and a first, explicitly provisional list of template seams a typed-decision
-   model could serve (`rlm` leaf classification, `triage`, `doc-review`,
-   session-loop stall/halt judgement, ledger/backlog checks) with what each
-   would need from the API. The fit **decision** is the next session's job
-   (`grill-with-docs`, then a `decisions.md` note), not this one's.
-5. `scripts/context-budget.sh record --label "<phase done>"` at every phase
-   boundary; a wave is agent-heavy, so expect WARN. When the wave is done or
-   at WARN/STOP: ledger block on `handoff.md` (`# Session Handoff — 1
-   (<date>): …`, plain numbered form), rewrite this launcher for what is
-   next (finished subjects stay finished — name them and the ones still
-   open), update the `work/README.md` row, commit. Then, under the
-   supervisor, roll over per `skills/session-rollover/SKILL.md`: record
-   "rollover complete", then `scripts/launch-next-session.sh jev-integration
-   --emit --loop-mode handsoff --loop-reason "…"` as the last action of the
-   turn. The fit-decision session needs the human: when the research is
-   complete, roll over with `--loop-mode interactive` so the successor poses
-   the decision on a fresh window instead of assuming it. Do not push main;
-   report how far ahead it is.
+1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=2`).
+2. Read `research/rulings.md` in full (every ruling so far, and the wave
+   patterns at the end of the `terms` section) and `research/schema.md`. Do
+   NOT read `record.md`/`fact-check.md` files whole — grep them.
+3. `scripts/fleet.sh dispatch-list --project jev-integration` — trust the
+   records over this file for which tasks are open. Every generation should be closed (session 1 waited for all agents). If one is
+   still `open`, its report file is partial: `dispatch-close --status KILLED`,
+   then `dispatch-open` a fresh generation with the same `--brief`, and
+   relaunch a `general-purpose` agent pointing at that brief (prompt shape:
+   "read and follow your brief exactly: <path>", the dispatch contract
+   `fleet.sh` prints, ≤12-line return, status word first).
+4. Finish Phase 3: (a) `dispatch-open` gen 2 of `corr-terms` with `--brief work/jev-integration/research/terms/corrections-brief.md` and launch a corrections agent; its brief plus ruling R9 in `rulings.md` are the instructions, and gen 1's `terms/corrections.md` holds a ready evidence block and edit plan it must re-verify before applying. (b) Fold the second-round rulings (R12–R15 for `what-jev-is`, R10 for `integration-paths`) into one small corrections pass each, or into the Phase 4 sweep's corrections. (c) Read each `corrections.md`'s
+   `## Not applied` and `## New findings needing a ruling` sections and rule
+   on them in `rulings.md` (a second round is expected — rule yourself,
+   never let an agent resolve at the wrong level).
+5. Phase 4 — one sweep agent across all three subjects (it may read
+   everything, writes only `research/sweep.md`): consistency of standard
+   (same evidence pattern scored two ways; Noul/confidence claims across
+   subjects), formatting integrity (every table renders — literal `|` in
+   snippets), evidence-appendix spot-check (sample quotes vs. sources),
+   stale summary counts (pre-correction figures marked historical). Feed it
+   the wave patterns from `rulings.md`. Rule on its findings; a corrections
+   pass per affected subject if needed.
+6. Synthesis → `research/synthesis.md`: the corrected facts (cite claim
+   ids), what changed vs. the README's standing claims S1–S6, and a first,
+   explicitly **provisional** list of template seams a typed-decision model
+   could serve (`rlm` leaf classification, `triage` categorisation,
+   `doc-review` verdicts, session-loop stall/halt judgement, ledger/backlog
+   checks) with what each needs from the API (closed option set + an `other`
+   option, a confidence threshold policy, model-version pinning, cost per
+   call at $42/Btok input). The fit **decision** is NOT this session's job.
+7. Update `README.md` here (status: research complete) and the
+   `work/README.md` row; ledger block `# Session Handoff — 2 (<date>): …`
+   on `handoff.md`; rewrite this launcher for the fit-decision session
+   (`grill-with-docs` → `decisions.md` note); commit (do not push; report
+   how far ahead main is). Then roll over per
+   `skills/session-rollover/SKILL.md` with `--loop-mode interactive` — the
+   fit decision needs the human.
+8. `scripts/context-budget.sh record --label "<phase done>"` at every phase boundary.
 
 ## Constraints already decided (do not re-litigate)
 
-- Template rules apply to anything that ships: agent-agnostic (works for
-  Codex/Gemini/OpenCode and downloaders, not only Claude Code), CLI-first or
-  `mcp-fragments/`, credentials in the keychain (`docs/service-access.md`),
-  documented as a first-class template addition.
+- Template rules apply to anything that ships: agent-agnostic, CLI-first or
+  `mcp-fragments/`, credentials in the keychain, documented as a first-class
+  template addition.
 - Research before design: no integration code or spec until a fit decision
   is recorded in `decisions.md`.
-- `research-wave` is the session-1 workflow (user's choice, 2026-09-22).
+- Wave scope is fixed at three subjects (ruling R0.1); off-limits: accounts,
+  keys, API calls, spend (R0.4). Raw `pass/*.md`, `fact-check.md`, and the
+  briefs are provenance — never edited.
+- Corrections mark each changed claim `(corrected <date>; previously: "…")`.
 
 ## State snapshot
 
-- Branch `main`; the scaffold is 54b6d01. No `session-state.json` yet — the
-  supervisor's bootstrap creates it and stages session 1.
-- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto` for the loop.
+- Branch `main`; session 1's commit is the one after 43112fb. Files under
+  `work/jev-integration/research/`: `schema.md`, `rulings.md`, and per
+  subject `brief.md`, `fc-targets.md`, `fact-check-brief.md`,
+  `corrections-brief.md`, `pass/`, `record.md`, `profile.md`,
+  `verification.md`, `open-verification.md`, `fact-check.md`, and
+  `corrections.md` where the corrections agent finished.
+- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto`.
 
 ## Read these first, in order
 
-1. `work/jev-integration/README.md`
-2. `work/jev-integration/handoff.md` (top block)
-3. `skills/research-wave/SKILL.md` (when step 2 reaches it)
+1. `work/jev-integration/handoff.md` (top block — headline findings + patterns)
+2. `work/jev-integration/research/rulings.md`
+3. `skills/research-wave/SKILL.md` Phases 3–4 (when step 4 reaches it)

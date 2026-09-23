@@ -1,0 +1,35 @@
+# Open verification — `integration-paths` (2026-09-23)
+
+What public sources could not settle, each tagged with the access that would
+settle it. Tags: **account** (console login), **key** (an API key + one
+authenticated call, i.e. spend), **email** (a vendor answer via
+support@/sales@typesafe.ai or Discord), **third-party login** (Reddit/X/PyPI
+search), **time** (re-check later).
+
+| # | Open item | Where it sits | What we know | Access that settles it |
+|---|---|---|---|---|
+| O1 | Exact `confidence` function for Choice/Score | record 4.6 | Docs say "derived from the probability distribution"; the demo's `(n·peak − 1)/(n − 1)` is labelled an approximation; the page defers alternative measures to "a separate cookbook … will add the link here when we do!" (corrected 2026-09-23; previously: "is 'planned'" — 0× on the page). | **key** (one call; compare returned `confidence` to the returned `probabilities`) or **email**. |
+| O2 | ~~JSON shape of the `422` error body~~ **CLOSED 2026-09-23** | record 5.9 | Settled from the public spec: `components.schemas.HTTPValidationError` = `{detail: [{loc, msg, type, input?, ctx?}]}` with example `[{"loc": ["body", "state"], "msg": "Field required", "type": "missing"}]`, now transcribed into record 5.9 (corrected 2026-09-23; previously: open — "no docs page shows an example body … not yet transcribed"). | None needed; a live 422 (**key**) would only confirm the server matches its spec. |
+| O3 | Status-code spread: spec lists 200/422; docs list 401/422/429/529; SDKs model 400/403/404/500 | record 5.9 | Which of 400/403 the endpoint actually emits for client-caused conditions is not stated. | **email** or **key**. |
+| O4 | Behaviour on empty / `null` `state` | schema cluster unsettled #5 | JS SDK types `state` as including `null`; no page says what comes back. | **key**. |
+| O5 | Score "not applicable" level guidance | record 5.10 | Escape-hatch advice is written for Choice only. | **email** (Discord invite on the jaggedness page). |
+| O6 | Whether an `other` option is ever auto-injected | schema cluster unsettled #6 | All evidence says the caller declares it; no explicit denial. | **key** (send a Choice whose options exclude the obvious answer and inspect `probabilities` keys) or **email**. |
+| O7 | Server-side request timeout / max duration | record 6.6 | Not published; cookbooks pass client `timeout=120.0`. | **email** or a status/SLA page (terms subject Q7). |
+| O8 | Billing on retried POSTs; idempotency semantics | record 6.5 | No idempotency key; SDK re-POSTs on 408/429/5xx with `X-TypeSafe-Retry-Count`. | **email** / billing docs behind the **account**. |
+| O9 | Rate-limit scope (per key / org / model) and burst vs sustained | record 6.8 | Models page gives figures, not scope; "adjusting dynamically". | **account** (console rate-limit page) or **email**. |
+| O10 | Is Jev reachable over OpenRouter `chat/completions`? | record 2.6 | Listed as `/~typesafe/jev-latest` and `/typesafe/jev-1.13` (only the alias is tilde-namespaced; corrected 2026-09-23, previously: "under a tilde namespace"); absent from `/api/v1/models`; TypeSafe drives its own SDK at `openrouter.ai/api`. | **third-party key** (OpenRouter) or OpenRouter's TypeSafe docs page (guessed paths 404). |
+| O11 | LlamaIndex / Haystack / DSPy / Instructor adapters | record 2.8 | Name-guess probes 404; PyPI search bot-walled; only tiny community repos found. | **third-party login** (PyPI search) or an authenticated GitHub code search. |
+| O12 | Where the cookbooks' companion files (`json_cache.json`, `trader.py`, `dispatch.py`, `retrievers.py`) live | record 3.5 | "ships with the cookbook"; `github.com/typesafe-ai/CookSafe/tree/main/cookbooks` (from cooksafe's PyPI README) is 404 — private or unpublished. | **account** (`console.typesafe.ai/docs/cookbooks` is login-walled and may carry attachments) or **email**. |
+| O13 | Smart-home demo source ("available on GitHub at release") | record 3.3 | Not in the org's 10 public repos as of today. | **time** (re-list `api.github.com/orgs/typesafe-ai/repos`). |
+| O14 | ~~Whether `evals.typesafe.ai` exposes the promised "full queries"~~ **CLOSED 2026-09-23** | record 3.8 | All four workflow pages fetched (200): questions appear as prose only; `"state"`, `"questions"`, `criteria`, question-type tokens and `.json` references 0× on every page. The promise is not met on the public pages as of 2026-09-23 (corrected 2026-09-23; previously: "Two of four workflow pages have no question-type tokens; two unfetched."). | None needed (public fetch done). |
+| O15 | The launch post's "actual query" Playground share link | record 3.8 | Login shell when logged out. | **account**. |
+| O16 | Whether the docs-site MCP at `docs.typesafe.ai/mcp` is intended to be user-facing | record 2.2 | Unlinked from the docs; Mintlify infrastructure. | **email**. |
+| O17 | Third-party discussion on Reddit and X | record 7.5 | Reddit 403 incl. control query; X statuses (two HN-indexed) unfetched. | **third-party login**. |
+| O18 | Product Hunt submitter (official vs community) | record 7.4 | Not in served HTML. | **third-party login** (Product Hunt). |
+| O19 | Python v0.5.7 date: changelog 2026-09-14 vs PyPI upload 2026-09-11 | record 1.8 | Both recorded; neither adopted. | **email** (or ignore — cosmetic). |
+| O21 | Which request-schema limits the server enforces: docs (`instructions` required; Choice ≤ 255 options; Score 2–10 levels; probabilities "sum to 1") vs spec (`instructions` optional/nullable; Choice unbounded; Score `minItems: 1`, no max; "approximately 1") — added 2026-09-23 | record 5.12-spec-spread | Two first-party references disagree. The spec's `ValidationError.ctx` example `{"min_length": 1}` at `loc` `["body", "questions", "urgency", "score", "criteria"]` hints that Score criteria are validated at length 1 server-side, but an example is not enforcement evidence. | **key** (one authenticated call per limit: omit `instructions`; send a 1-level Score; an 11-level Score; a 256-option Choice). |
+| O20 | Real third-party *callers* vs mentions/lists/re-implementations among the ≈2,374 GitHub hits | record 3.9, 7.3 | Only metadata read; several top hits are awesome-lists and clones. | Authenticated GitHub **code search** for `api.typesafe.ai/v1/systemone` (needs a token, no spend). |
+
+Nothing above is needed to answer the subject's core question (how Jev is
+called and what happens out of schema); O1–O6 are the ones that would
+sharpen the automation-seam design.
