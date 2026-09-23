@@ -6,6 +6,52 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-09-22): ticket 03 done — TEMPLATE_VERSION marks the template generation a workspace was cut from (M42); item complete
+
+**Summary.** Third loop session (hands-off, supervised; the human interjected
+mid-ticket to have `work/jev-integration/` scaffolded — done in 54b6d01,
+separate commit, then this ticket resumed). Ticket 03 landed in 523bf54: root
+`TEMPLATE_VERSION`, `#` comment lines plus one ISO-date value line
+(`2026-09-22`), bumped by the template maintainer at each release, read by
+nothing. Named in `docs/template-usage.md` (new §6 "Upgrading later";
+Reference renumbered §7) and the `docs/workspace-structure.md` tree. New suite
+`scripts/tests/test-template-version.sh` (V1–V3): exists and parses, both
+docs name it, survives the §5 prune — the wholesale command is lifted from
+the doc, run in no-git form on a `git ls-files -co` copy of the working tree
+so the suite is green before the commit. Red 3/9 before the file existed,
+green 9/9 after. Backlog M42 opened and resolved (archived; Resolved 93).
+Decision note first, as the ticket asked. All shell suites, the ledger test
+(26/26) and `check-workspace-structure.sh` green before the commit; 52K at
+register, ~114K at the ticket's record. All three tickets `done`; item
+closed through the stop door.
+
+**Decisions.** Shape assumed, not chosen by the human: ISO date over
+integer/semver; visible ALLCAPS root file over a dotfile or a key in
+`context-budget.env`/`CONTEXT.md`; comments allowed so the file explains
+itself after the usage doc is pruned — `decisions.md` 2026-09-22 (top note),
+with the reversal path. Not wired into `check-workspace-structure.sh` or
+`setup.sh` (the ticket: read by nothing yet).
+
+**Findings.** `docs/setup-guide.html` is hand-maintained, not rendered from
+`docs/template-usage.md` (`build-guide-html.sh` renders only
+`workspace-structure.md`), so the new §6 is not in the HTML guide —
+pre-existing drift, left alone. The `workspace-structure.html is stale`
+warning persists (still a warning).
+
+**Learnings:**
+- A suite that must be green before the commit cannot clone HEAD; `git
+  ls-files -co --exclude-standard -z | tar -c --null -T - -f - | tar -x -C
+  <dir> -f -` copies exactly what a clone would hold plus the uncommitted
+  work, and nothing gitignored.
+- Lift a documented command out of the doc (`grep -m1 '^git rm -r '`) rather
+  than restating it in the test, so the test follows the doc when the list
+  changes.
+- The ledger checker takes the first `session N` in a heading's title as the
+  block number: a date-only scaffold heading must not say "session 1 is next".
+
+**Open / next.** Nothing — item complete. main is 6 commits ahead of
+`origin/main` after this session's commit; not pushed (the human's call).
+The `jev-integration` item is scaffolded and waits for its first session.
 
 # Session Handoff — 3 (2026-09-22): ticket 02 done — one ledger-heading rule shared by check-ledger.py and the launcher's parser (M41)
 
@@ -47,35 +93,3 @@ from the test wrote `scripts/__pycache__/`; the test now sets
 **Open / next.** Ticket 03 (`issues/03-template-version-marker.md`), the one debatable ticket:
 decision note first, build under a stated assumption. main is 4 commits ahead
 of origin after this rollover's commit; not pushed (the human's call).
-
-# Session Handoff — 2 (2026-09-22): ticket 01 done — attach-session.sh and the statusline read the owner from the record (M40)
-
-**Summary.** First loop session (hands-off, supervised). Ticket 01 landed in
-e7c2356: `scripts/lib/session-lib.sh` gained two readers
-(`session_record_owner`, `session_owner_live` — pid running and `pid_start`
-match, artifact age when there is no pid); `attach-session.sh` and
-`statusline-context-budget.sh` source the lib and keep their output shape;
-the `link-local-work.sh` comment example corrected. Suites rewritten onto
-record fixtures (live/dead/recycled/ended owners; a stray `.active-session`
-file proven inert); lib contract tests O1–O4. Backlog M40 opened and resolved
-(archived; Resolved count 91). Decision note appended to `decisions.md`.
-Full suite, `test-check-ledger.py`, and `check-workspace-structure.sh` green
-before the commit. Rolled at WARN (124K) right after the ticket's commit.
-
-**Findings.** `docs/context-budget.md` has no lock-based prose for either
-script (grep of both names), so the ticket's doc step was a no-op. The
-ticket's acceptance line "grep hits only `import-session-seq.sh` and its
-test" is stricter than its own stray-file test allows; every remaining hit
-under `scripts/` is a deleter or a test proving the file inert (noted in the
-ticket). `context-budget.sh` keeps its own `owner_live()` copy of the rule —
-follow-up candidate, outside this item's scope.
-
-**Decisions.** Readers in the lib, `context-budget.sh` untouched, output
-shape (`locked=`, "work-item lock" message) kept — `decisions.md` 2026-09-22.
-
-**Learnings:** the ticket's setup reads (ticket + both scripts + lib + both
-suites + backlog format) cost ~70K before the first test was written; the
-successor should read the ticket and only the files it names, in that order.
-
-**Open / next.** Ticket 02 (`issues/02-one-ledger-heading-rule.md`). main is
-ahead of origin; not pushed (the human's call).
