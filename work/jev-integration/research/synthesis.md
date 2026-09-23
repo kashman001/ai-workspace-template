@@ -1,4 +1,4 @@
-# Synthesis — jev-integration research wave 1 (DRAFT, session 3, 2026-09-23 — §3 and the sweep-confirmed patterns in §4 are unfilled; rename to synthesis.md once filled)
+# Synthesis — jev-integration research wave 1 (final, session 4, 2026-09-23)
 
 The corrected, fact-checked picture of TypeSafe's Jev after three subjects
 (`what-jev-is`, `terms`, `integration-paths`), one fact-check per subject, two
@@ -140,7 +140,7 @@ strengthenings (the sweep verified them and they bear on S2) and R16's
 apostrophe; R37 records what the sweep did not check (console JS chunk
 counts, eight non-fit-bearing sources, terms' split list) as open items
 rather than fetching further. The queued rulings R18, R20, R21, R22 rode the
-same gen-3 pass. Gen-3 outcome: <!-- GEN3-OUTCOME -->
+same gen-3 pass. Gen-3 outcome: terms gen 3 DONE (6 rulings; scorecard 37/3/1/2 on the scale), what-jev-is gen 3 DONE_WITH_CONCERNS (10 rulings; N2 kept `not re-checked`, R40), integration-paths gen 3 rolled at WARN → gen 4 DONE (9 rulings; tally 64 = 56/2/5/1; S2 now one wording). R39–R41 close the round-3 findings; nothing fit-bearing remains open.
 
 ## 4. Wave patterns (the transferable output)
 

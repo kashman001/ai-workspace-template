@@ -48,7 +48,7 @@ points on 2026-09-15; Vercel, Cloudflare, LiteLLM, LangChain integrations by
 Schema / enums / Pydantic on the wire. Choice: option → description map, max
 255, single-label (`choice` = highest-probability option). Score: 2–10 ordered
 levels (255 and 2–10 are the docs' figures; the OpenAPI spec sets no Choice cap
-and Score `minItems: 1` with no max, and makes `instructions` optional where the
+and Score `minItems: 1` with no max, and leaves `instructions` out of every `required` list — typed `anyOf` string/object/array/null, no `default`; the spec has no `optional` keyword (corrected 2026-09-23, ruling R26; previously: "makes `instructions` optional") — where the
 docs mark it required — record 5.12-spec-spread; note added 2026-09-23), `score` is a probability-weighted value that can land between levels.
 Noul: yes/no → `noul` in 0–1. Choice and Score answers carry `probabilities`
 ("sum to 1" per the docs, "approximately 1" per the spec — corrected 2026-09-23;
@@ -86,7 +86,7 @@ total budget as well). No webhooks, no idempotency key (retries re-POST; billing
 on retry undisclosed), no server-side timeout published. Rate limits 250k
 tok/s / 1,200 rpm, "adjusting dynamically".
 
-**Standing claims.** S1, S2 (minus Noul), S4, S5 confirmed on the docs. S6
+**Standing claims.** S1, S4, S5 confirmed on the docs; S2 documented for Choice and Score, contradicted for Noul (`NoulAnswer.required` lacks `confidence`; the homepage says "Every decision includes an estimate of how confident the model is." — record S2) (corrected 2026-09-23, ruling R25; previously: "S1, S2 (minus Noul), S4, S5 confirmed on the docs"). S6
 holds for the homepage but the docs answer it. **S3 is the one to re-read:**
 the product is *marketed* — by contrast, never verbatim — as running without a
 human in the loop: the launch post's comparison table files "Human-in-the-loop

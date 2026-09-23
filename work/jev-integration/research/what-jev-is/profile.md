@@ -7,8 +7,12 @@ CTO; Sasha Sheng, COO). TypeSafe calls its model class **"System One
 models"**: "a class of AI models built to make fast, structured decisions that
 software can use directly" — the name is borrowed from Kahneman. The homepage
 FAQ carries the exact sentence the item README paraphrased: "Jev is TypeSafe’s
-first public System One Model, optimized for automation." Jev is still marked
-"in early access" on the homepage as of today.
+first public System One Model, optimized for automation." The homepage's
+`<meta>` description still says Jev is "in early access" (stale — access opened
+2026-09-20, see `terms` 6.3; the string sits only in three `<meta>` description
+attributes — `description`, `og:description`, `twitter:description` — and 0× in
+visible copy) (corrected 2026-09-23; previously: "Jev is still marked "in
+early access" on the homepage as of today.").
 
 **What a call is.** One HTTP endpoint, `POST https://api.typesafe.ai/v1/systemone`
 (bearer API key), plus `GET /v1/models`. A request is `{state, model, questions}`:
@@ -74,8 +78,10 @@ and the same docs prescribe routing low-confidence answers to a human (corrected
 **Versioning is thin.** IDs are `jev-<major>.<minor>.<patch>`; aliases move
 without notice and the response echoes the versioned ID so you can pin. There is
 no model changelog and no deprecation policy; 16 cookbook pages still cite
-`jev-1.12` (corrected 2026-09-23; previously: "14 cookbooks"), whose availability is unknown. Rate limits, prices ("temporary or
-subsidized?" is an unanswered FAQ heading) and the alias target are all things
+`jev-1.12` (corrected 2026-09-23; previously: "14 cookbooks"), whose availability is unknown. Rate limits, prices (the FAQ "temporary or
+subsidized?" is answered in the homepage's Framer module — "We can serve Jev
+profitably at our current prices" — see `terms` 1.7) (corrected 2026-09-23; previously: "is an
+unanswered FAQ heading") and the alias target are all things
 an integration should read at runtime rather than hard-code.
 
 Detail and evidence: `record.md`; what moved at re-check: `verification.md`;

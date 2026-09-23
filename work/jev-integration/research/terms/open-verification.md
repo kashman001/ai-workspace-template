@@ -13,6 +13,7 @@ What public sources could not settle, each tagged with the access that would set
 | O6 | Whether console login currently works for an existing account (open GitHub issue typesafe-ai/skills#10 reports HTTP 500s on all auth actions, Sep 21–22). (Narrowed 2026-09-23; previously also "whether a new Google login is admitted self-serve or hits the `SELF_SERVE_DISABLED` / invite-only branch" — self-serve is announced as of 2026-09-20 and the JS strings are error-handling branches, record 6.3; the sign-up half is now O29.) | account attempt |
 | O7 | ~~How to join the waitlist named in the launch post (no form found; homepage "Join Waitlist" goes to the jobs board).~~ **Closed 2026-09-23:** the waitlist ended on 2026-09-20 — X `@typesafeai`: "Jev is now available to everyone. No waitlist."; homepage module banner "NO MORE WAITLIST" ("Sept 20, 2026 • TypeSafe News") with a "Sign up" button to the console. The "Join Waitlist" string was a Framer layer name; the visible button is "Open roles" (jobs board). | — (settled) |
 | O29 | Whether console sign-up succeeds today: self-serve is announced (2026-09-20), but typesafe-ai/skills#10 reports sign-in/sign-up returning HTTP 500 on Sep 21–22 ("still reproducible" 2026-09-22 12:10 UTC on a newer deployment; no vendor reply). (Added 2026-09-23.) | account attempt (sign-up) |
+| O31 | The console JS chunk counts behind 6.3 / 6.6 and the appendix (18 chunks referenced from logged-out `/login`; `SELF_SERVE_DISABLED` 6, `signups_disabled` 6, `Email signup is disabled` 1, invite string 1, `billing topup started` 1, `billing auto reload toggled` 1) are the corrections agents' own counts (gen 2, gen 3); the sweep did not re-fetch them, and chunks loaded only after login are out of reach. Whether the logged-in bundle carries more or different strings, and whether the billing events are wired to a live top-up flow. (Added 2026-09-23, R37.) | browser (logged-in console) / account |
 
 ## Limits and auth (Q2, Q3)
 | # | Open item | Access that settles it |
@@ -51,3 +52,8 @@ What public sources could not settle, each tagged with the access that would set
 | O26 | Whether the logged-in console has a help/chat widget or status banner. | account |
 | O27 | Whether Discord is staffed as an official support channel. | join the server (Discord login) |
 | O28 | Relationship of github.com/typesafeai ("TypeSafe Community") to typesafe.ai. | email hello@ |
+
+## Record bookkeeping (added 2026-09-23, R37)
+| # | Open item | Access that settles it |
+|---|---|---|
+| O32 | ~~The record header's "11 split" list (`record.md` tally line) was not re-counted by the sweep (split halves are prose inside the verdict cell).~~ **Closed on creation 2026-09-23:** re-counted from the verdict column — 11 rows carry two halves (1.10, 2.6, 2.9, 3.6, 4.5, 4.6, 4.8, 5.2, 6.3, 6.7, 7.4), matching the list. Note: 3.6 reads `unknown (format) / documented (validation)` and is counted under `unknown` in the 54/3/7/2 tally (first word), so 10 of the 11 split rows are among the 54 `documented`; the count 11 is right, the phrase "11 of them" is off by 3.6. | — (settled by re-count) |

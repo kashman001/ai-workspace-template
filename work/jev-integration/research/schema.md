@@ -89,3 +89,17 @@ load-bearing or surprising (pricing, "no hallucination", schema shapes).
 Three subjects; roughly five to eight agents each (lead + ~5 cluster
 sub-agents, one fact-checker, one corrections agent). Nothing beyond four
 subjects.
+
+## Verification scale (adopted from `sweep.md` § "Scale definition" under R29, session 4, 2026-09-23)
+
+One scale for a verification row's outcome (one word first, qualifiers after a dash). Every `verification.md` in this wave is scored on it; the next wave's briefs carry it from Phase 1.
+
+1. **`survived`** — the lead re-checked the row against an independent copy of the source and the claim stands as worded. (No "with a caveat" here: a caveat that changes the wording is level 3.)
+2. **`confirmed`** — not re-checked by the lead; confirmed by an independent later stage (the fact-check).
+3. **`downgraded`** — the claim stands with weaker wording, scope or precision.
+4. **`spread`** — neither figure adopted, both recorded (rule 6).
+5. **`overturned`** — the claim as worded is wrong; the record row was rewritten or re-verdicted.
+6. **`reversed`** — a lead outcome later undone by the fact-check; keep the original word struck through and this word after it.
+7. **`not re-checked`** — declared, per rule 7.
+
+A scorecard line counts each level once, sums to the row count, and names the table(s) it counts (a subject with more than one verification table says which are in the total).
