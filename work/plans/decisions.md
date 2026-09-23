@@ -2,8 +2,9 @@
 
 Tier-2 decision notes, newest last. Format: `skills/decision-log/SKILL.md`.
 Notes marked **(settled)** were agreed with the user in session 1.
-Notes marked **(proposed)** were put forward by the agent and not yet
-explicitly confirmed; the grill confirms or overturns them.
+Session 2 grilled the remaining OPEN items with the user; every note below
+is now settled. The two former OPEN sections are kept as a record of what
+was asked and point to the notes that resolved them.
 
 ## 2026-09-23 — A node is sized to one session's context budget (settled)
 **Chose:** A plan is a graph of nodes. A node is a unit of work that should fit
@@ -129,7 +130,7 @@ between two open plans — silent writes to the wrong graph.
 gain a sync step; a Stop/SessionEnd hook may run `check`.
 **Promote?:** maybe — the derive-don't-decide rule is ADR-shaped.
 
-## 2026-09-23 — Node files are the truth; the index is rendered (proposed)
+## 2026-09-23 — Node files are the truth; the index is rendered (settled in session 2; see the two refinements below)
 **Chose:** One markdown file per node, `nodes/NN-<slug>.md`, flat YAML
 frontmatter (`id`, `title`, `status`, `blocked_by`, `wave`, `tier`,
 `parallel`, `loop`, `check`, `sessions`, `isolated`), sections Goal,
@@ -137,7 +138,7 @@ Acceptance, Log. `plan.md` holds hand-written Goal / Not yet specified /
 Out of scope / Replans and a generated waves board between marker comments.
 Only the orchestrator writes `plan.md`; subagents write only their node file.
 The launcher gets a generated Position/Frontier block the same way.
-Status set (proposed): `todo | doing | done | blocked | dropped`.
+Status set (settled): `todo | doing | done | blocked | dropped`.
 **Because:** Targeted reads and writes, no collisions between parallel
 subagents, and a to-tickets issue converts by adding lines.
 **Rejected:** one file holding everything — whole-file loads and write
@@ -157,8 +158,8 @@ the merge. State never lives in an isolated tree.
 **Blast radius:** glossary in `concept.md`; CONTEXT.md Language section.
 **Promote?:** no.
 
-## OPEN — How plans integrate into the template and how agents learn them
-Raised by the user at the end of session 1; proposed answer, to be grilled:
+## OPEN (resolved in session 2, see "How plans enter the template" below) — How plans integrate into the template and how agents learn them
+Raised by the user at the end of session 1; the proposal as grilled:
 - **Front door:** a short "Plans" section in `CONTEXT.md` (next to Decision
   Records and Work Directory Convention): what a plan is in three lines, when
   to use one, the `plan.sh status` one-liner, and a pointer to the reference.
@@ -181,7 +182,120 @@ Raised by the user at the end of session 1; proposed answer, to be grilled:
 - **Rejected (proposed):** teaching plans only through the launcher of one
   item — nothing would survive into a fresh workspace.
 
-## OPEN — Build / no-build verdict
-Not yet recorded. Everything above assumes "build a format plus state
-tooling, no runner"; the grill should confirm and the README status line
-should then say so.
+## OPEN (resolved in session 2, see "Verdict: build" below) — Build / no-build verdict
+Was: not yet recorded; everything above assumed "build a format plus state
+tooling, no runner".
+
+## 2026-09-23 — Verdict: build the format and plan.sh, no runner (settled)
+**Chose:** Build. Ship the node-file format under
+`work/<item>/plans/NN-<slug>/`, `scripts/plan.sh` (bash + jq, tests under
+`scripts/tests/`), and the `chain.plan` / `plan_closed` hook in
+`session-loop.sh`. No runner. Next steps in this item: `to-spec` → `spec.md`,
+`to-tickets` → `issues/`.
+**Because:** The seam inventory shows three genuinely new parts (tier as a
+plan property, a check-based loop with a cap outside code, a reconcile step
+named on disk) and the rest is joining; the user wants "where are we" and
+end-of-session sync done by code, not by an agent reading prose.
+**Rejected:** no-build — the four "genuinely missing" items in `seams.md`
+stay missing; format-only, defer plan.sh — hand-maintained node files
+re-create the prose-reading cost the format is meant to remove.
+**Blast radius:** this item's README status line, `spec.md`, `issues/`.
+**Promote?:** maybe — as part of the format ADR if one is written.
+
+## 2026-09-23 — Status refinements: `blocked` is explicit, `done` is verified (settled)
+**Chose:** `blocked` means a node is explicitly stuck, with the reason as the
+latest Log line; a node merely waiting on `blocked_by` edges is *waiting*, a
+state `plan.sh` derives and never writes. `done` is written only by the
+orchestrator (or a human) after verifying the acceptance on disk; a
+subagent's completion claim goes into the node's Log, never into `status`.
+**Because:** Two meanings of "blocked" would make `frontier` lie; a
+subagent that can flip `done` defeats "results are claims until verified".
+**Rejected:** a sixth `verified` status — two hands on the status field and
+a `done` that means nothing; the plain five-state proposal — ambiguous
+`blocked`, unowned `done`.
+**Blast radius:** `plan.sh done/block/frontier`; node-file Log convention;
+subagent prompt template in the plans skill.
+**Promote?:** no.
+
+## 2026-09-23 — HITL nodes have no `check`; the human's tick is acceptance (settled)
+**Chose:** A human-in-the-loop node carries no `check`; `plan.sh check`
+rejects one that does. It is marked done by a person, via
+`plan.sh done <id> --by human` or an edit of the node file. When the frontier
+holds only HITL nodes, the chain rolls over with `--loop-mode interactive`
+so the successor re-poses the question to a person instead of stalling
+hands-off.
+**Because:** No command can pass on a human decision; pretending otherwise
+makes `check` a formality. The loop mode following the frontier is what
+makes an unattended chain stop exactly where a human is needed.
+**Rejected:** a `check` that greps its own file for a ticked box — uniform
+but empty; `tier: human` — conflicts with "HITL nodes are always frontier
+tier", which is about the agent that prepares the question.
+**Blast radius:** `plan.sh check` lint; `session-loop.sh` loop-mode
+selection; `docs/context-budget.md` rollover contract.
+**Promote?:** no.
+
+## 2026-09-23 — Generated blocks sit between `<!-- plan:begin <name> -->` markers (settled)
+**Chose:** `plan.sh` renders into prose files only between
+`<!-- plan:begin <name> -->` and `<!-- plan:end <name> -->`, replacing
+exactly what lies between; everything outside is hand-written and never
+touched. Used for the waves board in `plan.md` and the Position/Frontier
+block in the launcher. Documented once in
+`docs/work-directory-conventions.md` as the workspace's marker convention
+(none existed before; verified by grep).
+**Because:** Targeted, idempotent writes into files agents also edit by
+hand; a tool prefix keeps a future generator from clashing.
+**Rejected:** a generic `generated:` prefix — the name would have to carry
+the tool anyway; no generated blocks, print only — the launcher would stop
+being a projection of the plan, which the seam inventory chose.
+**Blast radius:** `plan.sh sync`; launcher template in `create-work-item`;
+`docs/work-directory-conventions.md`.
+**Promote?:** no.
+
+## 2026-09-23 — A node declares its sort with `kind: work | reconcile | hitl` (settled)
+**Chose:** One frontmatter field, default `work` when absent. Lint rules
+hang off it: every wave ends in exactly one `reconcile` node; a `hitl` node
+has no `check`; `reconcile` defaults to `tier: frontier`.
+**Because:** Reconcile and HITL nodes are settled as named things in the
+plan, and the proposed frontmatter had no field to name them.
+**Rejected:** two booleans — a node could be both; inference from position
+and wording — breaks on reordering.
+**Blast radius:** node frontmatter; `plan.sh check`; to-tickets conversion.
+**Promote?:** no.
+
+## 2026-09-23 — How plans enter the template (settled)
+**Chose:** Five of the six proposed parts: (1) a short Plans section in
+`CONTEXT.md`; (2) `docs/plans.md` as the reference, indexed from
+`docs/README.md`, plus the optional `plans/` row in
+`docs/work-directory-conventions.md`; (3) `skills/plans/SKILL.md`
+(agent-agnostic, `/plan` shortcut) for what a script cannot do: create a
+plan from a spec or tickets, run a reconcile node, replan; (4) one
+conditional step in `session-rollover`, `checkpoint`, and the launcher
+template: if a plan is open, `plan.sh sync` first; (6) downloader work: every
+runtime documented, backlog card, `TEMPLATE_VERSION` bump, non-engineer note.
+`create-work-item` scaffolds nothing extra; a plan is opt-in.
+**Because:** Teaching plans only through one item's launcher would not
+survive into a fresh workspace; the template rule is "ship and document for
+downloaders".
+**Rejected:** (5) a Stop/SessionEnd hook running `plan.sh check` — at
+session end it can only warn, the supervisor already runs the same check
+before the next child and refuses on failure, and it would be wired into six
+runtimes' hook files; revisit if hand-run plans go stale. Docs-and-skill
+only — the sync step would depend on the agent remembering.
+**Blast radius:** `CONTEXT.md`, `docs/README.md`, `docs/plans.md` (new),
+`docs/work-directory-conventions.md`, `skills/plans/` (new),
+`.claude/commands/plan.md` (new), `skills/session-rollover/SKILL.md`,
+`skills/checkpoint/SKILL.md`, `skills/create-work-item/SKILL.md`,
+`docs/for-non-engineers.md`, the template backlog, `TEMPLATE_VERSION`.
+**Promote?:** no.
+
+## 2026-09-23 — Wayfinder coexists untouched in v1 (settled)
+**Chose:** `wayfinder` is not edited. `docs/plans.md` carries one paragraph
+mapping a wayfinder map onto a plan (map = `plan.md`, decision tickets =
+`hitl` nodes, one per session). "Wayfinder becomes a plan template" goes on
+the template backlog, to be taken up after plans have run a real item.
+**Because:** Retiring or rewriting a vendored, adapted skill before the
+replacement has run once is premature.
+**Rejected:** wayfinder emits a plan now — larger blast radius before plans
+exist; retire wayfinder — loses a working skill.
+**Blast radius:** `docs/plans.md`; one backlog card.
+**Promote?:** no.

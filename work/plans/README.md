@@ -34,7 +34,7 @@ plain files, documented for downloaders).
 
 ## Success criteria
 
-<!-- No spec.md yet; one is written via to-spec only if the exploration says "build". -->
+**Status (2026-09-23, session 2): verdict = BUILD** — format + `plan.sh` state tooling + the `chain.plan` loop hook, no runner. All decisions settled in `decisions.md`; `concept.md` written; `spec.md` and `issues/` follow via `to-spec` / `to-tickets`.
 
 - **Concept note** at `concept.md`: a one-page definition of a plan and its
   five properties (graph, loops, sessions, parallelism, tiers), a glossary of
