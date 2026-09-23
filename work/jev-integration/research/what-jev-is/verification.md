@@ -8,8 +8,7 @@ re-fetch of everything outside the snapshot (OpenAPI spec, npm/PyPI JSON,
 GitHub raw, HN Algolia, evals site, four third-party posts, two press pages).
 Method rule 8 is the bar: the table records moves in **both** directions.
 
-Scorecard: 41 checks — **34 survived, 4 downgraded, 1 overturned as worded,
-2 could not be re-checked by the lead** (kept at cluster verdict, flagged).
+Scorecard: 41 checks — **33 survived, 1 lead-introduced defect (V15, reversed by the fact-check), 4 downgraded (of which D4 has since been reversed and now survives — see its row), 1 overturned as worded, 2 could not be re-checked by the lead** (kept at cluster verdict, flagged) (corrected 2026-09-23; previously: "34 survived, 4 downgraded, 1 overturned as worded, 2 could not be re-checked by the lead" — re-counted by the corrections agent from the table's status column: V1–V34 = 33 `survived` + V15 `reversed`; D1 overturned; D2, D3, D5 downgraded; D4 downgraded by the lead, now `Survives`; N1–N2 not re-checked = 41).
 
 ## Moves DOWN (the reason this pass exists)
 
@@ -69,7 +68,7 @@ Scorecard: 41 checks — **34 survived, 4 downgraded, 1 overturned as worded,
 
 ## Direction check (rule 8)
 
-Moves toward confidence: 34 survived, 1 new implied claim (V7).
+Moves toward confidence: 33 survived, 1 new implied claim (V7); one further "survived" (V15) was a lead-introduced defect, reversed by the fact-check (corrected 2026-09-23; previously: "34 survived, 1 new implied claim (V7)").
 Moves away from confidence: 5 (D1–D5), of which one overturns a cluster's headline absence claim (D1) and one weakens a source chain (D2). Two items are unverified by the lead and say so (N1–N2). The pass moved claims in both directions; it did not merely ratify.
 
 Post fact-check adjustment (2026-09-23, see `corrections.md`): V15 is reversed (an over-correction against the subject that the lead's own check ratified — the lead's "survived" count is therefore 33, not 34, with one lead-introduced defect); D2 is partly reversed (FinSMEs was a UA bot wall); D4's and D5's spreads shrink (O11 closed; JS date spread was a timezone artefact). N1's three third-party rows were re-fetched and confirmed by the fact-check.

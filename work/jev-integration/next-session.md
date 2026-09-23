@@ -9,51 +9,71 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > `handoff.md` (the append-only ledger). Convention:
 > docs/work-directory-conventions.md.
 
+## Mission
+
+Finish research wave 1 on Jev (TypeSafe's typed-decision API) so a human can
+make the fit decision: run the Phase 4 cross-subject sweep, apply what it
+finds, write the synthesis, and roll over interactive with the fit question
+open. No integration code or spec until `decisions.md` records the fit.
+
 ## >>> START HERE <<<
 
-Position: research wave 1 is in Phase 3/4. **Finished and closed:** the three
-passes, the three fact-checks, and the corrections passes for `what-jev-is` and `integration-paths` (gen 1 DONE). **Still open:** `corr-terms` (gen 1 closed ROLLOVER_NEEDED, nothing applied — open gen 2), the second-round rulings R12–R15 (`what-jev-is`) and R10 (`integration-paths`).
-Phase 4 (cross-subject sweep) and the synthesis are not started.
+Position: **Phase 3 is closed** (every subject corrected in two rounds; all
+dispatch generations closed). **Phase 4 sweep, the post-sweep corrections
+pass, and the synthesis are not started.**
 
-1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=2`).
-2. Read `research/rulings.md` in full (every ruling so far, and the wave
-   patterns at the end of the `terms` section) and `research/schema.md`. Do
-   NOT read `record.md`/`fact-check.md` files whole — grep them.
+1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=3`).
+2. Read `research/rulings.md` in full (rulings through R23; the queued
+   post-sweep rulings are listed under "Phase 3 closed") and
+   `research/sweep-brief.md`. Do NOT read `record.md`/`fact-check.md`/
+   `corrections.md` whole — grep them.
 3. `scripts/fleet.sh dispatch-list --project jev-integration` — trust the
-   records over this file for which tasks are open. Every generation should be closed (session 1 waited for all agents). If one is
-   still `open`, its report file is partial: `dispatch-close --status KILLED`,
-   then `dispatch-open` a fresh generation with the same `--brief`, and
-   relaunch a `general-purpose` agent pointing at that brief (prompt shape:
-   "read and follow your brief exactly: <path>", the dispatch contract
-   `fleet.sh` prints, ≤12-line return, status word first).
-4. Finish Phase 3: (a) `dispatch-open` gen 2 of `corr-terms` with `--brief work/jev-integration/research/terms/corrections-brief.md` and launch a corrections agent; its brief plus ruling R9 in `rulings.md` are the instructions, and gen 1's `terms/corrections.md` holds a ready evidence block and edit plan it must re-verify before applying. (b) Fold the second-round rulings (R12–R15 for `what-jev-is`, R10 for `integration-paths`) into one small corrections pass each, or into the Phase 4 sweep's corrections. (c) Read each `corrections.md`'s
-   `## Not applied` and `## New findings needing a ruling` sections and rule
-   on them in `rulings.md` (a second round is expected — rule yourself,
-   never let an agent resolve at the wrong level).
-5. Phase 4 — one sweep agent across all three subjects (it may read
-   everything, writes only `research/sweep.md`): consistency of standard
-   (same evidence pattern scored two ways; Noul/confidence claims across
-   subjects), formatting integrity (every table renders — literal `|` in
-   snippets), evidence-appendix spot-check (sample quotes vs. sources),
-   stale summary counts (pre-correction figures marked historical). Feed it
-   the wave patterns from `rulings.md`. Rule on its findings; a corrections
-   pass per affected subject if needed.
-6. Synthesis → `research/synthesis.md`: the corrected facts (cite claim
-   ids), what changed vs. the README's standing claims S1–S6, and a first,
-   explicitly **provisional** list of template seams a typed-decision model
-   could serve (`rlm` leaf classification, `triage` categorisation,
-   `doc-review` verdicts, session-loop stall/halt judgement, ledger/backlog
-   checks) with what each needs from the API (closed option set + an `other`
-   option, a confidence threshold policy, model-version pinning, cost per
-   call at $42/Btok input). The fit **decision** is NOT this session's job.
-7. Update `README.md` here (status: research complete) and the
-   `work/README.md` row; ledger block `# Session Handoff — 2 (<date>): …`
-   on `handoff.md`; rewrite this launcher for the fit-decision session
-   (`grill-with-docs` → `decisions.md` note); commit (do not push; report
-   how far ahead main is). Then roll over per
-   `skills/session-rollover/SKILL.md` with `--loop-mode interactive` — the
-   fit decision needs the human.
-8. `scripts/context-budget.sh record --label "<phase done>"` at every phase boundary.
+   records. Everything should be closed. If one is `open`, its report is
+   partial: `dispatch-close --status KILLED`, then reopen and relaunch.
+4. **Phase 4 sweep.** `scripts/fleet.sh dispatch-open --project jev-integration
+   --task sweep --report work/jev-integration/research/sweep.md --brief
+   work/jev-integration/research/sweep-brief.md --agent-type general-purpose`,
+   then launch one `general-purpose` agent: "read and follow your brief
+   exactly: work/jev-integration/research/sweep-brief.md" + the contract the
+   script prints + tool guidance (curl/WebFetch, grep, write ONLY `sweep.md`).
+   It settles R17 (cookbook L512–591 reading) and checks R20's mirror.
+5. Rule on `sweep.md` in `rulings.md` (you rule; the agent recommends). Then
+   ONE corrections pass per affected subject (gen 3 of `corr-<subject>`,
+   brief `corrections-brief-3.md` modelled on `*/corrections-brief-2.md`)
+   carrying the sweep rulings PLUS the queued ones: R18 (if the sweep confirms
+   gen 2's reading of C50), R20, R21, R22 — text in `rulings.md`. Launch the
+   passes in parallel. Verify on disk; close dispatches; rule on any round-3
+   findings.
+6. **Synthesis → `research/synthesis.md`**: the corrected facts with claim
+   ids (start from the three `profile.md` files, they are the summaries);
+   what changed vs standing claims S1–S6 (`schema.md`); the wave patterns;
+   and a first, explicitly **provisional** list of template seams a
+   typed-decision model could serve, from `research/seam-inventory.md`
+   (verify a pointer before citing it), with what each needs from the API:
+   closed option set + an `other` option (the API never abstains), a
+   confidence-threshold policy (Choice/Score only — Noul has none),
+   model-version pinning (alias vs `jev-1.13.0`), cost per call at $42/Btok
+   input (output free), and the no-SLA / rate-limits-may-change terms. The
+   fit **decision** is NOT this session's job; write the decision *question*
+   verbatim at the end of the synthesis.
+7. Close: `README.md` here (add a status line: research complete, fit
+   decision pending) and the `work/README.md` row; ledger block
+   `# Session Handoff — 3 (<date>)` on `handoff.md`; rewrite this launcher for
+   the fit-decision session (`grill-with-docs` → `decisions.md` note; carry
+   the decision question verbatim in First actions); commit (do not push;
+   report how far ahead main is). Roll over per
+   `skills/session-rollover/SKILL.md` with `--loop-mode interactive`.
+8. `scripts/context-budget.sh record --label "<phase done>"` at every phase
+   boundary. At WARN mid-phase: wait for running children (they die with the
+   session), close their dispatches, then roll hands-off with position only.
+
+## Do NOT reload
+
+- The three gen-1 corrections debates (all settled; entries in each
+  `corrections.md`). The R15 dispute is NOT settled — the sweep settles it (R17).
+- The seam inventory's session-lifecycle seams (session-loop, context-budget,
+  launcher, check-ledger): deterministic by ADR-0011, not candidates.
+- Whether to add a fourth subject (R0.1: no).
 
 ## Constraints already decided (do not re-litigate)
 
@@ -62,23 +82,27 @@ Phase 4 (cross-subject sweep) and the synthesis are not started.
   template addition.
 - Research before design: no integration code or spec until a fit decision
   is recorded in `decisions.md`.
-- Wave scope is fixed at three subjects (ruling R0.1); off-limits: accounts,
-  keys, API calls, spend (R0.4). Raw `pass/*.md`, `fact-check.md`, and the
-  briefs are provenance — never edited.
+- Wave scope fixed at three subjects (R0.1); off-limits: accounts, keys, API
+  calls, spend (R0.4). Raw `pass/*.md`, `fact-check.md`, and every brief are
+  provenance — never edited.
 - Corrections mark each changed claim `(corrected <date>; previously: "…")`.
+- The orchestrator rules; agents recommend. Two agents disagreeing on a
+  source line → the sweep re-fetches the line, never a ruling from summaries.
 
 ## State snapshot
 
-- Branch `main`; session 1's commit is the one after 43112fb. Files under
-  `work/jev-integration/research/`: `schema.md`, `rulings.md`, and per
-  subject `brief.md`, `fc-targets.md`, `fact-check-brief.md`,
-  `corrections-brief.md`, `pass/`, `record.md`, `profile.md`,
-  `verification.md`, `open-verification.md`, `fact-check.md`, and
-  `corrections.md` where the corrections agent finished.
-- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto`.
+- Branch `main`, committed at session 2's close; not pushed. Files under
+  `work/jev-integration/research/`: `schema.md`, `rulings.md`,
+  `sweep-brief.md`, `seam-inventory.md`, and per subject the pass/fact-check/
+  corrections sets (`corrections-brief.md`, `corrections-brief-2.md`,
+  `corrections.md` with two rounds). No `sweep.md`, no `synthesis.md`,
+  no `decisions.md` yet.
+- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto`; a supervisor
+  (`session-loop.sh`) is running the chain — stage with `--emit`.
 
 ## Read these first, in order
 
-1. `work/jev-integration/handoff.md` (top block — headline findings + patterns)
+1. `work/jev-integration/handoff.md` (top block)
 2. `work/jev-integration/research/rulings.md`
-3. `skills/research-wave/SKILL.md` Phases 3–4 (when step 4 reaches it)
+3. `work/jev-integration/research/sweep-brief.md`
+4. `skills/research-wave/SKILL.md` Phase 4 + "Handing the wave off" (when step 4 reaches it)

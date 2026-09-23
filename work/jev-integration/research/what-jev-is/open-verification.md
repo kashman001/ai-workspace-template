@@ -23,7 +23,7 @@ publishes it; only TypeSafe can).
 | O13 | **Reddit discussion** (exists? sentiment?) | Every route bot-walled (403/429/empty shell; search UA blocked). No claim either way. | **browser**. |
 | O14 | **Third-party latency without a gateway in the path** | All hands-on reports ran through OpenRouter or an unstated gateway; PriorBench says it "cannot separate model latency from gateway latency". | **key** (see O5). |
 | O15 | **Copyright holder of the Python SDK** | LICENSE at `main` is the unfilled MIT template "Copyright (c) [year] [fullname]"; all metadata says MIT. | **email**/GitHub issue — cosmetic, but a downloader-facing licence file should not be a template. |
-| O16 | **Whether `instructions` is actually required** | api.md says required on all three question types; OpenAPI, both SDKs and advanced.md say optional/nullable. | **key** — one call without `instructions`. |
+| O16 | **Whether `instructions` is actually required** | api.md says required on all three question types; OpenAPI omits it from `required` and types it `anyOf` string/object/array/null; both SDKs type it optional/None; advanced.md lists `null` among its types without saying "optional" (corrected 2026-09-23; previously: "OpenAPI, both SDKs and advanced.md say optional/nullable."). | **key** — one call without `instructions`. |
 | O17 | **The "reference files" the agent-skill page says to copy** | The `typesafe-ai/skills` tree has only SKILL.md + LICENSE at `main`. | **none** (repo state) — re-check the repo at integration time. |
 | O18 | **Discord community content** (100,000 members claimed on Latent Space) | Login required. | **account** (Discord, not TypeSafe). |
 
