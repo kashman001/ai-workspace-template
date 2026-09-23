@@ -11,46 +11,45 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Research wave 1 on Jev is complete (`research/synthesis.md`). Close the wave's
-paperwork, then pose the fit decision to the human and record it in
-`decisions.md` via `grill-with-docs`. No integration code or spec until
+Research wave 1 on Jev is complete and closed (`research/synthesis.md`,
+commit c719edd). The only remaining step is **human-only**: pose the fit
+decision to the user, work it through with `grill-with-docs`, and record the
+outcome as a Tier-2 note in `decisions.md`. No integration code or spec until
 `decisions.md` records the fit.
 
 ## >>> START HERE <<<
 
-Position: **Phase 4 closed; all corrections applied; `research/synthesis.md`
-is final except a §1 re-check.** Small close steps remain, then the human.
+Position: **wave closed; fit decision open; this session is interactive
+(the supervisor waited for a human before starting it).**
 
-1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=5`).
-2. `scripts/fleet.sh dispatch-list --project jev-integration` — all closed; none should be `open`.
-3. **§1 re-check** of `research/synthesis.md` against the gen-3 changes only
-   (grep, don't read whole records): C50 in `what-jev-is/record.md` (denominator
-   caveat + cookbook per figure), IP S2 wording ("contradicted for Noul"),
-   S4 price-FAQ answer (`terms` 1.7 now quoted in `what-jev-is` S4), profile
-   "early access" (stale `<meta>`). Fix any §1 sentence they contradict.
-4. Close: add a status line to `README.md` here after "Start here" (research
-   wave 1 complete 2026-09-23; fit decision pending; synthesis at
-   `research/synthesis.md`); update `work/README.md` row L23 to the same;
-   `scripts/context-budget.sh record --label "wave close"`; commit (do not
-   push; report how far ahead main is).
-5. **Pose the fit decision** — this is human-only. Roll over with
-   `--loop-mode interactive` carrying the question verbatim:
+1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=6`).
+2. **Re-pose the open question to the user, verbatim:**
 
    > **Fit decision** in `decisions.md`: which template seam(s) a typed-decision
    > model serves better than the current runtime (or none), with the rejected
    > alternatives and the evidence from `research/`.
 
-   Inputs for the human: `research/synthesis.md` §5 (provisional seam table)
-   and §6; `research/seam-inventory.md`. Run `grill-with-docs` with the human;
-   the outcome is a Tier-2 note in `decisions.md` (`/decision`).
-6. `scripts/context-budget.sh record --label "<step done>"` at each boundary.
+   Point the user at `research/synthesis.md` §5 (provisional seam table) and
+   §6, and `research/seam-inventory.md`. Then run `grill-with-docs` with them;
+   the outcome is a Tier-2 note in `decisions.md` via `/decision` (what + why
+   + rejected alternatives, citing claim ids from `research/`).
+3. **If nobody answers** (no human in the loop): do NOT decide the fit
+   yourself and do NOT start design work. Commit nothing new, leave the
+   question open in this launcher, and end the session with `checkpoint`
+   (stop door) rather than rolling over again — a re-roll would loop the
+   supervisor on the same question.
+4. After the note exists: `scripts/context-budget.sh record --label "fit decision recorded"`,
+   commit (do not push; report how far ahead main is), then — only if the
+   decision is "integrate" — `to-spec` is the next governing skill.
 
 ## Do NOT reload
 
-- Any corrections debate (three rounds, all settled; `rulings.md` through R41).
-- The sweep (`sweep.md`) beyond what §3 of the synthesis already summarises.
+- The research records beyond the synthesis §5–§6 and the seam inventory;
+  every claim id cited there resolves to a `record.md` row if the human wants
+  the evidence (grep the id — do not read whole records).
+- Any corrections debate (settled; `rulings.md` through R41), the sweep
+  (`sweep.md`), or whether to add a fourth subject (R0.1: no).
 - The seam inventory's session-lifecycle seams (deterministic by ADR-0011).
-- Whether to add a fourth subject (R0.1: no).
 
 ## Constraints already decided (do not re-litigate)
 
@@ -60,20 +59,22 @@ is final except a §1 re-check.** Small close steps remain, then the human.
 - Research before design: no integration code or spec until a fit decision
   is recorded in `decisions.md`.
 - Raw `pass/*.md`, `fact-check.md`, and every brief are provenance — never edited.
-- The orchestrator rules; agents recommend.
+- The orchestrator rules; agents recommend. The fit decision itself is the
+  user's — the agent grills, records, and does not pre-empt it.
 
 ## State snapshot
 
-- Branch `main`, committed at session 4's close; not pushed. Under
-  `work/jev-integration/research/`: `schema.md` (with the verification scale),
-  `rulings.md` (through R41, "Phase 4 closed"), `sweep.md`, `seam-inventory.md`,
-  `synthesis.md`, and per subject the pass/fact-check/corrections sets (three
-  rounds). No `decisions.md` yet. All dispatch records closed.
-- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto`; a supervisor
-  (`session-loop.sh`) runs the chain — stage with `--emit`.
+- Branch `main`, clean, 15+ commits ahead of `origin/main`, not pushed.
+- `work/jev-integration/research/`: `synthesis.md` (final), `seam-inventory.md`,
+  `schema.md`, `rulings.md` (through R41), `sweep.md`, and per subject the
+  record/profile/pass/fact-check/corrections sets. No `decisions.md` yet.
+  All dispatch records closed.
+- `context-budget.env` here sets `ROLLOVER_RELAUNCH=auto`; the supervisor
+  (`session-loop.sh`) runs the chain — this session was staged interactive.
 
 ## Read these first, in order
 
 1. `work/jev-integration/handoff.md` (top block)
 2. `research/synthesis.md` §5–§6
-3. `skills/session-rollover/SKILL.md` step 6 (interactive rollover)
+3. `research/seam-inventory.md` (only once the grill reaches a specific seam)
+4. `skills/grill-with-docs/SKILL.md`, `skills/decision-log/SKILL.md`
