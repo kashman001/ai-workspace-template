@@ -48,7 +48,7 @@ installed — not run.
 
 **Budget.** ~91K at the last record before wrap-up (OK). Nothing pushed.
 
-# Session Handoff — 3 (2026-09-24): ticket 01 landed — `plan.sh` new / show / status, fixture, tests, docs/plans.md
+# Session Handoff — 3 (2026-09-23): ticket 01 landed — `plan.sh` new / show / status, fixture, tests, docs/plans.md
 
 **Summary.** Seq 3, supervised chain, hands-off. Implemented ticket 01
 test-first at the one agreed seam (the command line): fixture plan
@@ -75,34 +75,3 @@ installed on this machine — not run.
 
 **Budget.** WARN reached right after the doc (~117K at the last record);
 wrapped up here. Nothing pushed.
-
-# Session Handoff — 2 (2026-09-23): grill closed, verdict BUILD, concept + spec + 11 tickets; rolled at WARN
-
-**Summary.** Seq 2, supervised chain, launched interactive for the grill.
-The user was present. Two grill rounds settled all seven open points
-(recommended answers taken on every one; the user asked for plain-language
-explanations on the Stop-hook and node-kind questions before deciding).
-Landed: seven new notes in `decisions.md` (no "(proposed)" left; both OPEN
-sections resolved in place), `concept.md` (definition, five properties,
-glossary, this item as a worked plan in node-file form), README status line
-= BUILD, `spec.md` (36 stable S-items, two testing seams: the `plan.sh`
-command line and the existing session-loop fake-child harness), eleven
-tracer-bullet tickets under `issues/` approved by the user as listed,
-backlog card L48 (wayfinder as a plan template, deferred). WARN hit right
-after the tickets; wrapped up here.
-
-**Decisions this session** (why + rejected in `decisions.md`): build format
-+ `plan.sh` + loop hook, no runner; `blocked` explicit / `done` verified
-only; HITL nodes have no `check`, human tick, interactive rollover when only
-HITL remain; `<!-- plan:begin/end <name> -->` markers; `kind: work |
-reconcile | hitl`; integration = all parts except the Stop/SessionEnd hook;
-wayfinder untouched in v1 (L48).
-
-**State.** All of the above committed by this rollover. Branch main, nothing
-pushed. Spec approved by the user in this session;
-tickets are `ready-for-agent`. Frontier: ticket 01 only.
-
-**Next.** `next-session.md` → implement ticket 01 with `implement` + `tdd`.
-
-**Key files.** `work/plans/spec.md`, `work/plans/issues/01-*.md`,
-`work/plans/concept.md`, `work/plans/decisions.md`.

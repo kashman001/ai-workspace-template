@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** done (2026-09-24, session 3)
+**Status:** done (2026-09-23, session 3)
 
 **Spec:** S1, S2, S3, S5, S9, S10, S11, S12, S14, S17, S22, S23, S24
 
