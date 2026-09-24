@@ -3,6 +3,48 @@ PURPOSE: ARCHIVE of the ledger (handoff.md). Older "# Session Handoff"
 blocks, newest on top. Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-09-23): ticket 02 landed — `plan.sh` frontier / remaining / graph
+
+**Summary.** Seq 4, supervised chain, hands-off. Implemented ticket 02
+test-first: T8–T10 appended to `scripts/tests/test-plan.sh` (28 new
+assertions, 77 total) — frontier text and `--json`, the two empty-frontier
+outcomes, wave order (a lower wave's todo node is the whole frontier; a
+later wave's unblocked node is named in the reason but not offered), mixed
+done/dropped blockers, a dangling `blocked_by`, `remaining` order (wave then
+id) and emptiness, `graph` text and `{plan,nodes,edges}` — then the three
+verbs as `cmd_<verb>` over one shared jq prelude (`DERIVE_JQ`: padding,
+current wave, finished set). `docs/plans.md` table extended plus a
+"Frontier" paragraph. Ticket 02 boxes ticked, status `done`. One decision
+note (dangling blocker refused at load). Full shell suite green.
+
+**Choices made without a decision note.** Empty frontier with nothing
+unfinished is exit 0 and silence (not a refusal — `status` says the plan is
+complete); with `--json` the empty-and-unfinished case prints `[]` on stdout
+and the reason on stderr, exit 1, so a caller branches on the code as
+documented. `frontier`/`remaining --json` return full node objects (what
+`show --json` prints) rather than a trimmed shape — one shape to learn.
+`remaining` prints `id status wave` one per line, not the concept sketch's
+single id line — grep-able, and status is what "what is left" is for. No
+DOT option (ticket calls it optional; `graph --json` carries the edges).
+The reason line uses an em-dash after "nothing ready" — cosmetic, change
+freely.
+
+**For ticket 03 (`check`).** The loader now refuses a dangling `blocked_by`
+before any verb runs, so `check`'s "dangling or cross-plan blocked_by" rule
+cannot be reached through `load_nodes` as-is: `check` must either parse with
+its own lenient pass to report all violations at once, or accept that this
+one rule is a load-time refusal (one line, exit 1) rather than a listed
+violation. Decide at the start of 03 and note it.
+
+**For ticket 05 (board).** Wave names still live in no frontmatter (ledger
+block 3); `graph` prints bare `wave N` headings. Unchanged.
+
+**Verification.** `bash scripts/tests/test-plan.sh` → passed=77 failed=0;
+every `scripts/tests/test-*.sh` green (doc-consistency 7/7). shellcheck not
+installed — not run.
+
+**Budget.** ~91K at the last record before wrap-up (OK). Nothing pushed.
+
 # Session Handoff — 3 (2026-09-23): ticket 01 landed — `plan.sh` new / show / status, fixture, tests, docs/plans.md
 
 **Summary.** Seq 3, supervised chain, hands-off. Implemented ticket 01

@@ -11,31 +11,34 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 ## Mission
 
 Implement the tickets under `issues/` in dependency order, test-first, one
-ticket per session unless a ticket is clearly small. Tickets 01–03 are done;
-the frontier is 04, 05, 06 (all blocked only by done tickets). Take **04**
-(write verbs and the state machine) — 07 and 09 need it, and it is the
-largest; if it will not fit one session, land `start`/`done`/`verify` first
-and leave `add`/`block`/`drop`/`note` for the successor.
+ticket per session unless a ticket is clearly small. Tickets 01–04 are done;
+the frontier is 05 and 06 (both blocked only by done tickets). Take **05**
+(`sync` and the marker convention) — 07 and 08 need it. If it will not fit
+one session, land the `plan.md` board first and leave the launcher block for
+the successor.
 
 ## Read these, in order
 
-1. `work/plans/issues/04-write-verbs-state-machine.md` — the ticket.
-2. `handoff.md` top block → "For ticket 04" — the fixture's 09 node has a
-   `check` that exits 2 in the test workspace; decide how `done` tests run a
-   check (own command per test, or a fixture edit).
-3. `docs/plans.md` — format, every verb, "Check rules", exit codes; extend,
-   don't restate. The state machine is in `work/plans/spec.md` →
-   "Implementation Decisions" (`todo → doing → done`, `doing → blocked →
-   doing`, any → `dropped`; `done` requires the check to pass; hitl nodes
-   need `--by human`).
-4. `scripts/plan.sh` — read it whole (~300 lines): `load_nodes` (strict),
-   `node_parse` (lenient, used by `check`), `DERIVE_JQ`, `cmd_<verb>` +
-   `case` arm per verb. Write verbs edit node files in place: keep the
-   frontmatter line order and comments, append `## Log` lines.
-5. `scripts/tests/test-plan.sh` — T8 shows fixture variants (`reset`,
-   `setf`, `addf`, `squeeze`); T11 shows exit-code + `--json` shape
-   assertions. Append `T12…`.
-6. `work/plans/spec.md` — only S4, S8, S18, S19, S20.
+1. `work/plans/issues/05-sync-and-markers.md` — the ticket.
+2. `handoff.md` top block → "For ticket 05" — wave names live in no
+   frontmatter (decide: number only, or omit); the board is spliced between
+   markers, not appended to a section.
+3. `docs/plans.md` — format, every verb, "State machine", "Check rules";
+   extend, don't restate. The board's target shape is the fixture's
+   `plan.md` between `<!-- plan:begin board -->` / `<!-- plan:end board -->`
+   (`scripts/tests/fixtures/plan-01-concept/plan.md`).
+4. `scripts/plan.sh` — read it whole (~450 lines): `load_nodes`,
+   `DERIVE_JQ` (`ready`, `frontier`, `current_wave`), `section_append`
+   (prose sections; the board needs a marker splice instead), `cmd_<verb>`
+   + `case` arm per verb. Match the style.
+5. `scripts/tests/test-plan.sh` — T8 fixture helpers (`reset`, `setf`,
+   `addf`, `squeeze`), T12+ write-verb helpers (`fm`, `logs`, `lastlog`,
+   `SS`). Append `T18…`; the ticket wants a byte-identical-outside-markers
+   diff and an idempotence check.
+6. `docs/work-directory-conventions.md` — where the marker convention gets
+   its one write-up; find the launcher template the Position/Frontier
+   block goes into (`skills/create-work-item/`).
+7. `work/plans/spec.md` — only S2, S21.
 
 ## Do NOT reload
 
@@ -51,29 +54,29 @@ and leave `add`/`block`/`drop`/`note` for the successor.
 
 - Bash 3.2 + jq only; match `scripts/plan.sh`'s style. Exit codes 0/1/2 as
   documented. Text by default, `--json` on every read verb.
-- Write verbs never call a model and never decide: `done` is refused when the
-  check fails; the Nth failed check (`loop: N`) writes `blocked`.
+- `sync` derives, never decides; nothing outside the markers is generated;
+  missing markers are reported (exit 1, naming file and marker), never
+  invented.
 - `plan.sh check` must still pass on the fixture after any fixture edit.
-- Wave names ("1 ground") live in no frontmatter — derive or omit; note the
-  choice in the ledger for ticket 05 (board renderer).
+- Nothing pushed to origin; report how far ahead `main` is.
 
 ## State snapshot
 
 Branch `main`, clean after this rollover's commit; nothing pushed. Tickets:
-01–03 `done`; 04–11 `ready-for-agent`; frontier = 04, 05, 06. Chain
-supervised by `session-loop.sh` (seq 1 → 2 → 3 → 4 → 5 → 6). Budget at
-rollover: OK (~110K; ticket 03 finished under WARN).
+01–04 `done`; 05–11 `ready-for-agent`; frontier = 05, 06. Chain
+supervised by `session-loop.sh` (seq 1 → … → 6 → 7). Budget at rollover:
+WARN (~126K, hit right after ticket 04's suite went green).
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project plans` (expect `seq=6`).
+1. `scripts/context-budget.sh register --project plans` (expect `seq=7`).
 2. No question to pose. Proceed hands-off.
-3. `implement` ticket 04 with `tdd`: one red case per transition in
-   `test-plan.sh` first (legal transition, each illegal one refused with
-   exit 1, `done` on a passing and a failing check, `loop` exhaustion,
-   `--by human`), then `plan.sh <verb>` green one verb at a time.
-4. Extend `docs/plans.md` → "`plan.sh`" table with the write verbs and a
-   "State machine" paragraph.
+3. `implement` ticket 05 with `tdd`: red cases first in `test-plan.sh`
+   (board rendered between markers on the fixture; twice → byte-identical;
+   outside text untouched; launcher block; missing markers → exit 1 naming
+   file + marker), then `plan.sh sync` green.
+4. Extend `docs/plans.md` → "`plan.sh`" table with `sync`; write the marker
+   convention once in `docs/work-directory-conventions.md`.
 5. Tick the ticket's boxes as each lands; `Decision:` trailer on the commit.
 6. `scripts/context-budget.sh record --label "<unit done>"` at each step.
    At the end or at WARN/STOP: ledger block, rewrite this launcher (next
