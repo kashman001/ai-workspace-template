@@ -6,6 +6,46 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 10 (2026-09-24): ticket 07 slice a — the loop's plan-hook tests, red
+
+**Summary.** Seq 10, supervised chain, hands-off. Started at ~58K (the
+launcher's read list is heavy), hit WARN at ~127K right after the tests were
+written, so the ticket ships in two slices. Slice a (`c2ea565`): four
+fake-child cases in `scripts/tests/test-session-loop.sh` — P1 `chain.plan`
+binding (none / single open / `--plan` / unresolved / ambiguous), P2
+`plan_invalid leg=sync|check` refusing the next session, P3 `plan_closed`
+ending the chain (and the literal S27 conjunction: closed with the reconcile
+node dropped is not `plan_closed`), P4 hitl-only frontier → interactive with
+the board synced between children. A `mkplan` helper writes a three-node
+one-wave plan (work done, hitl, reconcile) with the board and position
+markers; the stub gains `stage-plan` (rolls over keeping the launcher's
+position markers, commits nothing); `plan.sh` ships into the throwaway
+workspace. 24 red, 116 green (the 105 plan-less assertions untouched). No
+code in `session-loop.sh` yet — that is slice b.
+
+**Choices made (one decision note, 2026-09-24).** One new code,
+`plan_invalid`, with legs: `unresolved` / `ambiguous` at start (refuse, exit
+4, record untouched), `sync` / `check` between children (broken, exit 1,
+notify, staged command kept, no close — the shape of `staged_invalid`
+mid-chain). `plan_closed` is emitted after the `staged` verdict of the child
+that finished the plan (the way `cap` follows `staged`), writes
+`chain.closed.reason = plan_closed`, so a restart refuses `chain_closed`.
+The interactive choice is the supervisor's own: it sets `launch.mode` to
+`interactive` in the record and the `staged` verdict line reads
+`mode=interactive`; the child's `--loop-mode` is not consulted for it. The
+gate runs only between children (a chain started on a closed or broken plan
+runs one session first) — per the ticket's wording; noted, not changed.
+
+**Verification.** `bash scripts/tests/test-session-loop.sh` → passed=116
+failed=24, every failure a missing-feature failure (`--plan` unknown option,
+`chain.plan` null, no gate). `test-plan.sh` not touched. shellcheck not
+installed — not run.
+
+**Budget.** WARN (~127K) as the tests landed; rolled at ~135K. Nothing
+pushed; `main` is 38 commits ahead of `origin/main` before the rollover
+commit. Untracked `work/jev-integration/research/spike.{md,py}` belong to
+another item — left alone.
+
 # Session Handoff — 9 (2026-09-24): ticket 06 done — model knob per runtime, `start` stamp, `add --leaf`, `plan-tiers.env`, docs "Tiers"
 
 **Summary.** Seq 9, supervised chain, hands-off. Ticket 06 finished in two

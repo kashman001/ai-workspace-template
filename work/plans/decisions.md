@@ -392,3 +392,28 @@ value (circular); stamping the model into the Log (box 3 of ticket 06).
 **Blast radius:** `load_nodes`, `cmd_frontier`, `cmd_start`, `cmd_add
 --leaf`, `plan-tiers.env`, `docs/plans.md` → "Tiers".
 **Promote?:** maybe — with the 2026-09-23 note, if the mapping outgrows plans.
+
+## 2026-09-24 — Loop plan hook: one code `plan_invalid`, broken mid-chain, refused at start (settled)
+**Chose:** A failing `plan.sh sync` or `check` between children is `broken
+reason=plan_invalid leg=sync|check` (exit 1, notify hook, staged command
+kept, no close) — the shape of `staged_invalid` mid-chain; a `--plan` that
+does not resolve or several open plans with no `--plan` is `refused
+reason=plan_invalid leg=unresolved|ambiguous` at start (exit 4, record
+untouched). `plan_closed` follows the `staged` verdict of the child that
+finished the plan and writes `chain.closed.reason`, so a restart refuses
+`chain_closed` until `--reopen`. The interactive choice is made by the
+supervisor from `frontier --json` (non-empty, every node `kind: hitl`): it
+writes `launch.mode = interactive` and pauses; the child's `--loop-mode` is
+not consulted for it.
+**Because:** Mid-chain the plan is what the child left behind and a human
+must fix it — the staged command must survive for the restart, exactly as a
+bad staging does. At start nothing has run, so a refusal leaves no trace. One
+code with legs keeps the reason-code table to one new row per emitter.
+**Rejected:** (a) `refuse` (exit 4) mid-chain — would read as a start gate
+and the doc's exit contract says the supervisor mid-flight is 0 or 1;
+(b) separate codes `plan_sync_failed` / `plan_check_failed` /
+`plan_ambiguous` — three doc rows for one situation ("the plan is not
+usable"); (c) having the child pick `--loop-mode interactive` from the
+frontier — the supervisor already reads the plan between children and never
+trusts the child's judgement for a verdict.
+**Promote?:** no.
