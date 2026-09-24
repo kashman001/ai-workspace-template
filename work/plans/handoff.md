@@ -6,6 +6,53 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 14 (2026-09-24): ticket 10 done — front door, reference, glossary, downloader work
+
+**Summary.** Seq 14, supervised chain, hands-off. Started at ~58K, ended
+~118K (at the WARN edge; rolled over rather than start ticket 11, which needs
+a fresh window and a person's call — below). Slice a: `CONTEXT.md` gains a
+"Plans" section (three-line definition, when to use one, the `plan.sh status`
+one-liner, pointers to `docs/plans.md` and `skills/plans/SKILL.md`) and the
+plan glossary under Language (work item with *worktree* as the alias to avoid,
+plan, node, wave, reconcile node, HITL node, check, tier, frontier) as a
+labelled block below the project's own `<term>` placeholder. Slice b:
+`docs/plans.md` completed — a wayfinder-and-plans paragraph (map = `plan.md`,
+decision tickets = `hitl` nodes; coexist until the first real plan closes,
+L48), a "Per runtime" section (one table row per runtime: how the skill is
+invoked, which `plan-tiers.env` knobs ship, registration), and a worked example
+quoting the fixture plan with verb output verified against a temporary copy of
+it under `work/` (removed after); the optional `plans/NN-<slug>/` row in
+`docs/work-directory-conventions.md`; a **Plan** entry in the non-engineer
+glossary; `docs/plans.md` and `skills/plans/` in the structure tree
+(`workspace-structure.html` rebuilt — the drift guard flagged it).
+`docs/README.md` already indexed `plans.md`. Slice c:
+`test-doc-consistency.sh` gains a paths phase — every backticked path rooted at
+`docs/ skills/ scripts/ .claude/ work/plans/` in `CONTEXT.md`, `docs/plans.md`,
+`skills/plans/SKILL.md`, `.claude/commands/plan.md` exists on disk, plus the
+two front-door pointers and the index row (7 → 17 checks); `TEMPLATE_VERSION`
+2026-09-22 → 2026-09-24; backlog changelog row for the plans feature, "Last
+updated" bumped, scorecard unchanged. Ticket 10 boxes ticked, status `done`.
+Suites: test-plan 238/238, test-session-loop 140/140, test-doc-consistency
+17/17, test-template-version 9/9, test-agent-entrypoints 10/10.
+
+**Decisions** (commit trailers): the glossary block sits under Language, not
+in its own section, because skills read Language for aliases to avoid; the
+worked example quotes the committed fixture, so the doc and `test-plan.sh`
+cannot drift apart silently; the backlog gets a changelog row, not a resolved
+card — plans never had a card, and L48 stays open by its own gate.
+
+**Learnings:** read verbs can be exercised on a fixture by copying it to
+`work/<tmp-item>/plans/NN-<slug>/` (the directory name must be the plan id,
+not the fixture's folder name) with `--project <tmp-item>`. Backticked
+*commands* (`scripts/plan.sh check`) look like paths to a path test — strip
+everything after the first space.
+
+**Not done.** Ticket 11 (dogfood) — it needs a real multi-session item to be
+the first plan, which is the user's choice (question carried verbatim in the
+launcher). Nothing pushed (main 55 ahead of origin). The item's own
+`README.md` status line still reads session 2's verdict; ticket 11 owns
+updating it.
+
 # Session Handoff — 13 (2026-09-24): ticket 09 done — the `plans` skill, `/plan`, Replans reference
 
 **Summary.** Seq 13, supervised chain, hands-off. Started at ~59K, ended
