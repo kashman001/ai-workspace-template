@@ -180,5 +180,18 @@ fall back to the latest plan by number instead of refusing. The supervisor
 every session in that chain resolves the same plan without `--plan`
 (`docs/context-budget.md` → "The supervisor", "Plans").
 
+**Replans.** Capture at once, restructure at the join: a discovery is a
+`note` (into "Not yet specified") the moment it is made; the graph changes at
+the wave's reconcile node, each change as a line under `## Replans` in
+`plan.md`. Authority is by blast radius — **local** (split a node, add a
+follow-up node in an existing wave): the agent, any time; **structural** (a new
+wave, a cross-wave re-edge, a drop): the reconcile node, hands-off only when
+`plan.md` says `replan: structural`, else a `kind: hitl` node carries the
+proposal to a person; **goal**: a person, always, by closing the plan and
+opening the next. A node added to a wave that already has its reconcile node
+takes the number of the node it follows plus a suffix (`add`, then rename the
+file and its `id:`), so the join stays the wave's last id. Procedures:
+`skills/plans/SKILL.md`.
+
 Tests: `scripts/tests/test-plan.sh` against the fixture plan
 `scripts/tests/fixtures/plan-01-concept/` (the worked example in the concept note).
