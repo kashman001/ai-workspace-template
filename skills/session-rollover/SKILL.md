@@ -94,6 +94,39 @@ signal only arrives when you run `record` — in an extended discussion, run
    (summaries are hints, not facts). (No-git workspace: saving the files IS the
    flush.)
 
+   If a plan is open (`scripts/plan.sh status` exits 0 and says `open`), run
+   `scripts/plan.sh sync` first so the launcher's Position block is fresh. Then,
+   if the current node is unfinished (`doing`, or a `todo` you had begun), split
+   it so the node stays the unit of accounting: the done part keeps the id, a
+   remainder node `<id>-b` carries the rest in the same wave with the same
+   edges and `sessions`. The split is existing verbs plus three file edits
+   under `work/<project>/plans/<plan>/nodes/` — shown for node `07-spec` in
+   wave 3; every write verb takes `--session <n>`:
+
+   1. `scripts/plan.sh show 07-spec --json` — note `wave`, `kind`, `tier`,
+      `blocked_by`, `sessions`, and `check`, `loop`, `parallel`, `leaf`,
+      `isolated` where set.
+   2. `scripts/plan.sh add spec-b --wave 3 --kind work --tier frontier
+      --blocked-by 06-reconcile-write --title "Write the spec (remainder)"` —
+      the same wave, kind, tier and blockers; pass `--check`, `--loop`,
+      `--parallel`, `--leaf`, `--isolated` when the node has them (the
+      acceptance check moves to the remainder).
+   3. `add` numbers the new file after the wave's reconcile node, which
+      `check` refuses (`reconcile-last`), so give it the origin's number:
+      `mv nodes/10-spec-b.md nodes/07-spec-b.md`, set `id: 07-spec-b`, and set
+      `sessions:` to the origin's list (`[2]`). Write its Goal and Acceptance
+      from what is left.
+   4. Every node whose `blocked_by` lists `07-spec` also gains `07-spec-b`
+      (`grep -l '07-spec' nodes/*.md` finds them; edit the list).
+   5. Delete the `check:` line from `07-spec` (its check now lives on the
+      remainder), then `scripts/plan.sh done 07-spec` (`--force` if it was
+      still `todo`) and append the Log line naming the split:
+      `- s<n> · split at rollover: remainder in 07-spec-b`.
+   6. `scripts/plan.sh check` (silent) and `scripts/plan.sh sync`.
+
+   Reconcile and hitl nodes are never split — a reconcile node is the wave's
+   join, a hitl node is one person's tick; leave them as they are.
+
 4. **Write the new handoff block** — insert it in `work/<project>/handoff.md`
    directly below the PURPOSE comment, above the block(s) already there. Its
    heading carries **your own** session number (`# Session Handoff — <N> (<date>)`);
@@ -120,6 +153,9 @@ signal only arrives when you run `record` — in an extended discussion, run
    - **Do NOT reload** — settled side quests and dead ends, each with a one-line
      why, so the next session doesn't re-litigate them.
    - **State snapshot** — branch, uncommitted work, running processes, open items.
+   - When a plan is open, keep the `<!-- plan:begin position -->` …
+     `<!-- plan:end position -->` block — `scripts/plan.sh sync` writes into it
+     and refuses a launcher without it.
    - **First actions** — step 1 is always
      `scripts/context-budget.sh register --project <project>` (the successor
      started by the launcher is already bound by the env pair; an explicit
