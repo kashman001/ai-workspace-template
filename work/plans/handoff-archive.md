@@ -3,6 +3,34 @@ PURPOSE: ARCHIVE of the ledger (handoff.md). Older "# Session Handoff"
 blocks, newest on top. Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 3 (2026-09-23): ticket 01 landed — `plan.sh` new / show / status, fixture, tests, docs/plans.md
+
+**Summary.** Seq 3, supervised chain, hands-off. Implemented ticket 01
+test-first at the one agreed seam (the command line): fixture plan
+`scripts/tests/fixtures/plan-01-concept/` (the concept's worked example, nine
+nodes), `scripts/tests/test-plan.sh` (49 assertions: usage, status text and
+`--json`, show, refusals naming the file, `new` numbering and refusal,
+plan and project resolution incl. the registry binding via an ancestor pid
+and a recycled-pid guard), then `scripts/plan.sh` (bash 3.2 + jq, ~170
+lines). Full shell suite green. `docs/plans.md` started (format + verbs +
+exit codes + resolution); indexed in `docs/README.md`. All five acceptance
+boxes ticked; ticket status `done`.
+
+**Choices made without a decision note (no rejected alternative worth
+recording).** Wave names on the board ("1 ground") are not in any
+frontmatter; the board renderer (ticket 05) will have to derive them, most
+likely from the wave's reconcile-node slug — flag when 05 starts. `show`
+parses the whole plan (cheap, keeps one loader). `isolated` is a JSON
+boolean in `--json`. Inline `# comment` stripping needs whitespace on both
+sides of the `#`.
+
+**Verification.** `bash scripts/tests/test-plan.sh` → passed=49 failed=0;
+every other `scripts/tests/test-*.sh` unchanged and green. shellcheck is not
+installed on this machine — not run.
+
+**Budget.** WARN reached right after the doc (~117K at the last record);
+wrapped up here. Nothing pushed.
+
 # Session Handoff — 2 (2026-09-23): grill closed, verdict BUILD, concept + spec + 11 tickets; rolled at WARN
 
 **Summary.** Seq 2, supervised chain, launched interactive for the grill.
