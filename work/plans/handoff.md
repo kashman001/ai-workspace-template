@@ -6,6 +6,35 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 11 (2026-09-24): ticket 07 done — the loop's plan hook, code + docs
+
+**Summary.** Seq 11, supervised chain, hands-off. Started at ~56K, ended
+~110K (below WARN). Slice b (`232688d`): `scripts/session-loop.sh` gains
+`--plan <slug>`; after the `supervisor_live` gate it binds a plan (`--plan` →
+`chain.plan` in the record → the single `plans/*/plan.md` with `status: open`;
+two open → `refused plan_invalid leg=ambiguous`, a slug `plan.sh status`
+cannot read → `leg=unresolved`, both before any write) and stamps
+`chain.plan` in the start write. Between children, when bound: `plan.sh
+sync` then `check` (failure → `broken plan_invalid leg=sync|check`, lines
+relayed, staged command kept); a `closed` plan whose highest-wave reconcile
+node is `done` → `verdict=plan_closed`, `chain.closed` written, exit 0; a
+hitl-only frontier → `launch.mode=interactive` in the record. Docs box
+(`b388f07`): `docs/context-budget.md` usage, a "Plans" paragraph under "The
+supervisor", the `plan_closed` verdict row, `plan_invalid` in the broken list
+and the reason-code table; one sentence in `docs/plans.md` → "Resolution".
+Ticket 07 boxes ticked, status `done`. Suites: test-session-loop 140/140,
+test-plan 238/238, test-doc-consistency 7/7.
+
+**One ordering detail the tests settled** (no new decision note — the shape
+was pinned by P2c/P4b): the `staged` verdict is emitted *before* the plan
+outcome, carrying the plan-derived mode; a `plan_invalid` break or a
+`plan_closed` close follows it. So the child's rollover is judged on its own,
+then the plan says whether the chain goes on.
+
+**Not done.** Ticket 08 (node split at rollover + the conditional sync step
+in `session-rollover`, `checkpoint`, `create-work-item`) — needs a fresh
+window; the launcher points at it. Nothing pushed (main 41+ ahead of origin).
+
 # Session Handoff — 10 (2026-09-24): ticket 07 slice a — the loop's plan-hook tests, red
 
 **Summary.** Seq 10, supervised chain, hands-off. Started at ~58K (the
