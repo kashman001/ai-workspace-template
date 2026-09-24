@@ -4,10 +4,10 @@
 
 **Blocked by:** 05, 07
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Spec:** S29, S34
 
-- [ ] Split procedure exercised once on the fixture and described with its exact verbs in the skill
-- [ ] Launcher template scaffolds the Position/Frontier markers only when asked (plans stay opt-in)
-- [ ] Both skills readable by any runtime; no Claude-only instruction
+- [x] Split procedure exercised once on the fixture and described with its exact verbs in the skill
+- [x] Launcher template scaffolds the Position/Frontier markers only when asked (plans stay opt-in)
+- [x] Both skills readable by any runtime; no Claude-only instruction
