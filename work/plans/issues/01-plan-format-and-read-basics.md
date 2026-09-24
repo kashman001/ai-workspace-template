@@ -4,12 +4,12 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-24, session 3)
 
 **Spec:** S1, S2, S3, S5, S9, S10, S11, S12, S14, S17, S22, S23, S24
 
-- [ ] `plan.sh new` numbers the next plan and refuses when one is already open in the item
-- [ ] `status` prints plan, open/closed, wave n of m, counts by status, sessions used; `--json` mirrors it
-- [ ] Malformed frontmatter or an unknown status/kind/tier value is refused with exit 1 and a line naming the file
-- [ ] Resolution: flag → registry binding → TF_SESSION_PROJECT → cwd → refuse; plan: flag → chain.plan → single open → refuse (read verbs fall back to latest)
-- [ ] Fixture plan under `scripts/tests/fixtures/` mirrors the worked example in `concept.md`; test script passes
+- [x] `plan.sh new` numbers the next plan and refuses when one is already open in the item
+- [x] `status` prints plan, open/closed, wave n of m, counts by status, sessions used; `--json` mirrors it
+- [x] Malformed frontmatter or an unknown status/kind/tier value is refused with exit 1 and a line naming the file
+- [x] Resolution: flag → registry binding → TF_SESSION_PROJECT → cwd → refuse; plan: flag → chain.plan → single open → refuse (read verbs fall back to latest)
+- [x] Fixture plan under `scripts/tests/fixtures/` mirrors the worked example in `concept.md`; test script passes

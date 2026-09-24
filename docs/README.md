@@ -20,6 +20,7 @@ why loading less is the point).
 | Know what context to load for a task | [`zoom-model.md`](zoom-model.md) |
 | Track a multi-session effort under `work/` | [`work-directory-conventions.md`](work-directory-conventions.md) |
 | Measure context and roll sessions over | [`context-budget.md`](context-budget.md) |
+| Plan a work item as a node graph and drive it with `plan.sh` | [`plans.md`](plans.md) |
 | Authenticate to services / add a credential | [`service-access.md`](service-access.md) + [`runbooks/authentication.md`](runbooks/authentication.md) |
 | Configure MCP servers (lean-by-default) | [`mcp-setup.md`](mcp-setup.md) |
 | Verify an agent runtime loads the workspace context | [`agent-onboarding-check.md`](agent-onboarding-check.md) (canary + live checks; static test: `scripts/tests/test-agent-entrypoints.sh`) |
