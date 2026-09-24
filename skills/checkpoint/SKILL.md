@@ -78,6 +78,8 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
    untracked/uncommitted `work/` state files — a new manifest or tracker left
    untracked silently strands the next session, which sees a clean tree and no file.
    (No-git workspace: skip — record instead that all state files under `work/` are current.)
+   If a plan is open (`scripts/plan.sh status` exits 0 and says `open`), run
+   `scripts/plan.sh sync` first so the launcher's Position block is fresh.
    **If the project maintains a persistent launcher** (`work/<project-name>/next-session.md`),
    re-read it before emitting the catch-up prompt and check that any "TOP block =
    session N" annotation still names the current session — a surgical edit easily
