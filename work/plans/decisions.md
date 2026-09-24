@@ -352,3 +352,19 @@ already says; `start` running `check` — the loop does it between children
 (ticket 07), twice is noise.
 **Blast radius:** `plan.sh` write verbs; `docs/plans.md` "State machine".
 **Promote?:** no.
+
+## 2026-09-24 — `sync` is a projection: read-style resolution, renders a closed plan too (settled)
+**Chose:** `plan.sh sync` resolves the plan like the read verbs (`--plan` →
+`chain.plan` → single open → latest) and never refuses a closed plan; it
+validates both marker pairs (`board` in `plan.md`, `position` in
+`next-session.md`) before writing either, so a missing marker leaves both
+files untouched. The board's wave column is the number alone; the footer and
+the launcher block name the doing/blocked nodes when the frontier is empty.
+**Because:** Closing a plan is a hand edit after the last reconcile; the board
+and launcher must still be re-renderable afterwards, and a half-written pair
+would be worse than none. Wave names live in no frontmatter (ledger block 3).
+**Rejected:** `resolve_plan write` (refuses closed plans — a projection is not a
+transition); rendering the launcher block even when `plan.md` lacks markers;
+inventing missing markers (settled: reported, never invented).
+**Blast radius:** `cmd_sync`, T18, the fixture board (re-rendered by `sync`).
+**Promote?:** no.

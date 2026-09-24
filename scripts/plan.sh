@@ -24,6 +24,9 @@
 #          add <slug> --wave <n> [--title t] [--kind k] [--tier t] [--blocked-by a,b]
 #                          [--parallel n] [--loop n] [--check cmd] [--isolated]   new node file
 #          note <text>     append to plan.md → "Not yet specified"; touches no node
+#          sync            re-render the board into plan.md and the position block into
+#                          next-session.md, each between `<!-- plan:begin <name> -->` /
+#                          `<!-- plan:end <name> -->` markers; missing markers: exit 1, nothing written
 #          Write verbs: --session <n> sets the session number (default: seq in the item's
 #          session-state.json), --by <actor> the Log stamp; they refuse a closed plan.
 # Resolution: project = --project → session registry binding (a registry
@@ -70,7 +73,7 @@ while [ $# -gt 0 ]; do
     *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; elif [ -z "$ARG2" ]; then ARG2="$1"; else usage; fi; shift ;;
   esac
 done
-case "$VERB" in new|status|show|frontier|remaining|graph|check|start|done|verify|block|drop|add|note) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
+case "$VERB" in new|status|show|frontier|remaining|graph|check|start|done|verify|block|drop|add|note|sync) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
 
 # ---- project -----------------------------------------------------------------
 registry_project() {  # the item bound to the session this process runs under
@@ -493,6 +496,48 @@ cmd_note() {
     || die 1 "$PLAN_DIR/plan.md has no '## Not yet specified' section"
 }
 
+# ---- generated blocks ------------------------------------------------------------
+# sync renders only between `<!-- plan:begin <name> -->` and `<!-- plan:end <name> -->`
+# (convention: docs/work-directory-conventions.md); a missing marker is reported, never added.
+marker_check() {  # <file> <name>: exit 1 naming the file and the marker it lacks
+  local b="<!-- plan:begin $2 -->" e="<!-- plan:end $2 -->"
+  [ -f "$1" ] || die 1 "$1: no such file — the $2 block goes between $b and $e in it"
+  grep -qxF "$b" "$1" || die 1 "$1: no $b marker — add it, with $e, where the $2 block goes"
+  grep -qxF "$e" "$1" || die 1 "$1: no $e marker — add it after $b"
+}
+marker_splice() {  # <file> <name> <content>: replace what lies between the markers; every other line verbatim
+  local tmp="$1.tmp.$$"
+  BLOCK="$3" awk -v b="<!-- plan:begin $2 -->" -v e="<!-- plan:end $2 -->" '
+    $0 == e && skip { print ENVIRON["BLOCK"]; skip = 0 }
+    !skip { print }
+    $0 == b { skip = 1 }' "$1" > "$tmp" && mv "$tmp" "$1"
+}
+cmd_sync() {
+  local pm="$PLAN_DIR/plan.md" launch="$ITEM/next-session.md" pstatus nodes out
+  marker_check "$pm" board; marker_check "$launch" position
+  pstatus="$(plan_status "$PLAN_DIR")"
+  nodes="$(load_nodes "$PLAN_DIR")" || exit 1
+  out="$(printf '%s' "$nodes" | jq --arg plan "$PLAN" --arg status "$pstatus" "$DERIVE_JQ"'
+    def n($s): map(select(.status == $s)) | length;
+    def unfinished: map(select(.status != "done" and .status != "dropped"));
+    . as $all | current_wave as $cur | frontier as $front | (unfinished | length) as $rem
+    | (if ($front | length) > 0 then ($front | map(.id) | join(", "))
+       else "none" + ($all | unfinished | map(select(.wave == $cur and .status != "todo") | "\(.id) \(.status)")
+                      | if length > 0 then " (\(join(", ")))" else "" end) end) as $ft
+    | { board: ("| Wave | Node | Kind | Tier | Status |\n|---|---|---|---|---|"
+          + (sort_by(.wave, .id) | map("\n| \(.wave) | \(.id) | \(.kind) | \(.tier) | \(.status) |") | join(""))
+          + "\nFrontier: \($ft). Remaining: \($rem) of \(length). Sessions used: \([.[].sessions[]] | unique | length)."),
+        position: ("Position: plan \($plan), \($status), wave \($cur // (([.[].wave] | max) // 0)) of \(([.[].wave] | max) // 0), "
+          + "done \(n("done"))/\(length), doing \(n("doing")), todo \(n("todo")), blocked \(n("blocked")), dropped \(n("dropped")), "
+          + "sessions \([.[].sessions[]] | unique | length).\nFrontier: \($ft). Remaining: \($rem) of \(length)"
+          + (if $rem > 0 then " — wave \($cur): " + (unfinished | map(select(.wave == $cur)) | sort_by(.id) | map("\(.id) \(.status)") | join(", ")) else "" end) + ".") }')"
+  marker_splice "$pm" board "$(printf '%s' "$out" | jq -r '.board')"
+  marker_splice "$launch" position "$(printf '%s' "$out" | jq -r '.position')"
+  pm="${pm#"$WORKSPACE_ROOT/"}"; launch="${launch#"$WORKSPACE_ROOT/"}"
+  if [ "$JSON" -eq 1 ]; then jq -n --arg plan "$PLAN" --arg a "$pm" --arg b "$launch" '{plan: $plan, files: [$a, $b]}'
+  else echo "synced $pm, $launch"; fi
+}
+
 case "$VERB" in
   new)       cmd_new ;;
   status)    resolve_plan; cmd_status ;;
@@ -508,4 +553,5 @@ case "$VERB" in
   drop)      resolve_plan write; cmd_drop ;;
   add)       resolve_plan write; cmd_add ;;
   note)      resolve_plan write; cmd_note ;;
+  sync)      resolve_plan; cmd_sync ;;
 esac

@@ -407,5 +407,69 @@ cp "$TMP/plan.bak" "$PM"
 "$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T17g: fixture clean at the end" "$?" "0"
 rm -f "$SS"
 
+echo "T18: sync — the board into plan.md and the position block into the launcher, between markers only"
+LAUNCH="$TMP/work/demo/next-session.md"
+between() { awk -v b="<!-- plan:begin $2 -->" -v e="<!-- plan:end $2 -->" '$0 == e { p = 0 } p { print } $0 == b { p = 1 }' "$1"; }   # <file> <name>: the lines inside the markers
+outside() { awk -v b="<!-- plan:begin $2 -->" -v e="<!-- plan:end $2 -->" '$0 == b { p = 1 } !p { print } $0 == e { p = 0 }' "$1"; }  # <file> <name>: everything else, markers included
+printf '# Catchup prompt — demo\n\nProse above.\n\n## Position\n\n<!-- plan:begin position -->\nstale\n<!-- plan:end position -->\n\nProse below.\n' > "$LAUNCH"
+cp "$LAUNCH" "$TMP/launch.bak"
+out="$("$PLAN" sync --project demo)"; rc=$?
+assert_eq "T18a: exit 0" "$rc" "0"
+assert_contains "T18b: names plan.md" "$out" "plans/01-concept/plan.md"
+assert_contains "T18c: ... and the launcher" "$out" "next-session.md"
+assert_eq "T18d: the board — wave, node, kind, tier, status; footer with frontier, remaining, sessions" "$(between "$PM" board)" \
+"| Wave | Node | Kind | Tier | Status |
+|---|---|---|---|---|
+| 1 | 01-seam-inventory | work | standard | done |
+| 1 | 02-concept-discussion | hitl | frontier | done |
+| 1 | 03-reconcile-ground | reconcile | frontier | done |
+| 2 | 04-grill-open-items | hitl | frontier | done |
+| 2 | 05-concept-note | work | frontier | done |
+| 2 | 06-reconcile-write | reconcile | frontier | done |
+| 3 | 07-spec | work | frontier | doing |
+| 3 | 08-tickets | work | standard | todo |
+| 3 | 09-reconcile-verdict | reconcile | frontier | todo |
+Frontier: none (07-spec doing). Remaining: 3 of 9. Sessions used: 2."
+assert_eq "T18e: plan.md outside the markers is byte-identical" "$(diff <(outside "$TMP/plan.bak" board) <(outside "$PM" board) | wc -l | tr -d ' ')" "0"
+assert_eq "T18f: the position block" "$(between "$LAUNCH" position)" \
+"Position: plan 01-concept, open, wave 3 of 3, done 6/9, doing 1, todo 2, blocked 0, dropped 0, sessions 2.
+Frontier: none (07-spec doing). Remaining: 3 of 9 — wave 3: 07-spec doing, 08-tickets todo, 09-reconcile-verdict todo."
+assert_eq "T18g: the launcher outside the markers is byte-identical" "$(diff <(outside "$TMP/launch.bak" position) <(outside "$LAUNCH" position) | wc -l | tr -d ' ')" "0"
+before="$(cksum < "$PM"):$(cksum < "$LAUNCH"):$(cat "$NODES"/*.md | cksum)"
+"$PLAN" sync --project demo >/dev/null; rc=$?
+assert_eq "T18h: a second sync is byte-identical (both files) and touches no node file" "$rc:$(cksum < "$PM"):$(cksum < "$LAUNCH"):$(cat "$NODES"/*.md | cksum)" "0:$before"
+assert_eq "T18i: the committed fixture board is what sync renders" "$(diff "$TMP/plan.bak" "$PM" | wc -l | tr -d ' ')" "0"
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T18j: the plan still passes check" "$?" "0"
+setf 07-spec status done
+"$PLAN" sync --project demo >/dev/null
+assert_eq "T18k: the board follows the node files" "$(between "$PM" board | grep -e '^| 3 | 07-spec' -e '^Frontier' | tr '\n' '|')" "| 3 | 07-spec | work | frontier | done ||Frontier: 08-tickets. Remaining: 2 of 9. Sessions used: 2.|"
+assert_eq "T18l: ... and so does the launcher" "$(between "$LAUNCH" position | tail -1)" "Frontier: 08-tickets. Remaining: 2 of 9 — wave 3: 08-tickets todo, 09-reconcile-verdict todo."
+setf 08-tickets status done; setf 09-reconcile-verdict status done
+"$PLAN" sync --project demo >/dev/null
+assert_eq "T18m: nothing unfinished" "$(between "$PM" board | tail -1):$(between "$LAUNCH" position | tail -1)" "Frontier: none. Remaining: 0 of 9. Sessions used: 2.:Frontier: none. Remaining: 0 of 9."
+reset; "$PLAN" sync --project demo >/dev/null
+out="$("$PLAN" sync --project demo --json)"; rc=$?
+assert_eq "T18n: --json lists the plan and the files written" "$rc:$(printf '%s' "$out" | jq -c '[.plan, (.files | map(sub(".*/"; "")))]')" '0:["01-concept",["plan.md","next-session.md"]]'
+printf '# Catchup prompt — demo\n\nno markers here\n' > "$LAUNCH"
+err="$("$PLAN" sync --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T18o: a launcher without markers exits 1" "$rc" "1"
+assert_contains "T18p: ... naming the file" "$err" "next-session.md"
+assert_contains "T18q: ... and the marker to add" "$err" "<!-- plan:begin position -->"
+rm "$LAUNCH"
+err="$("$PLAN" sync --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T18r: no launcher at all exits 1 naming it" "$rc:$(printf '%s' "$err" | grep -c 'next-session.md')" "1:1"
+cp "$TMP/launch.bak" "$LAUNCH"; setf 07-spec status done
+sed '/<!-- plan:end board -->/d' "$TMP/plan.bak" > "$PM"
+err="$("$PLAN" sync --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T18s: plan.md missing its end marker exits 1" "$rc" "1"
+assert_contains "T18t: ... naming plan.md and the marker" "$err" "plan.md: no <!-- plan:end board --> marker"
+assert_eq "T18u: nothing was written — the launcher still says stale" "$(between "$LAUNCH" position)" "stale"
+cp "$TMP/plan.bak" "$PM"; reset
+sed -i '' 's/^status: open$/status: closed/' "$PM"
+"$PLAN" sync --project demo --plan 01-concept >/dev/null 2>&1; rc=$?
+assert_eq "T18v: a closed plan still syncs (a projection, not a transition)" "$rc:$(between "$LAUNCH" position | head -1 | cut -d, -f2)" "0: closed"
+cp "$TMP/plan.bak" "$PM"; rm -f "$LAUNCH"
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T18w: fixture clean at the end" "$?" "0"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

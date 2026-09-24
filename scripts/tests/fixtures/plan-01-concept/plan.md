@@ -24,14 +24,14 @@ alternatives, and a build/no-build verdict for "plans" in this workspace.
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 ground | 01-seam-inventory | work | standard | done |
-| 1 ground | 02-concept-discussion | hitl | frontier | done |
-| 1 ground | 03-reconcile-ground | reconcile | frontier | done |
-| 2 write | 04-grill-open-items | hitl | frontier | done |
-| 2 write | 05-concept-note | work | frontier | done |
-| 2 write | 06-reconcile-write | reconcile | frontier | done |
-| 3 verdict | 07-spec | work | frontier | doing |
-| 3 verdict | 08-tickets | work | standard | todo |
-| 3 verdict | 09-reconcile-verdict | reconcile | frontier | todo |
-Frontier: 07-spec. Remaining: 3 of 9. Sessions used: 2.
+| 1 | 01-seam-inventory | work | standard | done |
+| 1 | 02-concept-discussion | hitl | frontier | done |
+| 1 | 03-reconcile-ground | reconcile | frontier | done |
+| 2 | 04-grill-open-items | hitl | frontier | done |
+| 2 | 05-concept-note | work | frontier | done |
+| 2 | 06-reconcile-write | reconcile | frontier | done |
+| 3 | 07-spec | work | frontier | doing |
+| 3 | 08-tickets | work | standard | todo |
+| 3 | 09-reconcile-verdict | reconcile | frontier | todo |
+Frontier: none (07-spec doing). Remaining: 3 of 9. Sessions used: 2.
 <!-- plan:end board -->

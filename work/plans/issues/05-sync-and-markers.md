@@ -8,6 +8,6 @@
 
 **Spec:** S2, S21
 
-- [ ] Running sync twice leaves the files byte-identical; text outside markers is untouched (test diffs the outside)
-- [ ] Launcher without markers → exit 1 naming the file and the marker to add
-- [ ] Board columns: wave, node, kind, tier, status; footer line with frontier, remaining, sessions used
+- [x] Running sync twice leaves the files byte-identical; text outside markers is untouched (test diffs the outside)
+- [x] Launcher without markers → exit 1 naming the file and the marker to add
+- [x] Board columns: wave, node, kind, tier, status; footer line with frontier, remaining, sessions used
