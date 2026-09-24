@@ -20,6 +20,13 @@ optional `wave_max: <integer>` (nodes per wave before `check` complains;
 default `PLAN_WAVE_MAX` in `context-budget.env`, 6 when unset).
 The board is rendered between `<!-- plan:begin board -->` and
 `<!-- plan:end board -->`; nothing outside the markers is ever generated.
+The item's launcher (`work/<item>/next-session.md`) opts in the same way
+with a `position` pair, and `sync` writes a two-line block there:
+`Position: plan NN-<slug>, <status>, wave n of m, done d/t, doing n, todo n,
+blocked n, dropped n, sessions n.` then `Frontier: <ids | none (<id> doing)>.
+Remaining: r of t — wave n: <id status, …>.` Markers are added by hand and
+never invented (convention: `docs/work-directory-conventions.md` →
+"Generated blocks").
 One plan is open per item at a time; a plan closes in place (`status: closed`)
 and the next one takes the next number, so "latest" is a directory listing.
 
@@ -69,6 +76,7 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 | `drop <id> [reason]` | any → `dropped` | `08-tickets dropped` |
 | `add <slug> --wave <n> [--title …] [--kind …] [--tier …] [--blocked-by a,b] [--parallel n] [--loop n] [--check …] [--isolated]` | writes `nodes/NN-<slug>.md` (next number, `status: todo`, empty Goal/Acceptance/Log); refuses a taken slug or a blocker naming no node; does not lint | `10-board-renderer todo` |
 | `note <text>` | appends `- s<n> · <text>` to `plan.md` → "Not yet specified"; touches no node file and never the board | (silent) |
+| `sync` | re-renders the board into `plan.md` and the position block into `work/<item>/next-session.md`, each strictly between its markers; idempotent; both marker pairs are checked before either file is written, and a missing one is exit 1 naming the file and the marker (nothing written). Resolves the plan read-style, so a closed plan still syncs | `synced work/<item>/plans/NN-<slug>/plan.md, work/<item>/next-session.md` |
 
 "Wave n of m" is the lowest wave with a node that is neither `done` nor
 `dropped`, of the highest wave number. "Sessions" is the count of distinct
@@ -76,7 +84,8 @@ session numbers across every node's `sessions`. `--json` mirrors each verb:
 `status` gives `{plan, status, wave:{current,total}, counts:{todo,doing,done,blocked,dropped,total}, sessions_used}`;
 `frontier` and `remaining` give an array of node objects as `show` prints them;
 `graph` gives `{plan, nodes:[{id,title,status,kind,tier,wave,blocked_by}], edges:[{from,to}]}`
-with one edge per `blocked_by` entry, blocker → node.
+with one edge per `blocked_by` entry, blocker → node. `sync` gives
+`{plan, files:[…]}`, the two paths relative to the workspace root.
 
 **Frontier.** "Waiting on edges" is derived here, never stored. The frontier
 is empty in two ways: nothing is unfinished (exit 0, no output, `[]`), or the

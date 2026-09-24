@@ -168,6 +168,26 @@ a gap the next session notes. Under `session-loop.sh`, a quit closes the chain
 Keep everything else (state trackers, registries, run logs, specs) named for
 what it is; the governing skill owns the full file-level detail.
 
+## Generated blocks (markers)
+
+A file under `work/<item>/` may carry a **generated block**: text a script
+re-renders in place, strictly between a pair of HTML-comment markers:
+
+```
+<!-- plan:begin <name> -->
+…rendered content…
+<!-- plan:end <name> -->
+```
+
+Everything outside the markers is hand-written and never touched. The markers
+are added by hand — opting a file in is a deliberate edit — and a script that
+finds one missing reports it (exit 1, naming the file and the marker) and
+writes nothing; it never invents a pair. Re-running the renderer is idempotent.
+Today's producer is `scripts/plan.sh sync` (`docs/plans.md`): the `board` block
+in a plan's `plan.md` and the `position` block in the item's launcher, which
+gives a resuming agent the plan's current wave and frontier without a status
+call.
+
 ## Verification evidence (`verification.md`)
 
 Decisions get `decisions.md`, sessions get `handoff.md` — `verification.md`
