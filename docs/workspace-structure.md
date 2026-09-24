@@ -266,6 +266,7 @@ docs/
 ├── service-access.md           # Credential framework: vault backends, verify commands
 ├── mcp-setup.md                # MCP server configuration guide
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
+├── plans.md                    # Plans: node-file format, plan.sh verbs, tiers, replans
 │
 ├── adr/                        # Architecture Decision Records (Tier 3 of the decision scheme)
 ├── postmortems/                # Blameless incident write-ups
@@ -322,6 +323,7 @@ skills/
 ├── design-for-testability/     # Advisory design-time testability interrogation
 ├── doc-review/                 # Multi-perspective review of a technical document
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
+├── plans/                      # Create / reconcile / replan a work item's plan (plan.sh writes)
 ├── research-wave/              # Parallel research, each result independently fact-checked
 ├── rlm/                        # Recursive Language Model loop for huge contexts
 ├── to-spec/                    # Conversation → effort spec (adapted from mattpocock/skills)

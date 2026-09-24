@@ -71,6 +71,10 @@ agent in plain language — it can do the work without the named skill.
   rejected; ADRs (`docs/adr/`) are the durable ones.
 - **Backlog card** — one finding or task on the backlog page, with evidence,
   impact, and fix.
+- **Plan** — for a bigger effort, its work drawn as a graph of small nodes in
+  waves, each wave ending in a check-and-record step; a node marked **HITL**
+  is one only a person can complete, and the agent will stop and ask you.
+  "Where are we?" is one command an agent can run for you: `plan.sh status`.
 
 Everything else you may see — MCP, hooks, worktrees, context tokens — is
 agent infrastructure. You never need it to read status, follow decisions, or

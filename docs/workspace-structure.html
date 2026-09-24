@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 54d016ffe281599ec4b997ec8c3276e180553ab6 -->
+  <!-- source-md-sha1: 49c2be5b5d1ab4837c6667618af8162c4ce49548 -->
 </head>
 <body>
 <div class="src-banner">
@@ -388,16 +388,16 @@ mutual exclusion are machine-local. A second person breaks these
 assumptions <strong>silently</strong> — nothing errors, state just gets
 stolen or collides:</p>
 <ul>
-<li><strong>Lock liveness is local artifact mtime.</strong> Another
-machine's <code>.active-session</code> lock always reads stale, so a
-primary role can be swept and taken over without the other person
+<li><strong>Owner liveness is a local process id.</strong> Another
+machine's owner in <code>work/&lt;item&gt;/session-state.json</code>
+always reads dead, so the item can be adopted without the other person
 noticing.</li>
 <li><strong>Coordination state is gitignored</strong>
 (<code>.context-budget/</code>), so there is zero cross-machine mutual
 exclusion.</li>
 <li><strong>Machine-local counters collide in committed files</strong>:
-session numbers (<code>.session-seq</code>) in ledgers, ADR numbers in
-<code>docs/adr/</code>.</li>
+session numbers (the record's <code>seq</code>) in ledgers, ADR numbers
+in <code>docs/adr/</code>.</li>
 <li><strong>Launcher/ledger are single-writer</strong>: two people
 rolling over the same work item produce merge conflicts in
 <code>next-session.md</code>/<code>handoff.md</code>.</li>
@@ -415,6 +415,8 @@ then, treat the workspace as single-user per work item.</p>
 ├── CLAUDE.md -&gt; CONTEXT.md     # Symlink — Claude Code entrypoint
 ├── AGENTS.md -&gt; CONTEXT.md     # Symlink — Codex / generic agent entrypoint
 ├── README.md                   # Workspace one-pager — short pitch + pointer to CONTEXT.md
+├── TEMPLATE_VERSION            # Template generation this workspace was cut from (ISO date;
+│                               #   bumped by the template maintainer; docs/template-usage.md §6)
 ├── .gitignore                  # See &quot;Gitignored vs. Checked In&quot; + Agent Bootstrap section
 ├── &lt;Project&gt;.code-workspace    # VS Code multi-root workspace definition (if using VS Code)
 │
@@ -436,6 +438,7 @@ then, treat the workspace as single-user per work item.</p>
 ├── .env.example                # Template for required env vars (checked in)
 ├── .env                        # Local env vars (gitignored)
 ├── context-budget.env          # Context-budget thresholds + relaunch knobs (checked in, non-secret)
+├── plan-tiers.env              # Plan tier policy + per-runtime model knobs (checked in, non-secret; docs/plans.md → &quot;Tiers&quot;)
 ├── .context-budget/            # Context-budget runtime state (gitignored)
 └── temp/, tmp/                 # Scratch files (gitignored, created as needed)</code></pre>
 <p>The root <code>README.md</code> is a one-pager for new humans landing
@@ -623,6 +626,7 @@ Documentation</h2>
 ├── service-access.md           # Credential framework: vault backends, verify commands
 ├── mcp-setup.md                # MCP server configuration guide
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
+├── plans.md                    # Plans: node-file format, plan.sh verbs, tiers, replans
 │
 ├── adr/                        # Architecture Decision Records (Tier 3 of the decision scheme)
 ├── postmortems/                # Blameless incident write-ups
@@ -682,6 +686,7 @@ persisted.</li>
 ├── design-for-testability/     # Advisory design-time testability interrogation
 ├── doc-review/                 # Multi-perspective review of a technical document
 ├── onboard-repo/               # Onboard a repo: registry + index + context docs
+├── plans/                      # Create / reconcile / replan a work item&#39;s plan (plan.sh writes)
 ├── research-wave/              # Parallel research, each result independently fact-checked
 ├── rlm/                        # Recursive Language Model loop for huge contexts
 ├── to-spec/                    # Conversation → effort spec (adapted from mattpocock/skills)
@@ -880,6 +885,7 @@ Bootstrap and Utility Scripts</h2>
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
+├── fleet.sh                       # Sub-agent fleet: per-child sweep + dispatch records/contract
 ├── context-inspect.sh             # Break down what fills a session&#39;s context window
 ├── context-experiment.sh          # Reproducible headless context experiment harness
 ├── link-local-work.sh             # Share ignored work/&lt;item&gt;/ dirs into a worktree by symlink (L45)
@@ -1105,6 +1111,13 @@ telemetry)</td>
 <td>Yes</td>
 <td>Non-secret context-budget thresholds + relaunch knobs (a count is
 never a credential)</td>
+</tr>
+<tr>
+<td><code>plan-tiers.env</code></td>
+<td>Yes</td>
+<td>Plan tier policy and per-runtime model aliases
+(<code>docs/plans.md</code> → "Tiers"); a model name is not a
+secret</td>
 </tr>
 <tr>
 <td><code>.mcp.json.example</code></td>

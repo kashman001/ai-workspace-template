@@ -4,7 +4,9 @@ A **plan** is a dependency graph of work for one work item, kept as one
 markdown file per node under `work/<item>/plans/NN-<slug>/`. `scripts/plan.sh`
 reads and writes it. Node files are the truth; `plan.md` is hand-written prose
 plus a rendered board. Concept and glossary: `work/plans/concept.md`; spec:
-`work/plans/spec.md`. This doc grows one section per landed ticket.
+`work/plans/spec.md`; procedures (create, reconcile, replan, subagent prompt):
+`skills/plans/SKILL.md`. Front door: `CONTEXT.md` → "Plans" and the glossary
+under "Language".
 
 ## Format
 
@@ -193,5 +195,98 @@ takes the number of the node it follows plus a suffix (`add`, then rename the
 file and its `id:`), so the join stays the wave's last id. Procedures:
 `skills/plans/SKILL.md`.
 
-Tests: `scripts/tests/test-plan.sh` against the fixture plan
-`scripts/tests/fixtures/plan-01-concept/` (the worked example in the concept note).
+**Wayfinder and plans.** A wayfinder map (`work/<item>/map.md` plus decision
+tickets under `issues/`, one resolved per session; `skills/wayfinder/SKILL.md`)
+is a plan whose nodes are all decisions: the map is `plan.md`, each decision
+ticket is a `kind: hitl` node, and the wave's reconcile node is the session
+that records the answer. The two coexist untouched for now — wayfinder for a
+chain of decisions a person makes, a plan for work an agent performs against
+checks — and wayfinder becomes a plan template (or retires) only after the
+first real plan has closed (backlog card L48).
+
+## Per runtime
+
+`plan.sh` is bash plus the standard tools, so every runtime runs it as is; the
+skill is plain markdown, so every runtime drives it by reading
+`skills/plans/SKILL.md` and following the named procedure. What differs:
+
+| Runtime | Invoking the skill | Model knobs (`plan-tiers.env`) |
+|---|---|---|
+| Claude Code | `/plan <create\|reconcile\|replan> [args]` (`.claude/commands/plan.md`), or by name | `PLAN_MODEL_CLAUDE_<TIER>` shipped (`--model` aliases) |
+| Codex | "run the plans skill, procedure <name>" — the skill is listed in `CONTEXT.md` → Workspace Skills, which `AGENTS.md` links | `PLAN_MODEL_CODEX_<TIER>` present, commented out |
+| Gemini CLI | same, via `GEMINI.md` | `PLAN_MODEL_GEMINI_<TIER>` present, commented out |
+| OpenCode | same, via `AGENTS.md` | `PLAN_MODEL_OPENCODE_<TIER>` present, commented out |
+| Copilot | same, via the entrypoint its hook wiring names (`docs/context-budget.md` → "Vendor hook deployments") | `PLAN_MODEL_COPILOT_<TIER>` present, commented out |
+
+Uncommenting a runtime's rows is the whole setup for tiers there; until then a
+node resolved to a tier that runtime has no knob for runs on the session model
+and `start` logs `unavailable on <runtime>`. Binding a session to the item
+(`scripts/context-budget.sh register --project <item>`) is what lets the verbs
+omit `--project`; the `SessionStart` hooks do it for Claude Code and Copilot,
+the other runtimes register by instruction (`docs/context-budget.md` →
+"Session registration"). The runtime `plan.sh` reports in `model` is the one
+the session registered as, so an unregistered session sees `null` and
+`unavailable (no runtime; session model)` in the Log.
+
+## Worked example
+
+The fixture plan `scripts/tests/fixtures/plan-01-concept/` is the concept
+item's own history written as a plan: three waves, nine nodes, each wave
+closed by a reconcile node, one `hitl` node per wave where a person decided.
+Its `plan.md` opens:
+
+```
+---
+plan: 01-concept
+status: open
+replan: local        # structural replans need a person
+default_tier: standard
+---
+```
+
+and one node, `nodes/03-reconcile-ground.md`, is the whole format:
+
+```
+---
+id: 03-reconcile-ground
+title: Join the inventory and the discussion
+status: done
+kind: reconcile
+wave: 1
+blocked_by: [01-seam-inventory, 02-concept-discussion]
+tier: frontier
+sessions: [1]
+---
+
+## Goal
+Join the inventory and the discussion.
+
+## Acceptance
+- [ ] Done when the orchestrator says so.
+
+## Log
+```
+
+With `07-spec` doing and `08-tickets` waiting on it, a session reads the plan
+so (all from the workspace root, the item bound or `--project plans` added):
+
+```
+$ scripts/plan.sh status
+plan 01-concept  open  wave 3 of 3  done 6/9  doing 1  todo 2  blocked 0  dropped 0  sessions 2
+$ scripts/plan.sh frontier; echo "exit $?"
+plan: frontier empty: wave 3 has nothing ready — 07-spec doing; 08-tickets waits on 07-spec; 09-reconcile-verdict waits on 07-spec, 08-tickets
+exit 1
+$ scripts/plan.sh done 07-spec --session 3      # runs the node's check first
+07-spec done
+$ scripts/plan.sh frontier
+08-tickets             work       standard
+$ scripts/plan.sh start 08-tickets --session 3
+08-tickets doing
+$ scripts/plan.sh check && scripts/plan.sh sync
+synced work/plans/plans/01-concept/plan.md, work/plans/next-session.md
+```
+
+The board between the markers in `plan.md` and the Position block in the
+launcher now say the same thing as `status`. `scripts/tests/test-plan.sh` runs
+the verbs against this fixture; `scripts/tests/test-session-loop.sh` covers the
+supervisor's use of `frontier` and `check` between children.
