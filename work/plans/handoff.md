@@ -6,6 +6,42 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 13 (2026-09-24): ticket 09 done — the `plans` skill, `/plan`, Replans reference
+
+**Summary.** Seq 13, supervised chain, hands-off. Started at ~59K, ended
+~115K (below WARN; ticket 10 left for a fresh window). The create procedure
+was exercised first on a copy of this item's `issues/` in a throwaway item
+under the scratchpad (`plan.sh new`, waves by longest blocker chain, `add` in
+wave order with a reconcile node closing each wave, ticket bodies into
+Goal/Acceptance, `done --force --by import` for finished tickets): 18 nodes,
+7 waves, `check` silent, `frontier` = the ticket-09 node, `sync` wrote the
+board and the Position block. The reconcile and replan steps were then run on
+that plan (`start`, a subagent-style Log line + tick, `done`, `note`, a
+same-wave `add` renamed below the join, `check` silent). Slice a
+(`1214a0b`): `skills/plans/SKILL.md` — create / run a reconcile node / replan
+procedures + the subagent prompt template (Log lines `- <actor> · …` and
+Acceptance ticks only; `status` written by `plan.sh` in the orchestrating
+session, never by the child); `docs/plans.md` gains the "Replans" paragraph
+the skill points at (authority ladder local / structural / goal, placement,
+same-wave numbering). Slice b (`85cb19c`): `.claude/commands/plan.md` +
+the `CONTEXT.md` Workspace Skills line; `skills/vendored-skills.md` untouched.
+Ticket 09 boxes ticked, status `done` (`38e19af`). Suites: test-plan 238/238,
+test-session-loop 140/140, test-doc-consistency 7/7.
+
+**Decision.** A follow-up found at the join goes to the next wave, one found
+mid-wave to the same wave (renamed below the reconcile node) — `done` does not
+look at blockers, so an edge added to the running reconcile node would be
+closed over silently; note in `decisions.md`, `Promote?: no`.
+
+**Learnings:** every `plan.sh` verb needs `--project` when the session is
+bound to another item — the registry binding beats the cwd (the skill says so
+up front). `done --force --by import` still stamps `sessions` with the
+current seq.
+
+**Not done.** Ticket 10 (front door: `CONTEXT.md` Plans section + glossary,
+`docs/plans.md` completion, indexes, backlog card, `TEMPLATE_VERSION`,
+doc-consistency paths) and 11. Nothing pushed (main 50 ahead of origin).
+
 # Session Handoff — 12 (2026-09-24): ticket 08 done — node split at rollover, sync step in three skills
 
 **Summary.** Seq 12, supervised chain, hands-off. Started at ~58K, ended

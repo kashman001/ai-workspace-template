@@ -10,90 +10,69 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Ticket **09** (`issues/09-plans-skill.md` — check the exact filename with
-`ls issues/09-*`): `skills/plans/SKILL.md`, vendor-neutral, with three
-procedures — **create** a plan from a spec or from tickets (a ticket becomes
-a node by gaining frontmatter), **reconcile** (run a reconcile node: join,
-verify on disk, record decisions, replan within the authority tiers), and
-**replan** — plus the subagent prompt template that lets a subagent write
-only its node's Log and Acceptance ticks. `.claude/commands/plan.md` wraps
-it; one line in `CONTEXT.md` → "Workspace Skills". Then **10** only if
-budget allows — `record` before it.
+Ticket **10** (`issues/10-front-door-and-downloaders.md`): the front door and
+reference for plans — a short Plans section in `CONTEXT.md` plus the glossary
+terms under Language (worktree as an alias to avoid); `docs/plans.md`
+completed (wayfinder mapping paragraph, worked example; format, verbs, tiers,
+Replans are already there) and indexed from `docs/README.md`; the optional
+`plans/` row in `docs/work-directory-conventions.md`; per-runtime notes;
+`docs/for-non-engineers.md` note; backlog card resolved; `TEMPLATE_VERSION`
+bump; `test-doc-consistency.sh` covers every new doc and skill path. Then
+**11** (dogfood) only if budget allows — `record` before it.
 
 ## Read these, in order (keep it lean)
 
-1. `issues/09-*.md` (short) and `spec.md` lines 171–174 (S30) and
-   177–180 (S31) — the two stories; nothing else from the spec.
-2. `docs/plans.md` — the format (node frontmatter, plan.md, markers), the
-   verb table, "Check rules", "Tiers"; it is the skill's reference — the skill
-   points at it, never restates it.
-3. `scripts/plan.sh` header (`sed -n 1,45p`) — the verbs the procedures use.
-4. `scripts/tests/fixtures/plan-01-concept/` — a whole plan (nodes + board);
-   `nodes/07-spec.md` is the node shape; the Log line format is
-   `- s<n> · <text>` (what `plan.sh` writes: `s<seq>` or `--by <actor>`).
-5. `skills/session-rollover/SKILL.md` step 3 (the split, lines ~87–124) — the
-   style for a `plan.sh` procedure inside a skill; `skills/decision-log/SKILL.md`
-   + `.claude/commands/decision.md` — a skill + wrapper pair of the right size.
-6. `CONTEXT.md` → "Workspace Skills" — the one-line list format.
-7. `issues/` — the tickets this item runs on; ticket box 1 converts them into a
-   plan **on a copy of the fixture item under the scratchpad**, never in
-   `work/plans/` itself (no plan opens here).
-
-## Design (settled where the ticket says so; the rest is a proposal — confirm
-## it against `grep -n '^## ' decisions.md` headings before building, without
-## reloading the file)
-
-- The skill owns three procedures; `plan.sh` owns every write. Nothing in the
-  skill edits node `status` by hand; only the split (rollover) edits files.
-- Ticket → node: frontmatter `id/title/status/kind/wave/blocked_by/tier/sessions`
-  from the ticket's title, `Blocked by`, and status (`done` → `done`,
-  `ready-for-agent` → `todo`); the ticket body becomes Goal + Acceptance
-  (boxes). *Proposed:* waves from the blocking edges (longest path); one
-  reconcile node closes each wave (`check` rules `reconcile-count`/`reconcile-last`).
-- *Proposed:* reconcile procedure = the reconcile node's Goal: verify the wave's outputs
-  on disk (subagent claims are hints), record decisions (`decision-log`),
-  replan — `add`/`drop`/`block` within the authority tiers in `docs/plans.md`
-  (a tier the node lacks → a hitl node, not a silent change), `check`, `sync`.
-- Subagent prompt template: the child gets its node file path, may append
-  Log lines (`- s<n> · …`) and tick Acceptance boxes, never writes `status`
-  or other nodes; the orchestrator runs `start`/`done`.
-- `/plan` wrapper: `argument-hint: "<create|reconcile|replan> [args]"`, a thin
-  pointer at the skill like `.claude/commands/create-work-item.md`.
-- `skills/vendored-skills.md` untouched (ticket box 3). Any runtime: no
-  Claude-only instruction in the skill. `writing-for-agents` applies (load it).
+1. `issues/10-*.md` (short) and `spec.md` — S32, S33, S35, S36 only
+   (`grep -n 'S3[2356]' spec.md` for the lines); nothing else from the spec.
+2. `docs/plans.md` whole — it is the reference ticket 10 completes; note what
+   is missing against the ticket's list, not what is there.
+3. `CONTEXT.md` → "Language", "Workspace Skills" (the `plans` line landed in
+   session 13), and the section order — the Plans section is one short
+   paragraph pointing at `docs/plans.md` and `skills/plans/SKILL.md`.
+4. `skills/plans/SKILL.md` headings only (`grep -n '^## '`) — what the front
+   door points at; do not rework the skill.
+5. `docs/README.md` (the index format), `docs/work-directory-conventions.md`
+   → the directory table and "Generated blocks", `docs/for-non-engineers.md`
+   (one note), `scripts/tests/test-doc-consistency.sh` (how paths are listed).
+6. `docs/template-workspace-backlog.html` — grep for `plans` to find the card;
+   edit by targeted reads per its "Maintaining this backlog" section.
+7. `work/plans/concept.md` → glossary rows only (`grep -n -A2 '^\*\*\|^- \*\*'`
+   or the "Language"/glossary heading) — source for the Language terms.
 
 ## Do NOT reload
 
-- `decisions.md`, `concept.md`, `seams.md`, the rest of `spec.md`, the grill.
-- Tickets 01–08 — done. `plan.sh`, `session-loop.sh`, `plan-tiers.env`, the
-  test suites — do not touch (the skill adds no code).
+- `decisions.md`, `seams.md`, the grill, the rest of `spec.md`/`concept.md`.
+- Tickets 01–09 — done. `plan.sh`, `session-loop.sh`, `plan-tiers.env`, the
+  skills — do not touch (ticket 10 adds docs and test paths, no code).
 - `handoff.md` — the top block only if something above is unclear.
 
 ## Still binding
 
 - No concrete model name anywhere. Nothing pushed to origin.
 - `test-plan.sh` (238), `test-session-loop.sh` (140),
-  `test-doc-consistency.sh` (7) stay green (run with `bash …`; the files
-  are not executable here).
+  `test-doc-consistency.sh` (7, grows with the new paths) stay green (run with
+  `bash …`; the files are not executable here).
+- Plan vocabulary says "work item", never "worktree".
 
 ## State snapshot
 
-Branch `main`, clean after this rollover's commit; nothing pushed (46+
-ahead). Tickets: 01–08 `done`; 09–11 `ready-for-agent`. Chain supervised by
-`session-loop.sh` (seq 1 → … → 12 → 13). Budget at rollover: ~105K (OK, below
-WARN; rolled over because 09 needs a fresh window). Untracked
+Branch `main`, clean after this rollover's commit; nothing pushed (50+
+ahead). Tickets: 01–09 `done`; 10–11 `ready-for-agent`. Chain supervised by
+`session-loop.sh` (seq 13 → 14; cap 15). Budget at rollover: ~115K (below
+WARN; rolled over because 10 needs a fresh window). Untracked
 `work/jev-integration/research/spike.{md,py}` are another item's — leave them.
+No plan is open in this item (none of `work/plans/plans/`).
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project plans` (expect `seq=13`).
+1. `scripts/context-budget.sh register --project plans` (expect `seq=14`).
 2. No question to pose. Proceed hands-off.
-3. Ticket 09 per "Design": skill file first (create procedure, exercised by
-   converting a copy of `issues/` on a fixture-item copy under the
-   scratchpad until `plan.sh check` is silent), then reconcile + replan
-   procedures, then the prompt template, then the wrapper + `CONTEXT.md`
-   line; `record --label "ticket 09 <slice>"` after each; commit each slice.
-4. Tick the three boxes in `issues/09-*.md`, status `done`; commit.
-5. `record` at each step. At the end or at WARN/STOP: ledger block, rewrite
-   this launcher (ticket 10 next), update the `work/README.md` row, commit.
+3. Ticket 10 in slices, `record --label "ticket 10 <slice>"` after each,
+   commit each: (a) `CONTEXT.md` Plans section + Language terms; (b)
+   `docs/plans.md` completion + `docs/README.md` index +
+   work-directory-conventions row + for-non-engineers note + per-runtime notes;
+   (c) doc-consistency paths + `TEMPLATE_VERSION` bump + backlog card.
+4. Tick the three boxes in `issues/10-*.md`, status `done`; commit.
+5. At the end or at WARN/STOP: ledger block, rewrite this launcher (ticket 11
+   next, or the item's close-out), update the `work/README.md` row, commit.
    Do not push main; report how far ahead it is.
