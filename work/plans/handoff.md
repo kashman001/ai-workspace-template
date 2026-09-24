@@ -6,6 +6,50 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 9 (2026-09-24): ticket 06 done — model knob per runtime, `start` stamp, `add --leaf`, `plan-tiers.env`, docs "Tiers"
+
+**Summary.** Seq 9, supervised chain, hands-off. Ticket 06 finished in two
+commits, test-first. Slice b (`67f1c63`): node JSON carries `model` from
+`PLAN_MODEL_<RUNTIME>_<TIER>` (null = session model); the runtime is
+`--runtime` → `PLAN_RUNTIME` → the bound registry record's `runtime` →
+unknown, with `registry_project` now reading through a shared
+`registry_record` finder and `resolve_runtime` caching the walk; `start`
+logs `started, tier <t>` / `… unavailable on <runtime> (session model)` /
+`… unavailable (no runtime; session model)`; T12d re-pinned, T19m–u. Slice
+c (`c62fcb6`): `add --leaf <label>`; a `tier_<label>:` outside
+`frontier|standard|cheap` refused naming `plan.md` (and a `malformed`
+violation in `check`); a bad `PLAN_TIER_*` refused naming `plan-tiers.env`;
+an empty knob is unset; the checked-in `plan-tiers.env` (three-row starter
+policy, claude `opus`/`sonnet`/`haiku`, codex/gemini/opencode/copilot rows
+commented out with each model flag named); `docs/plans.md` → `leaf` row,
+`tier_<label>:`, ` (auto)`, `tier_resolved`/`model`, the `malformed` rule,
+a "Tiers" section; `docs/workspace-structure.md` lists the file; T20a–h.
+Ticket 06's three boxes ticked, status `done`. No new decision note — the
+2026-09-24 tiers note already settles the shape.
+
+**Choices made without a decision note.** The forced stamp reads `started
+(forced: not on the frontier), tier <t>…` — "forced" qualifies "started".
+`check` lints `plan.md`'s `tier_<label>:` lines but not `plan-tiers.env`
+(the env is workspace state, not the plan; every other verb refuses on it).
+The registry walk for the runtime only runs when some `PLAN_MODEL_*` knob
+exists, so a workspace with no knobs pays nothing. `PLAN_TIER_*` / `tier_<label>:`
+accept `frontier|standard|cheap` only — `auto` is not a policy value.
+The T19 gemini knob became `gemini-pro` so the no-model-name grep (`-w`)
+cannot collide with prose.
+
+**Verification.** `bash scripts/tests/test-plan.sh` → passed=238 failed=0;
+`test-doc-consistency.sh` 7/7; every `scripts/tests/test-*.sh` green after
+slice b (not re-run after slice c's doc-only changes beyond the two named).
+shellcheck not installed — not run. `/code-review` skipped at WARN.
+
+**Suggested skills for the successor.** `tdd` for ticket 07 (fake child in
+`test-session-loop.sh` first); `decision-log` only if the `plan_closed` /
+interactive-launch shape forces a choice the spec (S25–S28) leaves open.
+
+**Budget.** WARN (~122K) as slice c's docs landed; rolled at ~129K. Nothing
+pushed; `main` is 36 commits ahead of `origin/main`. Untracked
+`work/jev-integration/research/spike.{md,py}` belong to another item — left alone.
+
 # Session Handoff — 8 (2026-09-24): ticket 05 done (docs); ticket 06 slice a — tier resolution, T19a–l
 
 **Summary.** Seq 8, supervised chain, hands-off. Ticket 05's doc half landed
@@ -61,52 +105,3 @@ installed — not run. `/code-review` skipped at WARN.
 **Budget.** WARN (~122K) the moment slice a went green; rolled under WARN.
 Nothing pushed; `main` is 33 commits ahead of `origin/main`. Untracked
 `work/jev-integration/research/spike.{md,py}` belong to another item — left alone.
-
-# Session Handoff — 7 (2026-09-24): ticket 05 code landed — `plan.sh sync`, markers, T18; docs left
-
-**Summary.** Seq 7, supervised chain, hands-off. Implemented the code half of
-ticket 05 test-first: T18 appended to `scripts/tests/test-plan.sh` (23 new
-assertions, 209 total) — the board rendered between `<!-- plan:begin board -->`
-markers on the fixture, a second `sync` byte-identical for both files and no
-node file touched, text outside the markers byte-identical (diffed), the
-`position` block in `work/<item>/next-session.md`, the board and block
-following node edits, the all-done footer, `--json`, a launcher without
-markers / no launcher / `plan.md` missing its end marker → exit 1 naming the
-file and the marker with nothing written, a closed plan still syncing. Then
-`marker_check`, `marker_splice` (awk; the block via `ENVIRON`, so no escape
-processing) and `cmd_sync` in `scripts/plan.sh`; `sync` dispatches through
-`resolve_plan` (read-style). The fixture `plan.md` board was re-rendered by
-`sync` itself (wave number only, footer `Frontier: none (07-spec doing).
-Remaining: 3 of 9. Sessions used: 2.`) so T18i holds. Ticket 05's three boxes
-ticked; status still `ready-for-agent` until the docs land. One decision
-note (projection semantics, both markers checked first). Commit `73e4752`.
-Every shell suite green (doc-consistency 7/7).
-
-**Left for the successor (ticket 05's doc half).** `docs/plans.md` → the
-`plan.sh` table needs a `sync` row (and the Format paragraph already names
-the board markers; add the launcher's `position` markers and the two-line
-block shape: `Position: plan …, <status>, wave n of m, done d/t, doing, todo,
-blocked, dropped, sessions n.` then `Frontier: <ids | none (<id> doing)>.
-Remaining: r of t — wave n: <id status, …>.`). `docs/work-directory-conventions.md`
-gets the marker convention written once (its own short section near
-"Required and optional files": generated blocks sit between
-`<!-- plan:begin <name> -->` / `<!-- plan:end <name> -->`, everything outside
-is hand-written, markers are added by hand and never invented; opt a launcher
-in by adding the `position` pair). The `create-work-item` launcher template
-was deliberately left alone — S22 says the scaffold adds nothing extra; S34
-(the conditional "sync first" step in rollover/checkpoint/template) is a
-later ticket. Then set ticket 05 `done`.
-
-**Choices made without a decision note.** Text output is one line, `synced
-<plan.md path>, <launcher path>` relative to the workspace root; `--json` is
-`{plan, files:[…]}`. The launcher path is fixed at `work/<item>/next-session.md`.
-The board's rows sort by wave then id. The empty-frontier parenthesis lists
-the current wave's `doing`/`blocked` nodes only (todo nodes waiting on them
-are implied). T18 introduced `between`/`outside` awk helpers in the suite.
-
-**Verification.** `bash scripts/tests/test-plan.sh` → passed=209 failed=0;
-every `scripts/tests/test-*.sh` green. shellcheck not installed — not run.
-`/code-review` skipped at WARN.
-
-**Budget.** WARN (~120K) hit while the T18 red cases were being written;
-~133K after green; rollover under WARN. Nothing pushed.

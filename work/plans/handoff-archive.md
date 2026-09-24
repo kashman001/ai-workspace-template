@@ -3,6 +3,55 @@ PURPOSE: ARCHIVE of the ledger (handoff.md). Older "# Session Handoff"
 blocks, newest on top. Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 7 (2026-09-24): ticket 05 code landed — `plan.sh sync`, markers, T18; docs left
+
+**Summary.** Seq 7, supervised chain, hands-off. Implemented the code half of
+ticket 05 test-first: T18 appended to `scripts/tests/test-plan.sh` (23 new
+assertions, 209 total) — the board rendered between `<!-- plan:begin board -->`
+markers on the fixture, a second `sync` byte-identical for both files and no
+node file touched, text outside the markers byte-identical (diffed), the
+`position` block in `work/<item>/next-session.md`, the board and block
+following node edits, the all-done footer, `--json`, a launcher without
+markers / no launcher / `plan.md` missing its end marker → exit 1 naming the
+file and the marker with nothing written, a closed plan still syncing. Then
+`marker_check`, `marker_splice` (awk; the block via `ENVIRON`, so no escape
+processing) and `cmd_sync` in `scripts/plan.sh`; `sync` dispatches through
+`resolve_plan` (read-style). The fixture `plan.md` board was re-rendered by
+`sync` itself (wave number only, footer `Frontier: none (07-spec doing).
+Remaining: 3 of 9. Sessions used: 2.`) so T18i holds. Ticket 05's three boxes
+ticked; status still `ready-for-agent` until the docs land. One decision
+note (projection semantics, both markers checked first). Commit `73e4752`.
+Every shell suite green (doc-consistency 7/7).
+
+**Left for the successor (ticket 05's doc half).** `docs/plans.md` → the
+`plan.sh` table needs a `sync` row (and the Format paragraph already names
+the board markers; add the launcher's `position` markers and the two-line
+block shape: `Position: plan …, <status>, wave n of m, done d/t, doing, todo,
+blocked, dropped, sessions n.` then `Frontier: <ids | none (<id> doing)>.
+Remaining: r of t — wave n: <id status, …>.`). `docs/work-directory-conventions.md`
+gets the marker convention written once (its own short section near
+"Required and optional files": generated blocks sit between
+`<!-- plan:begin <name> -->` / `<!-- plan:end <name> -->`, everything outside
+is hand-written, markers are added by hand and never invented; opt a launcher
+in by adding the `position` pair). The `create-work-item` launcher template
+was deliberately left alone — S22 says the scaffold adds nothing extra; S34
+(the conditional "sync first" step in rollover/checkpoint/template) is a
+later ticket. Then set ticket 05 `done`.
+
+**Choices made without a decision note.** Text output is one line, `synced
+<plan.md path>, <launcher path>` relative to the workspace root; `--json` is
+`{plan, files:[…]}`. The launcher path is fixed at `work/<item>/next-session.md`.
+The board's rows sort by wave then id. The empty-frontier parenthesis lists
+the current wave's `doing`/`blocked` nodes only (todo nodes waiting on them
+are implied). T18 introduced `between`/`outside` awk helpers in the suite.
+
+**Verification.** `bash scripts/tests/test-plan.sh` → passed=209 failed=0;
+every `scripts/tests/test-*.sh` green. shellcheck not installed — not run.
+`/code-review` skipped at WARN.
+
+**Budget.** WARN (~120K) hit while the T18 red cases were being written;
+~133K after green; rollover under WARN. Nothing pushed.
+
 # Session Handoff — 6 (2026-09-23): ticket 04 landed — `plan.sh` write verbs and the state machine
 
 **Summary.** Seq 6, supervised chain, hands-off. Implemented ticket 04
