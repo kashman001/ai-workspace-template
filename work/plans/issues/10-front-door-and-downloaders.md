@@ -4,10 +4,10 @@
 
 **Blocked by:** 07, 08, 09
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Spec:** S32, S33, S35, S36
 
-- [ ] Every new doc and skill path is covered by the doc-consistency test
-- [ ] A fresh-clone reader can find plans from CONTEXT.md in one hop
-- [ ] Backlog updated per its maintenance rules (card + scorecard + changelog)
+- [x] Every new doc and skill path is covered by the doc-consistency test
+- [x] A fresh-clone reader can find plans from CONTEXT.md in one hop
+- [x] Backlog updated per its maintenance rules (card + scorecard + changelog)
