@@ -21,7 +21,7 @@
 #          verify <id>     run the node's check, exit 0/1, change nothing
 #          block <id> <reason>   doing → blocked, the reason as the latest Log line
 #          drop <id> [reason]    any → dropped
-#          add <slug> --wave <n> [--title t] [--kind k] [--tier t] [--blocked-by a,b]
+#          add <slug> --wave <n> [--title t] [--kind k] [--tier t] [--leaf label] [--blocked-by a,b]
 #                          [--parallel n] [--loop n] [--check cmd] [--isolated]   new node file
 #          note <text>     append to plan.md → "Not yet specified"; touches no node
 #          sync            re-render the board into plan.md and the position block into
@@ -54,7 +54,7 @@ usage() { sed -n '/^# Usage:/,/^# Resolution:/p' "$0" | sed '$d; s/^# \{0,9\}//'
 command -v jq >/dev/null 2>&1 || die 2 "jq is required"
 
 VERB=""; ARG=""; ARG2=""; PROJECT=""; PLAN=""; JSON=0; FORCE=0; BY=""; SEQ=""; RUNTIME_FLAG=""
-TITLE=""; WAVE=""; KIND=""; TIER=""; BLOCKED_BY=""; PARALLEL=""; LOOP=""; CHECK=""; ISOLATED=""
+TITLE=""; WAVE=""; KIND=""; TIER=""; LEAF=""; BLOCKED_BY=""; PARALLEL=""; LOOP=""; CHECK=""; ISOLATED=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --project) [ $# -ge 2 ] || usage; PROJECT="$2"; shift 2 ;;
@@ -66,6 +66,7 @@ while [ $# -gt 0 ]; do
     --wave)    [ $# -ge 2 ] || usage; WAVE="$2"; shift 2 ;;
     --kind)    [ $# -ge 2 ] || usage; KIND="$2"; shift 2 ;;
     --tier)    [ $# -ge 2 ] || usage; TIER="$2"; shift 2 ;;
+    --leaf)    [ $# -ge 2 ] || usage; LEAF="$2"; shift 2 ;;
     --blocked-by) [ $# -ge 2 ] || usage; BLOCKED_BY="$2"; shift 2 ;;
     --parallel) [ $# -ge 2 ] || usage; PARALLEL="$2"; shift 2 ;;
     --loop)    [ $# -ge 2 ] || usage; LOOP="$2"; shift 2 ;;
@@ -177,10 +178,18 @@ tier_env_json() {  # {policy: {label: tier}, models: {runtime: {tier: model}}} f
   local f="$WORKSPACE_ROOT/plan-tiers.env" v
   { [ ! -f "$f" ] || ( . "$f" >/dev/null 2>&1
       for v in $(compgen -A variable PLAN_TIER_; compgen -A variable PLAN_MODEL_); do printf '%s\t%s\n' "$v" "${!v}"; done ); } \
-  | jq -R -s '[split("\n")[] | select(. != "") | split("\t") | {k: .[0], v: .[1]}]
+  | jq -R -s '[split("\n")[] | select(. != "") | split("\t") | {k: .[0], v: .[1]} | select(.v != "")]
       | { policy: (map(select(.k | startswith("PLAN_TIER_")) | {key: (.k | ltrimstr("PLAN_TIER_") | ascii_downcase), value: .v}) | from_entries),
           models: (reduce (map(select(.k | startswith("PLAN_MODEL_")) | (.k | ltrimstr("PLAN_MODEL_") | ascii_downcase | capture("^(?<r>.+)_(?<t>[a-z]+)$")) + {m: .v})[]) as $e
                      ({}; .[$e.r][$e.t] = $e.m)) }'
+}
+tier_env_check() {  # the first PLAN_TIER_* outside frontier|standard|cheap, as "PLAN_TIER_<LABEL>=<v>: unknown tier (…)", or nothing
+  printf '%s' "$1" | jq -r '.policy | to_entries[] | select(.value | IN("frontier","standard","cheap") | not)
+    | "PLAN_TIER_\(.key | ascii_upcase)=\(.value): unknown tier (frontier|standard|cheap)"' | head -1
+}
+plan_tiers_check() {  # <plan dir>: the first `tier_<label>:` outside frontier|standard|cheap, as "tier_<label>: unknown tier <v> (…)", or nothing
+  { fm_block "$1/plan.md" 2>/dev/null || true; } | sed -n 's/^tier_\([a-z][a-z0-9_]*\):[[:space:]]*\(.*\)$/\1 \2/p' \
+  | awk '$2 !~ /^(frontier|standard|cheap)$/ { print "tier_" $1 ": unknown tier " $2 " (frontier|standard|cheap)"; exit }'
 }
 plan_tiers_json() {  # <plan dir>: {label: tier} from plan.md's `tier_<label>:` lines
   { fm_block "$1/plan.md" 2>/dev/null || true; } | sed -n 's/^tier_\([a-z][a-z0-9_]*\):[[:space:]]*\(.*\)$/\1\t\2/p' \
@@ -196,6 +205,8 @@ load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name, e
   local tier f one out="" env
   tier="$(fm_get "$1/plan.md" default_tier)"; [ -n "$tier" ] || tier=standard
   env="$(tier_env_json)"
+  one="$(tier_env_check "$env")"; [ -z "$one" ] || die 1 "plan-tiers.env: $one"
+  one="$(plan_tiers_check "$1")"; [ -z "$one" ] || die 1 "$1/plan.md: $one"
   [ "$(printf '%s' "$env" | jq '.models | length')" -eq 0 ] || resolve_runtime   # the registry walk only when a knob exists
   for f in "$1"/nodes/*.md; do
     [ -f "$f" ] || continue
@@ -408,6 +419,7 @@ cmd_check() {
     if [ -n "$f" ]; then
       if printf '%s' "$f" | grep -qE '^[0-9]+$'; then wmax="$f"; else plan_problem="wave_max is not an integer"; fi
     fi
+    [ -n "$plan_problem" ] || plan_problem="$(plan_tiers_check "$PLAN_DIR")"
   else tier=standard; plan_problem="malformed frontmatter"; fi
   for f in "$PLAN_DIR"/nodes/*.md; do [ -f "$f" ] && nodes="$nodes$(node_parse "$f" "$tier")"; done
   nodes="$(printf '%s' "$nodes" | jq -s --argjson max "$wmax" --arg pm "$pm" --arg pmp "$plan_problem" '
@@ -515,6 +527,7 @@ cmd_add() {
   for k in WAVE PARALLEL LOOP; do eval "v=\$$k"; [ -z "$v" ] || printf '%s' "$v" | grep -qE '^[0-9]+$' || die 2 "--$(printf '%s' "$k" | tr A-Z a-z) '$v' is not an integer"; done
   case "$KIND" in ""|work|reconcile|hitl) ;; *) die 2 "unknown kind $KIND (work|reconcile|hitl)" ;; esac
   case "$TIER" in ""|frontier|standard|cheap|auto) ;; *) die 2 "unknown tier $TIER (frontier|standard|cheap|auto)" ;; esac
+  [ -z "$LEAF" ] || printf '%s' "$LEAF" | grep -qE '^[a-z][a-z0-9_]*$' || die 2 "--leaf '$LEAF' is not [a-z][a-z0-9_]*"
   nodes="$(load_nodes "$PLAN_DIR")" || exit 1
   ids="$(printf '%s' "$nodes" | jq -r '.[].id')"
   for f in "$PLAN_DIR"/nodes/*-"$ARG".md; do [ -f "$f" ] && die 1 "slug $ARG is taken by $(basename "$f")"; done
@@ -526,6 +539,7 @@ cmd_add() {
     echo "---"; echo "id: $id"; echo "title: $TITLE"; echo "status: todo"; echo "kind: ${KIND:-work}"; echo "wave: $WAVE"
     echo "blocked_by: [$(printf '%s' "$b" | tr '\n' ',' | sed 's/,$//; s/,/, /g')]"
     [ -z "$TIER" ] || echo "tier: $TIER"
+    [ -z "$LEAF" ] || echo "leaf: $LEAF"
     [ -z "$PARALLEL" ] || echo "parallel: $PARALLEL"
     [ -z "$LOOP" ] || echo "loop: $LOOP"
     [ -z "$CHECK" ] || echo "check: $CHECK"

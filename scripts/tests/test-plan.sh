@@ -524,5 +524,25 @@ hits=0; for m in $(sed -n 's/^PLAN_MODEL_[A-Z_]*=//p' "$TENV"); do hits=$((hits 
 assert_eq "T19u: no model name reaches a node file or plan.md" "$hits" "0"
 reset; rm -f "$SS"
 
+echo "T20: tiers — add --leaf, a bad tier_<label>: in plan.md, a bad PLAN_TIER_* in plan-tiers.env"
+printf '{"schema":1,"seq":3}\n' > "$SS"; reset
+"$PLAN" add leafy --wave 3 --tier auto --leaf research --project demo >/dev/null; rc=$?
+assert_eq "T20a: add --leaf writes the label" "$rc:$(fm 10-leafy leaf):$(fm 10-leafy tier)" "0:research:auto"
+"$PLAN" add leafy2 --wave 3 --leaf Bad-Label --project demo >/dev/null 2>&1; assert_eq "T20b: a label outside [a-z][a-z0-9_]* is usage" "$?" "2"
+reset; sed -i '' 's/^default_tier: standard$/default_tier: standard\
+tier_research: auto/' "$PM"
+err="$("$PLAN" show 08-tickets --project demo --json 2>&1 >/dev/null)"; rc=$?
+assert_eq "T20c: a tier_<label>: outside frontier|standard|cheap is refused" "$rc" "1"
+assert_contains "T20d: ... naming plan.md and the line" "$err" "plan.md: tier_research: unknown tier auto (frontier|standard|cheap)"
+assert_eq "T20e: check lists it as malformed" "$("$PLAN" check --project demo --json | jq -c '[.[] | select(.rule == "malformed") | .path | sub(".*/"; "")]')" '["plan.md"]'
+cp "$TMP/plan.bak" "$PM"
+printf 'PLAN_TIER_RESEARCH=bogus\n' > "$TENV"
+err="$("$PLAN" status --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T20f: a bad PLAN_TIER_* value is refused" "$rc" "1"
+assert_contains "T20g: ... naming plan-tiers.env and the knob" "$err" "plan-tiers.env: PLAN_TIER_RESEARCH=bogus: unknown tier (frontier|standard|cheap)"
+printf 'PLAN_TIER_RESEARCH=\nPLAN_MODEL_CLAUDE_STANDARD=\n' > "$TENV"; setf 08-tickets tier auto; addf 08-tickets leaf research
+assert_eq "T20h: an empty knob is unset (label misses, model null)" "$(mdl 08-tickets --runtime claude)" '["standard",null]'
+reset; rm -f "$SS" "$TENV"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -17,7 +17,9 @@ work/<item>/plans/NN-<slug>/
 **`plan.md` frontmatter** — `plan: NN-<slug>`, `status: open | closed`,
 `replan: local | structural`, `default_tier: frontier | standard | cheap | auto`,
 optional `wave_max: <integer>` (nodes per wave before `check` complains;
-default `PLAN_WAVE_MAX` in `context-budget.env`, 6 when unset).
+default `PLAN_WAVE_MAX` in `context-budget.env`, 6 when unset), optional
+`tier_<label>: frontier | standard | cheap` lines — this plan's override of
+the workspace tier table for one `leaf` label (see "Tiers").
 The board is rendered between `<!-- plan:begin board -->` and
 `<!-- plan:end board -->`; nothing outside the markers is ever generated.
 The item's launcher (`work/<item>/next-session.md`) opts in the same way
@@ -42,7 +44,8 @@ inside `check`, is kept). Sections below it: `## Goal`, `## Acceptance`, `## Log
 | `kind` | `work` `reconcile` `hitl` | `work` |
 | `wave` | integer, waves run in order | required |
 | `blocked_by` | `[id, id]` — node ids in this plan | `[]` |
-| `tier` | `frontier` `standard` `cheap` `auto` | plan `default_tier`; `frontier` for `reconcile` |
+| `tier` | `frontier` `standard` `cheap` `auto` | plan `default_tier`; `frontier` for `reconcile` and `hitl` |
+| `leaf` | a label, `[a-z][a-z0-9_]*` — the kind of leaf work, looked up when `tier` is `auto` | none |
 | `parallel` | integer, subagents in flight inside the node | `1` |
 | `loop` | integer, attempts before `blocked` | `1` |
 | `check` | a shell command, kept verbatim | none |
@@ -65,16 +68,16 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 | `new <slug>` | creates the next-numbered plan with an empty `plan.md` skeleton; refuses (exit 1) while a plan is open | `created work/<item>/plans/NN-<slug>` |
 | `status` | derived from the node files | `plan NN-<slug>  open  wave 2 of 3  done 5/9  doing 1  todo 3  blocked 0  dropped 0  sessions 2` |
 | `show <id>` | one node: the file in text, its parsed frontmatter plus `path` in `--json` | the file |
-| `frontier` | `todo` nodes whose blockers are all `done` or `dropped`, in the lowest wave that still has unfinished nodes; exits 1 with the reason when that wave has nothing ready | `06-reconcile-write     reconcile  frontier` (id, kind, tier) |
+| `frontier` | `todo` nodes whose blockers are all `done` or `dropped`, in the lowest wave that still has unfinished nodes; exits 1 with the reason when that wave has nothing ready | `06-reconcile-write     reconcile  frontier` (id, kind, resolved tier; ` (auto)` appended when the node's own tier is `auto`) |
 | `remaining` | every node that is neither `done` nor `dropped`, by wave then id | `07-spec                doing    wave 3` |
 | `graph` | the whole plan, one block per wave, each node with its blockers | `  08-tickets  todo  work  <- 07-spec` under a `wave 3` heading |
 | `check` | lints the plan against the rules below; every violation at once, exit 1 when any, silent and exit 0 on a clean plan | `<node path>: hitl node has a check` or `wave 3: 0 reconcile nodes (want exactly one)` |
-| `start <id>` | `todo` → `doing` for a frontier node (`--force` for one off it), or `blocked` → `doing`; adds the session to `sessions`, logs `started` | `08-tickets doing` |
+| `start <id>` | `todo` → `doing` for a frontier node (`--force` for one off it), or `blocked` → `doing`; adds the session to `sessions`, logs `started, tier <t>` (see "Tiers" for the unavailable forms) | `08-tickets doing` |
 | `done <id>` | `doing` → `done` once the node's `check` passes (`--force` allows `todo` → `done`); a `kind: hitl` node needs `--by human`; a failing check is refused, and the Nth failure (`loop: N`) writes `blocked` | `07-spec done` |
 | `verify <id>` | runs the check and reports; changes nothing; exit 1 on failure | `07-spec: check passed` / `check failed (exit 4)` / `no check` |
 | `block <id> <reason>` | `doing` → `blocked`, the reason as the latest Log line | `07-spec blocked` |
 | `drop <id> [reason]` | any → `dropped` | `08-tickets dropped` |
-| `add <slug> --wave <n> [--title …] [--kind …] [--tier …] [--blocked-by a,b] [--parallel n] [--loop n] [--check …] [--isolated]` | writes `nodes/NN-<slug>.md` (next number, `status: todo`, empty Goal/Acceptance/Log); refuses a taken slug or a blocker naming no node; does not lint | `10-board-renderer todo` |
+| `add <slug> --wave <n> [--title …] [--kind …] [--tier …] [--leaf label] [--blocked-by a,b] [--parallel n] [--loop n] [--check …] [--isolated]` | writes `nodes/NN-<slug>.md` (next number, `status: todo`, empty Goal/Acceptance/Log); refuses a taken slug or a blocker naming no node; does not lint | `10-board-renderer todo` |
 | `note <text>` | appends `- s<n> · <text>` to `plan.md` → "Not yet specified"; touches no node file and never the board | (silent) |
 | `sync` | re-renders the board into `plan.md` and the position block into `work/<item>/next-session.md`, each strictly between its markers; idempotent; both marker pairs are checked before either file is written, and a missing one is exit 1 naming the file and the marker (nothing written). Resolves the plan read-style, so a closed plan still syncs | `synced work/<item>/plans/NN-<slug>/plan.md, work/<item>/next-session.md` |
 
@@ -82,7 +85,8 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 `dropped`, of the highest wave number. "Sessions" is the count of distinct
 session numbers across every node's `sessions`. `--json` mirrors each verb:
 `status` gives `{plan, status, wave:{current,total}, counts:{todo,doing,done,blocked,dropped,total}, sessions_used}`;
-`frontier` and `remaining` give an array of node objects as `show` prints them;
+`frontier` and `remaining` give an array of node objects as `show` prints them
+(every node object carries `tier_resolved` and `model`, null for the session model);
 `graph` gives `{plan, nodes:[{id,title,status,kind,tier,wave,blocked_by}], edges:[{from,to}]}`
 with one edge per `blocked_by` entry, blocker → node. `sync` gives
 `{plan, files:[…]}`, the two paths relative to the workspace root.
@@ -120,7 +124,8 @@ apply). The rules, by `rule` slug:
 
 - `malformed` — a node or `plan.md` whose frontmatter any other verb would
   refuse (missing `---`, a non-`key: value` line, a value outside the sets
-  above, a non-integer `wave_max`). The node is left out of the other rules.
+  above, a non-integer `wave_max`, a `tier_<label>:` outside
+  `frontier|standard|cheap`). The node is left out of the other rules.
 - `blocked-by` — a `blocked_by` entry naming no node in this plan (a typo, or
   a node in another plan). Other verbs refuse the plan on this; `check` lists it.
 - `reconcile-count` — a wave with zero or several `kind: reconcile` nodes.
@@ -132,6 +137,33 @@ apply). The rules, by `rule` slug:
 - `doing-sessions` — a `status: doing` node with an empty `sessions`.
 - `wave-size` — more nodes in a wave than `wave_max` (plan) or `PLAN_WAVE_MAX`
   (explicit env, then `context-budget.env`, then 6).
+
+**Tiers.** A node's `tier` is what runs it; `auto` defers the choice. `auto`
+resolves, first match wins: the plan's `tier_<label>:` line → `PLAN_TIER_<LABEL>`
+in the workspace's `plan-tiers.env` → the plan's `default_tier` → `standard`,
+where `<label>` is the node's `leaf:`; a node with no `leaf`, or a label neither
+file names, skips straight to the plan default (no violation, no warning). A
+`default_tier: auto` bottoms out at `standard`. `reconcile` and `hitl` nodes
+default to `frontier` and resolve `auto` to `frontier` (fan-in reads every
+sibling's output, so it gets the strongest model). A `tier_<label>:` or
+`PLAN_TIER_*` value outside `frontier|standard|cheap` is refused (exit 1,
+naming `plan.md` or `plan-tiers.env`); `auto` is not a policy value. The board
+keeps the written tier — the orchestrator reads `frontier`.
+
+The same file maps tiers to model knobs, one row per runtime:
+`PLAN_MODEL_<RUNTIME>_<TIER>` is what that runtime's model flag takes
+(`claude --model`, `codex --model`, `gemini --model`, `opencode --model`,
+`copilot --model`); shipped set for claude only (`opus`/`sonnet`/`haiku`), the
+others present but commented out. The runtime is `--runtime <r>` →
+`PLAN_RUNTIME` → the `runtime` of the session's registry record → unknown.
+Node JSON carries `model` (null when the runtime has no knob for the resolved
+tier, or is unknown — either way the session runs on its own model). `start`
+stamps what was decided, never what ran: `started, tier cheap` when a knob
+exists, `started, tier cheap unavailable on gemini (session model)` when the
+runtime has none, `started, tier cheap unavailable (no runtime; session model)`
+when no runtime is known. No model name reaches a plan or node file;
+`plan-tiers.env` is the one place a model is named, so a model change is one
+line there and no plan edit.
 
 **Exit codes** are the contract: `0` ok; `1` lint or state refusal (malformed
 node, unknown value, unknown id, a plan already open, an illegal transition,

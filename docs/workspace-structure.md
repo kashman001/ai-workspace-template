@@ -125,6 +125,7 @@ work item.
 ├── .env.example                # Template for required env vars (checked in)
 ├── .env                        # Local env vars (gitignored)
 ├── context-budget.env          # Context-budget thresholds + relaunch knobs (checked in, non-secret)
+├── plan-tiers.env              # Plan tier policy + per-runtime model knobs (checked in, non-secret; docs/plans.md → "Tiers")
 ├── .context-budget/            # Context-budget runtime state (gitignored)
 └── temp/, tmp/                 # Scratch files (gitignored, created as needed)
 ```
@@ -680,6 +681,7 @@ agent conversation history.
 | `.gemini/settings.json` | Yes | Shared Gemini CLI config (graphify hook + context-budget telemetry) |
 | `.env.example` | Yes | Template for required env vars |
 | `context-budget.env` | Yes | Non-secret context-budget thresholds + relaunch knobs (a count is never a credential) |
+| `plan-tiers.env` | Yes | Plan tier policy and per-runtime model aliases (`docs/plans.md` → "Tiers"); a model name is not a secret |
 | `.mcp.json.example` | Yes | Template for project-level MCP config |
 | `.vscode/mcp.json.example` | Yes | Template for VS Code MCP config |
 | `.claude/settings.json` | Yes | Committed Claude Code hook wiring + statusLine (template-owned) |

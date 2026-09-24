@@ -4,10 +4,10 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Spec:** S6, S7
 
-- [ ] Resolution order tested: node tier → plan override → workspace table → wave default
-- [ ] Mapping file documented per runtime (claude, codex, gemini, opencode, copilot) with the unavailable case
-- [ ] No concrete model name appears in any plan or node file
+- [x] Resolution order tested: node tier → plan override → workspace table → wave default
+- [x] Mapping file documented per runtime (claude, codex, gemini, opencode, copilot) with the unavailable case
+- [x] No concrete model name appears in any plan or node file
