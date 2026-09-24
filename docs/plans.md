@@ -15,7 +15,9 @@ work/<item>/plans/NN-<slug>/
 ```
 
 **`plan.md` frontmatter** — `plan: NN-<slug>`, `status: open | closed`,
-`replan: local | structural`, `default_tier: frontier | standard | cheap | auto`.
+`replan: local | structural`, `default_tier: frontier | standard | cheap | auto`,
+optional `wave_max: <integer>` (nodes per wave before `check` complains;
+default `PLAN_WAVE_MAX` in `context-budget.env`, 6 when unset).
 The board is rendered between `<!-- plan:begin board -->` and
 `<!-- plan:end board -->`; nothing outside the markers is ever generated.
 One plan is open per item at a time; a plan closes in place (`status: closed`)
@@ -59,6 +61,7 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 | `frontier` | `todo` nodes whose blockers are all `done` or `dropped`, in the lowest wave that still has unfinished nodes; exits 1 with the reason when that wave has nothing ready | `06-reconcile-write     reconcile  frontier` (id, kind, tier) |
 | `remaining` | every node that is neither `done` nor `dropped`, by wave then id | `07-spec                doing    wave 3` |
 | `graph` | the whole plan, one block per wave, each node with its blockers | `  08-tickets  todo  work  <- 07-spec` under a `wave 3` heading |
+| `check` | lints the plan against the rules below; every violation at once, exit 1 when any, silent and exit 0 on a clean plan | `<node path>: hitl node has a check` or `wave 3: 0 reconcile nodes (want exactly one)` |
 
 "Wave n of m" is the lowest wave with a node that is neither `done` nor
 `dropped`, of the highest wave number. "Sessions" is the count of distinct
@@ -76,6 +79,27 @@ only in a later wave: …` appended when a later wave has an unblocked node —
 waves run in order, so it is not offered). A `blocked_by` naming no node in
 the plan is refused (exit 1, naming the file) by every verb. No DOT output
 yet; `graph --json` carries the edges for anything that wants to draw.
+
+**Check rules.** `check` parses leniently — a bad node is one violation, not a
+refusal — so one run lists everything. Text is `<where>: <message>` (the node
+file, `plan.md`, or `wave N`); `--json` is an array of
+`{rule, id, wave, path, message}` (`id`/`wave`/`path` null where they do not
+apply). The rules, by `rule` slug:
+
+- `malformed` — a node or `plan.md` whose frontmatter any other verb would
+  refuse (missing `---`, a non-`key: value` line, a value outside the sets
+  above, a non-integer `wave_max`). The node is left out of the other rules.
+- `blocked-by` — a `blocked_by` entry naming no node in this plan (a typo, or
+  a node in another plan). Other verbs refuse the plan on this; `check` lists it.
+- `reconcile-count` — a wave with zero or several `kind: reconcile` nodes.
+- `reconcile-last` — the wave's reconcile node is not the last id in the wave
+  (ids sort by number; the join comes after what it joins). Only checked when
+  the wave has exactly one.
+- `hitl-check` — a `kind: hitl` node with a `check` (the human's tick is the
+  acceptance).
+- `doing-sessions` — a `status: doing` node with an empty `sessions`.
+- `wave-size` — more nodes in a wave than `wave_max` (plan) or `PLAN_WAVE_MAX`
+  (explicit env, then `context-budget.env`, then 6).
 
 **Exit codes** are the contract: `0` ok; `1` lint or state refusal (malformed
 node, unknown value, unknown id, a plan already open); `2` usage or resolution

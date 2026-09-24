@@ -4,10 +4,10 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Spec:** S15
 
-- [ ] One test per rule, each with a fixture variant that trips exactly that rule
-- [ ] Clean fixture passes; `--json` lists violations as objects
-- [ ] Rule list documented in `docs/plans.md`
+- [x] One test per rule, each with a fixture variant that trips exactly that rule
+- [x] Clean fixture passes; `--json` lists violations as objects
+- [x] Rule list documented in `docs/plans.md`

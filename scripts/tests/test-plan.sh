@@ -9,7 +9,9 @@
 #          plan resolution follow the settled order (docs/plans.md);
 #          `frontier`, `remaining` and `graph` derive from the same node
 #          files (empty-frontier reasons, wave order, mixed done/dropped
-#          blockers, a blocker naming no node).
+#          blockers, a blocker naming no node); `check` lists every rule
+#          violation at once (one fixture variant per rule) and is silent
+#          on the clean fixture.
 #          Self-contained: throwaway workspace in mktemp -d.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -184,6 +186,74 @@ assert_eq "T10d: a root node has no arrow" "$(printf '%s' "$out" | grep '^ *01-s
 out="$("$PLAN" graph --project demo --json)"
 assert_eq "T10e: nodes and edges" "$(printf '%s' "$out" | jq -c '[.plan, (.nodes|length), (.edges|length)]')" '["01-concept",9,10]'
 assert_eq "T10f: an edge runs blocker -> node" "$(printf '%s' "$out" | jq -c '.edges | map(select(.to == "08-tickets"))')" '[{"from":"07-spec","to":"08-tickets"}]'
+
+echo "T11: check — one line per violation, exit 1; silence and exit 0 on a clean plan"
+addf() { sed -i '' "1a\\
+$2: $3
+" "$NODES/$1.md"; }   # <id> <key> <value>: a new frontmatter line
+PM="$TMP/work/demo/plans/01-concept/plan.md"; cp "$PM" "$TMP/plan.bak"
+out="$("$PLAN" check --project demo 2>&1)"; rc=$?
+assert_eq "T11a: the fixture is clean — exit 0, no output" "$rc:$out" "0:"
+assert_eq "T11b: --json on a clean plan is []" "$("$PLAN" check --project demo --json | jq -c .)" "[]"
+setf 09-reconcile-verdict kind work
+out="$("$PLAN" check --project demo)"; rc=$?
+assert_eq "T11c: a wave with no reconcile node exits 1" "$rc" "1"
+assert_eq "T11d: exactly one line, naming the wave" "$(printf '%s' "$out" | squeeze)" "wave 3: 0 reconcile nodes (want exactly one)"
+reset; setf 08-tickets kind reconcile
+assert_eq "T11e: two reconcile nodes in a wave" "$("$PLAN" check --project demo | squeeze)" "wave 3: 2 reconcile nodes (want exactly one)"
+reset; setf 07-spec kind reconcile; setf 09-reconcile-verdict kind work
+out="$("$PLAN" check --project demo)"; rc=$?
+assert_eq "T11f: a reconcile node not last in its wave exits 1" "$rc" "1"
+assert_eq "T11g: one line" "$(printf '%s' "$out" | grep -c .)" "1"
+assert_contains "T11h: names the file" "$out" "07-spec.md: reconcile node is not last in wave 3"
+assert_contains "T11i: ... and what follows it" "$out" "08-tickets, 09-reconcile-verdict follow"
+reset; addf 04-grill-open-items check true
+out="$("$PLAN" check --project demo)"; rc=$?
+assert_eq "T11j: a check on a hitl node exits 1" "$rc" "1"
+assert_contains "T11k: names the file" "$out" "04-grill-open-items.md: hitl node has a check"
+assert_eq "T11l: one line" "$(printf '%s' "$out" | grep -c .)" "1"
+reset; setf 08-tickets blocked_by '[07-spce]'
+out="$("$PLAN" check --project demo 2>/dev/null)"; rc=$?
+assert_eq "T11m: a dangling blocked_by is a listed violation, not a load refusal" "$rc" "1"
+assert_contains "T11n: names file and id" "$out" "08-tickets.md: blocked_by names no node 07-spce"
+assert_eq "T11o: one line" "$(printf '%s' "$out" | grep -c .)" "1"
+out="$("$PLAN" check --project demo --json 2>/dev/null)"
+assert_eq "T11p: --json lists violations as objects" "$(printf '%s' "$out" | jq -c '[.[] | [.rule, .id, .wave, (.path | endswith("08-tickets.md")), .message]]')" \
+  '[["blocked-by","08-tickets",3,true,"blocked_by names no node 07-spce"]]'
+addf 04-grill-open-items check true
+assert_eq "T11q: every violation is reported at once" "$("$PLAN" check --project demo --json | jq -c '[.[].rule] | sort')" '["blocked-by","hitl-check"]'
+reset; setf 07-spec sessions '[]'
+out="$("$PLAN" check --project demo)"; rc=$?
+assert_eq "T11r: a doing node with no session exits 1" "$rc" "1"
+assert_eq "T11s: one line naming the file" "$(printf '%s' "$out" | grep -c '07-spec.md: doing with no session listed'):$(printf '%s' "$out" | grep -c .)" "1:1"
+reset; sed '1d' "$TMP/orig/08-tickets.md" > "$NODES/08-tickets.md"
+out="$("$PLAN" check --project demo 2>/dev/null)"; rc=$?
+assert_eq "T11t: malformed frontmatter is a listed violation" "$rc" "1"
+assert_eq "T11u: one line naming the file" "$(printf '%s' "$out" | squeeze | sed 's|.*/||')" "08-tickets.md: malformed frontmatter"
+reset; setf 08-tickets status pending
+assert_eq "T11v: an unknown value is a listed violation" "$("$PLAN" check --project demo --json | jq -c '[.[] | [.rule, .id]]')" '[["malformed","08-tickets"]]'
+reset; setf 08-tickets status doing
+assert_eq "T11w: an unknown-value node trips only the malformed rule" "$("$PLAN" check --project demo --json | jq -c '[.[].rule]')" '["doing-sessions"]'
+reset
+echo "T11x-z: wave size — plan frontmatter wave_max, then PLAN_WAVE_MAX (env or context-budget.env), then the built-in 6"
+out="$(PLAN_WAVE_MAX=2 "$PLAN" check --project demo)"; rc=$?
+assert_eq "T11x: three waves of three over a limit of 2 — three lines, exit 1" "$rc:$(printf '%s' "$out" | grep -c .)" "1:3"
+assert_contains "T11y: the line" "$(printf '%s' "$out" | squeeze)" "wave 1: 3 nodes, limit 2"
+printf 'PLAN_WAVE_MAX=2\n' > "$TMP/context-budget.env"
+assert_eq "T11z1: context-budget.env sets the default" "$("$PLAN" check --project demo | grep -c .)" "3"
+assert_eq "T11z2: explicit env beats the file" "$(PLAN_WAVE_MAX=3 "$PLAN" check --project demo | grep -c .)" "0"
+sed -i '' 's/^status: open$/status: open\
+wave_max: 3/' "$PM"
+assert_eq "T11z3: plan frontmatter wave_max beats both" "$(PLAN_WAVE_MAX=2 "$PLAN" check --project demo; echo "rc=$?")" "rc=0"
+rm "$TMP/context-budget.env"
+sed -i '' 's/^wave_max: 3$/wave_max: 2/' "$PM"
+assert_eq "T11z4: wave_max: 2 in the plan trips all three waves" "$("$PLAN" check --project demo | grep -c .)" "3"
+sed -i '' 's/^wave_max: 2$/wave_max: many/' "$PM"
+assert_eq "T11z5: a non-integer wave_max is a malformed violation on plan.md" "$("$PLAN" check --project demo --json | jq -c '[.[] | [.rule, (.path | endswith("plan.md"))]]')" '[["malformed",true]]'
+sed '1d' "$TMP/plan.bak" > "$PM"
+assert_eq "T11z6: malformed plan.md frontmatter (with --plan) is a violation" "$("$PLAN" check --project demo --plan 01-concept --json 2>/dev/null | jq -c '[.[] | [.rule, .message]]')" '[["malformed","malformed frontmatter"]]'
+cp "$TMP/plan.bak" "$PM"
+assert_eq "T11z7: restored fixture is clean again" "$("$PLAN" check --project demo; echo "rc=$?")" "rc=0"
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

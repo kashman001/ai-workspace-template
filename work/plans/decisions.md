@@ -313,3 +313,24 @@ hides the typo from every read verb until someone runs the lint.
 blocked_by" rule becomes a report of what the loader already refuses.
 **Promote?:** no.
 
+
+## 2026-09-23 — `check` parses leniently and lists every violation at once (settled)
+**Chose:** `check` has its own lenient pass (`node_parse`: a bad node becomes a
+`malformed` violation carrying the file stem as its id, and stays in the id
+set so its dependants are not reported as dangling). The dangling-`blocked_by`
+rule shares one jq fragment with the loader's refusal, so the two cannot drift.
+"Reconcile last" means the reconcile node has the highest id in its wave. Wave
+size is `wave_max:` in `plan.md`, else `PLAN_WAVE_MAX` (env, then
+`context-budget.env`, then 6).
+**Because:** a lint that stops at the first problem is run N times for N
+problems; the ticket asks for one line per violation. Id order is what the
+board shows and what "followed by a reconcile node" reads as.
+**Rejected:** (a) treating the dangling blocker as a load-time refusal inside
+`check` too — one line, exit 1, hides the rest; (b) "last" as "blocked by every
+other node in the wave" — a stronger join rule the spec does not ask for, and
+one a plan author may legitimately relax (a reconcile node that reads files,
+not node outputs); (c) a separate env file for plan knobs — one knob does not
+earn a file, `context-budget.env` is already where the budget-shaped constants live.
+**Blast radius:** `scripts/plan.sh` (`node_parse`, `DANGLING_JQ`, `cmd_check`),
+`context-budget.env`, `docs/plans.md`.
+**Promote?:** no.

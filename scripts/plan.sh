@@ -13,6 +13,8 @@
 #                          unfinished wave: id kind tier (exit 1 + why when empty but unfinished)
 #          remaining       every node not done/dropped, by wave then id: id status wave
 #          graph           the plan as text, one block per wave, `<- blockers` per node
+#          check           lint: one line per violation on stdout, exit 1 when any; silent
+#                          and exit 0 on a clean plan (rules: docs/plans.md → "Check rules")
 # Resolution: project = --project → session registry binding (a registry
 #          record whose pid is an ancestor of this process) → TF_SESSION_PROJECT
 #          → the work item the cwd is inside → refuse. Plan = --plan →
@@ -21,6 +23,8 @@
 # Exit:    0 ok / 1 lint or state refusal (malformed node, unknown value,
 #          unknown id, a plan already open) / 2 usage or resolution failure.
 #          Refusals print `plan: <detail>` on stderr; a node problem names the file.
+# Env:     PLAN_WAVE_MAX — nodes per wave before `check` complains; explicit env >
+#          context-budget.env > 6. A plan's `wave_max:` frontmatter overrides it.
 
 set -u
 WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -41,7 +45,7 @@ while [ $# -gt 0 ]; do
     *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; else usage; fi; shift ;;
   esac
 done
-case "$VERB" in new|status|show|frontier|remaining|graph) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
+case "$VERB" in new|status|show|frontier|remaining|graph|check) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
 
 # ---- project -----------------------------------------------------------------
 registry_project() {  # the item bound to the session this process runs under
@@ -107,13 +111,19 @@ NODE_JQ='
   | .sessions = ((.sessions // "[]") | list | map(tonumber? // .))
   | .isolated = ((.isolated // "no") | IN("yes", "true"))
   | .check //= null | .title //= "" | .path = $path'
+node_parse() {  # <file> <default tier>: one JSON object, .problem set (never exits) when the frontmatter is bad
+  local block
+  block="$(fm_block "$1")" && printf '%s\n' "$block" | jq -R -s --arg path "$1" --arg default_tier "$2" "$NODE_JQ" 2>/dev/null \
+    || jq -n --arg path "$1" '{path: $path, id: ($path | sub(".*/"; "") | rtrimstr(".md")), problem: "malformed frontmatter"}'
+}
 node_json() {  # <file> <default tier>: one JSON object, or exit 1 naming the file
-  local block out
-  block="$(fm_block "$1")" || die 1 "$1: malformed frontmatter"
-  out="$(printf '%s\n' "$block" | jq -R -s --arg path "$1" --arg default_tier "$2" "$NODE_JQ")" || die 1 "$1: malformed frontmatter"
+  local out; out="$(node_parse "$1" "$2")"
   [ "$(printf '%s' "$out" | jq -r '.problem // empty')" = "" ] || die 1 "$1: $(printf '%s' "$out" | jq -r '.problem')"
   printf '%s' "$out" | jq 'del(.problem)'
 }
+# On an array of nodes, with $ids bound to the plan's ids: one violation object per blocked_by entry naming no node.
+DANGLING_JQ='.[] | .blocked_by[] as $b | select(($ids | index($b)) == null)
+  | {rule: "blocked-by", id, wave, path, message: "blocked_by names no node \($b)"}'
 load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name
   local tier f one out=""
   tier="$(fm_get "$1/plan.md" default_tier)"; [ -n "$tier" ] || tier=standard
@@ -123,7 +133,7 @@ load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name
     out="$out$one"
   done
   out="$(printf '%s' "$out" | jq -s '.')"
-  one="$(printf '%s' "$out" | jq -r '[.[].id] as $ids | .[] | .path as $p | .blocked_by[] as $b | select(($ids | index($b)) == null) | "\($p): blocked_by names no node \($b)"' | head -1)"
+  one="$(printf '%s' "$out" | jq -r '[.[].id] as $ids | '"$DANGLING_JQ"' | "\(.path): \(.message)"' | head -1)"
   [ -z "$one" ] || die 1 "$one"
   printf '%s' "$out"
 }
@@ -257,6 +267,36 @@ cmd_graph() {
       end'
 }
 
+cmd_check() {
+  local pm="$PLAN_DIR/plan.md" tier wmax env_max="${PLAN_WAVE_MAX:-}" f nodes="" plan_problem=""
+  [ -f "$WORKSPACE_ROOT/context-budget.env" ] && . "$WORKSPACE_ROOT/context-budget.env" >/dev/null 2>&1
+  wmax="${env_max:-${PLAN_WAVE_MAX:-6}}"
+  if fm_block "$pm" >/dev/null; then
+    tier="$(fm_get "$pm" default_tier)"; [ -n "$tier" ] || tier=standard
+    f="$(fm_get "$pm" wave_max)"
+    if [ -n "$f" ]; then
+      if printf '%s' "$f" | grep -qE '^[0-9]+$'; then wmax="$f"; else plan_problem="wave_max is not an integer"; fi
+    fi
+  else tier=standard; plan_problem="malformed frontmatter"; fi
+  for f in "$PLAN_DIR"/nodes/*.md; do [ -f "$f" ] && nodes="$nodes$(node_parse "$f" "$tier")"; done
+  nodes="$(printf '%s' "$nodes" | jq -s --argjson max "$wmax" --arg pm "$pm" --arg pmp "$plan_problem" '
+    def v($rule; $node; $msg): {rule: $rule, id: ($node.id // null), wave: ($node.wave // null), path: ($node.path // null), message: $msg};
+    def w($rule; $wave; $msg): {rule: $rule, id: null, wave: $wave, path: null, message: $msg};
+    map(select(.problem == null)) as $nodes | map(.id) as $ids
+    | (if $pmp == "" then [] else [v("malformed"; {path: $pm}; $pmp)] end)
+    + map(select(.problem != null) | v("malformed"; .; .problem))
+    + [$nodes | '"$DANGLING_JQ"']
+    + ($nodes | group_by(.wave) | map(.[0].wave as $wave | map(select(.kind == "reconcile")) as $r
+        | (if ($r | length) != 1 then [w("reconcile-count"; $wave; "\($r | length) reconcile nodes (want exactly one)")]
+           else (map(select(.id > $r[0].id)) | map(.id)) as $after
+             | if $after == [] then [] else [v("reconcile-last"; $r[0]; "reconcile node is not last in wave \($wave) (\($after | join(", ")) follow)")] end end)
+        + (if length > $max then [w("wave-size"; $wave; "\(length) nodes, limit \($max)")] else [] end)) | add // [])
+    + ($nodes | map(select(.kind == "hitl" and .check != null) | v("hitl-check"; .; "hitl node has a check")))
+    + ($nodes | map(select(.status == "doing" and .sessions == []) | v("doing-sessions"; .; "doing with no session listed")))')"
+  if [ "$JSON" -eq 1 ]; then printf '%s\n' "$nodes"; else printf '%s' "$nodes" | jq -r '.[] | "\(.path // "wave \(.wave)"): \(.message)"'; fi
+  [ "$(printf '%s' "$nodes" | jq 'length')" -eq 0 ] || exit 1
+}
+
 case "$VERB" in
   new)       cmd_new ;;
   status)    resolve_plan; cmd_status ;;
@@ -264,4 +304,5 @@ case "$VERB" in
   frontier)  resolve_plan; cmd_frontier ;;
   remaining) resolve_plan; cmd_remaining ;;
   graph)     resolve_plan; cmd_graph ;;
+  check)     resolve_plan; cmd_check ;;
 esac
