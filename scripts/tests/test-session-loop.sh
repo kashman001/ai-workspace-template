@@ -12,7 +12,7 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 MAIN="$TMP/main"
 mkdir -p "$MAIN/scripts/lib" "$MAIN/work/testproj" "$MAIN/.context-budget/sessions"
 cp "$SRC_ROOT/scripts/session-loop.sh" "$SRC_ROOT/scripts/launch-next-session.sh" \
-   "$SRC_ROOT/scripts/context-budget.sh" "$MAIN/scripts/"
+   "$SRC_ROOT/scripts/context-budget.sh" "$SRC_ROOT/scripts/plan.sh" "$MAIN/scripts/"
 cp "$SRC_ROOT/scripts/lib/session-lib.sh" "$MAIN/scripts/lib/"
 chmod +x "$MAIN/scripts/"*.sh
 printf 'ROLLOVER_RELAUNCH=manual\nROLLOVER_RUNTIME=claude\n' > "$MAIN/context-budget.env"
@@ -93,12 +93,14 @@ bump() {  # $1 = delta, $2 = disposition, $3 = staged.by ("" = nothing staged)
     --arg d "$1" --arg me "$me" --arg disp "$2" --arg by "$3"
 }
 case "${STUB_BEHAVIOUR:-quit}" in
-  stage|stage-commit|stage-bookkeeping)
+  stage|stage-commit|stage-bookkeeping|stage-plan)
     register
     printf '# launcher (session %s, %s)\n' "$me" "$RANDOM$RANDOM" > "$W/next-session.md"
+    # stage-plan keeps the launcher's position markers: what the supervisor's `plan.sh sync` writes between
+    [ "$STUB_BEHAVIOUR" = stage-plan ] && printf '\n<!-- plan:begin position -->\n<!-- plan:end position -->\n' >> "$W/next-session.md"
     printf '# Session Handoff — session %s\n' "$me" > "$W/handoff.md"
     [ "$STUB_BEHAVIOUR" = stage-commit ] && printf 'work %s\n' "$me" >> "$STUB_MAIN/src.txt"
-    [ "$STUB_BEHAVIOUR" != stage ] && { git -C "$STUB_MAIN" add -A; git -C "$STUB_MAIN" commit -qm "session $me"; }
+    case "$STUB_BEHAVIOUR" in stage-commit|stage-bookkeeping) git -C "$STUB_MAIN" add -A; git -C "$STUB_MAIN" commit -qm "session $me" ;; esac
     CLAUDE_CODE_SESSION_ID="sid-$me" "$STUB_MAIN/scripts/launch-next-session.sh" testproj --emit --skip-freshness \
       >"$STUB_DIR/launcher-$me.log" 2>&1 || { echo "stub: launcher rc=$? $(cat "$STUB_DIR/launcher-$me.log")" >&2; exit 9; }
     kill -TERM $$ ;;                  # what the turn-end hook does to a session that staged
@@ -348,6 +350,87 @@ run --reset-cap
 assert_eq "C2a: exit 4"                  "$RC" "4"
 assert_eq "C2b: reason supervisor_live"  "$(refused)" "supervisor_live"
 assert_eq "C2c: used untouched"          "$(rec '.chain.used')" "3"
+
+# ---------------------------------------------------------------------------
+# A three-node plan for the loop's plan hook: one wave — a work node, a hitl
+# node, and the reconcile node that joins them. The smallest plan that can show
+# a hitl-only frontier and a done terminal reconcile node.
+mkplan() {   # $1 plan status; $2 $3 $4 status of 01-work / 02-ask / 03-reconcile; $5 extra frontmatter line for 02-ask
+  local d="$W/plans/01-demo"; rm -rf "$W/plans"; mkdir -p "$d/nodes"
+  printf -- '---\nplan: 01-demo\nstatus: %s\n---\n\n# Plan 01\n\n<!-- plan:begin board -->\n<!-- plan:end board -->\n' "$1" > "$d/plan.md"
+  mknode() {  # $1 id, $2 status, $3 kind, $4 blocked_by, $5 extra line
+    printf -- '---\nid: %s\ntitle: %s\nstatus: %s\nkind: %s\nwave: 1\nblocked_by: %s\ntier: frontier\nsessions: [7]\n%s---\n\n## Goal\n%s\n\n## Log\n' \
+      "$1" "$1" "$2" "$3" "$4" "${5:+$5
+}" "$1" > "$d/nodes/$1.md"
+  }
+  mknode 01-work "$2" work '[]'
+  mknode 02-ask "$3" hitl '[]' "${5:-}"
+  mknode 03-reconcile "$4" reconcile '[01-work, 02-ask]'
+  printf '# launcher\n\n<!-- plan:begin position -->\n<!-- plan:end position -->\n' > "$W/next-session.md"
+}
+
+echo "P1: chain.plan — the loop knows its plan, or knows it has none"
+reset; run --max-sessions 3
+assert_eq "P1a: no plans directory: chain.plan is null"   "$(rec '.chain.plan')" "null"
+reset; mkplan open done todo todo; run --max-sessions 3
+assert_eq "P1b: the single open plan is bound"            "$(rec '.chain.plan')" "01-demo"
+assert_eq "P1c: the chain otherwise runs as before"       "$(verdicts)" "quit_plain seq=8"
+reset; mkplan closed done done done; run --max-sessions 3
+assert_eq "P1d: no open plan: nothing bound"              "$(rec '.chain.plan')" "null"
+reset; mkplan open done todo todo; run --max-sessions 3 --plan 01-demo
+assert_eq "P1e: --plan binds the named plan"              "$(rec '.chain.plan')" "01-demo"
+reset; mkplan open done todo todo; cp "$REC" "$TMP/before"; run --max-sessions 3 --plan 02-nope
+assert_eq "P1f: exit 4"                                   "$RC" "4"
+assert_eq "P1g: reason plan_invalid leg=unresolved"       "$(refused)" "plan_invalid leg=unresolved"
+cmp -s "$REC" "$TMP/before" && ok "P1h: record untouched" || bad "P1h: a refused start wrote the record"
+[ -f "$TMP/env-8" ] && bad "P1i: a session ran" || ok "P1i: nothing ran"
+reset; mkplan open done todo todo; cp -R "$W/plans/01-demo" "$W/plans/02-demo"; run --max-sessions 3
+assert_eq "P1j: two open plans and no --plan: exit 4"     "$RC" "4"
+assert_eq "P1k: reason plan_invalid leg=ambiguous"        "$(refused)" "plan_invalid leg=ambiguous"
+
+echo "P2: plan_invalid — a failing sync or check after the child refuses the next session"
+reset; mkplan open done todo todo 'check: true'; export STUB_BEHAVIOUR=stage-plan   # hitl-check violation
+run --max-sessions 3
+assert_eq "P2a: exit 1"                                   "$RC" "1"
+assert_eq "P2b: reason plan_invalid leg=check"            "$(broken)" "plan_invalid leg=check"
+assert_eq "P2c: session 8 rolled over first"              "$(verdicts)" "staged seq=8"
+[ -f "$TMP/env-9" ] && bad "P2d: session 9 ran on a broken plan" || ok "P2d: session 9 did not run"
+assert_eq "P2e: the staged command stays for a restart"   "$(rec '.staged.successor')" "9"
+assert_eq "P2f: no close"                                 "$(rec '.chain.closed')" "null"
+assert_contains "P2g: the notify hook carries the code"   "$(cat "$NOTED")" "plan_invalid"
+reset; mkplan open done todo todo; export STUB_BEHAVIOUR=stage-plan
+grep -v 'plan:begin board\|plan:end board' "$W/plans/01-demo/plan.md" > "$TMP/pm" && mv "$TMP/pm" "$W/plans/01-demo/plan.md"
+run --max-sessions 3
+assert_eq "P2h: a sync that cannot write (no markers) refuses too" "$(broken)" "plan_invalid leg=sync"
+[ -f "$TMP/env-9" ] && bad "P2i: session 9 ran" || ok "P2i: session 9 did not run"
+
+echo "P3: plan_closed — the terminal reconcile node done and the plan closed ends the chain"
+reset; mkplan closed done done done; export STUB_BEHAVIOUR=stage-plan
+run --max-sessions 3 --plan 01-demo
+assert_eq "P3a: exit 0"                                   "$RC" "0"
+assert_eq "P3b: verdicts"                                 "$(verdicts)" "staged seq=8 plan_closed seq=8"
+assert_eq "P3c: the chain is closed by the plan"          "$(rec '.chain.closed.reason')" "plan_closed"
+[ -f "$TMP/env-9" ] && bad "P3d: session 9 ran" || ok "P3d: session 9 did not run"
+assert_contains "P3e: the notify hook carries the verdict" "$(cat "$NOTED")" "plan_closed"
+run --max-sessions 3
+assert_eq "P3f: a restart is refused chain_closed"        "$(refused)" "chain_closed"
+reset; mkplan closed done done dropped; export STUB_BEHAVIOUR=stage-plan
+run --max-sessions 2 --plan 01-demo
+assert_eq "P3g: closed but the reconcile node not done: not plan_closed" "$(verdicts)" "staged seq=8 staged seq=9 cap seq=10"
+
+echo "P4: a frontier holding only hitl nodes makes the next launch interactive"
+reset; mkplan open done todo todo; export STUB_BEHAVIOUR=stage-plan
+run --max-sessions 3
+assert_eq "P4a: exit 0 — the pause with no tty ends the chain" "$RC" "0"
+assert_contains "P4b: the staged verdict carries the mode" "$OUT" "verdict=staged seq=8 successor=9 mode=interactive"
+assert_eq "P4c: the record says interactive"              "$(rec '.launch.mode')" "interactive"
+[ -f "$TMP/env-9" ] && bad "P4d: session 9 ran without the pause" || ok "P4d: session 9 waited at the pause"
+assert_eq "P4e: leaving at the pause is not a close"      "$(rec '.chain.closed')" "null"
+assert_contains "P4f: sync rendered the board between children" "$(cat "$W/plans/01-demo/plan.md")" "| 1 | 02-ask | hitl |"
+reset; mkplan open todo todo todo; export STUB_BEHAVIOUR=stage-plan
+run --max-sessions 2
+assert_eq "P4g: a work node on the frontier keeps hands-off" "$(verdicts)" "staged seq=8 staged seq=9 cap seq=10"
+assert_eq "P4h: the record still says handsoff"           "$(rec '.launch.mode')" "handsoff"
 
 # ---------------------------------------------------------------------------
 echo "F1: a fresh work item — no record — the supervisor stages session 1 through the launcher"
