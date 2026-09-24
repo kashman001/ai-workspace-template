@@ -299,3 +299,17 @@ replacement has run once is premature.
 exist; retire wayfinder — loses a working skill.
 **Blast radius:** `docs/plans.md`; one backlog card.
 **Promote?:** no.
+
+## 2026-09-23 — A `blocked_by` naming no node is refused by every verb (settled)
+**Chose:** `load_nodes` refuses (exit 1, naming the file and the id) when a
+`blocked_by` entry matches no node in the plan, so `status`, `show`,
+`frontier`, `remaining` and `graph` all stop on it.
+**Because:** `frontier` treats an unknown blocker as never satisfied, so a
+typo would silently keep a node off the frontier forever; a refusal at load
+is three lines and the only place the id set is known.
+**Rejected:** treat it as unsatisfied and let `check` (ticket 03) report it —
+hides the typo from every read verb until someone runs the lint.
+**Blast radius:** `scripts/plan.sh` `load_nodes`; ticket 03's "dangling
+blocked_by" rule becomes a report of what the loader already refuses.
+**Promote?:** no.
+

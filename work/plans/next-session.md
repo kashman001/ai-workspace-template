@@ -11,22 +11,27 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 ## Mission
 
 Implement the tickets under `issues/` in dependency order, test-first, one
-ticket per session unless a ticket is clearly small. Ticket 01 is done; the
-frontier is ticket 02 (`plan.sh frontier`, `remaining`, `graph`).
+ticket per session unless a ticket is clearly small. Tickets 01 and 02 are
+done; the frontier is 03, 05, 06 (all blocked only by done tickets). Take
+**03** (`plan.sh check`, the lint) — 04 needs it, and it is the deepest.
 
 ## Read these, in order
 
-1. `work/plans/issues/02-frontier-remaining-graph.md` — the ticket.
-2. `docs/plans.md` — the format and the verbs that exist; extend it, don't
-   restate it.
-3. `scripts/plan.sh` — read it whole (~170 lines): `load_nodes` gives every
-   verb a JSON array of nodes; add verbs as `cmd_<verb>` + a `case` arm.
-4. `scripts/tests/test-plan.sh` — append `T8…` cases in the same style; the
-   fixture `scripts/tests/fixtures/plan-01-concept/` mirrors the concept's
-   worked example (frontier there = `07-spec` is `doing`, so `frontier`
-   prints nothing until you adjust a copy of the fixture in the test).
-5. `work/plans/spec.md` — only the S-items ticket 02 names (S13, S14, S16,
-   S17) plus "Implementation Decisions" → Frontier.
+1. `work/plans/issues/03-check-lint.md` — the ticket (rules listed there).
+2. `handoff.md` top block → "For ticket 03" — the loader already refuses a
+   dangling `blocked_by`; decide how `check` reports that rule first.
+3. `docs/plans.md` — the format, every verb, exit codes; extend, don't
+   restate. Note the wave-size limit: "limit in plan frontmatter, workspace
+   default" — no such field or default exists yet; you name both (plan
+   frontmatter key + a value in `context-budget.env` or a new env file —
+   check `work/plans/spec.md` S15 and "Implementation Decisions" first).
+4. `scripts/plan.sh` — read it whole (~260 lines): `load_nodes` gives every
+   verb a JSON array of nodes; `DERIVE_JQ` is the shared jq prelude; add
+   verbs as `cmd_<verb>` + a `case` arm.
+5. `scripts/tests/test-plan.sh` — T8 shows the pattern for fixture variants
+   (`reset`, `setf <id> <key> <value>`, `squeeze`); append `T11…`.
+6. `work/plans/spec.md` — only S15 plus "Implementation Decisions" → check
+   rules / wave size.
 
 ## Do NOT reload
 
@@ -42,26 +47,29 @@ frontier is ticket 02 (`plan.sh frontier`, `remaining`, `graph`).
 
 - Bash 3.2 + jq only; match `scripts/plan.sh`'s style. Exit codes 0/1/2 as
   documented. Text by default, `--json` on every read verb.
-- Frontier: `todo` nodes whose blockers are all `done` or `dropped`,
-  restricted to the lowest wave that still has unfinished nodes; print
-  id, kind, tier (concept's sample: `06-reconcile-write   reconcile  frontier`).
+- `check`: one line per violation on stdout, exit non-zero when any; exit 0
+  and silence on a clean plan; `--json` lists violations as objects. The
+  fixture plan must pass clean (every wave there ends in one reconcile node).
 - Wave names ("1 ground") live in no frontmatter — derive or omit; note the
   choice in the ledger for ticket 05 (board renderer).
 
 ## State snapshot
 
 Branch `main`, clean after this rollover's commit; nothing pushed. Tickets:
-01 `done`; 02–11 `ready-for-agent`; frontier = 02. Chain supervised by
-`session-loop.sh` (seq 1 → 2 → 3 → 4). Budget at rollover: WARN (~118K).
+01, 02 `done`; 03–11 `ready-for-agent`; frontier = 03, 05, 06. Chain
+supervised by `session-loop.sh` (seq 1 → 2 → 3 → 4 → 5). Budget at
+rollover: OK (~95K; ticket 02 finished under WARN).
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project plans` (expect `seq=4`).
+1. `scripts/context-budget.sh register --project plans` (expect `seq=5`).
 2. No question to pose. Proceed hands-off.
-3. `implement` ticket 02 with `tdd`: red cases in `test-plan.sh` first
-   (`frontier` text + `--json`, mixed done/dropped blockers, `remaining`,
-   `graph` text), then `plan.sh` green one verb at a time.
-4. Extend `docs/plans.md` → "`plan.sh`" table with the new verbs.
+3. `implement` ticket 03 with `tdd`: one red case per rule in
+   `test-plan.sh` first (each a fixture variant tripping exactly that rule,
+   plus the clean fixture and `--json`), then `plan.sh check` green one rule
+   at a time.
+4. Extend `docs/plans.md` → "`plan.sh`" table with `check` and a "Check
+   rules" list; document the wave-size field and default.
 5. Tick the ticket's boxes as each lands; `Decision:` trailer on the commit.
 6. `scripts/context-budget.sh record --label "<unit done>"` at each step.
    At the end or at WARN/STOP: ledger block, rewrite this launcher (next

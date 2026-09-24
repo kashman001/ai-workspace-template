@@ -9,6 +9,10 @@
 #          new <slug>      create the next-numbered plan (refuses while one is open)
 #          status          plan, open/closed, wave n of m, counts by status, sessions used
 #          show <id>       print one node (text: the file; --json: its frontmatter + path)
+#          frontier        todo nodes whose blockers are all done/dropped, in the lowest
+#                          unfinished wave: id kind tier (exit 1 + why when empty but unfinished)
+#          remaining       every node not done/dropped, by wave then id: id status wave
+#          graph           the plan as text, one block per wave, `<- blockers` per node
 # Resolution: project = --project → session registry binding (a registry
 #          record whose pid is an ancestor of this process) → TF_SESSION_PROJECT
 #          → the work item the cwd is inside → refuse. Plan = --plan →
@@ -37,7 +41,7 @@ while [ $# -gt 0 ]; do
     *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; else usage; fi; shift ;;
   esac
 done
-case "$VERB" in new|status|show) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
+case "$VERB" in new|status|show|frontier|remaining|graph) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
 
 # ---- project -----------------------------------------------------------------
 registry_project() {  # the item bound to the session this process runs under
@@ -118,8 +122,19 @@ load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name
     one="$(node_json "$f" "$tier")" || exit 1     # node_json already named the file
     out="$out$one"
   done
-  printf '%s' "$out" | jq -s '.'
+  out="$(printf '%s' "$out" | jq -s '.')"
+  one="$(printf '%s' "$out" | jq -r '[.[].id] as $ids | .[] | .path as $p | .blocked_by[] as $b | select(($ids | index($b)) == null) | "\($p): blocked_by names no node \($b)"' | head -1)"
+  [ -z "$one" ] || die 1 "$one"
+  printf '%s' "$out"
 }
+
+# Shared jq for the derived read verbs: column padding, the current wave, what is finished.
+DERIVE_JQ='
+  def pad($n): . + (" " * ($n - length));
+  def idw: ([.[].id | length] | max // 0) + 2;
+  def finished: map(select(.status == "done" or .status == "dropped") | .id);
+  def current_wave: [.[] | select(.status != "done" and .status != "dropped") | .wave] | min;'
+
 
 # ---- verbs --------------------------------------------------------------------
 cmd_new() {
@@ -198,8 +213,55 @@ cmd_show() {
   if [ "$JSON" -eq 1 ]; then printf '%s\n' "$node" | jq '.'; else cat "$(printf '%s' "$node" | jq -r '.path')"; fi
 }
 
+cmd_frontier() {
+  local nodes out reason
+  nodes="$(load_nodes "$PLAN_DIR")" || exit 1
+  out="$(printf '%s' "$nodes" | jq "$DERIVE_JQ"'
+    . as $all | idw as $w | finished as $ok | current_wave as $cur
+    | map(select(.status == "todo" and (.blocked_by - $ok) == [])) as $ready
+    | ($ready | map(select(.wave == $cur))) as $front
+    | { nodes: $front,
+        text: ($front | map("\(.id | pad($w))\(.kind | pad(11))\(.tier)") | join("\n")),
+        reason: (if $cur == null or ($front | length) > 0 then "" else
+          "frontier empty: wave \($cur) has nothing ready — "
+          + ($all | map(select(.wave == $cur and .status != "done" and .status != "dropped")
+              | if .status == "todo" then "\(.id) waits on \(.blocked_by - $ok | join(", "))" else "\(.id) \(.status)" end) | join("; "))
+          + (if ($ready | length) > 0 then "; ready only in a later wave: \($ready | map(.id) | join(", "))" else "" end) end) }')"
+  reason="$(printf '%s' "$out" | jq -r '.reason')"
+  if [ "$JSON" -eq 1 ]; then printf '%s' "$out" | jq '.nodes'; else printf '%s' "$out" | jq -r '.text | select(. != "")'; fi
+  [ -z "$reason" ] || die 1 "$reason"
+}
+
+cmd_remaining() {
+  local nodes
+  nodes="$(load_nodes "$PLAN_DIR")" || exit 1
+  printf '%s' "$nodes" | jq -r --argjson json "$JSON" "$DERIVE_JQ"'
+    idw as $w | map(select(.status != "done" and .status != "dropped")) | sort_by(.wave, .id)
+    | if $json == 1 then . else .[] | "\(.id | pad($w))\(.status | pad(9))wave \(.wave)" end'
+}
+
+cmd_graph() {
+  local nodes
+  nodes="$(load_nodes "$PLAN_DIR")" || exit 1
+  printf '%s' "$nodes" | jq -r --arg plan "$PLAN" --argjson json "$JSON" "$DERIVE_JQ"'
+    idw as $w
+    | if $json == 1 then
+        { plan: $plan,
+          nodes: map({id, title, status, kind, tier, wave, blocked_by}),
+          edges: [.[] | .id as $to | .blocked_by[] | {from: ., to: $to}] }
+      else
+        group_by(.wave)[] | "wave \(.[0].wave)",
+          (.[] | ("  \(.id | pad($w))\(.status | pad(9))\(.kind | pad(11))"
+                  + (if .blocked_by == [] then "" else "<- \(.blocked_by | join(", "))" end)
+                  | sub("[[:space:]]+$"; "")))
+      end'
+}
+
 case "$VERB" in
-  new)    cmd_new ;;
-  status) resolve_plan; cmd_status ;;
-  show)   resolve_plan; cmd_show ;;
+  new)       cmd_new ;;
+  status)    resolve_plan; cmd_status ;;
+  show)      resolve_plan; cmd_show ;;
+  frontier)  resolve_plan; cmd_frontier ;;
+  remaining) resolve_plan; cmd_remaining ;;
+  graph)     resolve_plan; cmd_graph ;;
 esac

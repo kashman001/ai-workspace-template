@@ -6,7 +6,10 @@
 #          print the documented text and --json with the documented exit
 #          codes; malformed node files are refused naming the file; `new`
 #          numbers the next plan and refuses while one is open; project and
-#          plan resolution follow the settled order (docs/plans.md).
+#          plan resolution follow the settled order (docs/plans.md);
+#          `frontier`, `remaining` and `graph` derive from the same node
+#          files (empty-frontier reasons, wave order, mixed done/dropped
+#          blockers, a blocker naming no node).
 #          Self-contained: throwaway workspace in mktemp -d.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -115,6 +118,72 @@ assert_eq "T7e: registry binding (this shell is an ancestor)" "$("$PLAN" status 
 assert_eq "T7f: registry binding beats TF_SESSION_PROJECT" "$(TF_SESSION_PROJECT=empty "$PLAN" status 2>/dev/null | cut -d' ' -f2)" "01-concept"
 jq '.pid_start = "Mon Jan  1 00:00:00 2001"' "$TMP/.context-budget/sessions/test-t.json" > "$TMP/r.json" && mv "$TMP/r.json" "$TMP/.context-budget/sessions/test-t.json"
 "$PLAN" status >/dev/null 2>&1; assert_eq "T7g: a recycled pid (pid_start differs) does not bind" "$?" "2"
+
+# Derived read verbs (ticket 02). Each case edits a copy of the fixture, then reset.
+NODES="$TMP/work/demo/plans/01-concept/nodes"; mkdir -p "$TMP/orig"; cp "$NODES"/*.md "$TMP/orig/"
+reset() { rm -f "$NODES"/*.md; cp "$TMP/orig"/*.md "$NODES/"; }
+setf()  { sed -i '' "s/^$2: .*$/$2: $3/" "$NODES/$1.md"; }   # <id> <key> <value>
+squeeze() { tr -s ' ' | sed 's/^ //;s/ $//'; }
+
+echo "T8: frontier — todo nodes whose blockers are done or dropped, in the lowest unfinished wave"
+err="$("$PLAN" frontier --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T8a: fixture (07-spec doing, 08/09 wait on it) exits 1" "$rc" "1"
+assert_contains "T8b: says why, naming the blocker" "$err" "07-spec"
+out="$("$PLAN" frontier --project demo --json 2>/dev/null)"; rc=$?
+assert_eq "T8c: --json on an empty frontier prints [] and still exits 1" "$rc:$out" "1:[]"
+setf 07-spec status done
+out="$("$PLAN" frontier --project demo)"; rc=$?
+assert_eq "T8d: exit 0 once 07-spec is done" "$rc" "0"
+assert_eq "T8e: id kind tier" "$(printf '%s' "$out" | squeeze)" "08-tickets work standard"
+setf 06-reconcile-write status todo
+out="$("$PLAN" frontier --project demo)"
+assert_eq "T8f: a todo node in a lower wave is the whole frontier (the concept's sample line)" "$out" "06-reconcile-write     reconcile  frontier"
+reset; setf 07-spec status dropped; setf 08-tickets status done
+out="$("$PLAN" frontier --project demo)"
+assert_eq "T8g: mixed dropped/done blockers satisfy" "$(printf '%s' "$out" | squeeze)" "09-reconcile-verdict reconcile frontier"
+out="$("$PLAN" frontier --project demo --json)"
+assert_eq "T8h: --json is the full node objects" "$(printf '%s' "$out" | jq -c '[.[] | [.id, .wave, .blocked_by, (.check != null)]]')" \
+  '[["09-reconcile-verdict",3,["07-spec","08-tickets"],true]]'
+setf 09-reconcile-verdict status done
+out="$("$PLAN" frontier --project demo)"; rc=$?
+assert_eq "T8i: nothing unfinished — empty, exit 0" "$rc:$out" "0:"
+reset
+printf -- '---\nid: 10-later\nstatus: todo\nwave: 4\n---\n## Goal\n' > "$NODES/10-later.md"
+err="$("$PLAN" frontier --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T8j: an unblocked node in a later wave is not the frontier" "$rc" "1"
+assert_contains "T8k: the reason names it as later" "$err" "later wave"
+assert_contains "T8l: ... and names it" "$err" "10-later"
+setf 07-spec status done
+assert_eq "T8m: with wave 3 ready, wave 4 stays off the frontier" "$("$PLAN" frontier --project demo | squeeze)" "08-tickets work standard"
+reset; setf 08-tickets blocked_by '[07-spce]'
+err="$("$PLAN" frontier --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T8n: a blocker naming no node is refused" "$rc" "1"
+assert_contains "T8o: names the file and the id" "$err" "08-tickets.md"
+assert_contains "T8p: ..." "$err" "07-spce"
+reset
+
+echo "T9: remaining — everything not done or dropped, by wave then id"
+out="$("$PLAN" remaining --project demo)"; rc=$?
+assert_eq "T9a: exit 0" "$rc" "0"
+assert_eq "T9b: id status wave" "$(printf '%s' "$out" | squeeze | tr '\n' '|')" "07-spec doing wave 3|08-tickets todo wave 3|09-reconcile-verdict todo wave 3"
+assert_eq "T9c: --json ids" "$("$PLAN" remaining --project demo --json | jq -c '[.[].id]')" '["07-spec","08-tickets","09-reconcile-verdict"]'
+setf 09-reconcile-verdict wave 2
+assert_eq "T9d: wave before id" "$("$PLAN" remaining --project demo --json | jq -c '[.[].id]')" '["09-reconcile-verdict","07-spec","08-tickets"]'
+reset; setf 07-spec status done; setf 08-tickets status dropped; setf 09-reconcile-verdict status done
+out="$("$PLAN" remaining --project demo)"; rc=$?
+assert_eq "T9e: nothing left — empty, exit 0" "$rc:$out" "0:"
+assert_eq "T9f: --json empty" "$("$PLAN" remaining --project demo --json | jq -c .)" "[]"
+reset
+
+echo "T10: graph — the whole plan as text, nodes and edges in --json"
+out="$("$PLAN" graph --project demo)"; rc=$?
+assert_eq "T10a: exit 0" "$rc" "0"
+assert_eq "T10b: one heading per wave" "$(printf '%s' "$out" | grep -c '^wave ')" "3"
+assert_contains "T10c: a node line with its blockers" "$(printf '%s' "$out" | squeeze)" "03-reconcile-ground done reconcile <- 01-seam-inventory, 02-concept-discussion"
+assert_eq "T10d: a root node has no arrow" "$(printf '%s' "$out" | grep '^ *01-seam-inventory' | squeeze)" "01-seam-inventory done work"
+out="$("$PLAN" graph --project demo --json)"
+assert_eq "T10e: nodes and edges" "$(printf '%s' "$out" | jq -c '[.plan, (.nodes|length), (.edges|length)]')" '["01-concept",9,10]'
+assert_eq "T10f: an edge runs blocker -> node" "$(printf '%s' "$out" | jq -c '.edges | map(select(.to == "08-tickets"))')" '[{"from":"07-spec","to":"08-tickets"}]'
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

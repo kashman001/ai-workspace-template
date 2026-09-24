@@ -4,10 +4,10 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-23, session 4)
 
 **Spec:** S13, S14, S16
 
-- [ ] Frontier honours mixed done/dropped blockers and wave order (a later wave's unblocked node is not on the frontier)
-- [ ] An empty frontier with unfinished nodes exits 1 and says why (all blocked, or only later waves)
-- [ ] `--json` on all three; tests cover each rule against the fixture
+- [x] Frontier honours mixed done/dropped blockers and wave order (a later wave's unblocked node is not on the frontier)
+- [x] An empty frontier with unfinished nodes exits 1 and says why (all blocked, or only later waves)
+- [x] `--json` on all three; tests cover each rule against the fixture

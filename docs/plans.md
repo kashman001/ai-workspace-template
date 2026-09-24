@@ -56,11 +56,26 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 | `new <slug>` | creates the next-numbered plan with an empty `plan.md` skeleton; refuses (exit 1) while a plan is open | `created work/<item>/plans/NN-<slug>` |
 | `status` | derived from the node files | `plan NN-<slug>  open  wave 2 of 3  done 5/9  doing 1  todo 3  blocked 0  dropped 0  sessions 2` |
 | `show <id>` | one node: the file in text, its parsed frontmatter plus `path` in `--json` | the file |
+| `frontier` | `todo` nodes whose blockers are all `done` or `dropped`, in the lowest wave that still has unfinished nodes; exits 1 with the reason when that wave has nothing ready | `06-reconcile-write     reconcile  frontier` (id, kind, tier) |
+| `remaining` | every node that is neither `done` nor `dropped`, by wave then id | `07-spec                doing    wave 3` |
+| `graph` | the whole plan, one block per wave, each node with its blockers | `  08-tickets  todo  work  <- 07-spec` under a `wave 3` heading |
 
 "Wave n of m" is the lowest wave with a node that is neither `done` nor
 `dropped`, of the highest wave number. "Sessions" is the count of distinct
 session numbers across every node's `sessions`. `--json` mirrors each verb:
-`status` gives `{plan, status, wave:{current,total}, counts:{todo,doing,done,blocked,dropped,total}, sessions_used}`.
+`status` gives `{plan, status, wave:{current,total}, counts:{todo,doing,done,blocked,dropped,total}, sessions_used}`;
+`frontier` and `remaining` give an array of node objects as `show` prints them;
+`graph` gives `{plan, nodes:[{id,title,status,kind,tier,wave,blocked_by}], edges:[{from,to}]}`
+with one edge per `blocked_by` entry, blocker → node.
+
+**Frontier.** "Waiting on edges" is derived here, never stored. The frontier
+is empty in two ways: nothing is unfinished (exit 0, no output, `[]`), or the
+current wave has nothing ready (exit 1, `plan: frontier empty: wave 3 has
+nothing ready — 07-spec doing; 08-tickets waits on 07-spec`, with `; ready
+only in a later wave: …` appended when a later wave has an unblocked node —
+waves run in order, so it is not offered). A `blocked_by` naming no node in
+the plan is refused (exit 1, naming the file) by every verb. No DOT output
+yet; `graph --json` carries the edges for anything that wants to draw.
 
 **Exit codes** are the contract: `0` ok; `1` lint or state refusal (malformed
 node, unknown value, unknown id, a plan already open); `2` usage or resolution
