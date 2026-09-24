@@ -4,10 +4,10 @@
 
 **Blocked by:** 04, 05
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Spec:** S25, S26, S27, S28
 
-- [ ] New cases in `test-session-loop.sh` with a fake child: plan bound, failed check refuses, plan_closed ends, hitl-only frontier → interactive
-- [ ] Existing loop tests pass unchanged (plan-less regression)
-- [ ] `docs/context-budget.md` documents the verdict and the refusal
+- [x] New cases in `test-session-loop.sh` with a fake child: plan bound, failed check refuses, plan_closed ends, hitl-only frontier → interactive
+- [x] Existing loop tests pass unchanged (plan-less regression)
+- [x] `docs/context-budget.md` documents the verdict and the refusal

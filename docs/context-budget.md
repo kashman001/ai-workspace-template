@@ -382,7 +382,7 @@ Runs a chain of rollover sessions unattended. Started once by a human, owns the
 terminal, never talks to a model:
 
 ```sh
-scripts/session-loop.sh <project> [--runtime <rt>] \
+scripts/session-loop.sh <project> [--runtime <rt>] [--plan <slug>] \
   [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] \
   [--reset-cap] [--reopen] [--relaunch-override]
 ```
@@ -396,6 +396,23 @@ supervisor's pid is alive with the recorded start time). `--reset-cap` resets
 `cap` before anything is staged. It then writes `chain.supervisor` (pid, start
 time) and exports `TF_SESSION_LOOP=1` and `TF_SESSION_LOOP_PROJECT=<p>`, which
 the sessions and their hooks inherit.
+
+**Plans.** When the item has a plan (`docs/plans.md`), the chain binds it at
+start — `--plan <slug>`, else `chain.plan` already in the record (a restart
+keeps its binding), else the single plan under `work/<p>/plans/` whose
+`plan.md` says `status: open` — and writes `chain.plan` with the start block.
+Two open plans and no `--plan` → `plan_invalid leg=ambiguous`; a slug
+`scripts/plan.sh status` cannot read → `plan_invalid leg=unresolved`; both
+refuse before anything is written. Between children, after the staged verdict,
+the supervisor runs `plan.sh sync` (re-renders the board and the launcher's
+position block) then `plan.sh check`; either failing is **broken**
+`plan_invalid` with leg `sync` or `check`, the lines relayed, the staged
+command kept for a restart. A plan whose `status` is `closed` and whose
+reconcile node in the highest wave is `done` is the verdict `plan_closed`:
+`chain.closed` is written and the chain exits 0. Otherwise a frontier holding
+only `hitl` nodes sets `launch.mode` to `interactive`, so the next session
+starts only after Enter. An item with no plan binds nothing and runs exactly
+as before.
 
 **Each iteration.** Nothing staged → the bootstrap: a direct call of the
 launcher with `--emit` (a refusal there is relayed with the launcher's code, or
@@ -413,6 +430,7 @@ script wrote:
 | `staged` | `seq` moved by exactly one, `launch.predecessor` names the child as `rolled_over`, `staged.by` is the child's session id, the child's registration is not older than its start, and it lived at least `--min-lifetime` | run the next session (interactive mode: after Enter) |
 | `quit_plain` / `quit_stop` | nothing staged, `seq` unchanged, the child registered after it started, exit 0, transcript not ending in a logout; `quit_stop` when it went through `close` | `chain.closed` is written; exit 0 |
 | `cap` | `chain.used` reached `chain.cap` | exit 0; the staged command stays for a restart after `--reset-cap` |
+| `plan_closed` | after a `staged` verdict, the bound plan is `closed` and its highest-wave reconcile node is `done` | `chain.closed` is written (reason `plan_closed`); exit 0 |
 
 Anything else is **broken** (exit 1, `session-loop: broken reason=<code>`,
 through the notify hook): `rc_nonzero` (the command never ran or the child
@@ -425,7 +443,9 @@ rollover faster than `--min-lifetime` is not work), `no_own_measurement` (the
 child never registered against the item after it started), `record_unreadable`
 / `schema_mismatch` (the record broke mid-chain), `stall` (`--stall-limit`
 consecutive hands-off sessions whose commits touched only `README.md`,
-`next-session.md`, `handoff.md` and `handoff-archive.md`).
+`next-session.md`, `handoff.md` and `handoff-archive.md`), `plan_invalid` with
+a leg (sync: the bound plan could not be re-rendered; check: it has lint
+violations — repair the plan, then restart).
 
 **Ending a session that staged.** `--emit` is the last thing a supervised
 session does: the vendor's turn-end hook (`Stop` for claude and codex,
@@ -519,9 +539,9 @@ free-form and never a test contract.
 | register, binding outcomes (info) | `opened`, `filled`, `refreshed`, `adopted`, `minted`, `takeover`; a kept slot is `owner_live` |
 | release and close | `not_owner`, `ledger_shape`, `ledger_seq_mismatch` |
 | launcher gates, in order | `chain_closed`, `runtime_path_unsupported`, `supervised_stage_only`, `no_supervisor`, `owner_live`, `not_owner`, `worktree_unsynced`, `launcher_stale`, `launcher_unchanged`, `ledger_shape`, `ledger_seq_mismatch` (plus `schema_mismatch` and `jq_missing` first) |
-| supervisor start | `relaunch_off`, `chain_closed`, `supervisor_live`, `stage_failed` (the bootstrap launcher refused without a code), `staged_invalid` (leg spent) |
-| supervisor verdicts | `staged`, `quit_plain`, `quit_stop`, `cap` |
-| supervisor broken | `rc_nonzero`, `logout`, `staged_invalid` (legs seq, staged, predecessor, by, lifetime), `no_own_measurement`, `stall` |
+| supervisor start | `relaunch_off`, `chain_closed`, `supervisor_live`, `stage_failed` (the bootstrap launcher refused without a code), `staged_invalid` (leg spent), `plan_invalid` (legs unresolved, ambiguous) |
+| supervisor verdicts | `staged`, `quit_plain`, `quit_stop`, `cap`, `plan_closed` |
+| supervisor broken | `rc_nonzero`, `logout`, `staged_invalid` (legs seq, staged, predecessor, by, lifetime), `no_own_measurement`, `stall`, `plan_invalid` (legs sync, check) |
 | watchdog pages | `unidentified`, `blocked`, `staged_alive`, `silent` |
 | `scripts/import-session-seq.sh` | `no_old_counter`, `counter_unreadable`, `seq_conflict` |
 | hook dispatcher | `jq_missing` (stderr, exit 0, silent envelope on stdout) |

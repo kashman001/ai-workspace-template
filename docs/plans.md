@@ -175,7 +175,10 @@ a failing check); `2` usage or resolution failure. Refusals print `plan: <detail
 → the `work/<item>/` the current directory is inside → refuse. The plan:
 `--plan` → `chain.plan` in the item's `session-state.json` → the single open
 plan → refuse when none or several are open; read verbs (`status`, `show`)
-fall back to the latest plan by number instead of refusing.
+fall back to the latest plan by number instead of refusing. The supervisor
+(`scripts/session-loop.sh`) writes `chain.plan` when it starts a chain, so
+every session in that chain resolves the same plan without `--plan`
+(`docs/context-budget.md` → "The supervisor", "Plans").
 
 Tests: `scripts/tests/test-plan.sh` against the fixture plan
 `scripts/tests/fixtures/plan-01-concept/` (the worked example in the concept note).
