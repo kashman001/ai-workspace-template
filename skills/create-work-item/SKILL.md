@@ -109,6 +109,20 @@ agent-neutral state on disk.
    2. `work/<project>/handoff.md` (top block)
    ```
 
+   **Plan markers — only when asked** (`--plan` among the arguments, or the
+   user says the effort will run a plan per `docs/plans.md`); the default
+   scaffold carries none, plans stay opt-in. Append to `next-session.md`:
+
+   ```markdown
+   ## Position
+
+   <!-- plan:begin position -->
+   <!-- plan:end position -->
+   ```
+
+   `scripts/plan.sh sync` renders the plan's position and frontier between
+   the markers and refuses a launcher without them.
+
 5. **handoff.md** (ledger — purpose header + first block):
 
    ```markdown

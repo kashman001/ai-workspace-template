@@ -1,6 +1,6 @@
 ---
 description: Scaffold a new work/<project>/ directory following the work-directory conventions (README + launcher + ledger)
-argument-hint: "<project-name> [one-line description]"
+argument-hint: "<project-name> [one-line description] [--plan]"
 ---
 
 New work item: **$ARGUMENTS**
