@@ -128,6 +128,10 @@ untagged skills assume an engineering operator.
   synthesized into prioritized recommendations. `/doc-review <path>`
 - **onboard-repo** — bring a repo into the workspace: registry entry, graphify
   index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
+- **plans** — drive a work item's plan where `plan.sh` cannot decide: create
+  one from a spec or tickets, run a reconcile node (join, verify on disk,
+  record, replan), replan within authority, dispatch a subagent onto one node
+  with the prompt template. `/plan <create|reconcile|replan> [args]`
 - **research-wave** — research several subjects in parallel, then verify each
   result with an independent fact-checker before the claims are published or
   presented. User-invoked only. `/research-wave <subjects>`
