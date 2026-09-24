@@ -255,5 +255,157 @@ assert_eq "T11z6: malformed plan.md frontmatter (with --plan) is a violation" "$
 cp "$TMP/plan.bak" "$PM"
 assert_eq "T11z7: restored fixture is clean again" "$("$PLAN" check --project demo; echo "rc=$?")" "rc=0"
 
+
+# Write verbs (ticket 04). Each case edits the fixture copy, then reset. The
+# session number comes from work/demo/session-state.json (seq 3 here).
+SS="$TMP/work/demo/session-state.json"
+printf '{"schema":1,"seq":3}\n' > "$SS"
+fm()  { sed -n "s/^$2:[[:space:]]*//p" "$NODES/$1.md" | head -1 | sed 's/[[:space:]]*#.*$//; s/[[:space:]]*$//'; }   # <id> <key>: the raw value
+logs() { sed -n '/^## Log/,$p' "$NODES/$1.md" | sed '1d' | grep -c .; }   # <id>: Log lines
+lastlog() { sed -n '/^## Log/,$p' "$NODES/$1.md" | grep '^- ' | tail -1; }
+
+echo "T12: start — a frontier node goes todo -> doing, stamped with the session"
+reset; setf 07-spec status done
+out="$("$PLAN" start 08-tickets --project demo)"; rc=$?
+assert_eq "T12a: exit 0, one line" "$rc:$out" "0:08-tickets doing"
+assert_eq "T12b: status written in place" "$(fm 08-tickets status)" "doing"
+assert_eq "T12c: session appended to sessions" "$(fm 08-tickets sessions)" "[3]"
+assert_eq "T12d: one Log line, stamped s3" "$(logs 08-tickets):$(lastlog 08-tickets)" "1:- s3 · started"
+assert_eq "T12e: the rest of the file is byte-identical" "$(diff <(sed '/^status:/d;/^sessions:/d;/^- s3/d' "$TMP/orig/08-tickets.md") <(sed '/^status:/d;/^sessions:/d;/^- s3/d' "$NODES/08-tickets.md") | wc -l | tr -d ' ')" "0"
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T12g: the plan still passes check" "$?" "0"
+assert_eq "T12h: --json gives {id,status}" "$(reset; setf 07-spec status done; "$PLAN" start 08-tickets --project demo --json | jq -c '[.id,.status]')" '["08-tickets","doing"]'
+reset
+err="$("$PLAN" start 08-tickets --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T12i: a todo node off the frontier (blocker unfinished) is refused" "$rc" "1"
+assert_contains "T12j: says why" "$err" "not on the frontier"
+assert_eq "T12k: ... and the file is untouched" "$(fm 08-tickets status)" "todo"
+out="$("$PLAN" start 08-tickets --project demo --force)"; rc=$?
+assert_eq "T12l: --force starts it anyway" "$rc:$(fm 08-tickets status)" "0:doing"
+assert_contains "T12m: the Log says it was forced" "$(lastlog 08-tickets)" "forced"
+reset
+"$PLAN" start 07-spec --project demo >/dev/null 2>&1; assert_eq "T12n: start on a doing node is refused" "$?" "1"
+"$PLAN" start 01-seam-inventory --project demo >/dev/null 2>&1; assert_eq "T12o: start on a done node is refused" "$?" "1"
+setf 07-spec status blocked
+out="$("$PLAN" start 07-spec --project demo --session 4)"; rc=$?
+assert_eq "T12p: blocked -> doing is legal (resume), --session overrides the number" "$rc:$(fm 07-spec status):$(fm 07-spec sessions)" "0:doing:[2, 4]"
+reset; setf 07-spec status done
+"$PLAN" start 08-tickets --project demo --plan 02-none >/dev/null 2>&1; assert_eq "T12q: an unknown --plan exits 2" "$?" "2"
+"$PLAN" start no-such --project demo >/dev/null 2>&1; assert_eq "T12r: an unknown id exits 1" "$?" "1"
+"$PLAN" start --project demo >/dev/null 2>&1; assert_eq "T12s: no id is usage" "$?" "2"
+rm "$SS"
+err="$("$PLAN" start 08-tickets --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T12t: no session number anywhere is refused" "$rc:$(fm 08-tickets status)" "2:todo"
+assert_contains "T12u: ... naming the fix" "$err" "--session"
+printf '{"schema":1,"seq":3}\n' > "$SS"
+sed -i '' 's/^status: open$/status: closed/' "$PM"
+"$PLAN" start 08-tickets --project demo --plan 01-concept >/dev/null 2>&1; assert_eq "T12v: a write into a closed plan is refused" "$?" "1"
+cp "$TMP/plan.bak" "$PM"
+reset
+
+echo "T13: done — doing -> done once the check passes; a failing check is refused, the Nth writes blocked"
+reset
+out="$("$PLAN" done 07-spec --project demo)"; rc=$?
+assert_eq "T13a: no check — exit 0, one line" "$rc:$out" "0:07-spec done"
+assert_eq "T13b: status, session, Log" "$(fm 07-spec status):$(fm 07-spec sessions):$(lastlog 07-spec)" "done:[2, 3]:- s3 · done"
+assert_eq "T13c: the frontier moves on" "$("$PLAN" frontier --project demo | squeeze)" "08-tickets work standard"
+reset; addf 07-spec check 'test -f marker.txt && test -d "$WORKSPACE_ROOT/scripts" && echo checked'
+touch "$TMP/work/demo/marker.txt"
+out="$("$PLAN" done 07-spec --project demo 2>/dev/null)"; rc=$?
+assert_eq "T13d: the check runs from the work item dir with WORKSPACE_ROOT set; its output stays off stdout" "$rc:$out" "0:07-spec done"
+assert_eq "T13e: Log records the passing check" "$(lastlog 07-spec)" "- s3 · check passed → done"
+rm "$TMP/work/demo/marker.txt"
+reset; addf 07-spec check false
+err="$("$PLAN" done 07-spec --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T13f: a failing check is refused" "$rc" "1"
+assert_contains "T13g: says the check failed" "$err" "check failed"
+assert_eq "T13h: loop 1 (default): the first failure writes blocked, reason as the latest Log line" "$(fm 07-spec status):$(lastlog 07-spec)" "blocked:- s3 · check failed (exit 1), attempt 1 of 1 → blocked"
+reset; addf 07-spec check 'exit 3'; addf 07-spec loop 2
+"$PLAN" done 07-spec --project demo >/dev/null 2>&1; rc=$?
+assert_eq "T13i: loop 2: the first failure leaves doing" "$rc:$(fm 07-spec status):$(lastlog 07-spec)" "1:doing:- s3 · check failed (exit 3), attempt 1 of 2"
+"$PLAN" done 07-spec --project demo >/dev/null 2>&1; rc=$?
+assert_eq "T13j: ... the second writes blocked" "$rc:$(fm 07-spec status):$(lastlog 07-spec)" "1:blocked:- s3 · check failed (exit 3), attempt 2 of 2 → blocked"
+assert_eq "T13k: two Log lines, nothing else changed" "$(logs 07-spec):$(fm 07-spec sessions)" "2:[2]"
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T13l: the plan still passes check" "$?" "0"
+reset
+"$PLAN" done 08-tickets --project demo >/dev/null 2>&1; assert_eq "T13m: done on a todo node is refused" "$?:$(fm 08-tickets status)" "1:todo"
+"$PLAN" done 08-tickets --project demo --force >/dev/null 2>&1; assert_eq "T13n: --force allows todo -> done" "$?:$(fm 08-tickets status)" "0:done"
+assert_contains "T13o: ... and says so in the Log" "$(lastlog 08-tickets)" "forced from todo"
+"$PLAN" done 01-seam-inventory --project demo >/dev/null 2>&1; assert_eq "T13p: done on a done node is refused" "$?" "1"
+reset; setf 07-spec status blocked
+"$PLAN" done 07-spec --project demo >/dev/null 2>&1; assert_eq "T13q: done on a blocked node is refused (start it first)" "$?" "1"
+reset; setf 04-grill-open-items status doing
+err="$("$PLAN" done 04-grill-open-items --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T13r: a hitl node without --by is refused" "$rc:$(fm 04-grill-open-items status)" "1:doing"
+assert_contains "T13s: ... naming the flag" "$err" "--by human"
+out="$("$PLAN" done 04-grill-open-items --project demo --by human --json)"; rc=$?
+assert_eq "T13t: --by human marks it done, --json gives {id,status}" "$rc:$(printf '%s' "$out" | jq -c '[.id,.status]')" '0:["04-grill-open-items","done"]'
+assert_eq "T13u: the Log names the actor" "$(lastlog 04-grill-open-items)" "- human · done"
+reset
+
+echo "T14: verify — run the check, report, change nothing"
+out="$("$PLAN" verify 07-spec --project demo)"; rc=$?
+assert_eq "T14a: no check — exit 0" "$rc:$out" "0:07-spec: no check"
+addf 07-spec check true
+out="$("$PLAN" verify 07-spec --project demo)"; rc=$?
+assert_eq "T14b: a passing check" "$rc:$out" "0:07-spec: check passed"
+setf 07-spec check 'exit 4'
+out="$("$PLAN" verify 07-spec --project demo)"; rc=$?
+assert_eq "T14c: a failing check exits 1 with the code" "$rc:$out" "1:07-spec: check failed (exit 4)"
+assert_eq "T14d: the file is untouched" "$(fm 07-spec status):$(logs 07-spec)" "doing:0"
+assert_eq "T14e: any status will do" "$("$PLAN" verify 01-seam-inventory --project demo >/dev/null 2>&1; echo "rc=$?")" "rc=1"
+reset
+
+echo "T15: block and drop — doing -> blocked with a reason; any -> dropped"
+out="$("$PLAN" block 07-spec "spec needs the user's call on tiers" --project demo)"; rc=$?
+assert_eq "T15a: exit 0, one line" "$rc:$out" "0:07-spec blocked"
+assert_eq "T15b: status and the reason as the latest Log line" "$(fm 07-spec status):$(lastlog 07-spec)" "blocked:- s3 · blocked: spec needs the user's call on tiers"
+assert_eq "T15c: frontier reports it" "$("$PLAN" frontier --project demo 2>&1 >/dev/null | squeeze)" "plan: frontier empty: wave 3 has nothing ready — 07-spec blocked; 08-tickets waits on 07-spec; 09-reconcile-verdict waits on 07-spec, 08-tickets"
+"$PLAN" block 07-spec "again" --project demo >/dev/null 2>&1; assert_eq "T15d: block on a blocked node is refused" "$?" "1"
+"$PLAN" block 08-tickets "why" --project demo >/dev/null 2>&1; assert_eq "T15e: block on a todo node is refused" "$?" "1"
+"$PLAN" block 07-spec --project demo >/dev/null 2>&1; assert_eq "T15f: no reason is usage" "$?" "2"
+reset
+out="$("$PLAN" drop 08-tickets --project demo)"; rc=$?
+assert_eq "T15g: drop a todo node" "$rc:$out:$(fm 08-tickets status):$(lastlog 08-tickets)" "0:08-tickets dropped:dropped:- s3 · dropped"
+out="$("$PLAN" drop 07-spec "superseded by 08" --project demo --json)"; rc=$?
+assert_eq "T15h: drop a doing node with a reason, --json" "$rc:$(printf '%s' "$out" | jq -c '[.id,.status]'):$(lastlog 07-spec)" '0:["07-spec","dropped"]:- s3 · dropped: superseded by 08'
+assert_eq "T15i: the frontier treats dropped blockers as finished" "$("$PLAN" frontier --project demo | squeeze)" "09-reconcile-verdict reconcile frontier"
+"$PLAN" drop 07-spec --project demo >/dev/null 2>&1; assert_eq "T15j: drop on a dropped node is refused" "$?" "1"
+"$PLAN" drop 01-seam-inventory --project demo >/dev/null 2>&1; assert_eq "T15k: done -> dropped is allowed (any -> dropped)" "$?:$(fm 01-seam-inventory status)" "0:dropped"
+reset
+
+echo "T16: add — a new node file from flags, next number, todo"
+out="$("$PLAN" add board-renderer --wave 3 --title "Render the board" --blocked-by 07-spec,08-tickets --project demo)"; rc=$?
+assert_eq "T16a: exit 0, one line" "$rc:$out" "0:10-board-renderer todo"
+assert_eq "T16b: the file exists and parses" "$("$PLAN" show 10-board-renderer --project demo --json | jq -c '[.id,.title,.status,.kind,.wave,.blocked_by,.tier,.parallel,.loop,.check,.sessions,.isolated]')" \
+  '["10-board-renderer","Render the board","todo","work",3,["07-spec","08-tickets"],"standard",1,1,null,[],false]'
+assert_eq "T16c: sections present, frontmatter in the fixture's order" "$(grep -E '^(id|title|status|kind|wave|blocked_by|sessions|## )' "$NODES/10-board-renderer.md" | cut -d: -f1 | tr '\n' ' ')" "id title status kind wave blocked_by sessions ## Goal ## Acceptance ## Log "
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T16d: check now trips reconcile-last (10 follows 09 in wave 3) — add does not lint" "$?" "1"
+rm "$NODES/10-board-renderer.md"
+out="$("$PLAN" add reconcile-two --wave 4 --kind reconcile --tier frontier --parallel 2 --loop 3 --check 'true' --isolated --project demo --json)"; rc=$?
+assert_eq "T16e: every flag lands, --json" "$rc:$(printf '%s' "$out" | jq -c '[.id,.status]')" '0:["10-reconcile-two","todo"]'
+assert_eq "T16f: ... parsed back" "$("$PLAN" show 10-reconcile-two --project demo --json | jq -c '[.kind,.tier,.parallel,.loop,.check,.isolated,.wave,.blocked_by]')" '["reconcile","frontier",2,3,"true",true,4,[]]'
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T16g: a wave-4 reconcile node keeps the plan clean" "$?" "0"
+"$PLAN" add reconcile-two --wave 4 --project demo >/dev/null 2>&1; assert_eq "T16h: a slug already in use is refused" "$?" "1"
+"$PLAN" add other --wave 4 --blocked-by no-such --project demo >/dev/null 2>&1; assert_eq "T16i: a blocker naming no node is refused" "$?:$(ls "$NODES" | grep -c other)" "1:0"
+"$PLAN" add other --project demo >/dev/null 2>&1; assert_eq "T16j: no --wave is usage" "$?" "2"
+"$PLAN" add Bad_Slug --wave 4 --project demo >/dev/null 2>&1; assert_eq "T16k: a bad slug exits 2" "$?" "2"
+"$PLAN" add other --wave 4 --kind task --project demo >/dev/null 2>&1; assert_eq "T16l: an unknown kind exits 2" "$?" "2"
+rm "$NODES/10-reconcile-two.md"
+reset
+
+echo "T17: note — appends to plan.md -> Not yet specified; touches no node file"
+before="$(cat "$NODES"/*.md | cksum)"
+out="$("$PLAN" note "tier policy needs a per-runtime override" --project demo)"; rc=$?
+assert_eq "T17a: exit 0, silent" "$rc:$out" "0:"
+assert_eq "T17b: the line lands at the end of the section, stamped" "$(sed -n '/^## Not yet specified/,/^## Out of scope/p' "$PM" | grep '^- ' | tail -1)" "- s3 · tier policy needs a per-runtime override"
+assert_eq "T17c: section order intact, board untouched" "$(diff <(sed '/^- s3 · tier/d' "$PM") "$TMP/plan.bak" | wc -l | tr -d ' ')" "0"
+assert_eq "T17d: node files untouched" "$(cat "$NODES"/*.md | cksum)" "$before"
+"$PLAN" note "second" --project demo >/dev/null
+assert_eq "T17e: a second note follows the first" "$(sed -n '/^## Not yet specified/,/^## Out of scope/p' "$PM" | grep -c '^- ')" "3"
+"$PLAN" note --project demo >/dev/null 2>&1; assert_eq "T17f: no text is usage" "$?" "2"
+cp "$TMP/plan.bak" "$PM"
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T17g: fixture clean at the end" "$?" "0"
+rm -f "$SS"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

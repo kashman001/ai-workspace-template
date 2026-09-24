@@ -15,13 +15,25 @@
 #          graph           the plan as text, one block per wave, `<- blockers` per node
 #          check           lint: one line per violation on stdout, exit 1 when any; silent
 #                          and exit 0 on a clean plan (rules: docs/plans.md → "Check rules")
+#          start <id>      todo (on the frontier, or --force) or blocked → doing; stamps the session
+#          done <id>       doing → done once the node's check passes; the Nth failure (loop: N)
+#                          writes blocked; hitl nodes need --by <actor>; --force allows todo → done
+#          verify <id>     run the node's check, exit 0/1, change nothing
+#          block <id> <reason>   doing → blocked, the reason as the latest Log line
+#          drop <id> [reason]    any → dropped
+#          add <slug> --wave <n> [--title t] [--kind k] [--tier t] [--blocked-by a,b]
+#                          [--parallel n] [--loop n] [--check cmd] [--isolated]   new node file
+#          note <text>     append to plan.md → "Not yet specified"; touches no node
+#          Write verbs: --session <n> sets the session number (default: seq in the item's
+#          session-state.json), --by <actor> the Log stamp; they refuse a closed plan.
 # Resolution: project = --project → session registry binding (a registry
 #          record whose pid is an ancestor of this process) → TF_SESSION_PROJECT
 #          → the work item the cwd is inside → refuse. Plan = --plan →
 #          chain.plan in the item's session record → the single open plan →
 #          refuse; read verbs fall back to the latest plan by number.
 # Exit:    0 ok / 1 lint or state refusal (malformed node, unknown value,
-#          unknown id, a plan already open) / 2 usage or resolution failure.
+#          unknown id, a plan already open, an illegal transition, a failing check)
+#          / 2 usage or resolution failure.
 #          Refusals print `plan: <detail>` on stderr; a node problem names the file.
 # Env:     PLAN_WAVE_MAX — nodes per wave before `check` complains; explicit env >
 #          context-budget.env > 6. A plan's `wave_max:` frontmatter overrides it.
@@ -34,18 +46,31 @@ die() { echo "plan: $2" >&2; exit "$1"; }   # <code> <message>
 usage() { sed -n '/^# Usage:/,/^# Resolution:/p' "$0" | sed '$d; s/^# \{0,9\}//' >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || die 2 "jq is required"
 
-VERB=""; ARG=""; PROJECT=""; PLAN=""; JSON=0
+VERB=""; ARG=""; ARG2=""; PROJECT=""; PLAN=""; JSON=0; FORCE=0; BY=""; SEQ=""
+TITLE=""; WAVE=""; KIND=""; TIER=""; BLOCKED_BY=""; PARALLEL=""; LOOP=""; CHECK=""; ISOLATED=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --project) [ $# -ge 2 ] || usage; PROJECT="$2"; shift 2 ;;
     --plan)    [ $# -ge 2 ] || usage; PLAN="$2"; shift 2 ;;
+    --by)      [ $# -ge 2 ] || usage; BY="$2"; shift 2 ;;
+    --session) [ $# -ge 2 ] || usage; SEQ="$2"; shift 2 ;;
+    --title)   [ $# -ge 2 ] || usage; TITLE="$2"; shift 2 ;;
+    --wave)    [ $# -ge 2 ] || usage; WAVE="$2"; shift 2 ;;
+    --kind)    [ $# -ge 2 ] || usage; KIND="$2"; shift 2 ;;
+    --tier)    [ $# -ge 2 ] || usage; TIER="$2"; shift 2 ;;
+    --blocked-by) [ $# -ge 2 ] || usage; BLOCKED_BY="$2"; shift 2 ;;
+    --parallel) [ $# -ge 2 ] || usage; PARALLEL="$2"; shift 2 ;;
+    --loop)    [ $# -ge 2 ] || usage; LOOP="$2"; shift 2 ;;
+    --check)   [ $# -ge 2 ] || usage; CHECK="$2"; shift 2 ;;
+    --isolated) ISOLATED=yes; shift ;;
     --json)    JSON=1; shift ;;
+    --force)   FORCE=1; shift ;;
     -h|--help) usage ;;
     -*)        die 2 "unknown option $1" ;;
-    *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; else usage; fi; shift ;;
+    *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; elif [ -z "$ARG2" ]; then ARG2="$1"; else usage; fi; shift ;;
   esac
 done
-case "$VERB" in new|status|show|frontier|remaining|graph|check) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
+case "$VERB" in new|status|show|frontier|remaining|graph|check|start|done|verify|block|drop|add|note) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
 
 # ---- project -----------------------------------------------------------------
 registry_project() {  # the item bound to the session this process runs under
@@ -143,7 +168,9 @@ DERIVE_JQ='
   def pad($n): . + (" " * ($n - length));
   def idw: ([.[].id | length] | max // 0) + 2;
   def finished: map(select(.status == "done" or .status == "dropped") | .id);
-  def current_wave: [.[] | select(.status != "done" and .status != "dropped") | .wave] | min;'
+  def current_wave: [.[] | select(.status != "done" and .status != "dropped") | .wave] | min;
+  def ready: finished as $ok | map(select(.status == "todo" and (.blocked_by - $ok) == []));
+  def frontier: current_wave as $cur | ready | map(select(.wave == $cur));'
 
 
 # ---- verbs --------------------------------------------------------------------
@@ -154,7 +181,7 @@ cmd_new() {
   open="$(open_plans | head -1)"
   [ -z "$open" ] || die 1 "$open is still open in work/$PROJECT — close it (status: closed) before opening another"
   n=0; for dir in "$PLANS"/[0-9]*/; do [ -d "$dir" ] || continue; dir="$(basename "$dir")"; dir="${dir%%-*}"; [ "$dir" -gt "$n" ] 2>/dev/null && n="$dir"; done
-  name="$(printf '%02d-%s' $((n + 1)) "$ARG")"; dir="$PLANS/$name"
+  name="$(printf '%02d-%s' $((10#$n + 1)) "$ARG")"; dir="$PLANS/$name"
   mkdir -p "$dir/nodes" || die 1 "cannot create $dir"
   cat > "$dir/plan.md" <<PLAN
 ---
@@ -164,7 +191,7 @@ replan: local
 default_tier: standard
 ---
 
-# Plan $(printf '%02d' $((n + 1))) — <title>
+# Plan $(printf '%02d' $((10#$n + 1))) — <title>
 
 ## Goal
 
@@ -181,7 +208,7 @@ PLAN
   else echo "created work/$PROJECT/plans/$name"; fi
 }
 
-resolve_plan() {  # sets PLAN_DIR
+resolve_plan() {  # [write]: sets PLAN_DIR; a write verb never falls back to the latest plan and refuses a closed one
   local rec open count
   if [ -z "$PLAN" ]; then
     rec="$ITEM/session-state.json"
@@ -190,6 +217,7 @@ resolve_plan() {  # sets PLAN_DIR
   if [ -z "$PLAN" ]; then
     open="$(open_plans)"; count="$(printf '%s' "$open" | grep -c .)"
     if [ "$count" -eq 1 ]; then PLAN="$open"
+    elif [ "${1:-}" = write ]; then die 2 "work/$PROJECT has $count open plans; pass --plan"
     else  # read verbs: the latest plan by number
       PLAN="$(for d in "$PLANS"/[0-9]*/; do [ -f "$d/plan.md" ] && basename "$d"; done | sort | tail -1)"
       [ -n "$PLAN" ] || die 2 "work/$PROJECT has no plan; scripts/plan.sh new <slug> creates one"
@@ -197,6 +225,65 @@ resolve_plan() {  # sets PLAN_DIR
   fi
   PLAN_DIR="$PLANS/$PLAN"
   [ -f "$PLAN_DIR/plan.md" ] || die 2 "work/$PROJECT/plans/$PLAN is not a plan"
+  [ "${1:-}" = write ] && [ "$(plan_status "$PLAN_DIR")" = closed ] && die 1 "work/$PROJECT/plans/$PLAN is closed; writes need an open plan"
+  return 0
+}
+
+# ---- write plumbing ----------------------------------------------------------------
+# The session number: --session, else seq in the item's session-state.json. The Log
+# stamp (WHO): --by, else s<seq>. Node files are rewritten whole via a temp file;
+# frontmatter line order and trailing `  # comments` are kept.
+[ -n "$SEQ" ] || SEQ="$(jq -r '.seq // empty' "$ITEM/session-state.json" 2>/dev/null)"
+[ -z "$SEQ" ] || printf '%s' "$SEQ" | grep -qE '^[0-9]+$' || die 2 "session number '$SEQ' is not an integer"
+WHO="${BY:-${SEQ:+s$SEQ}}"
+need_who() { [ -n "$WHO" ] || die 2 "no session number (work/$PROJECT/session-state.json has no seq): pass --session <n> or --by <actor>"; }
+need_seq() { [ -n "$SEQ" ] || die 2 "no session number (work/$PROJECT/session-state.json has no seq): pass --session <n>"; }
+fm_set() {  # <file> <key> <value>: replace the value in place (comment kept), or add the line before the closing ---
+  local tmp="$1.tmp.$$"
+  awk -v k="$2" -v v="$3" '
+    BEGIN { infm = 0; done = 0 }
+    NR == 1 && $0 == "---" { infm = 1; print; next }
+    infm && $0 == "---" { if (!done) print k ": " v; infm = 0; print; next }
+    infm && index($0, k ":") == 1 && !done {
+      c = ""; if (match($0, /[[:space:]][[:space:]]+#[[:space:]].*$/)) c = substr($0, RSTART)
+      print k ": " v c; done = 1; next }
+    { print }' "$1" > "$tmp" && mv "$tmp" "$1"
+}
+section_append() {  # <file> <heading> <line> [create]: append `- <line>` after the section's last content line; 1 when absent
+  local tmp="$1.tmp.$$"
+  awk -v h="$2" -v l="- $3" -v create="${4:-}" '
+    BEGIN { insec = 0; seen = 0; pending = 0 }
+    index($0, h) == 1 && !seen { insec = 1; seen = 1; print; next }
+    insec && /^## / { print l; while (pending > 0) { print ""; pending-- }; insec = 0 }
+    insec && /^[[:space:]]*$/ { pending++; next }
+    insec { while (pending > 0) { print ""; pending-- } }
+    { print }
+    END { if (insec) print l; else if (!seen) { if (create == "") exit 1; print ""; print h; print l } }' "$1" > "$tmp" && mv "$tmp" "$1" || { rm -f "$tmp"; return 1; }
+}
+log_append() { section_append "$1" "## Log" "$2" create; }
+node_file() {  # <id>: NODE (the node JSON) and NODE_FILE, or exit 1
+  local nodes
+  nodes="$(load_nodes "$PLAN_DIR")" || exit 1
+  NODE="$(printf '%s' "$nodes" | jq -c --arg id "$1" '.[] | select(.id == $id)' | head -1)"
+  [ -n "$NODE" ] || die 1 "no node '$1' in work/$PROJECT/plans/$PLAN"
+  NODE_FILE="$(printf '%s' "$NODE" | jq -r '.path')"
+  NODES_JSON="$nodes"
+}
+node_field() { printf '%s' "$NODE" | jq -r "$1"; }
+stamp_session() {  # add SEQ to the node's sessions (unique, sorted)
+  [ -n "$SEQ" ] || return 0
+  fm_set "$NODE_FILE" sessions "$(printf '%s' "$NODE" | jq -r --argjson s "$SEQ" '.sessions + [$s] | unique | "[\(map(tostring) | join(", "))]"')"
+}
+run_check() {  # the node's check, run from the work item dir with its output on stderr; its exit code (0 when none)
+  local cmd; cmd="$(node_field '.check // empty')"
+  [ -n "$cmd" ] || return 0
+  ( cd "$ITEM" && WORKSPACE_ROOT="$WORKSPACE_ROOT" sh -c "$cmd" 1>&2 )
+}
+failed_attempts() {  # check failures logged since the node was last started
+  awk '/^## Log/ { inlog = 1; next } inlog && /· started/ { n = 0 } inlog && /· check failed/ { n++ } END { print n + 0 }' "$NODE_FILE"
+}
+report() {  # <id> <status>: the one-line result
+  if [ "$JSON" -eq 1 ]; then jq -n --arg id "$1" --arg status "$2" '{id: $id, status: $status}'; else echo "$1 $2"; fi
 }
 
 cmd_status() {
@@ -228,8 +315,7 @@ cmd_frontier() {
   nodes="$(load_nodes "$PLAN_DIR")" || exit 1
   out="$(printf '%s' "$nodes" | jq "$DERIVE_JQ"'
     . as $all | idw as $w | finished as $ok | current_wave as $cur
-    | map(select(.status == "todo" and (.blocked_by - $ok) == [])) as $ready
-    | ($ready | map(select(.wave == $cur))) as $front
+    | ready as $ready | frontier as $front
     | { nodes: $front,
         text: ($front | map("\(.id | pad($w))\(.kind | pad(11))\(.tier)") | join("\n")),
         reason: (if $cur == null or ($front | length) > 0 then "" else
@@ -297,6 +383,116 @@ cmd_check() {
   [ "$(printf '%s' "$nodes" | jq 'length')" -eq 0 ] || exit 1
 }
 
+cmd_start() {
+  [ -n "$ARG" ] || usage
+  need_seq; node_file "$ARG"
+  local status forced=""
+  status="$(node_field .status)"
+  case "$status" in
+    todo)
+      if ! printf '%s' "$NODES_JSON" | jq -e --arg id "$ARG" "$DERIVE_JQ"' frontier | any(.id == $id)' >/dev/null; then
+        [ "$FORCE" -eq 1 ] || die 1 "$ARG is not on the frontier (blockers unfinished or a later wave); --force to start it anyway"
+        forced=" (forced: not on the frontier)"
+      fi ;;
+    blocked) ;;
+    *) die 1 "$ARG is $status; start needs todo or blocked" ;;
+  esac
+  fm_set "$NODE_FILE" status doing; stamp_session
+  log_append "$NODE_FILE" "$WHO · started$forced"
+  report "$ARG" doing
+}
+
+cmd_done() {
+  [ -n "$ARG" ] || usage
+  need_who; node_file "$ARG"
+  local status forced="" line rc attempt loop
+  status="$(node_field .status)"
+  [ "$(node_field .kind)" != hitl ] || [ -n "$BY" ] || die 1 "$ARG is a hitl node: a person ticks it — done $ARG --by human"
+  case "$status" in
+    doing) ;;
+    todo)  [ "$FORCE" -eq 1 ] || die 1 "$ARG is todo; start it first (--force to mark it done anyway)"; forced=" (forced from todo)" ;;
+    *)     die 1 "$ARG is $status; done needs doing" ;;
+  esac
+  if [ "$(node_field '.check // empty')" = "" ]; then line="done$forced"
+  else
+    run_check; rc=$?
+    if [ "$rc" -ne 0 ]; then
+      loop="$(node_field .loop)"; attempt=$(( $(failed_attempts) + 1 ))
+      line="$WHO · check failed (exit $rc), attempt $attempt of $loop"
+      if [ "$attempt" -ge "$loop" ]; then fm_set "$NODE_FILE" status blocked; line="$line → blocked"; fi
+      log_append "$NODE_FILE" "$line"
+      die 1 "$ARG ${line#"$WHO · "}"
+    fi
+    line="check passed → done$forced"
+  fi
+  fm_set "$NODE_FILE" status done; stamp_session
+  log_append "$NODE_FILE" "$WHO · $line"
+  report "$ARG" done
+}
+
+cmd_verify() {
+  [ -n "$ARG" ] || usage
+  node_file "$ARG"
+  local result rc=0
+  if [ "$(node_field '.check // empty')" = "" ]; then result="no check"
+  else run_check; rc=$?; if [ "$rc" -eq 0 ]; then result="check passed"; else result="check failed (exit $rc)"; fi; fi
+  if [ "$JSON" -eq 1 ]; then jq -n --arg id "$ARG" --arg result "$result" --argjson exit "$rc" '{id: $id, result: $result, exit: $exit}'
+  else echo "$ARG: $result"; fi
+  [ "$rc" -eq 0 ]
+}
+
+cmd_block() {
+  [ -n "$ARG" ] && [ -n "$ARG2" ] || usage
+  need_who; node_file "$ARG"
+  [ "$(node_field .status)" = doing ] || die 1 "$ARG is $(node_field .status); block needs doing"
+  fm_set "$NODE_FILE" status blocked
+  log_append "$NODE_FILE" "$WHO · blocked: $ARG2"
+  report "$ARG" blocked
+}
+
+cmd_drop() {
+  [ -n "$ARG" ] || usage
+  need_who; node_file "$ARG"
+  [ "$(node_field .status)" != dropped ] || die 1 "$ARG is already dropped"
+  fm_set "$NODE_FILE" status dropped
+  log_append "$NODE_FILE" "$WHO · dropped${ARG2:+: $ARG2}"
+  report "$ARG" dropped
+}
+
+cmd_add() {
+  [ -n "$ARG" ] && [ -n "$WAVE" ] || usage
+  printf '%s' "$ARG" | grep -qE '^[a-z0-9][a-z0-9-]*$' || die 2 "slug '$ARG' must be lowercase [a-z0-9-]"
+  local k v nodes n f id ids b
+  for k in WAVE PARALLEL LOOP; do eval "v=\$$k"; [ -z "$v" ] || printf '%s' "$v" | grep -qE '^[0-9]+$' || die 2 "--$(printf '%s' "$k" | tr A-Z a-z) '$v' is not an integer"; done
+  case "$KIND" in ""|work|reconcile|hitl) ;; *) die 2 "unknown kind $KIND (work|reconcile|hitl)" ;; esac
+  case "$TIER" in ""|frontier|standard|cheap|auto) ;; *) die 2 "unknown tier $TIER (frontier|standard|cheap|auto)" ;; esac
+  nodes="$(load_nodes "$PLAN_DIR")" || exit 1
+  ids="$(printf '%s' "$nodes" | jq -r '.[].id')"
+  for f in "$PLAN_DIR"/nodes/*-"$ARG".md; do [ -f "$f" ] && die 1 "slug $ARG is taken by $(basename "$f")"; done
+  b="$(printf '%s' "$BLOCKED_BY" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep . || true)"
+  for v in $b; do printf '%s\n' "$ids" | grep -qx "$v" || die 1 "--blocked-by names no node $v"; done
+  n=0; for f in "$PLAN_DIR"/nodes/[0-9]*.md; do [ -f "$f" ] || continue; f="$(basename "$f")"; f="${f%%-*}"; [ "$f" -gt "$n" ] 2>/dev/null && n="$f"; done
+  id="$(printf '%02d-%s' $((10#$n + 1)) "$ARG")"
+  {
+    echo "---"; echo "id: $id"; echo "title: $TITLE"; echo "status: todo"; echo "kind: ${KIND:-work}"; echo "wave: $WAVE"
+    echo "blocked_by: [$(printf '%s' "$b" | tr '\n' ',' | sed 's/,$//; s/,/, /g')]"
+    [ -z "$TIER" ] || echo "tier: $TIER"
+    [ -z "$PARALLEL" ] || echo "parallel: $PARALLEL"
+    [ -z "$LOOP" ] || echo "loop: $LOOP"
+    [ -z "$CHECK" ] || echo "check: $CHECK"
+    echo "sessions: []"
+    [ -z "$ISOLATED" ] || echo "isolated: yes"
+    echo "---"; echo; echo "## Goal"; echo; echo "## Acceptance"; echo; echo "## Log"
+  } > "$PLAN_DIR/nodes/$id.md"
+  report "$id" todo
+}
+
+cmd_note() {
+  [ -n "$ARG" ] || usage
+  section_append "$PLAN_DIR/plan.md" "## Not yet specified" "${WHO:+$WHO · }$ARG" \
+    || die 1 "$PLAN_DIR/plan.md has no '## Not yet specified' section"
+}
+
 case "$VERB" in
   new)       cmd_new ;;
   status)    resolve_plan; cmd_status ;;
@@ -305,4 +501,11 @@ case "$VERB" in
   remaining) resolve_plan; cmd_remaining ;;
   graph)     resolve_plan; cmd_graph ;;
   check)     resolve_plan; cmd_check ;;
+  start)     resolve_plan write; cmd_start ;;
+  done)      resolve_plan write; cmd_done ;;
+  verify)    resolve_plan; cmd_verify ;;
+  block)     resolve_plan write; cmd_block ;;
+  drop)      resolve_plan write; cmd_drop ;;
+  add)       resolve_plan write; cmd_add ;;
+  note)      resolve_plan write; cmd_note ;;
 esac

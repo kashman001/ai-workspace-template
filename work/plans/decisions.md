@@ -334,3 +334,21 @@ earn a file, `context-budget.env` is already where the budget-shaped constants l
 **Blast radius:** `scripts/plan.sh` (`node_parse`, `DANGLING_JQ`, `cmd_check`),
 `context-budget.env`, `docs/plans.md`.
 **Promote?:** no.
+
+## 2026-09-23 — Write verbs: who stamps, where checks run, how attempts count (settled)
+**Chose:** The Log stamp is `--by <actor>`, else `s<seq>` from `--session`
+or the item's `session-state.json`; `start` needs a number, the rest accept
+either. A node's `check` runs from `work/<item>/` with `WORKSPACE_ROOT`
+exported. Failed attempts count Log lines since the last `started`, so
+`blocked → doing` gets `loop` fresh. Write verbs resolve the plan strictly
+and refuse a closed one; `start` does not lint.
+**Because:** A human ticking a hitl node has no session; the loop's children
+do. Item-relative paths (`seams.md`, `issues/`) are what checks name;
+root-relative ones can use the variable. Counting from the file keeps
+`plan.sh` stateless. A closed plan is the wrong graph for a write.
+**Rejected:** a `--session` requirement everywhere — blocks the human tick;
+a failure counter field — a second hand on the frontmatter for what the Log
+already says; `start` running `check` — the loop does it between children
+(ticket 07), twice is noise.
+**Blast radius:** `plan.sh` write verbs; `docs/plans.md` "State machine".
+**Promote?:** no.

@@ -62,6 +62,13 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 | `remaining` | every node that is neither `done` nor `dropped`, by wave then id | `07-spec                doing    wave 3` |
 | `graph` | the whole plan, one block per wave, each node with its blockers | `  08-tickets  todo  work  <- 07-spec` under a `wave 3` heading |
 | `check` | lints the plan against the rules below; every violation at once, exit 1 when any, silent and exit 0 on a clean plan | `<node path>: hitl node has a check` or `wave 3: 0 reconcile nodes (want exactly one)` |
+| `start <id>` | `todo` → `doing` for a frontier node (`--force` for one off it), or `blocked` → `doing`; adds the session to `sessions`, logs `started` | `08-tickets doing` |
+| `done <id>` | `doing` → `done` once the node's `check` passes (`--force` allows `todo` → `done`); a `kind: hitl` node needs `--by human`; a failing check is refused, and the Nth failure (`loop: N`) writes `blocked` | `07-spec done` |
+| `verify <id>` | runs the check and reports; changes nothing; exit 1 on failure | `07-spec: check passed` / `check failed (exit 4)` / `no check` |
+| `block <id> <reason>` | `doing` → `blocked`, the reason as the latest Log line | `07-spec blocked` |
+| `drop <id> [reason]` | any → `dropped` | `08-tickets dropped` |
+| `add <slug> --wave <n> [--title …] [--kind …] [--tier …] [--blocked-by a,b] [--parallel n] [--loop n] [--check …] [--isolated]` | writes `nodes/NN-<slug>.md` (next number, `status: todo`, empty Goal/Acceptance/Log); refuses a taken slug or a blocker naming no node; does not lint | `10-board-renderer todo` |
+| `note <text>` | appends `- s<n> · <text>` to `plan.md` → "Not yet specified"; touches no node file and never the board | (silent) |
 
 "Wave n of m" is the lowest wave with a node that is neither `done` nor
 `dropped`, of the highest wave number. "Sessions" is the count of distinct
@@ -79,6 +86,22 @@ only in a later wave: …` appended when a later wave has an unblocked node —
 waves run in order, so it is not offered). A `blocked_by` naming no node in
 the plan is refused (exit 1, naming the file) by every verb. No DOT output
 yet; `graph --json` carries the edges for anything that wants to draw.
+
+**State machine.** `todo → doing → done`, `doing → blocked → doing`, any →
+`dropped`; every other transition is refused with exit 1 and the file
+untouched. Write verbs edit one node file in place — the frontmatter keeps
+its line order and comments, and a `- <who> · <what>` line is appended under
+`## Log` — so `done` written by anything but `plan.sh done` is outside the
+contract (nothing stops a hand edit; the Log just will not say why). `<who>`
+is `--by <actor>` when given, else `s<n>` with the session number from
+`--session <n>` or `seq` in the item's `session-state.json`; `start` always
+needs a number (the `doing-sessions` rule), the other write verbs accept
+either. A node's `check` runs from `work/<item>/` with `WORKSPACE_ROOT` in
+the environment and its output on stderr. Failed attempts are counted from
+the node's own Log lines since it was last `started`, so a resumed node gets
+its `loop` again. Write verbs resolve the plan strictly — `--plan`,
+`chain.plan`, the single open plan, else refuse — and refuse a closed plan.
+`start` does not lint; the session loop runs `check` between children.
 
 **Check rules.** `check` parses leniently — a bad node is one violation, not a
 refusal — so one run lists everything. Text is `<where>: <message>` (the node
@@ -102,8 +125,8 @@ apply). The rules, by `rule` slug:
   (explicit env, then `context-budget.env`, then 6).
 
 **Exit codes** are the contract: `0` ok; `1` lint or state refusal (malformed
-node, unknown value, unknown id, a plan already open); `2` usage or resolution
-failure. Refusals print `plan: <detail>` on stderr.
+node, unknown value, unknown id, a plan already open, an illegal transition,
+a failing check); `2` usage or resolution failure. Refusals print `plan: <detail>` on stderr.
 
 **Resolution.** The work item: `--project` → the session registry binding
 (a `.context-budget/sessions/*.json` record with a `project` whose `pid` and

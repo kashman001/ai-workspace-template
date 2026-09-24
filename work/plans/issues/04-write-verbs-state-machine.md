@@ -4,11 +4,11 @@
 
 **Blocked by:** 02, 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Spec:** S4, S8, S18, S19, S20
 
-- [ ] Illegal transitions refused with exit 1 (done on a failing check, start off-frontier without `--force`, done written by anything but this verb is out of contract and documented as such)
-- [ ] `done --by human` on a hitl node logs the actor; `done` on a hitl node without it is refused
-- [ ] Loop cap test: check fails N times → status blocked, reason logged
-- [ ] `note` never touches node files or the board
+- [x] Illegal transitions refused with exit 1 (done on a failing check, start off-frontier without `--force`, done written by anything but this verb is out of contract and documented as such)
+- [x] `done --by human` on a hitl node logs the actor; `done` on a hitl node without it is refused
+- [x] Loop cap test: check fails N times → status blocked, reason logged
+- [x] `note` never touches node files or the board
