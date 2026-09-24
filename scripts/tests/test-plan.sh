@@ -471,5 +471,34 @@ assert_eq "T18v: a closed plan still syncs (a projection, not a transition)" "$r
 cp "$TMP/plan.bak" "$PM"; rm -f "$LAUNCH"
 "$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T18w: fixture clean at the end" "$?" "0"
 
+echo "T19: tiers — auto resolves node tier -> plan override -> workspace table -> wave default; reconcile/hitl fan in"
+TENV="$TMP/plan-tiers.env"
+printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_TIER_DOCS=standard\nPLAN_MODEL_CLAUDE_FRONTIER=opus\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_GEMINI_FRONTIER=pro\n' > "$TENV"
+tiers() { "$PLAN" show "$1" --project demo --json | jq -c '[.tier, .tier_resolved]'; }   # <id>
+reset; cp "$PM" "$TMP/plan.bak"
+assert_eq "T19a: an explicit tier resolves to itself" "$(tiers 08-tickets)" '["standard","standard"]'
+setf 08-tickets tier auto
+assert_eq "T19b: auto with no leaf label falls to the plan default" "$(tiers 08-tickets)" '["auto","standard"]'
+addf 08-tickets leaf research
+assert_eq "T19c: auto + leaf label looks the workspace table up" "$(tiers 08-tickets)" '["auto","cheap"]'
+sed -i '' 's/^default_tier: standard$/default_tier: standard\
+tier_research: frontier/' "$PM"
+assert_eq "T19d: a plan override beats the workspace table" "$(tiers 08-tickets)" '["auto","frontier"]'
+cp "$TMP/plan.bak" "$PM"; setf 08-tickets leaf nosuchlabel
+assert_eq "T19e: an unknown label falls to the plan default" "$(tiers 08-tickets)" '["auto","standard"]'
+sed -i '' 's/^default_tier: standard$/default_tier: cheap/' "$PM"
+assert_eq "T19f: ... which is the wave default" "$(tiers 08-tickets)" '["auto","cheap"]'
+sed -i '' 's/^default_tier: cheap$/default_tier: auto/' "$PM"
+assert_eq "T19g: a plan default of auto bottoms out at standard" "$(tiers 08-tickets)" '["auto","standard"]'
+cp "$TMP/plan.bak" "$PM"; rm "$TENV"
+assert_eq "T19h: no plan-tiers.env at all — the label just misses" "$(setf 08-tickets leaf research; tiers 08-tickets)" '["auto","standard"]'
+reset; sed -i '' '/^tier: frontier$/d' "$NODES/04-grill-open-items.md"; setf 09-reconcile-verdict tier auto
+assert_eq "T19i: hitl defaults to frontier, reconcile resolves auto to frontier (fan-in)" "$(tiers 04-grill-open-items):$(tiers 09-reconcile-verdict)" '["frontier","frontier"]:["auto","frontier"]'
+"$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T19j: ... and the plan passes check" "$?" "0"
+printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_GEMINI_FRONTIER=pro\n' > "$TENV"
+reset; setf 07-spec status done; setf 08-tickets tier auto; addf 08-tickets leaf research
+assert_eq "T19k: frontier prints the resolved tier and marks auto" "$("$PLAN" frontier --project demo | squeeze)" "08-tickets work cheap (auto)"
+assert_eq "T19l: frontier --json carries tier_resolved" "$("$PLAN" frontier --project demo --json | jq -c '[.[0].tier, .[0].tier_resolved]')" '["auto","cheap"]'
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

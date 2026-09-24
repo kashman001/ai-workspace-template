@@ -131,8 +131,10 @@ NODE_JQ='
     elif (.status | IN("todo","doing","done","blocked","dropped") | not) then .problem //= "unknown status \(.status) (todo|doing|done|blocked|dropped)" else . end
   | .kind //= "work"
   | if (.kind | IN("work","reconcile","hitl") | not) then .problem //= "unknown kind \(.kind) (work|reconcile|hitl)" else . end
-  | .tier //= (if .kind == "reconcile" then "frontier" else $default_tier end)
+  | .tier //= (if .kind == "reconcile" or .kind == "hitl" then "frontier" else $default_tier end)
   | if (.tier | IN("frontier","standard","cheap","auto") | not) then .problem //= "unknown tier \(.tier) (frontier|standard|cheap|auto)" else . end
+  | .leaf //= null
+  | if .leaf != null and (.leaf | test("^[a-z][a-z0-9_]*$") | not) then .problem //= "leaf label \(.leaf) is not [a-z][a-z0-9_]*" else . end
   | if .wave == null then .problem //= "missing wave" else int("wave") end
   | .parallel //= "1" | int("parallel") | .loop //= "1" | int("loop")
   | .blocked_by = ((.blocked_by // "[]") | list)
@@ -152,7 +154,29 @@ node_json() {  # <file> <default tier>: one JSON object, or exit 1 naming the fi
 # On an array of nodes, with $ids bound to the plan's ids: one violation object per blocked_by entry naming no node.
 DANGLING_JQ='.[] | .blocked_by[] as $b | select(($ids | index($b)) == null)
   | {rule: "blocked-by", id, wave, path, message: "blocked_by names no node \($b)"}'
-load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name
+# ---- tiers ----------------------------------------------------------------------
+# `auto` resolves node tier -> plan.md `tier_<label>:` -> PLAN_TIER_<LABEL> in plan-tiers.env
+# -> the plan's default_tier -> standard; the label is the node's `leaf:`. Reconcile and hitl
+# fan in to frontier. PLAN_MODEL_<RUNTIME>_<TIER> maps a tier to a model knob (docs/plans.md -> "Tiers").
+tier_env_json() {  # {policy: {label: tier}, models: {runtime: {tier: model}}} from plan-tiers.env
+  local f="$WORKSPACE_ROOT/plan-tiers.env" v
+  { [ ! -f "$f" ] || ( . "$f" >/dev/null 2>&1
+      for v in $(compgen -A variable PLAN_TIER_; compgen -A variable PLAN_MODEL_); do printf '%s\t%s\n' "$v" "${!v}"; done ); } \
+  | jq -R -s '[split("\n")[] | select(. != "") | split("\t") | {k: .[0], v: .[1]}]
+      | { policy: (map(select(.k | startswith("PLAN_TIER_")) | {key: (.k | ltrimstr("PLAN_TIER_") | ascii_downcase), value: .v}) | from_entries),
+          models: (reduce (map(select(.k | startswith("PLAN_MODEL_")) | (.k | ltrimstr("PLAN_MODEL_") | ascii_downcase | capture("^(?<r>.+)_(?<t>[a-z]+)$")) + {m: .v})[]) as $e
+                     ({}; .[$e.r][$e.t] = $e.m)) }'
+}
+plan_tiers_json() {  # <plan dir>: {label: tier} from plan.md's `tier_<label>:` lines
+  { fm_block "$1/plan.md" 2>/dev/null || true; } | sed -n 's/^tier_\([a-z][a-z0-9_]*\):[[:space:]]*\(.*\)$/\1\t\2/p' \
+  | jq -R -s '[split("\n")[] | select(. != "") | split("\t") | {key: .[0], value: (.[1] | sub("[[:space:]]+$"; ""))}] | from_entries'
+}
+RESOLVE_JQ='map(.tier_resolved = (
+    if .tier != "auto" then .tier
+    elif .kind == "reconcile" or .kind == "hitl" then "frontier"
+    else ($plan[.leaf // ""] // $env.policy[.leaf // ""] // (if $dt == "auto" then "standard" else $dt end)) end))'
+
+load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name, each with its resolved tier
   local tier f one out=""
   tier="$(fm_get "$1/plan.md" default_tier)"; [ -n "$tier" ] || tier=standard
   for f in "$1"/nodes/*.md; do
@@ -160,7 +184,7 @@ load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name
     one="$(node_json "$f" "$tier")" || exit 1     # node_json already named the file
     out="$out$one"
   done
-  out="$(printf '%s' "$out" | jq -s '.')"
+  out="$(printf '%s' "$out" | jq -s --argjson env "$(tier_env_json)" --argjson plan "$(plan_tiers_json "$1")" --arg dt "$tier" "$RESOLVE_JQ")"
   one="$(printf '%s' "$out" | jq -r '[.[].id] as $ids | '"$DANGLING_JQ"' | "\(.path): \(.message)"' | head -1)"
   [ -z "$one" ] || die 1 "$one"
   printf '%s' "$out"
@@ -320,7 +344,7 @@ cmd_frontier() {
     . as $all | idw as $w | finished as $ok | current_wave as $cur
     | ready as $ready | frontier as $front
     | { nodes: $front,
-        text: ($front | map("\(.id | pad($w))\(.kind | pad(11))\(.tier)") | join("\n")),
+        text: ($front | map("\(.id | pad($w))\(.kind | pad(11))\(.tier_resolved)" + (if .tier == "auto" then " (auto)" else "" end)) | join("\n")),
         reason: (if $cur == null or ($front | length) > 0 then "" else
           "frontier empty: wave \($cur) has nothing ready — "
           + ($all | map(select(.wave == $cur and .status != "done" and .status != "dropped")

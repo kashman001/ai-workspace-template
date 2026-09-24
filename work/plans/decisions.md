@@ -368,3 +368,27 @@ transition); rendering the launcher block even when `plan.md` lacks markers;
 inventing missing markers (settled: reported, never invented).
 **Blast radius:** `cmd_sync`, T18, the fixture board (re-rendered by `sync`).
 **Promote?:** no.
+
+## 2026-09-24 — Tiers: `leaf:` is the lookup key, `tier_<label>:` the plan override, one `plan-tiers.env` (settled)
+**Chose:** `auto` resolves node `tier` → `plan.md` `tier_<label>:` → `PLAN_TIER_<LABEL>`
+in `plan-tiers.env` → the plan's `default_tier` → `standard`; the label is
+the node's optional `leaf: <label>` (`[a-z][a-z0-9_]*`), absent or unknown
+labels skip to the default. Reconcile and hitl nodes default to `frontier`
+and resolve `auto` to `frontier` (fan-in). Model knobs are
+`PLAN_MODEL_<RUNTIME>_<TIER>` in the same file; the runtime is `--runtime` →
+`PLAN_RUNTIME` → the bound registry record → unknown. Node JSON carries
+`tier_resolved` and `model` (null = session model); `frontier` text prints
+the resolved tier with ` (auto)`; `start` logs `started, tier <t>` or
+`…, tier <t> unavailable on <runtime> (session model)`. Model names never
+reach a plan or node file. The board keeps the written tier.
+**Because:** "kind of leaf work" needs a key `kind:` does not carry; a
+frontmatter line is visible in the node and needs no new file. One env file
+beside `context-budget.env` matches rlm's knob shape and is what every
+runtime's hook can source. Stamping the tier (not the model) keeps node
+files runtime-neutral while the Log still says what ran.
+**Rejected:** deriving the label from the slug (fragile, invisible); a
+per-plan `tiers.env` (a second file for two lines); `auto` as a policy
+value (circular); stamping the model into the Log (box 3 of ticket 06).
+**Blast radius:** `load_nodes`, `cmd_frontier`, `cmd_start`, `cmd_add
+--leaf`, `plan-tiers.env`, `docs/plans.md` → "Tiers".
+**Promote?:** maybe — with the 2026-09-23 note, if the mapping outgrows plans.
