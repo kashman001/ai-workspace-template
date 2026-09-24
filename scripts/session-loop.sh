@@ -8,11 +8,11 @@
 #          in `chain`, runs it in the foreground, and reads the verdict from what
 #          the launcher wrote at the bump (`launch.predecessor`, `staged.by`)
 #          plus `seq` before and after. It never talks to a model.
-# Usage:   session-loop.sh <project> [--runtime <rt>] [--max-sessions <N>]
-#            [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap] [--reopen]
-#            [--relaunch-override]
-# Exit:    0 chain ended (verdict quit_stop / quit_plain / cap, or the
-#          interactive pause) / 1 broken / 3 usage / 4 refused at start
+# Usage:   session-loop.sh <project> [--runtime <rt>] [--plan <slug>]
+#            [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>]
+#            [--reset-cap] [--reopen] [--relaunch-override]
+# Exit:    0 chain ended (verdict quit_stop / quit_plain / cap / plan_closed, or
+#          the interactive pause) / 1 broken / 3 usage / 4 refused at start
 #          130/143/129 signal deaths (INT untrapped; TERM/HUP re-raised)
 # Lines:   on stderr and in work/<project>/.session-loop.log; the code and the
 #          exit status are the contract, the prose is not:
@@ -21,11 +21,18 @@
 #            session-loop: broken reason=<code> seq=<n> [k=v …] — <remedy>
 #          Codes (evaluation/stage3-design-v2.md, gate table): start refusals
 #          record_unreadable, schema_mismatch, chain_closed, supervisor_live,
-#          relaunch_off, staged_invalid leg=spent, and the launcher's own code
-#          when the bootstrap stage is refused; verdicts staged, quit_stop,
-#          quit_plain, cap; broken rc_nonzero, logout, staged_invalid
+#          relaunch_off, staged_invalid leg=spent, plan_invalid
+#          leg=<unresolved|ambiguous>, and the launcher's own code when the
+#          bootstrap stage is refused; verdicts staged, quit_stop, quit_plain,
+#          cap, plan_closed; broken rc_nonzero, logout, staged_invalid
 #          leg=<seq|staged|predecessor|by|lifetime>, no_own_measurement,
-#          record_unreadable, schema_mismatch, stall.
+#          record_unreadable, schema_mismatch, stall, plan_invalid
+#          leg=<sync|check>.
+#          A plan (docs/plans.md) binds at start — --plan, else chain.plan in
+#          the record, else the single open plan — and is re-rendered, linted
+#          and read between children: closed with its terminal reconcile node
+#          done ends the chain; a hitl-only frontier makes the next session
+#          interactive. A plan-less item runs exactly as before.
 set -u
 main() {
 
@@ -49,11 +56,12 @@ ROOT="$(resolve_workspace_root)"
 . "$ROOT/scripts/lib/session-lib.sh"
 [ -f "$ROOT/context-budget.env" ] && . "$ROOT/context-budget.env"
 
-PROJECT=""; RUNTIME=""; MAX_SESSIONS=""; MIN_LIFETIME=""; STALL_LIMIT=""
+PROJECT=""; RUNTIME=""; PLAN_OPT=""; MAX_SESSIONS=""; MIN_LIFETIME=""; STALL_LIMIT=""
 RESET_CAP=0; REOPEN=0; RELAUNCH_OVERRIDE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
+    --plan) PLAN_OPT="$2"; shift 2 ;;
     --reset-cap) RESET_CAP=1; shift ;;
     --reopen) REOPEN=1; shift ;;
     --relaunch-override) RELAUNCH_OVERRIDE=1; shift ;;
@@ -64,7 +72,7 @@ while [ $# -gt 0 ]; do
     *) [ -z "$PROJECT" ] && PROJECT="$1" || { echo "unexpected argument: $1" >&2; exit 3; }; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap] [--reopen] [--relaunch-override]" >&2; exit 3; }
+[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--plan <slug>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap] [--reopen] [--relaunch-override]" >&2; exit 3; }
 command -v jq >/dev/null 2>&1 || { echo "session-loop: refused reason=jq_missing — jq is required" >&2; exit 4; }
 
 S="$ROOT/work/$PROJECT"
@@ -156,6 +164,30 @@ supervisor_live && refuse supervisor_live "pid=$(rq '.chain.supervisor.pid') pro
 USED="$(rq '.chain.used // 0')"
 [ "$USED" -lt "$MAX_SESSIONS" ] || cap_stop "$USED"
 [ "$USED" -gt 0 ] && say "resuming the chain budget at $USED of $MAX_SESSIONS used"
+# The plan, if any: --plan, else the record's chain.plan (a restart keeps its
+# binding), else the single open plan under work/<project>/plans. Two open
+# plans need --plan; a slug plan.sh cannot read is refused before anything is
+# written. Plan-less items bind nothing and run exactly as before.
+plan_sh() { "$ROOT/scripts/plan.sh" "$@" --project "$PROJECT" --plan "$PLAN"; }
+PLAN="${PLAN_OPT:-$(rq '.chain.plan // empty')}"
+if [ -z "$PLAN" ]; then
+  open_plans=""
+  for d in "$S"/plans/[0-9]*/; do
+    [ -f "$d/plan.md" ] || continue
+    [ "$(awk 'NR == 1 { next } /^---$/ { exit } /^status:/ { sub(/^status:[ \t]*/, ""); sub(/[ \t]+$/, ""); print; exit }' "$d/plan.md")" = open ] || continue
+    open_plans="$open_plans${open_plans:+ }$(basename "$d")"
+  done
+  case "$open_plans" in
+    "") ;;
+    *" "*) refuse plan_invalid "leg=ambiguous project=$PROJECT open=$(printf '%s' "$open_plans" | tr ' ' ',') — more than one plan is open; name the one this chain runs: scripts/session-loop.sh $PROJECT --plan <slug>" ;;
+    *) PLAN="$open_plans" ;;
+  esac
+fi
+if [ -n "$PLAN" ]; then
+  perr="$(plan_sh status --json 2>&1 >/dev/null)" \
+    || refuse plan_invalid "leg=unresolved plan=$PLAN project=$PROJECT — scripts/plan.sh cannot read work/$PROJECT/plans/$PLAN (${perr:-no detail}); name an existing plan with --plan, or null chain.plan in the record"
+  say "plan $PLAN is bound to this chain"
+fi
 git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1 || { echo "error: $ROOT is not a git repository" >&2; exit 3; }
 
 cd "$ROOT" || exit 3
@@ -163,8 +195,10 @@ export TF_SESSION_LOOP=1
 export TF_SESSION_LOOP_PROJECT="$PROJECT"   # the turn-end hooks locate the work item through it
 rec_write true \
   '.chain = {supervisor: {pid: $pid, pid_start: $ps, started_at: $at},
-             used: ((.chain // {}).used // 0), cap: $cap, closed: ((.chain // {}).closed // null)}' \
-  --argjson pid "$SUP_PID" --arg ps "$SUP_START" --arg at "$(date -u +%FT%TZ)" --argjson cap "$MAX_SESSIONS" || exit 4
+             used: ((.chain // {}).used // 0), cap: $cap, closed: ((.chain // {}).closed // null),
+             plan: (if $plan == "" then null else $plan end)}' \
+  --argjson pid "$SUP_PID" --arg ps "$SUP_START" --arg at "$(date -u +%FT%TZ)" --argjson cap "$MAX_SESSIONS" \
+  --arg plan "$PLAN" || exit 4
 
 # ---- the watchdog ------------------------------------------------------------
 # A background subshell per child: the child is foreground and tty-inheriting,
@@ -350,7 +384,41 @@ while :; do
   [ "$MIN_LIFETIME" -le 0 ] || [ "$elapsed" -ge "$MIN_LIFETIME" ] \
     || broken staged_invalid "leg=lifetime seq=$seq elapsed=${elapsed}s min=${MIN_LIFETIME}s — a rollover this fast is not work"
   mode="$(rq '.launch.mode // "handsoff"')"
+  # The plan, when one is bound: re-render it, lint it, then read where it
+  # stands. The child's rollover is judged first (the staged verdict), then the
+  # plan: one the supervisor cannot trust breaks the chain before the next
+  # child; a closed one whose terminal reconcile node is done ends it; a
+  # frontier holding only hitl nodes hands the next session to a human.
+  plan_bad=""; plan_closed=0; perr=""
+  if [ -n "$PLAN" ]; then
+    perr="$(plan_sh sync 2>&1 >/dev/null)" || plan_bad=sync
+    [ -n "$plan_bad" ] || perr="$(plan_sh check 2>&1)" || plan_bad=check
+    if [ -z "$plan_bad" ]; then
+      if [ "$(plan_sh status --json 2>/dev/null | jq -r '.status // empty')" = closed ] \
+         && plan_sh graph --json 2>/dev/null | jq -e '([.nodes[].wave] | max) as $top
+              | [.nodes[] | select(.kind == "reconcile" and .wave == $top)]
+              | length > 0 and all(.status == "done")' >/dev/null 2>&1; then
+        plan_closed=1
+      elif [ "$mode" != interactive ] \
+           && plan_sh frontier --json 2>/dev/null | jq -e 'length > 0 and all(.kind == "hitl")' >/dev/null 2>&1; then
+        mode=interactive
+        rec_write true '.launch.mode = "interactive"' >/dev/null || say "warning: could not record the interactive mode"
+        say "plan $PLAN: every node on the frontier is hitl — session #$seq_after will be interactive"
+      fi
+    fi
+  fi
   verdict staged "seq=$seq successor=$seq_after mode=$mode"
+  if [ -n "$plan_bad" ]; then
+    [ -z "$perr" ] || printf '%s\n' "$perr" >&2
+    broken plan_invalid "leg=$plan_bad seq=$seq plan=$PLAN — scripts/plan.sh $plan_bad failed for work/$PROJECT/plans/$PLAN (its lines are above); repair the plan, then resume: scripts/session-loop.sh $PROJECT"
+  fi
+  if [ "$plan_closed" -eq 1 ]; then
+    rec_write '.chain.closed == null' '.chain.closed = {at: $at, by_seq: $seq, reason: "plan_closed"}' \
+      --arg at "$(date -u +%FT%TZ)" --argjson seq "$seq" >/dev/null \
+      || say "warning: could not record the chain close"
+    notify "verdict=plan_closed seq=$seq plan=$PLAN — the plan is closed and its reconcile node is done; the chain is closed (reopen: scripts/session-loop.sh $PROJECT --reopen)"
+    exit 0
+  fi
 
   # Hands-off only: in interactive mode the human at the keyboard is the stall detector.
   if [ "$STALL_LIMIT" -gt 0 ] && [ "$mode" = "handsoff" ] && [ "$head_before" != "none" ]; then
