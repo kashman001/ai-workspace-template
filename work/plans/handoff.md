@@ -6,6 +6,62 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 8 (2026-09-24): ticket 05 done (docs); ticket 06 slice a — tier resolution, T19a–l
+
+**Summary.** Seq 8, supervised chain, hands-off. Ticket 05's doc half landed
+(`f644e8a`): the `sync` row and the launcher's `position` block shape in
+`docs/plans.md`, the marker convention once in
+`docs/work-directory-conventions.md` → "Generated blocks (markers)"; ticket
+05 `done`. Then ticket 06, test-first, first slice (`6dc70f6`): T19a–l in
+`scripts/tests/test-plan.sh` (12 assertions, 221 total) — the resolution
+order node tier → `plan.md` `tier_<label>:` → `PLAN_TIER_<LABEL>` in
+`plan-tiers.env` → the plan's `default_tier` → `standard`, keyed by the
+node's new optional `leaf:` label; hitl now defaults to `frontier` and
+reconcile/hitl resolve `auto` to `frontier`; `frontier` prints the resolved
+tier with ` (auto)`; every node's JSON carries `tier_resolved`. In
+`scripts/plan.sh`: `tier_env_json` (sources `plan-tiers.env` in a subshell,
+`compgen -A variable` → `{policy, models}` — `models` is already parsed as
+`{runtime: {tier: model}}` for the next slice), `plan_tiers_json`,
+`RESOLVE_JQ` applied inside `load_nodes`. One decision note (2026-09-24,
+tiers). Suites green; WARN at ~122K right after green, so the slice was
+committed and the session rolled.
+
+**Left for the successor (ticket 06, slices b and c).** (b) `model` on node
+JSON from `$env.models[runtime][tier_resolved]` (null = session model); the
+runtime from `--runtime` → `PLAN_RUNTIME` → the bound registry record's
+`runtime` (split `registry_project` into a record finder so the walk is
+shared) → unknown; `start` logs `started, tier <t>` with a knob, `started,
+tier <t> unavailable on <runtime> (session model)` without, `… unavailable
+(no runtime; session model)` when unknown — update T12d's pinned line; a
+T19 case that no model name (grep the mapping's values) lands in any node
+file or `plan.md` after `start`. (c) `add --leaf <label>`; refusals: a
+`tier_<label>:` value outside `frontier|standard|cheap` → exit 1 naming
+`plan.md` (and a `malformed` violation in `check`), a bad `PLAN_TIER_*`
+value → exit 1 naming `plan-tiers.env`. Then the checked-in `plan-tiers.env`
+(claude: `opus`/`sonnet`/`haiku` CLI aliases; codex, gemini, opencode,
+copilot rows present but unset, each with its `--model` flag named, the
+unset-means-session-model case explained in the header), the `plan.sh`
+header comment, and `docs/plans.md`: `leaf` row in the node table, `tier_<label>:`
+in the plan.md frontmatter paragraph, `frontier`'s ` (auto)`, `add --leaf`,
+`tier_resolved`/`model` in the `--json` paragraph, a short "Tiers" section
+(order, the two files, per-runtime mapping, the unavailable case, the Log
+stamp, "no model name in a plan or node file"). Tick the three boxes, set
+ticket 06 `done`.
+
+**Choices made without a decision note.** The board (`sync`) keeps showing
+the written tier, not the resolved one — the orchestrator reads `frontier`.
+An absent or unknown `leaf:` skips straight to the plan default (no
+violation, no warning). `default_tier: auto` bottoms out at `standard`.
+`tier_env_json` treats a missing `plan-tiers.env` as empty.
+
+**Verification.** `bash scripts/tests/test-plan.sh` → passed=221 failed=0;
+`test-doc-consistency.sh` 7/7 after the ticket 05 docs. shellcheck not
+installed — not run. `/code-review` skipped at WARN.
+
+**Budget.** WARN (~122K) the moment slice a went green; rolled under WARN.
+Nothing pushed; `main` is 33 commits ahead of `origin/main`. Untracked
+`work/jev-integration/research/spike.{md,py}` belong to another item — left alone.
+
 # Session Handoff — 7 (2026-09-24): ticket 05 code landed — `plan.sh sync`, markers, T18; docs left
 
 **Summary.** Seq 7, supervised chain, hands-off. Implemented the code half of
@@ -54,53 +110,3 @@ every `scripts/tests/test-*.sh` green. shellcheck not installed — not run.
 
 **Budget.** WARN (~120K) hit while the T18 red cases were being written;
 ~133K after green; rollover under WARN. Nothing pushed.
-
-# Session Handoff — 6 (2026-09-23): ticket 04 landed — `plan.sh` write verbs and the state machine
-
-**Summary.** Seq 6, supervised chain, hands-off. Implemented ticket 04
-test-first, one verb per slice: T12–T17 appended to
-`scripts/tests/test-plan.sh` (77 new assertions, 186 total) — `start`
-(frontier / `--force` / `blocked` resume / `--session` / no number refused /
-closed plan refused), `done` (no check, passing check from the item dir with
-`WORKSPACE_ROOT`, failing check refused, `loop` 1 and 2 exhaustion writing
-`blocked`, `--force` from todo, hitl needs `--by`), `verify`, `block`, `drop`,
-`add` (every flag, taken slug, dangling blocker), `note`. Then `cmd_<verb>`
-over shared plumbing: `fm_set` (awk, keeps line order and `  # comments`),
-`section_append`/`log_append`, `run_check`, `failed_attempts`, `report`;
-`resolve_plan write` is strict and refuses a closed plan; `ready`/`frontier`
-moved into `DERIVE_JQ` so `start` and `frontier` share one definition.
-`docs/plans.md`: seven table rows, a "State machine" paragraph, exit-code
-line. Ticket 04 boxes ticked, status `done`. One decision note (stamp source,
-check cwd, attempt counting, closed-plan refusal, `start` not linting).
-Commit `1780d30`. Full shell suite green.
-
-**Choices made without a decision note.** `--by` accepts any actor, not only
-the literal `human` (docs say `--by human`). `done` needs `doing`; `--force`
-lifts that for `todo` and is logged as `forced from todo`. `drop` refuses
-only an already-dropped node (done → dropped is allowed, "any → dropped").
-`block` needs `doing` and a reason (usage otherwise). `add` requires
-`--wave` (no "current wave" default), writes `tier`/`parallel`/`loop`/
-`check`/`isolated` only when given, and does not lint — the fixture shows a
-work node added after wave 3's reconcile trips `reconcile-last` on the next
-`check`, which is the lint's job. `note` stamps `s<n> ·` when a session is
-known and is otherwise plain. Write verbs honour `--json` with `{id,status}`;
-`verify --json` is `{id,result,exit}`. The check's stdout goes to stderr so
-`--json` stays clean. The octal bug: `$((n + 1))` on `09` failed silently
-in `add`; fixed with `10#$n` in `add` and the identical loop in `new`.
-
-**For ticket 05 (sync + markers).** Wave names ("1 ground") still live in no
-frontmatter; `add` writes none. Derive the board's wave column as the number
-alone, or omit the name — the fixture board's `1 ground` text is the concept
-sketch, not a contract. The fixture's `09-reconcile-verdict` check still
-names a plan that does not exist (exit 2) — harmless for `sync`; `done`
-tests supply their own check via `addf`. `section_append` in `plan.sh` is
-the one place that edits prose sections; the board goes between markers
-instead (nothing outside them is generated), so it needs its own splice.
-
-**Verification.** `bash scripts/tests/test-plan.sh` → passed=186 failed=0;
-every `scripts/tests/test-*.sh` green (doc-consistency 7/7). shellcheck not
-installed — not run. `implement` asks for `/code-review` afterwards; skipped
-at WARN, self-reviewed the diff instead.
-
-**Budget.** WARN at ~126K right after the suite went green; wrap-up and
-rollover under STOP. Nothing pushed.
