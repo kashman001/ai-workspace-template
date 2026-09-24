@@ -417,3 +417,21 @@ usable"); (c) having the child pick `--loop-mode interactive` from the
 frontier — the supervisor already reads the plan between children and never
 trusts the child's judgement for a verdict.
 **Promote?:** no.
+
+## 2026-09-24 — Node split at rollover: rename the remainder to `<id>-b` after `add` (settled)
+**Chose:** The split in `session-rollover` is existing verbs plus file edits:
+`show` → `add` (same wave, kind, tier, blockers, check) → `mv` the new file to
+the origin's number and set `id: <id>-b` and `sessions:` → dependants gain
+`<id>-b` in `blocked_by` → drop `check:` from the origin → `done` → Log line →
+`check` → `sync`.
+**Because:** `add` always takes the next number, which lands the remainder
+after the wave's reconcile node and trips `reconcile-last` (ids compare as
+strings); sharing the origin's number keeps the pair together before the
+join and needs no code. `done --force` does not skip a check, so the check
+moves to the remainder rather than being forced past.
+**Rejected:** (a) `add --number`/`--after` in `plan.sh` — a code change, docs
+row and tests for one procedure; (b) relaxing `reconcile-last` to ignore
+nodes the reconcile node is blocked by — weakens a lint every plan relies on;
+(c) keeping the origin as the remainder and adding a done-part node — same
+numbering problem, and the done part would carry no edges anyone reads.
+**Promote?:** no.

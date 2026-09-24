@@ -6,6 +6,31 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 12 (2026-09-24): ticket 08 done — node split at rollover, sync step in three skills
+
+**Summary.** Seq 12, supervised chain, hands-off. Started at ~58K, ended
+~105K (below WARN). The split was exercised three times on a fixture copy
+under the scratchpad (plain, with a `check:`, and a verbatim replay of the
+skill text) before it was written down. Slice a (`66c8978`):
+`skills/session-rollover/SKILL.md` step 3 gains the conditional sync line and
+the six-verb split (`show` → `add` → rename to `<id>-b` + carry `sessions` →
+dependants' `blocked_by` → drop `check:`, `done`, Log line → `check`, `sync`);
+step 5 keeps the position markers when a plan is open; reconcile/hitl nodes
+are never split. Slice b (`89490e5`): the same sync line in
+`skills/checkpoint/SKILL.md` step 3. Slice c (`874a623`):
+`skills/create-work-item/SKILL.md` scaffolds the `## Position` marker block
+only on `--plan` (argument-hint updated in `.claude/commands/create-work-item.md`).
+Ticket 08 boxes ticked, status `done` (`e50bedf`). Suites: test-plan 238/238,
+test-session-loop 140/140, test-doc-consistency 7/7.
+
+**Decision.** The remainder is renamed to the origin's number after `add`
+(the `reconcile-last` lint compares ids as strings and `add` numbers past the
+wave's join); note in `decisions.md`, `Promote?: no`.
+
+**Not done.** Ticket 09 (the `plans` skill + `/plan`) — a whole skill with
+three procedures and a fixture walk-through; left for a fresh window. Nothing
+pushed (main 46 ahead of origin).
+
 # Session Handoff — 11 (2026-09-24): ticket 07 done — the loop's plan hook, code + docs
 
 **Summary.** Seq 11, supervised chain, hands-off. Started at ~56K, ended
@@ -34,143 +59,3 @@ then the plan says whether the chain goes on.
 **Not done.** Ticket 08 (node split at rollover + the conditional sync step
 in `session-rollover`, `checkpoint`, `create-work-item`) — needs a fresh
 window; the launcher points at it. Nothing pushed (main 41+ ahead of origin).
-
-# Session Handoff — 10 (2026-09-24): ticket 07 slice a — the loop's plan-hook tests, red
-
-**Summary.** Seq 10, supervised chain, hands-off. Started at ~58K (the
-launcher's read list is heavy), hit WARN at ~127K right after the tests were
-written, so the ticket ships in two slices. Slice a (`c2ea565`): four
-fake-child cases in `scripts/tests/test-session-loop.sh` — P1 `chain.plan`
-binding (none / single open / `--plan` / unresolved / ambiguous), P2
-`plan_invalid leg=sync|check` refusing the next session, P3 `plan_closed`
-ending the chain (and the literal S27 conjunction: closed with the reconcile
-node dropped is not `plan_closed`), P4 hitl-only frontier → interactive with
-the board synced between children. A `mkplan` helper writes a three-node
-one-wave plan (work done, hitl, reconcile) with the board and position
-markers; the stub gains `stage-plan` (rolls over keeping the launcher's
-position markers, commits nothing); `plan.sh` ships into the throwaway
-workspace. 24 red, 116 green (the 105 plan-less assertions untouched). No
-code in `session-loop.sh` yet — that is slice b.
-
-**Choices made (one decision note, 2026-09-24).** One new code,
-`plan_invalid`, with legs: `unresolved` / `ambiguous` at start (refuse, exit
-4, record untouched), `sync` / `check` between children (broken, exit 1,
-notify, staged command kept, no close — the shape of `staged_invalid`
-mid-chain). `plan_closed` is emitted after the `staged` verdict of the child
-that finished the plan (the way `cap` follows `staged`), writes
-`chain.closed.reason = plan_closed`, so a restart refuses `chain_closed`.
-The interactive choice is the supervisor's own: it sets `launch.mode` to
-`interactive` in the record and the `staged` verdict line reads
-`mode=interactive`; the child's `--loop-mode` is not consulted for it. The
-gate runs only between children (a chain started on a closed or broken plan
-runs one session first) — per the ticket's wording; noted, not changed.
-
-**Verification.** `bash scripts/tests/test-session-loop.sh` → passed=116
-failed=24, every failure a missing-feature failure (`--plan` unknown option,
-`chain.plan` null, no gate). `test-plan.sh` not touched. shellcheck not
-installed — not run.
-
-**Budget.** WARN (~127K) as the tests landed; rolled at ~135K. Nothing
-pushed; `main` is 38 commits ahead of `origin/main` before the rollover
-commit. Untracked `work/jev-integration/research/spike.{md,py}` belong to
-another item — left alone.
-
-# Session Handoff — 9 (2026-09-24): ticket 06 done — model knob per runtime, `start` stamp, `add --leaf`, `plan-tiers.env`, docs "Tiers"
-
-**Summary.** Seq 9, supervised chain, hands-off. Ticket 06 finished in two
-commits, test-first. Slice b (`67f1c63`): node JSON carries `model` from
-`PLAN_MODEL_<RUNTIME>_<TIER>` (null = session model); the runtime is
-`--runtime` → `PLAN_RUNTIME` → the bound registry record's `runtime` →
-unknown, with `registry_project` now reading through a shared
-`registry_record` finder and `resolve_runtime` caching the walk; `start`
-logs `started, tier <t>` / `… unavailable on <runtime> (session model)` /
-`… unavailable (no runtime; session model)`; T12d re-pinned, T19m–u. Slice
-c (`c62fcb6`): `add --leaf <label>`; a `tier_<label>:` outside
-`frontier|standard|cheap` refused naming `plan.md` (and a `malformed`
-violation in `check`); a bad `PLAN_TIER_*` refused naming `plan-tiers.env`;
-an empty knob is unset; the checked-in `plan-tiers.env` (three-row starter
-policy, claude `opus`/`sonnet`/`haiku`, codex/gemini/opencode/copilot rows
-commented out with each model flag named); `docs/plans.md` → `leaf` row,
-`tier_<label>:`, ` (auto)`, `tier_resolved`/`model`, the `malformed` rule,
-a "Tiers" section; `docs/workspace-structure.md` lists the file; T20a–h.
-Ticket 06's three boxes ticked, status `done`. No new decision note — the
-2026-09-24 tiers note already settles the shape.
-
-**Choices made without a decision note.** The forced stamp reads `started
-(forced: not on the frontier), tier <t>…` — "forced" qualifies "started".
-`check` lints `plan.md`'s `tier_<label>:` lines but not `plan-tiers.env`
-(the env is workspace state, not the plan; every other verb refuses on it).
-The registry walk for the runtime only runs when some `PLAN_MODEL_*` knob
-exists, so a workspace with no knobs pays nothing. `PLAN_TIER_*` / `tier_<label>:`
-accept `frontier|standard|cheap` only — `auto` is not a policy value.
-The T19 gemini knob became `gemini-pro` so the no-model-name grep (`-w`)
-cannot collide with prose.
-
-**Verification.** `bash scripts/tests/test-plan.sh` → passed=238 failed=0;
-`test-doc-consistency.sh` 7/7; every `scripts/tests/test-*.sh` green after
-slice b (not re-run after slice c's doc-only changes beyond the two named).
-shellcheck not installed — not run. `/code-review` skipped at WARN.
-
-**Suggested skills for the successor.** `tdd` for ticket 07 (fake child in
-`test-session-loop.sh` first); `decision-log` only if the `plan_closed` /
-interactive-launch shape forces a choice the spec (S25–S28) leaves open.
-
-**Budget.** WARN (~122K) as slice c's docs landed; rolled at ~129K. Nothing
-pushed; `main` is 36 commits ahead of `origin/main`. Untracked
-`work/jev-integration/research/spike.{md,py}` belong to another item — left alone.
-
-# Session Handoff — 8 (2026-09-24): ticket 05 done (docs); ticket 06 slice a — tier resolution, T19a–l
-
-**Summary.** Seq 8, supervised chain, hands-off. Ticket 05's doc half landed
-(`f644e8a`): the `sync` row and the launcher's `position` block shape in
-`docs/plans.md`, the marker convention once in
-`docs/work-directory-conventions.md` → "Generated blocks (markers)"; ticket
-05 `done`. Then ticket 06, test-first, first slice (`6dc70f6`): T19a–l in
-`scripts/tests/test-plan.sh` (12 assertions, 221 total) — the resolution
-order node tier → `plan.md` `tier_<label>:` → `PLAN_TIER_<LABEL>` in
-`plan-tiers.env` → the plan's `default_tier` → `standard`, keyed by the
-node's new optional `leaf:` label; hitl now defaults to `frontier` and
-reconcile/hitl resolve `auto` to `frontier`; `frontier` prints the resolved
-tier with ` (auto)`; every node's JSON carries `tier_resolved`. In
-`scripts/plan.sh`: `tier_env_json` (sources `plan-tiers.env` in a subshell,
-`compgen -A variable` → `{policy, models}` — `models` is already parsed as
-`{runtime: {tier: model}}` for the next slice), `plan_tiers_json`,
-`RESOLVE_JQ` applied inside `load_nodes`. One decision note (2026-09-24,
-tiers). Suites green; WARN at ~122K right after green, so the slice was
-committed and the session rolled.
-
-**Left for the successor (ticket 06, slices b and c).** (b) `model` on node
-JSON from `$env.models[runtime][tier_resolved]` (null = session model); the
-runtime from `--runtime` → `PLAN_RUNTIME` → the bound registry record's
-`runtime` (split `registry_project` into a record finder so the walk is
-shared) → unknown; `start` logs `started, tier <t>` with a knob, `started,
-tier <t> unavailable on <runtime> (session model)` without, `… unavailable
-(no runtime; session model)` when unknown — update T12d's pinned line; a
-T19 case that no model name (grep the mapping's values) lands in any node
-file or `plan.md` after `start`. (c) `add --leaf <label>`; refusals: a
-`tier_<label>:` value outside `frontier|standard|cheap` → exit 1 naming
-`plan.md` (and a `malformed` violation in `check`), a bad `PLAN_TIER_*`
-value → exit 1 naming `plan-tiers.env`. Then the checked-in `plan-tiers.env`
-(claude: `opus`/`sonnet`/`haiku` CLI aliases; codex, gemini, opencode,
-copilot rows present but unset, each with its `--model` flag named, the
-unset-means-session-model case explained in the header), the `plan.sh`
-header comment, and `docs/plans.md`: `leaf` row in the node table, `tier_<label>:`
-in the plan.md frontmatter paragraph, `frontier`'s ` (auto)`, `add --leaf`,
-`tier_resolved`/`model` in the `--json` paragraph, a short "Tiers" section
-(order, the two files, per-runtime mapping, the unavailable case, the Log
-stamp, "no model name in a plan or node file"). Tick the three boxes, set
-ticket 06 `done`.
-
-**Choices made without a decision note.** The board (`sync`) keeps showing
-the written tier, not the resolved one — the orchestrator reads `frontier`.
-An absent or unknown `leaf:` skips straight to the plan default (no
-violation, no warning). `default_tier: auto` bottoms out at `standard`.
-`tier_env_json` treats a missing `plan-tiers.env` as empty.
-
-**Verification.** `bash scripts/tests/test-plan.sh` → passed=221 failed=0;
-`test-doc-consistency.sh` 7/7 after the ticket 05 docs. shellcheck not
-installed — not run. `/code-review` skipped at WARN.
-
-**Budget.** WARN (~122K) the moment slice a went green; rolled under WARN.
-Nothing pushed; `main` is 33 commits ahead of `origin/main`. Untracked
-`work/jev-integration/research/spike.{md,py}` belong to another item — left alone.
