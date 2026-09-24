@@ -37,8 +37,6 @@ tickets are `ready-for-agent`. Frontier: ticket 01 only.
 **Key files.** `work/plans/spec.md`, `work/plans/issues/01-*.md`,
 `work/plans/concept.md`, `work/plans/decisions.md`.
 
-# Session Handoff"
-
 # Session Handoff — 1 (2026-09-23): seam inventory + decisions from the concept discussion; rolled at WARN before the grill
 
 **Summary.** First registered session (seq 1, supervised chain). The user
