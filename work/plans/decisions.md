@@ -435,3 +435,19 @@ nodes the reconcile node is blocked by — weakens a lint every plan relies on;
 (c) keeping the origin as the remainder and adding a done-part node — same
 numbering problem, and the done part would carry no edges anyone reads.
 **Promote?:** no.
+
+## 2026-09-24 — Replan follow-ups: same wave when found mid-wave, next wave when found at the join (settled)
+**Chose:** A follow-up node discovered while a wave is still running is added
+to that wave (renamed below the reconcile node, the split's trick) and becomes
+one of the join's blockers; one discovered *at* the reconcile node goes into
+the next wave. The skill says so; `plan.sh` is unchanged.
+**Because:** `done` checks the node's own `check`, not its blockers — an edge
+added to the reconcile node mid-run would be closed over by the same `done`
+that ends the reconcile, and nothing would ever join the follow-up.
+**Rejected:** `done` refusing while a blocker is open — a `plan.sh` change
+under a ticket that adds no code, and it would also refuse the legitimate
+`--force` import of a half-finished ticket set; a follow-up as a new blocker of
+the running reconcile node — silently skipped, see above.
+**Blast radius:** `skills/plans/SKILL.md` (Reconcile step 5, Replan rule 1);
+`docs/plans.md` → "Replans".
+**Promote?:** no.

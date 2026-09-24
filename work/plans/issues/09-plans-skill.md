@@ -4,10 +4,10 @@
 
 **Blocked by:** 04, 05, 06
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-24, session 13)
 
 **Spec:** S30, S31
 
-- [ ] Worked through once by converting this item's own `issues/` into a plan on the fixture
-- [ ] Subagent prompt template forbids writing `status` and names the Log line format
-- [ ] Listed in the CONTEXT.md Workspace Skills section (one line) and `skills/vendored-skills.md` untouched
+- [x] Worked through once by converting this item's own `issues/` into a plan on the fixture
+- [x] Subagent prompt template forbids writing `status` and names the Log line format
+- [x] Listed in the CONTEXT.md Workspace Skills section (one line) and `skills/vendored-skills.md` untouched
