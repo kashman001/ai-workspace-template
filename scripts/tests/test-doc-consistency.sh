@@ -23,6 +23,13 @@
 #           and the supervisor's `v=quit_<x>` verdicts. The one non-code match,
 #           `broken reason` (the function's own line), is dropped; comment
 #           lines and trailing ` # …` comments are stripped first.
+#
+# Paths — the plans front door and reference (CONTEXT.md, docs/plans.md,
+#   skills/plans/SKILL.md, .claude/commands/plan.md): every backticked path
+#   rooted at docs/ skills/ scripts/ .claude/ or work/plans/ exists on disk
+#   (tokens with a placeholder — `<`, `*`, `…`, `|` — are skipped, a trailing
+#   `/` and any arguments after a space are stripped), CONTEXT.md names the reference and the skill, and
+#   docs/README.md indexes the reference.
 set -u
 export LC_ALL=C   # [a-z] must never match uppercase (macOS locales do)
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -71,6 +78,20 @@ compare() {  # $1 = label, $2 = doc set, $3 = script set
 [ -n "$SCRIPT_CODES" ] && ok "codes extracted from the scripts ($(printf '%s\n' "$SCRIPT_CODES" | wc -l | tr -d ' '))" || bad "no codes extracted from the scripts"
 compare verbs "$DOC_VERBS" "$SCRIPT_VERBS"
 compare codes "$DOC_CODES" "$SCRIPT_CODES"
+
+PLANS_DOCS="CONTEXT.md docs/plans.md skills/plans/SKILL.md .claude/commands/plan.md"
+for f in $PLANS_DOCS; do
+  [ -f "$SRC_ROOT/$f" ] && ok "paths: $f exists" || { bad "paths: $f missing"; continue; }
+  missing="$(grep -oE '`(docs|skills|scripts|\.claude|work/plans)/[^`]*`' "$SRC_ROOT/$f" | tr -d '`' \
+    | grep -vE '[<*…|]' | sed 's: .*$::; s:/$::' | sort -u \
+    | while IFS= read -r p; do [ -e "$SRC_ROOT/$p" ] || printf '%s ' "$p"; done)"
+  [ -z "$missing" ] && ok "paths: every path $f names exists" || bad "paths: named in $f, not on disk: $missing"
+done
+grep -q '`docs/plans.md`' "$SRC_ROOT/CONTEXT.md" && grep -q '`skills/plans/SKILL.md`' "$SRC_ROOT/CONTEXT.md" \
+  && ok "paths: CONTEXT.md names docs/plans.md and skills/plans/SKILL.md" \
+  || bad "paths: CONTEXT.md does not name both docs/plans.md and skills/plans/SKILL.md"
+grep -q '(plans.md)' "$SRC_ROOT/docs/README.md" && ok "paths: docs/README.md indexes plans.md" \
+  || bad "paths: docs/README.md does not index plans.md"
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
