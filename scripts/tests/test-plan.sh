@@ -270,7 +270,7 @@ out="$("$PLAN" start 08-tickets --project demo)"; rc=$?
 assert_eq "T12a: exit 0, one line" "$rc:$out" "0:08-tickets doing"
 assert_eq "T12b: status written in place" "$(fm 08-tickets status)" "doing"
 assert_eq "T12c: session appended to sessions" "$(fm 08-tickets sessions)" "[3]"
-assert_eq "T12d: one Log line, stamped s3" "$(logs 08-tickets):$(lastlog 08-tickets)" "1:- s3 · started"
+assert_eq "T12d: one Log line, stamped s3, the tier named" "$(logs 08-tickets):$(lastlog 08-tickets)" "1:- s3 · started, tier standard unavailable (no runtime; session model)"
 assert_eq "T12e: the rest of the file is byte-identical" "$(diff <(sed '/^status:/d;/^sessions:/d;/^- s3/d' "$TMP/orig/08-tickets.md") <(sed '/^status:/d;/^sessions:/d;/^- s3/d' "$NODES/08-tickets.md") | wc -l | tr -d ' ')" "0"
 "$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T12g: the plan still passes check" "$?" "0"
 assert_eq "T12h: --json gives {id,status}" "$(reset; setf 07-spec status done; "$PLAN" start 08-tickets --project demo --json | jq -c '[.id,.status]')" '["08-tickets","doing"]'
@@ -473,7 +473,7 @@ cp "$TMP/plan.bak" "$PM"; rm -f "$LAUNCH"
 
 echo "T19: tiers — auto resolves node tier -> plan override -> workspace table -> wave default; reconcile/hitl fan in"
 TENV="$TMP/plan-tiers.env"
-printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_TIER_DOCS=standard\nPLAN_MODEL_CLAUDE_FRONTIER=opus\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_GEMINI_FRONTIER=pro\n' > "$TENV"
+printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_TIER_DOCS=standard\nPLAN_MODEL_CLAUDE_FRONTIER=opus\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_GEMINI_FRONTIER=gemini-pro\n' > "$TENV"
 tiers() { "$PLAN" show "$1" --project demo --json | jq -c '[.tier, .tier_resolved]'; }   # <id>
 reset; cp "$PM" "$TMP/plan.bak"
 assert_eq "T19a: an explicit tier resolves to itself" "$(tiers 08-tickets)" '["standard","standard"]'
@@ -495,10 +495,34 @@ assert_eq "T19h: no plan-tiers.env at all — the label just misses" "$(setf 08-
 reset; sed -i '' '/^tier: frontier$/d' "$NODES/04-grill-open-items.md"; setf 09-reconcile-verdict tier auto
 assert_eq "T19i: hitl defaults to frontier, reconcile resolves auto to frontier (fan-in)" "$(tiers 04-grill-open-items):$(tiers 09-reconcile-verdict)" '["frontier","frontier"]:["auto","frontier"]'
 "$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T19j: ... and the plan passes check" "$?" "0"
-printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_GEMINI_FRONTIER=pro\n' > "$TENV"
+printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_GEMINI_FRONTIER=gemini-pro\n' > "$TENV"
 reset; setf 07-spec status done; setf 08-tickets tier auto; addf 08-tickets leaf research
 assert_eq "T19k: frontier prints the resolved tier and marks auto" "$("$PLAN" frontier --project demo | squeeze)" "08-tickets work cheap (auto)"
 assert_eq "T19l: frontier --json carries tier_resolved" "$("$PLAN" frontier --project demo --json | jq -c '[.[0].tier, .[0].tier_resolved]')" '["auto","cheap"]'
+
+# Slice b: the model knob per runtime, and the `start` stamp (the tier, never the model).
+mdl() { "$PLAN" show "$1" --project demo --json "${@:2}" | jq -c '[.tier_resolved, .model]'; }   # <id> [flags]
+assert_eq "T19m: --runtime picks the knob for the resolved tier" "$(mdl 08-tickets --runtime claude)" '["cheap","haiku"]'
+assert_eq "T19n: a runtime without that knob gives model null" "$(mdl 08-tickets --runtime gemini)" '["cheap",null]'
+assert_eq "T19o: no runtime known — model null" "$(mdl 08-tickets)" '["cheap",null]'
+assert_eq "T19p: PLAN_RUNTIME names the runtime; --runtime beats it" "$(PLAN_RUNTIME=claude mdl 08-tickets):$(PLAN_RUNTIME=claude mdl 08-tickets --runtime gemini)" '["cheap","haiku"]:["cheap",null]'
+jq -n --argjson pid $$ --arg ps "$start" '{runtime:"claude",session_id:"t",project:"demo",pid:$pid,pid_start:$ps}' > "$TMP/.context-budget/sessions/test-t.json"
+assert_eq "T19q: else the bound registry record's runtime" "$(mdl 08-tickets)" '["cheap","haiku"]'
+rm "$TMP/.context-budget/sessions/test-t.json"
+printf '{"schema":1,"seq":3}\n' > "$SS"   # T18 removed it; the write verbs need a session number
+"$PLAN" start 08-tickets --project demo --runtime claude >/dev/null
+assert_eq "T19r: start stamps the tier when a knob exists" "$(lastlog 08-tickets)" "- s3 · started, tier cheap"
+reset; setf 07-spec status done; setf 08-tickets tier auto; addf 08-tickets leaf research
+"$PLAN" start 08-tickets --project demo --runtime gemini >/dev/null
+assert_eq "T19s: ... says the tier is unavailable on a runtime without one" "$(lastlog 08-tickets)" "- s3 · started, tier cheap unavailable on gemini (session model)"
+reset; setf 07-spec status done; setf 08-tickets tier auto; addf 08-tickets leaf research
+"$PLAN" start 08-tickets --project demo >/dev/null
+assert_eq "T19t: ... and names no runtime when none is known" "$(lastlog 08-tickets)" "- s3 · started, tier cheap unavailable (no runtime; session model)"
+"$PLAN" start 08-tickets --project demo --runtime claude --force >/dev/null 2>&1; reset; setf 07-spec status done
+"$PLAN" start 08-tickets --project demo --runtime claude --force >/dev/null
+hits=0; for m in $(sed -n 's/^PLAN_MODEL_[A-Z_]*=//p' "$TENV"); do hits=$((hits + $(grep -rFw "$m" "$TMP/work/demo/plans/01-concept" | wc -l))); done
+assert_eq "T19u: no model name reaches a node file or plan.md" "$hits" "0"
+reset; rm -f "$SS"
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

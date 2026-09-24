@@ -29,6 +29,8 @@
 #                          `<!-- plan:end <name> -->` markers; missing markers: exit 1, nothing written
 #          Write verbs: --session <n> sets the session number (default: seq in the item's
 #          session-state.json), --by <actor> the Log stamp; they refuse a closed plan.
+#          --runtime <r> names the runtime whose model knob applies (default: PLAN_RUNTIME,
+#          then the runtime of the session's registry record); `start` stamps the tier.
 # Resolution: project = --project → session registry binding (a registry
 #          record whose pid is an ancestor of this process) → TF_SESSION_PROJECT
 #          → the work item the cwd is inside → refuse. Plan = --plan →
@@ -40,6 +42,8 @@
 #          Refusals print `plan: <detail>` on stderr; a node problem names the file.
 # Env:     PLAN_WAVE_MAX — nodes per wave before `check` complains; explicit env >
 #          context-budget.env > 6. A plan's `wave_max:` frontmatter overrides it.
+#          PLAN_RUNTIME — the runtime for the model knob when --runtime is not given.
+#          PLAN_TIER_<LABEL> / PLAN_MODEL_<RUNTIME>_<TIER> — plan-tiers.env (see "tiers").
 
 set -u
 WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -49,7 +53,7 @@ die() { echo "plan: $2" >&2; exit "$1"; }   # <code> <message>
 usage() { sed -n '/^# Usage:/,/^# Resolution:/p' "$0" | sed '$d; s/^# \{0,9\}//' >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || die 2 "jq is required"
 
-VERB=""; ARG=""; ARG2=""; PROJECT=""; PLAN=""; JSON=0; FORCE=0; BY=""; SEQ=""
+VERB=""; ARG=""; ARG2=""; PROJECT=""; PLAN=""; JSON=0; FORCE=0; BY=""; SEQ=""; RUNTIME_FLAG=""
 TITLE=""; WAVE=""; KIND=""; TIER=""; BLOCKED_BY=""; PARALLEL=""; LOOP=""; CHECK=""; ISOLATED=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -57,6 +61,7 @@ while [ $# -gt 0 ]; do
     --plan)    [ $# -ge 2 ] || usage; PLAN="$2"; shift 2 ;;
     --by)      [ $# -ge 2 ] || usage; BY="$2"; shift 2 ;;
     --session) [ $# -ge 2 ] || usage; SEQ="$2"; shift 2 ;;
+    --runtime) [ $# -ge 2 ] || usage; RUNTIME_FLAG="$2"; shift 2 ;;
     --title)   [ $# -ge 2 ] || usage; TITLE="$2"; shift 2 ;;
     --wave)    [ $# -ge 2 ] || usage; WAVE="$2"; shift 2 ;;
     --kind)    [ $# -ge 2 ] || usage; KIND="$2"; shift 2 ;;
@@ -76,7 +81,7 @@ done
 case "$VERB" in new|status|show|frontier|remaining|graph|check|start|done|verify|block|drop|add|note|sync) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
 
 # ---- project -----------------------------------------------------------------
-registry_project() {  # the item bound to the session this process runs under
+registry_record() {  # the project-bound session record whose pid is an ancestor of this process (its path), or 1
   local p="$$" hops=0 pids="" f pid ps
   while [ "${p:-0}" -gt 1 ] && [ "$hops" -lt 12 ]; do
     pids="$pids $p"; hops=$((hops + 1)); p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
@@ -88,9 +93,18 @@ registry_project() {  # the item bound to the session this process runs under
     case " $pids " in *" $pid "*) ;; *) continue ;; esac
     ps=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//;s/ *$//')
     [ "$ps" = "$(jq -r '.pid_start // empty' "$f")" ] || continue   # recycled pid
-    jq -r '.project' "$f"; return 0
+    printf '%s' "$f"; return 0
   done
   return 1
+}
+registry_project() { local f; f="$(registry_record)" && jq -r '.project' "$f"; }  # the item bound to this session
+RUNTIME=""; RUNTIME_KNOWN=0
+resolve_runtime() {  # sets RUNTIME: --runtime -> PLAN_RUNTIME -> the bound registry record's runtime -> "" (unknown); once
+  local f
+  [ "$RUNTIME_KNOWN" -eq 0 ] || return 0
+  RUNTIME="${RUNTIME_FLAG:-${PLAN_RUNTIME:-}}"
+  [ -n "$RUNTIME" ] || { f="$(registry_record)" && RUNTIME="$(jq -r '.runtime // empty' "$f")"; }
+  RUNTIME_KNOWN=1
 }
 cwd_project() {
   local here; here="$(pwd -P)/"
@@ -157,7 +171,8 @@ DANGLING_JQ='.[] | .blocked_by[] as $b | select(($ids | index($b)) == null)
 # ---- tiers ----------------------------------------------------------------------
 # `auto` resolves node tier -> plan.md `tier_<label>:` -> PLAN_TIER_<LABEL> in plan-tiers.env
 # -> the plan's default_tier -> standard; the label is the node's `leaf:`. Reconcile and hitl
-# fan in to frontier. PLAN_MODEL_<RUNTIME>_<TIER> maps a tier to a model knob (docs/plans.md -> "Tiers").
+# fan in to frontier. PLAN_MODEL_<RUNTIME>_<TIER> maps a tier to a model knob for the resolved
+# runtime; no knob = null = the session model (docs/plans.md -> "Tiers").
 tier_env_json() {  # {policy: {label: tier}, models: {runtime: {tier: model}}} from plan-tiers.env
   local f="$WORKSPACE_ROOT/plan-tiers.env" v
   { [ ! -f "$f" ] || ( . "$f" >/dev/null 2>&1
@@ -174,17 +189,20 @@ plan_tiers_json() {  # <plan dir>: {label: tier} from plan.md's `tier_<label>:` 
 RESOLVE_JQ='map(.tier_resolved = (
     if .tier != "auto" then .tier
     elif .kind == "reconcile" or .kind == "hitl" then "frontier"
-    else ($plan[.leaf // ""] // $env.policy[.leaf // ""] // (if $dt == "auto" then "standard" else $dt end)) end))'
+    else ($plan[.leaf // ""] // $env.policy[.leaf // ""] // (if $dt == "auto" then "standard" else $dt end)) end))
+  | map(.model = (($env.models[$rt] // {})[.tier_resolved] // null))'
 
-load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name, each with its resolved tier
-  local tier f one out=""
+load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name, each with its resolved tier and model
+  local tier f one out="" env
   tier="$(fm_get "$1/plan.md" default_tier)"; [ -n "$tier" ] || tier=standard
+  env="$(tier_env_json)"
+  [ "$(printf '%s' "$env" | jq '.models | length')" -eq 0 ] || resolve_runtime   # the registry walk only when a knob exists
   for f in "$1"/nodes/*.md; do
     [ -f "$f" ] || continue
     one="$(node_json "$f" "$tier")" || exit 1     # node_json already named the file
     out="$out$one"
   done
-  out="$(printf '%s' "$out" | jq -s --argjson env "$(tier_env_json)" --argjson plan "$(plan_tiers_json "$1")" --arg dt "$tier" "$RESOLVE_JQ")"
+  out="$(printf '%s' "$out" | jq -s --argjson env "$env" --argjson plan "$(plan_tiers_json "$1")" --arg dt "$tier" --arg rt "$RUNTIME" "$RESOLVE_JQ")"
   one="$(printf '%s' "$out" | jq -r '[.[].id] as $ids | '"$DANGLING_JQ"' | "\(.path): \(.message)"' | head -1)"
   [ -z "$one" ] || die 1 "$one"
   printf '%s' "$out"
@@ -424,8 +442,12 @@ cmd_start() {
     blocked) ;;
     *) die 1 "$ARG is $status; start needs todo or blocked" ;;
   esac
+  local tier; tier="$(node_field .tier_resolved)"; resolve_runtime
+  if [ "$(node_field '.model // empty')" != "" ]; then tier=", tier $tier"
+  elif [ -n "$RUNTIME" ]; then tier=", tier $tier unavailable on $RUNTIME (session model)"
+  else tier=", tier $tier unavailable (no runtime; session model)"; fi
   fm_set "$NODE_FILE" status doing; stamp_session
-  log_append "$NODE_FILE" "$WHO · started$forced"
+  log_append "$NODE_FILE" "$WHO · started$forced$tier"
   report "$ARG" doing
 }
 
