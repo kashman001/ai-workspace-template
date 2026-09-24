@@ -39,6 +39,32 @@ read this section. -->
 
 - **<term>** — <one-line definition; note aliases to avoid>
 
+Plan vocabulary — ships with the template, shared by every skill that touches
+a plan (reference: `docs/plans.md`; aliases to avoid in italics):
+
+- **Work item** — `work/<item>/`, the durable home of an effort; a plan lives
+  inside one. *Not "worktree"* — a git isolation mechanism the plan never names.
+- **Plan** — a dependency graph of work for one work item, one markdown file
+  per node under `work/<item>/plans/NN-<slug>/`; open or closed, never moved.
+  *Not "runner", "workflow", "map".*
+- **Node** — one unit of work, one file, sized to one session's budget; its
+  `kind` is `work`, `reconcile`, or `hitl`. *Not "task", "ticket", "step" in
+  plan files.*
+- **Wave** — the nodes sharing a `wave:` number; they may run in parallel
+  inside one session, and waves run in order.
+- **Reconcile node** — `kind: reconcile`, exactly one per wave and last in it:
+  joins results, verifies on disk, records decisions, replans. *Not "join",
+  "sync", "gate" in plan files.*
+- **HITL node** — `kind: hitl`, a step only a person can complete; has no
+  `check`, a person marks it done.
+- **Check** — the node's `check:` shell command, exit 0 is pass; also
+  `plan.sh check`, the lint that refuses a malformed plan.
+- **Tier** — what runs a node: `frontier`, `standard`, `cheap`, or `auto`
+  (resolved through `plan-tiers.env`); no model name ever reaches a plan file.
+- **Frontier** — the `todo` nodes whose blockers are all `done` or `dropped`,
+  in the lowest unfinished wave; derived by `plan.sh frontier`, never stored.
+  Also the name of the strongest tier.
+
 ## Repository Layout
 
 - `repos/` holds cloned product repos (if multi-repo); `docs/repos-registry.md`
@@ -76,6 +102,18 @@ ledger split is the main defense against context-token accretion across
 sessions. Full roles + write discipline: `docs/work-directory-conventions.md`.
 Scaffold a new one with `skills/create-work-item/SKILL.md` (Claude Code:
 **`/create-work-item <name>`**).
+
+## Plans
+
+A **plan** is a dependency graph of work for one work item: one markdown file
+per node under `work/<item>/plans/NN-<slug>/`, grouped into waves, each wave
+closed by a reconcile node. `scripts/plan.sh` derives status, frontier, and
+lint from the node files and owns every state write; the `plans` skill decides
+what the nodes are. Use one when a work item outgrows a ticket list — several
+sessions, parallel subagents, or steps a person must approve. Where am I:
+`scripts/plan.sh status --project <item>`. Reference (format, verbs, tiers,
+replans): `docs/plans.md`; procedures: `skills/plans/SKILL.md` (Claude Code:
+`/plan`).
 
 ## Decision Records
 
