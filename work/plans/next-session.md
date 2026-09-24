@@ -40,15 +40,14 @@ format, node parser, `plan.sh new / show / status`).
 ## State snapshot
 
 Branch `main`, clean after this rollover's commit; nothing pushed. `spec.md`
-is `Status: draft` — the user has not flipped it to approved. Eleven
+is `Status: approved` (user, 2026-09-23). Eleven
 tickets, all `ready-for-agent`; frontier = 01. Chain supervised by
 `session-loop.sh` (seq 1 → 2 → 3). Budget at rollover: WARN (~122K).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project plans` (expect `seq=3`).
-2. If a person is present: ask whether to flip `spec.md` to
-   `Status: approved` (one line). If not, proceed on the draft and note it.
+2. Spec is approved; no question to pose. Proceed hands-off.
 3. `implement` ticket 01 with `tdd`: fixture plan under
    `scripts/tests/fixtures/` mirroring `concept.md`'s worked example first,
    then `scripts/tests/test-plan.sh` red, then `scripts/plan.sh` green, one

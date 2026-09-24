@@ -23,7 +23,7 @@ reconcile | hitl`; integration = all parts except the Stop/SessionEnd hook;
 wayfinder untouched in v1 (L48).
 
 **State.** All of the above committed by this rollover. Branch main, nothing
-pushed. Spec `Status: draft` — the user has not flipped it to approved;
+pushed. Spec approved by the user in this session;
 tickets are `ready-for-agent`. Frontier: ticket 01 only.
 
 **Next.** `next-session.md` → implement ticket 01 with `implement` + `tdd`.

@@ -7,8 +7,8 @@ seams.md and the grill; no interview. Vocabulary: concept.md → Glossary.
 
 # Spec — plans: a node-file format, `plan.sh` state tooling, and the loop hook
 
-Status: draft            <!-- draft | in-review | approved -->
-Approved-by: —
+Status: approved         <!-- draft | in-review | approved -->
+Approved-by: Kashif Siddiqui (2026-09-23, session 2)
 Date: 2026-09-23
 Spec-of-record: —
 
