@@ -6,6 +6,55 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 7 (2026-09-24): ticket 05 code landed — `plan.sh sync`, markers, T18; docs left
+
+**Summary.** Seq 7, supervised chain, hands-off. Implemented the code half of
+ticket 05 test-first: T18 appended to `scripts/tests/test-plan.sh` (23 new
+assertions, 209 total) — the board rendered between `<!-- plan:begin board -->`
+markers on the fixture, a second `sync` byte-identical for both files and no
+node file touched, text outside the markers byte-identical (diffed), the
+`position` block in `work/<item>/next-session.md`, the board and block
+following node edits, the all-done footer, `--json`, a launcher without
+markers / no launcher / `plan.md` missing its end marker → exit 1 naming the
+file and the marker with nothing written, a closed plan still syncing. Then
+`marker_check`, `marker_splice` (awk; the block via `ENVIRON`, so no escape
+processing) and `cmd_sync` in `scripts/plan.sh`; `sync` dispatches through
+`resolve_plan` (read-style). The fixture `plan.md` board was re-rendered by
+`sync` itself (wave number only, footer `Frontier: none (07-spec doing).
+Remaining: 3 of 9. Sessions used: 2.`) so T18i holds. Ticket 05's three boxes
+ticked; status still `ready-for-agent` until the docs land. One decision
+note (projection semantics, both markers checked first). Commit `73e4752`.
+Every shell suite green (doc-consistency 7/7).
+
+**Left for the successor (ticket 05's doc half).** `docs/plans.md` → the
+`plan.sh` table needs a `sync` row (and the Format paragraph already names
+the board markers; add the launcher's `position` markers and the two-line
+block shape: `Position: plan …, <status>, wave n of m, done d/t, doing, todo,
+blocked, dropped, sessions n.` then `Frontier: <ids | none (<id> doing)>.
+Remaining: r of t — wave n: <id status, …>.`). `docs/work-directory-conventions.md`
+gets the marker convention written once (its own short section near
+"Required and optional files": generated blocks sit between
+`<!-- plan:begin <name> -->` / `<!-- plan:end <name> -->`, everything outside
+is hand-written, markers are added by hand and never invented; opt a launcher
+in by adding the `position` pair). The `create-work-item` launcher template
+was deliberately left alone — S22 says the scaffold adds nothing extra; S34
+(the conditional "sync first" step in rollover/checkpoint/template) is a
+later ticket. Then set ticket 05 `done`.
+
+**Choices made without a decision note.** Text output is one line, `synced
+<plan.md path>, <launcher path>` relative to the workspace root; `--json` is
+`{plan, files:[…]}`. The launcher path is fixed at `work/<item>/next-session.md`.
+The board's rows sort by wave then id. The empty-frontier parenthesis lists
+the current wave's `doing`/`blocked` nodes only (todo nodes waiting on them
+are implied). T18 introduced `between`/`outside` awk helpers in the suite.
+
+**Verification.** `bash scripts/tests/test-plan.sh` → passed=209 failed=0;
+every `scripts/tests/test-*.sh` green. shellcheck not installed — not run.
+`/code-review` skipped at WARN.
+
+**Budget.** WARN (~120K) hit while the T18 red cases were being written;
+~133K after green; rollover under WARN. Nothing pushed.
+
 # Session Handoff — 6 (2026-09-23): ticket 04 landed — `plan.sh` write verbs and the state machine
 
 **Summary.** Seq 6, supervised chain, hands-off. Implemented ticket 04
@@ -55,51 +104,3 @@ at WARN, self-reviewed the diff instead.
 
 **Budget.** WARN at ~126K right after the suite went green; wrap-up and
 rollover under STOP. Nothing pushed.
-
-# Session Handoff — 5 (2026-09-23): ticket 03 landed — `plan.sh check`, the lint
-
-**Summary.** Seq 5, supervised chain, hands-off. Implemented ticket 03
-test-first: T11 appended to `scripts/tests/test-plan.sh` (32 new assertions,
-109 total) — the clean fixture is silent and exit 0, `--json` is `[]`, then
-one fixture variant per rule tripping exactly that rule (reconcile count zero
-and two, reconcile not last, check on a hitl node, dangling `blocked_by`, doing
-with no session, malformed frontmatter and an unknown value, wave size via
-plan `wave_max`, `PLAN_WAVE_MAX` env, `context-budget.env`, and precedence),
-plus "every violation at once" and malformed `plan.md`. Then `cmd_check` over
-a lenient `node_parse` (the strict `node_json` now wraps it) and a
-`DANGLING_JQ` fragment shared with `load_nodes`. `docs/plans.md`: `check` row,
-"Check rules" list, `wave_max` in the plan frontmatter. `context-budget.env`:
-`PLAN_WAVE_MAX=6` with rationale. Ticket 03 boxes ticked, status `done`. One
-decision note (lenient pass; "last" = highest id; wave size knob placement).
-Full shell suite green.
-
-**Choices made without a decision note.** Violation text is `<where>:
-<message>` where `where` is the node's path, `plan.md`'s path, or `wave N`;
-the JSON object is `{rule, id, wave, path, message}` with nulls where a field
-does not apply. Output order is rule order (malformed, blocked-by, per-wave
-reconcile/size, hitl-check, doing-sessions), not by node. `reconcile-last` is
-skipped when the wave's reconcile count is not one, so a broken wave trips one
-rule, not two. A malformed node keeps its file stem as `id` so its dependants
-are not reported as dangling. Dropped nodes count toward wave size. `check`
-resolves the plan like the other read verbs; with a malformed `plan.md` and
-no `--plan`, resolution itself refuses before `check` runs (`open_plans` →
-`plan_status`), which is why T11z6 passes `--plan` — the fixture's own
-09 node already does the same.
-
-**For ticket 04 (write verbs).** `done` must run the node's `check`; the
-fixture's `09-reconcile-verdict` check invokes `plan.sh check --project plans
---plan 01-concept` — a plan that does not exist in `work/plans/plans/`
-(exit 2), so a `done` test on that node needs its own check command or a
-fixture edit. `start` should probably refuse a plan that fails `check`
-(ticket 07 does this between children; deciding whether write verbs do too
-is 04's call).
-
-**For ticket 05 (board).** Wave names still live in no frontmatter (ledger
-block 3). Unchanged; `check` did not need them.
-
-**Verification.** `bash scripts/tests/test-plan.sh` → passed=109 failed=0;
-every `scripts/tests/test-*.sh` green (doc-consistency 7/7). shellcheck not
-installed — not run.
-
-**Budget.** ~108K at the record after green (OK); wrap-up under WARN.
-Nothing pushed.
