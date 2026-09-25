@@ -451,3 +451,55 @@ the running reconcile node — silently skipped, see above.
 **Blast radius:** `skills/plans/SKILL.md` (Reconcile step 5, Replan rule 1);
 `docs/plans.md` → "Replans".
 **Promote?:** no.
+
+## 2026-09-25 — Dogfood (ticket 11): the first real plan opens before a spec or tickets exist
+**Chose:** `jev-integration/plans/01-gated-integration`, a three-wave
+"plan the planning" shape — 01 draft the fit note → 03 a person approves
+(`hitl`) → 05 spec + tickets → 06 reconcile with `replan: structural`, which
+adds the implementation waves from the tickets. Six nodes, `check` silent.
+**Because:** the item was blocked on a human-only fit decision (four grill
+questions open after session 6) with no spec and no tickets, and "Create a
+plan" assumes one of the two exists. The structural replan at the wave-3 join
+is the documented path for "a new wave", and it lets the chain run hands-off
+from the first node instead of waiting for a person to write tickets by hand.
+The user's direction (integrate, gated on Jev access — grill Q4 = a) is in
+`plan.md` → Goal; the note itself stays node 01's work and the three still-open
+questions ride with it, so the approval in 03 is a real `hitl` step.
+**Rejected:** (a) drafting the note and tickets in the plans session, then
+opening the plan from tickets — hides the `hitl` step ticket 11 wants
+exercised and spends this session on another item's design; (b) a wayfinder
+map for the decision and a plan afterwards — two mechanisms for one chain.
+**Blast radius:** none in code. L48 evidence: waves 1–2 of this plan *are* a
+wayfinder (decision → person → record); if the chain runs them cleanly,
+wayfinder becomes a plan template with `kind: hitl` decision nodes.
+**Promote?:** no.
+
+### Dogfood findings (append one bullet per finding as the chain runs)
+- 2026-09-25 (s15, plan creation) — `plan.sh add --leaf <label>` without
+  `--tier auto` does nothing: the node gets the plan's `default_tier` and
+  `plan-tiers.env` is never consulted. `frontier` showed `standard` for a
+  `design` leaf until `tier: auto` was set by hand. Candidate fix: `--leaf`
+  implies `tier: auto` unless `--tier` is given; say so in "Create a plan"
+  step 3. Not fixed here.
+- 2026-09-25 (s15) — `--blocked-by` takes full ids (`01-decision-note`), not
+  numbers; the error `names no node 01` cost a round-trip. Cosmetic; the skill
+  could show an example with a full id.
+- 2026-09-25 (s15) — node checks run with cwd = the item directory
+  (`plan.sh:336`, `cd "$ITEM"`), so `--check` paths are item-relative;
+  `WORKSPACE_ROOT` is exported for the rest. Worth one sentence in the
+  `docs/plans.md` `check` row if it is not there.
+- 2026-09-25 (s15) — `session-loop.sh` page text for an `interactive` staging
+  left open: jev session 6 sat idle from 2026-09-23 to 2026-09-25 while the
+  supervisor paged `staged_alive seq=6 — session #6 staged a successor and is
+  still running` every 15 min (28 KB log) although `session-state.json` said
+  `staged: null`; the session had staged nothing — it was the one *staged
+  by* session 5. When it quit, the supervisor closed the chain correctly
+  (`quit_plain`). Two findings: the page names the wrong condition, and there
+  is no idle policy for an interactive staging (perhaps by design — a human
+  step). Session-loop, plans item.
+- 2026-09-25 (s15) — two sessions on one checkout: session 6 of the dogfood
+  item committed (524bb2a) ten minutes after this session started, so the
+  first pass at its launcher and ledger was written against a stale snapshot
+  and redone. A plan-creation step should re-read `git log -1` and the files
+  it will rewrite right before writing; the skill's "Create a plan" could say
+  so where it touches another item's launcher.

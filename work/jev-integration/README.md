@@ -6,11 +6,11 @@ Governing skill(s): `research-wave` (session 1), then `grill-with-docs` →
 **Start here:** `next-session.md` (catch-up launcher) → `handoff.md`
 (session ledger, top block).
 
-**Status (2026-09-25):** research wave 1 complete — synthesis at
-`research/synthesis.md`; live spike run with the user's key (`research/spike.md`,
-2026-09-24) closing the open facts; fit decision still pending — posed in
-session 6, four questions open in `next-session.md` (to be recorded in
-`decisions.md`).
+**Status (2026-09-25):** direction set by the user — integrate, gated on Jev
+access (active only where a key exists). Running as plan
+`plans/01-gated-integration/` (fit note → a person approves → spec + tickets
+→ replanned implementation); also the `plans` item's dogfood. Research closed
+at `research/synthesis.md`; live spike `research/spike.md`.
 
 ## What this is
 

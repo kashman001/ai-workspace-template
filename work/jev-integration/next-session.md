@@ -11,89 +11,81 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Research wave 1 is closed (`research/synthesis.md`) and a live spike with the
-user's key closed the facts it left open (`research/spike.md`, 2026-09-24).
-The only remaining step is **human-only**: the fit decision, worked through
-with `grill-with-docs` and recorded as a Tier-2 note in `decisions.md`. No
-integration code or spec until that note exists.
+Research is closed (`research/synthesis.md`; live spike `research/spike.md`).
+On 2026-09-25 the user set the direction: **integrate Jev, gated on access** —
+active only where a person has a key (`jev-api-key` in the OS keychain);
+without one, nothing changes. That answers session 6's grill question Q4 as
+(a); Q1 (axis of "serves better"), Q2 (candidate scope) and Q5 (scope of the
+R0.4 lift) are drafted as proposals by node 01 and confirmed by a person in
+node 03. The rest of this item runs as **plan `01-gated-integration`**
+(`plans/01-gated-integration/`): wave 1 drafts the fit note, wave 2 a person
+approves it, wave 3 writes spec + tickets and the join replans the
+implementation waves in. It is also the `plans` item's dogfood
+(`work/plans/issues/11-dogfood-first-real-plan.md`): what breaks, what is
+slow, and the L48 question go to `work/plans/decisions.md` as they appear.
 
-## >>> START HERE <<<
+## Position
 
-Position: **fit decision open; grill round 1 posed in session 6, unanswered.
-This session must be interactive.**
+<!-- plan:begin position -->
+Position: plan 01-gated-integration, open, wave 1 of 3, done 0/6, doing 0, todo 6, blocked 0, dropped 0, sessions 0.
+Frontier: 01-decision-note. Remaining: 6 of 6 — wave 1: 01-decision-note todo, 02-reconcile-w1 todo.
+<!-- plan:end position -->
 
-1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=7`).
-2. **Re-pose the open question to the user, verbatim:**
+## First actions
 
-   > **Fit decision** in `decisions.md`: which template seam(s) a typed-decision
-   > model serves better than the current runtime (or none), with the rejected
-   > alternatives and the evidence from `research/`.
-
-   Then re-issue the **four open round-1 questions** exactly, with the
-   orchestrator's recommendations (the user may answer each, or say "go with
-   your picks"):
-
-   - **Q1 axis of "serves better"** — (a) output quality, (b) cost, (c)
-     determinism + thresholdable `confidence`, (d) weighted. *Rec: (c), latency
-     second — `spike.md` shows parity on labels, negligible cost, 0.64s vs 4.83s.*
-   - **Q2 candidate scope** — all six §5 seams, or narrow to rlm leaf
-     classification (+ research-wave verdict) with the other four rejected in
-     one line each. *Rec: narrow; rlm is the only "integrate" candidate — the
-     verdict seam's value is the re-fetch, not the label.*
-   - **Q4 terms risk** — Jev (a) optional path with the current runtime as
-     default/fallback, (b) default for the seam, (c) not at all. *Rec: (a);
-     ADR-0011 keeps load-bearing gates off model calls; a downloader without a
-     key must still get a working `rlm`.*
-   - **Q5 scope of the R0.4 lift** — key usable (a) orchestrator fact-finding
-     only, (b) any dispatched agent, (c) spike only, rule reinstated. *Rec: (a)
-     now; widen to (b) in the spec if "integrate".*
-
-   (Q3 — decide without live evidence? — is closed: the user supplied the key
-   and the spike ran; `decisions.md` records the lift.)
-
-   Round 2 (threshold policy, `other` handling, `jev-latest` vs pinned
-   `jev-1.13.0`, where the swap point goes in `rlm_repl.py`) only after these.
-3. **If nobody answers**: do NOT decide the fit yourself, do NOT start design
-   work; end via `checkpoint` (stop door), not a rollover.
-4. After the note exists: `scripts/context-budget.sh record --label "fit decision recorded"`,
-   commit (do not push; report how far ahead main is), then — only if
-   "integrate" — `to-spec` is the next governing skill.
+1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=7`
+   on the first session after 2026-09-25).
+2. `scripts/plan.sh frontier` (add `--project jev-integration` if this session
+   is bound elsewhere). Work the node it names, per `skills/plans/SKILL.md`:
+   `start <id>`, read the node file (`## Goal` is the work, `## Acceptance` the
+   definition of done), do it, tick only boxes you verified, `done <id>`.
+   A `reconcile` node: the procedure "Run a reconcile node" — it runs in this
+   session, never a subagent. A `hitl` node on the frontier: stop — a person
+   does it (the node file says how); end with `checkpoint` (stop door); the
+   supervisor stages the next session interactive.
+3. Overruns: a node that will not finish in this window → `block <id>
+   <reason>` or split it (Replan rule 1), and record which as a finding —
+   ticket 11 asks whether a rollover split happened or was shown unnecessary.
+4. At WARN/STOP, or when the frontier holds nothing this session can do:
+   ledger block in `handoff.md`, `scripts/plan.sh sync`, rewrite the prose
+   above the Position block only if the mission changed, commit with a
+   `Decision:` trailer. Do not push `main`.
+5. Dogfood findings: append to `work/plans/decisions.md` under the dated
+   "Dogfood" heading (one bullet each). Do not edit `plan.sh`,
+   `session-loop.sh`, or the plans skill from this item.
 
 ## Do NOT reload
 
-- The research records beyond synthesis §5–§6, `seam-inventory.md`, and
-  `spike.md`; claim ids resolve to `record.md` rows by grep.
-- The corrections debate (`rulings.md` through R41), the sweep, R0.1.
-- Do NOT re-run the spike; its results are on disk. The key is in the macOS
-  keychain as `jev-api-key` (`security find-generic-password -s jev-api-key -w`)
-  — read it only for a new fact the grill needs, never print it, never write it
-  to a file.
+- `research/` beyond what a node's Goal names (synthesis §5–§6, `spike.md`;
+  claim ids by grep).
+- `rulings.md`, `sweep.md`, `seam-inventory.md`, the corrections — settled.
+- `work/plans/` beyond `decisions.md` (append) and `issues/11-dogfood.md`
+  (read once).
+- `handoff.md` — the top block only if something above is unclear.
+- The grill round itself: its four questions live in the node files now.
 
 ## Constraints already decided (do not re-litigate)
 
-- Template rules for anything that ships: agent-agnostic, CLI-first or
-  `mcp-fragments/`, key in the keychain, documented as a first-class addition,
-  a test that proves it without a live key.
-- Research before design: no integration code or spec until `decisions.md`
-  records the fit.
-- Raw `pass/*.md`, `fact-check.md`, every brief, and `synthesis.md` are
-  provenance — never edited (spike facts live in `spike.md` beside them).
-- The orchestrator rules; agents recommend. The fit decision is the user's.
-- R0.4 lifted for orchestrator fact-finding only (`decisions.md`, 2026-09-24).
+- Template rules: agent-agnostic, CLI-first or `mcp-fragments/`, credentials
+  in the keychain, documented as a first-class addition, a test that proves
+  it without a live key.
+- "Gated on access" is the user's direction; the seam order (`rlm` first) is
+  proposed by node 01 and approved or amended by a person in node 03 — an
+  agent never skips 03.
+- Raw `pass/*.md`, `fact-check.md`, `record.md`, every brief, and
+  `spike.{md,py}` are provenance — never edited.
+- No concrete model name in plan files (tiers only).
 
 ## State snapshot
 
-- Branch `main`, clean, 57 commits ahead of `origin/main`, not pushed.
-- `work/jev-integration/`: `decisions.md` (one note: R0.4 lift; fit NOT
-  recorded), `research/spike.md` + `spike.py`, synthesis and records as before.
-  No plan (`plan.sh status`: none). All dispatch records closed.
-- `context-budget.env` sets `ROLLOVER_RELAUNCH=auto`; this session was ended
-  through the checkpoint door, so the supervisor is not looping.
-
-## Read these first, in order
-
-1. `work/jev-integration/handoff.md` (top block)
-2. `research/spike.md`
-3. `research/synthesis.md` §5–§6
-4. `research/seam-inventory.md` (only once the grill reaches a specific seam)
-5. `skills/grill-with-docs/SKILL.md`, `skills/decision-log/SKILL.md`
+- Branch `main`, not pushed. Plan `01-gated-integration` open: 6 nodes, 3
+  waves, all `todo`; frontier `01-decision-note`.
+- `decisions.md` holds one note (the R0.4 lift, 2026-09-24) and the line
+  "Fit decision: STILL OPEN" — node 01 appends the fit note and replaces that
+  line with a pointer to it.
+- `research/spike.{md,py}` are tracked (session 6, commit 524bb2a) — never
+  edited; do not re-run the spike. The key stays in the keychain: read it only
+  for a new fact a node needs, never print it, never write it to a file.
+- Chain: session 6 quit through the checkpoint door, so the supervisor closed
+  the chain (used 6 of 15). Start it again bound to the plan:
+  `scripts/session-loop.sh jev-integration --reopen --plan 01-gated-integration`.
