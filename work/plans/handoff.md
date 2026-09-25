@@ -1,6 +1,18 @@
 <!--
 PURPOSE: This is the LEDGER (provenance log). Append-only, newest block on
-TOP. Each "# Session Handoff" block records what happened in one session.
+TOP. Each "# Session Handoff — 15 (2026-09-25): ticket 11 started — the user chose `jev-integration` (integrate, gated on Jev access); plan `01-gated-integration` opened there (aec31e5); five dogfood findings recorded; chain cap reached
+
+1. Registered `seq=15`; `git fetch origin` — nothing landed on origin. Posed the ticket-11 question; the user chose (a) `work/jev-integration` and added the constraint: Jev active only where a person has Jev access.
+2. Opened the plan per "Create a plan": `plan.sh new gated-integration`, six nodes in three waves (01 decision-note → 02 join; 03 approve-decision [hitl] → 04 join; 05 spec-and-tickets → 06 join + structural replan). `check` silent, `sync` run, frontier `01-decision-note` (tier auto → frontier via the `design` leaf).
+3. Mid-session, jev session 6 committed its checkpoint close (524bb2a, 17:23) ten minutes after this session started: the first pass at jev's launcher/ledger was against a stale snapshot and was redone against HEAD — session 6's four open grill questions now ride in nodes 01 and 03 (Q4 answered by the user's direction). Recorded as a finding.
+4. Findings appended under "Dogfood findings" in `decisions.md`: `--leaf` needs `--tier auto`; `--blocked-by` wants full ids; checks run item-relative; the supervisor's `staged_alive` page names the wrong condition for an idle interactive session; two sessions on one checkout need a re-read before rewriting. None fixed (11 says note first).
+5. Commit aec31e5 (jev item, work index, plans decisions). Suites green: test-plan 238, test-session-loop 140, test-doc-consistency 17, test-template-version 9. WARN at ~128K during the fix pass; this is session 15 of a 15-cap chain, so the plans chain ends here — 11 continues inside jev's chain. Not pushed.
+
+Learnings:
+- A plan can open before a spec or tickets exist: draft → hitl approval → spec/tickets → structural replan at the join. This is the L48 shape (wayfinder as a plan) in practice; the verdict waits for the chain to run it.
+- `AskUserQuestion` at the launcher's "pose verbatim" step got the answer in one round; the constraint the user attached went straight into `plan.md` → Goal rather than a new grill.
+
+# Session Handoff" block records what happened in one session.
 Read the TOP block only; older blocks are in handoff-archive.md. Forward
 "what to do next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.

@@ -4,7 +4,7 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** ready-for-agent (in progress since 2026-09-25, session 15 — plan `work/jev-integration/plans/01-gated-integration` opened; findings accrue in `decisions.md`)
 
 **Spec:** S1–S36 (verification)
 
