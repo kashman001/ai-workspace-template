@@ -6,6 +6,19 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 6 (2026-09-24/25): fit question posed; user supplied a Jev key mid-session; live spike run and recorded (research/spike.md); fit decision NOT made — user exited; closed through the checkpoint door
+
+1. Registered `seq=6` (interactive session, staged by session 5). Re-posed the fit question verbatim and opened `grill-with-docs` with a four-question first round (axis of "serves better", candidate scope, terms risk appetite, then Q3 on deciding without live evidence).
+2. The user opened a Jev account and stored the key in the keychain as `jev-api-key`, which settled Q3 by action. The orchestrator ran four probes (`research/spike.py`): key authenticates (O29 closed); rlm-shaped batch of 5 records with `other` → same 5 labels as `claude -p haiku`, each with `confidence`, 0.64s vs 4.83s; 256 options → 400 "at most 255 choices" (O21 cap enforced); `instructions` omitted → 200 (server follows the OpenAPI spec, resolving 5.12-spec-spread at runtime). Written to `research/spike.md`; raw records untouched. Tier-2 note for the R0.4 lift in `decisions.md` (created this session; the fit decision is NOT in it).
+3. Round 1 re-issued with Q3 closed and a new Q5 (scope of the R0.4 lift). The user asked to checkpoint and exit without answering. Per the launcher's rule 3, nothing was decided on their behalf; the four open questions and the orchestrator's recommendations are carried in `next-session.md`.
+4. Close: README status line; `work/README.md` row; `record --label "checkpoint: fit still open"`; committed (not pushed).
+
+Suggested skills for session 7: `grill-with-docs` (resume at the four open questions — the frontier is unchanged), `decision-log` / `/decision` for the fit note, then `to-spec` only if "integrate"; `checkpoint` again if the human defers.
+
+Learnings:
+- A user can settle a grill question by *action* (supplying a key) rather than by answer; treat that as the answer, close the facts yourself, and re-issue the round with the frontier recomputed rather than waiting on the original wording.
+- The spike was ~6K tokens of orchestrator budget end to end (record greps + 4 probes + baseline); cheaper than a dispatched agent for anything under ten probes.
+
 # Session Handoff — 5 (2026-09-23): wave 1 closed — §1 re-check clean (no edit), README status line and work-index row committed (c719edd); rolled over interactive at ~80K to pose the fit decision to the human
 
 1. Registered `seq=5`. `dispatch-list`: all ten records closed (DONE / DONE_WITH_CONCERNS), none open.

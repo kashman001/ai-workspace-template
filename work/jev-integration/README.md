@@ -6,8 +6,10 @@ Governing skill(s): `research-wave` (session 1), then `grill-with-docs` →
 **Start here:** `next-session.md` (catch-up launcher) → `handoff.md`
 (session ledger, top block).
 
-**Status (2026-09-23):** research wave 1 complete — synthesis at
-`research/synthesis.md`; fit decision pending (to be recorded in
+**Status (2026-09-25):** research wave 1 complete — synthesis at
+`research/synthesis.md`; live spike run with the user's key (`research/spike.md`,
+2026-09-24) closing the open facts; fit decision still pending — posed in
+session 6, four questions open in `next-session.md` (to be recorded in
 `decisions.md`).
 
 ## What this is
