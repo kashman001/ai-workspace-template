@@ -9,7 +9,8 @@
 #          keychain. T8+ drive the `rlm` REPL's classify() helper through the
 #          real REPL (skills/rlm/scripts/rlm_repl.py exec) against the same
 #          stub, with a fake `claude` on PATH standing in for the leaf.
-#          Spec: work/jev-integration/spec.md S2, S3, S4, S6, S8-S13, S19.
+#          T15+ widen the CLI to Score and Noul, the S7 refusals, and --help.
+#          Spec: work/jev-integration/spec.md S2-S13, S19.
 #          Self-contained: throwaway workspace in mktemp -d.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -28,7 +29,8 @@ assert_absent()   { case "$2" in *"$3"*) bad "$1 (found [$3])" ;; *) ok "$1" ;; 
 # Stub server: binds a free port, writes it to $TMP/port, appends one JSON
 # line per request ({headers, body}) to $TMP/requests.jsonl, replies 200
 # with the fixture named in argv -- or, when the fixture is `echo`, with an
-# answer per question: its first criterion label at confidence 1.0.
+# answer per question: its first criterion label at confidence 1.0 -- or, when
+# it is `status:<code>`, with that non-200 status and a small error body.
 cat > "$TMP/stub.py" <<'PY'
 import json, sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -41,6 +43,10 @@ class H(BaseHTTPRequestHandler):
         except ValueError: body = raw.decode(errors="replace")
         with open(out, "a") as f:
             f.write(json.dumps({"path": self.path, "headers": dict(self.headers), "body": body}) + "\n")
+        if fixture.startswith("status:"):
+            data = json.dumps({"error": {"type": "vendor_error", "message": "stub refused this request"}}).encode()
+            self.send_response(int(fixture[7:])); self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
         if fixture == "echo":
             qs = body["questions"] if isinstance(body, dict) else {}
             data = json.dumps({"answers": {k: {"choice": next(iter(q["criteria"])), "confidence": 1.0}
@@ -315,6 +321,69 @@ sys.stdout.write(inspect.getsource(rlm_repl.llm_query))
 PY
 if diff -u "$FIX/llm_query.golden.py" "$TMP/llm_query.now.py" > "$TMP/llm_query.diff"; then ok "T14a: no diff"; else bad "T14a: llm_query differs from the golden"; cat "$TMP/llm_query.diff" >&2; fi
 rm -rf "$SRC_ROOT/skills/rlm/scripts/__pycache__"
+
+# ---------------------------------------------------------------------------
+# T15+: the CLI widened to the three question types (S5), the client-side
+# limit refusals and the non-200 exit (S7).
+echo "T15: a Score question passes through; the answer line carries the score and its confidence"
+SCORE_ENDPOINT="$(start_stub "$FIX/score.json" score)"
+SCORE_REQ='{"state":"The export button crashes the settings page in Safari. It works in Chrome.","questions":{"severity":{"type":"score","instructions":"How severe is this bug report?","criteria":["Cosmetic; no impact to functionality","Broken or degraded feature, but workaround exists","Blocking issue; no workaround exists"]}}}'
+out="$(printf '%s' "$SCORE_REQ" | JEV_ENDPOINT="$SCORE_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t15.err")"; rc=$?
+assert_eq "T15a: exit 0" "$rc" "0"
+assert_eq "T15b: the question reached the endpoint as given" "$(tail -1 "$TMP/score.jsonl" | jq -c '.body.questions.severity | [.type, (.criteria|length)]')" '["score",3]'
+assert_eq "T15c: one line: key, score as value, confidence" "$(printf '%s' "$out" | jq -c .)" '{"key":"severity","value":1.43,"confidence":0.35}'
+assert_eq "T15d: nothing on stderr" "$(cat "$TMP/t15.err")" ""
+
+echo "T16: Noul questions pass through; the answer line carries the probability and no confidence"
+NOUL_ENDPOINT="$(start_stub "$FIX/noul.json" noul)"
+NOUL_REQ='{"state":"I already opened ticket 4411 about this last week. Can I speak to a person?","questions":{"is_human_escalation":{"type":"noul","instructions":"Is the customer asking for a human agent?"},"is_repeat_contact":{"type":"noul","instructions":"Has the customer contacted support about this before?","criteria":{"true":"Mentions a prior attempt, ticket, or that they have asked before","false":"No sign of any previous contact"}}}}'
+out="$(printf '%s' "$NOUL_REQ" | JEV_ENDPOINT="$NOUL_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t16.err")"; rc=$?
+assert_eq "T16a: exit 0" "$rc" "0"
+assert_eq "T16b: both questions reached the endpoint, criteria kept" "$(tail -1 "$TMP/noul.jsonl" | jq -c '.body.questions | [keys, .is_repeat_contact.criteria.true]')" \
+  '[["is_human_escalation","is_repeat_contact"],"Mentions a prior attempt, ticket, or that they have asked before"]'
+assert_eq "T16c: one line per answer: probability as value, confidence null" "$(printf '%s' "$out" | jq -c .)" \
+  "$(printf '%s\n' '{"key":"is_human_escalation","value":0.99,"confidence":null}' '{"key":"is_repeat_contact","value":0.93,"confidence":null}' | jq -c .)"
+assert_eq "T16d: nothing on stderr" "$(cat "$TMP/t16.err")" ""
+
+echo "T17: the published limits are refused client-side — exit 2, one stderr line, before any request"
+before="$(requests)"
+out="$(jq -nc '{state:"s",questions:{q:{type:"choice",instructions:"pick",criteria:([range(256)]|map({key:("o\(.)"),value:"d"})|from_entries)}}}' \
+  | JEV_ENDPOINT="$ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t17a.err")"; rc=$?
+assert_eq "T17a: 256 Choice options exit 2" "$rc" "2"
+assert_eq "T17b: empty stdout" "$out" ""
+assert_contains "T17c: the reason names the 255 limit" "$(cat "$TMP/t17a.err")" "255"
+out="$(jq -nc '{state:"s",questions:{q:{type:"choice",instructions:"pick",criteria:([range(255)]|map({key:("o\(.)"),value:"d"})|from_entries)}}}' \
+  | JEV_ENDPOINT="$ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>/dev/null)"; rc=$?
+assert_eq "T17d: 255 options is allowed (sent, exit 0)" "$rc/$(( $(requests) - before ))" "0/1"
+before="$(requests)"
+out="$(python3 -c 'import json; print(json.dumps({"state": "x" * 130000, "questions": {"q": {"type": "noul", "instructions": "Is it long?"}}}))' \
+  | JEV_ENDPOINT="$ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t17e.err")"; rc=$?
+assert_eq "T17e: state + longest question estimated over 32k tokens exits 2" "$rc" "2"
+assert_eq "T17f: empty stdout" "$out" ""
+assert_contains "T17g: the reason names the token limit" "$(cat "$TMP/t17e.err")" "32"
+assert_eq "T17h: one stderr line each" "$(cat "$TMP/t17a.err" "$TMP/t17e.err" | wc -l | tr -d ' ')" "2"
+assert_eq "T17i: no request sent for the refusals" "$(requests)" "$before"
+
+echo "T18: a non-200 from the server — exit 4 with the status and the body head on stderr, empty stdout"
+DENY_ENDPOINT="$(start_stub status:429 deny)"
+out="$(printf '%s' "$REQ" | JEV_ENDPOINT="$DENY_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t18.err")"; rc=$?
+assert_eq "T18a: exit 4" "$rc" "4"
+assert_eq "T18b: empty stdout" "$out" ""
+assert_contains "T18c: stderr carries the status" "$(cat "$TMP/t18.err")" "429"
+assert_contains "T18d: stderr carries the body head" "$(cat "$TMP/t18.err")" "stub refused this request"
+assert_eq "T18e: one stderr line" "$(wc -l < "$TMP/t18.err" | tr -d ' ')" "1"
+assert_absent "T18f: the key is not on stderr" "$(cat "$TMP/t18.err")" "$KEY"
+AUTH_ENDPOINT="$(start_stub status:401 unauth)"
+printf '%s' "$REQ" | JEV_ENDPOINT="$AUTH_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" >/dev/null 2>"$TMP/t18g.err"; rc=$?
+assert_eq "T18g: 401 is also exit 4, status on stderr" "$rc/$(grep -c 401 "$TMP/t18g.err")" "4/1"
+
+echo "T19: --help teaches the three types with a worked example each, the exit codes, the key order, and the limits"
+help="$("$JEV" --help 2>&1)"
+assert_eq "T19a: an example request per type" "$(printf '%s' "$help" | grep -cE '"type": ?"(choice|score|noul)"')" "3"
+assert_eq "T19b: every example is valid JSON" "$(printf '%s' "$help" | grep -E '^ *\{"state"' | while IFS= read -r l; do printf '%s' "$l" | jq -e . >/dev/null 2>&1 && echo ok || echo bad; done | sort -u)" "ok"
+for w in "exit" " 0 " " 2 " " 3 " " 4 " "JEV_API_KEY" "jev-api-key" "255" "32" "--check"; do
+  assert_contains "T19c: mentions [$w]" "$help" "$w"
+done
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

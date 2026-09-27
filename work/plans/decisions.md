@@ -550,3 +550,14 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
 **Promote?:** no
 
 - **s10 (jev-integration, node 09):** a standard-tier seam node (helper + tests + skill doc) consumed ~70K of the window on top of a 61K harness baseline, so one such node per session is the realistic budget; the launcher should size waves accordingly rather than list two work nodes as "do both".
+
+- **s11 (jev-integration, node 11):** the node's `check:` named `scripts/jev.sh`
+  relatively; `plan.sh done` runs a check from the work item directory
+  (`cd "$ITEM"`), so it failed and the node went `blocked` although the same
+  command passed from the workspace root. `plan.sh check` did not flag it.
+  Fixed by prefixing `"$WORKSPACE_ROOT/"` (a reconcile-authority edit).
+  **Suggest:** a Check rule — a `check:` that starts with a relative path
+  (`scripts/`, `./`) is a violation — and one line in docs/plans.md stating
+  the cwd a check runs in. Also: `done` streams the check's full output to the
+  terminal (128 test lines here); a `--quiet` or tail-on-failure would spare
+  the window. Promote?: no.

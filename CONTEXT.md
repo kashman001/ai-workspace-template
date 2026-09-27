@@ -216,6 +216,12 @@ credential helper, so pushes to it stop prompting. Optional, macOS-only, and off
 by default: `scripts/setup-github-repo-access.sh --owner <o> --repo <r>` wires
 it, `docs/service-access.md` → "GitHub — repo-scoped access" explains it.
 
+- **Jev (typed questions).** Closed options, many items, a safe fallback for
+  low confidence, correctness confirmed elsewhere → ask through
+  `scripts/jev.sh` (`--help` teaches Choice/Score/Noul; detail:
+  `skills/jev/SKILL.md`). Never for prose or extraction. No key
+  (`scripts/jev.sh --check` exits 3) → do it the current way.
+
 ## First-run Setup
 
 Agents bringing this workspace up on a machine: run the `scripts/check-*.sh`

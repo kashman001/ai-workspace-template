@@ -75,10 +75,27 @@ Not vendored: upstream's `skills/in-progress/` (marked unstable) and its
 course-tooling misc skills (`scaffold-exercises`, `migrate-to-shoehorn`).
 Workspace-authored skills (`checkpoint`, `session-rollover`, `create-work-item`,
 `decision-log`, `design-for-testability`, `doc-review`, `onboard-repo`,
-`research-wave`, `rlm`) live alongside these in `skills/` and are indexed in
+`research-wave`, `rlm`, `jev`) live alongside these in `skills/` and are indexed in
 `CONTEXT.md`.
 
-## Upstream license
+## TypeSafe agent skill (vendored beside `jev`)
+
+- **jev/typesafe-ai** *(pristine)* — TypeSafe's own agent skill for its
+  System One models (Jev), vendored from
+  [github.com/typesafe-ai/skills](https://github.com/typesafe-ai/skills)
+  `skills/typesafe-ai/SKILL.md` at commit `65a39f3` (v0.5.7, 2026-09-12;
+  re-checked 2026-09-27) into `skills/jev/typesafe-ai/` with its `LICENSE`.
+  Not a standalone workspace skill: it is reached from the workspace's own
+  `jev` skill (`skills/jev/SKILL.md`, which carries the CLI contract) for
+  design guidance and live-docs pointers. Not covered by
+  `scripts/sync-vendored-skills.sh` (different upstream); refresh by
+  re-copying `SKILL.md` + `LICENSE` from the new commit and bumping the pin
+  in the provenance comment and here. License: MIT, Copyright (c) 2026
+  TypeSafe AI — the text is `skills/jev/typesafe-ai/LICENSE`; it has the
+  same terms as the Matt Pocock license below with a different copyright
+  holder.
+
+## Upstream license (Matt Pocock set)
 
 MIT License
 

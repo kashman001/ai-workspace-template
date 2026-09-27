@@ -30,6 +30,7 @@ what breaks, what is slow, and the L48 question go to
 - s7 · wave 2 (s7): the user approved the fit note in chat; tier routing for subagent dispatch, a relevance filter, and a jev CLI + one always-on context rule + a demand-loaded skill were discussed as slices — node 05 scopes the CLI/rule/skill into the rlm slice's spec and lists tier routing and the relevance filter as later plans
 - s8 · s8 · TypeSafe skills repo re-checked 2026-09-27: last push 2026-09-12 (65a39f3, v0.5.7); nothing newer than the 2026-09-23 research — ticket 04 vendors that commit
 - s9 · s9: a post-green sanity run of jev.sh with no JEV_ENDPOINT override and the real keychain on PATH made one live request with the user's key (typed answer returned, exit 0; the key was not printed). Not a UAT claim (S20 is the user's); guard: run ad-hoc checks with JEV_ENDPOINT set or PATH stripped.
+- s11 · s11 · 12-reconcile-w5: node 11 check used a relative script path; checks run from the item dir — fixed with $WORKSPACE_ROOT; finding in work/plans/decisions.md
 
 ## Out of scope
 
@@ -61,11 +62,11 @@ what breaks, what is slow, and the L48 question go to
 | 4 | 08-reconcile-w4 | reconcile | frontier | done |
 | 5 | 09-rlm-classify | work | standard | done |
 | 5 | 10-credentials-docs | work | cheap | done |
-| 5 | 11-cli-skill-rule | work | standard | todo |
-| 5 | 12-reconcile-w5 | reconcile | frontier | todo |
+| 5 | 11-cli-skill-rule | work | standard | done |
+| 5 | 12-reconcile-w5 | reconcile | frontier | doing |
 | 6 | 13-uat-gated | hitl | frontier | todo |
 | 6 | 14-reconcile-w6 | reconcile | frontier | todo |
 | 7 | 15-tune-and-pin | work | standard | todo |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 11-cli-skill-rule. Remaining: 6 of 16. Sessions used: 4.
+Frontier: none (12-reconcile-w5 doing). Remaining: 5 of 16. Sessions used: 5.
 <!-- plan:end board -->

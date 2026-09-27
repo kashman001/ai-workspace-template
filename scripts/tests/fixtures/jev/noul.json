@@ -1,0 +1,8 @@
+{
+  "model": "jev-1.13.0",
+  "usage": {"input_tokens": 110, "output_tokens": 18},
+  "answers": {
+    "is_human_escalation": {"type": "noul", "noul": 0.99},
+    "is_repeat_contact": {"type": "noul", "noul": 0.93}
+  }
+}
