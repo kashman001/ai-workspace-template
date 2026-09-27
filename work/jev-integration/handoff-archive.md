@@ -1,22 +1,3 @@
-# Session Handoff — 2026-09-22 (scaffold): item created; the research wave comes next
-
-**Summary.** Scaffolded by a session bound to `session-management-followups`
-(so this block carries no session number; the item's counter starts at the
-first `register --project jev-integration`). The user asked for a work item
-to integrate Jev into the template, with the first session doing research;
-they pointed at <https://typesafe.ai> for what Jev is and chose
-`research-wave` over `research`. The homepage says Jev is TypeSafe's "first
-public System One Model, optimized for automation" — typed decisions with
-confidence estimates rather than text, priced per token, docs at
-<https://docs.typesafe.ai/>; nothing on the page says how it is called
-(SDK/HTTP/MCP), which is why the launcher's subject list starts there.
-
-**State.** README (goal, success criteria pending a fit decision), launcher
-(subject list proposed for the wave), this ledger; row added to
-`work/README.md`. No `research/`, `decisions.md`, or `spec.md` yet.
-
-**Next.** `next-session.md` → run the research wave.
-
 # Session Handoff — 6→7 bridge (2026-09-25): written by the `plans` item's session 15 under its ticket 11 — the user chose this item for the first real plan and set the direction (integrate, gated on Jev access); plan `01-gated-integration` opened; session 6's four open grill questions folded into nodes 01 and 03
 
 1. Session 6 closed through the checkpoint door at 22:23Z (commit 524bb2a; supervisor verdict `quit_plain`, chain closed). Its launcher carried the four open round-1 grill questions (Q1 axis, Q2 scope, Q4 terms risk, Q5 lift scope) with recommendations; `decisions.md` holds the R0.4-lift note and "fit decision STILL OPEN".
@@ -92,4 +73,23 @@ Suggested skills for session 3: `research-wave` (Phase 4, then handing the wave 
 7. Context budget: WARN reached after the fact-checks; rolled over hands-off mid-Phase-3. Dispatch records under `.agent-dispatch/` (one per task, generation-fenced) say exactly which tasks are closed. main not pushed.
 
 <!-- ARCHIVE of work/jev-integration/handoff.md — older ledger blocks, newest on top. Convention: docs/work-directory-conventions.md -->
+
+# Session Handoff — 2026-09-22 (scaffold): item created; the research wave comes next
+
+**Summary.** Scaffolded by a session bound to `session-management-followups`
+(so this block carries no session number; the item's counter starts at the
+first `register --project jev-integration`). The user asked for a work item
+to integrate Jev into the template, with the first session doing research;
+they pointed at <https://typesafe.ai> for what Jev is and chose
+`research-wave` over `research`. The homepage says Jev is TypeSafe's "first
+public System One Model, optimized for automation" — typed decisions with
+confidence estimates rather than text, priced per token, docs at
+<https://docs.typesafe.ai/>; nothing on the page says how it is called
+(SDK/HTTP/MCP), which is why the launcher's subject list starts there.
+
+**State.** README (goal, success criteria pending a fit decision), launcher
+(subject list proposed for the wave), this ledger; row added to
+`work/README.md`. No `research/`, `decisions.md`, or `spec.md` yet.
+
+**Next.** `next-session.md` → run the research wave.
 
