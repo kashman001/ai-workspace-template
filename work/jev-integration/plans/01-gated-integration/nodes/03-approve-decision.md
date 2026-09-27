@@ -1,11 +1,11 @@
 ---
 id: 03-approve-decision
 title: A person approves or amends the fit decision
-status: todo
+status: done
 kind: hitl
 wave: 2
 blocked_by: [01-decision-note]
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -26,7 +26,9 @@ wave-2 reconcile node closes the plan through the stop door.
 
 ## Acceptance
 
-- [ ] The note in `decisions.md` is the decision the person stands behind (amended if needed)
-- [ ] `Promote?` is set (yes / maybe / no)
+- [x] The note in `decisions.md` is the decision the person stands behind (amended if needed)
+- [x] `Promote?` is set (yes / maybe / no)
 
 ## Log
+- s7 · approved by the user in chat (2026-09-27: "go ahead and build the suggested integration, use the plan concept we have built"): Q1 (c), Q2 narrow to rlm, Q5 (a) confirmed as proposed; Promote? set to maybe in the note (the user named no value — the session took the note's own candidate; reversible). Follow-up slices from the same conversation (tier routing at subagent dispatch, relevance filter, jev CLI + context rule + demand-loaded skill) go to node 05 via the launcher.
+- kashif · done (forced from todo)

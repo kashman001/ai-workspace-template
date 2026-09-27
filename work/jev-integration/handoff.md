@@ -6,7 +6,7 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 7 (2026-09-27): wave 1 of plan 01-gated-integration done hands-off — fit note drafted as a proposal (decisions.md), reconcile 02 joined; frontier is 03 (hitl); four dogfood findings; closed through the checkpoint door
+# Session Handoff — 7 (2026-09-27): wave 1 of plan 01-gated-integration done hands-off — fit note drafted as a proposal (decisions.md), reconcile 02 joined; frontier is 03 (hitl); the user then approved node 03 in chat; wave 2 joined; frontier 05-spec-and-tickets; rolled over hands-off at WARN
 
 1. Registered `seq=7` (hands-off, launched by the supervisor after the chain was reopened bound to the plan; chain used 7 of 15). Frontier `01-decision-note`.
 2. Node 01: appended the Tier-2 fit note to `decisions.md` (heading `## 2026-09-27 — Fit decision: …`, five fields) and replaced "STILL OPEN" with a pointer. Chose: `rlm` leaf seam, gated on `jev-api-key` in the keychain; batch-as-state, explicit `other`, confidence threshold with per-record fallback, alias `jev-latest`. Q4 = the user's (a); Q1 (c), Q2 narrow, Q5 (a) carried as proposals. Cites C28, integration-paths 5.1–5.7, 6.2, terms 1.1/1.7/2.1/5.9/7.3 and the spike rows; all 14 ids grep-verified. `verify` passed; `done`.
@@ -14,6 +14,9 @@ Convention: docs/work-directory-conventions.md.
 4. Mid-session the user asked for a status summary (given in chat) and about TypeSafe's Claude Code plugin; answered from integration-paths 1.7/3.7 (one SKILL.md, no code; installable for Codex and others via `npx skills add`), recorded as a `plan.sh note` for nodes 03/05.
 5. Dogfood: four findings appended to `work/plans/decisions.md` (harness baseline eats ~40% of the budget before work; `--project` as one word is rejected silently-ish; record step is a no-op when the node is itself a note; hitl launcher prose should be in the skill). No rollover split was needed.
 6. Budget 102K at close (68%). Closed through the checkpoint door: the frontier is a `hitl` node — nothing this session may do. The supervisor stages the next session interactive; `research/` untouched; the key never read.
+7. The session did not end at item 6: the user asked three follow-up questions (model routing for subagent dispatch, other uses, cost and how agents learn when to use Jev, what `rlm` is) — answered in chat from the research on disk; the design input worth keeping is in the launcher's "Design input for node 05".
+8. The user then said "go ahead and build the suggested integration, use the plan concept we have built" — taken as node 03's approval: `done 03 --force --by kashif`, Log quotes the direction; `Promote?` set to `maybe` (the session's choice, flagged to the user). Node 04 (reconcile) run in-session: verified, one `plan.sh note`, no replan; `done`. Frontier `05-spec-and-tickets`.
+9. WARN at 120K; ledger blocks 4, 5 and the 6→7 bridge archived; rolled over hands-off (supervised chain, `--emit`) so session 8 works node 05.
 
 # Session Handoff — 6 (2026-09-24/25): fit question posed; user supplied a Jev key mid-session; live spike run and recorded (research/spike.md); fit decision NOT made — user exited; closed through the checkpoint door
 
@@ -28,35 +31,3 @@ Learnings:
 - A user can settle a grill question by *action* (supplying a key) rather than by answer; treat that as the answer, close the facts yourself, and re-issue the round with the frontier recomputed rather than waiting on the original wording.
 - The spike was ~6K tokens of orchestrator budget end to end (record greps + 4 probes + baseline); cheaper than a dispatched agent for anything under ten probes.
 
-# Session Handoff — 6→7 bridge (2026-09-25): written by the `plans` item's session 15 under its ticket 11 — the user chose this item for the first real plan and set the direction (integrate, gated on Jev access); plan `01-gated-integration` opened; session 6's four open grill questions folded into nodes 01 and 03
-
-1. Session 6 closed through the checkpoint door at 22:23Z (commit 524bb2a; supervisor verdict `quit_plain`, chain closed). Its launcher carried the four open round-1 grill questions (Q1 axis, Q2 scope, Q4 terms risk, Q5 lift scope) with recommendations; `decisions.md` holds the R0.4-lift note and "fit decision STILL OPEN".
-2. In the `plans` session, answering ticket 11's "which item?", the user chose this one and added: integrate Jev **only where a person has Jev access**. That answers Q4 as (a) — optional path, current runtime as the default and fallback. Q1, Q2, Q5 stay open: node 01 drafts the fit note taking the recommendations as proposals, node 03 (`hitl`) is where the person confirms or amends them. Direction recorded in `plans/01-gated-integration/plan.md` → Goal.
-3. Plan opened with `scripts/plan.sh new gated-integration`: six nodes in three waves (01 decision-note → 02 join; 03 approve-decision [hitl] → 04 join; 05 spec-and-tickets → 06 join + structural replan adding the implementation waves from the tickets). `check` silent; launcher rewritten with the Position block; `sync` run; README status line and `work/README.md` row updated.
-4. Noticed while doing it: session 6's commit landed ten minutes after the plans session started, so a first pass here was written against a stale snapshot (spike thought untracked, `decisions.md` thought absent, the grill questions dropped) and redone against 524bb2a. Recorded as a dogfood finding in `work/plans/decisions.md`. Also found then: two `session-loop.sh jev-integration` supervisor processes (started 2026-09-23 10:04 and 13:05 local) paging `staged_alive seq=6` every 15 min since 2026-09-23 18:20Z; left running as the user's terminal processes. Both had exited by 2026-09-27.
-
-Learnings:
-- Two sessions on one checkout: re-read `git log -1` and the target files immediately before rewriting another item's launcher, not at session start — a concurrent interactive session can commit in between.
-
-# Session Handoff — 5 (2026-09-23): wave 1 closed — §1 re-check clean (no edit), README status line and work-index row committed (c719edd); rolled over interactive at ~80K to pose the fit decision to the human
-
-1. Registered `seq=5`. `dispatch-list`: all ten records closed (DONE / DONE_WITH_CONCERNS), none open.
-2. §1 re-check of `research/synthesis.md` against the four gen-3 change sites, by grep only: C50's denominator caveat matches §1's "contended LLM latency (16-way pool) by uncontended TypeSafe latency"; `integration-paths` S2 "contradicted for Noul" matches §1 (Noul carries no `confidence`) and the §2 S2 row; the S4 price-FAQ answer is quoted in §1 Terms with `terms` 1.7 / `what-jev-is` S4; the profile's stale `<meta>` "in early access" does not contradict §1's "open self-serve as of 2026-09-20" (§3 sweep row 1 already records the fix). **No edit to the synthesis** — reason in the `Decision:` trailer of c719edd.
-3. Close: status line in `README.md` after "Start here"; `work/README.md` row L23; `record --label "wave close"`; commit c719edd. main is 15 commits ahead of `origin/main`, not pushed (the push is the user's call).
-4. Rolled over `--loop-mode interactive` (budget OK at ~80K; the trigger is the human-only step, not WARN). Block 3 moved to `handoff-archive.md`. No `decisions.md` yet — research-before-design still binds.
-
-Suggested skills for session 6: `grill-with-docs` (with the human, on §5–§6 of the synthesis + `seam-inventory.md`); `decision-log` / `/decision` for the Tier-2 note; `to-spec` only after the note exists; `checkpoint` if the human defers.
-
-Learnings:
-- A launcher that names grep targets for a re-check (session 4's did) keeps the whole close under ~25K, orientation included; the session never approached WARN.
-
-# Session Handoff — 4 (2026-09-23): rulings R24–R37 verified (R38); scale adopted into schema.md; gen-3 corrections applied on all three subjects; R39–R41; synthesis final as research/synthesis.md; rolled at WARN before the README/work-index close
-
-1. Registered `seq=4`. Verified R24–R37 against `sweep.md` rows: all hold; five amendments as **R38** (IP profile L51/O21 in R26; S4 pointer → O9; IP "six down" restated not marked; R22 reduces to the appendix + SW1-1 cross-pointer; R36 scope). Sweep scale adopted verbatim into `schema.md` § "Verification scale".
-2. Briefs `<subject>/corrections-brief-3.md` written; three agents in parallel. terms gen 3 DONE; what-jev-is gen 3 DONE_WITH_CONCERNS (N2 refusal, R40); integration-paths gen 3 hit WARN after re-derivation with no edits (plan left in its `corrections.md`) → closed ROLLOVER_NEEDED, gen 4 launched with the plan, DONE. All verified on disk (markers, third-round sections, provenance untouched), dispatches closed. R39/R40/R41 rule on round-3 findings; the tally 21→22 one-word fix applied by the orchestrator. `rulings.md` § "Phase 4 closed".
-3. Synthesis: §3 and §4 (patterns 8–10) filled; `research/synthesis.md` written from the draft (draft file still present — delete it at the close, the `git mv` was not done). §1 NOT yet re-checked against the gen-3 changes (C50 caveat + cookbook-per-figure, IP S2 wording, price-FAQ answer, profile "early access").
-4. Not done: README status line, `work/README.md` row L23, delete `synthesis-draft.md`. WARN at 143K right after Phase 4 closed; rolled hands-off.
-
-Learnings:
-- A corrections agent with nine rulings and five re-fetches reaches WARN before editing (IP gen 3, ~107K); it wrote its edit plan to the report and gen 4 applied it in one pass — the rollover contract worked as designed. Split a brief with more than ~6 rulings that each need a fetch, or tell the agent to edit as it goes.
-- The orchestrator's own budget: ~60K on orientation reads + brief writing before launch. The briefs could be shorter — the sweep rows already carry target text; point at the row ids instead of restating them.

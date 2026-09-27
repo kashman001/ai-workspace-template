@@ -12,105 +12,102 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 ## Mission
 
 Research is closed (`research/synthesis.md`; live spike `research/spike.md`).
-On 2026-09-25 the user set the direction: **integrate Jev, gated on access** —
-active only where a person has a key (`jev-api-key` in the OS keychain);
-without one, nothing changes. The rest of this item runs as **plan
-`01-gated-integration`** (`plans/01-gated-integration/`): wave 1 drafted the
-fit note (done, session 7), wave 2 a person approves it, wave 3 writes spec +
-tickets and the join replans the implementation waves in. It is also the
-`plans` item's dogfood (`work/plans/issues/11-dogfood-first-real-plan.md`):
-what breaks, what is slow, and the L48 question go to
-`work/plans/decisions.md` as they appear.
+Direction (user, 2026-09-25) and fit decision (approved by the user in chat,
+2026-09-27 — the second note in `decisions.md`): **integrate Jev at the `rlm`
+leaf-classification seam, gated on access** — active only where
+`jev-api-key` is in the OS keychain; without one, `rlm` behaves exactly as
+today. The item runs as **plan `01-gated-integration`**: waves 1–2 are done;
+wave 3 writes the spec and tickets (node 05) and its join (node 06) replans
+the implementation waves in from those tickets (`replan: structural`). It is
+also the `plans` item's dogfood: findings go to `work/plans/decisions.md`.
 
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-gated-integration, open, wave 2 of 3, done 2/6, doing 0, todo 4, blocked 0, dropped 0, sessions 1.
-Frontier: 03-approve-decision. Remaining: 4 of 6 — wave 2: 03-approve-decision todo, 04-reconcile-w2 todo.
+Position: plan 01-gated-integration, open, wave 3 of 3, done 4/6, doing 0, todo 2, blocked 0, dropped 0, sessions 1.
+Frontier: 05-spec-and-tickets. Remaining: 2 of 6 — wave 3: 05-spec-and-tickets todo, 06-reconcile-w3 todo.
 <!-- plan:end position -->
 
-## For the person — what node 03 asks (the frontier is a `hitl` node)
-
-Read the **second** note in `decisions.md` (`## 2026-09-27 — Fit decision: …`).
-It is a proposal: integrate Jev at the `rlm` leaf-classification seam, gated
-on the keychain key; a user without a key sees no change. It carries your Q4
-answer (gated) and three proposals from session 6 for you to confirm or amend:
-
-- **Q1** what "serves better" means — proposed (c) determinism + thresholdable
-  `confidence`, latency second (not output quality, not cost).
-- **Q2** scope — proposed narrow to `rlm`; research-wave verdicts next; the
-  other four seams rejected one line each.
-- **Q5** how far the key's use widens — proposed orchestrator fact-finding
-  now, dispatched agents once the spec says so.
-- **Promote?** — left to you (`no` / `maybe` / `yes`).
-
-Also pending your read (recorded as plan notes, `scripts/plan.sh show
-02-reconcile-w1` or `plan.md`): TypeSafe's Claude Code plugin is one
-SKILL.md with no code (installable for Codex and others via `npx skills
-add`), so it is agent knowledge, not the integration; node 05 re-checks the
-marketplace for anything newer than 2026-09-23.
-
-A wording fix: edit the note in place. A material change: append a new note
-(`skills/decision-log/SKILL.md`). "No-go" is an answer too — write it in the
-note. Then:
-
-    scripts/plan.sh done 03-approve-decision --by <your-name> --project jev-integration
-
-## First actions (agent session)
+## First actions
 
 1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=8`).
-2. `scripts/plan.sh frontier --project jev-integration`. If it still names
-   `03-approve-decision`: stop — a person does it (section above); end with
-   `checkpoint`. If it names `04-reconcile-w2`: the person has answered — run
-   the reconcile in this session per `skills/plans/SKILL.md` ("Run a reconcile
-   node"): verify the note on disk, record the decision the person made (a
-   "no-go" closes the plan through the stop door), replan within authority,
-   `done`. Then wave 3: `05-spec-and-tickets` per its node file.
-3. Overruns: `block <id> <reason>` or split (Replan rule 1); record which as a
-   finding — ticket 11 asks whether a rollover split happened (none so far).
-4. At WARN/STOP, or when the frontier holds nothing this session can do:
-   ledger block in `handoff.md` (insert after the `-->` of the header comment;
-   verify block headers unique), `scripts/plan.sh sync`, rewrite the prose
-   above the Position block only if the mission changed, commit with a
-   `Decision:` trailer. Do not push `main`.
-5. Dogfood findings: append one bullet each under the dated "Dogfood findings"
-   list at the end of `work/plans/decisions.md`. Do not edit `plan.sh`,
-   `session-loop.sh`, or the plans skill from this item.
-6. `plan.sh` takes `--project jev-integration` as two words; a shell variable
-   holding both is rejected as `unknown option` (finding, s7).
+2. `scripts/plan.sh frontier --project jev-integration` → `05-spec-and-tickets`.
+   `start` it, read its node file, write `spec.md` (`to-spec` conventions,
+   `docs/agents/issue-tracker.md`) and the tickets under `issues/`
+   (`to-tickets`: tracer-bullet, blocking edges), from the fit note plus the
+   design input below. Tick verified boxes, `done`.
+3. Then `06-reconcile-w3` in this session: verify, record, **structural
+   replan** — `add` the implementation waves from the tickets (`skills/plans/
+   SKILL.md` → "Create a plan" steps 2–4), one `## Replans` line, `check`
+   silent, `sync`, `done`. Then work the new frontier while budget allows.
+4. Overruns: `block`/split (Replan rule 1); record which as a finding.
+5. At WARN/STOP: ledger block (insert after the header's `-->`; verify block
+   headers unique, keep two blocks, archive the rest newest-on-top),
+   `plan.sh sync`, commit with a `Decision:` trailer, then
+   `session-rollover` (supervised chain → `--emit`). Do not push `main`.
+6. `plan.sh` flags are separate words (`--project jev-integration`); a
+   variable holding both is rejected.
+
+## Design input for node 05 (from the session-7 conversation with the user)
+
+Slice 1 — this plan's implementation, all agent-agnostic (every runtime,
+CLI-first, zero standing context):
+
+- A `scripts/jev.sh` (or small Python) CLI: reads the key from the keychain
+  (`security find-generic-password -s jev-api-key -w` on macOS; documented
+  equivalent elsewhere), POSTs `/v1/systemone` with `state` + questions,
+  prints typed answers + confidence, exits with a reason code when no key —
+  never an error, never prints the key. `--help` teaches the three question
+  types with one example, so no skill needs loading to use it.
+- `skills/rlm/scripts/rlm_repl.py`: the leaf swap at `llm_query` — with a key,
+  one request per 50-record batch (`state` = records, one Choice per record,
+  the root's categories + explicit `other`), confidence threshold with
+  per-record fallback to the current `claude -p` leaf; without a key, the
+  current path byte-for-byte. `skills/rlm/SKILL.md`: `other` + threshold
+  guidance. Alias `jev-latest`; pin the versioned id once thresholds are tuned.
+- A test proving both paths with no live key (no key → identical output; key
+  present → request shape against a stub endpoint).
+- Docs: `docs/service-access.md` (Jev entry), `docs/runbooks/authentication.md`
+  (adding the key), `scripts/check-service-access.sh` (present/absent only).
+- One always-on rule in `CONTEXT.md` (< 100 tokens): closed options, many
+  items, safe fallback, correctness confirmed elsewhere → use the CLI; never
+  for prose/extraction; no key → current way.
+- `skills/jev/SKILL.md`, demand-loaded (request shape, `other`, thresholds,
+  255-option / 32k-state limits); vendor TypeSafe's SKILL.md beside it with
+  provenance — re-check `typesafe-ai/skills` for anything newer than
+  2026-09-23 (research integration-paths 1.7, 3.7).
+- Cost/limits to cite: $42/Btok input, output free (terms 1.1); 250k tok/s,
+  1,200 req/min, 429 beyond (2.1); no SLA (7.3).
+
+Later plans (name them in the spec's "Out of scope", do not ticket them):
+tier routing at subagent dispatch (resolves `tier: auto` in `plan.sh` — the
+plans item owns that file; baseline to beat: cheap-first, escalate on failed
+check); a relevance filter before loading files/tickets; the other seams.
 
 ## Do NOT reload
 
-- `research/` beyond what a node's Goal names (claim ids by grep).
+- `research/` beyond claim ids by grep and `spike.md` if a number is needed.
 - `rulings.md`, `sweep.md`, `seam-inventory.md`, the corrections — settled.
-- `work/plans/` beyond `decisions.md` (append) and `issues/11-dogfood.md`
-  (read once).
+- `work/plans/` beyond `decisions.md` (append) and `issues/11-dogfood.md`.
 - `handoff.md` — the top block only if something above is unclear.
-- The grill round: its questions are in the fit note and the section above.
 
 ## Constraints already decided (do not re-litigate)
 
 - Template rules: agent-agnostic, CLI-first or `mcp-fragments/`, credentials
   in the keychain, documented as a first-class addition, a test that proves
   it without a live key.
-- "Gated on access" is the user's direction; the seam order (`rlm` first) is
-  the proposal in the fit note, approved or amended by a person in node 03 —
-  an agent never skips 03.
+- Gated on access; `rlm` first; Q1 (c), Q2 narrow, Q5 (a); `Promote?: maybe`
+  (the session's choice — the user may change it).
 - Raw `pass/*.md`, `fact-check.md`, `record.md`, every brief, and
-  `spike.{md,py}` are provenance — never edited.
-- No concrete model name in plan files (tiers only).
+  `spike.{md,py}` are provenance — never edited. Do not re-run the spike.
+  The key stays in the keychain: never print it, never write it to a file.
+- No concrete model name in plan files (tiers only). Do not edit `plan.sh`,
+  `session-loop.sh`, or the plans skill from this item.
 
 ## State snapshot
 
-- Branch `main`, not pushed. Plan `01-gated-integration` open: wave 2 of 3,
-  nodes 01 and 02 `done` (session 7), frontier `03-approve-decision` (hitl).
-- `decisions.md` holds two notes: the R0.4 lift (2026-09-24) and the fit
-  proposal (2026-09-27); the "STILL OPEN" line is now a pointer.
-- `research/spike.{md,py}` are tracked — never edited; do not re-run the
-  spike. The key stays in the keychain: never print it, never write it to a
-  file.
-- Chain: reopened 2026-09-27 bound to the plan (`session-loop.sh
-  jev-integration --reopen --plan 01-gated-integration`), used 7 of 15;
-  session 7 closed through the checkpoint door at a `hitl` frontier, so the
-  supervisor stages the next session interactive. If it is not running when
-  the person has answered node 03, restart it with the command above.
+- Branch `main`, not pushed. Plan `01-gated-integration` open: wave 3 of 3,
+  nodes 01–04 `done`, frontier `05-spec-and-tickets`.
+- `decisions.md`: two notes (R0.4 lift; fit decision, approved, Promote maybe).
+- Chain: supervised, reopened 2026-09-27 bound to the plan; session 7 staged
+  session 8 hands-off at WARN.
