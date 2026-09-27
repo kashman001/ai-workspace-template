@@ -133,44 +133,56 @@ chunks fat (a leaf can hold a large slice — batch to minimise call count) but 
 enough that the sub-LM stays accurate. Accumulate results in a variable; let Python
 do the aggregation.
 
+**Classification (one label per record) goes through `classify`**, not a
+hand-built prompt. It returns one `{label, confidence, source}` per record, in
+order. Where the machine holds a Jev key (`scripts/jev.sh --check`), each batch
+of 50 records is one typed request and comes back in under a second; where it
+does not, `classify` runs the same `N: label` prompt through `llm_query_map`
+that you would have written — same leaf calls, same labels, nothing else
+changes. You do not branch on which; the helper does.
+
 ```bash
 python skills/rlm/scripts/rlm_repl.py exec <<'PY'
 # Example shape for an aggregation task: derive records from the actual format,
-# ask leaf LMs for semantic labels, then count/aggregate in Python.
+# ask for semantic labels with classify(), then count/aggregate in Python.
 records = [line.strip() for line in content.splitlines() if line.strip()]
 
 # Fill these from the user's query and what you observed while probing. Do not
 # assume the file's delimiter, item marker, or labels before inspecting it.
-question = "What should be classified or extracted for each record?"
-categories = ["category_a", "category_b", "category_c"]
+# A {label: description} dict gives the typed path its criteria; a plain list
+# of labels also works. `other` is appended for you — keep it in the results:
+# a record that fits nothing is `other`, not forced into your nearest category.
+question = "What should be classified for each record?"
+categories = {"category_a": "one-line description", "category_b": "...", "category_c": "..."}
 
-def build(batch, start):
-    body = "\n".join(f"{start+i}: {record}" for i, record in enumerate(batch))
-    return (
-        f"{question}\n"
-        f"Use exactly one of these categories: {', '.join(categories)}.\n"
-        "Output exactly one line per record as 'N: <category>'. No extra text.\n\n"
-        + body
-    )
+labels = classify(records, categories, question=question)   # list aligned with records
 
-BATCH = 50
-prompts = [build(records[s:s+BATCH], s) for s in range(0, len(records), BATCH)]
-outs = llm_query_map(prompts)          # parallel sub-LM calls; order preserved
-
-import re
 from collections import Counter
-labels = {}
-for out in outs:
-    for ln in out.splitlines():
-        m = re.match(r"\s*(\d+)\s*[:.\)]\s*(.+)", ln)
-        if m:
-            labels[int(m.group(1))] = m.group(2).strip().strip("*[]").lower()
-missing = [i for i in range(len(records)) if i not in labels]
-counts = Counter(labels.values())
-print("classified:", len(labels), "/", len(records), "missing:", len(missing))
-print("counts:", dict(counts))
+counts = Counter(l["label"] for l in labels)
+by_source = Counter(l["source"] for l in labels)             # {"jev": n, "leaf": m}
+missing = [i for i, l in enumerate(labels) if l["label"] is None]
+print("classified:", len(records) - len(missing), "/", len(records), "missing:", len(missing))
+print("counts:", dict(counts), "by source:", dict(by_source))
 PY
 ```
+
+Reading the result: `source: jev` labels carry a `confidence` in 0..1 and were
+answered typed; `source: leaf` labels came from the sub-model (no confidence)
+— because there is no key, because the typed answer's confidence fell below
+the threshold, or because a batch failed and fell back (one warning line on
+stderr names the batch). `label: None` is a leaf answer that did not parse;
+re-ask those as you would a garbled batch today.
+
+Choosing the threshold: it is the confidence below which a record is re-asked
+through the leaf (`threshold=` per call, else `RLM_JEV_THRESHOLD`, default
+`0.9`). Lower it (`0.7`) when categories are crisp and a re-ask costs more
+than a rare wrong label; raise it (`0.95`+) when a wrong label is expensive
+and the leaf is cheap. Check `by_source` after the first batch: a leaf share
+well above a few percent means the categories or descriptions need sharpening
+before the threshold does.
+
+For free-text work per record (extract a fact, summarise a chunk) `classify`
+does not apply; build the prompt and use `llm_query_map` as before.
 
 Because the REPL is persistent, `items`, `labels`, and `counts` survive into your
 next `exec`. Inspect, sanity-check, and re-run pieces as needed. Save durable
@@ -203,6 +215,7 @@ Injected automatically every `exec` (you never import or define these):
 | `context` / `content` | the full context, as a `str` (two names for the same value) |
 | `llm_query(prompt, model=None, timeout=300, system=...)` | one sub-LM leaf call → text |
 | `llm_query_map(prompts, max_workers=8, ...)` | many leaf calls in parallel → list of texts, in order |
+| `classify(records, categories, threshold=None, question=...)` | one `{label, confidence, source}` per record; typed via Jev where a key is present, else the `N: label` leaf pattern |
 | `rlm_query(context_text, query, ...)` | recursive RLM over a sub-context (depth>1); falls back to `llm_query` at max depth |
 | `FINAL(answer)` / `FINAL_VAR(name)` | set the final answer (literal / by variable name) |
 | `peek(start, end)` | a slice of the raw context |
@@ -251,6 +264,9 @@ The replay checkpoint is separate from the live REPL state and does not mutate
 - **Split semantics from arithmetic.** LLM = meaning (classify/extract/summarise);
   Python = counting/aggregation/formatting. Counting with the LLM, or classifying
   with `if "keyword" in line`, both score badly.
+- **Label with `classify`, not a hand-rolled prompt.** Keep `other` in the
+  category list, pick the threshold deliberately, and read `source` before
+  trusting a `confidence` (leaf answers have none).
 - **Batch sub-calls; don't make one call per line.** Put many items in each
   `llm_query` (e.g. 50–100 short lines per call) and parallelise with
   `llm_query_map`. Thousands of one-item calls are slow and costly for no accuracy
@@ -271,3 +287,7 @@ The replay checkpoint is separate from the live REPL state and does not mutate
   login — no API key or SDK. `llm_query` runs it with tools **off** (a plain LLM);
   `rlm_query` runs it with bash + this skill **on** (its own REPL).
 - Keep all scratch/state under `.claude/rlm_state/`.
+- `classify` talks to Jev only through `scripts/jev.sh`, the workspace's one
+  vendor surface (`docs/service-access.md`); the key lives in the OS keychain
+  and never reaches the REPL. Knobs: `RLM_JEV_THRESHOLD`, `RLM_JEV_MODEL`
+  (default `jev-latest`; pin a version once a threshold is tuned on it).

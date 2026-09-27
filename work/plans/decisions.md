@@ -548,3 +548,5 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
 ## 2026-09-27 — Dogfood findings from jev-integration session 9 (plan 01-gated-integration, wave 4)
 **Observed:** (a) A one-node wave's reconcile is mostly `verify` plus a Tier-2 note — fine, no procedure gap. (b) A `check:` that runs a test from `$WORKSPACE_ROOT` worked from `work/<item>/` as documented; the only trap was the operator's (`VAR=x cmd "$VAR"` does not expand on the same line), not the plan's. (c) A node's `check` proving the seam does not protect a session from an ad-hoc run against the live vendor: the plan has no place for "safe-run" guards beyond the launcher's Constraints; `note` carried it. No overruns; node 07 fit with ~60K headroom.
 **Promote?:** no
+
+- **s10 (jev-integration, node 09):** a standard-tier seam node (helper + tests + skill doc) consumed ~70K of the window on top of a 61K harness baseline, so one such node per session is the realistic budget; the launcher should size waves accordingly rather than list two work nodes as "do both".

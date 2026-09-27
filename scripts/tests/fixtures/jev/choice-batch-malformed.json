@@ -1,0 +1,7 @@
+{
+  "model": "jev-1.13.0",
+  "usage": {"input_tokens": 780, "output_tokens": 40},
+  "answers": {
+    "r0": {"choice": 42, "probabilities": {}, "confidence": 1.0}
+  }
+}

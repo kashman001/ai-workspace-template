@@ -59,7 +59,7 @@ what breaks, what is slow, and the L48 question go to
 | 3 | 06-reconcile-w3 | reconcile | frontier | done |
 | 4 | 07-gate-cli-test | work | standard | done |
 | 4 | 08-reconcile-w4 | reconcile | frontier | done |
-| 5 | 09-rlm-classify | work | standard | todo |
+| 5 | 09-rlm-classify | work | standard | done |
 | 5 | 10-credentials-docs | work | cheap | done |
 | 5 | 11-cli-skill-rule | work | standard | todo |
 | 5 | 12-reconcile-w5 | reconcile | frontier | todo |
@@ -67,5 +67,5 @@ what breaks, what is slow, and the L48 question go to
 | 6 | 14-reconcile-w6 | reconcile | frontier | todo |
 | 7 | 15-tune-and-pin | work | standard | todo |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 09-rlm-classify, 11-cli-skill-rule. Remaining: 7 of 16. Sessions used: 3.
+Frontier: 11-cli-skill-rule. Remaining: 6 of 16. Sessions used: 4.
 <!-- plan:end board -->

@@ -17,6 +17,9 @@ Mental model (the paper's three design choices):
      programmatically, in loops, over slices of the context:
        - llm_query(prompt)      -> a single sub-LM call (a "leaf"; tools OFF).
        - llm_query_map(prompts) -> many leaf calls, run in parallel (batching).
+       - classify(records, categories) -> one label per record with a confidence
+                                   and a source; typed (Jev) where a key is
+                                   present, else the leaf's `N: label` pattern.
        - rlm_query(context,q)   -> a full *recursive* RLM over a sub-context,
                                    used for sub-tasks too big for one leaf call;
                                    falls back to llm_query at the max depth.
@@ -82,6 +85,20 @@ DEFAULT_MAX_OUTPUT_CHARS = 8000
 DEFAULT_SUB_MODEL = os.environ.get("RLM_SUB_MODEL", "haiku")
 DEFAULT_MAX_WORKERS = int(os.environ.get("RLM_MAX_WORKERS", "8"))
 DEFAULT_RLM_MODEL = os.environ.get("RLM_ROOT_MODEL", "sonnet")
+
+# Jev: typed classification through scripts/jev.sh, the workspace's one vendor
+# surface for it (docs/service-access.md). Active only where that CLI finds a
+# key; without one classify() takes the leaf path and nothing below is used.
+#   RLM_JEV_THRESHOLD : Jev confidence below which a record is re-asked through
+#                       the leaf (default: 0.9; a worked value, tuned per S21).
+#   RLM_JEV_MODEL     : Jev model id sent in each request (default: jev-latest).
+DEFAULT_JEV_THRESHOLD = float(os.environ.get("RLM_JEV_THRESHOLD", "0.9"))
+DEFAULT_JEV_MODEL = os.environ.get("RLM_JEV_MODEL", "jev-latest")
+JEV_CLI = Path(__file__).resolve().parents[3] / "scripts" / "jev.sh"
+JEV_BATCH = 50              # records per Jev request
+JEV_TOKEN_LIMIT = 32000     # Jev's state limit; a batch is sized to stay under it
+JEV_OTHER = ("other", "None of the above")
+CLASSIFY_QUESTION = "Which category best describes each record?"
 RLM_CLAUDE_DISALLOWED_TOOLS = (
     "WebSearch WebFetch Monitor "
     "ScheduleWakeup Task AskUserQuestion "
@@ -266,6 +283,144 @@ def llm_query_map(
         for i, out in ex.map(_one, list(enumerate(prompts))):
             results[i] = out
     return [r if r is not None else "" for r in results]
+
+
+def classify(
+    records: List[str],
+    categories: Any,
+    threshold: Optional[float] = None,
+    question: str = CLASSIFY_QUESTION,
+) -> List[Dict[str, Any]]:
+    """One label per record, with a confidence and a source.
+
+    Returns a list aligned with `records` of {"label", "confidence", "source"},
+    `source` being "jev" or "leaf". `categories` is a list of labels or a
+    {label: description} dict; `other` is appended so a record that fits
+    nothing is labelled `other` rather than forced into a category.
+
+    With a Jev key (scripts/jev.sh answers), each batch of up to JEV_BATCH
+    records is one typed request -- `state` is the record array, one Choice
+    question per record -- and any answer whose confidence is below
+    `threshold` (default RLM_JEV_THRESHOLD) is re-asked through the leaf,
+    reported with `source: leaf` and no confidence. Without a key every record
+    takes today's path: the skill's `N: label` prompt through llm_query_map,
+    with nothing said about Jev. Any other CLI failure, or a malformed answer,
+    sends that batch to the leaf with one warning line on stderr.
+    """
+    if isinstance(categories, dict):
+        criteria = {str(k): str(v) for k, v in categories.items()}
+    else:
+        criteria = {str(c): str(c) for c in categories}
+    criteria.setdefault(*JEV_OTHER)
+    if threshold is None:
+        threshold = DEFAULT_JEV_THRESHOLD
+
+    results: List[Optional[Dict[str, Any]]] = [None] * len(records)
+    to_leaf: List[int] = []
+    jev_absent = False
+    for start, batch in _jev_batches(records, criteria, question):
+        span = range(start, start + len(batch))
+        if jev_absent:
+            to_leaf.extend(span)
+            continue
+        answers, status = _jev_classify_batch(batch, criteria, question)
+        if status == "no-key":
+            jev_absent = True
+            to_leaf.extend(span)
+            continue
+        if answers is None:
+            print(f"[classify: records[{start}:{start + len(batch)}] fell back to the leaf "
+                  f"({status})]", file=sys.stderr)
+            to_leaf.extend(span)
+            continue
+        for i, (label, conf) in zip(span, answers):
+            if conf is None or conf < threshold:
+                to_leaf.append(i)
+            else:
+                results[i] = {"label": label, "confidence": conf, "source": "jev"}
+
+    if to_leaf:
+        leaf_labels = _leaf_classify(records, to_leaf, list(criteria), question)
+        for i, label in zip(to_leaf, leaf_labels):
+            results[i] = {"label": label, "confidence": None, "source": "leaf"}
+    return results  # type: ignore[return-value]
+
+
+def _jev_batches(records: List[str], criteria: Dict[str, str], question: str):
+    """Yield (start, batch): up to JEV_BATCH records, split further so that the
+    estimated tokens of `state` plus the longest question stay under the limit."""
+    q_chars = len(json.dumps(_jev_question(JEV_BATCH, criteria, question)))
+    start, batch, chars = 0, [], 2
+    for i, rec in enumerate(records):
+        rec_chars = len(json.dumps(rec)) + 1
+        if batch and (len(batch) >= JEV_BATCH
+                      or (chars + rec_chars + q_chars) // 4 > JEV_TOKEN_LIMIT):
+            yield start, batch
+            start, batch, chars = i, [], 2
+        batch.append(rec)
+        chars += rec_chars
+    if batch:
+        yield start, batch
+
+
+def _jev_question(i: int, criteria: Dict[str, str], question: str) -> Dict[str, Any]:
+    return {"type": "choice", "instructions": f"{question} Classify `records[{i}]`.",
+            "criteria": criteria}
+
+
+def _jev_classify_batch(batch: List[str], criteria: Dict[str, str], question: str
+                        ) -> Tuple[Optional[List[Tuple[str, Optional[float]]]], str]:
+    """One request through scripts/jev.sh. Returns ([(label, confidence)...], "ok"),
+    (None, "no-key") on exit 3, or (None, <reason>) for any other failure."""
+    req = {"state": batch, "model": DEFAULT_JEV_MODEL,
+           "questions": {f"r{i}": _jev_question(i, criteria, question) for i in range(len(batch))}}
+    try:
+        res = subprocess.run(["bash", str(JEV_CLI)], input=json.dumps(req), capture_output=True,
+                             text=True, timeout=120, encoding="utf-8", errors="replace")
+    except Exception as e:  # pragma: no cover - environment dependent
+        return None, f"{type(e).__name__}"
+    if res.returncode == 3:
+        return None, "no-key"
+    if res.returncode != 0:
+        first = ((res.stderr or "").strip().splitlines() or [""])[0][:200]
+        return None, f"exit {res.returncode}: {first}"
+    try:
+        got: Dict[str, Tuple[Any, Any]] = {}
+        for line in res.stdout.splitlines():
+            if line.strip():
+                d = json.loads(line)
+                got[d["key"]] = (d.get("value"), d.get("confidence"))
+        answers: List[Tuple[str, Optional[float]]] = []
+        for i in range(len(batch)):
+            label, conf = got[f"r{i}"]
+            if not isinstance(label, str) or label not in criteria:
+                raise ValueError(f"r{i}: label {label!r}")
+            answers.append((label, None if conf is None else float(conf)))
+    except (ValueError, KeyError, TypeError) as e:
+        return None, f"malformed answer: {e}"
+    return answers, "ok"
+
+
+def _leaf_classify(records: List[str], indices: List[int], labels: List[str],
+                   question: str) -> List[Optional[str]]:
+    """The skill's `N: label` pattern, unchanged: batches of JEV_BATCH numbered by
+    the record's index, one leaf call per batch through llm_query_map."""
+    def build(batch: List[int]) -> str:
+        body = "\n".join(f"{i}: {records[i]}" for i in batch)
+        return (
+            f"{question}\n"
+            f"Use exactly one of these categories: {', '.join(labels)}.\n"
+            "Output exactly one line per record as 'N: <category>'. No extra text.\n\n"
+            + body
+        )
+    prompts = [build(indices[s:s + JEV_BATCH]) for s in range(0, len(indices), JEV_BATCH)]
+    parsed: Dict[int, str] = {}
+    for out in llm_query_map(prompts):
+        for ln in out.splitlines():
+            m = re.match(r"\s*(\d+)\s*[:.\)]\s*(.+)", ln)
+            if m:
+                parsed[int(m.group(1))] = m.group(2).strip().strip("*[]").lower()
+    return [parsed.get(i) for i in indices]
 
 
 def rlm_query(
@@ -729,6 +884,7 @@ def _make_helpers(state: Dict[str, Any], buffers_ref: List[str], final_ref: Dict
         "add_buffer": add_buffer,
         "llm_query": llm_query,
         "llm_query_map": llm_query_map,
+        "classify": classify,
         "rlm_query": rlm_query,
         "FINAL": FINAL,
         "FINAL_VAR": FINAL_VAR,

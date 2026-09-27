@@ -27,3 +27,10 @@
 **Rejected:** (a) `--state`/`--question`/`--criteria` flags — lossy, Choice-only by construction; (b) `python3 - <<heredoc` — takes stdin from the body (the first green run showed it); (c) passing the key on argv — visible in `ps`; (d) a `--model` flag — the body's `model` and the one constant already cover S21's pin.
 **Blast radius:** `scripts/jev.sh`, `scripts/tests/test-jev.sh`, the helper's call in ticket 02, the skill's examples in ticket 04.
 **Promote?:** no
+
+## 2026-09-27 — `classify()` takes categories as a `{label: description}` dict or a list, plus an optional `question=`
+
+- **Decision:** the helper's signature is `classify(records, categories, threshold=None, question=CLASSIFY_QUESTION)`; `categories` may be a dict (label → description, sent as the Choice `criteria`) or a list (each label described by itself); `other` is appended when absent.
+- **Why:** Jev's Choice criteria are `{label: description}` and the descriptions are what makes the typed answer good (the spike used them); the skill's existing `N: label` pattern carries a root-chosen `question`, and the no-key path must reproduce that prompt, so the question has to be a parameter.
+- **Rejected:** labels-only (description = label always) — throws away the criteria Jev is best with; a fixed question string — the leaf prompt would no longer be what a root writes today.
+- **Promote?:** no (Tier 2 is enough; the docstring and SKILL.md carry it).
