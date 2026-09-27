@@ -122,5 +122,24 @@ assert_eq "T5f: no request sent" "$(requests)" "$before"
 "$JEV" --help >/dev/null 2>&1; assert_eq "T5g: --help exits 0" "$?" "0"
 assert_absent "T5h: the key is not in any usage text" "$("$JEV" --help 2>&1)" "$KEY"
 
+echo "T6: --check with a key present (env override) — exit 0, report source"
+out="$(JEV_ENDPOINT="$ENDPOINT" JEV_API_KEY="$KEY" "$JEV" --check 2>"$TMP/t6.err")"; rc=$?
+assert_eq "T6a: exit 0" "$rc" "0"
+assert_contains "T6b: reports env source" "$out" "env"
+assert_eq "T6c: stderr is empty" "$(cat "$TMP/t6.err")" ""
+assert_absent "T6d: the key is not on stdout" "$out" "$KEY"
+
+echo "T7: --check with a key absent — exit 3, one stderr line, empty stdout"
+printf '#!/bin/sh\nexit 1\n' > "$FAKE/security"  # reset to the failing version
+before="$(requests)"
+out="$(env -u JEV_API_KEY JEV_ENDPOINT="$ENDPOINT" PATH="$FAKE:$PATH" "$JEV" --check 2>"$TMP/t7.err")"; rc=$?
+assert_eq "T7a: exit 3" "$rc" "3"
+assert_eq "T7b: empty stdout" "$out" ""
+assert_eq "T7c: one stderr line" "$(wc -l < "$TMP/t7.err" | tr -d ' ')" "1"
+assert_contains "T7d: names the keychain entry" "$(cat "$TMP/t7.err")" "jev-api-key"
+assert_eq "T7e: no request sent" "$(requests)" "$before"
+assert_absent "T7f: the key string is nowhere on stdout" "$out" "$KEY"
+assert_absent "T7g: the key string is nowhere on stderr" "$(cat "$TMP/t7.err")" "$KEY"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

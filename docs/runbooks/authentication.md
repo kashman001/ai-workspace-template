@@ -60,16 +60,38 @@ writing anything with `--verify-only`.
 Full reference, including the isolation check and the Linux/WSL caveat:
 `../service-access.md` → "GitHub — repo-scoped access (one repository)".
 
-## 3. Verify
+## 3. Jev API key (optional)
+
+Skip this unless you want faster classification in `rlm` runs. Jev is a TypeSafe service:
+gain a 10x speedup and confidence scores for batch classification.
+
+Get a key from [TypeSafe.ai](https://typesafe.ai). Store it in the OS keychain:
+
+**macOS:**
+```bash
+security add-generic-password -a "$USER" -s jev-api-key -w
+# Paste the key when prompted (silently — no echo).
+```
+
+**Linux:**
+```bash
+secret-tool store --label=jev-api-key service jev-api-key
+# Paste the key when prompted (silently — no echo).
+```
+
+**Verify** with `scripts/jev.sh --check` (see `../service-access.md` for details).
+
+## 4. Verify
 
 ```bash
 ./scripts/check-service-access.sh   # expect: "Status: ok"
 gh auth status                      # authenticated as <your-github-username>
 ```
 
-`check-service-access.sh` also discovers any repo-scoped credentials from step 2
-with no configuration of its own, and asserts each token is still live with push
-rights — a workspace that skipped step 2 sees nothing extra.
+`check-service-access.sh` also discovers any repo-scoped credentials from the GitHub
+step above with no configuration of its own, and asserts each token is still live with
+push rights — a workspace that skipped that step sees nothing extra. It also reports
+the Jev key as present or absent if you added it.
 
 See also `../service-access.md` (the credential framework) and `../mcp-setup.md`
 (per-runtime MCP config for the non-GitHub servers).

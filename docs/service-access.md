@@ -134,6 +134,16 @@ is live with push rights. A workspace that never ran the script reports nothing.
 - **Used by**: workspace-local `youtube-transcript` MCP server (see `docs/mcp-setup.md`)
 - **Notes**: retrieves only public metadata/captions that YouTube exposes; availability depends on the video and YouTube access rules.
 
+### Jev (TypeSafe)
+
+- **Scope**: personal
+- **Credentials**: `jev-api-key` in the OS keychain; `JEV_API_KEY` environment variable for keychain-less hosts and tests only (never a `.env` file)
+- **Retrieve cmd**: macOS `security find-generic-password -s jev-api-key -w`; Linux `secret-tool lookup service jev-api-key`
+- **Verify cmd**: `scripts/jev.sh --check`
+- **Used by**: the `rlm` skill (classification), the `jev` skill (direct request)
+- **Cost and limits**: $42 per billion input tokens, output free; 250k tokens/s and 1,200 requests/min, 429 beyond; no SLA
+- **Notes**: optional; absence does not degrade the status. A key grants faster, confidence-bearing classification in `rlm` runs; without one, the current sub-model path is used unchanged. Get a key from [TypeSafe.ai](https://typesafe.ai).
+
 <!-- Add one section per additional service (cloud CLI, database, Atlassian, …).
 See docs/workspace-structure.md → "Service Access Pattern" for the entry shape. -->
 

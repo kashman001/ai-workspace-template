@@ -18,7 +18,7 @@ JEV_ENDPOINT_DEFAULT="https://api.typesafe.ai/v1/systemone"
 
 usage() {
   cat <<'USAGE'
-usage: scripts/jev.sh [--help] < request.json
+usage: scripts/jev.sh [--help] [--check] < request.json
 
 Reads {state, questions[, model]} as JSON on stdin and prints one JSON line
 per answer: {"key": <question key>, "value": <choice>, "confidence": <0..1>}.
@@ -28,26 +28,52 @@ A question is {type: "choice", instructions, criteria: {label: description}}.
   questions  map of question key -> question
   model      optional; default jev-latest
 
+Flags:
+  --check    Verify the key is present (does not send a request); prints one
+             line on stdout and exits 0 if present, or exits 3 with one line
+             on stderr if absent. Reads no stdin.
+  --help     Show this message.
+
 Key: JEV_API_KEY, else the OS keychain entry `jev-api-key` (macOS security,
 Linux secret-tool). Endpoint: JEV_ENDPOINT (default: the live URL).
 Exit: 0 answered, 2 usage, 3 no key, 4 non-200 from the server.
 USAGE
 }
 
+check_mode=0
 for arg in "$@"; do
   case "$arg" in
     -h|--help) usage; exit 0 ;;
+    --check) check_mode=1 ;;
     *) usage >&2; exit 2 ;;
   esac
 done
 
 key="${JEV_API_KEY:-}"
-if [ -z "$key" ] && command -v security >/dev/null 2>&1; then
+key_source=""
+
+if [ -n "$key" ]; then
+  key_source="env"
+elif command -v security >/dev/null 2>&1; then
   key="$(security find-generic-password -s jev-api-key -w 2>/dev/null)" || key=""
+  [ -n "$key" ] && key_source="keychain"
 fi
+
 if [ -z "$key" ] && command -v secret-tool >/dev/null 2>&1; then
   key="$(secret-tool lookup service jev-api-key 2>/dev/null)" || key=""
+  [ -n "$key" ] && key_source="keychain"
 fi
+
+if [ "$check_mode" = 1 ]; then
+  if [ -n "$key" ]; then
+    echo "jev: key present ($key_source)"
+    exit 0
+  else
+    echo "jev: no API key — set JEV_API_KEY or add the keychain entry 'jev-api-key' (docs/service-access.md)" >&2
+    exit 3
+  fi
+fi
+
 if [ -z "$key" ]; then
   echo "jev: no API key — set JEV_API_KEY or add the keychain entry 'jev-api-key' (docs/service-access.md)" >&2
   exit 3

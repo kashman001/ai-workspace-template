@@ -140,6 +140,22 @@ EOF
   ]"
 fi
 
+# --- Jev API key (optional): TypeSafe classification service ------------------
+# Optional by design: a workspace that never set up a Jev key sees nothing.
+# Used by: rlm skill (classification), jev skill (direct request).
+# Verification: call scripts/jev.sh --check, which resolves the key exactly as
+# the normal path does, sends no request, and exits 0/3.
+jev_json=""
+if scripts/jev.sh --check >/dev/null 2>&1; then
+  echo "  ✓ jev key present"
+  jev_json=",
+  \"jev\": {
+    \"verify\": \"scripts/jev.sh --check\"
+  }"
+else
+  echo "  – jev key absent (optional)"
+fi
+
 # --- cache (gitignored) so agents don't re-discover the commands ---
 cat > .service-access.local.json <<JSON
 {
@@ -147,7 +163,7 @@ cat > .service-access.local.json <<JSON
   "github": {
     "tokenSource": "gh keychain (managed by gh auth login)",
     "verify": "gh auth status"
-  }${repo_scoped_json}
+  }${repo_scoped_json}${jev_json}
 }
 JSON
 echo "  wrote .service-access.local.json"
