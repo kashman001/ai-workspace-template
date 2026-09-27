@@ -1,14 +1,14 @@
 ---
 id: 05-spec-and-tickets
 title: spec.md via to-spec, tracer-bullet tickets via to-tickets
-status: todo
+status: done
 kind: work
 wave: 3
 blocked_by: [03-approve-decision]
 leaf: design
 tier: auto
 check: test -s spec.md && ls issues/*.md >/dev/null
-sessions: []
+sessions: [8]
 ---
 
 ## Goal
@@ -34,8 +34,13 @@ first-class documentation, a test that proves it without a live key).
 
 ## Acceptance
 
-- [ ] `spec.md` exists with `## Testability` and numbered success criteria
-- [ ] `issues/NN-*.md` exist, each with `Blocked by:` and checkbox acceptance; the edges form no cycle
-- [ ] Every story traces to the note in `decisions.md` or to `README.md` → Success criteria
+- [x] `spec.md` exists with `## Testability` and numbered success criteria
+- [x] `issues/NN-*.md` exist, each with `Blocked by:` and checkbox acceptance; the edges form no cycle
+- [x] Every story traces to the note in `decisions.md` or to `README.md` → Success criteria
 
 ## Log
+- s8 · started, tier frontier
+- s8 · started, tier auto
+- s8 · spec.md written (21 stories S1–S21, Testability, Implementation/Testing Decisions, Out of scope names tier routing + relevance filter); six tickets under issues/ (01 gate+CLI+offline test → 02 rlm helper, 03 docs+preflight, 04 CLI three types+skill+rule → 05 UAT hitl → 06 tune+pin), edges acyclic, each with Spec: S-ids; Tier-2 note "rlm swap is a new typed helper beside llm_query" appended to decisions.md; TypeSafe skills re-check: last push 2026-09-12 (65a39f3, v0.5.7), nothing newer than 2026-09-23. On disk: spec.md, issues/*.md, decisions.md.
+- s8 · check passed → done
+- s8 · check passed → done

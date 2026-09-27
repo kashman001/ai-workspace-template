@@ -540,3 +540,7 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   "Run a reconcile node" should say: when the next frontier is `hitl`, the
   launcher's prose carries the question and how to answer it
   (`done <id> --by human` / amend / `drop`).
+
+## 2026-09-27 — Dogfood findings from jev-integration session 8 (plan 01-gated-integration, wave 3)
+**Observed:** (a) `plan.sh add` writes empty `## Goal` / `## Acceptance`, so "Create a plan" step 4 (Ticket:/Spec: pointer, "What to build", the ticket's boxes) is a hand copy per node — done here with a one-off Python pass over six tickets; an `add --from-ticket <path>` would remove the step and the transcription risk. (b) `--project jev-integration` held in one shell variable is rejected ("unknown option") — the launcher already warns, it still cost one call; a `plan.sh` hint naming the fix, or accepting `--project=<item>`, would close it. (c) `frontier` exits 1 while the wave's reconcile node is `doing` — correct, but it fails a `&&` chain that only wanted the listing. No overruns; nodes 05 and 06 fit one session with ~40K headroom.
+**Promote?:** no — fixes under the plans item (`issues/11-dogfood.md`).

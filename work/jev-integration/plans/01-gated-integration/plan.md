@@ -28,6 +28,7 @@ what breaks, what is slow, and the L48 question go to
 - s7 · wave 1: the fit note proposes a confidence threshold with per-record fallback to the current path; the threshold value and the per-OS keychain read are left to node 05's spec, not the note
 - s7 · user question (s7, 2026-09-27): TypeSafe ships a Claude Code plugin — research integration-paths 1.7/3.7 (2026-09-23) records it as one SKILL.md with no code (claude plugin marketplace add typesafe-ai/skills; npx skills add typesafe-ai/skills for Codex and others), and coding-agents docs say Jev is not a drop-in for the agent's LLM. For node 03/05: the plugin is agent knowledge, not the integration; the seam stays a CLI-first script every runtime can call; the SKILL.md can be vendored with provenance. Re-check the marketplace for anything newer than 2026-09-23 in node 05.
 - s7 · wave 2 (s7): the user approved the fit note in chat; tier routing for subagent dispatch, a relevance filter, and a jev CLI + one always-on context rule + a demand-loaded skill were discussed as slices — node 05 scopes the CLI/rule/skill into the rlm slice's spec and lists tier routing and the relevance filter as later plans
+- s8 · s8 · TypeSafe skills repo re-checked 2026-09-27: last push 2026-09-12 (65a39f3, v0.5.7); nothing newer than the 2026-09-23 research — ticket 04 vendors that commit
 
 ## Out of scope
 
@@ -40,6 +41,12 @@ what breaks, what is slow, and the L48 question go to
 
 ## Replans
 
+- s8 · 06-reconcile-w3 (structural): added wave 4 — 07-gate-cli-test ← ticket 01; 08-reconcile-w4
+- s8 · 06-reconcile-w3 (structural): added wave 5 — 09-rlm-classify ← ticket 02; 10-credentials-docs ← ticket 03 (tier cheap); 11-cli-skill-rule ← ticket 04; 12-reconcile-w5
+- s8 · 06-reconcile-w3 (structural): added wave 6 — 13-uat-gated (hitl) ← ticket 05; 14-reconcile-w6
+- s8 · 06-reconcile-w3 (structural): added wave 7 — 15-tune-and-pin ← ticket 06; 16-reconcile-w7
+- s8 · waves = 3 + (1 + longest blocker chain) per ticket; checks name `scripts/tests/test-jev.sh` (ticket 01 builds it); no model name in any node (tiers only)
+
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
@@ -47,7 +54,17 @@ what breaks, what is slow, and the L48 question go to
 | 1 | 02-reconcile-w1 | reconcile | frontier | done |
 | 2 | 03-approve-decision | hitl | frontier | done |
 | 2 | 04-reconcile-w2 | reconcile | frontier | done |
-| 3 | 05-spec-and-tickets | work | auto | todo |
-| 3 | 06-reconcile-w3 | reconcile | frontier | todo |
-Frontier: 05-spec-and-tickets. Remaining: 2 of 6. Sessions used: 1.
+| 3 | 05-spec-and-tickets | work | auto | done |
+| 3 | 06-reconcile-w3 | reconcile | frontier | done |
+| 4 | 07-gate-cli-test | work | standard | todo |
+| 4 | 08-reconcile-w4 | reconcile | frontier | todo |
+| 5 | 09-rlm-classify | work | standard | todo |
+| 5 | 10-credentials-docs | work | cheap | todo |
+| 5 | 11-cli-skill-rule | work | standard | todo |
+| 5 | 12-reconcile-w5 | reconcile | frontier | todo |
+| 6 | 13-uat-gated | hitl | frontier | todo |
+| 6 | 14-reconcile-w6 | reconcile | frontier | todo |
+| 7 | 15-tune-and-pin | work | standard | todo |
+| 7 | 16-reconcile-w7 | reconcile | frontier | todo |
+Frontier: 07-gate-cli-test. Remaining: 10 of 16. Sessions used: 2.
 <!-- plan:end board -->
