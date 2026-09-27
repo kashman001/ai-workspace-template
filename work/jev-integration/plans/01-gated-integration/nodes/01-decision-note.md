@@ -1,14 +1,14 @@
 ---
 id: 01-decision-note
 title: Fit decision — Tier-2 note in decisions.md: rlm leaf seam, gated on jev access
-status: todo
+status: done
 kind: work
 wave: 1
 blocked_by: []
 leaf: design
 tier: auto
 check: grep -qE '^## .*[Ff]it decision' decisions.md
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -56,9 +56,12 @@ Do not re-run the spike; never print or write the key.
 
 ## Acceptance
 
-- [ ] `decisions.md` has the new note appended after the R0.4 note, with a dated `## … Fit decision` heading and the five fields; the "STILL OPEN" line now points at it; the node's check passes
-- [ ] Every claim id cited resolves (`grep -rn '<id>' research/` finds a row for each)
-- [ ] The note names Q1, Q2, Q4, Q5 and which of them is the user's answer (Q4) versus a proposal
-- [ ] The note says in one sentence what a user *without* a key experiences (nothing changes)
+- [x] `decisions.md` has the new note appended after the R0.4 note, with a dated `## … Fit decision` heading and the five fields; the "STILL OPEN" line now points at it; the node's check passes
+- [x] Every claim id cited resolves (`grep -rn '<id>' research/` finds a row for each)
+- [x] The note names Q1, Q2, Q4, Q5 and which of them is the user's answer (Q4) versus a proposal
+- [x] The note says in one sentence what a user *without* a key experiences (nothing changes)
 
 ## Log
+- s7 · started, tier frontier
+- s7 · fit note appended to decisions.md (heading "## 2026-09-27 — Fit decision: …", five fields, Q4 = user, Q1/Q2/Q5 = proposals for node 03); "STILL OPEN" line replaced by a pointer; 14 claim ids resolve (grep of research/*/record.md); check passes; research/ untouched. On disk: decisions.md. Not on disk: nothing pending.
+- s7 · check passed → done

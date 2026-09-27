@@ -518,3 +518,25 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   first block header after `-->`. Candidate ticket 12 (with the dedupe
   finding above): a `scripts/check-ledger.sh` or a `plan.sh`/checkpoint
   step that runs it. Fixed by hand in s16.
+- 2026-09-27 (s7 of jev-integration, first hands-off run of the plan) — a
+  `work` node and its wave's reconcile ran in one session with no rollover
+  split: node 01 (a Tier-2 note from closed research) cost ~35K tokens of
+  work. The window opened at 60K tokens (39% of the 150K STOP) before any
+  work — harness baseline (system prompt, tool schemas, skill list) — so a
+  node has ~60K of real budget below WARN, not 120K. Worth a sentence in
+  `docs/plans.md` sizing guidance; ticket 11's "did a split happen": no.
+- 2026-09-27 (s7) — `plan.sh` rejects `--project <item>` when the flag and
+  value arrive as one word (zsh `P="--project x"; plan.sh done id $P` →
+  `unknown option --project jev-integration`); four verbs silently did not
+  run and the session only noticed because `check` returned 2. Cosmetic
+  (caller error), but a `--project=<item>` form would remove the trap.
+- 2026-09-27 (s7) — the reconcile procedure's step 3 ("record forks as
+  Tier-2 notes") is a no-op when the wave's only work node *is* a Tier-2
+  note; fine, but the skill could say "unless the node's output already is
+  one". Step 2 worked as written: `verify`, claim-id greps, `git diff`.
+- 2026-09-27 (s7) — hitl handoff: the reconcile node 02's Goal told this
+  session to rewrite the launcher prose for the person (what node 03 asks);
+  that instruction lived in the node file, not in the skill. If it holds up,
+  "Run a reconcile node" should say: when the next frontier is `hitl`, the
+  launcher's prose carries the question and how to answer it
+  (`done <id> --by human` / amend / `drop`).

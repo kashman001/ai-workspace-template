@@ -25,6 +25,8 @@ what breaks, what is slow, and the L48 question go to
 `work/plans/decisions.md` as they appear.
 
 ## Not yet specified
+- s7 · wave 1: the fit note proposes a confidence threshold with per-record fallback to the current path; the threshold value and the per-OS keychain read are left to node 05's spec, not the note
+- s7 · user question (s7, 2026-09-27): TypeSafe ships a Claude Code plugin — research integration-paths 1.7/3.7 (2026-09-23) records it as one SKILL.md with no code (claude plugin marketplace add typesafe-ai/skills; npx skills add typesafe-ai/skills for Codex and others), and coding-agents docs say Jev is not a drop-in for the agent's LLM. For node 03/05: the plugin is agent knowledge, not the integration; the seam stays a CLI-first script every runtime can call; the SKILL.md can be vendored with provenance. Re-check the marketplace for anything newer than 2026-09-23 in node 05.
 
 ## Out of scope
 
@@ -40,11 +42,11 @@ what breaks, what is slow, and the L48 question go to
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-decision-note | work | auto | todo |
-| 1 | 02-reconcile-w1 | reconcile | frontier | todo |
+| 1 | 01-decision-note | work | auto | done |
+| 1 | 02-reconcile-w1 | reconcile | frontier | done |
 | 2 | 03-approve-decision | hitl | frontier | todo |
 | 2 | 04-reconcile-w2 | reconcile | frontier | todo |
 | 3 | 05-spec-and-tickets | work | auto | todo |
 | 3 | 06-reconcile-w3 | reconcile | frontier | todo |
-Frontier: 01-decision-note. Remaining: 6 of 6. Sessions used: 0.
+Frontier: 03-approve-decision. Remaining: 4 of 6. Sessions used: 1.
 <!-- plan:end board -->
