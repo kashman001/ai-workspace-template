@@ -22,21 +22,27 @@ a wayfinder).
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project plans` (the chain cap of 15
-   was reached; a person restarted this session, so expect `seq=16` after
-   `--reset-cap` or a manual launch).
+1. `scripts/context-budget.sh register --project plans` (manual restart;
+   expect `seq=17`).
 2. `scripts/plan.sh status --project jev-integration` and the "Dogfood
    findings" list at the tail of `decisions.md` here. If the plan is not yet
    closed (`plan_closed` not in `work/jev-integration/.session-loop.log`),
    there is nothing to close yet: add any new finding from that item's
-   `handoff.md` top block to the list, commit, `checkpoint`.
+   `handoff.md` top block to the list, commit, `checkpoint`. Sessions 15 and
+   16 already did this; do not repeat their findings. The jev chain itself
+   is closed (`quit_plain`) — it restarts only when a person runs
+   `scripts/session-loop.sh jev-integration --reopen` (or `--plan`); the
+   plans item never drives it.
 3. When it *is* closed: tick 11's boxes against the evidence (the log's
    `plan_closed` line; a split or its absence in that plan's `## Replans`;
    the findings list), write the L48 verdict as a Tier-2 note in
    `decisions.md`, mark `issues/11-dogfood-first-real-plan.md` `done`, update
    this `README.md` status line and the `work/README.md` row, then fix the
    findings that are bugs under new tickets (12+) — note first, fix second,
-   suite third. `checkpoint`, not rollover.
+   suite third. `checkpoint`, not rollover. Candidate 12 is already named in
+   the findings: a ledger lint (header comment intact, `# Session Handoff`
+   headers unique, first block right after `-->`), after s15 produced two
+   ledger-write defects that s16 fixed by hand.
 
 ## Read these, in order (keep it lean)
 
@@ -62,7 +68,8 @@ a wayfinder).
 
 ## State snapshot
 
-Branch `main`, clean after this session's commits; nothing pushed. Tickets:
-01–10 `done`; 11 in progress (plan open in jev-integration, frontier
-`01-decision-note`, 0/6 done). Plans chain: seq 15 of cap 15 — ended.
-`TEMPLATE_VERSION` = 2026-09-24.
+Branch `main`, clean after this session's commits; nothing pushed (main is
+60+ commits ahead of `origin/main`). Tickets: 01–10 `done`; 11 in progress
+(plan open in jev-integration, frontier `01-decision-note`, 0/6 done, jev
+chain closed since 2026-09-25). Plans chain: seq 16, manual restarts.
+`TEMPLATE_VERSION` = 2026-09-24. Ledger TOP block = session 16.

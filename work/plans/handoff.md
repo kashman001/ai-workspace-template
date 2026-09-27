@@ -1,6 +1,23 @@
 <!--
 PURPOSE: This is the LEDGER (provenance log). Append-only, newest block on
-TOP. Each "# Session Handoff — 15 (2026-09-25): ticket 11 started — the user chose `jev-integration` (integrate, gated on Jev access); plan `01-gated-integration` opened there (aec31e5); five dogfood findings recorded; chain cap reached
+TOP. Each "# Session Handoff" block records what happened in one session.
+Read the TOP block only; older blocks are in handoff-archive.md. Forward
+"what to do next" belongs in next-session.md, NOT here.
+Convention: docs/work-directory-conventions.md.
+-->
+
+# Session Handoff — 16 (2026-09-27): dogfood plan still open, nothing to close; two ledger-write defects from s15 found and fixed; findings recorded
+
+1. Registered `seq=16` (person restarted after the cap). `plan.sh status --project jev-integration`: `01-gated-integration` open, wave 1 of 3, 0/6 done, frontier `01-decision-note`; jev chain closed (`quit_plain`, 2026-09-25 22:23Z), no supervisor running. No `plan_closed` line, so ticket 11 stays open — launcher step 2 applied.
+2. Found the s15 redo had left its stale first pass in `work/jev-integration/handoff.md` (session-6 block twice, both 6→7 bridges; the stale one claimed session 6 never closed). Removed the stale copy; its one unique fact (two supervisor processes) folded into the kept bridge. Commit 5f35266.
+3. Found the s15 block of *this* ledger spliced into the header comment. Moved it out to its proper place above block 14; header restored.
+4. Both recorded under "Dogfood findings" in `decisions.md` as a candidate ticket 12 (ledger lint). Suites green: test-plan 238, test-session-loop 140, test-doc-consistency 17, test-template-version 9. Nothing pushed.
+
+Learnings:
+- A ledger write that anchors on the first `# Session Handoff` match hits the header comment's example text; anchor on `-->` (end of the header) instead.
+- After any ledger write, `grep -c '^# Session Handoff'` against the expected count is a two-second check that would have caught both defects.
+
+# Session Handoff — 15 (2026-09-25): ticket 11 started — the user chose `jev-integration` (integrate, gated on Jev access); plan `01-gated-integration` opened there (aec31e5); five dogfood findings recorded; chain cap reached
 
 1. Registered `seq=15`; `git fetch origin` — nothing landed on origin. Posed the ticket-11 question; the user chose (a) `work/jev-integration` and added the constraint: Jev active only where a person has Jev access.
 2. Opened the plan per "Create a plan": `plan.sh new gated-integration`, six nodes in three waves (01 decision-note → 02 join; 03 approve-decision [hitl] → 04 join; 05 spec-and-tickets → 06 join + structural replan). `check` silent, `sync` run, frontier `01-decision-note` (tier auto → frontier via the `design` leaf).
@@ -11,12 +28,6 @@ TOP. Each "# Session Handoff — 15 (2026-09-25): ticket 11 started — the user
 Learnings:
 - A plan can open before a spec or tickets exist: draft → hitl approval → spec/tickets → structural replan at the join. This is the L48 shape (wayfinder as a plan) in practice; the verdict waits for the chain to run it.
 - `AskUserQuestion` at the launcher's "pose verbatim" step got the answer in one round; the constraint the user attached went straight into `plan.md` → Goal rather than a new grill.
-
-# Session Handoff" block records what happened in one session.
-Read the TOP block only; older blocks are in handoff-archive.md. Forward
-"what to do next" belongs in next-session.md, NOT here.
-Convention: docs/work-directory-conventions.md.
--->
 
 # Session Handoff — 14 (2026-09-24): ticket 10 done — front door, reference, glossary, downloader work
 

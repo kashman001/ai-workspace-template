@@ -510,3 +510,11 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   a `handoff.md` header-uniqueness check (`grep -c` of each `# Session Handoff`
   line) would have caught it. Deduped in s16; the stale bridge's one unique
   fact (two supervisor processes) folded into the kept bridge.
+- 2026-09-27 (s16) — the s15 ledger block for *this* item was spliced into
+  the ledger's HTML comment header (the write anchored on the first
+  `# Session Handoff` text, which is the comment's own example, not a block).
+  Second ledger-write defect from one session; both would be caught by a
+  cheap `handoff.md` lint: header comment intact, block headers unique,
+  first block header after `-->`. Candidate ticket 12 (with the dedupe
+  finding above): a `scripts/check-ledger.sh` or a `plan.sh`/checkpoint
+  step that runs it. Fixed by hand in s16.
