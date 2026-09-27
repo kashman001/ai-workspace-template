@@ -503,3 +503,10 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   and redone. A plan-creation step should re-read `git log -1` and the files
   it will rewrite right before writing; the skill's "Create a plan" could say
   so where it touches another item's launcher.
+- 2026-09-27 (s16) — the s15 redo left its stale first pass in place: the
+  jev-integration ledger carried the session-6 block twice and both versions
+  of the 6→7 bridge (the stale one said session 6 "never closed"). A redo of a
+  ledger write must delete the superseded block, not just prepend the new one;
+  a `handoff.md` header-uniqueness check (`grep -c` of each `# Session Handoff`
+  line) would have caught it. Deduped in s16; the stale bridge's one unique
+  fact (two supervisor processes) folded into the kept bridge.
