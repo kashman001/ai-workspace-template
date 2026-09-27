@@ -27,8 +27,8 @@ dogfood: findings go to `work/plans/decisions.md`.
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-gated-integration, open, wave 5 of 7, done 11/16, doing 1, todo 4, blocked 0, dropped 0, sessions 5.
-Frontier: none (12-reconcile-w5 doing). Remaining: 5 of 16 — wave 5: 12-reconcile-w5 doing.
+Position: plan 01-gated-integration, open, wave 6 of 7, done 12/17, doing 0, todo 5, blocked 0, dropped 0, sessions 5.
+Frontier: 13-uat-gated. Remaining: 5 of 17 — wave 6: 13-uat-gated todo, 14-reconcile-w6 todo, 17-13b-uat-fixes todo.
 <!-- plan:end position -->
 
 Remaining nodes (`plan.sh remaining`):
@@ -42,36 +42,44 @@ Remaining nodes (`plan.sh remaining`):
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=12`).
-2. `scripts/plan.sh frontier --project jev-integration` → `13-uat-gated`
-   (`hitl`, wave 6; ticket `issues/05-*` is `ready-for-human`). **This session
-   is interactive: pose the UAT to the user and wait.** Read the node
-   (`nodes/13-uat-gated.md`) for its boxes, then ask the user to run, on a
-   **keyed** machine: `scripts/jev.sh --check` (expect `jev: key present
-   (keychain)`), `scripts/jev.sh --help` (three examples read correctly), and
-   an `rlm` classification run following `skills/rlm/SKILL.md` section 3
-   (`classify(...)`) whose `by_source` counter shows `jev`; and on a
-   **keyless** machine (or with a fake `security` first on `PATH`):
-   `--check` exits 3 with one stderr line, the same `rlm` run works and
-   `by_source` shows only `leaf`, nothing mentions Jev. Note: an `rlm` run on
-   the keyed machine is a real paid request (small: cents). Record the answer:
-   pass → `scripts/plan.sh done 13-uat-gated --by human --project
-   jev-integration`; findings → fix in a new wave-6 `work` node
-   (`plan.sh add`), or `drop 13-uat-gated <reason>` if the user says so.
-3. Then `14-reconcile-w6` (verify 13 by its human mark, record, `check`,
-   `sync`, `done`), and wave 7 (see the nodes for 15/16).
-4. Overruns: `block`/split (Replan rule 1); record which as a finding.
-5. At WARN/STOP: ledger block (insert after the header's `-->`; blocks are
+1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=13`).
+2. **Interactive session.** Node 13 (hitl) is half done — see ledger block
+   12. First fix the plan lint: `scripts/plan.sh check --project
+   jev-integration` fails because fix node `17-13b-uat-fixes` (wave 6,
+   added for the UAT findings) sorts after reconcile `14-reconcile-w6`.
+   Resolve per `skills/plans/SKILL.md` (replan rules), not by hand-editing
+   ids; record how as a `plan.sh note`.
+3. Re-pose the two remaining UAT legs to the user, with `python3` (not
+   `python`) and a **real file path** in place of `<file>` (zsh parses the
+   literal placeholder as a redirection). Keyed leg: `python3
+   skills/rlm/scripts/rlm_repl.py init <path>` then the `classify(...)`
+   exec block from `skills/rlm/SKILL.md` section 3 printing `by_source`;
+   expect mostly `jev`, samples with `confidence`; note the leaf share. It is
+   the one sanctioned live paid call (cents). Keyless leg: same, prefixed
+   `PATH=/tmp/nokey:$PATH` (the user's fake `security`, exit 44; recreate if
+   `/tmp` was cleared); expect only `leaf`, nothing mentioning Jev.
+4. On pass: `scripts/plan.sh done 13-uat-gated --by human --project
+   jev-integration`; write the leaf share to `decisions.md` for node 15.
+   Then run node 17 (goal + acceptance in the node; reviewer's help text at
+   `uat-help-proposal.txt`), then `14-reconcile-w6`, then wave 7.
+5. After the plan closes: the user's deferred request — a critical
+   assessment of the three videos' implementation ideas against context
+   budget and usefulness; candidates and on-disk evidence are listed under
+   "Deferred" in `research/video-notes-2026-09-27.md`. Do not start it
+   before node 16 is done.
+6. At WARN/STOP: ledger block (insert after the header's `-->`; blocks are
    `# Session Handoff — N`; keep two, archive the rest newest-on-top, no
    duplicate N; verify the header count after writing), `plan.sh sync`,
    commit with a `Decision:` trailer, then `session-rollover` (supervised
    chain → `--emit`). Do not push `main`.
-6. `plan.sh` flags are separate words (`--project jev-integration`); a
+7. `plan.sh` flags are separate words (`--project jev-integration`); a
    variable holding both is rejected. `frontier` exits 1 while a reconcile
    node is `doing` — do not chain it with `&&`. A node `check:` runs from the
    work item directory: every path in it needs `"$WORKSPACE_ROOT/"`.
    `plan.sh done` streams the check's full output — pipe through `tail`.
-7. Test-authoring gotcha: a background stub started inside `$( … )` must
+   `plan.sh add <slug>` prefixes its own number: the file is
+   `nodes/NN-<slug>.md`; append the body there, never to `nodes/<slug>.md`.
+8. Test-authoring gotcha: a background stub started inside `$( … )` must
    redirect its stdout/stderr or the substitution hangs (`start_stub` does).
 
 ## Do NOT reload
@@ -114,9 +122,10 @@ Remaining nodes (`plan.sh remaining`):
 ## State snapshot
 
 - Branch `main`, not pushed. Plan `01-gated-integration` open: wave 6 of 7,
-  nodes 01–12 `done`, frontier `13-uat-gated` (hitl).
+  nodes 01–12 `done`, 13 `todo` (hitl, half-run), 17 `todo` (fix node, lint
+  ordering unresolved), 14/15/16 `todo`.
 - `decisions.md`: five notes (R0.4 lift; fit decision, approved; typed
   helper; CLI stdin/JSON-lines shape; `classify` dict categories + `question=`).
 - `spec.md` Status: draft (the user may flip it to approved; the tickets are
   `ready-for-agent`, 05 `ready-for-human`).
-- Chain: supervised; session 11 staged session 12 **interactive** at WARN.
+- Chain: supervised; session 12 staged session 13 **interactive** at STOP.

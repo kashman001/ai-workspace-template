@@ -1,0 +1,100 @@
+jev.sh - ask Jev (TypeSafe's typed-question model) typed questions about a
+         piece of state: pick a label, place on a scale, or judge yes/no
+
+USAGE
+  scripts/jev.sh < request.json   send one request; print one JSON line
+                                  per answer
+  scripts/jev.sh --check          is a key available? sends nothing, reads
+                                  no stdin; exit 0 = yes, exit 3 = no
+  scripts/jev.sh --help           show this text
+
+  First time here: run --check. Exit 3 means no key; do the task without
+  Jev (nothing to set up on the command line; see KEY below).
+
+REQUEST  one JSON object on stdin
+  state        any JSON value: a string, or an array/object of records.
+               Refer to parts of it in instructions as `records[3]` or
+               `ticket.text`.
+  questions    object: question key -> {type, instructions, criteria}.
+               The question key is for your code; it is not sent to the
+               model. Questions are sent exactly as given.
+  model        optional; default jev-latest
+
+  Put every independent question about the same state in one request:
+  they run in parallel and cannot see each other's answers.
+
+ANSWER  one JSON line per question
+  {"key": <question key>, "value": <typed answer>, "confidence": <0..1|null>}
+
+  Confidence measures how concentrated the answer distribution is, not
+  whether the workflow is correct.
+
+QUESTION TYPES
+  choice   pick one of a closed set.  value: the chosen label.
+           criteria: {label: description}, up to 255 options; add an
+           "other" option when nothing may fit.
+  score    degree along an ordered scale.  value: the probability-weighted
+           level (0 = first criterion, 1 = second, ...).
+           criteria: ordered array of 2-10 level descriptions, low to high.
+  noul     does a condition hold.  value: the probability of yes;
+           confidence is null. A value near 0.5 means undecided, not
+           "medium".  criteria: optional {"true": what a yes means,
+           "false": what a no means}.
+
+EXAMPLES  one runnable command per type, then the line it prints
+          (stdin accepts multi-line JSON as shown)
+
+  printf '%s' '{
+    "state":
+  "Login page throws 500 after password reset",
+    "questions": {"kind": {
+      "type": "choice", "instructions": "Classify the record",
+      "criteria": {"bug": "Something is broken",
+                   "enhancement": "A request for new behaviour",
+                   "other": "None of the above"}}}
+  }' | scripts/jev.sh
+  {"key": "kind", "value": "bug", "confidence": 0.99}
+
+  printf '%s' '{
+    "state":
+  "The export button crashes the settings page in Safari. It works in Chrome.",
+    "questions": {"severity": {
+      "type": "score", "instructions": "How severe is this bug report?",
+      "criteria": ["Cosmetic; no impact to functionality",
+                   "Broken, but a workaround exists",
+                   "Blocking; no workaround"]}}
+  }' | scripts/jev.sh
+  {"key": "severity", "value": 1.43, "confidence": 0.35}
+
+  printf '%s' '{
+    "state":
+  "I already opened ticket 4411 about this. Can I speak to a person?",
+    "questions": {"wants_human": {
+      "type": "noul",
+      "instructions": "Is the customer asking for a human agent?"}}
+  }' | scripts/jev.sh
+  {"key": "wants_human", "value": 0.99, "confidence": null}
+
+KEY
+  JEV_API_KEY if set, else the OS keychain entry `jev-api-key` (macOS
+  `security`, Linux `secret-tool`). The key never appears on stdout,
+  stderr, argv, or disk. Setup: docs/service-access.md -> "Jev (TypeSafe)".
+
+ENVIRONMENT
+  JEV_API_KEY    the key; takes precedence over the keychain
+  JEV_ENDPOINT   override the endpoint (tests); default: the live URL
+
+LIMITS  checked here; a request that breaks one is refused, nothing is sent
+  more than 255 options in one choice
+  state plus the longest question over an estimated 32k tokens
+
+EXIT STATUS
+  0   answered
+  2   usage error, or a limit above broken; nothing was sent
+  3   no key; one line on stderr, nothing on stdout
+  4   non-200 from the server; status and body head on stderr
+      (429 = rate limited)
+
+SEE ALSO
+  skills/jev/SKILL.md   when Jev fits, the "other" pattern, thresholds,
+                        batching, rate limits, cost

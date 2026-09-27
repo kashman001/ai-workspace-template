@@ -6,6 +6,46 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 12 (2026-09-27): interactive UAT session — user ran the three keyed commands and the keyless `--check`/preflight (both PASS); findings: `jev.sh --help` not user-friendly (CLI text-UX review done, replacement text at `uat-help-proposal.txt`), `skills/rlm/SKILL.md` says `python` (Mac has only `python3`); fix node 17-13b-uat-fixes added (lint: reconcile 14 no longer last in wave 6 — unresolved); `rlm` keyed/keyless legs NOT yet run; three Jev videos read, notes + deferred assessment in `research/video-notes-2026-09-27.md`; rolled over at STOP
+
+## What happened
+
+- Frontier was 13-uat-gated (hitl). Posed the UAT. User ran `--check`
+  (key present), `--help`, `check-service-access.sh` on the keyed machine;
+  then with a fake `security` on PATH: `--check` exit 3 + one stderr line,
+  preflight `– jev key absent (optional)`. Both keyless checks PASS.
+- Finding 1: `--help` judged not user-friendly. A text-UX subagent ranked
+  ten issues (unreadable one-line JSON examples, no synopsis, exit codes
+  buried, flags after examples, "key" overloaded) and wrote a 100-line
+  replacement (all ≤ 80 cols, examples byte-identical via `jq -c`), saved at
+  `work/jev-integration/uat-help-proposal.txt`.
+- Finding 2: `skills/rlm/SKILL.md` uses `python` five times; this Mac has
+  only `python3` (script shebang is python3). Pre-existing rlm-skill bug,
+  inherited by the classify recipe.
+- The `rlm` legs never ran: first because of `python`, then because the
+  user pasted the `<file>` placeholder literally (`zsh: parse error`).
+- `plan.sh add 17-13b-uat-fixes --wave 6 --blocked-by 13-uat-gated` with
+  goal/acceptance/check written; `plan.sh check` now fails: "reconcile node
+  is not last in wave 6 (17-13b-uat-fixes follow)". Not resolved (STOP).
+  Two `plan.sh note` entries record the UAT results.
+- User request mid-session: three YouTube tutorials on Jev + Claude Code
+  read in full (transcripts via Chrome; yt-dlp rate-limited). Notes and a
+  list of deferred implementation candidates in
+  `research/video-notes-2026-09-27.md`. User: finish the plan first, then
+  assess the videos critically (context-budget cost vs usefulness).
+
+## Decisions
+
+- UAT findings become a wave-6 work node rather than dropping 13 (launcher
+  rule); the help rewrite follows the reviewer's text, facts unchanged.
+- Video input is deferred until the plan closes (user's call).
+
+## Open
+
+- Node 17 ordering vs reconcile 14 (see node's "Ordering note").
+- `rlm` keyed + keyless legs of the UAT; the leaf share for node 15.
+- Node 13 stays `todo` until the user marks it.
+
 # Session Handoff — 11 (2026-09-27): wave 5 closed hands-off — node 11 (CLI widened to Choice/Score/Noul, S7 refusals, `--help` with a worked example per type; `skills/jev/SKILL.md`; TypeSafe's skill vendored at `65a39f3`; Service Access bullet) built test-first (T15–T19, 128/128), reconcile 12 joined; frontier 13-uat-gated (hitl); rolled over interactive at WARN
 
 1. Registered `seq=11` (hands-off, 61K at register). Frontier `11-cli-skill-rule`; `start 11`. Read the node, ticket 04, S5/S7/S17/S18, `jev.sh`, `test-jev.sh`; fetched TypeSafe's `skills/typesafe-ai/SKILL.md` + `LICENSE` at `65a39f3` (`gh api` tree confirmed the path) and the Score/Noul/API doc pages for the exact criteria shapes (Score: ordered array of 2–10 levels; Noul: optional `{true,false}`; Choice ≤255 options).
@@ -14,13 +54,4 @@ Convention: docs/work-directory-conventions.md.
 4. `plan.sh done 11` failed and the node went `blocked`: its `check:` named `scripts/jev.sh` relatively, and `plan.sh` runs checks from the work item directory (`cd "$ITEM"`); `plan.sh check` had not flagged it. Fixed the node's check with `"$WORKSPACE_ROOT/"`, `start` (blocked → doing), `done` → done. Dogfood finding appended to `work/plans/decisions.md` (suggests a Check rule for relative paths, a doc line on the check cwd, and quieter `done` output — it streamed 128 test lines) plus a `plan.sh note`.
 5. Reconcile 12: `verify` 09, 10, 11 → exit 0 each; files, box counts, docs entries confirmed on disk; no structural replan (wave 6 stands). `check` silent, `sync`, `done 12`. Plan: wave 6 of 7, 12/16 done, frontier `13-uat-gated` (hitl).
 6. Budget: 114.8K after node 11, 123.7K (WARN) after the reconcile. Rolled over `--loop-mode interactive` so the successor poses the UAT to the user. Nothing pushed.
-
-# Session Handoff — 10 (2026-09-27): wave 5 node 09 (the `rlm` seam) done hands-off — `classify()` helper in `skills/rlm/scripts/rlm_repl.py` built test-first (T8–T14 in `scripts/tests/test-jev.sh`, 92/92), `llm_query` byte-for-byte unchanged (golden diff), `skills/rlm/SKILL.md` teaches `classify`; frontier 11-cli-skill-rule; rolled over at WARN
-
-1. Registered `seq=10` (hands-off, 61K at register). Frontier `09-rlm-classify` + `11-cli-skill-rule`; `start 09`. Read the node, ticket 02, spec "Implementation/Testing Decisions" + "Testability", `scripts/jev.sh`, `test-jev.sh`, the fixture, and only the knobs/`llm_query`/`llm_query_map`/`_make_helpers`/`cmd_exec` regions of `rlm_repl.py`.
-2. Node 09, `tdd`. Tests first: `scripts/tests/fixtures/jev/llm_query.golden.py` (the untouched `llm_query` source, via `inspect.getsource`, taken before any edit) and `choice-batch-malformed.json`; `test-jev.sh` gained a `start_stub <fixture> <name>` helper (the stub also has an `echo` mode answering every question with its first criterion), a fake `claude` on `PATH` (logs argv + prompt, answers `N: <label>` per numbered line), and drives the helper through the real REPL (`rlm_repl.py --state … init/exec --no-audit`, cwd in the temp dir): T8 key path (request shape, `other` appended, r3 at 0.89 below the default threshold → leaf, one leaf call numbered by original index), T9 threshold arg / `RLM_JEV_THRESHOLD` / `RLM_JEV_MODEL`, T10 no key (prompt byte-identical to the skill's `N: label` pattern, argv as `llm_query`, no request, no "jev" on stdout/stderr), T11 exit 4 (unreachable endpoint) → leaf + one warning line, T12 malformed answers → leaf + one warning, T13 batching (120 → 50/50/20; 100×4000-char records → >2 requests, each state+question under 32k), T14 golden diff. Red on the missing helper; then `classify(records, categories, threshold=None, question=…)` + `_jev_batches`/`_jev_question`/`_jev_classify_batch`/`_leaf_classify`, constants `DEFAULT_JEV_THRESHOLD` (0.9, `RLM_JEV_THRESHOLD`), `DEFAULT_JEV_MODEL` (`RLM_JEV_MODEL`), `JEV_CLI` (`parents[3]/scripts/jev.sh`), `JEV_BATCH`, `JEV_TOKEN_LIMIT`; registered in `_make_helpers`. Exit 3 → every remaining record silently to the leaf; any other non-zero or malformed line → that batch to the leaf with one stderr warning naming the record span. Green 92/92; `done` (check passed). Boxes ticked.
-3. Two small widenings past the ticket's signature, recorded as the fifth Tier-2 note in `decisions.md`: `categories` may be a `{label: description}` dict (Choice criteria need descriptions; a list still works, described by its labels) and an optional `question=` kwarg (the skill's pattern has one; default "Which category best describes each record?").
-4. `skills/rlm/SKILL.md`: section 3's example now calls `classify` (dict categories, `other` kept, `by_source` counter), a "reading the result" and "choosing the threshold" paragraph, the REPL table row, a guardrail bullet, a Notes bullet naming the CLI + knobs. Free-text per-record work still goes through `llm_query_map`.
-5. Test-authoring gotcha (not a plans finding): a stub started inside `$(start_stub …)` must redirect its stdout/stderr or the command substitution hangs waiting on the inherited pipe; first run hung 120 s for that reason.
-6. Budget: 130K after node 09 (WARN). Node 11 left for a fresh window. This ledger block, launcher for session 11, `sync`, commit, `--emit` hands-off. Not pushed.
 

@@ -31,6 +31,8 @@ what breaks, what is slow, and the L48 question go to
 - s8 · s8 · TypeSafe skills repo re-checked 2026-09-27: last push 2026-09-12 (65a39f3, v0.5.7); nothing newer than the 2026-09-23 research — ticket 04 vendors that commit
 - s9 · s9: a post-green sanity run of jev.sh with no JEV_ENDPOINT override and the real keychain on PATH made one live request with the user's key (typed answer returned, exit 0; the key was not printed). Not a UAT claim (S20 is the user's); guard: run ad-hoc checks with JEV_ENDPOINT set or PATH stripped.
 - s11 · s11 · 12-reconcile-w5: node 11 check used a relative script path; checks run from the item dir — fixed with $WORKSPACE_ROOT; finding in work/plans/decisions.md
+- s12 · UAT 13 (session 12, user): ran --check, --help, check-service-access on the keyed machine; --help judged not user-friendly — sent to a CLI text-UX reviewer; verdict pending, fix to be a new wave-6 work node. rlm keyed/keyless legs not yet run.
+- s12 · UAT 13 keyless leg (session 12, user): --check exit 3 + one stderr line PASS; check-service-access shows '– jev key absent (optional)' PASS; rlm run not reached: skills/rlm/SKILL.md says 'python' (5 places) but this Mac has only python3 (shebang is python3) — docs finding, pre-existing in the rlm skill, inherited by the classify recipe. Also the UAT recipe given in chat omitted the 'init <context>' step (session error, not a product finding).
 
 ## Out of scope
 
@@ -63,10 +65,11 @@ what breaks, what is slow, and the L48 question go to
 | 5 | 09-rlm-classify | work | standard | done |
 | 5 | 10-credentials-docs | work | cheap | done |
 | 5 | 11-cli-skill-rule | work | standard | done |
-| 5 | 12-reconcile-w5 | reconcile | frontier | doing |
+| 5 | 12-reconcile-w5 | reconcile | frontier | done |
 | 6 | 13-uat-gated | hitl | frontier | todo |
 | 6 | 14-reconcile-w6 | reconcile | frontier | todo |
+| 6 | 17-13b-uat-fixes | work | standard | todo |
 | 7 | 15-tune-and-pin | work | standard | todo |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: none (12-reconcile-w5 doing). Remaining: 5 of 16. Sessions used: 5.
+Frontier: 13-uat-gated. Remaining: 5 of 17. Sessions used: 5.
 <!-- plan:end board -->
