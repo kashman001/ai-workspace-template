@@ -1,12 +1,12 @@
 ---
 id: 07-gate-cli-test
 title: Ticket 01 — Gate, jev.sh CLI (Choice), and the offline test
-status: todo
+status: done
 kind: work
 wave: 4
 blocked_by: [05-spec-and-tickets]
 check: bash "$WORKSPACE_ROOT/scripts/tests/test-jev.sh"
-sessions: []
+sessions: [9]
 ---
 
 ## Goal
@@ -18,11 +18,14 @@ A person with `jev-api-key` in the keychain runs `scripts/jev.sh` with a `state`
 
 ## Acceptance
 
-- [ ] `scripts/jev.sh` resolves the key in the documented order (`JEV_API_KEY` override, then macOS `security find-generic-password -s jev-api-key -w`, then Linux `secret-tool`) and never prints, logs, or writes it
-- [ ] With a key: POSTs `{state, model, questions}` to `JEV_ENDPOINT` (default: the live URL) with a bearer header, prints each answer's key, typed value, and confidence as JSON lines, exits 0
-- [ ] Without a key: exits 3, one stderr line naming the missing keychain entry, nothing on stdout
-- [ ] `scripts/tests/test-jev.sh` starts a local stub server with fixture responses under `scripts/tests/fixtures/jev/`, runs the CLI with `JEV_ENDPOINT`/`JEV_API_KEY` set, and asserts the received request body has the documented shape and the header carries the key
-- [ ] The same test runs the CLI with no override and a fake `security` on `PATH` that fails, asserting exit 3, empty stdout, and that the key string appears nowhere in stdout or stderr
-- [ ] The test runs the way the other `scripts/tests/test-*.sh` files run and passes on a machine with no network
+- [x] `scripts/jev.sh` resolves the key in the documented order (`JEV_API_KEY` override, then macOS `security find-generic-password -s jev-api-key -w`, then Linux `secret-tool`) and never prints, logs, or writes it
+- [x] With a key: POSTs `{state, model, questions}` to `JEV_ENDPOINT` (default: the live URL) with a bearer header, prints each answer's key, typed value, and confidence as JSON lines, exits 0
+- [x] Without a key: exits 3, one stderr line naming the missing keychain entry, nothing on stdout
+- [x] `scripts/tests/test-jev.sh` starts a local stub server with fixture responses under `scripts/tests/fixtures/jev/`, runs the CLI with `JEV_ENDPOINT`/`JEV_API_KEY` set, and asserts the received request body has the documented shape and the header carries the key
+- [x] The same test runs the CLI with no override and a fake `security` on `PATH` that fails, asserting exit 3, empty stdout, and that the key string appears nowhere in stdout or stderr
+- [x] The test runs the way the other `scripts/tests/test-*.sh` files run and passes on a machine with no network
 
 ## Log
+- s9 · started, tier standard
+- s9 · built test-first: `scripts/tests/test-jev.sh` (stub server, fake `security`/`secret-tool`, fixture `fixtures/jev/choice-batch.json` from the spike's recorded run) 34 assertions red → `scripts/jev.sh` green; check passes from `work/jev-integration/`. Request body on stdin; answers `{key,value,confidence}` one per line; key reaches Python via the child env only. Exit 4 implemented (S7 test is ticket 04's).
+- s9 · check passed → done

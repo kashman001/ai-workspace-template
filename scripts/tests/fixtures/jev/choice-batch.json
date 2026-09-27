@@ -1,0 +1,11 @@
+{
+  "model": "jev-1.13.0",
+  "usage": {"input_tokens": 780, "output_tokens": 230},
+  "answers": {
+    "r0": {"choice": "bug", "probabilities": {"bug": 1.0, "enhancement": 0.0, "question": 0.0, "other": 0.0}, "confidence": 1.0},
+    "r1": {"choice": "enhancement", "probabilities": {"bug": 0.0, "enhancement": 1.0, "question": 0.0, "other": 0.0}, "confidence": 1.0},
+    "r2": {"choice": "question", "probabilities": {"bug": 0.01, "enhancement": 0.01, "question": 0.98, "other": 0.0}, "confidence": 0.98},
+    "r3": {"choice": "other", "probabilities": {"bug": 0.02, "enhancement": 0.04, "question": 0.02, "other": 0.92}, "confidence": 0.89},
+    "r4": {"choice": "bug", "probabilities": {"bug": 0.99, "enhancement": 0.01, "question": 0.0, "other": 0.0}, "confidence": 0.99}
+  }
+}

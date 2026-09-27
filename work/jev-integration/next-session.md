@@ -24,8 +24,8 @@ access** — active only where `jev-api-key` is in the OS keychain; without one,
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-gated-integration, open, wave 4 of 7, done 6/16, doing 0, todo 10, blocked 0, dropped 0, sessions 2.
-Frontier: 07-gate-cli-test. Remaining: 10 of 16 — wave 4: 07-gate-cli-test todo, 08-reconcile-w4 todo.
+Position: plan 01-gated-integration, open, wave 5 of 7, done 8/16, doing 0, todo 8, blocked 0, dropped 0, sessions 3.
+Frontier: 09-rlm-classify, 10-credentials-docs, 11-cli-skill-rule. Remaining: 8 of 16 — wave 5: 09-rlm-classify todo, 10-credentials-docs todo, 11-cli-skill-rule todo, 12-reconcile-w5 todo.
 <!-- plan:end position -->
 
 ## First actions

@@ -29,6 +29,7 @@ what breaks, what is slow, and the L48 question go to
 - s7 · user question (s7, 2026-09-27): TypeSafe ships a Claude Code plugin — research integration-paths 1.7/3.7 (2026-09-23) records it as one SKILL.md with no code (claude plugin marketplace add typesafe-ai/skills; npx skills add typesafe-ai/skills for Codex and others), and coding-agents docs say Jev is not a drop-in for the agent's LLM. For node 03/05: the plugin is agent knowledge, not the integration; the seam stays a CLI-first script every runtime can call; the SKILL.md can be vendored with provenance. Re-check the marketplace for anything newer than 2026-09-23 in node 05.
 - s7 · wave 2 (s7): the user approved the fit note in chat; tier routing for subagent dispatch, a relevance filter, and a jev CLI + one always-on context rule + a demand-loaded skill were discussed as slices — node 05 scopes the CLI/rule/skill into the rlm slice's spec and lists tier routing and the relevance filter as later plans
 - s8 · s8 · TypeSafe skills repo re-checked 2026-09-27: last push 2026-09-12 (65a39f3, v0.5.7); nothing newer than the 2026-09-23 research — ticket 04 vendors that commit
+- s9 · s9: a post-green sanity run of jev.sh with no JEV_ENDPOINT override and the real keychain on PATH made one live request with the user's key (typed answer returned, exit 0; the key was not printed). Not a UAT claim (S20 is the user's); guard: run ad-hoc checks with JEV_ENDPOINT set or PATH stripped.
 
 ## Out of scope
 
@@ -56,8 +57,8 @@ what breaks, what is slow, and the L48 question go to
 | 2 | 04-reconcile-w2 | reconcile | frontier | done |
 | 3 | 05-spec-and-tickets | work | auto | done |
 | 3 | 06-reconcile-w3 | reconcile | frontier | done |
-| 4 | 07-gate-cli-test | work | standard | todo |
-| 4 | 08-reconcile-w4 | reconcile | frontier | todo |
+| 4 | 07-gate-cli-test | work | standard | done |
+| 4 | 08-reconcile-w4 | reconcile | frontier | done |
 | 5 | 09-rlm-classify | work | standard | todo |
 | 5 | 10-credentials-docs | work | cheap | todo |
 | 5 | 11-cli-skill-rule | work | standard | todo |
@@ -66,5 +67,5 @@ what breaks, what is slow, and the L48 question go to
 | 6 | 14-reconcile-w6 | reconcile | frontier | todo |
 | 7 | 15-tune-and-pin | work | standard | todo |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 07-gate-cli-test. Remaining: 10 of 16. Sessions used: 2.
+Frontier: 09-rlm-classify, 10-credentials-docs, 11-cli-skill-rule. Remaining: 8 of 16. Sessions used: 3.
 <!-- plan:end board -->

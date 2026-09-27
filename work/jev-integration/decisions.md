@@ -20,3 +20,10 @@
 **Rejected:** (a) swap inside `llm_query` by sniffing prompts for a category list — fragile, silently wrong on prose prompts; (b) replace `llm_query` wholesale — Jev is not a text model; (c) call the HTTP endpoint from Python directly instead of the CLI — a second vendor surface to keep the key out of, and the CLI is what the other runtimes use.
 **Blast radius:** `skills/rlm/scripts/rlm_repl.py` (one new helper, one constant each for threshold and model id), `skills/rlm/SKILL.md` (root guidance), `scripts/tests/test-jev.sh`.
 **Promote?:** no
+
+## 2026-09-27 — `jev.sh` takes the request as JSON on stdin and answers as JSON lines
+**Chose:** `scripts/jev.sh < request.json`: the body `{state, questions[, model]}` arrives on stdin and is passed through untouched (`model` defaulted from one constant in the CLI); each answer prints as one line `{"key", "value", "confidence"}` in the server's order. No flags beyond `--help`. The shell resolves the key and hands it to the Python `urllib` call through the child's environment only, with the script in a variable so stdin stays free for the body.
+**Because:** The wire shape is a JSON document with nested criteria maps; a flag per field would re-encode it lossily and grow with every question type, while stdin carries any of the three types now (ticket 04 only widens the answer extraction). JSON lines are what the `rlm` helper (ticket 02) thresholds on with no parsing beyond `json.loads` per line. Env-only key transport keeps it out of `ps` and the transcript (S8).
+**Rejected:** (a) `--state`/`--question`/`--criteria` flags — lossy, Choice-only by construction; (b) `python3 - <<heredoc` — takes stdin from the body (the first green run showed it); (c) passing the key on argv — visible in `ps`; (d) a `--model` flag — the body's `model` and the one constant already cover S21's pin.
+**Blast radius:** `scripts/jev.sh`, `scripts/tests/test-jev.sh`, the helper's call in ticket 02, the skill's examples in ticket 04.
+**Promote?:** no
