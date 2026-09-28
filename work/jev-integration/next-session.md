@@ -1,6 +1,7 @@
 # Catchup prompt — jev-integration (paste into a new agent session)
 
-`jev-integration` is **finished** (checkpoint, session 16, 2026-09-27).
+`jev-integration`'s first plan is shipped and closed (s16); the user has
+**approved the follow-on** (2026-09-28) — session 17 plans it.
 Works in any runtime (Claude Code, Codex, Gemini, OpenCode) — all read
 `CONTEXT.md` via their entrypoint.
 
@@ -10,7 +11,7 @@ Works in any runtime (Claude Code, Codex, Gemini, OpenCode) — all read
 > `handoff.md` (the append-only ledger). Convention:
 > docs/work-directory-conventions.md.
 
-## Mission — complete
+## Mission — first plan complete; follow-on approved
 
 The gated Jev integration is shipped and closed: `scripts/jev.sh` (+
 `--help`, `JEV_DISABLED=1` off switch), `scripts/tests/test-jev.sh` T1–T20
@@ -18,7 +19,8 @@ The gated Jev integration is shipped and closed: `scripts/jev.sh` (+
 model `jev-latest` @ release 2026-09-10), `skills/jev/`, credentials docs,
 UAT passed, tuned on two real runs. Plan `01-gated-integration` is
 **closed** 18/18; `spec.md` is **approved**; tickets 01–07 `resolved`.
-Nothing is scheduled. Ledger top block (`handoff.md` — 16) has the close-out.
+Next: plan the approved follow-on (below). Ledger top block
+(`handoff.md` — 16) has the close-out and the approval.
 
 ## Position
 
@@ -27,7 +29,10 @@ Position: plan 01-gated-integration, closed, wave 7 of 7, done 18/18, doing 0, t
 Frontier: none. Remaining: 0 of 18.
 <!-- plan:end position -->
 
-## APPROVED FOLLOW-ON — plan it (user, 2026-09-28, session 16)
+## First actions — plan the approved follow-on
+
+0. `scripts/context-budget.sh register --project jev-integration` (expect
+   `seq=17`). Interactive session: the grill below needs the user.
 
 The user approved **all** Jev follow-on items listed at the s16 checkpoint
 and authorized any spending they need ("You have my approval if any
@@ -61,12 +66,9 @@ gate only where the user must *run* them on their machine — the spend
 itself is pre-authorized. Same constraints as below; never a bare
 `scripts/jev.sh` run outside the batch you intend to pay for.
 
-## If a session opens this item again
+## Other reasons to be here (not now — the follow-on above comes first)
 
-1. `scripts/context-budget.sh register --project jev-integration`
-   (next `seq=17`).
-2. There is no open work. Possible reasons to be here, each a new decision
-   for the user, not a continuation:
+1. Each of these is a separate decision for the user, not a continuation:
    - **A later slice** from `spec.md` ("later slices": tier routing at
      dispatch, another seam) or the assessment's #3 (a paid batch to confirm
      0.5 on the crisp commit corpus; well under a cent) → open a new ticket
@@ -119,10 +121,12 @@ itself is pre-authorized. Same constraints as below; never a bare
 
 ## State snapshot
 
-- Branch `main`, ahead of origin, not pushed (the user pushes). Session 16's
-  work in one commit. Plan `closed`, spec `approved`, tickets 01–07
+- Branch `main`, pushed to origin at c43a271 on 2026-09-28; two later
+  commits (index row, approval) plus this rollover are ahead — the user
+  pushes. Plan `closed`, spec `approved`, tickets 01–07
   `resolved`, `decisions.md` nine notes, test-jev.sh 140/140.
 - `work/plans/decisions.md` carries dogfood findings s8–s16; ticket 11 of
   the `plans` item keeps box 1 open (no chain-side `plan_closed`).
 - `/tmp/jev-uat/`, `/tmp/nokey/` are machine-local and no longer needed.
-- Chain: ended. Session 16 checkpointed; no successor scheduled.
+- Chain: supervised. Session 16 checkpointed, then rolled over interactive
+  at WARN once the follow-on was approved; session 17 plans.
