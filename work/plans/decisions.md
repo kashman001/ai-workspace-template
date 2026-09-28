@@ -561,3 +561,12 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   the cwd a check runs in. Also: `done` streams the check's full output to the
   terminal (128 test lines here); a `--quiet` or tail-on-failure would spare
   the window. Promote?: no.
+
+- **s14 (jev-integration, node 14):** ticket 06 ("requires a key, so it runs on
+  the keyholder's machine after UAT") became a plain `work` node when the plan
+  was created from the tickets, although its acceptance needs a person to
+  authorize paid calls. Caught only at the wave 6 join; fixed with a hitl gate
+  ahead of it (Replan rule 1 rename, `add` had numbered it after the join).
+  **Suggest:** in "Create a plan from tickets", a ticket whose text says the
+  user / a key / spend / a machine is required gets a `hitl` node in front of
+  its work node at creation, not at the join. Promote?: no.

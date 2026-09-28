@@ -1,3 +1,43 @@
+# Session Handoff — 12 (2026-09-27): interactive UAT session — user ran the three keyed commands and the keyless `--check`/preflight (both PASS); findings: `jev.sh --help` not user-friendly (CLI text-UX review done, replacement text at `uat-help-proposal.txt`), `skills/rlm/SKILL.md` says `python` (Mac has only `python3`); fix node 17-13b-uat-fixes added (lint: reconcile 14 no longer last in wave 6 — unresolved); `rlm` keyed/keyless legs NOT yet run; three Jev videos read, notes + deferred assessment in `research/video-notes-2026-09-27.md`; rolled over at STOP
+
+## What happened
+
+- Frontier was 13-uat-gated (hitl). Posed the UAT. User ran `--check`
+  (key present), `--help`, `check-service-access.sh` on the keyed machine;
+  then with a fake `security` on PATH: `--check` exit 3 + one stderr line,
+  preflight `– jev key absent (optional)`. Both keyless checks PASS.
+- Finding 1: `--help` judged not user-friendly. A text-UX subagent ranked
+  ten issues (unreadable one-line JSON examples, no synopsis, exit codes
+  buried, flags after examples, "key" overloaded) and wrote a 100-line
+  replacement (all ≤ 80 cols, examples byte-identical via `jq -c`), saved at
+  `work/jev-integration/uat-help-proposal.txt`.
+- Finding 2: `skills/rlm/SKILL.md` uses `python` five times; this Mac has
+  only `python3` (script shebang is python3). Pre-existing rlm-skill bug,
+  inherited by the classify recipe.
+- The `rlm` legs never ran: first because of `python`, then because the
+  user pasted the `<file>` placeholder literally (`zsh: parse error`).
+- `plan.sh add 17-13b-uat-fixes --wave 6 --blocked-by 13-uat-gated` with
+  goal/acceptance/check written; `plan.sh check` now fails: "reconcile node
+  is not last in wave 6 (17-13b-uat-fixes follow)". Not resolved (STOP).
+  Two `plan.sh note` entries record the UAT results.
+- User request mid-session: three YouTube tutorials on Jev + Claude Code
+  read in full (transcripts via Chrome; yt-dlp rate-limited). Notes and a
+  list of deferred implementation candidates in
+  `research/video-notes-2026-09-27.md`. User: finish the plan first, then
+  assess the videos critically (context-budget cost vs usefulness).
+
+## Decisions
+
+- UAT findings become a wave-6 work node rather than dropping 13 (launcher
+  rule); the help rewrite follows the reviewer's text, facts unchanged.
+- Video input is deferred until the plan closes (user's call).
+
+## Open
+
+- Node 17 ordering vs reconcile 14 (see node's "Ordering note").
+- `rlm` keyed + keyless legs of the UAT; the leaf share for node 15.
+- Node 13 stays `todo` until the user marks it.
+
 # Session Handoff — 11 (2026-09-27): wave 5 closed hands-off — node 11 (CLI widened to Choice/Score/Noul, S7 refusals, `--help` with a worked example per type; `skills/jev/SKILL.md`; TypeSafe's skill vendored at `65a39f3`; Service Access bullet) built test-first (T15–T19, 128/128), reconcile 12 joined; frontier 13-uat-gated (hitl); rolled over interactive at WARN
 
 1. Registered `seq=11` (hands-off, 61K at register). Frontier `11-cli-skill-rule`; `start 11`. Read the node, ticket 04, S5/S7/S17/S18, `jev.sh`, `test-jev.sh`; fetched TypeSafe's `skills/typesafe-ai/SKILL.md` + `LICENSE` at `65a39f3` (`gh api` tree confirmed the path) and the Score/Noul/API doc pages for the exact criteria shapes (Score: ordered array of 2–10 levels; Noul: optional `{true,false}`; Choice ≤255 options).

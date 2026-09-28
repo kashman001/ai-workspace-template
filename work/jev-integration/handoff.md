@@ -6,6 +6,57 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 14 (2026-09-27): wave 6 joined — reconcile 14 done (13b's four boxes re-verified: 128/128, `--help` clean, rlm skill `python3`; 13's evidence = sixth note); structural replan: hitl gate `15a-authorize-live-runs` added ahead of `15-tune-and-pin` (its acceptance needs two paid live Jev calls only the user may trigger); node 15's keyless prep logged (edit sites, fixture placeholder id `jev-1.13.0`, candidates 0.5 / 0.25); frontier 15a (hitl); stopped blocked on the user, well under WARN
+
+## What happened
+
+- Reconcile 14 per the plans skill: `start`; 13b verified on disk (test-jev.sh
+  128/128, `--help` 0 lines > 80 cols with the ten sections in order, no
+  `python ` invocation in skills/rlm/SKILL.md, `verify 13b-uat-fixes` passes);
+  13 is hitl, done by the user, its third box satisfied by the sixth note in
+  `decisions.md`. No claim failed. Boxes ticked, Log line, `check` silent,
+  `sync`, `done` → 15/18.
+- Replan (structural, at the join): node 15 was a `work` node whose acceptance
+  needs a second real `rlm` run and one `GET /v1/models` — cents each, the
+  user's to trigger. A hands-off chain would have dispatched it. `add
+  authorize-live-runs --wave 7 --kind hitl` numbered it 17 (after the join,
+  `reconcile-last`) → renamed `15a-authorize-live-runs` (Replan rule 1); 15
+  is now `blocked_by: [13-uat-gated, 15a-authorize-live-runs]`. Its Goal
+  carries the two requests verbatim, including the one-off `curl` for the
+  model listing (key straight into the header, never printed). `## Replans`
+  line in plan.md.
+- Node 15 prep (no key needed) logged on the node: every edit site with line
+  numbers (rlm_repl.py constants + comments, rlm SKILL.md 176–182 and
+  292–293, jev SKILL.md 81), the fixtures' placeholder id `jev-1.13.0` and
+  T2b/T9e/T1g/T8h that follow the pin, candidates 0.5 and 0.25 from run 1.
+  No code touched.
+- Origin: `git fetch --dry-run` silent — nothing landed upstream; main is 71
+  ahead, not pushed.
+
+## Decisions
+
+- `decisions.md` seventh note: hitl gate for node 15's paid calls; rejected
+  launcher-only requests (invisible to `frontier`/`session-loop.sh`) and
+  leaving 15 `doing` across sessions. Promote?: no.
+- `work/plans/decisions.md` (dogfood): ticket 06 said "requires a key … after
+  UAT" yet became a plain `work` node at plan creation; suggest "Create a plan
+  from tickets" puts a hitl node in front of any ticket that names the user, a
+  key, spend, or a machine. Promote?: no.
+
+## Open
+
+- **Node 15a (hitl) — the user's two requests**, verbatim in
+  `plans/01-gated-integration/nodes/15a-authorize-live-runs.md` and at the top
+  of `next-session.md`: (1) a second keyed `rlm` run at `threshold=0.0` on a
+  corpus of a different kind (issue titles or ledger bullets, ~100 records);
+  (2) one `GET https://api.typesafe.ai/v1/models` to read the versioned id
+  behind `jev-latest`. Then `done 15a-authorize-live-runs --by human`.
+- Node 15 then sets `DEFAULT_JEV_THRESHOLD` / `DEFAULT_JEV_MODEL`, the
+  fixtures, and the two skills' wording; Tier-2 note with both distributions
+  and the rejected values; 16-reconcile-w7 closes the plan.
+- Deferred: the critical assessment of the three videos' ideas
+  (`research/video-notes-2026-09-27.md` → "Deferred") after node 16.
+
 # Session Handoff — 13 (2026-09-27): interactive UAT close — plan lint fixed (17-13b → 13b-uat-fixes, replan rule 1); UAT node 13 done by the user: keyed `rlm` run 100/100 `source: jev`, keyless 100/100 `leaf` (34 s, nothing mentions Jev); finding for node 15: median confidence 0.52, **90 % would fall to the leaf at the 0.9 default**; node 13b done (`--help` rewritten to the reviewer's text, T19b reworked, rlm skill `python3`; 128/128); frontier 14-reconcile-w6; rolled over interactive at WARN
 
 ## What happened
@@ -56,43 +107,3 @@ Learnings:
 Suggested skills: `plans` (reconcile 14, then node 15), `decision-log` (threshold + pin note), `session-rollover`.
 
 Key files: `work/jev-integration/decisions.md` (sixth note), `plans/01-gated-integration/nodes/{13b-uat-fixes,14-reconcile-w6,15-tune-and-pin}.md`, `scripts/jev.sh` (help heredoc 22–124), `scripts/tests/test-jev.sh` (T19b), `skills/rlm/SKILL.md`, `/tmp/jev-uat/{commits.txt,leg.py,leg-keyed.py}`, `/tmp/nokey/security`.
-
-# Session Handoff — 12 (2026-09-27): interactive UAT session — user ran the three keyed commands and the keyless `--check`/preflight (both PASS); findings: `jev.sh --help` not user-friendly (CLI text-UX review done, replacement text at `uat-help-proposal.txt`), `skills/rlm/SKILL.md` says `python` (Mac has only `python3`); fix node 17-13b-uat-fixes added (lint: reconcile 14 no longer last in wave 6 — unresolved); `rlm` keyed/keyless legs NOT yet run; three Jev videos read, notes + deferred assessment in `research/video-notes-2026-09-27.md`; rolled over at STOP
-
-## What happened
-
-- Frontier was 13-uat-gated (hitl). Posed the UAT. User ran `--check`
-  (key present), `--help`, `check-service-access.sh` on the keyed machine;
-  then with a fake `security` on PATH: `--check` exit 3 + one stderr line,
-  preflight `– jev key absent (optional)`. Both keyless checks PASS.
-- Finding 1: `--help` judged not user-friendly. A text-UX subagent ranked
-  ten issues (unreadable one-line JSON examples, no synopsis, exit codes
-  buried, flags after examples, "key" overloaded) and wrote a 100-line
-  replacement (all ≤ 80 cols, examples byte-identical via `jq -c`), saved at
-  `work/jev-integration/uat-help-proposal.txt`.
-- Finding 2: `skills/rlm/SKILL.md` uses `python` five times; this Mac has
-  only `python3` (script shebang is python3). Pre-existing rlm-skill bug,
-  inherited by the classify recipe.
-- The `rlm` legs never ran: first because of `python`, then because the
-  user pasted the `<file>` placeholder literally (`zsh: parse error`).
-- `plan.sh add 17-13b-uat-fixes --wave 6 --blocked-by 13-uat-gated` with
-  goal/acceptance/check written; `plan.sh check` now fails: "reconcile node
-  is not last in wave 6 (17-13b-uat-fixes follow)". Not resolved (STOP).
-  Two `plan.sh note` entries record the UAT results.
-- User request mid-session: three YouTube tutorials on Jev + Claude Code
-  read in full (transcripts via Chrome; yt-dlp rate-limited). Notes and a
-  list of deferred implementation candidates in
-  `research/video-notes-2026-09-27.md`. User: finish the plan first, then
-  assess the videos critically (context-budget cost vs usefulness).
-
-## Decisions
-
-- UAT findings become a wave-6 work node rather than dropping 13 (launcher
-  rule); the help rewrite follows the reviewer's text, facts unchanged.
-- Video input is deferred until the plan closes (user's call).
-
-## Open
-
-- Node 17 ordering vs reconcile 14 (see node's "Ordering note").
-- `rlm` keyed + keyless legs of the UAT; the leaf share for node 15.
-- Node 13 stays `todo` until the user marks it.

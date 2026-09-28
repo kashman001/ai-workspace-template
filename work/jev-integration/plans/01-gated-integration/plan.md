@@ -53,6 +53,7 @@ what breaks, what is slow, and the L48 question go to
 - s8 · 06-reconcile-w3 (structural): added wave 7 — 15-tune-and-pin ← ticket 06; 16-reconcile-w7
 - s8 · waves = 3 + (1 + longest blocker chain) per ticket; checks name `scripts/tests/test-jev.sh` (ticket 01 builds it); no model name in any node (tiers only)
 - s13 · 14-reconcile-w6 (local, applied by the session before the join): 17-13b-uat-fixes renamed to 13b-uat-fixes (number of the node it follows + suffix) and added to 14-reconcile-w6 blocked_by — `add` had numbered it after the join, tripping `reconcile-last`. Local replan.
+- s14 · 14-reconcile-w6 (structural): added 15a-authorize-live-runs (hitl, wave 7) in front of 15-tune-and-pin — node 15's acceptance needs two paid live Jev calls only the user may trigger, but it was a `work` node, so a hands-off chain would have dispatched it (or a subagent would have spent). `add` numbered it 17, after the join → renamed to 15a (Replan rule 1); 15 now `blocked_by: [13-uat-gated, 15a-authorize-live-runs]`. Structural replan.
 
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
@@ -71,8 +72,9 @@ what breaks, what is slow, and the L48 question go to
 | 5 | 12-reconcile-w5 | reconcile | frontier | done |
 | 6 | 13-uat-gated | hitl | frontier | done |
 | 6 | 13b-uat-fixes | work | standard | done |
-| 6 | 14-reconcile-w6 | reconcile | frontier | todo |
+| 6 | 14-reconcile-w6 | reconcile | frontier | done |
 | 7 | 15-tune-and-pin | work | standard | todo |
+| 7 | 15a-authorize-live-runs | hitl | frontier | todo |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 14-reconcile-w6. Remaining: 3 of 17. Sessions used: 6.
+Frontier: 15a-authorize-live-runs. Remaining: 3 of 18. Sessions used: 7.
 <!-- plan:end board -->

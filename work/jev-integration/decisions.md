@@ -41,3 +41,10 @@
 - **Surprise:** the "leaf share well above a few percent" case the `rlm` skill warns about is the *normal* case at 0.9 on prose-like records; the threshold is not a safety net but the main routing knob. Node 15 must set it from this distribution (a second run is still owed by its acceptance) and consider whether the high-confidence tail (1.0/0.98/0.99 on the unambiguous records) is the signal to keep.
 - **Recipe finding (not a product bug):** a keychain stub that fails every `security` call also logs the `claude` CLI out; the keyless leg needs a stub that fails only the `jev-api-key` lookup.
 - **For node 15:** the leaf share at 0.9 is 90 %; candidate thresholds to evaluate: 0.5 (≈ median; roughly half the records typed) and 0.25 (≈ min; nearly all typed). Corpus and recipe: `/tmp/jev-uat/commits.txt`, `/tmp/jev-uat/leg-keyed.py` (regenerate from `git log --format=%s -n 100` if `/tmp` is cleared).
+
+## 2026-09-27 — Node 15's two paid live calls sit behind a hitl gate, not behind a launcher request
+**Chose:** a `kind: hitl` node `15a-authorize-live-runs` in wave 7, ahead of `15-tune-and-pin`, carrying the two requests (second-corpus `rlm` run at `threshold=0.0`; one `GET /v1/models` to read the id behind `jev-latest`) as its Goal; node 15 is `blocked_by` it.
+**Because:** the standing constraint is that no session runs `scripts/jev.sh` live without the user asking (real key in this keychain, cents per run). Node 15 was a `work` node, so `frontier` would hand it to a hands-off chain or a subagent, which either spends or stalls; a hitl node is the one plan construct `session-loop.sh` pauses on (`--loop-mode interactive`).
+**Rejected:** requests written only at the top of the launcher — invisible to `frontier`/`session-loop.sh`, and lost when the launcher is replaced; leaving 15 `doing` across sessions with the ask in its Log — `doing` reads as in-progress work, not as waiting on a person, and a chain would resume it.
+**Blast radius:** plan files only (`nodes/15a-authorize-live-runs.md`, `nodes/15-tune-and-pin.md` blocked_by, `plan.md` Replans). No code.
+**Promote?:** no
