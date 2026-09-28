@@ -27,6 +27,40 @@ Position: plan 01-gated-integration, closed, wave 7 of 7, done 18/18, doing 0, t
 Frontier: none. Remaining: 0 of 18.
 <!-- plan:end position -->
 
+## APPROVED FOLLOW-ON — plan it (user, 2026-09-28, session 16)
+
+The user approved **all** Jev follow-on items listed at the s16 checkpoint
+and authorized any spending they need ("You have my approval if any
+spending is needed"). This session was at WARN, so the planning is the
+successor's first job. Scope, in the order proposed (reorder if the grill
+says so):
+
+1. **Confirm 0.5 on the crisp commit corpus** — one paid Jev batch (100
+   commit subjects, `threshold=0.0`, confidence distribution + leaf
+   agreement); recipe in the s13 note of `decisions.md`; regenerate the
+   corpus with `git log --format=%s -n 100`. Spend approved; still say what
+   it cost. Verdict goes to a tenth decision note (keep 0.5 or move it).
+2. **Score and Noul in the `rlm` helper** — `classify()` is Choice-only;
+   the CLI already does all three. Spec non-goal to lift; T-tests widen.
+3. **Jev at a second seam: research-wave verdicts** — the spec's named
+   next candidate; same gate-on-key rule, same CLI, no new vendor surface.
+4. **Tier routing at subagent dispatch** — resolve `tier: auto` with a Jev
+   decision. Touches `plan.sh` / `plan-tiers.env`, owned by the `plans`
+   item: coordinate there (a ticket in `work/plans/issues/`), baseline to
+   beat is cheap-first + escalate on a failed check.
+5. **Relevance filter** before loading files/tickets into context — the
+   vaguest; grill it to a testable slice or drop it with a note.
+(Re-pin on a newer `jev-latest` release date stays a watch item, not work.)
+
+How to plan: `grill-with-docs` on the five (amend `spec.md` — new S-items,
+lift the non-goals it takes; Status back to `in-review` until the user
+re-approves), `to-tickets` → `issues/08-…` onward, then `/plan create` as
+`plans/02-<slug>/` in this item (default; a new work item only if the grill
+finds the scope no longer fits "Jev at seams"). Paid calls get a `hitl`
+gate only where the user must *run* them on their machine — the spend
+itself is pre-authorized. Same constraints as below; never a bare
+`scripts/jev.sh` run outside the batch you intend to pay for.
+
 ## If a session opens this item again
 
 1. `scripts/context-budget.sh register --project jev-integration`
