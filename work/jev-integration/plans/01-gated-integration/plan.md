@@ -35,6 +35,8 @@ what breaks, what is slow, and the L48 question go to
 - s12 · UAT 13 keyless leg (session 12, user): --check exit 3 + one stderr line PASS; check-service-access shows '– jev key absent (optional)' PASS; rlm run not reached: skills/rlm/SKILL.md says 'python' (5 places) but this Mac has only python3 (shebang is python3) — docs finding, pre-existing in the rlm skill, inherited by the classify recipe. Also the UAT recipe given in chat omitted the 'init <context>' step (session error, not a product finding).
 - s13 · s13: lint fix — node 17-13b-uat-fixes → 13b-uat-fixes per plans skill Replan rule 1 (mv file + set id: + add to reconcile 14 blocked_by); the node's own ordering note said 'do not hand-edit ids' but docs/plans.md and the skill prescribe exactly that rename for a follow-up in a wave that already has its reconcile; no plan.sh verb renames a node
 - s13 · s13 · UAT 13 recipe finding (not a product bug): a fake 'security' that fails every call also logs the claude CLI out (Claude Code reads its OAuth token via the same keychain command), so the leaf returns 'Not logged in' and classify() yields label None for every record in ~1s. The keyless leg needs a pass-through stub that fails only the jev-api-key lookup (/tmp/nokey/security now does: case "$*" in *jev-api-key*) exit 44; else exec /usr/bin/security). The user's keyed run reached the leaf fallback (some Jev answers below threshold 0.9) and was interrupted as 'stuck' — leaf batches of 50 via claude -p haiku take tens of seconds; timing measured this session.
+- s15 · 16-reconcile-w7: node 15 box 1 held by evidence, not as written — GET /v1/models lists no versioned id, so the pin is jev-latest + release 2026-09-10 (eighth note in decisions.md); the fixtures' jev-1.13.0 stays a stub-only override value, never a claimed real id. 128/128, threshold 0.5, both skills name the release; diff HEAD~1 touched only the note's blast radius. No follow-up.
+- s15 · 16-reconcile-w7: wave 7 is the last wave and nothing remains — closing the plan is goal-level (a person). Proposal: set 'status: closed' in plan.md (no plan.sh verb closes a plan; write verbs refuse a closed one, so it is the last write) and flip spec.md Status draft → approved with Approved-by (the spec vocabulary has no 'done'). Tickets 01–06 were marked 'resolved' at this join — none had been flipped when its node closed.
 
 ## Out of scope
 
@@ -75,6 +77,6 @@ what breaks, what is slow, and the L48 question go to
 | 6 | 14-reconcile-w6 | reconcile | frontier | done |
 | 7 | 15-tune-and-pin | work | standard | done |
 | 7 | 15a-authorize-live-runs | hitl | frontier | done |
-| 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 16-reconcile-w7. Remaining: 1 of 18. Sessions used: 7.
+| 7 | 16-reconcile-w7 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 18. Sessions used: 8.
 <!-- plan:end board -->

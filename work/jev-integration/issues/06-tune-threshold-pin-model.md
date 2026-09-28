@@ -4,7 +4,7 @@
 
 **Blocked by:** 05 — UAT: the gated behaviour.
 
-**Status:** ready-for-agent
+**Status:** resolved — plan 01-gated-integration node 15-tune-and-pin (s14) done; marked at the wave 7 join (s15, 2026-09-27)
 
 **Spec:** S13, S21
 

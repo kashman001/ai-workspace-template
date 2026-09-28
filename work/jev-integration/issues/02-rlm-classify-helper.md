@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Gate, `jev.sh` CLI (Choice), and the offline test.
 
-**Status:** ready-for-agent
+**Status:** resolved — plan 01-gated-integration node 09-rlm-classify (s10) done; marked at the wave 7 join (s15, 2026-09-27)
 
 **Spec:** S1, S2, S9, S10, S11, S12, S13, S14, S19
 

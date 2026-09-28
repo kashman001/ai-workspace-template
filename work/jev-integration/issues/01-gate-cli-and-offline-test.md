@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** resolved — plan 01-gated-integration node 07-gate-cli-test (s9) done; marked at the wave 7 join (s15, 2026-09-27)
 
 **Spec:** S3, S4, S6, S8, S19
 

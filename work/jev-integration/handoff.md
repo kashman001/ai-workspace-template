@@ -6,6 +6,47 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 15 (2026-09-27): interactive — wave 7 joined: reconcile 16 done (node 15 re-verified on disk: 128/128, `DEFAULT_JEV_THRESHOLD` 0.5, pin `jev-latest` @ 2026-09-10 in both skills, `git diff HEAD~1` = the eighth note's blast radius); plan `01-gated-integration` 18/18 done, frontier none, left **open** — closing is goal-level, proposed to the user; tickets 01–06 `resolved`; three dogfood findings to `work/plans/decisions.md`; the deferred video assessment written (two doc lines worth doing, one knob for the user, rest no); rolled over interactive at WARN
+
+## What happened
+
+- Registered seq=15. Started `16-reconcile-w7`; verified node 15's four
+  boxes on disk (tests 128/128; constants at `rlm_repl.py:99-100`; no `0.9`
+  left in either skill; both skills name release 2026-09-10 and "re-tune when
+  it changes"; fixture r3 0.41; T8i/T9a/T9c reworded). Diff since HEAD~1
+  touched only the eighth note's blast radius plus plan bookkeeping. Box 1
+  held by evidence, not as written (no versioned id exists) — noted, no
+  follow-up; the fixtures' `jev-1.13.0` stays a stub-only override value.
+- Recorded two `plan.sh note` lines; ticked node 16; `check` silent; `done`;
+  `sync`. Status: 18/18 done, sessions 8, frontier none, plan still `open`.
+- Housekeeping: tickets 01–06 `Status: resolved — node <id> done` (the
+  tracker has no `done`; `resolved` is its only terminal state; none had been
+  flipped when its node closed). Spec left `draft` — approval is the user's.
+  `work/plans/issues/11-dogfood-first-real-plan.md` got a Comments entry;
+  `work/plans/decisions.md` an s15 bullet: sync-after-done, tickets never
+  flipped by plan-from-tickets, no `plan.sh` verb closes a plan (hand-edit
+  `status: closed`, must be the last write).
+- Wrote `research/video-assessment-2026-09-27.md` (one page + glossary):
+  **do** a data-leaves-the-machine sentence in `skills/jev/SKILL.md` and
+  `docs/service-access.md`, and a Score-reliability clause; **user decides**
+  a `JEV_DISABLED=1` env knob (spec amendment); agreement measurement is
+  already done (node 15a, 22/100 on overlapping categories, tracks
+  confidence); tier routing, hooks, OpenRouter: no. Zero always-on context.
+- Slip: held `--project jev-integration` in a shell variable → every verb
+  refused ("unknown option"); nothing was written by those calls; redone
+  with literal flags. Same trap as the s8 dogfood finding (b).
+
+## Decisions
+
+- No new Tier-2 note. Plan notes: box 1 by evidence; the close proposal.
+  Ticket state `resolved` chosen over inventing `done` (commit trailer).
+
+## Open for the user (session 16 launcher leads with these)
+
+- Close the plan: `status: closed` in `plans/01-gated-integration/plan.md`.
+- Spec Status `draft` → `approved` + `Approved-by`, if the user agrees.
+- Ticket 07 from the assessment (#1, #2, optionally #4): yes or no.
+
 # Session Handoff — 14 (2026-09-27): wave 6 joined (reconcile 14; 13b re-verified 128/128) → hitl gate 15a added ahead of 15 → the user authorized both live calls in-session → run 2 (100 ledger bullets: median 0.26, 94 % below 0.5; leaf agreement tracks confidence, 22/100 overall) + model listing (no versioned id: `jev-latest`/`jev-preview` with release dates) → node 15 done: threshold 0.9 → 0.5, pin = `jev-latest` @ 2026-09-10, skills reworded, fixture r3 0.41, 128/128; frontier 16-reconcile-w7; rolled over at WARN
 
 ## What happened
@@ -64,54 +105,3 @@ Convention: docs/work-directory-conventions.md.
   (goal-level — the user closes). Then the deferred video assessment.
 - Deferred: the critical assessment of the three videos' ideas
   (`research/video-notes-2026-09-27.md` → "Deferred") after node 16.
-
-# Session Handoff — 13 (2026-09-27): interactive UAT close — plan lint fixed (17-13b → 13b-uat-fixes, replan rule 1); UAT node 13 done by the user: keyed `rlm` run 100/100 `source: jev`, keyless 100/100 `leaf` (34 s, nothing mentions Jev); finding for node 15: median confidence 0.52, **90 % would fall to the leaf at the 0.9 default**; node 13b done (`--help` rewritten to the reviewer's text, T19b reworked, rlm skill `python3`; 128/128); frontier 14-reconcile-w6; rolled over interactive at WARN
-
-## What happened
-
-- Lint: `17-13b-uat-fixes` renamed to `13b-uat-fixes` (file + `id:`) and added
-  to 14's `blocked_by` — plans skill Replan rule 1 / `docs/plans.md`
-  ("number of the node it follows plus a suffix"). `## Replans` line + note.
-- UAT (node 13, user): corpus = last 100 commit subjects (`/tmp/jev-uat/
-  commits.txt`), recipes `/tmp/jev-uat/leg.py` (default threshold) and
-  `leg-keyed.py` (`threshold=0.0`, prints the confidence distribution).
-  User's first keyed run at the default reached the leaf fallback and was
-  interrupted as "stuck" — the leaf batch of 50 via `claude -p haiku` takes
-  ~30 s, so it was slow, not hung. Keyed run with `threshold=0.0`: 100/100
-  jev, confidence min 0.23 / median 0.52 / max 1.0, 90/100 below 0.9.
-  Keyless run (session, pass-through stub): 100/100 leaf, 34 s, no Jev
-  mention. Marked `done --by human`. Full numbers + label agreement: the
-  sixth note in `decisions.md`.
-- Recipe finding: a fake `security` that fails every call also logs the
-  `claude` CLI out (its OAuth token is in the keychain) → leaf answers "Not
-  logged in", every label `None` in ~1 s. `/tmp/nokey/security` is now a
-  pass-through that fails only the `jev-api-key` lookup. `plan.sh note` + decisions.md.
-- Node 13b: `scripts/jev.sh --help` = `uat-help-proposal.txt` with one
-  factual tweak (KEY sentence); heredoc delimiter renamed `USAGE` →
-  `JEV_HELP` (the new text has a `USAGE` header at column 0, which
-  terminated the heredoc — 79 tests failed until renamed). T19b now
-  extracts the three multi-line `printf … | scripts/jev.sh` blocks and
-  asserts `3 ok` (stricter). `skills/rlm/SKILL.md`: six `python ` → `python3`
-  (the sixth is the audit-replay line). 128/128; node check passes.
-
-## Decisions
-
-- Node 13 marked done by the user on the pasted outputs (both legs seen).
-- UAT observation recorded as a Tier-2 note for node 15 (threshold is the
-  main routing knob, not a safety net; candidates 0.5 and 0.25).
-
-## Open
-
-- 14-reconcile-w6 (frontier), then wave 7: node 15 needs the user's key
-  for a second real run and a threshold call; node 16.
-- After the plan closes: the deferred video assessment
-  (`research/video-notes-2026-09-27.md` → "Deferred").
-
-Learnings:
-- A quoted heredoc dies on any content line equal to its delimiter — pick a delimiter that cannot be a section header (second strike → `docs/operational-knowledge.md`).
-- A keychain stub for "no key" tests must pass through everything but the one entry; blanket failure disables the `claude` CLI too.
-- macOS has no `timeout`; use a Python `subprocess.run(timeout=)` wrapper to cap a probe.
-
-Suggested skills: `plans` (reconcile 14, then node 15), `decision-log` (threshold + pin note), `session-rollover`.
-
-Key files: `work/jev-integration/decisions.md` (sixth note), `plans/01-gated-integration/nodes/{13b-uat-fixes,14-reconcile-w6,15-tune-and-pin}.md`, `scripts/jev.sh` (help heredoc 22–124), `scripts/tests/test-jev.sh` (T19b), `skills/rlm/SKILL.md`, `/tmp/jev-uat/{commits.txt,leg.py,leg-keyed.py}`, `/tmp/nokey/security`.

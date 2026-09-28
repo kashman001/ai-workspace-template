@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Gate, `jev.sh` CLI (Choice), and the offline test.
 
-**Status:** ready-for-agent
+**Status:** resolved — plan 01-gated-integration node 10-credentials-docs (s9) done; marked at the wave 7 join (s15, 2026-09-27)
 
 **Spec:** S15, S16
 

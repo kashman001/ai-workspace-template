@@ -11,117 +11,100 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Research is closed; the fit decision is approved (`decisions.md`, second
-note): **integrate Jev at the `rlm` leaf-classification seam, gated on
-access** — active only where `jev-api-key` is in the OS keychain; without one,
-`rlm` behaves exactly as today. Requirements: `spec.md` (S1–S21) and the six
-tickets under `issues/`. Plan `01-gated-integration`: waves 4–7, one node per
-ticket, a reconcile last in each wave. Waves 4–6 are done (`scripts/jev.sh` +
-`--help`, `scripts/tests/test-jev.sh` T1–T19 128/128, `classify()` in
-`skills/rlm/scripts/rlm_repl.py`, credentials docs, `skills/jev/`, UAT passed
-by the user). Wave 7's work is done too (threshold 0.5,
-pin `jev-latest` @ release 2026-09-10). Left: the wave 7 join, which closes
-the plan, then the user's deferred video assessment. This item is also the `plans` item's dogfood:
-findings go to `work/plans/decisions.md`.
+The gated Jev integration is **shipped**: `scripts/jev.sh` (+ `--help`),
+`scripts/tests/test-jev.sh` T1–T19 128/128, `classify()` in
+`skills/rlm/scripts/rlm_repl.py` (threshold 0.5, model `jev-latest` @ release
+2026-09-10), credentials docs, `skills/jev/`, UAT passed, tuned on two real
+runs. Plan `01-gated-integration` has every node done (18/18) and is waiting
+only for the user's goal-level close. What is left is three decisions that
+are the user's, then possibly one small documentation ticket. This item is
+also the `plans` item's dogfood: findings go to `work/plans/decisions.md`.
 
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-gated-integration, open, wave 7 of 7, done 17/18, doing 0, todo 1, blocked 0, dropped 0, sessions 7.
-Frontier: 16-reconcile-w7. Remaining: 1 of 18 — wave 7: 16-reconcile-w7 todo.
+Position: plan 01-gated-integration, open, wave 7 of 7, done 18/18, doing 0, todo 0, blocked 0, dropped 0, sessions 8.
+Frontier: none. Remaining: 0 of 18.
 <!-- plan:end position -->
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=15`).
-2. **Interactive session.** Run `16-reconcile-w7` per `skills/plans/SKILL.md`
-   → "Run a reconcile node": `start`; verify node 15 on disk — `bash
-   scripts/tests/test-jev.sh | tail -1` → 128/128; `grep -n
-   'DEFAULT_JEV_THRESHOLD = ' skills/rlm/scripts/rlm_repl.py` → `"0.5"`;
-   `grep -c '0\.9' skills/rlm/SKILL.md skills/jev/SKILL.md` → the only
-   remaining `0.9`s are the spike's "0.89–1.0" range; `grep -n release
-   skills/jev/SKILL.md skills/rlm/SKILL.md` → both name 2026-09-10; node 15a's
-   Log holds the raw numbers, the eighth note in `decisions.md` the decision.
-   Verify `git diff HEAD~1 --stat` touches only the files the note's Blast
-   radius lists. Record (`plan.sh note` for anything not yet a node); replan:
-   nothing remains — closing the plan is **goal-level**, so propose it in the
-   Log and stop; the user closes (`plan.sh` close verb, or says so). `check`
-   silent, `sync`, `done`. No human needed for the join itself.
-3. The user's deferred request: a critical assessment of the three videos'
-   implementation ideas against context budget and usefulness; candidates
-   under "Deferred" in `research/video-notes-2026-09-27.md`. Plain-language,
-   one page, self-contained (the user rejects jargon-heavy design docs).
-4. Housekeeping the join may propose: `spec.md` Status draft → done; ticket
-   06 `ready-for-agent` → done; `work/plans/issues/11-dogfood.md` gets the
-   two s14 findings (hitl-at-creation; sync-after-done). Dogfood decisions
-   are already in `work/plans/decisions.md`.
-5. At WARN/STOP: ledger block (insert after the header's `-->`; blocks are
-   `# Session Handoff — N`; keep two, archive the rest newest-on-top, no
-   duplicate N; verify the header count after writing), `plan.sh sync`,
-   commit with a `Decision:` trailer, then `session-rollover` (supervised
-   chain → `--emit`). Do not push `main`.
-6. `plan.sh` flags are separate words (`--project jev-integration`).
-   `frontier` exits 1 while a reconcile node is `doing` — do not chain it
-   with `&&`. `done` on a `todo` node needs `start` first (or `--force`);
-   hitl nodes need `--by`. A node `check:` runs from the work item directory:
-   every path needs `"$WORKSPACE_ROOT/"`. `plan.sh done` streams the check's
-   output — pipe through `tail`. Run `sync` *after* `done`, not before — the
-   Position block is a snapshot.
-7. Keyless testing: `/tmp/nokey/security` must stay a **pass-through** stub
-   that fails only the `jev-api-key` lookup. Leaf batches of 50 via `claude
-   -p haiku` take ~30 s; that is slow, not hung. The REPL state
-   (`.claude/rlm_state/state.pkl`) now holds the 100 ledger bullets, not the
-   commits; both corpora are in `/tmp/jev-uat/` (`commits.txt`, `ledger.txt`).
+1. `scripts/context-budget.sh register --project jev-integration` (expect `seq=16`).
+2. **Interactive session — three decisions for the user, in this order.**
+   Pose all three in one message; act on each answer:
+   - **Close the plan.** No `plan.sh` verb does it: edit `status: open` →
+     `status: closed` in `plans/01-gated-integration/plan.md` (the last write
+     — write verbs refuse a closed plan), then `scripts/plan.sh sync
+     --project jev-integration` (renders a closed plan). Record the closing
+     as a `Decision:` trailer.
+   - **Approve the spec.** `spec.md` line 10 `Status: draft` → `approved`
+     and `Approved-by: <user>` (vocabulary is draft | in-review | approved;
+     there is no `done`). The user approved the fit note (node 03) and ran
+     UAT (node 13); the spec itself was never flipped.
+   - **Ticket 07, yes or no.** From `research/video-assessment-2026-09-27.md`
+     (read it whole — 49 lines): #1 a data-leaves-the-machine sentence in
+     `skills/jev/SKILL.md` (No-key contract or step 2) and
+     `docs/service-access.md` → Jev Notes; #2 a Score-reliability clause in
+     the skill's type table; #4 (optional, spec amendment) a `JEV_DISABLED=1`
+     env var honoured by `scripts/jev.sh` as the no-key branch (exit 3) plus
+     one test. If yes: `issues/07-<slug>.md`, no plan (one session, one
+     agent), check = `bash scripts/tests/test-jev.sh` 128/128 (+1 if #4).
+3. Dogfood close-out when the plan closes: `work/plans/issues/11-dogfood-first-real-plan.md`
+   box 1 says "chain ends with verdict plan_closed" — this plan was closed by
+   a person, not a chain; note that under its Comments rather than ticking.
+4. At WARN/STOP (or when the decisions are taken): ledger block (insert after
+   the header's `-->`; blocks are `# Session Handoff — N`; keep two, archive
+   the rest newest-on-top, no duplicate N; verify the header count after
+   writing), commit with a `Decision:` trailer, then `session-rollover`
+   (supervised chain → `--emit`) or `checkpoint` if the item is finished.
+   Do not push `main`.
+5. `plan.sh` flags are separate words and **literal** — `--project
+   jev-integration` held in a shell variable is refused as "unknown option"
+   (bit session 15 too). `sync` after any state write, not before.
 
 ## Do NOT reload
 
-- `research/` beyond claim ids by grep; `spike.md` only if a number is needed.
+- `research/` beyond the assessment; `video-notes-2026-09-27.md` only if the
+  assessment's reasoning is questioned; `spike.md` never.
 - `rulings.md`, `sweep.md`, `seam-inventory.md`, the corrections — settled.
-- `spec.md` "User Stories" in full — grep an `S<n>` when a box cites one.
-- `work/plans/` beyond `decisions.md` (append) and `issues/11-dogfood.md`.
+- `spec.md` beyond line 10 (Status) unless #4 is taken (then S-item on key
+  resolution, ~line 145).
+- `work/plans/` beyond `decisions.md` (append) and the dogfood ticket.
 - `handoff.md` — the top block only if something above is unclear.
 - `scripts/tests/test-jev.sh` in full (390 lines) — grep a `T<n>` label.
-- `uat-help-proposal.txt` — applied; `scripts/jev.sh --help` is the text now.
+- Plan node files — the plan is done; `plan.sh status` is enough.
 
 ## Constraints already decided (do not re-litigate)
 
 - **Never run `scripts/jev.sh` without `JEV_ENDPOINT` pointing at the stub
   unless it is `--check` or `--help`.** This machine's keychain holds a real
-  key; a bare run is a live paid request. Node 15a's two calls were run with
-  the user's in-session authorization; no further live call is planned.
+  key; a bare run is a live paid request. No further live call is planned.
 - Template rules: agent-agnostic, CLI-first, credentials in the keychain,
   documented as a first-class addition, a test that proves it without a live
-  key. `scripts/jev.sh` is the only code that knows the endpoint or the key;
-  the model-listing `curl` is a one-off in the node file, not a script.
-- CLI contract (fourth note in `decisions.md`): request JSON on stdin, passed
-  through; one JSON line `{key,value,confidence}` per answer (Noul:
-  confidence `null`); key reaches Python via the child env only; exit 0/2/3/4;
-  `--check` and `--help` are the only flags. Help text: every line ≤ 80 cols,
-  sections USAGE…SEE ALSO in order, examples byte-identical through `jq -c`.
-- `llm_query` is byte-for-byte untouched (T14 golden diff — never regenerate
-  the golden). `classify()` and node 15 are done: threshold 0.5, model
-  `jev-latest` @ release 2026-09-10 (the listing has no versioned ids — do not
-  invent one), fixture r3 at 0.41. No code changes remain in this item.
-- Vendored `skills/jev/typesafe-ai/` is pristine upstream (`65a39f3`,
-  v0.5.7) below its provenance comment — never edit the body.
-- Gated on access; `rlm` first; Q1 (c), Q2 narrow, Q5 (a) widened to (b) by
-  the spec; `Promote?: maybe` on the fit note.
-- Raw `pass/*.md`, `fact-check.md`, `record.md`, every brief, and
-  `spike.{md,py}` are provenance — never edited. Do not re-run the spike.
-  The key stays in the keychain: never print it, never write it to a file.
-- No concrete model name in plan files (tiers only). Do not edit `plan.sh`,
-  `session-loop.sh`, or the plans skill from this item.
+  key. `scripts/jev.sh` is the only code that knows the endpoint or the key.
+- CLI contract (fourth note in `decisions.md`): request JSON on stdin; one
+  JSON line `{key,value,confidence}` per answer; exit 0/2/3/4; `--check` and
+  `--help` are the only flags (an env var is not a flag). Help text ≤ 80
+  cols, sections in order, examples byte-identical through `jq -c`.
+- `llm_query` is byte-for-byte untouched (T14 golden — never regenerate).
+  Threshold 0.5, model `jev-latest` @ release 2026-09-10 (no versioned id
+  exists — do not invent one); the fixtures' `jev-1.13.0` is a stub-only
+  override value (eighth note). Vendored `skills/jev/typesafe-ai/` is pristine
+  upstream (`65a39f3`, v0.5.7) below its provenance comment.
+- Raw `pass/*.md`, `fact-check.md`, `record.md`, briefs, `spike.{md,py}` are
+  provenance — never edited. The key stays in the keychain: never print it.
+- No model name in plan files. Do not edit `plan.sh`, `session-loop.sh`, or
+  the plans skill from this item — a dogfood finding is a note in
+  `work/plans/decisions.md`.
 
 ## State snapshot
 
-- Branch `main`, 72 ahead of origin, not pushed; session 14's work in two
-  commits. Plan `01-gated-integration` open: wave 7 of 7, 17/18 done, only
-  `16-reconcile-w7` `todo`; `check` silent.
-- `decisions.md`: eight notes (…; UAT observation; hitl gate for node 15's
-  calls; threshold 0.5 + pin @ release 2026-09-10 with the rejected values).
-- `spec.md` Status: draft (tickets `ready-for-agent`, 05 done by the user;
-  06 done in fact, not yet marked).
-- `/tmp/jev-uat/` (both corpora + three recipes), `/tmp/nokey/` are
-  machine-local.
-- Chain: supervised; session 14 rolled over at WARN; session 15 is
+- Branch `main`, ahead of origin, not pushed; session 15's work in one
+  commit. Plan `01-gated-integration` `open`, 18/18 done, frontier none,
+  `check` silent.
+- `decisions.md`: eight notes (the eighth: threshold 0.5 + pin). Tickets
+  01–06 `resolved`. `spec.md` Status `draft`.
+- `work/plans/decisions.md` carries dogfood findings s8–s15.
+- `/tmp/jev-uat/`, `/tmp/nokey/` are machine-local and no longer needed.
+- Chain: supervised; session 15 rolled over at WARN; session 16 is
   **interactive**.

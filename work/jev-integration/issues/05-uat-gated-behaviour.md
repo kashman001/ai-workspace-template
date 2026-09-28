@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 — `rlm` classification helper; 03 — Credentials docs and preflight; 04 — CLI widened, `jev` skill, always-on rule.
 
-**Status:** ready-for-human
+**Status:** resolved — plan 01-gated-integration node 13-uat-gated (the user, s13) done; marked at the wave 7 join (s15, 2026-09-27)
 
 **Spec:** S20
 

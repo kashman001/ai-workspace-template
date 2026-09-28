@@ -570,3 +570,18 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   **Suggest:** in "Create a plan from tickets", a ticket whose text says the
   user / a key / spend / a machine is required gets a `hitl` node in front of
   its work node at creation, not at the join. Promote?: no.
+
+- **s15 (jev-integration, node 16, the last join):** (a) `sync` run before
+  `done` leaves the launcher's Position block one state stale — the block is a
+  snapshot, so the order is `done` → `sync`; the skill's step 5 lists them in
+  that order but does not say why. (b) "Create a plan from tickets" never
+  touches the tickets again: all six `Status:` lines still read
+  `ready-for-agent`/`ready-for-human` after every node closed, and the triage
+  vocabulary has no terminal state for an implementation ticket (only the
+  wayfinder's `claimed`/`resolved`); this join used `resolved` + the node id.
+  **Suggest:** the reconcile step flips the ticket a node's `Ticket:` line
+  names, or the tracker doc names the terminal state. (c) No `plan.sh` verb
+  closes a plan although the loop reports `plan_closed`; closing is a hand
+  edit of `status: closed` in plan.md, and write verbs refuse a closed plan,
+  so it must be the last write. Fine for a person, but the skill's replan
+  ladder should say so in one line. Promote?: no.

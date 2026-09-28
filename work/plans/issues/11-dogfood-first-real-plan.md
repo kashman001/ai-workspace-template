@@ -11,3 +11,15 @@
 - [ ] Chain ends with verdict plan_closed at least once
 - [ ] A rollover split of an overrunning node happened, or was shown unnecessary
 - [ ] Findings appended to `work/plans/decisions.md`; README status line of this item updated
+
+## Comments
+
+- 2026-09-27 (jev-integration s15, wave 7 join): plan `01-gated-integration`
+  reached its last join — 17/18 done, seven sessions, two hitl nodes (03, 13,
+  plus the replanned gate 15a), one local and two structural replans, no
+  rollover split needed (every node fit one session). Findings in
+  `work/plans/decisions.md`, newest: s14 hitl-at-creation (a ticket that says
+  "needs the user / a key / spend" should get a `hitl` gate when the plan is
+  created from tickets, not at the join) and s15 sync-after-done (`sync`
+  before `done` leaves the Position block one state stale). Closing the plan
+  is the user's; the first box ticks once the chain reports `plan_closed`.
