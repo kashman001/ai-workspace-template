@@ -380,7 +380,9 @@ assert_eq "T18g: 401 is also exit 4, status on stderr" "$rc/$(grep -c 401 "$TMP/
 echo "T19: --help teaches the three types with a worked example each, the exit codes, the key order, and the limits"
 help="$("$JEV" --help 2>&1)"
 assert_eq "T19a: an example request per type" "$(printf '%s' "$help" | grep -cE '"type": ?"(choice|score|noul)"')" "3"
-assert_eq "T19b: every example is valid JSON" "$(printf '%s' "$help" | grep -E '^ *\{"state"' | while IFS= read -r l; do printf '%s' "$l" | jq -e . >/dev/null 2>&1 && echo ok || echo bad; done | sort -u)" "ok"
+# Each example is a multi-line block: printf '%s' '{ ... }' | scripts/jev.sh
+t19_blocks="$(printf '%s\n' "$help" | awk '/^ *printf .%s. .\{$/{b="{"; f=1; next} f && /^ *\}. \| scripts\/jev\.sh$/{print b "}"; b=""; f=0; next} f{b=b $0}')"
+assert_eq "T19b: three example blocks, each valid JSON with state and questions" "$(printf '%s\n' "$t19_blocks" | while IFS= read -r l; do [ -n "$l" ] || continue; printf '%s' "$l" | jq -e '.state and .questions' >/dev/null 2>&1 && echo ok || echo bad; done | sort | uniq -c | tr -s ' ' | sed 's/^ //')" "3 ok"
 for w in "exit" " 0 " " 2 " " 3 " " 4 " "JEV_API_KEY" "jev-api-key" "255" "32" "--check"; do
   assert_contains "T19c: mentions [$w]" "$help" "$w"
 done

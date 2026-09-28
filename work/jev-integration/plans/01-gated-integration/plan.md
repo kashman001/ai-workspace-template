@@ -33,6 +33,8 @@ what breaks, what is slow, and the L48 question go to
 - s11 · s11 · 12-reconcile-w5: node 11 check used a relative script path; checks run from the item dir — fixed with $WORKSPACE_ROOT; finding in work/plans/decisions.md
 - s12 · UAT 13 (session 12, user): ran --check, --help, check-service-access on the keyed machine; --help judged not user-friendly — sent to a CLI text-UX reviewer; verdict pending, fix to be a new wave-6 work node. rlm keyed/keyless legs not yet run.
 - s12 · UAT 13 keyless leg (session 12, user): --check exit 3 + one stderr line PASS; check-service-access shows '– jev key absent (optional)' PASS; rlm run not reached: skills/rlm/SKILL.md says 'python' (5 places) but this Mac has only python3 (shebang is python3) — docs finding, pre-existing in the rlm skill, inherited by the classify recipe. Also the UAT recipe given in chat omitted the 'init <context>' step (session error, not a product finding).
+- s13 · s13: lint fix — node 17-13b-uat-fixes → 13b-uat-fixes per plans skill Replan rule 1 (mv file + set id: + add to reconcile 14 blocked_by); the node's own ordering note said 'do not hand-edit ids' but docs/plans.md and the skill prescribe exactly that rename for a follow-up in a wave that already has its reconcile; no plan.sh verb renames a node
+- s13 · s13 · UAT 13 recipe finding (not a product bug): a fake 'security' that fails every call also logs the claude CLI out (Claude Code reads its OAuth token via the same keychain command), so the leaf returns 'Not logged in' and classify() yields label None for every record in ~1s. The keyless leg needs a pass-through stub that fails only the jev-api-key lookup (/tmp/nokey/security now does: case "$*" in *jev-api-key*) exit 44; else exec /usr/bin/security). The user's keyed run reached the leaf fallback (some Jev answers below threshold 0.9) and was interrupted as 'stuck' — leaf batches of 50 via claude -p haiku take tens of seconds; timing measured this session.
 
 ## Out of scope
 
@@ -50,6 +52,7 @@ what breaks, what is slow, and the L48 question go to
 - s8 · 06-reconcile-w3 (structural): added wave 6 — 13-uat-gated (hitl) ← ticket 05; 14-reconcile-w6
 - s8 · 06-reconcile-w3 (structural): added wave 7 — 15-tune-and-pin ← ticket 06; 16-reconcile-w7
 - s8 · waves = 3 + (1 + longest blocker chain) per ticket; checks name `scripts/tests/test-jev.sh` (ticket 01 builds it); no model name in any node (tiers only)
+- s13 · 14-reconcile-w6 (local, applied by the session before the join): 17-13b-uat-fixes renamed to 13b-uat-fixes (number of the node it follows + suffix) and added to 14-reconcile-w6 blocked_by — `add` had numbered it after the join, tripping `reconcile-last`. Local replan.
 
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
@@ -66,10 +69,10 @@ what breaks, what is slow, and the L48 question go to
 | 5 | 10-credentials-docs | work | cheap | done |
 | 5 | 11-cli-skill-rule | work | standard | done |
 | 5 | 12-reconcile-w5 | reconcile | frontier | done |
-| 6 | 13-uat-gated | hitl | frontier | todo |
+| 6 | 13-uat-gated | hitl | frontier | done |
+| 6 | 13b-uat-fixes | work | standard | done |
 | 6 | 14-reconcile-w6 | reconcile | frontier | todo |
-| 6 | 17-13b-uat-fixes | work | standard | todo |
 | 7 | 15-tune-and-pin | work | standard | todo |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 13-uat-gated. Remaining: 5 of 17. Sessions used: 5.
+Frontier: 14-reconcile-w6. Remaining: 3 of 17. Sessions used: 6.
 <!-- plan:end board -->

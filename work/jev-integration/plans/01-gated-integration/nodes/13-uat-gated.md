@@ -1,11 +1,11 @@
 ---
 id: 13-uat-gated
 title: Ticket 05 — UAT: gated behaviour with a key and without
-status: todo
+status: done
 kind: hitl
 wave: 6
 blocked_by: [09-rlm-classify, 10-credentials-docs, 11-cli-skill-rule]
-sessions: []
+sessions: [13]
 ---
 
 ## Goal
@@ -24,3 +24,5 @@ A person marks this done (`plan.sh done 13-uat-gated --by <name>`); the chain pa
 - [ ] The user records the observed fallback rate and any surprise in `work/jev-integration/decisions.md` or as a `plan.sh note` for ticket 06 to use
 
 ## Log
+- s13 · started, tier frontier
+- human · done

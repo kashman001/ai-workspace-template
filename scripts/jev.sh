@@ -19,58 +19,109 @@ JEV_MODEL_DEFAULT="jev-latest"
 JEV_ENDPOINT_DEFAULT="https://api.typesafe.ai/v1/systemone"
 
 usage() {
-  cat <<'USAGE'
-usage: scripts/jev.sh [--help] [--check] < request.json
+  cat <<'JEV_HELP'
+jev.sh - ask Jev (TypeSafe's typed-question model) typed questions about a
+         piece of state: pick a label, place on a scale, or judge yes/no
 
-Asks Jev (TypeSafe's typed-question model) one or more questions about a
-piece of state. Reads {state, questions[, model]} as JSON on stdin and prints
-one JSON line per answer: {"key": <question key>, "value": <typed answer>,
-"confidence": <0..1 or null>}. Questions are sent exactly as given.
-
-  state      any JSON value (a string, or an array/object of records; refer
-             to parts of it in instructions as `records[3]` or `ticket.text`)
-  questions  map of your key -> {type, instructions, criteria}; the key is
-             for your code, it is not sent to the model
-  model      optional; default jev-latest
-
-Three question types, one worked example each (each line is a full request):
-
-  choice  pick one of a closed set; value is the chosen label
-          criteria: {label: description}; add an "other" option when nothing
-          may fit. Up to 255 options.
-  {"state":"Login page throws 500 after password reset","questions":{"kind":{"type":"choice","instructions":"Classify the record","criteria":{"bug":"Something is broken","enhancement":"A request for new behaviour","other":"None of the above"}}}}
-  -> {"key": "kind", "value": "bug", "confidence": 0.99}
-
-  score   degree along an ordered scale; value is the probability-weighted
-          level (0 = first criterion, 1 = second, ...); criteria: an ordered
-          array of 2-10 level descriptions, low to high
-  {"state":"The export button crashes the settings page in Safari. It works in Chrome.","questions":{"severity":{"type":"score","instructions":"How severe is this bug report?","criteria":["Cosmetic; no impact to functionality","Broken, but a workaround exists","Blocking; no workaround"]}}}
-  -> {"key": "severity", "value": 1.43, "confidence": 0.35}
-
-  noul    does a condition hold; value is the probability of yes, confidence
-          is null (a value near 0.5 means undecided, not "medium");
-          criteria is optional: {"true": what a yes means, "false": what a no means}
-  {"state":"I already opened ticket 4411 about this. Can I speak to a person?","questions":{"wants_human":{"type":"noul","instructions":"Is the customer asking for a human agent?"}}}
-  -> {"key": "wants_human", "value": 0.99, "confidence": null}
-
-Ask independent questions about the same state in one request; they run in
-parallel and cannot see each other. Confidence measures how concentrated the
-answer distribution is, not whether the workflow is correct.
-
-Flags:
-  --check    Verify the key is present (does not send a request); prints one
-             line on stdout and exits 0 if present, or exits 3 with one line
-             on stderr if absent. Reads no stdin.
-  --help     Show this message.
-
-Key: JEV_API_KEY, else the OS keychain entry `jev-api-key` (macOS security,
-Linux secret-tool). Endpoint: JEV_ENDPOINT (default: the live URL).
-Limits (refused here, before any request): more than 255 options in one
-Choice; state plus the longest question over an estimated 32k tokens.
-Exit: 0 answered, 2 usage or limit refused, 3 no key, 4 non-200 from the
-server (429 = rate limited; status and body head on stderr).
-Detail (the `other` pattern, thresholds, cost): skills/jev/SKILL.md.
 USAGE
+  scripts/jev.sh < request.json   send one request; print one JSON line
+                                  per answer
+  scripts/jev.sh --check          is a key available? sends nothing, reads
+                                  no stdin; exit 0 = yes, exit 3 = no
+  scripts/jev.sh --help           show this text
+
+  First time here: run --check. Exit 3 means no key; do the task without
+  Jev (nothing to set up on the command line; see KEY below).
+
+REQUEST  one JSON object on stdin
+  state        any JSON value: a string, or an array/object of records.
+               Refer to parts of it in instructions as `records[3]` or
+               `ticket.text`.
+  questions    object: question key -> {type, instructions, criteria}.
+               The question key is for your code; it is not sent to the
+               model. Questions are sent exactly as given.
+  model        optional; default jev-latest
+
+  Put every independent question about the same state in one request:
+  they run in parallel and cannot see each other's answers.
+
+ANSWER  one JSON line per question
+  {"key": <question key>, "value": <typed answer>, "confidence": <0..1|null>}
+
+  Confidence measures how concentrated the answer distribution is, not
+  whether the workflow is correct.
+
+QUESTION TYPES
+  choice   pick one of a closed set.  value: the chosen label.
+           criteria: {label: description}, up to 255 options; add an
+           "other" option when nothing may fit.
+  score    degree along an ordered scale.  value: the probability-weighted
+           level (0 = first criterion, 1 = second, ...).
+           criteria: ordered array of 2-10 level descriptions, low to high.
+  noul     does a condition hold.  value: the probability of yes;
+           confidence is null. A value near 0.5 means undecided, not
+           "medium".  criteria: optional {"true": what a yes means,
+           "false": what a no means}.
+
+EXAMPLES  one runnable command per type, then the line it prints
+          (stdin accepts multi-line JSON as shown)
+
+  printf '%s' '{
+    "state":
+  "Login page throws 500 after password reset",
+    "questions": {"kind": {
+      "type": "choice", "instructions": "Classify the record",
+      "criteria": {"bug": "Something is broken",
+                   "enhancement": "A request for new behaviour",
+                   "other": "None of the above"}}}
+  }' | scripts/jev.sh
+  {"key": "kind", "value": "bug", "confidence": 0.99}
+
+  printf '%s' '{
+    "state":
+  "The export button crashes the settings page in Safari. It works in Chrome.",
+    "questions": {"severity": {
+      "type": "score", "instructions": "How severe is this bug report?",
+      "criteria": ["Cosmetic; no impact to functionality",
+                   "Broken, but a workaround exists",
+                   "Blocking; no workaround"]}}
+  }' | scripts/jev.sh
+  {"key": "severity", "value": 1.43, "confidence": 0.35}
+
+  printf '%s' '{
+    "state":
+  "I already opened ticket 4411 about this. Can I speak to a person?",
+    "questions": {"wants_human": {
+      "type": "noul",
+      "instructions": "Is the customer asking for a human agent?"}}
+  }' | scripts/jev.sh
+  {"key": "wants_human", "value": 0.99, "confidence": null}
+
+KEY
+  JEV_API_KEY if set, else the OS keychain entry `jev-api-key` (macOS
+  `security`, Linux `secret-tool`). The script never writes the key to
+  stdout, stderr, argv, or a file. Setup: docs/service-access.md ->
+  "Jev (TypeSafe)".
+
+ENVIRONMENT
+  JEV_API_KEY    the key; takes precedence over the keychain
+  JEV_ENDPOINT   override the endpoint (tests); default: the live URL
+
+LIMITS  checked here; a request that breaks one is refused, nothing is sent
+  more than 255 options in one choice
+  state plus the longest question over an estimated 32k tokens
+
+EXIT STATUS
+  0   answered
+  2   usage error, or a limit above broken; nothing was sent
+  3   no key; one line on stderr, nothing on stdout
+  4   non-200 from the server; status and body head on stderr
+      (429 = rate limited)
+
+SEE ALSO
+  skills/jev/SKILL.md   when Jev fits, the "other" pattern, thresholds,
+                        batching, rate limits, cost
+JEV_HELP
 }
 
 check_mode=0

@@ -100,7 +100,7 @@ submitted Python as `steps/step_XXXX.py`.
 ### 1. Initialise — load the context, read only its metadata
 
 ```bash
-python skills/rlm/scripts/rlm_repl.py init <context_path>
+python3 skills/rlm/scripts/rlm_repl.py init <context_path>
 ```
 
 This prints the context's type, char/line/token estimate, and a short prefix.
@@ -114,7 +114,7 @@ Look at the shape of the data before deciding a strategy. Print *small* slices a
 structure, not the bulk:
 
 ```bash
-python skills/rlm/scripts/rlm_repl.py exec <<'PY'
+python3 skills/rlm/scripts/rlm_repl.py exec <<'PY'
 print(peek(0, 1500))                 # head
 lines = [l for l in content.splitlines() if l.strip()]
 print("lines:", len(lines))
@@ -142,7 +142,7 @@ that you would have written — same leaf calls, same labels, nothing else
 changes. You do not branch on which; the helper does.
 
 ```bash
-python skills/rlm/scripts/rlm_repl.py exec <<'PY'
+python3 skills/rlm/scripts/rlm_repl.py exec <<'PY'
 # Example shape for an aggregation task: derive records from the actual format,
 # ask for semantic labels with classify(), then count/aggregate in Python.
 records = [line.strip() for line in content.splitlines() if line.strip()]
@@ -195,12 +195,12 @@ must be a REPL variable or literal — not just something you say in chat** (so 
 can be arbitrarily long and is captured verbatim):
 
 ```bash
-python skills/rlm/scripts/rlm_repl.py exec <<'PY'
+python3 skills/rlm/scripts/rlm_repl.py exec <<'PY'
 top = counts.most_common(1)[0][0]
 answer = f"Label: {top}"
 FINAL_VAR("answer")          # or: FINAL(f"Label: {top}")
 PY
-python skills/rlm/scripts/rlm_repl.py final   # prints the stored answer
+python3 skills/rlm/scripts/rlm_repl.py final   # prints the stored answer
 ```
 
 Then report that final answer to the user, in the exact output format the query
@@ -241,7 +241,7 @@ Each audited `exec` writes:
 Replay with:
 
 ```bash
-python .claude/rlm_runs/<run_id>/replay_all.py
+python3 .claude/rlm_runs/<run_id>/replay_all.py
 ```
 
 Replay calls `llm_query` live, so sub-LM text can differ from the original run.

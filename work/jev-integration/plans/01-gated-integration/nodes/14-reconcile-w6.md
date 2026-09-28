@@ -4,7 +4,7 @@ title: Join wave 6
 status: todo
 kind: reconcile
 wave: 6
-blocked_by: [13-uat-gated]
+blocked_by: [13-uat-gated, 13b-uat-fixes]
 sessions: []
 ---
 

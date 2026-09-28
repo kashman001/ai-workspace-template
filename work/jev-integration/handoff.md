@@ -6,6 +6,57 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 13 (2026-09-27): interactive UAT close — plan lint fixed (17-13b → 13b-uat-fixes, replan rule 1); UAT node 13 done by the user: keyed `rlm` run 100/100 `source: jev`, keyless 100/100 `leaf` (34 s, nothing mentions Jev); finding for node 15: median confidence 0.52, **90 % would fall to the leaf at the 0.9 default**; node 13b done (`--help` rewritten to the reviewer's text, T19b reworked, rlm skill `python3`; 128/128); frontier 14-reconcile-w6; rolled over interactive at WARN
+
+## What happened
+
+- Lint: `17-13b-uat-fixes` renamed to `13b-uat-fixes` (file + `id:`) and added
+  to 14's `blocked_by` — plans skill Replan rule 1 / `docs/plans.md`
+  ("number of the node it follows plus a suffix"). `## Replans` line + note.
+- UAT (node 13, user): corpus = last 100 commit subjects (`/tmp/jev-uat/
+  commits.txt`), recipes `/tmp/jev-uat/leg.py` (default threshold) and
+  `leg-keyed.py` (`threshold=0.0`, prints the confidence distribution).
+  User's first keyed run at the default reached the leaf fallback and was
+  interrupted as "stuck" — the leaf batch of 50 via `claude -p haiku` takes
+  ~30 s, so it was slow, not hung. Keyed run with `threshold=0.0`: 100/100
+  jev, confidence min 0.23 / median 0.52 / max 1.0, 90/100 below 0.9.
+  Keyless run (session, pass-through stub): 100/100 leaf, 34 s, no Jev
+  mention. Marked `done --by human`. Full numbers + label agreement: the
+  sixth note in `decisions.md`.
+- Recipe finding: a fake `security` that fails every call also logs the
+  `claude` CLI out (its OAuth token is in the keychain) → leaf answers "Not
+  logged in", every label `None` in ~1 s. `/tmp/nokey/security` is now a
+  pass-through that fails only the `jev-api-key` lookup. `plan.sh note` + decisions.md.
+- Node 13b: `scripts/jev.sh --help` = `uat-help-proposal.txt` with one
+  factual tweak (KEY sentence); heredoc delimiter renamed `USAGE` →
+  `JEV_HELP` (the new text has a `USAGE` header at column 0, which
+  terminated the heredoc — 79 tests failed until renamed). T19b now
+  extracts the three multi-line `printf … | scripts/jev.sh` blocks and
+  asserts `3 ok` (stricter). `skills/rlm/SKILL.md`: six `python ` → `python3`
+  (the sixth is the audit-replay line). 128/128; node check passes.
+
+## Decisions
+
+- Node 13 marked done by the user on the pasted outputs (both legs seen).
+- UAT observation recorded as a Tier-2 note for node 15 (threshold is the
+  main routing knob, not a safety net; candidates 0.5 and 0.25).
+
+## Open
+
+- 14-reconcile-w6 (frontier), then wave 7: node 15 needs the user's key
+  for a second real run and a threshold call; node 16.
+- After the plan closes: the deferred video assessment
+  (`research/video-notes-2026-09-27.md` → "Deferred").
+
+Learnings:
+- A quoted heredoc dies on any content line equal to its delimiter — pick a delimiter that cannot be a section header (second strike → `docs/operational-knowledge.md`).
+- A keychain stub for "no key" tests must pass through everything but the one entry; blanket failure disables the `claude` CLI too.
+- macOS has no `timeout`; use a Python `subprocess.run(timeout=)` wrapper to cap a probe.
+
+Suggested skills: `plans` (reconcile 14, then node 15), `decision-log` (threshold + pin note), `session-rollover`.
+
+Key files: `work/jev-integration/decisions.md` (sixth note), `plans/01-gated-integration/nodes/{13b-uat-fixes,14-reconcile-w6,15-tune-and-pin}.md`, `scripts/jev.sh` (help heredoc 22–124), `scripts/tests/test-jev.sh` (T19b), `skills/rlm/SKILL.md`, `/tmp/jev-uat/{commits.txt,leg.py,leg-keyed.py}`, `/tmp/nokey/security`.
+
 # Session Handoff — 12 (2026-09-27): interactive UAT session — user ran the three keyed commands and the keyless `--check`/preflight (both PASS); findings: `jev.sh --help` not user-friendly (CLI text-UX review done, replacement text at `uat-help-proposal.txt`), `skills/rlm/SKILL.md` says `python` (Mac has only `python3`); fix node 17-13b-uat-fixes added (lint: reconcile 14 no longer last in wave 6 — unresolved); `rlm` keyed/keyless legs NOT yet run; three Jev videos read, notes + deferred assessment in `research/video-notes-2026-09-27.md`; rolled over at STOP
 
 ## What happened
@@ -45,13 +96,3 @@ Convention: docs/work-directory-conventions.md.
 - Node 17 ordering vs reconcile 14 (see node's "Ordering note").
 - `rlm` keyed + keyless legs of the UAT; the leaf share for node 15.
 - Node 13 stays `todo` until the user marks it.
-
-# Session Handoff — 11 (2026-09-27): wave 5 closed hands-off — node 11 (CLI widened to Choice/Score/Noul, S7 refusals, `--help` with a worked example per type; `skills/jev/SKILL.md`; TypeSafe's skill vendored at `65a39f3`; Service Access bullet) built test-first (T15–T19, 128/128), reconcile 12 joined; frontier 13-uat-gated (hitl); rolled over interactive at WARN
-
-1. Registered `seq=11` (hands-off, 61K at register). Frontier `11-cli-skill-rule`; `start 11`. Read the node, ticket 04, S5/S7/S17/S18, `jev.sh`, `test-jev.sh`; fetched TypeSafe's `skills/typesafe-ai/SKILL.md` + `LICENSE` at `65a39f3` (`gh api` tree confirmed the path) and the Score/Noul/API doc pages for the exact criteria shapes (Score: ordered array of 2–10 levels; Noul: optional `{true,false}`; Choice ≤255 options).
-2. Node 11, `tdd`. Red first: fixtures `scripts/tests/fixtures/jev/score.json` + `noul.json`; the stub gained a `status:<code>` fixture mode (non-200 + small error body); T15 Score, T16 Noul, T17 the two S7 refusals (256 options → exit 2; 255 allowed; 130k-char state → exit 2; no request), T18 exit 4 on 429/401 with status + body head, T19 `--help` content (three valid-JSON examples, exit codes, key order, limits). 15 failures. Green: `scripts/jev.sh` — typed value is `choice`/`score`/`noul` (Noul confidence `null`), the `{key,value,confidence}` line kept; limits checked before the request (chars/4 estimate, same as `classify`); `--help` rewritten. 128/128; T8–T14 untouched and green; `llm_query` golden diff clean.
-3. `skills/jev/SKILL.md` (workspace-authored, runtime-neutral, model-invoked, no slash command): gate → request shape → type table → `other` pattern → run/exit codes → threshold + fallback; limits/cost/no-key sections; points to `typesafe-ai/SKILL.md` beside it. Vendored `skills/jev/typesafe-ai/SKILL.md` (pristine body byte-identical to upstream, provenance comment after the frontmatter) + `LICENSE` (MIT, TypeSafe AI). `skills/vendored-skills.md`: new "TypeSafe agent skill" section (pin, refresh procedure, license) and `jev` added to the workspace-authored list. `CONTEXT.md` → Service Access: one bullet, ~83 tokens (edited the real file; `CLAUDE.md` is the symlink).
-4. `plan.sh done 11` failed and the node went `blocked`: its `check:` named `scripts/jev.sh` relatively, and `plan.sh` runs checks from the work item directory (`cd "$ITEM"`); `plan.sh check` had not flagged it. Fixed the node's check with `"$WORKSPACE_ROOT/"`, `start` (blocked → doing), `done` → done. Dogfood finding appended to `work/plans/decisions.md` (suggests a Check rule for relative paths, a doc line on the check cwd, and quieter `done` output — it streamed 128 test lines) plus a `plan.sh note`.
-5. Reconcile 12: `verify` 09, 10, 11 → exit 0 each; files, box counts, docs entries confirmed on disk; no structural replan (wave 6 stands). `check` silent, `sync`, `done 12`. Plan: wave 6 of 7, 12/16 done, frontier `13-uat-gated` (hitl).
-6. Budget: 114.8K after node 11, 123.7K (WARN) after the reconcile. Rolled over `--loop-mode interactive` so the successor poses the UAT to the user. Nothing pushed.
-
