@@ -1,11 +1,11 @@
 ---
 id: 15a-authorize-live-runs
 title: Authorize node 15's two live Jev calls (second corpus run + model listing)
-status: todo
+status: done
 kind: hitl
 wave: 7
 blocked_by: [13-uat-gated]
-sessions: []
+sessions: [14]
 ---
 
 ## Goal
@@ -42,8 +42,14 @@ Then mark this node done (`scripts/plan.sh done 15a-authorize-live-runs --by hum
 
 ## Acceptance
 
-- [ ] Second run's confidence distribution recorded (as a `plan.sh note` or a line in `decisions.md`), with the corpus kind and record count
-- [ ] The versioned id behind `jev-latest` read from the listing and recorded the same way
-- [ ] A person marks this node done (`--by human`)
+- [x] Second run's confidence distribution recorded (as a `plan.sh note` or a line in `decisions.md`), with the corpus kind and record count
+- [x] The versioned id behind `jev-latest` read from the listing and recorded the same way
+- [x] A person marks this node done (`--by human`)
 
 ## Log
+- s14 · the user authorized both in-session ("You have permission for both"); the agent ran them.
+- s14 · run 2 (keyed, `threshold=0.0`, `jev-latest`): 100 ledger bullets from `work/*/handoff*.md` (`/tmp/jev-uat/ledger.txt`, recipe `leg2-keyed.py`), four categories built / verified / decided / blocked + `other`. 100/100 `source: jev`; confidence min 0.09 / median 0.26 / max 0.94; below 0.25: 41 %, below 0.5: 94 %, below 0.7: 98 %, below 0.9: 99 %; deciles 0.09 0.15 0.17 0.20 0.24 0.26 0.28 0.30 0.36 0.46 | 0.94. Jev counts: verified 52, blocked 23, decided 15, built 10. Two live requests, under a second.
+- s14 · leaf leg on the same corpus (keyless stub, `claude -p haiku`, 31 s): leaf counts decided 31, built 29, other 17, verified 16, blocked 7. Agreement Jev vs leaf by Jev confidence: [0,0.25) 5/41 · [0.25,0.5) 14/53 · [0.5,0.7) 1/4 · [0.7,1] 2/2 · overall 22/100. Main confusion: Jev `verified` where the leaf said `built` (18) or `decided` (15). Confidence tracks agreement; these categories overlap (a bullet often records built + verified), which is what the low confidences report.
+- s14 · model listing (`GET /v1/models`, HTTP 200): `{"models":[{"name":"jev-latest","description":"The latest iteration of TypeSafe's System One Model: Jev","release_date":"2026-09-10T18:38:01.391457+00:00"},{"name":"jev-preview","description":"A preview version of `jev-latest`: should be better in most ways","release_date":"2026-09-10T18:39:06.057655+00:00"}]}`. **There is no versioned id** — only the two aliases, each with a `release_date`. The pinnable identity is `jev-latest` + its release date.
+- s14 · started, tier frontier
+- human · done

@@ -6,7 +6,7 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 14 (2026-09-27): wave 6 joined — reconcile 14 done (13b's four boxes re-verified: 128/128, `--help` clean, rlm skill `python3`; 13's evidence = sixth note); structural replan: hitl gate `15a-authorize-live-runs` added ahead of `15-tune-and-pin` (its acceptance needs two paid live Jev calls only the user may trigger); node 15's keyless prep logged (edit sites, fixture placeholder id `jev-1.13.0`, candidates 0.5 / 0.25); frontier 15a (hitl); stopped blocked on the user, well under WARN
+# Session Handoff — 14 (2026-09-27): wave 6 joined (reconcile 14; 13b re-verified 128/128) → hitl gate 15a added ahead of 15 → the user authorized both live calls in-session → run 2 (100 ledger bullets: median 0.26, 94 % below 0.5; leaf agreement tracks confidence, 22/100 overall) + model listing (no versioned id: `jev-latest`/`jev-preview` with release dates) → node 15 done: threshold 0.9 → 0.5, pin = `jev-latest` @ 2026-09-10, skills reworded, fixture r3 0.41, 128/128; frontier 16-reconcile-w7; rolled over at WARN
 
 ## What happened
 
@@ -30,6 +30,21 @@ Convention: docs/work-directory-conventions.md.
   292–293, jev SKILL.md 81), the fixtures' placeholder id `jev-1.13.0` and
   T2b/T9e/T1g/T8h that follow the pin, candidates 0.5 and 0.25 from run 1.
   No code touched.
+- The user then authorized both calls ("You have permission for both"); the
+  standing rule that live `jev.sh` calls are the user's to trigger was the
+  reason for the wait (not the permission classifier). Listing: `GET
+  /v1/models` → `jev-latest` (release 2026-09-10T18:38Z) and `jev-preview`
+  only, no versioned ids. Run 2: 100 ledger bullets (`/tmp/jev-uat/
+  ledger.txt`, `leg2-keyed.py`), 100/100 jev under a second, min 0.09 /
+  median 0.26 / max 0.94, below 0.25/0.5/0.7/0.9 = 41/94/98/99 %. Leaf leg
+  (`leg2-leaf.py`, keyless stub, 31 s): agreement by Jev confidence [0,0.25)
+  5/41 · [0.25,0.5) 14/53 · [0.5,1] 3/6. Full numbers on node 15a's Log.
+- Node 15 done: `DEFAULT_JEV_THRESHOLD` 0.5, `DEFAULT_JEV_MODEL` stays
+  `jev-latest` with the release date in the comment; rlm SKILL threshold
+  paragraph + knobs, jev SKILL step 6 + Model bullet; fixture r3 0.89 → 0.41
+  so T8i still hits the fallback at the new default (T1i/T9a/T9c follow).
+  128/128; T14 golden untouched. Eighth decision note (rejected 0.9 / 0.25 /
+  0.7, synthetic id). REPL state now holds the ledger corpus.
 - Origin: `git fetch --dry-run` silent — nothing landed upstream; main is 71
   ahead, not pushed.
 
@@ -45,15 +60,8 @@ Convention: docs/work-directory-conventions.md.
 
 ## Open
 
-- **Node 15a (hitl) — the user's two requests**, verbatim in
-  `plans/01-gated-integration/nodes/15a-authorize-live-runs.md` and at the top
-  of `next-session.md`: (1) a second keyed `rlm` run at `threshold=0.0` on a
-  corpus of a different kind (issue titles or ledger bullets, ~100 records);
-  (2) one `GET https://api.typesafe.ai/v1/models` to read the versioned id
-  behind `jev-latest`. Then `done 15a-authorize-live-runs --by human`.
-- Node 15 then sets `DEFAULT_JEV_THRESHOLD` / `DEFAULT_JEV_MODEL`, the
-  fixtures, and the two skills' wording; Tier-2 note with both distributions
-  and the rejected values; 16-reconcile-w7 closes the plan.
+- 16-reconcile-w7: verify node 15 on disk, record, propose closing the plan
+  (goal-level — the user closes). Then the deferred video assessment.
 - Deferred: the critical assessment of the three videos' ideas
   (`research/video-notes-2026-09-27.md` → "Deferred") after node 16.
 

@@ -90,9 +90,13 @@ DEFAULT_RLM_MODEL = os.environ.get("RLM_ROOT_MODEL", "sonnet")
 # surface for it (docs/service-access.md). Active only where that CLI finds a
 # key; without one classify() takes the leaf path and nothing below is used.
 #   RLM_JEV_THRESHOLD : Jev confidence below which a record is re-asked through
-#                       the leaf (default: 0.9; a worked value, tuned per S21).
-#   RLM_JEV_MODEL     : Jev model id sent in each request (default: jev-latest).
-DEFAULT_JEV_THRESHOLD = float(os.environ.get("RLM_JEV_THRESHOLD", "0.9"))
+#                       the leaf (default: 0.5, tuned per S21 on two real runs
+#                       against jev-latest released 2026-09-10; re-tune when the
+#                       listing's release_date changes).
+#   RLM_JEV_MODEL     : Jev model id sent in each request (default: jev-latest;
+#                       GET /v1/models lists no versioned ids, only jev-latest
+#                       and jev-preview, each with a release_date).
+DEFAULT_JEV_THRESHOLD = float(os.environ.get("RLM_JEV_THRESHOLD", "0.5"))
 DEFAULT_JEV_MODEL = os.environ.get("RLM_JEV_MODEL", "jev-latest")
 JEV_CLI = Path(__file__).resolve().parents[3] / "scripts" / "jev.sh"
 JEV_BATCH = 50              # records per Jev request

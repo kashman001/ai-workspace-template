@@ -97,7 +97,7 @@ assert_eq "T1g: model defaults to jev-latest" "$(printf '%s' "$got" | jq -r '.bo
 assert_eq "T1h: questions passed through as given" "$(printf '%s' "$got" | jq -c '.body.questions.r1 | [.type, .instructions, .criteria.other]')" \
   '["choice","Classify `records[1]`","None of the above"]'
 assert_eq "T1i: one JSON line per answer, key + typed value + confidence" "$(printf '%s' "$out" | jq -c .)" \
-  "$(printf '%s\n' '{"key":"r0","value":"bug","confidence":1.0}' '{"key":"r1","value":"enhancement","confidence":1.0}' '{"key":"r2","value":"question","confidence":0.98}' '{"key":"r3","value":"other","confidence":0.89}' '{"key":"r4","value":"bug","confidence":0.99}' | jq -c .)"
+  "$(printf '%s\n' '{"key":"r0","value":"bug","confidence":1.0}' '{"key":"r1","value":"enhancement","confidence":1.0}' '{"key":"r2","value":"question","confidence":0.98}' '{"key":"r3","value":"other","confidence":0.41}' '{"key":"r4","value":"bug","confidence":0.99}' | jq -c .)"
 assert_eq "T1j: nothing on stderr" "$err" ""
 assert_absent "T1k: the key is not on stdout" "$out" "$KEY"
 assert_absent "T1l: the key is not on stderr" "$err" "$KEY"
@@ -212,7 +212,7 @@ assert_eq "T8f: type choice, other appended with a fixed description" "$(printf 
   '["choice",["bug","enhancement","other","question"],"None of the above"]'
 assert_eq "T8g: the caller's descriptions are the criteria" "$(printf '%s' "$got" | jq -r '.body.questions.r0.criteria.bug')" "Something is broken or wrong"
 assert_eq "T8h: model id sent" "$(printf '%s' "$got" | jq -r '.body.model')" "jev-latest"
-assert_eq "T8i: labels aligned with records; r3 (0.89) fell below the default threshold to the leaf" \
+assert_eq "T8i: labels aligned with records; r3 (0.41) fell below the default threshold (0.5) to the leaf" \
   "$(printf '%s' "$out" | head -1 | jq -c 'map([.label, .source])')" \
   '[["bug","jev"],["enhancement","jev"],["question","jev"],["bug","leaf"],["bug","jev"]]'
 assert_eq "T8j: jev confidences carried, leaf has none" "$(printf '%s' "$out" | head -1 | jq -c 'map(.confidence)')" '[1.0,1.0,0.98,null,0.99]'
@@ -226,17 +226,17 @@ echo "T9: the threshold — a call argument, else RLM_JEV_THRESHOLD, else the mo
 reset_leaf
 out="$(RLM_ENV="JEV_ENDPOINT=$ENDPOINT JEV_API_KEY=$KEY" rlm_exec 2>/dev/null <<PY
 import json
-print(json.dumps([x["source"] for x in classify($RECORDS, $CATS, threshold=0.5)]))
+print(json.dumps([x["source"] for x in classify($RECORDS, $CATS, threshold=0.4)]))
 PY
 )"
-assert_eq "T9a: threshold=0.5 keeps every record on jev" "$(printf '%s' "$out" | head -1)" '["jev", "jev", "jev", "jev", "jev"]'
+assert_eq "T9a: threshold=0.4 (below the 0.5 default) keeps every record on jev" "$(printf '%s' "$out" | head -1)" '["jev", "jev", "jev", "jev", "jev"]'
 assert_eq "T9b: no leaf call" "$(leaf_calls)" "0"
 out="$(RLM_ENV="JEV_ENDPOINT=$ENDPOINT JEV_API_KEY=$KEY RLM_JEV_THRESHOLD=0.99" rlm_exec 2>/dev/null <<PY
 import json
 print(json.dumps([x["source"] for x in classify($RECORDS, $CATS)]))
 PY
 )"
-assert_eq "T9c: RLM_JEV_THRESHOLD=0.99 sends r2 (0.98) and r3 (0.89) to the leaf" "$(printf '%s' "$out" | head -1)" '["jev", "jev", "leaf", "leaf", "jev"]'
+assert_eq "T9c: RLM_JEV_THRESHOLD=0.99 sends r2 (0.98) and r3 (0.41) to the leaf" "$(printf '%s' "$out" | head -1)" '["jev", "jev", "leaf", "leaf", "jev"]'
 assert_eq "T9d: the two re-asks share one leaf call" "$(leaf_calls)" "1"
 out="$(RLM_ENV="JEV_ENDPOINT=$ENDPOINT JEV_API_KEY=$KEY RLM_JEV_MODEL=jev-1.13.0" rlm_exec 2>/dev/null <<PY
 classify($RECORDS[:1], $CATS, threshold=0)

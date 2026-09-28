@@ -73,8 +73,8 @@ what breaks, what is slow, and the L48 question go to
 | 6 | 13-uat-gated | hitl | frontier | done |
 | 6 | 13b-uat-fixes | work | standard | done |
 | 6 | 14-reconcile-w6 | reconcile | frontier | done |
-| 7 | 15-tune-and-pin | work | standard | todo |
-| 7 | 15a-authorize-live-runs | hitl | frontier | todo |
+| 7 | 15-tune-and-pin | work | standard | done |
+| 7 | 15a-authorize-live-runs | hitl | frontier | done |
 | 7 | 16-reconcile-w7 | reconcile | frontier | todo |
-Frontier: 15a-authorize-live-runs. Remaining: 3 of 18. Sessions used: 7.
+Frontier: 16-reconcile-w7. Remaining: 1 of 18. Sessions used: 7.
 <!-- plan:end board -->

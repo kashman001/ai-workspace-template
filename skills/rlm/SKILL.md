@@ -175,11 +175,16 @@ re-ask those as you would a garbled batch today.
 
 Choosing the threshold: it is the confidence below which a record is re-asked
 through the leaf (`threshold=` per call, else `RLM_JEV_THRESHOLD`, default
-`0.9`). Lower it (`0.7`) when categories are crisp and a re-ask costs more
-than a rare wrong label; raise it (`0.95`+) when a wrong label is expensive
-and the leaf is cheap. Check `by_source` after the first batch: a leaf share
-well above a few percent means the categories or descriptions need sharpening
-before the threshold does.
+`0.5`). The default was tuned on two real runs against `jev-latest` (release
+2026-09-10): on crisp categories (commit subjects) the median confidence was
+0.52 and labels at or above 0.5 agreed with the leaf; on overlapping
+categories (ledger bullets) the median was 0.26 and labels below 0.5 agreed
+with the leaf about one time in four. Thresholds are version-sensitive:
+re-tune when the model listing shows a newer release. Raise it (`0.7`+) when
+a wrong label is expensive and the leaf is cheap; lower it (`0.25`) only for
+a first pass you will re-check. Check `by_source` after the first batch: a
+leaf share above half means the categories overlap — sharpen the
+descriptions before touching the threshold.
 
 For free-text work per record (extract a fact, summarise a chunk) `classify`
 does not apply; build the prompt and use `llm_query_map` as before.
@@ -289,5 +294,7 @@ The replay checkpoint is separate from the live REPL state and does not mutate
 - Keep all scratch/state under `.claude/rlm_state/`.
 - `classify` talks to Jev only through `scripts/jev.sh`, the workspace's one
   vendor surface (`docs/service-access.md`); the key lives in the OS keychain
-  and never reaches the REPL. Knobs: `RLM_JEV_THRESHOLD`, `RLM_JEV_MODEL`
-  (default `jev-latest`; pin a version once a threshold is tuned on it).
+  and never reaches the REPL. Knobs: `RLM_JEV_THRESHOLD` (default `0.5`), `RLM_JEV_MODEL`
+  (default `jev-latest`, release 2026-09-10 — the listing has no versioned
+  ids; the threshold is tuned on that release, so re-tune when
+  `GET /v1/models` shows a newer `release_date`).

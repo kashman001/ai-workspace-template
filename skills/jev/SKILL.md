@@ -61,8 +61,9 @@ where a key is present (`skills/rlm/SKILL.md`).
    confidence you act on. Confidence measures how concentrated the answer
    distribution is, not whether the workflow is right. Below your threshold,
    send that item to the current way (a reasoning model, a person), never
-   guess. The `rlm` helper uses `0.9` by default; a clean batch in the spike
-   scored 0.89–1.0, so tune on your own data. A Noul near `0.5` means the
+   guess. The `rlm` helper uses `0.5` by default, tuned on two real runs
+   (median confidence 0.52 on crisp categories, 0.26 on overlapping ones); a
+   clean batch in the spike scored 0.89–1.0, so tune on your own data. A Noul near `0.5` means the
    model is undecided, not "medium".
 
 Done when every answer either met the threshold and was acted on, or was
@@ -78,8 +79,10 @@ handed to the fallback, and no key string appears anywhere in your output.
 - Price: $42 per billion input tokens, output free (vendor terms, verified
   2026-09; the terms carry a "we can serve it profitably" qualifier). Each
   question re-sends the state it shares, so measure real request budgets.
-- Model: `jev-latest` unless the request carries `"model"`; pin a version
-  once a threshold is tuned against it.
+- Model: `jev-latest` unless the request carries `"model"`. The listing
+  (`GET /v1/models`) offers only `jev-latest` and `jev-preview`, no versioned
+  ids — each carries a `release_date` (`jev-latest`: 2026-09-10). A threshold
+  is tuned against one release; re-tune when that date changes.
 
 ## No-key contract
 
