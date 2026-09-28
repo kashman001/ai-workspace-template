@@ -7,7 +7,8 @@
 #          given (Choice, Score, Noul); the value is the typed answer. The
 #          only code in the workspace that knows the endpoint or the key.
 #          Key order: JEV_API_KEY (offline test / hosts with no keychain),
-#          macOS `security`, Linux `secret-tool`. Endpoint: JEV_ENDPOINT
+#          macOS `security`, Linux `secret-tool`; JEV_DISABLED=1 skips all
+#          of it and takes the no-key branch. Endpoint: JEV_ENDPOINT
 #          (stub in tests). Exit: 0 answered; 2 usage or a published limit
 #          broken (refused before any request); 3 no key (one stderr line,
 #          empty stdout); 4 non-200 (status + body head on stderr).
@@ -106,6 +107,8 @@ KEY
 ENVIRONMENT
   JEV_API_KEY    the key; takes precedence over the keychain
   JEV_ENDPOINT   override the endpoint (tests); default: the live URL
+  JEV_DISABLED   set to 1 to behave as if no key were present (exit 3,
+                 keychain not read); keeps a corpus local on a keyed machine
 
 LIMITS  checked here; a request that breaks one is refused, nothing is sent
   more than 255 options in one choice
@@ -132,6 +135,13 @@ for arg in "$@"; do
     *) usage >&2; exit 2 ;;
   esac
 done
+
+# The off switch: a keyed machine that must keep this corpus local. Exactly
+# the no-key branch, decided before any key is looked up.
+if [ "${JEV_DISABLED:-0}" != 0 ]; then
+  echo "jev: disabled by JEV_DISABLED — unset it to use the key (docs/service-access.md)" >&2
+  exit 3
+fi
 
 key="${JEV_API_KEY:-}"
 key_source=""

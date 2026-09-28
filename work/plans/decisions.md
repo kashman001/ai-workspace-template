@@ -585,3 +585,10 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   edit of `status: closed` in plan.md, and write verbs refuse a closed plan,
   so it must be the last write. Fine for a person, but the skill's replan
   ladder should say so in one line. Promote?: no.
+- 2026-09-27 (jev-integration s16): closing a plan by hand works as s15
+  described — `status: open` → `closed` in `plan.md` as the last write, then
+  `sync`; `status` prints `closed`, the launcher's Position block re-rendered
+  `closed`, no verb complained. The dogfood plan therefore never produced a
+  chain-side `plan_closed` verdict (ticket 11 box 1 stays open, noted under
+  its Comments). Post-close, a one-session ticket (07) ran with no plan at
+  all, as the assessment proposed — the right size for it.

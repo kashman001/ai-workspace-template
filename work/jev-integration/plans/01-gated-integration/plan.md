@@ -1,6 +1,6 @@
 ---
 plan: 01-gated-integration
-status: open
+status: closed
 replan: structural
 default_tier: standard
 ---

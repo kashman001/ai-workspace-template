@@ -297,4 +297,7 @@ The replay checkpoint is separate from the live REPL state and does not mutate
   and never reaches the REPL. Knobs: `RLM_JEV_THRESHOLD` (default `0.5`), `RLM_JEV_MODEL`
   (default `jev-latest`, release 2026-09-10 — the listing has no versioned
   ids; the threshold is tuned on that release, so re-tune when
-  `GET /v1/models` shows a newer `release_date`).
+  `GET /v1/models` shows a newer `release_date`), and `JEV_DISABLED=1` to
+  keep a run local on a keyed machine (the CLI takes the no-key branch, so
+  every record goes through the leaf; the records in `state` otherwise
+  leave the machine).

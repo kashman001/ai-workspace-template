@@ -142,7 +142,7 @@ is live with push rights. A workspace that never ran the script reports nothing.
 - **Verify cmd**: `scripts/jev.sh --check`
 - **Used by**: the `rlm` skill (classification), the `jev` skill (direct request)
 - **Cost and limits**: $42 per billion input tokens, output free; 250k tokens/s and 1,200 requests/min, 429 beyond; no SLA
-- **Notes**: optional; absence does not degrade the status. A key grants faster, confidence-bearing classification in `rlm` runs; without one, the current sub-model path is used unchanged. Get a key from [TypeSafe.ai](https://typesafe.ai).
+- **Notes**: optional; absence does not degrade the status. A key grants faster, confidence-bearing classification in `rlm` runs; without one, the current sub-model path is used unchanged. Get a key from [TypeSafe.ai](https://typesafe.ai). With a key, the records an agent classifies are sent to TypeSafe's servers (compliance posture unverified) — do not route personal or confidential data. `JEV_DISABLED=1` in the environment makes `scripts/jev.sh` behave as if no key were present, keeping that run local.
 
 <!-- Add one section per additional service (cloud CLI, database, Atlassian, …).
 See docs/workspace-structure.md → "Service Access Pattern" for the entry shape. -->

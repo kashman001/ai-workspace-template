@@ -23,3 +23,10 @@
   created from tickets, not at the join) and s15 sync-after-done (`sync`
   before `done` leaves the Position block one state stale). Closing the plan
   is the user's; the first box ticks once the chain reports `plan_closed`.
+- 2026-09-27 (jev-integration s16): plan `01-gated-integration` closed
+  18/18 — by a person (the user answered "close it" in an interactive
+  session and the agent edited `status: open` → `closed`, then `sync`),
+  not by a chain reporting `plan_closed`. Box 1 stays unticked: the chain
+  ended at a hitl gate and a WARN rollover, and no `plan.sh` verb closes a
+  plan (s15 finding "no close verb"). The plan-closed verdict remains
+  unexercised by this dogfood.

@@ -38,6 +38,12 @@ where a key is present (`skills/rlm/SKILL.md`).
      request is warranted only when the next question depends on an answer.
    - Question keys are for your code; they are not sent to the model, so put
      the whole meaning in `instructions`.
+   - **The state leaves the machine.** With a key, everything in `state` is
+     sent to TypeSafe's servers; the vendor's compliance posture is
+     unverified (one report of no SOC 2 attestation). Do not route personal
+     or confidential records. To keep a corpus local on a keyed machine, run
+     with `JEV_DISABLED=1`: the CLI takes the no-key branch (exit 3) and the
+     caller does the task the current way.
 3. **Pick the type** by what the answer means:
 
    | Need | Type | `criteria` | Answer `value` |
@@ -47,6 +53,10 @@ where a key is present (`skills/rlm/SKILL.md`).
    | does a condition hold | `noul` | optional `{"true": ..., "false": ...}` | probability of yes; `confidence` is `null` |
 
    Several labels may apply at once → one `noul` per label, not a `choice`.
+   Scale answers are the least reliable of the three in the one report we
+   have (good agreement with a frontier model on Choice and yes/no, poor on
+   1–5 scales, ungraded); when a level matters, prefer a `choice` over the
+   levels or one `noul` per level.
 4. **The `other` pattern.** A Choice can only pick from the options given, so
    when nothing may fit, add an explicit no-match option (`"other": "None of
    the above"`) and treat it as a real label in your code. Never let the

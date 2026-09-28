@@ -6,11 +6,13 @@ Governing skill(s): `research-wave` (session 1), then `grill-with-docs` →
 **Start here:** `next-session.md` (catch-up launcher) → `handoff.md`
 (session ledger, top block).
 
-**Status (2026-09-25):** direction set by the user — integrate, gated on Jev
-access (active only where a key exists). Running as plan
-`plans/01-gated-integration/` (fit note → a person approves → spec + tickets
-→ replanned implementation); also the `plans` item's dogfood. Research closed
-at `research/synthesis.md`; live spike `research/spike.md`.
+**Status (2026-09-27, session 16): finished.** Shipped and closed — the
+gated Jev integration (`scripts/jev.sh` with `--check`/`--help` and a
+`JEV_DISABLED=1` off switch, `classify()` at the `rlm` leaf seam, threshold
+0.5 on `jev-latest` @ 2026-09-10, `skills/jev/`, credentials docs, T1–T20
+140/140). Plan `plans/01-gated-integration/` closed 18/18 (also the `plans`
+item's dogfood); `spec.md` approved; tickets 01–07 resolved. Previous status
+(2026-09-25): direction set by the user — integrate, gated on Jev access.
 
 ## What this is
 

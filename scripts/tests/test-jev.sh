@@ -10,6 +10,7 @@
 #          real REPL (skills/rlm/scripts/rlm_repl.py exec) against the same
 #          stub, with a fake `claude` on PATH standing in for the leaf.
 #          T15+ widen the CLI to Score and Noul, the S7 refusals, and --help.
+#          T20 proves the JEV_DISABLED off switch (ticket 07).
 #          Spec: work/jev-integration/spec.md S2-S13, S19.
 #          Self-contained: throwaway workspace in mktemp -d.
 set -u
@@ -386,6 +387,27 @@ assert_eq "T19b: three example blocks, each valid JSON with state and questions"
 for w in "exit" " 0 " " 2 " " 3 " " 4 " "JEV_API_KEY" "jev-api-key" "255" "32" "--check"; do
   assert_contains "T19c: mentions [$w]" "$help" "$w"
 done
+
+echo "T20: JEV_DISABLED — the no-key branch on a keyed machine: exit 3, one stderr line, nothing sent, keychain untouched"
+# A fake security that HAS the entry and records every call, so "untouched" is observable.
+printf '#!/bin/sh\ntouch "%s"\n[ "$1" = find-generic-password ] && [ "$3" = jev-api-key ] && { echo "%s"; exit 0; }\nexit 44\n' "$TMP/keychain-touched" "$KEY" > "$FAKE/security"
+before="$(requests)"
+out="$(printf '%s' "$REQ" | env -u JEV_API_KEY JEV_DISABLED=1 JEV_ENDPOINT="$ENDPOINT" PATH="$FAKE:$PATH" "$JEV" 2>"$TMP/t20.err")"; rc=$?
+assert_eq "T20a: exit 3" "$rc" "3"
+assert_eq "T20b: empty stdout" "$out" ""
+assert_eq "T20c: one stderr line" "$(wc -l < "$TMP/t20.err" | tr -d ' ')" "1"
+assert_contains "T20d: names the switch" "$(cat "$TMP/t20.err")" "JEV_DISABLED"
+assert_eq "T20e: no request sent" "$(requests)" "$before"
+assert_eq "T20f: the keychain was not read" "$([ -e "$TMP/keychain-touched" ] && echo touched || echo untouched)" "untouched"
+out="$(printf '%s' "$REQ" | JEV_DISABLED=1 JEV_API_KEY="$KEY" JEV_ENDPOINT="$ENDPOINT" "$JEV" 2>"$TMP/t20g.err")"; rc=$?
+assert_eq "T20g: the switch beats the env override too" "$rc/$(requests)" "3/$before"
+assert_absent "T20h: the key is not on stderr" "$(cat "$TMP/t20g.err")" "$KEY"
+out="$(env -u JEV_API_KEY JEV_DISABLED=1 JEV_ENDPOINT="$ENDPOINT" PATH="$FAKE:$PATH" "$JEV" --check 2>"$TMP/t20i.err")"; rc=$?
+assert_eq "T20i: --check exits 3, empty stdout" "$rc/$out" "3/"
+printf '%s' "$REQ" | JEV_DISABLED=0 JEV_API_KEY="$KEY" JEV_ENDPOINT="$ENDPOINT" "$JEV" >/dev/null 2>&1; rc=$?
+assert_eq "T20j: JEV_DISABLED=0 is not disabled (sent, exit 0)" "$rc/$(( $(requests) - before ))" "0/1"
+"$JEV" --help >/dev/null 2>&1; assert_eq "T20k: --help exits 0 regardless" "$?" "0"
+assert_contains "T20l: --help documents the switch" "$("$JEV" --help 2>&1)" "JEV_DISABLED"
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

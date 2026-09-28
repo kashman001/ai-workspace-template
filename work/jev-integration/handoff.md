@@ -6,6 +6,50 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 16 (2026-09-27): interactive, then unattended — the user took all three decisions (close the plan, approve the spec, ticket 07 with #1 + #2 + #4) and left; plan `01-gated-integration` **closed** (hand-edit + `sync`, Position re-rendered), spec `approved`, ticket 07 opened and resolved in-session: data-leaves-the-machine sentences in the `jev` skill and `docs/service-access.md`, Score-reliability clause, `JEV_DISABLED=1` off switch in `scripts/jev.sh` (+ help line, spec line, `rlm` knob) with T20 → test-jev.sh 140/140; ninth decision note; dogfood note on ticket 11 + s16 bullet; item **finished** — checkpoint, no successor
+
+## What happened
+
+- Registered seq=16 (40 %). Posed the three launcher decisions in one
+  message; the user answered all three "yes" (recommended options) and
+  then said to continue unattended.
+- Close: `status: open` → `closed` in `plans/01-gated-integration/plan.md`,
+  `plan.sh sync` (rendered `closed` in the launcher's Position block),
+  `status` prints `closed 18/18`, `check` silent. Ticket 11 of the `plans`
+  item got a Comments entry: closed by a person, box 1 (chain verdict
+  `plan_closed`) stays unticked; `work/plans/decisions.md` an s16 bullet.
+- Spec: line 10 `Status: approved`, `Approved-by: Kashif Siddiqui
+  (2026-09-27, session 16)`.
+- Ticket 07 (`issues/07-data-leaves-machine-score-caveat-off-switch.md`),
+  no plan, test-first: T20 appended (12 assertions: request and `--check`
+  exit 3, empty stdout, one stderr line naming the switch, nothing sent,
+  fake keychain provably not read, switch beats `JEV_API_KEY`,
+  `JEV_DISABLED=0` not disabled, `--help` unaffected and documents it) →
+  10 red → `scripts/jev.sh` gained the check before key resolution
+  (`${JEV_DISABLED:-0}` != 0 → the no-key line, exit 3) plus an ENVIRONMENT
+  help line (≤ 80 cols; the >80 lines in the file are code, as before) →
+  140/140. Docs: `skills/jev/SKILL.md` step 2 (state leaves the machine,
+  SOC 2 claim unverified, no personal/confidential records, `JEV_DISABLED=1`
+  to keep a corpus local) and step 3 (Score least reliable in the one
+  report; prefer a Choice or one Noul per level); `docs/service-access.md`
+  Jev Notes (two sentences); `spec.md` key-resolution item (one clause);
+  `skills/rlm/SKILL.md` knobs (one clause). Ticket boxes ticked, `resolved`.
+- `decisions.md` ninth note: `JEV_DISABLED=1` is the off switch, default
+  stays gate-on-key; rejected default-off, an `--offline` flag, and
+  any-non-empty-value semantics. Promote?: no.
+- Budget after the ticket: 100 K (67 %), OK — checkpoint, not rollover.
+
+## Decisions
+
+- Ninth Tier-2 note (above). Commit trailer: the plan close and the switch.
+
+## State at close
+
+- Plan closed 18/18, sessions 8. Tickets 01–07 `resolved`. Spec `approved`.
+- No open work in this item. Later slices (tier routing, other seams) stay
+  where `spec.md` and the assessment left them: not scheduled.
+- `/tmp/jev-uat/`, `/tmp/nokey/` still machine-local; safe to delete.
+
 # Session Handoff — 15 (2026-09-27): interactive — wave 7 joined: reconcile 16 done (node 15 re-verified on disk: 128/128, `DEFAULT_JEV_THRESHOLD` 0.5, pin `jev-latest` @ 2026-09-10 in both skills, `git diff HEAD~1` = the eighth note's blast radius); plan `01-gated-integration` 18/18 done, frontier none, left **open** — closing is goal-level, proposed to the user; tickets 01–06 `resolved`; three dogfood findings to `work/plans/decisions.md`; the deferred video assessment written (two doc lines worth doing, one knob for the user, rest no); rolled over interactive at WARN
 
 ## What happened
@@ -46,62 +90,3 @@ Convention: docs/work-directory-conventions.md.
 - Close the plan: `status: closed` in `plans/01-gated-integration/plan.md`.
 - Spec Status `draft` → `approved` + `Approved-by`, if the user agrees.
 - Ticket 07 from the assessment (#1, #2, optionally #4): yes or no.
-
-# Session Handoff — 14 (2026-09-27): wave 6 joined (reconcile 14; 13b re-verified 128/128) → hitl gate 15a added ahead of 15 → the user authorized both live calls in-session → run 2 (100 ledger bullets: median 0.26, 94 % below 0.5; leaf agreement tracks confidence, 22/100 overall) + model listing (no versioned id: `jev-latest`/`jev-preview` with release dates) → node 15 done: threshold 0.9 → 0.5, pin = `jev-latest` @ 2026-09-10, skills reworded, fixture r3 0.41, 128/128; frontier 16-reconcile-w7; rolled over at WARN
-
-## What happened
-
-- Reconcile 14 per the plans skill: `start`; 13b verified on disk (test-jev.sh
-  128/128, `--help` 0 lines > 80 cols with the ten sections in order, no
-  `python ` invocation in skills/rlm/SKILL.md, `verify 13b-uat-fixes` passes);
-  13 is hitl, done by the user, its third box satisfied by the sixth note in
-  `decisions.md`. No claim failed. Boxes ticked, Log line, `check` silent,
-  `sync`, `done` → 15/18.
-- Replan (structural, at the join): node 15 was a `work` node whose acceptance
-  needs a second real `rlm` run and one `GET /v1/models` — cents each, the
-  user's to trigger. A hands-off chain would have dispatched it. `add
-  authorize-live-runs --wave 7 --kind hitl` numbered it 17 (after the join,
-  `reconcile-last`) → renamed `15a-authorize-live-runs` (Replan rule 1); 15
-  is now `blocked_by: [13-uat-gated, 15a-authorize-live-runs]`. Its Goal
-  carries the two requests verbatim, including the one-off `curl` for the
-  model listing (key straight into the header, never printed). `## Replans`
-  line in plan.md.
-- Node 15 prep (no key needed) logged on the node: every edit site with line
-  numbers (rlm_repl.py constants + comments, rlm SKILL.md 176–182 and
-  292–293, jev SKILL.md 81), the fixtures' placeholder id `jev-1.13.0` and
-  T2b/T9e/T1g/T8h that follow the pin, candidates 0.5 and 0.25 from run 1.
-  No code touched.
-- The user then authorized both calls ("You have permission for both"); the
-  standing rule that live `jev.sh` calls are the user's to trigger was the
-  reason for the wait (not the permission classifier). Listing: `GET
-  /v1/models` → `jev-latest` (release 2026-09-10T18:38Z) and `jev-preview`
-  only, no versioned ids. Run 2: 100 ledger bullets (`/tmp/jev-uat/
-  ledger.txt`, `leg2-keyed.py`), 100/100 jev under a second, min 0.09 /
-  median 0.26 / max 0.94, below 0.25/0.5/0.7/0.9 = 41/94/98/99 %. Leaf leg
-  (`leg2-leaf.py`, keyless stub, 31 s): agreement by Jev confidence [0,0.25)
-  5/41 · [0.25,0.5) 14/53 · [0.5,1] 3/6. Full numbers on node 15a's Log.
-- Node 15 done: `DEFAULT_JEV_THRESHOLD` 0.5, `DEFAULT_JEV_MODEL` stays
-  `jev-latest` with the release date in the comment; rlm SKILL threshold
-  paragraph + knobs, jev SKILL step 6 + Model bullet; fixture r3 0.89 → 0.41
-  so T8i still hits the fallback at the new default (T1i/T9a/T9c follow).
-  128/128; T14 golden untouched. Eighth decision note (rejected 0.9 / 0.25 /
-  0.7, synthetic id). REPL state now holds the ledger corpus.
-- Origin: `git fetch --dry-run` silent — nothing landed upstream; main is 71
-  ahead, not pushed.
-
-## Decisions
-
-- `decisions.md` seventh note: hitl gate for node 15's paid calls; rejected
-  launcher-only requests (invisible to `frontier`/`session-loop.sh`) and
-  leaving 15 `doing` across sessions. Promote?: no.
-- `work/plans/decisions.md` (dogfood): ticket 06 said "requires a key … after
-  UAT" yet became a plain `work` node at plan creation; suggest "Create a plan
-  from tickets" puts a hitl node in front of any ticket that names the user, a
-  key, spend, or a machine. Promote?: no.
-
-## Open
-
-- 16-reconcile-w7: verify node 15 on disk, record, propose closing the plan
-  (goal-level — the user closes). Then the deferred video assessment.
-- Deferred: the critical assessment of the three videos' ideas
-  (`research/video-notes-2026-09-27.md` → "Deferred") after node 16.

@@ -7,8 +7,8 @@ approved fit note (decisions.md, 2026-09-27) and the session-7 design input.
 
 # Spec — jev-integration: Jev at the `rlm` leaf seam, gated on access
 
-Status: draft            <!-- draft | in-review | approved -->
-Approved-by: —
+Status: approved         <!-- draft | in-review | approved -->
+Approved-by: Kashif Siddiqui (2026-09-27, session 16)
 Date: 2026-09-27
 Spec-of-record: —
 
@@ -148,7 +148,9 @@ Proof and tuning:
   `security find-generic-password -s jev-api-key -w`; Linux
   `secret-tool lookup service jev-api-key`; other hosts the env override.
   An endpoint override (`JEV_ENDPOINT`) exists for the stub; the default is
-  the live URL from the spike.
+  the live URL from the spike. `JEV_DISABLED=1` short-circuits resolution:
+  the CLI takes the no-key branch (exit 3, keychain not read) so a keyed
+  machine can keep one corpus local (ticket 07, 2026-09-27).
 - **Exit codes.** `0` answered; `2` usage or a client-side limit refusal
   (before any request); `3` no key (one stderr line, empty stdout); `4`
   non-200 from the server (status and the first 300 bytes of the body on
