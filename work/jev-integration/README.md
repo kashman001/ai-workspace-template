@@ -6,7 +6,7 @@ Governing skill(s): `research-wave` (session 1), then `grill-with-docs` →
 **Start here:** `next-session.md` (catch-up launcher) → `handoff.md`
 (session ledger, top block).
 
-**Status (2026-09-27, session 16): finished.** Shipped and closed — the
+**Status (2026-09-28, session 17): follow-on planned.** Plan `02-follow-on` open, 0/7, wave 1 frontier = nodes 01–03; spec S22–S30 approved. Previous: **(2026-09-27, session 16): finished.** Shipped and closed — the
 gated Jev integration (`scripts/jev.sh` with `--check`/`--help` and a
 `JEV_DISABLED=1` off switch, `classify()` at the `rlm` leaf seam, threshold
 0.5 on `jev-latest` @ 2026-09-10, `skills/jev/`, credentials docs, T1–T20

@@ -25,8 +25,8 @@ Next: plan the approved follow-on (below). Ledger top block
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-gated-integration, closed, wave 7 of 7, done 18/18, doing 0, todo 0, blocked 0, dropped 0, sessions 8.
-Frontier: none. Remaining: 0 of 18.
+Position: plan 02-follow-on, open, wave 1 of 2, done 0/7, doing 0, todo 7, blocked 0, dropped 0, sessions 0.
+Frontier: 01-confirm-threshold, 02-score-check-helpers, 03-relevance-experiment. Remaining: 7 of 7 — wave 1: 01-confirm-threshold todo, 02-score-check-helpers todo, 03-relevance-experiment todo, 04-reconcile-w1 todo.
 <!-- plan:end position -->
 
 ## First actions — plan the approved follow-on

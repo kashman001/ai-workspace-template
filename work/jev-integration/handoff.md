@@ -6,6 +6,45 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 17 (2026-09-28): interactive — the approved Jev follow-on was grilled one question at a time (nine questions, plain-language framing at the user's request), `spec.md` amended with S22–S30 and **re-approved**, tickets 08–12 written, plan `02-follow-on` created (7 nodes, 2 waves), `check` silent, `sync` rendered; WARN at 128 K after the plan landed
+
+## What happened
+
+- Registered seq=17 (41 % at start — the system context alone is heavy).
+- Grill (`grill-with-docs` → `grilling` + `domain-modeling`), one question
+  per turn after the user asked for simple terms and options: **1a** keep 0.5
+  by a pre-registered rule (`[0.5,1]` agreement ≥ 2× `[0.25,0.5)`, else move
+  to the first boundary where it holds); **2a** two helpers `score()` and
+  `check()` shaped like `classify()`; **3a** Noul fallback = probability
+  within 0.25 of 0.5; **4a** research-wave: Jev is a *second reader* over
+  the fact-check table, flags rows where ≥ 0.5 and disagrees, fact-checker
+  and ruling unchanged; **5a** tier routing = evidence batch over both
+  items' node files → `work/plans/issues/12-jev-tier-routing.md`, no edit to
+  `plan.sh` (the "cheap-first + escalate" baseline was found not to exist);
+  **6b** relevance filter = one experiment (docs/README.md rows × five task
+  sentences, Noul per row), a note not a feature; **7a** one plan, agent runs
+  the paid batches, cost in the node Log, no hitl gates; **8b**
+  `scripts/jev-verdicts.sh` thin script + offline test; **9a** experiment
+  truth = the tickets' "Read first" lists (weakness stated).
+- `spec.md`: Status → in-review → **approved** again (re-approved by the
+  user in chat, "approved"); S22–S30 appended under a "Follow-on" heading;
+  Implementation and Testing each gained a follow-on bullet; Non-goals
+  rewritten (research-wave and Score/Noul lifted; tier-routing *code* and a
+  relevance *feature* stay out; "nothing in the ruling depends on Jev" added).
+- Tickets `issues/08…12` in the item's format, each with a `Read first:`
+  line (that line is S29's truth list). Plan: `plan.sh new follow-on`, seven
+  `add`s (`--plan 02-follow-on` is required while plan 01 exists closed —
+  without it `add` targets plan 01 and is refused), bodies filled from the
+  tickets, `plan.md` Goal/Out of scope written, `check` silent, `sync` done.
+  **Waves follow blockers, not the slice order agreed in Q7**: wave 1 =
+  nodes 01–03 (independent), wave 2 = 05 and 06 (both need the confirmed
+  threshold); two waves, not three — told to the user in the recap.
+- Dogfood: `--project <item>` in a shell variable refused as predicted
+  (constraint held); `add` without `--plan` picks the closed plan — noted for
+  the `plans` item below.
+- Budget: WARN (128 K) right after `sync`; wrap-up, then the rollover
+  question to the user.
+
 # Session Handoff — 16 (2026-09-27): interactive, then unattended — the user took all three decisions (close the plan, approve the spec, ticket 07 with #1 + #2 + #4) and left; plan `01-gated-integration` **closed** (hand-edit + `sync`, Position re-rendered), spec `approved`, ticket 07 opened and resolved in-session: data-leaves-the-machine sentences in the `jev` skill and `docs/service-access.md`, Score-reliability clause, `JEV_DISABLED=1` off switch in `scripts/jev.sh` (+ help line, spec line, `rlm` knob) with T20 → test-jev.sh 140/140; ninth decision note; dogfood note on ticket 11 + s16 bullet; checkpointed — then the user returned: `main` pushed (75 commits), `/tmp` scratch deleted, index row fixed, and **all Jev follow-on slices approved with spend** → captured in the launcher, rolled over interactive at WARN for session 17 to plan
 
 ## What happened
@@ -68,43 +107,3 @@ Convention: docs/work-directory-conventions.md.
 - Supervised chain (dry-run refused `supervised_stage_only`): staged
   `--emit --loop-mode interactive`; the successor grills with the user.
 
-# Session Handoff — 15 (2026-09-27): interactive — wave 7 joined: reconcile 16 done (node 15 re-verified on disk: 128/128, `DEFAULT_JEV_THRESHOLD` 0.5, pin `jev-latest` @ 2026-09-10 in both skills, `git diff HEAD~1` = the eighth note's blast radius); plan `01-gated-integration` 18/18 done, frontier none, left **open** — closing is goal-level, proposed to the user; tickets 01–06 `resolved`; three dogfood findings to `work/plans/decisions.md`; the deferred video assessment written (two doc lines worth doing, one knob for the user, rest no); rolled over interactive at WARN
-
-## What happened
-
-- Registered seq=15. Started `16-reconcile-w7`; verified node 15's four
-  boxes on disk (tests 128/128; constants at `rlm_repl.py:99-100`; no `0.9`
-  left in either skill; both skills name release 2026-09-10 and "re-tune when
-  it changes"; fixture r3 0.41; T8i/T9a/T9c reworded). Diff since HEAD~1
-  touched only the eighth note's blast radius plus plan bookkeeping. Box 1
-  held by evidence, not as written (no versioned id exists) — noted, no
-  follow-up; the fixtures' `jev-1.13.0` stays a stub-only override value.
-- Recorded two `plan.sh note` lines; ticked node 16; `check` silent; `done`;
-  `sync`. Status: 18/18 done, sessions 8, frontier none, plan still `open`.
-- Housekeeping: tickets 01–06 `Status: resolved — node <id> done` (the
-  tracker has no `done`; `resolved` is its only terminal state; none had been
-  flipped when its node closed). Spec left `draft` — approval is the user's.
-  `work/plans/issues/11-dogfood-first-real-plan.md` got a Comments entry;
-  `work/plans/decisions.md` an s15 bullet: sync-after-done, tickets never
-  flipped by plan-from-tickets, no `plan.sh` verb closes a plan (hand-edit
-  `status: closed`, must be the last write).
-- Wrote `research/video-assessment-2026-09-27.md` (one page + glossary):
-  **do** a data-leaves-the-machine sentence in `skills/jev/SKILL.md` and
-  `docs/service-access.md`, and a Score-reliability clause; **user decides**
-  a `JEV_DISABLED=1` env knob (spec amendment); agreement measurement is
-  already done (node 15a, 22/100 on overlapping categories, tracks
-  confidence); tier routing, hooks, OpenRouter: no. Zero always-on context.
-- Slip: held `--project jev-integration` in a shell variable → every verb
-  refused ("unknown option"); nothing was written by those calls; redone
-  with literal flags. Same trap as the s8 dogfood finding (b).
-
-## Decisions
-
-- No new Tier-2 note. Plan notes: box 1 by evidence; the close proposal.
-  Ticket state `resolved` chosen over inventing `done` (commit trailer).
-
-## Open for the user (session 16 launcher leads with these)
-
-- Close the plan: `status: closed` in `plans/01-gated-integration/plan.md`.
-- Spec Status `draft` → `approved` + `Approved-by`, if the user agrees.
-- Ticket 07 from the assessment (#1, #2, optionally #4): yes or no.

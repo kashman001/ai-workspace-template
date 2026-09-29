@@ -8,7 +8,11 @@ approved fit note (decisions.md, 2026-09-27) and the session-7 design input.
 # Spec — jev-integration: Jev at the `rlm` leaf seam, gated on access
 
 Status: approved         <!-- draft | in-review | approved -->
-Approved-by: Kashif Siddiqui (2026-09-27, session 16)
+Approved-by: Kashif Siddiqui (2026-09-27, session 16) — S1–S21, plan 01
+Amended: 2026-09-28 (session 17) — follow-on S22–S30 added from the grill of
+the five approved slices (decisions 1a 2a 3a 4a 5a 6b 7a 8b 9a); awaiting
+re-approval for plan 02 — **re-approved by Kashif Siddiqui (2026-09-28,
+session 17, "approved")**
 Date: 2026-09-27
 Spec-of-record: —
 
@@ -135,6 +139,70 @@ Proof and tuning:
 - **S21** — As the user, I want the threshold tuned on real runs and the model
   id pinned once it is, so that the fallback rate is a number I chose.
 
+Follow-on (2026-09-28, session 17; plan `02-follow-on`). Every paid batch
+below is run by the agent on the keyed machine — spend pre-authorized by the
+user on 2026-09-28 — and its cost is written into the node Log (S30).
+
+- **S22** — As the user, I want the 0.5 threshold *confirmed* on the crisp
+  commit corpus by a rule fixed before the run: regenerate 100 commit subjects
+  (`git log --format=%s -n 100`), one keyed `classify()` at `threshold=0.0`
+  and one leaf leg (s13 stub recipe), leaf agreement by bucket `[0,0.25)`,
+  `[0.25,0.5)`, `[0.5,1]`; **keep 0.5 if agreement in `[0.5,1]` is at least
+  twice that in `[0.25,0.5)`, else move to the lowest bucket boundary where
+  that holds** — the verdict is a tenth decision note, so that "confirm" is a
+  pass/fail and not a second re-tune.
+- **S23** — As the `rlm` root, I want a `score(records, levels, ...)` helper
+  beside `classify()` — Jev Score with 2–10 ordered level descriptions, the
+  0.5 confidence fallback, a leaf prompt in the `N: level` pattern without a
+  key, results `{level, confidence, source}` — with the docstring carrying the
+  reliability caveat (Score is the least reliable type in the one report we
+  have), so that a root can grade an ordered scale and measure that caveat.
+- **S24** — As the `rlm` root, I want a `check(records, condition, ...)`
+  helper — Jev Noul, one yes/no per record, result `{value: True|False,
+  probability, source}` — that falls back to the leaf when the probability is
+  **within 0.25 of 0.5** (default margin, one constant, env-overridable like the
+  threshold), so that the leaf decides whenever Jev is guessing, the same
+  story as `classify()`.
+- **S25** — As a maintainer, I want `scripts/tests/test-jev.sh` to prove both
+  paths of `score()` and `check()` the way it proves `classify()` (no key:
+  leaf prompts byte-identical to the hand-written pattern; key: request shape
+  against the stub, answers parsed, fallback at the margin), with `llm_query`
+  and the T14 golden untouched, so that the two helpers cannot regress
+  unnoticed.
+- **S26** — As a research-wave orchestrator with a key, I want a second
+  reader over the fact-check tables: `scripts/jev-verdicts.sh <fact-check.md>…`
+  parses each claim row, sends one Choice per row through `scripts/jev.sh`
+  (`state` = claim + "what the source actually says"; criteria = the four
+  verdicts CONFIRMED / OVERSTATED / WRONG / UNVERIFIABLE), and prints the rows
+  where Jev's confidence is ≥ 0.5 **and** its verdict differs from the
+  fact-checker's, so that I look twice at those rows before ruling. Without a
+  key it exits 3 and the skill says to skip the step; the fact-checker brief
+  and the ruling are unchanged (the value of a fact-check is the re-fetch;
+  Jev only reads).
+- **S27** — As a maintainer, I want the second reader proved offline (stub
+  endpoint: request shape from a fixture table, the flag rule on canned
+  answers, exit 3 with no key, malformed rows refused before any request)
+  in `scripts/tests/`, and the research-wave skill to carry a one-line
+  gated step, so that the second seam ships as first-class as the first.
+- **S28** — As the `plans` item's owner, I want one Jev batch over plan 01's
+  18 node files and the `plans` item's own nodes — a three-way Choice
+  `frontier / standard / cheap` from each node's Goal and Check, criteria =
+  the tier definitions in `docs/plans.md` — compared with the tier each node
+  actually ran at (its Log stamp), delivered as `work/plans/issues/12-…` with
+  the agreement table as the brief, so that tier routing by Jev is decided
+  on a number; **no edit to `plan.sh` or `plan-tiers.env` from this item**.
+- **S29** — As the user, I want the relevance filter answered by one
+  experiment, not a feature: `state` = the rows of `docs/README.md`, one Noul
+  per row ("would an agent need this doc for this task?") for each of the
+  five follow-on task sentences, truth = the "read first" pointer list of the
+  ticket that planned that slice; the result (per-task precision/recall and
+  the stated weakness that judge and planner are the same agent) is a
+  decision note, so that a number replaces a vague idea.
+- **S30** — As the user, I want every paid batch in this follow-on to record
+  its cost (input tokens × the published rate, or the account's usage line)
+  in the node Log and the reconcile summary, so that "spend approved" ends
+  with "spend was".
+
 ## Implementation Decisions
 
 - **One vendor surface: the CLI.** `scripts/jev.sh` (POSIX shell wrapping a
@@ -200,6 +268,16 @@ Proof and tuning:
   "materially as described" only (7.3); liability cap the greater of 12
   months' fees or $50 (5.9).
 
+- **Follow-on (S22–S30).** `score()` and `check()` are siblings of
+  `classify()` in `rlm_repl.py` — same batch sizing through the CLI, same
+  per-record fallback, one new constant `DEFAULT_JEV_NOUL_MARGIN = 0.25`
+  (`RLM_JEV_NOUL_MARGIN`); nothing inside `llm_query`. `scripts/jev-verdicts.sh`
+  is a thin script over `scripts/jev.sh` (shell, with Python only for the
+  table parsing; it never talks to the network itself), so the vendor surface
+  stays one file. The S22, S28, and S29 batches are one-off runs whose artefacts are
+  decision notes and a ticket, not code; their corpora are regenerated from
+  git, plan node files, and `docs/README.md`, never checked in.
+
 ## Testing Decisions
 
 - A good test drives the seam from outside — the CLI's command line and the
@@ -220,6 +298,13 @@ Proof and tuning:
   network. It is wired into whatever runs the other `scripts/tests/` files.
 - Both paths of `check-service-access.sh` (key present/absent) are covered by
   the same fake-`security` technique.
+
+- Follow-on: the two helpers and the second-reader script join
+  `test-jev.sh` (T21 onward) or a sibling `test-jev-verdicts.sh` with the same
+  stub server and fake binaries; fixtures for Score and Noul answers are
+  recorded from the CLI's documented answer shape. The one-off batches (S22,
+  S28, S29) are not tests — their check is the note or ticket existing with
+  the numbers filled in.
 
 ## Testability
 
@@ -260,16 +345,19 @@ Proof and tuning:
 
 ## Non-goals / Out of Scope
 
-- Any seam other than `rlm` (research-wave verdicts, triage, doc-review,
-  decision-log, checkpoint routing) — a later plan; research-wave is the
-  next candidate.
-- **Tier routing at subagent dispatch** — resolving `tier: auto` in `plan.sh`
-  with a Jev decision; the `plans` item owns that file; the baseline to beat
-  is cheap-first, escalate on a failed check. A later plan.
-- **A relevance filter** before loading files or tickets into context. A
-  later plan.
-- Score and Noul questions in `rlm` (the helper is Choice-only; the CLI
-  supports all three for other callers).
+- Any seam other than `rlm` and the research-wave second reader (S26):
+  triage, doc-review, decision-log, checkpoint routing stay out. *(Amended
+  2026-09-28: research-wave lifted into S26–S27.)*
+- **Tier routing code** — resolving `tier: auto` in `plan.sh` with a Jev
+  decision is the `plans` item's to build; this item delivers only the
+  evidence and the ticket (S28). The "cheap-first, escalate on a failed
+  check" baseline does not exist yet either (checked 2026-09-28).
+- **A relevance filter as a feature** — the experiment (S29) is in scope; a
+  pre-filter wired into any prompt template is not, because a wrong "not
+  relevant" has no safety net (gate rule, fourth clause).
+- ~~Score and Noul questions in `rlm`~~ — lifted into S23–S25 (2026-09-28).
+- Any fact-checker or ruling step that *depends* on a Jev answer (the second
+  reader only flags).
 - Anything ADR-0011 rules out: session-loop verdicts, budget gates, ledger
   checks on a model call.
 - SDK adoption, an MCP server, or the TypeSafe Claude Code plugin as the

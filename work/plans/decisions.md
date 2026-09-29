@@ -592,3 +592,4 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
   chain-side `plan_closed` verdict (ticket 11 box 1 stays open, noted under
   its Comments). Post-close, a one-session ticket (07) ran with no plan at
   all, as the assessment proposed — the right size for it.
+- s17 (jev-integration dogfood, 2026-09-28): with a closed plan 01 on disk, `plan.sh add` without `--plan` targets the closed plan and is refused ("writes need an open plan") even though `new` just created plan 02 — the default plan should be the open one, or `new` should print the `--plan` flag the next writes need. Also confirmed: `--project <item>` inside a shell variable is refused (unknown option); flags must be literal words.
