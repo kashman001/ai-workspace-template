@@ -42,8 +42,9 @@ Convention: docs/work-directory-conventions.md.
 - Dogfood: `--project <item>` in a shell variable refused as predicted
   (constraint held); `add` without `--plan` picks the closed plan — noted for
   the `plans` item below.
-- Budget: WARN (128 K) right after `sync`; wrap-up, then the rollover
-  question to the user.
+- Budget: WARN (128 K) right after `sync`; wrap-up committed (05b8273), the
+  user chose to roll over: launcher rewritten for wave 1 hands-off, staged
+  with `--emit --loop-mode handsoff` (supervised chain).
 
 # Session Handoff — 16 (2026-09-27): interactive, then unattended — the user took all three decisions (close the plan, approve the spec, ticket 07 with #1 + #2 + #4) and left; plan `01-gated-integration` **closed** (hand-edit + `sync`, Position re-rendered), spec `approved`, ticket 07 opened and resolved in-session: data-leaves-the-machine sentences in the `jev` skill and `docs/service-access.md`, Score-reliability clause, `JEV_DISABLED=1` off switch in `scripts/jev.sh` (+ help line, spec line, `rlm` knob) with T20 → test-jev.sh 140/140; ninth decision note; dogfood note on ticket 11 + s16 bullet; checkpointed — then the user returned: `main` pushed (75 commits), `/tmp` scratch deleted, index row fixed, and **all Jev follow-on slices approved with spend** → captured in the launcher, rolled over interactive at WARN for session 17 to plan
 
