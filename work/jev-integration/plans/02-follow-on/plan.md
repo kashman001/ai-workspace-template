@@ -38,12 +38,12 @@ keyed machine and its cost written into the node Log (S30). Tickets:
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-confirm-threshold | work | standard | todo |
-| 1 | 02-score-check-helpers | work | standard | todo |
+| 1 | 01-confirm-threshold | work | standard | done |
+| 1 | 02-score-check-helpers | work | standard | done |
 | 1 | 03-relevance-experiment | work | cheap | todo |
 | 1 | 04-reconcile-w1 | reconcile | frontier | todo |
 | 2 | 05-research-wave-second-reader | work | standard | todo |
 | 2 | 06-tier-routing-evidence | work | cheap | todo |
 | 2 | 07-reconcile-w2 | reconcile | frontier | todo |
-Frontier: 01-confirm-threshold, 02-score-check-helpers, 03-relevance-experiment. Remaining: 7 of 7. Sessions used: 0.
+Frontier: 03-relevance-experiment. Remaining: 5 of 7. Sessions used: 1.
 <!-- plan:end board -->

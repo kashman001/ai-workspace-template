@@ -1,3 +1,65 @@
+# Session Handoff — 16 (2026-09-27): interactive, then unattended — the user took all three decisions (close the plan, approve the spec, ticket 07 with #1 + #2 + #4) and left; plan `01-gated-integration` **closed** (hand-edit + `sync`, Position re-rendered), spec `approved`, ticket 07 opened and resolved in-session: data-leaves-the-machine sentences in the `jev` skill and `docs/service-access.md`, Score-reliability clause, `JEV_DISABLED=1` off switch in `scripts/jev.sh` (+ help line, spec line, `rlm` knob) with T20 → test-jev.sh 140/140; ninth decision note; dogfood note on ticket 11 + s16 bullet; checkpointed — then the user returned: `main` pushed (75 commits), `/tmp` scratch deleted, index row fixed, and **all Jev follow-on slices approved with spend** → captured in the launcher, rolled over interactive at WARN for session 17 to plan
+
+## What happened
+
+- Registered seq=16 (40 %). Posed the three launcher decisions in one
+  message; the user answered all three "yes" (recommended options) and
+  then said to continue unattended.
+- Close: `status: open` → `closed` in `plans/01-gated-integration/plan.md`,
+  `plan.sh sync` (rendered `closed` in the launcher's Position block),
+  `status` prints `closed 18/18`, `check` silent. Ticket 11 of the `plans`
+  item got a Comments entry: closed by a person, box 1 (chain verdict
+  `plan_closed`) stays unticked; `work/plans/decisions.md` an s16 bullet.
+- Spec: line 10 `Status: approved`, `Approved-by: Kashif Siddiqui
+  (2026-09-27, session 16)`.
+- Ticket 07 (`issues/07-data-leaves-machine-score-caveat-off-switch.md`),
+  no plan, test-first: T20 appended (12 assertions: request and `--check`
+  exit 3, empty stdout, one stderr line naming the switch, nothing sent,
+  fake keychain provably not read, switch beats `JEV_API_KEY`,
+  `JEV_DISABLED=0` not disabled, `--help` unaffected and documents it) →
+  10 red → `scripts/jev.sh` gained the check before key resolution
+  (`${JEV_DISABLED:-0}` != 0 → the no-key line, exit 3) plus an ENVIRONMENT
+  help line (≤ 80 cols; the >80 lines in the file are code, as before) →
+  140/140. Docs: `skills/jev/SKILL.md` step 2 (state leaves the machine,
+  SOC 2 claim unverified, no personal/confidential records, `JEV_DISABLED=1`
+  to keep a corpus local) and step 3 (Score least reliable in the one
+  report; prefer a Choice or one Noul per level); `docs/service-access.md`
+  Jev Notes (two sentences); `spec.md` key-resolution item (one clause);
+  `skills/rlm/SKILL.md` knobs (one clause). Ticket boxes ticked, `resolved`.
+- `decisions.md` ninth note: `JEV_DISABLED=1` is the off switch, default
+  stays gate-on-key; rejected default-off, an `--offline` flag, and
+  any-non-empty-value semantics. Promote?: no.
+- Budget after the ticket: 100 K (67 %), OK — checkpoint, not rollover.
+
+## Decisions
+
+- Ninth Tier-2 note (above). Commit trailer: the plan close and the switch.
+
+## State at close
+
+- Plan closed 18/18, sessions 8. Tickets 01–07 `resolved`. Spec `approved`.
+- No open work in this item. Later slices (tier routing, other seams) stay
+  where `spec.md` and the assessment left them: not scheduled.
+- `/tmp/jev-uat/`, `/tmp/nokey/` deleted at the user's request (2026-09-28).
+
+## After the checkpoint (2026-09-28, same session)
+
+- The user asked for a status recap, then `push main` (done: origin at
+  c43a271), then deletion of the two `/tmp` scratch dirs (done), then a list
+  of potential next items, then which video suggestions were integrated
+  (#1, #2, #4 via ticket 07; #3 measured earlier; #5–#7 not taken).
+- `work/README.md` index row for this item was stale ("running its plan")
+  — fixed and committed (5139560).
+- **The user approved every Jev follow-on item listed and authorized any
+  spending** ("You have my approval if any spending is needed"). Scope and
+  the how-to-plan are in the launcher's "First actions" (five slices: crisp-
+  corpus confirmation batch, Score/Noul in `classify()`, research-wave seam,
+  tier routing at dispatch, relevance filter). Committed (4aab5a0) before
+  rolling over: the session was at WARN (132 K), and the user chose "roll
+  over now" when asked.
+- Supervised chain (dry-run refused `supervised_stage_only`): staged
+  `--emit --loop-mode interactive`; the successor grills with the user.
+
 # Session Handoff — 15 (2026-09-27): interactive — wave 7 joined: reconcile 16 done (node 15 re-verified on disk: 128/128, `DEFAULT_JEV_THRESHOLD` 0.5, pin `jev-latest` @ 2026-09-10 in both skills, `git diff HEAD~1` = the eighth note's blast radius); plan `01-gated-integration` 18/18 done, frontier none, left **open** — closing is goal-level, proposed to the user; tickets 01–06 `resolved`; three dogfood findings to `work/plans/decisions.md`; the deferred video assessment written (two doc lines worth doing, one knob for the user, rest no); rolled over interactive at WARN
 
 ## What happened

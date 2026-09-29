@@ -186,6 +186,16 @@ a first pass you will re-check. Check `by_source` after the first batch: a
 leaf share above half means the categories overlap — sharpen the
 descriptions before touching the threshold.
 
+`score` and `check` are `classify`'s siblings for the other two question types,
+with the same batching, fallback, and no-key behaviour. Use `check` for a yes/no
+per record ("does it ask for a refund?"; several labels may apply at once, so one
+`check` per label rather than a `classify`); use `score` for a degree on an
+ordered scale (`levels` low to high). `check` has no confidence to threshold on,
+so it re-asks through the leaf when the probability is within `margin` of 0.5
+(`margin=` per call, else `RLM_JEV_NOUL_MARGIN`, default `0.25`: keep p >= 0.75 or
+p <= 0.25). `score` is the least reliable of the three in the one report we have;
+prefer `classify` over the levels when a level matters.
+
 For free-text work per record (extract a fact, summarise a chunk) `classify`
 does not apply; build the prompt and use `llm_query_map` as before.
 
@@ -221,6 +231,8 @@ Injected automatically every `exec` (you never import or define these):
 | `llm_query(prompt, model=None, timeout=300, system=...)` | one sub-LM leaf call → text |
 | `llm_query_map(prompts, max_workers=8, ...)` | many leaf calls in parallel → list of texts, in order |
 | `classify(records, categories, threshold=None, question=...)` | one `{label, confidence, source}` per record; typed via Jev where a key is present, else the `N: label` leaf pattern |
+| `score(records, levels, threshold=None, question=...)` | one `{level, confidence, source}` per record on an ordered 2-10 level scale; Jev Score where a key is present (Jev's float level), else the `N: level` leaf pattern (integer index) |
+| `check(records, condition, margin=None, question=...)` | one `{value, probability, source}` per record: does `condition` hold; Jev Noul where a key is present, else the `N: yes\|no` leaf pattern (`value` a bool) |
 | `rlm_query(context_text, query, ...)` | recursive RLM over a sub-context (depth>1); falls back to `llm_query` at max depth |
 | `FINAL(answer)` / `FINAL_VAR(name)` | set the final answer (literal / by variable name) |
 | `peek(start, end)` | a slice of the raw context |
@@ -292,9 +304,9 @@ The replay checkpoint is separate from the live REPL state and does not mutate
   login — no API key or SDK. `llm_query` runs it with tools **off** (a plain LLM);
   `rlm_query` runs it with bash + this skill **on** (its own REPL).
 - Keep all scratch/state under `.claude/rlm_state/`.
-- `classify` talks to Jev only through `scripts/jev.sh`, the workspace's one
+- `classify`, `score` and `check` talk to Jev only through `scripts/jev.sh`, the workspace's one
   vendor surface (`docs/service-access.md`); the key lives in the OS keychain
-  and never reaches the REPL. Knobs: `RLM_JEV_THRESHOLD` (default `0.5`), `RLM_JEV_MODEL`
+  and never reaches the REPL. Knobs: `RLM_JEV_THRESHOLD` (default `0.5`), `RLM_JEV_NOUL_MARGIN` (default `0.25`, `check` only), `RLM_JEV_MODEL`
   (default `jev-latest`, release 2026-09-10 — the listing has no versioned
   ids; the threshold is tuned on that release, so re-tune when
   `GET /v1/models` shows a newer `release_date`), and `JEV_DISABLED=1` to

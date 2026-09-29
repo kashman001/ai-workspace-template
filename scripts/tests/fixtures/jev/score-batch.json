@@ -1,0 +1,9 @@
+{
+  "model": "jev-1.13.0",
+  "usage": {"input_tokens": 360, "output_tokens": 90},
+  "answers": {
+    "r0": {"type": "score", "score": 1.95, "confidence": 0.9, "probabilities": {"0": 0.0, "1": 0.05, "2": 0.95}},
+    "r1": {"type": "score", "score": 1.43, "confidence": 0.35, "probabilities": {"0": 0.0, "1": 0.57, "2": 0.43}},
+    "r2": {"type": "score", "score": 0.2, "confidence": 0.8, "probabilities": {"0": 0.8, "1": 0.2, "2": 0.0}}
+  }
+}

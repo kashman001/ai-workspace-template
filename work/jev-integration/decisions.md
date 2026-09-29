@@ -69,3 +69,20 @@
 **Rejected:** one plan per slice (five near-empty reconciles); a `hitl` before each paid batch (what the spend approval was meant to remove); three waves as first proposed in Q7 (slice order, not dependency); reusing the `rlm` REPL for the research-wave seam (drags a REPL into a skill that never used one); a person hand-ticking the relevance truth (clean but a `hitl`, kept as the follow-up if the number is interesting).
 **Blast radius:** `spec.md` S22–S30 + non-goals, `issues/08…12`, `plans/02-follow-on/`, the launcher's Position block. No code.
 **Promote?:** no
+
+## 2026-09-28 — Threshold confirmation on the crisp commit corpus: pre-registered rule names no destination, 0.5 stays (S22, node 01, session 18)
+**Chose:** `DEFAULT_JEV_THRESHOLD` stays `0.5`; no code touched. Pre-registered rule (grill Q1a, 2026-09-28): *keep 0.5 if leaf agreement in `[0.5,1]` ≥ 2× agreement in `[0.25,0.5)`, else move to the lowest bucket boundary where that holds.* Run (100 fresh commit subjects from `git log --format=%s -n 100`, s13 labels `work-item`/`tooling`/`docs`/`fix` + `other`, `jev-latest`, `threshold=0.0`; leaf leg = the same `classify()` with the pass-through keychain stub, 100/100 `source: leaf`, 78 s, nothing mentioning Jev):
+
+| Jev confidence bucket | n | leaf agrees | rate |
+|---|---|---|---|
+| `[0,0.25)` | 15 | 8 | 0.53 |
+| `[0.25,0.5)` | 20 | 16 | 0.80 |
+| `[0.5,1]` | 65 | 49 | 0.75 |
+| overall | 100 | 73 | 0.73 |
+
+Confidence: min 0.15, median 0.54, max 1.0 (s13 run 1: 0.23 / 0.52 / 1.0). Test at 0.5: 0.75 ≥ 2 × 0.80 = 1.60 — **fails**, so the rule says "move"; test at 0.25 (agreement in `[0.25,1]` 65/85 = 0.76 vs `[0,0.25)` 0.53): 0.76 ≥ 1.07 — **fails too**. No bucket boundary satisfies the 2× condition, so the rule yields no destination; the verdict is recorded as **keep (rule inconclusive)**, not as a data-driven confirmation.
+**Because:** the 2× rule presumed run 2's shape (agreement collapses below the threshold: 0.26 in `[0.25,0.5)` vs 0.50 above). On the crisp corpus agreement is flat at ~0.75–0.80 everywhere above 0.25 and 0.53 below it: confidence separates only the bottom 15 %, and a 2× ratio is unreachable when the bucket below already agrees 80 %. Moving without a rule-given destination would be a silent re-litigation of the grill; the conservative reading is to leave the constant and surface the finding. What the data does say: lowering to 0.25 would type 85 records instead of 65 at the same agreement rate (0.76 vs 0.75) — a candidate for the user at the goal-level close, not for a hands-off session. 21 of the 27 disagreements are `work-item` (Jev) vs `tooling` (leaf) on `work(...)`-prefixed commits that also touch scripts — a category-overlap effect, so the leaf is not an oracle here either.
+**Rejected:** move to 0.25 on the "same agreement, more typed" reading — outside the pre-registered rule; move to 0.5's nearest passing point by scanning finer cut-offs — the rule names bucket boundaries only; declaring the rule satisfied at 0.5 because agreement above is the highest *absolute* — it is not (0.80 in `[0.25,0.5)`).
+**Caveats:** the s13 category *descriptions* were never recorded (`/tmp` cleared); s18 wrote its own four one-liners, so this is not the identical prompt (labels are). Leaf = `claude -p haiku`, batches of 50. Cost (S30): 2 Jev requests, ~17.5k estimated input tokens (body chars/4), **≈ $0.0007** at $42/B; the leaf leg is Claude subscription usage, not Jev spend. Corpus, both result files and `leg.py` live in the session scratchpad (`jev-s18/n01/`), not checked in.
+**Blast radius:** this note only. Wave-2 nodes 05/06 keep their "≥ 0.5" wording.
+**Promote?:** no

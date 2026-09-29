@@ -6,6 +6,46 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 18 (2026-09-28): hands-off — plan `02-follow-on` wave 1: node 01 (threshold confirmation) done in-session — pre-registered 2× rule fails at 0.5 *and* at 0.25, verdict **keep 0.5 (rule inconclusive)**, no code touched, S22 note; node 02 (`score()`/`check()`) done by a standard-tier subagent test-first, test-jev.sh 182/182, `llm_query` untouched; node 03 + reconcile 04 left for session 19; WARN at 124 K mid-node, rolled over hands-off at ~135 K
+
+## What happened
+
+- Registered seq 18 by the SessionStart hook (supervised chain, `handsoff`). Found the launcher's Position block re-rendered to plan 01's closed line by the supervisor's `sync` (see Learnings); restored with `plan.sh sync --plan 02-follow-on`.
+- **Node 02** dispatched to a `sonnet` subagent (tier standard) with the skill's prompt template, actor `s18-a`. It added T21–T25 (42 assertions, fixtures `score-batch.json`, `noul-batch.json`) red first, then `score()`/`check()` + `DEFAULT_JEV_NOUL_MARGIN` (`RLM_JEV_NOUL_MARGIN`, 0.25) in `skills/rlm/scripts/rlm_repl.py`, generalising classify's private helpers into `_jev_run`/`_jev_batch`/`_leaf_numbered`; docs in both skills. Suite 182/182 (was 140/140); `done` ran the node's check (suite + both `def` greps) — passed. Its ticks are subagent claims until reconcile 04 re-verifies on disk.
+- **Node 01** in-session: corpus `git log --format=%s -n 100`; keyed `classify()` at `threshold=0.0` (2 requests, 100/100 `jev`, confidence 0.15 / 0.54 / 1.0); leaf leg with a pass-through `security` stub (fails only `jev-api-key`) 100/100 `leaf`, 78 s, no mention of Jev. Buckets: `[0,0.25)` 8/15 · `[0.25,0.5)` 16/20 · `[0.5,1]` 49/65 · overall 73/100. Rule fails at both boundaries → no destination → keep, flagged for the goal-level close (0.25 would type 85 vs 65 at the same 0.75 agreement). Cost ≈ $0.0007 (~17.5k est. input tokens). Note appended to `decisions.md` (S22). The s13 category *descriptions* were never recorded; s18 wrote its own (in the note).
+- Dogfood bullet (second strike) in `work/plans/decisions.md`: supervisor bound to the stale closed plan.
+
+## Decisions
+
+- S22 verdict: keep 0.5, rule inconclusive — `decisions.md` last note (2026-09-28, node 01). Wave-2 nodes 05/06 keep their "≥ 0.5" wording; no replan needed.
+
+## Current state
+
+- Plan `02-follow-on` open, wave 1 of 2, done 2/7 (01, 02), todo 03 → 04-reconcile-w1 → wave 2. Frontier: `03-relevance-experiment`.
+- Working tree committed at this rollover (helpers, tests, fixtures, skills, notes, plan files, ledger, launcher). `main` ahead of origin — the user pushes.
+- **Chain risk:** the live supervisor (`session-loop.sh`, started 23:36 local) is bound to plan `01-gated-integration` (closed, reconcile 16 done). After this session it will record `plan_closed` and exit without running the staged successor. Recovery, one line: `scripts/session-loop.sh jev-integration --plan 02-follow-on --reopen`.
+
+## Open questions
+
+- None for wave 1. For the goal-level close: lower the threshold to 0.25 on the crisp-corpus evidence, or keep 0.5 (S22 note has the table).
+
+## Next steps
+
+- Session 19: node 03 (paid Noul batch; `check(rows, condition, margin=0.0)` now exists and returns every raw probability), reconcile 04 (re-verify 01/02 on disk, flip tickets 08–10 `resolved`, sum costs), then wave 2.
+
+## Key files
+
+`work/jev-integration/decisions.md` (S22 note, last), `plans/02-follow-on/nodes/{01,02,03,04}-*.md`, `skills/rlm/scripts/rlm_repl.py` (`score`, `check`), `scripts/tests/test-jev.sh` (T21–T25), `scripts/tests/fixtures/jev/{score,noul}-batch.json`, `work/plans/decisions.md` (s18 bullet). Scratch (not committed): session scratchpad `jev-s18/n01/` and `jev-s18/nokey/security`.
+
+## Suggested skills
+
+`plans` (reconcile procedure for 04), `decision-log` (S29 note), `session-rollover`.
+
+Learnings:
+- A `plan.sh sync`/`status` without `--plan` resolves via `chain.plan`; with a stale binding it silently rewrites the launcher's Position block — always pass `--plan` while two plans exist.
+- The reconcile-node ordinal in tickets ("tenth"/"eleventh" note) drifted after the s17 follow-on-shape note; name notes by S-number.
+- `check()` with `margin=0.0` is the way to harvest raw Noul probabilities for an experiment (no leaf fallback).
+
 # Session Handoff — 17 (2026-09-28): interactive — the approved Jev follow-on was grilled one question at a time (nine questions, plain-language framing at the user's request), `spec.md` amended with S22–S30 and **re-approved**, tickets 08–12 written, plan `02-follow-on` created (7 nodes, 2 waves), `check` silent, `sync` rendered; WARN at 128 K after the plan landed
 
 ## What happened
@@ -45,66 +85,3 @@ Convention: docs/work-directory-conventions.md.
 - Budget: WARN (128 K) right after `sync`; wrap-up committed (05b8273), the
   user chose to roll over: launcher rewritten for wave 1 hands-off, staged
   with `--emit --loop-mode handsoff` (supervised chain).
-
-# Session Handoff — 16 (2026-09-27): interactive, then unattended — the user took all three decisions (close the plan, approve the spec, ticket 07 with #1 + #2 + #4) and left; plan `01-gated-integration` **closed** (hand-edit + `sync`, Position re-rendered), spec `approved`, ticket 07 opened and resolved in-session: data-leaves-the-machine sentences in the `jev` skill and `docs/service-access.md`, Score-reliability clause, `JEV_DISABLED=1` off switch in `scripts/jev.sh` (+ help line, spec line, `rlm` knob) with T20 → test-jev.sh 140/140; ninth decision note; dogfood note on ticket 11 + s16 bullet; checkpointed — then the user returned: `main` pushed (75 commits), `/tmp` scratch deleted, index row fixed, and **all Jev follow-on slices approved with spend** → captured in the launcher, rolled over interactive at WARN for session 17 to plan
-
-## What happened
-
-- Registered seq=16 (40 %). Posed the three launcher decisions in one
-  message; the user answered all three "yes" (recommended options) and
-  then said to continue unattended.
-- Close: `status: open` → `closed` in `plans/01-gated-integration/plan.md`,
-  `plan.sh sync` (rendered `closed` in the launcher's Position block),
-  `status` prints `closed 18/18`, `check` silent. Ticket 11 of the `plans`
-  item got a Comments entry: closed by a person, box 1 (chain verdict
-  `plan_closed`) stays unticked; `work/plans/decisions.md` an s16 bullet.
-- Spec: line 10 `Status: approved`, `Approved-by: Kashif Siddiqui
-  (2026-09-27, session 16)`.
-- Ticket 07 (`issues/07-data-leaves-machine-score-caveat-off-switch.md`),
-  no plan, test-first: T20 appended (12 assertions: request and `--check`
-  exit 3, empty stdout, one stderr line naming the switch, nothing sent,
-  fake keychain provably not read, switch beats `JEV_API_KEY`,
-  `JEV_DISABLED=0` not disabled, `--help` unaffected and documents it) →
-  10 red → `scripts/jev.sh` gained the check before key resolution
-  (`${JEV_DISABLED:-0}` != 0 → the no-key line, exit 3) plus an ENVIRONMENT
-  help line (≤ 80 cols; the >80 lines in the file are code, as before) →
-  140/140. Docs: `skills/jev/SKILL.md` step 2 (state leaves the machine,
-  SOC 2 claim unverified, no personal/confidential records, `JEV_DISABLED=1`
-  to keep a corpus local) and step 3 (Score least reliable in the one
-  report; prefer a Choice or one Noul per level); `docs/service-access.md`
-  Jev Notes (two sentences); `spec.md` key-resolution item (one clause);
-  `skills/rlm/SKILL.md` knobs (one clause). Ticket boxes ticked, `resolved`.
-- `decisions.md` ninth note: `JEV_DISABLED=1` is the off switch, default
-  stays gate-on-key; rejected default-off, an `--offline` flag, and
-  any-non-empty-value semantics. Promote?: no.
-- Budget after the ticket: 100 K (67 %), OK — checkpoint, not rollover.
-
-## Decisions
-
-- Ninth Tier-2 note (above). Commit trailer: the plan close and the switch.
-
-## State at close
-
-- Plan closed 18/18, sessions 8. Tickets 01–07 `resolved`. Spec `approved`.
-- No open work in this item. Later slices (tier routing, other seams) stay
-  where `spec.md` and the assessment left them: not scheduled.
-- `/tmp/jev-uat/`, `/tmp/nokey/` deleted at the user's request (2026-09-28).
-
-## After the checkpoint (2026-09-28, same session)
-
-- The user asked for a status recap, then `push main` (done: origin at
-  c43a271), then deletion of the two `/tmp` scratch dirs (done), then a list
-  of potential next items, then which video suggestions were integrated
-  (#1, #2, #4 via ticket 07; #3 measured earlier; #5–#7 not taken).
-- `work/README.md` index row for this item was stale ("running its plan")
-  — fixed and committed (5139560).
-- **The user approved every Jev follow-on item listed and authorized any
-  spending** ("You have my approval if any spending is needed"). Scope and
-  the how-to-plan are in the launcher's "First actions" (five slices: crisp-
-  corpus confirmation batch, Score/Noul in `classify()`, research-wave seam,
-  tier routing at dispatch, relevance filter). Committed (4aab5a0) before
-  rolling over: the session was at WARN (132 K), and the user chose "roll
-  over now" when asked.
-- Supervised chain (dry-run refused `supervised_stage_only`): staged
-  `--emit --loop-mode interactive`; the successor grills with the user.
-

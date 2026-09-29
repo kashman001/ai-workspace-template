@@ -11,6 +11,7 @@
 #          stub, with a fake `claude` on PATH standing in for the leaf.
 #          T15+ widen the CLI to Score and Noul, the S7 refusals, and --help.
 #          T20 proves the JEV_DISABLED off switch (ticket 07).
+#          T21+ drive the score() and check() helpers (ticket 09).
 #          Spec: work/jev-integration/spec.md S2-S13, S19.
 #          Self-contained: throwaway workspace in mktemp -d.
 set -u
@@ -408,6 +409,152 @@ printf '%s' "$REQ" | JEV_DISABLED=0 JEV_API_KEY="$KEY" JEV_ENDPOINT="$ENDPOINT" 
 assert_eq "T20j: JEV_DISABLED=0 is not disabled (sent, exit 0)" "$rc/$(( $(requests) - before ))" "0/1"
 "$JEV" --help >/dev/null 2>&1; assert_eq "T20k: --help exits 0 regardless" "$?" "0"
 assert_contains "T20l: --help documents the switch" "$("$JEV" --help 2>&1)" "JEV_DISABLED"
+
+# ---------------------------------------------------------------------------
+# T21+: the rlm score() and check() helpers (ticket 09), same harness as T8+.
+printf '#!/bin/sh\nexit 44\n' > "$FAKE/security"   # T20 left a keychain with an entry; the no-key tests need none
+SREC='["The whole site is down for everyone","Button label has a typo","Export fails for large files"]'
+SLEVELS='["Cosmetic; no impact","Degraded, workaround exists","Blocking; no workaround"]'
+CREC='["Refund me now","Thanks, all good","I want my money back","Where is my order","Cancel my plan","Nice product"]'
+CCOND='The customer asks for a refund.'
+SCORE_EP="$(start_stub "$FIX/score-batch.json" scorebatch)"
+NOUL_EP="$(start_stub "$FIX/noul-batch.json" noulbatch)"
+sreq() { [ -f "$TMP/scorebatch.jsonl" ] && wc -l < "$TMP/scorebatch.jsonl" | tr -d ' ' || echo 0; }
+nreq() { [ -f "$TMP/noulbatch.jsonl" ] && wc -l < "$TMP/noulbatch.jsonl" | tr -d ' ' || echo 0; }
+
+echo "T21: score() with a key — one Score request, criteria = the ordered levels, low-confidence record re-asked through the leaf"
+reset_leaf; echo 2 > "$TMP/leaf-label"
+out="$(RLM_ENV="JEV_ENDPOINT=$SCORE_EP JEV_API_KEY=$KEY" rlm_exec 2>"$TMP/t21.err" <<PY
+import json
+print(json.dumps(score($SREC, $SLEVELS)))
+PY
+)"; rc=$?
+got="$(tail -1 "$TMP/scorebatch.jsonl")"
+assert_eq "T21a: exec exits 0" "$rc" "0"
+assert_eq "T21b: one request for three records" "$(sreq)" "1"
+assert_eq "T21c: state is the record array" "$(printf '%s' "$got" | jq -c '.body.state')" "$SREC"
+assert_eq "T21d: one Score per record, keyed r0..r2" "$(printf '%s' "$got" | jq -c '.body.questions | [keys, (map(.type)|unique)]')" '[["r0","r1","r2"],["score"]]'
+assert_eq "T21e: criteria is the ordered level array" "$(printf '%s' "$got" | jq -c '.body.questions.r1.criteria')" "$SLEVELS"
+assert_eq "T21f: each question references its record" "$(printf '%s' "$got" | jq -r '.body.questions.r2.instructions | contains("records[2]")')" "true"
+assert_eq "T21g: levels/source: r1 (0.35) fell below 0.5 to the leaf, the others carry jev's value and confidence" "$(printf '%s' "$out" | head -1)" \
+  '[{"level": 1.95, "confidence": 0.9, "source": "jev"}, {"level": 2, "confidence": null, "source": "leaf"}, {"level": 0.2, "confidence": 0.8, "source": "jev"}]'
+assert_eq "T21h: one leaf call" "$(leaf_calls)" "1"
+assert_contains "T21i: the leaf prompt numbers the record by its original index" "$(cat "$TMP/claude.prompts")" "1: Button label has a typo"
+assert_absent "T21j: the leaf prompt carries no other record" "$(cat "$TMP/claude.prompts")" "site is down"
+assert_eq "T21k: nothing on stderr" "$(cat "$TMP/t21.err")" ""
+
+echo "T22: score() without a key — the N: level leaf prompt, no request, nothing about Jev"
+reset_leaf; before="$(sreq)"; echo 2 > "$TMP/leaf-label"
+EXPECTED_SCORE_PROMPT="$(printf '%s\n' \
+  'On the scale below, where does each record fall?' \
+  'Levels (0 is lowest):' \
+  'Level 0: Cosmetic; no impact' \
+  'Level 1: Degraded, workaround exists' \
+  'Level 2: Blocking; no workaround' \
+  "Output exactly one line per record as 'N: <level number>'. No extra text." \
+  '' \
+  '0: The whole site is down for everyone' \
+  '1: Button label has a typo' \
+  '2: Export fails for large files')"
+out="$(RLM_ENV="JEV_ENDPOINT=$SCORE_EP" rlm_exec 2>"$TMP/t22.err" <<PY
+import json
+print(json.dumps(score($SREC, $SLEVELS)))
+PY
+)"; rc=$?
+assert_eq "T22a: exec exits 0" "$rc" "0"
+assert_eq "T22b: no request sent" "$(sreq)" "$before"
+assert_eq "T22c: one leaf call for the whole batch" "$(leaf_calls)" "1"
+assert_eq "T22d: the leaf prompt is the N: level prompt, byte for byte" "$(sed '/^=====$/,$d' "$TMP/claude.prompts")" "$EXPECTED_SCORE_PROMPT"
+assert_eq "T22e: level index from the leaf, source leaf, no confidence" "$(printf '%s' "$out" | head -1 | jq -c 'map([.level, .confidence, .source]) | unique')" '[[2,null,"leaf"]]'
+assert_eq "T22f: nothing on stderr" "$(cat "$TMP/t22.err")" ""
+assert_absent "T22g: stdout never mentions Jev" "$(printf '%s' "$out" | tr 'A-Z' 'a-z')" "jev"
+echo "Blocking; no workaround" > "$TMP/leaf-label"
+out="$(RLM_ENV="JEV_ENDPOINT=$SCORE_EP" rlm_exec 2>/dev/null <<PY
+import json
+print(json.dumps([x["level"] for x in score($SREC, $SLEVELS)]))
+PY
+)"
+assert_eq "T22h: a leaf answering with the level text parses to its index" "$(printf '%s' "$out" | head -1)" "[2, 2, 2]"
+echo 7 > "$TMP/leaf-label"
+out="$(RLM_ENV="JEV_ENDPOINT=$SCORE_EP" rlm_exec 2>/dev/null <<PY
+import json
+print(json.dumps([x["level"] for x in score($SREC, $SLEVELS)]))
+PY
+)"
+assert_eq "T22i: an out-of-range or garbled leaf answer is None" "$(printf '%s' "$out" | head -1)" "[null, null, null]"
+
+echo "T23: check() with a key — one Noul request, {value, probability, source}, fallback when |p - 0.5| < 0.25"
+reset_leaf; echo yes > "$TMP/leaf-label"
+out="$(RLM_ENV="JEV_ENDPOINT=$NOUL_EP JEV_API_KEY=$KEY" rlm_exec 2>"$TMP/t23.err" <<PY
+import json
+print(json.dumps(check($CREC, "$CCOND")))
+PY
+)"; rc=$?
+got="$(tail -1 "$TMP/noulbatch.jsonl")"
+assert_eq "T23a: exec exits 0" "$rc" "0"
+assert_eq "T23b: one request for six records" "$(nreq)" "1"
+assert_eq "T23c: one Noul per record, keyed r0..r5" "$(printf '%s' "$got" | jq -c '.body.questions | [(keys|length), (map(.type)|unique)]')" '[6,["noul"]]'
+assert_eq "T23d: the condition and the record reference are in each question" "$(printf '%s' "$got" | jq -r '.body.questions.r4.instructions | contains("refund") and contains("records[4]")')" "true"
+assert_eq "T23e: p=0.75 and p=0.25 sit on the margin and stay jev; 0.74, 0.26, 0.6 go to the leaf" "$(printf '%s' "$out" | head -1 | jq -c 'map(.source)')" '["jev","jev","jev","leaf","leaf","leaf"]'
+assert_eq "T23f: jev answers carry value (p>=0.5) and probability" "$(printf '%s' "$out" | head -1 | jq -c '.[0:3] | map([.value, .probability])')" '[[true,0.99],[true,0.75],[false,0.25]]'
+assert_eq "T23g: leaf answers carry a bool and no probability" "$(printf '%s' "$out" | head -1 | jq -c '.[3:] | map([.value, .probability]) | unique')" '[[true,null]]'
+assert_eq "T23h: one leaf call for the three fallbacks" "$(leaf_calls)" "1"
+assert_contains "T23i: the leaf prompt numbers them by original index" "$(cat "$TMP/claude.prompts")" "3: Where is my order"
+assert_absent "T23j: the leaf prompt carries none of the jev-answered records" "$(cat "$TMP/claude.prompts")" "Refund me now"
+assert_eq "T23k: nothing on stderr" "$(cat "$TMP/t23.err")" ""
+
+echo "T24: the margin — RLM_JEV_NOUL_MARGIN, else the margin argument, else 0.25"
+reset_leaf
+out="$(RLM_ENV="JEV_ENDPOINT=$NOUL_EP JEV_API_KEY=$KEY RLM_JEV_NOUL_MARGIN=0.3" rlm_exec 2>/dev/null <<PY
+import json
+print(json.dumps([x["source"] for x in check($CREC, "$CCOND")]))
+PY
+)"
+assert_eq "T24a: RLM_JEV_NOUL_MARGIN=0.3 moves 0.75 and 0.25 to the leaf" "$(printf '%s' "$out" | head -1)" '["jev", "leaf", "leaf", "leaf", "leaf", "leaf"]'
+out="$(RLM_ENV="JEV_ENDPOINT=$NOUL_EP JEV_API_KEY=$KEY RLM_JEV_NOUL_MARGIN=0.05" rlm_exec 2>/dev/null <<PY
+import json
+print(json.dumps([x["source"] for x in check($CREC, "$CCOND")]))
+PY
+)"
+assert_eq "T24b: RLM_JEV_NOUL_MARGIN=0.05 keeps every record on jev" "$(printf '%s' "$out" | head -1)" '["jev", "jev", "jev", "jev", "jev", "jev"]'
+out="$(RLM_ENV="JEV_ENDPOINT=$NOUL_EP JEV_API_KEY=$KEY RLM_JEV_NOUL_MARGIN=0.3" rlm_exec 2>/dev/null <<PY
+import json
+print(json.dumps([x["source"] for x in check($CREC, "$CCOND", margin=0.05)]))
+PY
+)"
+assert_eq "T24c: the margin argument beats the env" "$(printf '%s' "$out" | head -1)" '["jev", "jev", "jev", "jev", "jev", "jev"]'
+
+echo "T25: check() without a key — the N: yes|no leaf prompt, no request, nothing about Jev"
+reset_leaf; before="$(nreq)"; echo no > "$TMP/leaf-label"
+EXPECTED_CHECK_PROMPT="$(printf '%s\n' \
+  "Answer yes or no for each record. $CCOND" \
+  "Output exactly one line per record as 'N: yes' or 'N: no'. No extra text." \
+  '' \
+  '0: Refund me now' \
+  '1: Thanks, all good' \
+  '2: I want my money back' \
+  '3: Where is my order' \
+  '4: Cancel my plan' \
+  '5: Nice product')"
+out="$(RLM_ENV="JEV_ENDPOINT=$NOUL_EP" rlm_exec 2>"$TMP/t25.err" <<PY
+import json
+print(json.dumps(check($CREC, "$CCOND")))
+PY
+)"; rc=$?
+assert_eq "T25a: exec exits 0" "$rc" "0"
+assert_eq "T25b: no request sent" "$(nreq)" "$before"
+assert_eq "T25c: one leaf call" "$(leaf_calls)" "1"
+assert_eq "T25d: the leaf prompt is the N: yes|no prompt, byte for byte" "$(sed '/^=====$/,$d' "$TMP/claude.prompts")" "$EXPECTED_CHECK_PROMPT"
+assert_eq "T25e: value false, no probability, source leaf" "$(printf '%s' "$out" | head -1 | jq -c 'map([.value, .probability, .source]) | unique')" '[[false,null,"leaf"]]'
+assert_eq "T25f: nothing on stderr" "$(cat "$TMP/t25.err")" ""
+assert_absent "T25g: stdout never mentions Jev" "$(printf '%s' "$out" | tr 'A-Z' 'a-z')" "jev"
+echo maybe > "$TMP/leaf-label"
+out="$(RLM_ENV="JEV_ENDPOINT=$NOUL_EP" rlm_exec 2>/dev/null <<PY
+import json
+print(json.dumps([x["value"] for x in check($CREC[:2], "$CCOND")]))
+PY
+)"
+assert_eq "T25h: an unparseable leaf answer is None" "$(printf '%s' "$out" | head -1)" "[null, null]"
 
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

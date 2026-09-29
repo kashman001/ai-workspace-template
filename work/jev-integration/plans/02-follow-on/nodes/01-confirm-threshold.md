@@ -1,12 +1,12 @@
 ---
 id: 01-confirm-threshold
 title: Ticket 08 — Confirm 0.5 on the crisp commit corpus
-status: todo
+status: done
 kind: work
 wave: 1
 blocked_by: []
 check: grep -q 'S22' decisions.md
-sessions: []
+sessions: [18]
 ---
 
 ## Goal
@@ -22,10 +22,14 @@ Paid batch: run by the agent on the keyed machine (spend pre-authorized 2026-09-
 
 ## Acceptance
 
-- [ ] Corpus regenerated (100 subjects), keyed run at `threshold=0.0` → 100 `source: jev` with confidences
-- [ ] Leaf leg with the pass-through stub → 100 `source: leaf`, nothing mentioning Jev
-- [ ] Agreement-by-bucket table (counts and rates per bucket) in the tenth decision note, with the pre-registered rule quoted and the verdict stated as keep/move
-- [ ] Cost of the batch recorded in the note and the node Log
-- [ ] If "move": constant + fixture + skills updated, `test-jev.sh` passes; if "keep": no code touched
+- [x] Corpus regenerated (100 subjects), keyed run at `threshold=0.0` → 100 `source: jev` with confidences
+- [x] Leaf leg with the pass-through stub → 100 `source: leaf`, nothing mentioning Jev
+- [x] Agreement-by-bucket table (counts and rates per bucket) in the tenth decision note, with the pre-registered rule quoted and the verdict stated as keep/move
+- [x] Cost of the batch recorded in the note and the node Log
+- [x] If "move": constant + fixture + skills updated, `test-jev.sh` passes; if "keep": no code touched
 
 ## Log
+- s18 · started, tier standard
+- s18 · keyed leg: 100 subjects, 2 requests, 100/100 source: jev, confidence min 0.15 / median 0.54 / max 1.0; leaf leg via pass-through security stub 100/100 source: leaf, 78 s, 0 mentions of jev; scratch in session scratchpad jev-s18/n01/ (commits.txt, keyed.json, leaf.json, leg.py), not checked in
+- s18 · bucket table [0,0.25) 8/15 · [0.25,0.5) 16/20 · [0.5,1] 49/65 · overall 73/100; pre-registered 2× rule fails at 0.5 AND at 0.25 → no destination → verdict keep (rule inconclusive), no code touched; S22 note appended to decisions.md (eleventh note by count; tickets call it the tenth). Cost ≈ $0.0007 (≈17.5k est. input tokens at $42/B). Finding for the goal-level close: 0.25 would type 85 vs 65 records at the same 0.75 agreement
+- s18 · check passed → done

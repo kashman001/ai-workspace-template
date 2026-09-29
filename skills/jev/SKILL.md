@@ -57,6 +57,8 @@ where a key is present (`skills/rlm/SKILL.md`).
    have (good agreement with a frontier model on Choice and yes/no, poor on
    1–5 scales, ungraded); when a level matters, prefer a `choice` over the
    levels or one `noul` per level.
+   For batches of records, the rlm REPL's `classify` / `score` / `check`
+   helpers build these requests for you (`skills/rlm/SKILL.md`).
 4. **The `other` pattern.** A Choice can only pick from the options given, so
    when nothing may fit, add an explicit no-match option (`"other": "None of
    the above"`) and treat it as a real label in your code. Never let the
