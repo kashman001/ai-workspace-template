@@ -6,6 +6,18 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 19 (2026-09-30): tickets 14–15 done, L48 archived — work item finished; checkpoint, no successor
+
+1. Registered `seq=19`. Ticket 14 test-first (T1d–f, T11wa–wb, T13v–w, T20ba–bb red), then `plan.sh`: `add --leaf` implies `tier: auto`; `--project=`/`--plan=` and a named fix for a one-word `"--flag value"`; `check` rule `relative-check` (syntactic, first word only); `done` prints the check's last 20 lines only on failure. The fixture's node 09 had the relative-check bug itself and was fixed. Commit de1c210.
+2. Ticket 15: the twelve wording points in `docs/plans.md` (check cwd, ≈60K sizing, closing a plan by hand) and `skills/plans/SKILL.md` (full-id `--blocked-by`, hitl in front of person/key/spend/machine tickets, re-read before rewriting another item's launcher, reconcile step-3 no-op, ticket flip, `sync` after `done`, hitl launcher prose, the L48 recipe "Create a plan before a spec exists"). `TEMPLATE_VERSION` → 2026-09-30, a changelog row, README and `work/README.md` status lines. Commit 8af5dd5.
+3. Backlog card L48 resolved and archived (scorecard 0/94/4/0/6). Commit fef3b21.
+4. Suites: test-plan 252, test-session-loop 144, test-doc-consistency 17, test-template-version 9, test-check-ledger 29. Tier-2 note for ticket 14 in `decisions.md`.
+
+Suggested skills: none — the item is finished. Reopen only for a new plans finding (append it to `decisions.md` → "Dogfood findings", then a new ticket).
+
+Learnings:
+- `test-doc-consistency.sh` treats every backticked path in `docs/plans.md` as a claim that it exists; examples need a placeholder (`scripts/<name>.sh`).
+
 # Session Handoff — 18 (2026-09-30): ticket 13 done — a closed chain.plan yields to the one open plan; rolled hands-off at 89 K, ahead of ticket 14
 
 1. Registered `seq=18`. Ticket 13 test-first: T6g–j (`plan.sh`, closed `chain.plan` + one open plan) and P5a–d (`session-loop.sh`, the s18 layout) red; old T6c asserted the bug and was rewritten to "an open chain.plan beats another open plan".
