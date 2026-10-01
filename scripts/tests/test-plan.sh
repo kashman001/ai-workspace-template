@@ -33,6 +33,11 @@ echo "T1: usage — no verb or an unknown verb exits 2"
 "$PLAN" >/dev/null 2>&1; assert_eq "T1a: no verb" "$?" "2"
 "$PLAN" bogus --project demo >/dev/null 2>&1; assert_eq "T1b: unknown verb" "$?" "2"
 "$PLAN" show --project demo >/dev/null 2>&1; assert_eq "T1c: show without id" "$?" "2"
+out="$("$PLAN" status --project=demo --plan=01-concept)"; rc=$?
+assert_eq "T1d: --project=<item> and --plan=<id> are accepted" "$rc:${out%%  *}" "0:plan 01-concept"
+err="$("$PLAN" status "--project demo" 2>&1 >/dev/null)"; rc=$?
+assert_eq "T1e: a flag and its value in one word is usage" "$rc" "2"
+assert_contains "T1f: ... naming the fix" "$err" "--project=demo"
 
 echo "T2: status — one line, derived from the node files"
 out="$("$PLAN" status --project demo)"; rc=$?
@@ -241,6 +246,10 @@ reset; setf 08-tickets status pending
 assert_eq "T11v: an unknown value is a listed violation" "$("$PLAN" check --project demo --json | jq -c '[.[] | [.rule, .id]]')" '[["malformed","08-tickets"]]'
 reset; setf 08-tickets status doing
 assert_eq "T11w: an unknown-value node trips only the malformed rule" "$("$PLAN" check --project demo --json | jq -c '[.[].rule]')" '["doing-sessions"]'
+reset; addf 08-tickets check 'scripts/x.sh --quiet'; addf 07-spec check './run.sh'; addf 05-concept-note check 'sh run.sh && "$WORKSPACE_ROOT/scripts/x.sh" a/b'
+out="$("$PLAN" check --project demo)"; rc=$?
+assert_eq "T11wa: a check starting with a relative path is a violation (checks run from the item dir)" "$rc:$("$PLAN" check --project demo --json | jq -c '[.[] | [.rule, .id]]')" '1:[["relative-check","07-spec"],["relative-check","08-tickets"]]'
+assert_contains "T11wb: ... naming the path and the fix" "$out" '08-tickets.md: check starts with relative path scripts/x.sh; checks run from the work item dir — use "$WORKSPACE_ROOT/scripts/x.sh"'
 reset
 echo "T11x-z: wave size — plan frontmatter wave_max, then PLAN_WAVE_MAX (env or context-budget.env), then the built-in 6"
 out="$(PLAN_WAVE_MAX=2 "$PLAN" check --project demo)"; rc=$?
@@ -347,6 +356,12 @@ assert_contains "T13s: ... naming the flag" "$err" "--by human"
 out="$("$PLAN" done 04-grill-open-items --project demo --by human --json)"; rc=$?
 assert_eq "T13t: --by human marks it done, --json gives {id,status}" "$rc:$(printf '%s' "$out" | jq -c '[.id,.status]')" '0:["04-grill-open-items","done"]'
 assert_eq "T13u: the Log names the actor" "$(lastlog 04-grill-open-items)" "- human · done"
+reset; addf 07-spec check 'echo noisy'
+err="$("$PLAN" done 07-spec --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T13v: a passing check's output is not printed" "$rc:$err" "0:"
+reset; addf 07-spec check 'seq 1 50; false'
+err="$("$PLAN" done 07-spec --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T13w: a failing check prints only its tail (last 20 lines) before the refusal" "$rc:$(printf '%s\n' "$err" | grep -cx '[0-9]*'):$(printf '%s\n' "$err" | grep -x '[0-9]*' | head -1)" "1:20:31"
 reset
 
 echo "T14: verify — run the check, report, change nothing"
@@ -536,6 +551,10 @@ printf '{"schema":1,"seq":3}\n' > "$SS"; reset
 "$PLAN" add leafy --wave 3 --tier auto --leaf research --project demo >/dev/null; rc=$?
 assert_eq "T20a: add --leaf writes the label" "$rc:$(fm 10-leafy leaf):$(fm 10-leafy tier)" "0:research:auto"
 "$PLAN" add leafy2 --wave 3 --leaf Bad-Label --project demo >/dev/null 2>&1; assert_eq "T20b: a label outside [a-z][a-z0-9_]* is usage" "$?" "2"
+"$PLAN" add leafy3 --wave 3 --leaf research --project demo >/dev/null
+assert_eq "T20ba: --leaf without --tier implies tier auto" "$(fm 11-leafy3 tier)" "auto"
+"$PLAN" add leafy4 --wave 3 --leaf research --tier cheap --project demo >/dev/null
+assert_eq "T20bb: ... an explicit --tier wins" "$(fm 12-leafy4 tier)" "cheap"
 reset; sed -i '' 's/^default_tier: standard$/default_tier: standard\
 tier_research: auto/' "$PM"
 err="$("$PLAN" show 08-tickets --project demo --json 2>&1 >/dev/null)"; rc=$?

@@ -7,7 +7,7 @@ wave: 3
 blocked_by: [07-spec, 08-tickets]
 tier: frontier
 loop: 2
-check: scripts/plan.sh check --project plans --plan 01-concept && test -n "$(ls issues/*.md)"
+check: "$WORKSPACE_ROOT/scripts/plan.sh" check --project plans --plan 01-concept && test -n "$(ls issues/*.md)"
 sessions: []
 ---
 

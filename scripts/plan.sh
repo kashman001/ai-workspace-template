@@ -6,6 +6,7 @@
 #          prints comes from the node files; it never calls a model.
 #          Format, resolution order and exit codes: docs/plans.md. Bash 3.2 + jq.
 # Usage:   scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
+#          (--project=<item> and --plan=<name> work too)
 #          new <slug>      create the next-numbered plan (refuses while one is open)
 #          status          plan, open/closed, wave n of m, counts by status, sessions used
 #          show <id>       print one node (text: the file; --json: its frontmatter + path)
@@ -17,12 +18,14 @@
 #                          and exit 0 on a clean plan (rules: docs/plans.md → "Check rules")
 #          start <id>      todo (on the frontier, or --force) or blocked → doing; stamps the session
 #          done <id>       doing → done once the node's check passes; the Nth failure (loop: N)
-#                          writes blocked; hitl nodes need --by <actor>; --force allows todo → done
+#                          writes blocked; hitl nodes need --by <actor>; --force allows todo → done;
+#                          the check's output shows only on failure (its last 20 lines)
 #          verify <id>     run the node's check, exit 0/1, change nothing
 #          block <id> <reason>   doing → blocked, the reason as the latest Log line
 #          drop <id> [reason]    any → dropped
 #          add <slug> --wave <n> [--title t] [--kind k] [--tier t] [--leaf label] [--blocked-by a,b]
-#                          [--parallel n] [--loop n] [--check cmd] [--isolated]   new node file
+#                          [--parallel n] [--loop n] [--check cmd] [--isolated]   new node file;
+#                          --leaf without --tier writes tier: auto
 #          note <text>     append to plan.md → "Not yet specified"; touches no node
 #          sync            re-render the board into plan.md and the position block into
 #                          next-session.md, each between `<!-- plan:begin <name> -->` /
@@ -59,7 +62,9 @@ TITLE=""; WAVE=""; KIND=""; TIER=""; LEAF=""; BLOCKED_BY=""; PARALLEL=""; LOOP="
 while [ $# -gt 0 ]; do
   case "$1" in
     --project) [ $# -ge 2 ] || usage; PROJECT="$2"; shift 2 ;;
+    --project=*) PROJECT="${1#--project=}"; shift ;;
     --plan)    [ $# -ge 2 ] || usage; PLAN="$2"; shift 2 ;;
+    --plan=*)  PLAN="${1#--plan=}"; shift ;;
     --by)      [ $# -ge 2 ] || usage; BY="$2"; shift 2 ;;
     --session) [ $# -ge 2 ] || usage; SEQ="$2"; shift 2 ;;
     --runtime) [ $# -ge 2 ] || usage; RUNTIME_FLAG="$2"; shift 2 ;;
@@ -76,6 +81,7 @@ while [ $# -gt 0 ]; do
     --json)    JSON=1; shift ;;
     --force)   FORCE=1; shift ;;
     -h|--help) usage ;;
+    --*" "*)   die 2 "unknown option '$1': a flag and its value arrived as one word — pass two words, or ${1%% *}=${1#* }" ;;
     -*)        die 2 "unknown option $1" ;;
     *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; elif [ -z "$ARG2" ]; then ARG2="$1"; else usage; fi; shift ;;
   esac
@@ -343,6 +349,12 @@ run_check() {  # the node's check, run from the work item dir with its output on
   [ -n "$cmd" ] || return 0
   ( cd "$ITEM" && WORKSPACE_ROOT="$WORKSPACE_ROOT" sh -c "$cmd" 1>&2 )
 }
+run_check_quiet() {  # run_check, its output kept back unless it fails — then the last 20 lines on stderr
+  local out rc
+  out="$(run_check 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || printf '%s\n' "$out" | tail -n 20 >&2
+  return "$rc"
+}
 failed_attempts() {  # check failures logged since the node was last started
   awk '/^## Log/ { inlog = 1; next } inlog && /· started/ { n = 0 } inlog && /· check failed/ { n++ } END { print n + 0 }' "$NODE_FILE"
 }
@@ -443,6 +455,9 @@ cmd_check() {
              | if $after == [] then [] else [v("reconcile-last"; $r[0]; "reconcile node is not last in wave \($wave) (\($after | join(", ")) follow)")] end end)
         + (if length > $max then [w("wave-size"; $wave; "\(length) nodes, limit \($max)")] else [] end)) | add // [])
     + ($nodes | map(select(.kind == "hitl" and .check != null) | v("hitl-check"; .; "hitl node has a check")))
+    + ($nodes | map(select(.check != null and (.check | test("^[^ /$\"'"'"'~=-][^ =]*/")))
+        | (.check | capture("^(?<p>[^ ]+)").p) as $p
+        | v("relative-check"; .; "check starts with relative path \($p); checks run from the work item dir — use \"$WORKSPACE_ROOT/\($p | ltrimstr("./"))\"")))
     + ($nodes | map(select(.status == "doing" and .sessions == []) | v("doing-sessions"; .; "doing with no session listed")))')"
   if [ "$JSON" -eq 1 ]; then printf '%s\n' "$nodes"; else printf '%s' "$nodes" | jq -r '.[] | "\(.path // "wave \(.wave)"): \(.message)"'; fi
   [ "$(printf '%s' "$nodes" | jq 'length')" -eq 0 ] || exit 1
@@ -484,7 +499,7 @@ cmd_done() {
   esac
   if [ "$(node_field '.check // empty')" = "" ]; then line="done$forced"
   else
-    run_check; rc=$?
+    run_check_quiet; rc=$?
     if [ "$rc" -ne 0 ]; then
       loop="$(node_field .loop)"; attempt=$(( $(failed_attempts) + 1 ))
       line="$WHO · check failed (exit $rc), attempt $attempt of $loop"
@@ -536,6 +551,7 @@ cmd_add() {
   case "$KIND" in ""|work|reconcile|hitl) ;; *) die 2 "unknown kind $KIND (work|reconcile|hitl)" ;; esac
   case "$TIER" in ""|frontier|standard|cheap|auto) ;; *) die 2 "unknown tier $TIER (frontier|standard|cheap|auto)" ;; esac
   [ -z "$LEAF" ] || printf '%s' "$LEAF" | grep -qE '^[a-z][a-z0-9_]*$' || die 2 "--leaf '$LEAF' is not [a-z][a-z0-9_]*"
+  [ -z "$LEAF" ] || [ -n "$TIER" ] || TIER=auto   # a leaf label only matters under auto
   nodes="$(load_nodes "$PLAN_DIR")" || exit 1
   ids="$(printf '%s' "$nodes" | jq -r '.[].id')"
   for f in "$PLAN_DIR"/nodes/*-"$ARG".md; do [ -f "$f" ] && die 1 "slug $ARG is taken by $(basename "$f")"; done

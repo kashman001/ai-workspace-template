@@ -50,7 +50,7 @@ inside `check`, is kept). Sections below it: `## Goal`, `## Acceptance`, `## Log
 | `leaf` | a label, `[a-z][a-z0-9_]*` — the kind of leaf work, looked up when `tier` is `auto` | none |
 | `parallel` | integer, subagents in flight inside the node | `1` |
 | `loop` | integer, attempts before `blocked` | `1` |
-| `check` | a shell command, kept verbatim | none |
+| `check` | a shell command, kept verbatim; it runs with the work item directory as cwd and `WORKSPACE_ROOT` exported, so name workspace scripts as `"$WORKSPACE_ROOT/scripts/…"` | none |
 | `sessions` | `[n, n]` — session numbers that worked the node | `[]` |
 | `isolated` | `yes` / `no` | `no` |
 
@@ -65,6 +65,10 @@ refused with exit 1 and a line on stderr naming the file.
 scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 ```
 
+`--project=<item>` and `--plan=<name>` are accepted too. Each flag and its value
+must reach the script as separate words (or the `=` form): a `"--project x"`
+held in one shell variable is refused, naming the `=` form.
+
 | Verb | Does | Text output |
 |---|---|---|
 | `new <slug>` | creates the next-numbered plan with an empty `plan.md` skeleton; refuses (exit 1) while a plan is open | `created work/<item>/plans/NN-<slug>` |
@@ -75,11 +79,11 @@ scripts/plan.sh <verb> [args] [--project <item>] [--plan <name>] [--json]
 | `graph` | the whole plan, one block per wave, each node with its blockers | `  08-tickets  todo  work  <- 07-spec` under a `wave 3` heading |
 | `check` | lints the plan against the rules below; every violation at once, exit 1 when any, silent and exit 0 on a clean plan | `<node path>: hitl node has a check` or `wave 3: 0 reconcile nodes (want exactly one)` |
 | `start <id>` | `todo` → `doing` for a frontier node (`--force` for one off it), or `blocked` → `doing`; adds the session to `sessions`, logs `started, tier <t>` (see "Tiers" for the unavailable forms) | `08-tickets doing` |
-| `done <id>` | `doing` → `done` once the node's `check` passes (`--force` allows `todo` → `done`); a `kind: hitl` node needs `--by human`; a failing check is refused, and the Nth failure (`loop: N`) writes `blocked` | `07-spec done` |
+| `done <id>` | `doing` → `done` once the node's `check` passes (`--force` allows `todo` → `done`); a `kind: hitl` node needs `--by human`; the check's output is shown only when it fails (its last 20 lines, on stderr); a failing check is refused, and the Nth failure (`loop: N`) writes `blocked` | `07-spec done` |
 | `verify <id>` | runs the check and reports; changes nothing; exit 1 on failure | `07-spec: check passed` / `check failed (exit 4)` / `no check` |
 | `block <id> <reason>` | `doing` → `blocked`, the reason as the latest Log line | `07-spec blocked` |
 | `drop <id> [reason]` | any → `dropped` | `08-tickets dropped` |
-| `add <slug> --wave <n> [--title …] [--kind …] [--tier …] [--leaf label] [--blocked-by a,b] [--parallel n] [--loop n] [--check …] [--isolated]` | writes `nodes/NN-<slug>.md` (next number, `status: todo`, empty Goal/Acceptance/Log); refuses a taken slug or a blocker naming no node; does not lint | `10-board-renderer todo` |
+| `add <slug> --wave <n> [--title …] [--kind …] [--tier …] [--leaf label] [--blocked-by a,b] [--parallel n] [--loop n] [--check …] [--isolated]` | writes `nodes/NN-<slug>.md` (next number, `status: todo`, empty Goal/Acceptance/Log); `--leaf` without `--tier` writes `tier: auto` (the label is only looked up under `auto`); refuses a taken slug or a blocker naming no node; does not lint | `10-board-renderer todo` |
 | `note <text>` | appends `- s<n> · <text>` to `plan.md` → "Not yet specified"; touches no node file and never the board | (silent) |
 | `sync` | re-renders the board into `plan.md` and the position block into `work/<item>/next-session.md`, each strictly between its markers; idempotent; both marker pairs are checked before either file is written, and a missing one is exit 1 naming the file and the marker (nothing written). Resolves the plan read-style, so a closed plan still syncs | `synced work/<item>/plans/NN-<slug>/plan.md, work/<item>/next-session.md` |
 
@@ -137,6 +141,10 @@ apply). The rules, by `rule` slug:
 - `hitl-check` — a `kind: hitl` node with a `check` (the human's tick is the
   acceptance).
 - `doing-sessions` — a `status: doing` node with an empty `sessions`.
+- `relative-check` — a `check` whose first word is a relative path
+  (`scripts/<name>.sh`, `./<name>.sh`). Checks run from the work item directory, so a
+  workspace path must be `"$WORKSPACE_ROOT/scripts/<name>.sh"`; an item-local
+  script runs as `sh <name>.sh`.
 - `wave-size` — more nodes in a wave than `wave_max` (plan) or `PLAN_WAVE_MAX`
   (explicit env, then `context-budget.env`, then 6).
 

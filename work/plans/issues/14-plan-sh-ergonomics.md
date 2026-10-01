@@ -4,9 +4,9 @@
 
 **Blocked by:** 13
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-30, s19)
 
 **Spec:** findings only
 
-- [ ] One failing test per item (a)–(d), then passing
-- [ ] `test-plan.sh` green; `docs/plans.md` updated for (a)–(c)
+- [x] One failing test per item (a)–(d), then passing
+- [x] `test-plan.sh` green; `docs/plans.md` updated for (a)–(c)
