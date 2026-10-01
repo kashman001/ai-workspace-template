@@ -24,15 +24,16 @@ LAUNCHER = ROOT / "scripts" / "launch-next-session.sh"
 
 PURPOSE = """<!--
 PURPOSE: This is the LEDGER (provenance log). Append-only, newest block on TOP.
+Each "# Session Handoff" block records what happened in one session.
 Convention: docs/work-directory-conventions.md.
 -->
 """
 
 # A clean ledger exercising every accepted title convention (current, sNNN,
-# hash-number, date-only, addendum), plus an archive in the legacy
-# convention — all are live history and all must parse; the mixed
-# date-only/dateless blocks also prove ordering skips a missing key without
-# breaking the chain.
+# hash-number, date-only, addendum, two same-day blocks from one session),
+# plus an archive in the legacy convention — all are live history and all
+# must parse; the mixed date-only/dateless blocks also prove ordering skips a
+# missing key without breaking the chain.
 CLEAN_LEDGER = PURPOSE + """
 # Session Handoff — 76 (2026-08-22): the newest thing that happened
 
@@ -47,6 +48,10 @@ More body.
 Body prose.
 
 # Session Handoff — 75 (2026-08-21): the older thing that happened
+
+Body prose.
+
+# Session Handoff — 75 (2026-08-21): an earlier block from the same session, same day
 
 Body prose.
 
@@ -183,6 +188,40 @@ Body prose.
     return broken, swapped
 
 
+S16_BLOCK = """# Session Handoff — 77 (2026-08-23): a block written by the s16-style write
+
+Body prose.
+
+"""
+
+
+def mutate_spliced_into_comment(ledger: str, archive: str):
+    """s16 defect 1: the write anchored on the first `# Session Handoff` text
+    in the file — the purpose comment's own example — so the new block landed
+    inside the comment instead of after `-->`."""
+    i = ledger.index("# Session Handoff")
+    return ledger[:i] + S16_BLOCK + ledger[i:], archive
+
+
+def mutate_duplicated_block(ledger: str, archive: str):
+    """s16 defect 2a: a redo prepended the block again without deleting its
+    stale first pass, so the same block appears twice."""
+    return ledger.replace("-->\n", "-->\n\n" + S16_BLOCK + S16_BLOCK, 1), archive
+
+
+def mutate_s16_incident(ledger: str, archive: str):
+    """s16 defect 2, as it happened: the stale pass left a block twice AND two
+    versions of one bridge block. The bridge pair alone is indistinguishable
+    from one session's two same-day blocks (legal), so the verbatim repeat is
+    what the check holds on to."""
+    bridge = "# Session Handoff — 76→77 bridge (2026-08-22): {}\n\nBody prose.\n\n"
+    return ledger.replace(
+        "-->\n",
+        "-->\n\n" + bridge.format("session 76 closed") + S16_BLOCK
+        + bridge.format("session 76 never closed") + S16_BLOCK,
+        1,
+    ), archive
+
 # (name, mutation, required stderr substring or None)
 MUTATIONS = [
     ("purpose comment never closes, heading swallowed", mutate_unclosed_comment, None),
@@ -200,6 +239,9 @@ MUTATIONS = [
         mutate_broken_live_hides_archive,
         "handoff-archive.md",
     ),
+    ("s16: block spliced into the purpose comment", mutate_spliced_into_comment, None),
+    ("s16: the same block filed twice", mutate_duplicated_block, "duplicate"),
+    ("s16: duplicate block plus two bridge versions", mutate_s16_incident, "duplicate"),
 ]
 
 

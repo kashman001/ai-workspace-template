@@ -604,3 +604,9 @@ wayfinder becomes a plan template with `kind: hitl` decision nodes.
 ## 2026-09-30 — ticket 11 closed; findings triaged into tickets 12–15
 **Decision:** Bugs first (12 ledger lint, 13 stale default plan), then CLI ergonomics (14), then docs/skill wording (15). `add --from-ticket` (s8 a) and `frontier`'s exit 1 while a reconcile is `doing` (s8 c) are not taken: the first is a feature, the second is correct behaviour.
 **Promote?:** no
+
+## 2026-09-30 — ticket 12: ledger lint catches a verbatim duplicate only, not "two versions of one block"
+**Decision:** `check-ledger.py` fails when a heading appears twice (live + archive). It does not try to detect two *versions* of one block (same title up to the colon, different summaries).
+**Why:** Keying on the title before the colon was tried first and flagged three legitimate pairs in `work/template-improvement-review` (one session filing two same-day blocks in the preferred `N (date): summary` form). By shape, two versions of one bridge cannot be told apart from that. The s16 incident is still caught, because its stale pass also repeated the session-6 block word for word. The splice-into-comment shape was already caught ("heading inside a comment"); it only needed a fixture. The TEMPLATE_VERSION bump is deferred to ticket 15 so the item ships under one bump.
+**Rejected:** (a) prefix key — false positives on real history; (b) body-hash comparison — the stale and kept bridges had different bodies, so it adds code without catching the s16 pair.
+**Promote?:** no

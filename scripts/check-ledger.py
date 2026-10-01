@@ -3,7 +3,8 @@
 File: scripts/check-ledger.py
 Purpose: Validate the shape of every work-item ledger (work/<project>/handoff.md
          and its handoff-archive.md) — block headings well-formed, none buried
-         inside the purpose comment, newest-first ordering, archive continuity.
+         inside the purpose comment, newest-first ordering, no duplicate
+         blocks, archive continuity.
          Exits non-zero on any failure.
 See: docs/work-directory-conventions.md → "handoff.md — the ledger"
 
@@ -218,6 +219,28 @@ def check_ordering(blocks: list[Block], report) -> None:
             prev_date = b
 
 
+def check_duplicates(blocks: list[Block], report) -> None:
+    """No heading appears twice.
+
+    A redo of a ledger write that prepends the new block without deleting the
+    stale first pass leaves the same block twice. Only an identical heading is
+    a defect: one session filing two same-day blocks with different summaries
+    ("22 (2026-09-22): …" twice) is legitimate history, so two *versions* of
+    one block cannot be told apart from it by shape — that is caught only
+    when the redo also repeats a heading verbatim, as the s16 incident did.
+    """
+    seen: dict[str, Block] = {}
+    for b in blocks:
+        if b.text in seen:
+            report.bad(
+                f"duplicate block: {b.where} repeats the heading of "
+                f"{seen[b.text].where} — {b.text[:70]!r} (a redone write "
+                f"left its stale first pass?)"
+            )
+        else:
+            seen[b.text] = b
+
+
 class Report:
     def __init__(self):
         self.fail = False
@@ -257,6 +280,7 @@ def check_ledger(project: Path, report: Report) -> None:
     # The two files are one logical ledger: newest-first has to hold across the
     # seam, or a rotation has interleaved them.
     check_ordering(live + archived, report)
+    check_duplicates(live + archived, report)
 
     if live:
         report.ok(

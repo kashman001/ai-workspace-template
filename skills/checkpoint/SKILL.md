@@ -71,6 +71,11 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
    the document's structure; the contract above binds either way. Frame it around
    the next focus, or — if none given — the next item in the backlog's active
    sequence.
+   When the hand-off is a new block in the ledger (`work/<project-name>/handoff.md`),
+   insert it after the purpose comment's closing `-->` — never anchor on the first
+   `# Session Handoff` text, which is the comment's own example — and if you are
+   redoing an earlier write, delete the stale block rather than prepending again.
+   Then run `scripts/check-ledger.py work/<project-name>`; it must exit 0.
 
 3. **Confirm repo/branch state** is clean and recorded: current branch, working tree clean,
    merged branches tidied or noted. If the project deploys, record the live deployment versions.
@@ -93,6 +98,8 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
 ## Verification
 
 - Hand-off doc is on disk: `ls work/<project-name>/` shows it.
+- If a ledger block was written: `scripts/check-ledger.py work/<project-name>` exits 0
+  (no heading inside the purpose comment, no block filed twice, newest on top).
 - Promotion scan ran to completion: `grep -n 'Promote?: yes\|Promote?: maybe' work/*/decisions.md work/*/map.md`
   — every hit is either promoted this checkpoint (flipped to `done → ADR-NNNN`) or its
   `maybe` condition checked and still unmet.

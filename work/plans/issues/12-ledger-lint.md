@@ -4,10 +4,10 @@
 
 **Blocked by:** 11
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-30, session 17)
 
 **Spec:** findings only (no spec section)
 
-- [ ] Fixtures for both s16 shapes; `check-ledger.py` exits non-zero on each (extended if needed), clean ledger exits 0
-- [ ] `scripts/check-ledger.py` exits 0 over the whole repo
-- [ ] `skills/checkpoint/SKILL.md` names the check after the ledger write; doc-consistency stays green
+- [x] Fixtures for both s16 shapes; `check-ledger.py` exits non-zero on each (extended if needed), clean ledger exits 0
+- [x] `scripts/check-ledger.py` exits 0 over the whole repo
+- [x] `skills/checkpoint/SKILL.md` names the check after the ledger write; doc-consistency stays green
