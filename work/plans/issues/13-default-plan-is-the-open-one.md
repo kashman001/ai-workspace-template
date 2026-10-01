@@ -4,10 +4,10 @@
 
 **Blocked by:** 11
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-30, s18)
 
 **Spec:** S-chain.plan rules (`docs/plans.md` → session loop)
 
-- [ ] Test reproducing s18 (closed 01, open 02, `chain.plan=01`) fails first, then passes: no false `plan_closed`, Position block shows plan 02
-- [ ] `plan.sh` default-plan resolution test for the same layout
-- [ ] `test-plan.sh` and `test-session-loop.sh` green
+- [x] Test reproducing s18 (closed 01, open 02, `chain.plan=01`) fails first, then passes: no false `plan_closed`, Position block shows plan 02
+- [x] `plan.sh` default-plan resolution test for the same layout
+- [x] `test-plan.sh` and `test-session-loop.sh` green

@@ -388,6 +388,20 @@ reset; mkplan open done todo todo; cp -R "$W/plans/01-demo" "$W/plans/02-demo"; 
 assert_eq "P1j: two open plans and no --plan: exit 4"     "$RC" "4"
 assert_eq "P1k: reason plan_invalid leg=ambiguous"        "$(refused)" "plan_invalid leg=ambiguous"
 
+echo "P5: a stale chain.plan naming a closed plan rebinds to the one open plan (s18)"
+reset; mkplan closed done done done; cp -R "$W/plans/01-demo" "$W/plans/02-demo"
+sed -i '' 's/^plan: 01-demo$/plan: 02-demo/; s/^status: closed$/status: open/' "$W/plans/02-demo/plan.md"
+sed -i '' 's/^status: done$/status: todo/' "$W/plans/02-demo/nodes/"*.md
+jq '.chain = {supervisor: null, used: 0, cap: 3, closed: null, plan: "01-demo"}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"
+export STUB_BEHAVIOUR=stage-plan; run --max-sessions 2
+assert_eq "P5a: the open plan is bound"                   "$(rec '.chain.plan')" "02-demo"
+assert_eq "P5b: no false plan_closed"                     "$(verdicts)" "staged seq=8 staged seq=9 cap seq=10"
+assert_contains "P5c: the Position block shows plan 02"   "$(cat "$W/next-session.md")" "Position: plan 02-demo, open"
+cp -R "$W/plans/02-demo" "$W/plans/03-demo"; sed -i '' 's/^plan: 02-demo$/plan: 03-demo/' "$W/plans/03-demo/plan.md"
+jq '.chain = {supervisor: null, used: 0, cap: 3, closed: null, plan: "01-demo"}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"
+run --max-sessions 2
+assert_eq "P5d: two open plans besides it: plan_invalid leg=ambiguous" "$(refused)" "plan_invalid leg=ambiguous"
+
 echo "P2: plan_invalid — a failing sync or check after the child refuses the next session"
 reset; mkplan open done todo todo 'check: true'; export STUB_BEHAVIOUR=stage-plan   # hitl-check violation
 run --max-sessions 3

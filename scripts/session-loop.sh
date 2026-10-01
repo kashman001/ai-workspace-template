@@ -29,7 +29,8 @@
 #          record_unreadable, schema_mismatch, stall, plan_invalid
 #          leg=<sync|check>.
 #          A plan (docs/plans.md) binds at start — --plan, else chain.plan in
-#          the record, else the single open plan — and is re-rendered, linted
+#          the record unless it is closed while another plan is open, else the
+#          single open plan — and is re-rendered, linted
 #          and read between children: closed with its terminal reconcile node
 #          done ends the chain; a hitl-only frontier makes the next session
 #          interactive. A plan-less item runs exactly as before.
@@ -165,18 +166,24 @@ USED="$(rq '.chain.used // 0')"
 [ "$USED" -lt "$MAX_SESSIONS" ] || cap_stop "$USED"
 [ "$USED" -gt 0 ] && say "resuming the chain budget at $USED of $MAX_SESSIONS used"
 # The plan, if any: --plan, else the record's chain.plan (a restart keeps its
-# binding), else the single open plan under work/<project>/plans. Two open
+# binding unless that plan is closed and another is open), else the single open plan under work/<project>/plans. Two open
 # plans need --plan; a slug plan.sh cannot read is refused before anything is
 # written. Plan-less items bind nothing and run exactly as before.
 plan_sh() { "$ROOT/scripts/plan.sh" "$@" --project "$PROJECT" --plan "$PLAN"; }
+plan_status_of() { awk 'NR == 1 { next } /^---$/ { exit } /^status:/ { sub(/^status:[ \t]*/, ""); sub(/[ \t]+$/, ""); print; exit }' "$S/plans/$1/plan.md" 2>/dev/null; }
+open_plans=""
+for d in "$S"/plans/[0-9]*/; do
+  [ -f "$d/plan.md" ] || continue
+  [ "$(plan_status_of "$(basename "$d")")" = open ] || continue
+  open_plans="$open_plans${open_plans:+ }$(basename "$d")"
+done
 PLAN="${PLAN_OPT:-$(rq '.chain.plan // empty')}"
+# A chain.plan left closed by an earlier chain (s18) yields to the open plan,
+# exactly as an unset one does; an open one, or a closed one with no other
+# plan open, keeps its binding.
+[ -z "$PLAN_OPT" ] && [ -n "$PLAN" ] && [ -n "$open_plans" ] && [ "$(plan_status_of "$PLAN")" = closed ] \
+  && { say "chain.plan $PLAN is closed; rebinding to the open plan"; PLAN=""; }
 if [ -z "$PLAN" ]; then
-  open_plans=""
-  for d in "$S"/plans/[0-9]*/; do
-    [ -f "$d/plan.md" ] || continue
-    [ "$(awk 'NR == 1 { next } /^---$/ { exit } /^status:/ { sub(/^status:[ \t]*/, ""); sub(/[ \t]+$/, ""); print; exit }' "$d/plan.md")" = open ] || continue
-    open_plans="$open_plans${open_plans:+ }$(basename "$d")"
-  done
   case "$open_plans" in
     "") ;;
     *" "*) refuse plan_invalid "leg=ambiguous project=$PROJECT open=$(printf '%s' "$open_plans" | tr ' ' ',') — more than one plan is open; name the one this chain runs: scripts/session-loop.sh $PROJECT --plan <slug>" ;;

@@ -399,7 +399,8 @@ the sessions and their hooks inherit.
 
 **Plans.** When the item has a plan (`docs/plans.md`), the chain binds it at
 start — `--plan <slug>`, else `chain.plan` already in the record (a restart
-keeps its binding), else the single plan under `work/<p>/plans/` whose
+keeps its binding; one left closed by an earlier chain yields while another
+plan is open), else the single plan under `work/<p>/plans/` whose
 `plan.md` says `status: open` — and writes `chain.plan` with the start block.
 Two open plans and no `--plan` → `plan_invalid leg=ambiguous`; a slug
 `scripts/plan.sh status` cannot read → `plan_invalid leg=unresolved`; both

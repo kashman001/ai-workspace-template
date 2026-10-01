@@ -34,8 +34,9 @@
 # Resolution: project = --project → session registry binding (a registry
 #          record whose pid is an ancestor of this process) → TF_SESSION_PROJECT
 #          → the work item the cwd is inside → refuse. Plan = --plan →
-#          chain.plan in the item's session record → the single open plan →
-#          refuse; read verbs fall back to the latest plan by number.
+#          chain.plan in the item's session record (a closed one yields to the
+#          single open plan) → the single open plan → refuse; read verbs fall
+#          back to the latest plan by number.
 # Exit:    0 ok / 1 lint or state refusal (malformed node, unknown value,
 #          unknown id, a plan already open, an illegal transition, a failing check)
 #          / 2 usage or resolution failure.
@@ -261,7 +262,7 @@ default_tier: standard
 <!-- plan:end board -->
 PLAN
   if [ "$JSON" -eq 1 ]; then jq -n --arg plan "$name" --arg path "work/$PROJECT/plans/$name" '{plan: $plan, path: $path}'
-  else echo "created work/$PROJECT/plans/$name"; fi
+  else echo "created work/$PROJECT/plans/$name — name it in later verbs: --plan $name"; fi
 }
 
 resolve_plan() {  # [write]: sets PLAN_DIR; a write verb never falls back to the latest plan and refuses a closed one
@@ -269,6 +270,13 @@ resolve_plan() {  # [write]: sets PLAN_DIR; a write verb never falls back to the
   if [ -z "$PLAN" ]; then
     rec="$ITEM/session-state.json"
     [ -f "$rec" ] && PLAN="$(jq -r '.chain.plan // empty' "$rec" 2>/dev/null)"
+    # A chain.plan left closed by an earlier chain yields to the open plan: one open → it; several → --plan.
+    if [ -n "$PLAN" ] && [ -f "$PLANS/$PLAN/plan.md" ] && [ "$(plan_status "$PLANS/$PLAN")" = closed ]; then
+      open="$(open_plans)"; count="$(printf '%s' "$open" | grep -c .)"
+      if [ "$count" -eq 1 ]; then PLAN="$open"
+      elif [ "$count" -gt 1 ]; then die 2 "chain.plan $PLAN is closed and work/$PROJECT has $count open plans; pass --plan"
+      fi
+    fi
   fi
   if [ -z "$PLAN" ]; then
     open="$(open_plans)"; count="$(printf '%s' "$open" | grep -c .)"
