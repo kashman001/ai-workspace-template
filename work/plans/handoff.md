@@ -6,6 +6,18 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 18 (2026-09-30): ticket 13 done — a closed chain.plan yields to the one open plan; rolled hands-off at 89 K, ahead of ticket 14
+
+1. Registered `seq=18`. Ticket 13 test-first: T6g–j (`plan.sh`, closed `chain.plan` + one open plan) and P5a–d (`session-loop.sh`, the s18 layout) red; old T6c asserted the bug and was rewritten to "an open chain.plan beats another open plan".
+2. Fix in `scripts/plan.sh` `resolve_plan` and the binding block of `scripts/session-loop.sh`: a record-sourced closed `chain.plan` rebinds to the single open plan; several open → exit 2 / `plan_invalid leg=ambiguous`; none open → binding kept (so `plan_closed` still fires); `--plan` never overridden. `plan.sh new` prints `--plan <name>` (T5k). Wording in both headers, `docs/plans.md` → Resolution, `docs/context-budget.md` → Plans.
+3. Suites: test-plan 243, test-session-loop 144, test-doc-consistency 17, test-template-version 9, test-check-ledger 29. Tier-2 note in `decisions.md` (refuse-and-name-`--plan` and plan.sh-writes-the-record rejected). Commit 9c60b69.
+4. Rolled over at 89 K: ticket 14 has four sub-items and is budgeted as its own session. Archived block 16.
+
+Suggested skills: `tdd` for ticket 14 (one failing test per sub-item in `scripts/tests/test-plan.sh`).
+
+Learnings:
+- `plan.sh note` stamps lines `- s<n> · <text>`; grep for `· <text>` in tests.
+
 # Session Handoff — 17 (2026-09-30): ticket 12 done — ledger lint catches a duplicated block, checkpoint runs the check; rolled hands-off at 94 K, ahead of ticket 13
 
 1. Registered `seq=17`. Ticket 12: fixtures for both s16 shapes added to `scripts/tests/test-check-ledger.py`. The splice into the purpose comment was already caught; the duplicate was not (red, 27/29).
@@ -17,16 +29,3 @@ Suggested skills: `tdd` for ticket 13 (failing test first in `scripts/tests/test
 
 Learnings:
 - `scripts/tests/test-plan.sh` and `test-session-loop.sh` are not executable; run them with `bash`.
-
-# Session Handoff — 16 (2026-09-27/30): ledger defects fixed; then, the dogfood plan having closed, ticket 11 done, L48 verdict, findings → tickets 12–15; rolled hands-off at WARN
-
-1. Registered `seq=16` (person restarted after the cap). `plan.sh status --project jev-integration`: `01-gated-integration` open, wave 1 of 3, 0/6 done, frontier `01-decision-note`; jev chain closed (`quit_plain`, 2026-09-25 22:23Z), no supervisor running. No `plan_closed` line, so ticket 11 stays open — launcher step 2 applied.
-2. Found the s15 redo had left its stale first pass in `work/jev-integration/handoff.md` (session-6 block twice, both 6→7 bridges; the stale one claimed session 6 never closed). Removed the stale copy; its one unique fact (two supervisor processes) folded into the kept bridge. Commit 5f35266.
-3. Found the s15 block of *this* ledger spliced into the header comment. Moved it out to its proper place above block 14; header restored.
-4. Both recorded under "Dogfood findings" in `decisions.md` as a candidate ticket 12 (ledger lint). Suites green: test-plan 238, test-session-loop 140, test-doc-consistency 17, test-template-version 9. Nothing pushed.
-5. Checkpointed (ac9e447); the user returned 2026-09-30 and asked to finish the remaining work. The dogfood plan had closed meanwhile (`plan_closed seq=17`, 2026-09-29; 18/18, 8 sessions, no split). Ticket 11 closed against that evidence; L48 verdict written (adopt as a plans-skill recipe, keep `wayfinder`); the 12 findings triaged into tickets 12 (ledger lint), 13 (default plan is the open one: plan.sh + session-loop), 14 (plan.sh ergonomics), 15 (docs/skill wording, incl. the L48 recipe). Status lines updated. Commit ecfac2e.
-6. Found `scripts/check-ledger.py` already exists and passes both ledgers; ticket 12 narrowed to fixtures for the two s16 shapes + the checkpoint skill step. Rolled over hands-off at WARN (~120K); the user exited.
-
-Learnings:
-- A ledger write that anchors on the first `# Session Handoff` match hits the header comment's example text; anchor on `-->` (end of the header) instead.
-- After any ledger write, `grep -c '^# Session Handoff'` against the expected count is a two-second check that would have caught both defects.

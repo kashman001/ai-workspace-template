@@ -3,6 +3,19 @@ PURPOSE: ARCHIVE of the ledger (handoff.md). Older "# Session Handoff"
 blocks, newest on top. Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 16 (2026-09-27/30): ledger defects fixed; then, the dogfood plan having closed, ticket 11 done, L48 verdict, findings → tickets 12–15; rolled hands-off at WARN
+
+1. Registered `seq=16` (person restarted after the cap). `plan.sh status --project jev-integration`: `01-gated-integration` open, wave 1 of 3, 0/6 done, frontier `01-decision-note`; jev chain closed (`quit_plain`, 2026-09-25 22:23Z), no supervisor running. No `plan_closed` line, so ticket 11 stays open — launcher step 2 applied.
+2. Found the s15 redo had left its stale first pass in `work/jev-integration/handoff.md` (session-6 block twice, both 6→7 bridges; the stale one claimed session 6 never closed). Removed the stale copy; its one unique fact (two supervisor processes) folded into the kept bridge. Commit 5f35266.
+3. Found the s15 block of *this* ledger spliced into the header comment. Moved it out to its proper place above block 14; header restored.
+4. Both recorded under "Dogfood findings" in `decisions.md` as a candidate ticket 12 (ledger lint). Suites green: test-plan 238, test-session-loop 140, test-doc-consistency 17, test-template-version 9. Nothing pushed.
+5. Checkpointed (ac9e447); the user returned 2026-09-30 and asked to finish the remaining work. The dogfood plan had closed meanwhile (`plan_closed seq=17`, 2026-09-29; 18/18, 8 sessions, no split). Ticket 11 closed against that evidence; L48 verdict written (adopt as a plans-skill recipe, keep `wayfinder`); the 12 findings triaged into tickets 12 (ledger lint), 13 (default plan is the open one: plan.sh + session-loop), 14 (plan.sh ergonomics), 15 (docs/skill wording, incl. the L48 recipe). Status lines updated. Commit ecfac2e.
+6. Found `scripts/check-ledger.py` already exists and passes both ledgers; ticket 12 narrowed to fixtures for the two s16 shapes + the checkpoint skill step. Rolled over hands-off at WARN (~120K); the user exited.
+
+Learnings:
+- A ledger write that anchors on the first `# Session Handoff` match hits the header comment's example text; anchor on `-->` (end of the header) instead.
+- After any ledger write, `grep -c '^# Session Handoff'` against the expected count is a two-second check that would have caught both defects.
+
 # Session Handoff — 15 (2026-09-25): ticket 11 started — the user chose `jev-integration` (integrate, gated on Jev access); plan `01-gated-integration` opened there (aec31e5); five dogfood findings recorded; chain cap reached
 
 1. Registered `seq=15`; `git fetch origin` — nothing landed on origin. Posed the ticket-11 question; the user chose (a) `work/jev-integration` and added the constraint: Jev active only where a person has Jev access.
