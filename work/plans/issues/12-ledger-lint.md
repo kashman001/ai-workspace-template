@@ -1,6 +1,6 @@
 # 12 — Ledger lint: catch corrupted `handoff.md` ledgers
 
-**What to build:** `scripts/check-ledger.sh <work/item/handoff.md>` exits non-zero when the PURPOSE header comment is not intact, a `# Session Handoff` header line repeats, or the first block header does not follow the closing `-->`. The checkpoint and session-rollover skills run it after writing the ledger. Source: dogfood findings 2026-09-27 (s16) in `decisions.md`.
+**What to build:** `scripts/check-ledger.py` already exists (M41, session-management-followups) and checks headings buried in the purpose comment, ordering, and archive continuity; `session-rollover` step 4 already runs it. Ticket 12 is only the gap: (1) reproduce both s16 defects as test fixtures (a block spliced into the purpose comment; a duplicated session block plus two versions of one bridge block) and confirm the checker fails each — extend it if the duplicate is not caught; (2) `skills/checkpoint/SKILL.md` runs it after the ledger write, as rollover does. Source: dogfood findings 2026-09-27 (s16) in `decisions.md`.
 
 **Blocked by:** 11
 
@@ -8,6 +8,6 @@
 
 **Spec:** findings only (no spec section)
 
-- [ ] Script plus tests (a suite under `scripts/tests/`), covering the three failure shapes and a clean ledger
-- [ ] Every `work/*/handoff.md` in the repo passes, or the failures are fixed
-- [ ] `skills/checkpoint/SKILL.md` and `skills/session-rollover/SKILL.md` name the check after the ledger write; doc-consistency stays green
+- [ ] Fixtures for both s16 shapes; `check-ledger.py` exits non-zero on each (extended if needed), clean ledger exits 0
+- [ ] `scripts/check-ledger.py` exits 0 over the whole repo
+- [ ] `skills/checkpoint/SKILL.md` names the check after the ledger write; doc-consistency stays green

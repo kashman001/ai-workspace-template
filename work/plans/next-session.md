@@ -8,68 +8,55 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > session history. Past-tense provenance lives in `handoff.md` (the ledger).
 > Convention: docs/work-directory-conventions.md.
 
-## Mission
+## Mission — tickets 12–15, hands-off
 
-Tickets 01–10 are `done`. Ticket **11** (dogfood) is **in progress on
-another item**: `work/jev-integration/plans/01-gated-integration` (opened
-2026-09-25, session 15) is the first real plan — fit note → a person approves
-(`hitl`) → spec + tickets → structural replan adding the implementation waves.
-That chain runs under jev-integration's supervisor, not this one. This item's
-remaining job is to **collect the findings and close 11**: what broke, what
-was slow, whether a rollover split happened or was shown unnecessary, and
-the L48 verdict (wayfinder as a plan template — waves 1–2 of that plan *are*
-a wayfinder).
+Tickets 01–11 are `done` (11 closed 2026-09-30; L48 verdict in
+`decisions.md`). What remains is fixing the dogfood findings, in order:
+**12** ledger lint gap → **13** default plan is the open one (a real bug in
+`plan.sh` and `session-loop.sh`) → **14** `plan.sh` ergonomics → **15** docs
+and skill wording (includes the L48 recipe). Nobody is watching: do not stop
+with a question; make the call, record it as a Tier-2 note.
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project plans` (manual restart;
-   expect `seq=17`).
-2. `scripts/plan.sh status --project jev-integration` and the "Dogfood
-   findings" list at the tail of `decisions.md` here. If the plan is not yet
-   closed (`plan_closed` not in `work/jev-integration/.session-loop.log`),
-   there is nothing to close yet: add any new finding from that item's
-   `handoff.md` top block to the list, commit, `checkpoint`. Sessions 15 and
-   16 already did this; do not repeat their findings. The jev chain itself
-   is closed (`quit_plain`) — it restarts only when a person runs
-   `scripts/session-loop.sh jev-integration --reopen` (or `--plan`); the
-   plans item never drives it.
-3. When it *is* closed: tick 11's boxes against the evidence (the log's
-   `plan_closed` line; a split or its absence in that plan's `## Replans`;
-   the findings list), write the L48 verdict as a Tier-2 note in
-   `decisions.md`, mark `issues/11-dogfood-first-real-plan.md` `done`, update
-   this `README.md` status line and the `work/README.md` row, then fix the
-   findings that are bugs under new tickets (12+) — note first, fix second,
-   suite third. `checkpoint`, not rollover. Candidate 12 is already named in
-   the findings: a ledger lint (header comment intact, `# Session Handoff`
-   headers unique, first block right after `-->`), after s15 produced two
-   ledger-write defects that s16 fixed by hand.
+1. `scripts/context-budget.sh register --project plans` (expect `seq=17`).
+2. Take the lowest open ticket under `issues/` (12 first). Per ticket: note
+   first (a failing test or fixture), fix second, suites third, then flip its
+   `Status:` to `done` with date + session, tick its boxes, commit with a
+   `Decision:` trailer. `record --label` after each ticket.
+3. Budget: one ticket per session is the realistic size for 13 and 14; 12 and
+   15 are small. At WARN, roll over `--loop-mode handsoff`.
+4. After 15: README status line ("tickets 01–15 done"), `work/README.md` row,
+   then `checkpoint` — no successor; the item is finished.
 
 ## Read these, in order (keep it lean)
 
-1. `issues/11-dogfood-first-real-plan.md`; `decisions.md` tail (the findings).
-2. `work/jev-integration/handoff.md` top block; `work/jev-integration/plans/01-gated-integration/plan.md` (`## Replans`, board).
-3. `skills/plans/SKILL.md` only if a finding needs a fix.
+1. The ticket you are on (`issues/NN-*.md`) — it names its sources.
+2. The finding it cites in `decisions.md` (grep the session tag, e.g. `s18`).
+3. Only the code the ticket touches: `scripts/plan.sh`, `scripts/session-loop.sh`,
+   `scripts/check-ledger.py`, `skills/plans/SKILL.md`, `docs/plans.md`, and
+   their suites under `scripts/tests/`.
 
 ## Do NOT reload
 
-- `concept.md`, `seams.md`, the grill, `spec.md`, tickets 01–10, `handoff.md`
-  beyond the top block.
-- `plan.sh`, `session-loop.sh`, the skills, `docs/plans.md` — built and green;
-  a fix comes only under a ticket that a finding opened.
+- `concept.md`, `seams.md`, `spec.md`, tickets 01–11, `handoff.md` beyond the
+  top block, anything under `work/jev-integration/` (its own plan
+  `02-follow-on` runs under its own supervisor; never touch it from here).
 
 ## Still binding
 
 - No concrete model name anywhere. Nothing pushed to origin — report how far
   ahead main is.
-- `test-plan.sh` (238), `test-session-loop.sh` (140),
-  `test-doc-consistency.sh` (17), `test-template-version.sh` (9) stay green.
+- Suites stay green: `scripts/tests/test-plan.sh` (238),
+  `test-session-loop.sh` (140), `test-doc-consistency.sh` (17),
+  `test-template-version.sh` (9); counts rise only by tests you add.
 - Plan vocabulary says "work item", never "worktree".
-- `plan.sh` verbs need `--project jev-integration` from a session bound here.
+- After any ledger write: `scripts/check-ledger.py work/plans` exits 0.
+- An uncommitted edit to `work/jev-integration/next-session.md` belongs to
+  that item's session; never stage it (`git add work/plans …` only).
 
 ## State snapshot
 
-Branch `main`, clean after this session's commits; nothing pushed (main is
-60+ commits ahead of `origin/main`). Tickets: 01–10 `done`; 11 in progress
-(plan open in jev-integration, frontier `01-decision-note`, 0/6 done, jev
-chain closed since 2026-09-25). Plans chain: seq 16, manual restarts.
-`TEMPLATE_VERSION` = 2026-09-24. Ledger TOP block = session 16.
+Branch `main`; nothing pushed. Tickets 01–11 `done`; 12–15
+`ready-for-agent`. Ledger TOP block = session 16. `TEMPLATE_VERSION` =
+2026-09-24 (bump only if a ticket changes shipped template files).
