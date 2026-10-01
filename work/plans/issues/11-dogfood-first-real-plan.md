@@ -4,13 +4,13 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent (in progress since 2026-09-25, session 15 — plan `work/jev-integration/plans/01-gated-integration` opened; findings accrue in `decisions.md`)
+**Status:** done (2026-09-30, plans session 16 — plan `jev-integration/plans/01-gated-integration` closed 18/18; fixes split into tickets 12–15)
 
 **Spec:** S1–S36 (verification)
 
-- [ ] Chain ends with verdict plan_closed at least once
-- [ ] A rollover split of an overrunning node happened, or was shown unnecessary
-- [ ] Findings appended to `work/plans/decisions.md`; README status line of this item updated
+- [x] Chain ends with verdict plan_closed at least once — `work/jev-integration/.session-loop.log` 2026-09-29T04:35:30Z `verdict=plan_closed seq=17 plan=01-gated-integration`
+- [x] A rollover split of an overrunning node happened, or was shown unnecessary — shown unnecessary: 18 nodes over 8 sessions, every node fit one session (plan 01 `## Replans` has structural and local replans, no split); sizing lesson recorded (~60K harness baseline)
+- [x] Findings appended to `work/plans/decisions.md`; README status line of this item updated
 
 ## Comments
 
