@@ -925,6 +925,27 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L48</span> Wayfinder could emit a plan instead of a prose map
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills · wayfinder · plans</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/plans/seams.md</code> rates <code>wayfinder</code> as "wrap: a decision
+      plan is a wayfinder map" (map = <code>plan.md</code>, decision tickets = <code>hitl</code> nodes, one per session).
+      Session 2 of <code>work/plans</code> settled (2026-09-23, <code>decisions.md</code> → "Wayfinder coexists untouched in
+      v1") that wayfinder is not edited until plans have run a real item; the mapping is documented in
+      <code>docs/plans.md</code> only.</p>
+    <p><span class="k">Impact</span> — two ways to plan multi-session decision work coexist (wayfinder map vs. plan) with
+      hand-maintained frontier on one side and <code>plan.sh</code> on the other.</p>
+    <p><span class="k">Fix</span> — after the first real plan closes: make wayfinder a plan template (its map becomes
+      <code>plan.md</code>, its decision tickets become <code>hitl</code> nodes), or retire it in favour of the plans skill.
+      Owner: the <code>work/plans</code> item's follow-up.</p>
+    <p><span class="fix">Fixed:</span> verdict (2026-09-30, <code>work/plans</code> ticket 15, <code>8af5dd5</code>): adopt as a
+      <em>recipe</em>, keep the <code>wayfinder</code> skill. <code>skills/plans/SKILL.md</code> gained "Create a plan before a spec
+      exists" (decision note &rarr; <code>hitl</code> approval &rarr; spec + tickets &rarr; structural replan at the join);
+      the wayfinder paragraph in <code>docs/plans.md</code> records the verdict. Evidence: dogfood plan
+      <code>work/jev-integration/plans/01-gated-integration</code> closed 18/18. Rationale: <code>work/plans/decisions.md</code>
+      &rarr; "2026-09-30 &mdash; L48 verdict".</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L47</span> Counter-import script slated for retirement, but downstream workspaces still need it to migrate
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/import-session-seq.sh</span></h3>
     <p><span class="k">Evidence:</span> the script header said "retired after cutover" and ticket 10 of
