@@ -34,7 +34,7 @@ plain files, documented for downloaders).
 
 ## Success criteria
 
-**Status (2026-09-30, session 16):** tickets 01–11 `done` (dogfood plan closed 18/18 in jev-integration; L48 verdict: adopt as a recipe); fixes from the dogfood open as tickets 12–15.
+**Status (2026-09-30, session 19):** tickets 01–15 done — finished. Dogfood plan closed 18/18 in jev-integration; L48 verdict adopted as a recipe in the `plans` skill; dogfood fixes landed as tickets 12–15.
 
 **Earlier status (2026-09-23, session 2): verdict = BUILD** — format + `plan.sh` state tooling + the `chain.plan` loop hook, no runner. All decisions settled in `decisions.md`; `concept.md` written; `spec.md` and `issues/` follow via `to-spec` / `to-tickets`.
 

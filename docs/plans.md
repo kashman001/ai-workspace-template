@@ -31,8 +31,16 @@ blocked n, dropped n, sessions n.` then `Frontier: <ids | none (<id> doing)>.
 Remaining: r of t — wave n: <id status, …>.` Markers are added by hand and
 never invented (convention: `docs/work-directory-conventions.md` →
 "Generated blocks").
-One plan is open per item at a time; a plan closes in place (`status: closed`)
-and the next one takes the next number, so "latest" is a directory listing.
+One plan is open per item at a time; a plan closes in place (`status: closed`,
+a hand edit of `plan.md`, made as the plan's last write) and the next one
+takes the next number, so "latest" is a directory listing.
+
+**Sizing.** A node is sized to one session, and a session has less room than
+the WARN threshold suggests: the harness baseline (system prompt, tool
+schemas, skill list) takes ≈60K tokens before any work, so a node gets
+roughly 60K of real budget below WARN. In the dogfood, one standard-tier seam
+node (helper + tests + skill doc) per session was the realistic size; a
+launcher should not list two such nodes as "do both".
 
 **Node frontmatter** — flat YAML, one `key: value` per line, `# comment`
 allowed after two or more spaces (a `#` glued to text, as in a `grep '^##'`
@@ -212,8 +220,10 @@ is a plan whose nodes are all decisions: the map is `plan.md`, each decision
 ticket is a `kind: hitl` node, and the wave's reconcile node is the session
 that records the answer. The two coexist untouched for now — wayfinder for a
 chain of decisions a person makes, a plan for work an agent performs against
-checks — and wayfinder becomes a plan template (or retires) only after the
-first real plan has closed (backlog card L48).
+checks. The first real plan settled card L48: a single decision that gates
+delivery runs as a plan (the recipe "Create a plan before a spec exists" in
+`skills/plans/SKILL.md`); a map of several decisions with nothing to build
+yet stays a wayfinder.
 
 ## Per runtime
 

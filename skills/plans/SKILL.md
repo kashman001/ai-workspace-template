@@ -20,7 +20,10 @@ what a replan may touch. Format, verbs, check rules, tiers, replan authority:
 `docs/plans.md` — read it once before the first procedure; nothing below
 restates it. Every write goes through a `plan.sh` verb. The hand edits are
 prose (Goal, Acceptance, `plan.md` sections) and the two file moves the split
-and a same-wave `add` need (below); `status` is never hand-written.
+and a same-wave `add` need (below); a node's `status` is never hand-written.
+The one hand-written `status` is the plan's own: closing a plan is a hand edit
+of `status: closed` in `plan.md`, made as the plan's last write (after the
+final reconcile's `done` and `sync`).
 
 Every verb below takes `--project <item>` unless the session is bound to the
 item (`context-budget.sh register --project <item>`); a session bound to one
@@ -43,8 +46,14 @@ with `plan.sh check` silent.
    `scripts/plan.sh add <slug> --wave <n> --title "Ticket NN — <title>"
    --blocked-by <ids>` — the ticket's `Blocked by:` mapped to the node ids you
    have just created (keep a ticket→node list as you go; the numbers differ).
-   `--kind hitl` for a step only a person can do; `--tier`/`--leaf`/`--check`/
-   `--loop`/`--parallel` when the ticket says so. Then close the wave:
+   `--blocked-by` takes full ids, not numbers (`--blocked-by
+   01-decision-note,02-spike`). `--kind hitl` for a step only a person can
+   do; a ticket that needs a person, a key, spend or a particular machine
+   gets a `hitl` node in front of it (the ticket's node `--blocked-by` the
+   hitl node), so a hands-off chain stops at the question instead of failing
+   on it. `--tier`/`--leaf`/`--check`/`--loop`/`--parallel` when the ticket
+   says so; a `--check` runs from the work item directory, so a workspace
+   script is `"$WORKSPACE_ROOT/scripts/<name>.sh"`. Then close the wave:
    `scripts/plan.sh add reconcile-w<n> --wave <n> --kind reconcile
    --blocked-by <every work id in the wave> --title "Join wave n"`.
 4. **Body.** Into each node file, under `## Goal`: a `Ticket: issues/NN-….md`
@@ -64,7 +73,10 @@ with `plan.sh check` silent.
    it; `docs/work-directory-conventions.md` → "Generated blocks"), then
    `scripts/plan.sh sync`. `status`, `frontier` and `graph` should read as the
    tickets did; a chain binds to the plan with `session-loop.sh <item> --plan
-   <slug>`.
+   <slug>`. When the plan's item is not this session's, another session may
+   be running it on the same checkout: re-read `git log -1` and the files you
+   will rewrite (its launcher, its ledger) right before writing, not at the
+   start of the session.
 
 Done when `check` is silent, `frontier` names the first ready node, and the
 board and the launcher's Position block agree with `status`.
@@ -84,7 +96,10 @@ tier, never in a subagent.
    transition, so `add` a follow-up (Replan, rule 1) and log the finding on
    the reconcile node.
 3. **Record.** Each fork the wave settled → a Tier-2 note (`decision-log`
-   skill); each discovery not yet a node → `scripts/plan.sh note "<text>"`.
+   skill), unless the node's output already is one (then this step is a
+   no-op); each discovery not yet a node → `scripts/plan.sh note "<text>"`.
+   A node whose Goal has a `Ticket: issues/NN-….md` line: flip that ticket's
+   `Status:` to `resolved` (or `done`, where the item's tickets use it).
 4. **Replan** within authority — the "Replan" procedure below, every change
    as a `## Replans` line in `plan.md`.
 5. Tick the reconcile node's Acceptance boxes (verified on disk · decisions
@@ -92,6 +107,31 @@ tier, never in a subagent.
    verdict, then `scripts/plan.sh check` and `scripts/plan.sh done <id>`.
    `done` does not look at blockers, so anything the replan added is a node
    for the next wave, not a new blocker of the node being closed.
+6. `scripts/plan.sh sync` after the `done`. The board in `plan.md` and the
+   launcher's Position block are rendered copies, not live views: the next
+   session reads the launcher, so a `done` without `sync` hands it a stale
+   position. When the next frontier is a `hitl` node, the launcher's prose
+   carries the question itself and how to answer it (`plan.sh done <id> --by
+   human`, or `drop`) — the person reads the launcher, not the node file.
+
+## Create a plan before a spec exists
+
+For an effort that starts with an open decision (the wayfinder shape) and
+should run to delivery on one board. Ran end to end in
+`jev-integration/plans/01-gated-integration` (decisions.md, L48 verdict).
+
+1. **Wave 1:** one `work` node that drafts the decision as a Tier-2 note
+   (options, a recommendation), then the wave's reconcile node.
+2. **Wave 2:** one `hitl` node — the person approves, amends or rejects the
+   note (`done --by human` / `drop`) — then its reconcile node, which writes
+   the spec and tickets from the approved note (`to-spec`, `to-tickets`).
+3. **The join is a structural replan:** the wave-2 reconcile node adds the
+   delivery waves from the tickets ("Create a plan" steps 2–6, from `add`),
+   so the plan needs `replan: structural` from the start.
+
+A chain of decisions with nothing to build yet stays a wayfinder map
+(`skills/wayfinder/SKILL.md`); this recipe is for one decision that gates
+delivery.
 
 ## Replan
 

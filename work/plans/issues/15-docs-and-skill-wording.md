@@ -4,9 +4,9 @@
 
 **Blocked by:** 14
 
-**Status:** ready-for-agent
+**Status:** done (2026-09-30, s19)
 
 **Spec:** findings only
 
-- [ ] Each listed point present (grep-checkable phrase per point)
-- [ ] `test-doc-consistency.sh` green
+- [x] Each listed point present (grep-checkable phrase per point)
+- [x] `test-doc-consistency.sh` green
