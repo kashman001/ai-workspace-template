@@ -35,3 +35,10 @@ would make rows from different runtimes incomparable. Commit `0e489b5`.
 **Rejected:** trimming the Language/plan glossary — the ticket names it as must-keep; dropping the skill list entirely for a pointer to `skills/` — an agent picks skills from the list without being prompted, so it stays as one-liners.
 **Blast radius:** CONTEXT.md (all four entrypoint symlinks)
 **Promote?:** no
+
+## 2026-10-07 — No vector store, no MMR re-ranking, no numeric decay scoring (D5)
+**Chose:** the template won't adopt hybrid vector retrieval, MMR re-ranking, or Ebbinghaus-style numeric decay scores for its knowledge stores.
+**Because:** each needs a database or embedding service, which breaks the plain-files, any-runtime property; curated indexes ("summaries up, pointers down", `MEMORY.md`, `docs/README.md`) meet the need at this scale; M43's `Last confirmed` date plus checkpoint review sweep is the lightweight substitute for decay.
+**Rejected:** adopting them — breaks plain files and agent-agnostic access; shipping them as an optional add-on — maintenance cost for unproven value.
+**Blast radius:** memory/retrieval design; docs/operational-knowledge.md, skills/checkpoint, skills/decision-log
+**Promote?:** done → ADR-0013

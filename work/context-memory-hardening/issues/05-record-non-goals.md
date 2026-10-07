@@ -24,15 +24,21 @@ D-cards resolve with a `Decided:` line instead of `Fixed:` and status
 
 **Blocked by:** 03 (the ADR points to M43's implemented mechanism).
 
-**Status:** todo
+**Status:** done
 
-- [ ] Tier-2 note in `work/context-memory-hardening/decisions.md`, then ADR
+- [x] Tier-2 note in `work/context-memory-hardening/decisions.md`, then ADR
       `docs/adr/NNNN-…` (next free number) and an index line
-- [ ] D5 moved to the archive with status Decided and a `Decided:` line;
+- [x] D5 moved to the archive with status Decided and a `Decided:` line;
       scorecard Decided +1
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+
+**Done (2026-10-07, session 3).** ADR-0013 promoted from the Tier-2 note
+(flipped to `done → ADR-0013`), indexed in `docs/adr/README.md`. D5 archived
+under Decisions with a `Decided:` line. The template "badge → Resolved /
+`Fixed:`" box is met by the D-card shape (status Decided, `Decided:` line),
+as the ticket's own note says.

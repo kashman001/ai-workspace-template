@@ -1809,6 +1809,20 @@
   <h2>Decisions</h2>
 
   <div class="find dec resolved">
+    <h3><span class="id">D5</span> Record non-goals: no vector store, no MMR re-ranking, no numeric decay scoring
+      <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">docs/adr · memory design</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C7/C8: the evaluated framework recommends hybrid vector+keyword+graph retrieval with MMR and Ebbinghaus-style decay scores.</p>
+    <p><span class="k">Impact</span> — Without a recorded decision, future reviews will keep re-proposing them.</p>
+    <p><span class="k">Fix</span> — Write an ADR (via <code>decision-log</code> promote) stating these are out of scope: incompatible with plain-files + agent-agnostic access, and curated indexes (C11) already cover the need; M43 is the chosen lightweight substitute for decay. Owner: <code>work/context-memory-hardening</code> ticket 05.</p>
+    <p><span class="fix">Decided:</span> 2026-10-07 (<code>work/context-memory-hardening</code> ticket 05, commit
+      &ldquo;Fix D5&rdquo;): ADR-0013 (<code>docs/adr/0013-no-vector-store-mmr-or-decay-scoring.md</code>) records that the template
+      won't adopt hybrid vector retrieval, MMR re-ranking, or numeric decay scores. They need a database or embedding
+      service (breaks plain-files, any-runtime access), and curated indexes already meet the need. M43's
+      <code>Last confirmed</code> dates and checkpoint review sweep are the substitute for decay. Rejected: adopting
+      them; shipping them as an optional add-on.</p>
+  </div>
+
+  <div class="find dec resolved">
     <h3><span class="id">D1</span> Four coding principles duplicated: <code>CONTEXT.md</code> vs <code>global.md</code>
       <span class="sev dec">Decision</span><span class="status decided">Decided</span><span class="area">CONTEXT.md</span></h3>
     <p><span class="fix">Decided:</span> <strong>keep</strong> the principles in <code>CONTEXT.md</code>. A public

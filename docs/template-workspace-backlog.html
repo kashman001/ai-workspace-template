@@ -75,9 +75,9 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">98</div><div class="lab">Resolved</div></div>
-    <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
+    <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
   </div>
@@ -147,14 +147,6 @@
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
-
-  <div class="find dec">
-    <h3><span class="id">D5</span> Record non-goals: no vector store, no MMR re-ranking, no numeric decay scoring
-      <span class="sev dec">Decision</span><span class="status open">Open</span><span class="area">docs/adr · memory design</span></h3>
-    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C7/C8: the evaluated framework recommends hybrid vector+keyword+graph retrieval with MMR and Ebbinghaus-style decay scores.</p>
-    <p><span class="k">Impact</span> — Without a recorded decision, future reviews will keep re-proposing them.</p>
-    <p><span class="k">Fix</span> — Write an ADR (via <code>decision-log</code> promote) stating these are out of scope: incompatible with plain-files + agent-agnostic access, and curated indexes (C11) already cover the need; M43 is the chosen lightweight substitute for decay. Owner: <code>work/context-memory-hardening</code> ticket 05.</p>
-  </div>
 
   <!-- ========================= STRENGTHS ========================= -->
   <h2 class="good">Strengths (keep these)</h2>
@@ -275,6 +267,7 @@
       <tr><td>2026-10-07</td><td>Resolved <strong>L50</strong> (archived; <code>work/context-memory-hardening/</code> ticket 02): ledger rows carry <code>cache_read_share</code> from the runtime's own cache count (Claude, Codex, OpenCode; <code>null</code> elsewhere), shown as <code>cache=NN%</code> in <code>check</code>/<code>record</code>. Scorecard now 3/96/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>M43</strong> (archived; <code>work/context-memory-hardening/</code> ticket 03): <code>docs/operational-knowledge.md</code> entries carry git-derived <code>Last confirmed</code> dates with a 6-month review age; <code>checkpoint</code> and <code>decision-log</code> classify a new entry ADD / UPDATE / SUPERSEDE / NOOP before writing, and <code>checkpoint</code> lists stale entries for a person. Scorecard now 2/97/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L51</strong> (archived; <code>work/context-memory-hardening/</code> ticket 04): <code>CONTEXT.md</code> trimmed from 20,656 to 15,206 bytes by moving detail behind pointers to the docs that already hold it; every must-see rule stays inline. Scorecard now 1/98/4/0/6.</td></tr>
+      <tr><td>2026-10-07</td><td>Decided <strong>D5</strong> (archived; <code>work/context-memory-hardening/</code> ticket 05): ADR-0013 — no vector store, no MMR re-ranking, no numeric decay scoring; M43's last-confirmed dates are the substitute. All five context/memory-hardening cards closed. Scorecard now 0/98/5/0/6.</td></tr>
 </tbody>
   </table>
 

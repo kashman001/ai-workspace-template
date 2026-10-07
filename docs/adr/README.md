@@ -65,3 +65,4 @@ keep it here.
 - [ADR-0010: One session-state record per work item, with three writers and process liveness as the only ownership test](0010-one-session-record-three-writers.md) — accepted 2026-09-21
 - [ADR-0011: Every load-bearing session step is a script that refuses with a reason code](0011-mechanical-gates-and-reason-codes.md) — accepted 2026-09-21
 - [ADR-0012: Runtime contract — one adapter table, a probe-gated support matrix, fleet machinery isolated](0012-runtime-contract-adapter-table.md) — accepted 2026-09-21
+- [ADR-0013: No vector store, no MMR re-ranking, no numeric decay scoring](0013-no-vector-store-mmr-or-decay-scoring.md) — accepted 2026-10-07
