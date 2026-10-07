@@ -939,6 +939,21 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L51</span> CONTEXT.md sits at the top of its own Z0 always-loaded budget
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · docs/zoom-model.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C4: <code>CONTEXT.md</code> is 20.5&nbsp;KB (~5K tokens), the ceiling of the 2&ndash;5K Z0 band in <code>docs/zoom-model.md</code>; with the global <code>CLAUDE.md</code> and <code>MEMORY.md</code> the always-loaded set is ~7K tokens before plugins.</p>
+    <p><span class="k">Impact</span> — Every session in every runtime pays for it; further additions push Z0 over budget.</p>
+    <p><span class="k">Fix</span> — Move detail that already has a home doc (Context Budget detail, vendored-skills paragraph, long skill one-liners) behind pointers; target ≤ ~4K tokens; preserve the onboarding canary and every rule an agent must see unprompted. Doc-consistency suite stays green. Owner: <code>work/context-memory-hardening</code> ticket 04.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-07 (<code>work/context-memory-hardening</code> ticket 04, commit
+      &ldquo;Fix L51&rdquo;): <code>CONTEXT.md</code> cut from 20,656 to 15,206 bytes (~3.8K tokens). Workspace Skills,
+      Context Budget, Tool &amp; Context Loading, Service Access, and graphify now point to their home docs
+      (<code>skills/vendored-skills.md</code>, <code>docs/context-budget.md</code>, <code>docs/mcp-setup.md</code>,
+      <code>docs/service-access.md</code>, <code>docs/recommended-tooling.md</code> &sect;5). The canary, symlink warning,
+      Agent Context Discipline, decision tiers, plan glossary, Template Backlog rule, and the
+      <code>ROLLOVER_RELAUNCH=auto</code> authorization stay inline.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L50</span> Context-budget ledger does not report prompt-cache hit ratio
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
     <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: <code>claude_measure()</code> (<code>scripts/context-budget.sh</code> ~l.264) already reads <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code> but only sums them; the ledger row (~l.896) has no cache field.</p>

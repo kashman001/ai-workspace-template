@@ -28,3 +28,10 @@ would make rows from different runtimes incomparable. Commit `0e489b5`.
 **Rejected:** copying the rule into both skills — drift; a `scripts/stale-knowledge.sh` with a suite — speculative for a one-liner; a per-entry `Status:` field for retirement — heavier than one added line.
 **Blast radius:** skills/checkpoint, skills/decision-log, docs/operational-knowledge.md
 **Promote?:** no
+
+## 2026-10-07 — Which CONTEXT.md sections to cut for L51
+**Chose:** compress five sections (Workspace Skills, Service Access, Tool & Context Loading, Context Budget, graphify) to pointers plus the rules an agent must act on unprompted; leave every other section byte-identical.
+**Because:** those five held most of the detail that already had a home doc, and the cut reached 15.2 KB without touching the must-keep list.
+**Rejected:** trimming the Language/plan glossary — the ticket names it as must-keep; dropping the skill list entirely for a pointer to `skills/` — an agent picks skills from the list without being prompted, so it stays as one-liners.
+**Blast radius:** CONTEXT.md (all four entrypoint symlinks)
+**Promote?:** no

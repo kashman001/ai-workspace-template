@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">97</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">98</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -142,14 +142,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L51</span> CONTEXT.md sits at the top of its own Z0 always-loaded budget
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">CONTEXT.md · docs/zoom-model.md</span></h3>
-    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C4: <code>CONTEXT.md</code> is 20.5&nbsp;KB (~5K tokens), the ceiling of the 2&ndash;5K Z0 band in <code>docs/zoom-model.md</code>; with the global <code>CLAUDE.md</code> and <code>MEMORY.md</code> the always-loaded set is ~7K tokens before plugins.</p>
-    <p><span class="k">Impact</span> — Every session in every runtime pays for it; further additions push Z0 over budget.</p>
-    <p><span class="k">Fix</span> — Move detail that already has a home doc (Context Budget detail, vendored-skills paragraph, long skill one-liners) behind pointers; target ≤ ~4K tokens; preserve the onboarding canary and every rule an agent must see unprompted. Doc-consistency suite stays green. Owner: <code>work/context-memory-hardening</code> ticket 04.</p>
-  </div>
 
 
 
@@ -282,6 +274,7 @@
       <tr><td>2026-10-07</td><td>Resolved <strong>L49</strong> (archived; <code>work/context-memory-hardening/</code> ticket 01): &ldquo;Cache the prefix, vary the tail&rdquo; rule in <code>docs/context-budget.md</code> with a <code>CONTEXT.md</code> pointer, a date-line warning in <code>check-workspace-structure.sh</code> (new <code>test-context-prefix-stability.sh</code>), and a per-runtime hook-output audit (no change needed). Scorecard now 4/95/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L50</strong> (archived; <code>work/context-memory-hardening/</code> ticket 02): ledger rows carry <code>cache_read_share</code> from the runtime's own cache count (Claude, Codex, OpenCode; <code>null</code> elsewhere), shown as <code>cache=NN%</code> in <code>check</code>/<code>record</code>. Scorecard now 3/96/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>M43</strong> (archived; <code>work/context-memory-hardening/</code> ticket 03): <code>docs/operational-knowledge.md</code> entries carry git-derived <code>Last confirmed</code> dates with a 6-month review age; <code>checkpoint</code> and <code>decision-log</code> classify a new entry ADD / UPDATE / SUPERSEDE / NOOP before writing, and <code>checkpoint</code> lists stale entries for a person. Scorecard now 2/97/4/0/6.</td></tr>
+      <tr><td>2026-10-07</td><td>Resolved <strong>L51</strong> (archived; <code>work/context-memory-hardening/</code> ticket 04): <code>CONTEXT.md</code> trimmed from 20,656 to 15,206 bytes by moving detail behind pointers to the docs that already hold it; every must-see rule stays inline. Scorecard now 1/98/4/0/6.</td></tr>
 </tbody>
   </table>
 

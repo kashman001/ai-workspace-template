@@ -133,94 +133,45 @@ Driven by the **decision-log** skill (`skills/decision-log/SKILL.md`); Claude Co
 
 ## Workspace Skills
 
-Vendor-neutral skills live under `skills/<name>/SKILL.md` — any runtime can read
-them (Codex/Gemini/OpenCode via this file; Claude Code also gets slash-command
-shortcuts under `.claude/commands/`). One line each below — **open the skill's
-`SKILL.md` for the full workflow before acting on it**; that file carries the
-details omitted here. Adding a team capability (script vs. skill vs. agent
-profile vs. runbook, plus the two wiring steps): `docs/workspace-structure.md`
-→ "Authoring a Team Capability". Skills tagged **(anyone)** are safe for
-non-engineers to drive conversationally (see `docs/for-non-engineers.md`);
-untagged skills assume an engineering operator.
+Vendor-neutral skills live under `skills/<name>/SKILL.md`; any runtime can
+read them, and Claude Code also gets `/` shortcuts from `.claude/commands/`.
+**Open a skill's `SKILL.md` before acting on it** — the one-liners below are
+for picking a skill, not for running it. *(anyone)* marks skills safe for
+non-engineers to drive (`docs/for-non-engineers.md`). Adding a capability:
+`docs/workspace-structure.md` → "Authoring a Team Capability".
 
-- **checkpoint** — session-boundary wrap-up: reconcile backlog/memory/docs,
-  write a hand-off doc, emit a catch-up prompt for the next session. On a
-  context-budget WARN/STOP, `session-rollover` takes precedence (measurement
-  wins). `/checkpoint [next-focus]`
-- **session-rollover** — deliberate, pruned handoff to a fresh session when the
-  context budget hits WARN/STOP, instead of letting automatic compaction decide
-  what survives (see **Context Budget** below). `/session-rollover [reason]`
-- **create-work-item** *(anyone)* — scaffold a `work/<project>/` directory
-  (README + launcher + ledger) when starting multi-session work; not for
-  one-shot tasks. `/create-work-item <name>`
-- **decision-log** *(anyone)* — capture the *why* behind a decision per the
-  three-tier scheme above. `/decision <what + why + rejected>` (or
-  `/decision promote <note>`)
-- **design-for-testability** — advisory design-time interrogation alongside
-  grill/spec/ADR work: how will we test this, how does it fail, what is
-  observable, what is the cheapest proving check; answers land in the spec's
-  `## Testability`, the ADR's Consequences, or `verification.md`. Not a gate.
-  `/design-for-testability [effort or design]`
-- **doc-review** *(anyone)* — multi-perspective review of a technical
-  document: audience gate first, six independent reviewer subagents, findings
-  synthesized into prioritized recommendations. `/doc-review <path>`
-- **onboard-repo** — bring a repo into the workspace: registry entry, graphify
-  index, committed repo-context docs. `/onboard-repo <repo-name> [repo-path]`
-- **plans** — drive a work item's plan where `plan.sh` cannot decide: create
-  one from a spec or tickets, run a reconcile node (join, verify on disk,
-  record, replan), replan within authority, dispatch a subagent onto one node
-  with the prompt template. `/plan <create|reconcile|replan> [args]`
-- **research-wave** — research several subjects in parallel, then verify each
-  result with an independent fact-checker before the claims are published or
-  presented. User-invoked only. `/research-wave <subjects>`
-- **rlm** — answer a query over a context too large to read into chat
-  (persistent Python REPL + cheap leaf LLM over slices; good for counting,
-  per-item classification, whole-corpus summaries). `/rlm context=<path> query=<question>`
-- **to-spec** *(anyone)* — synthesize the current conversation into an effort
-  spec at `work/<effort>/spec.md`, per the spec conventions
-  (`docs/agents/issue-tracker.md`). `/to-spec [effort]`
-- **to-tickets** — break a plan/spec/conversation into tracer-bullet tickets
-  with blocking edges under `work/<effort>/issues/`. `/to-tickets [source]`
-- **triage** — move issues through the triage state machine: categorise,
-  verify, write agent-ready briefs. `/triage [request]`
-- **wayfinder** — plan work too big for one session as a map of decision
-  tickets, resolved one per session. User-invoked only. `/wayfinder [map path or ticket]`
-- **writing-for-agents** — style guide for any document an agent consumes;
-  consult before writing or reworking anything under `skills/`. Model-invoked
-  (no slash command).
+- **checkpoint** — session-boundary wrap-up and catch-up prompt (the stop door). `/checkpoint`
+- **session-rollover** — pruned handoff to a fresh session at budget WARN/STOP; takes precedence over checkpoint then. `/session-rollover`
+- **create-work-item** *(anyone)* — scaffold `work/<project>/` for multi-session work. `/create-work-item <name>`
+- **decision-log** *(anyone)* — record the *why* per the tiers above. `/decision`
+- **design-for-testability** — advisory: how will we test this, how does it fail. `/design-for-testability`
+- **doc-review** *(anyone)* — six-reviewer critique of a document. `/doc-review <path>`
+- **onboard-repo** — registry entry, graphify index, repo-context docs. `/onboard-repo <repo>`
+- **plans** — create, reconcile, or replan a work item's plan. `/plan`
+- **research-wave** — parallel research, each result fact-checked; user-invoked only. `/research-wave`
+- **rlm** — answer a query over a context too large to read into chat. `/rlm`
+- **to-spec** *(anyone)* / **to-tickets** — conversation → spec / tickets under `work/<effort>/`. `/to-spec`, `/to-tickets`
+- **triage** — move issues through the triage state machine. `/triage`
+- **wayfinder** — plan too-big work as decision tickets, one per session; user-invoked only. `/wayfinder`
+- **writing-for-agents** — style guide; consult before editing anything under `skills/`.
 
-**Vendored engineering set (Matt Pocock, MIT)** — the full curated skill set
-from `github.com/mattpocock/skills` ships in `skills/` alongside the above:
-`tdd`, `grill-with-docs`/`grill-me`/`grilling`, `diagnosing-bugs`,
-`domain-modeling`, `codebase-design`, `implement`, `code-review`,
-`improve-codebase-architecture`, `prototype`, `research`,
-`resolving-merge-conflicts`, `wizard`, `ask-matt`, `handoff`, `teach`,
-`to-questionnaire`, `wait-what`, `setup-matt-pocock-skills`,
-`git-guardrails-claude-code`, `setup-pre-commit` (and the adapted
-`to-spec`/`to-tickets`/`triage`/`wayfinder`/`writing-for-agents` above).
-One-liners, slash-command
-map, refresh workflow (`scripts/sync-vendored-skills.sh`), and license:
+**Vendored engineering set** (Matt Pocock, MIT) — `tdd`, `grill-with-docs`,
+`diagnosing-bugs`, `implement`, `code-review` and the rest also ship in
+`skills/`; one-liners, slash map, refresh, and license:
 `skills/vendored-skills.md`. Run `setup-matt-pocock-skills` once per repo
 before the tracker-dependent ones.
 
 ## Service Access
 
-External services are documented in `docs/service-access.md`. MCP setup is
-documented in `docs/mcp-setup.md`. Credentials live in the OS keychain —
-never in tracked files or `.env`.
-
-**GitHub auth has one exception.** The `gh` CLI login is the path for every
-GitHub repo — unless one machine carries two GitHub identities, in which case a
-single repo can be given its own fine-grained token plus a path-scoped git
-credential helper, so pushes to it stop prompting. Optional, macOS-only, and off
-by default: `scripts/setup-github-repo-access.sh --owner <o> --repo <r>` wires
-it, `docs/service-access.md` → "GitHub — repo-scoped access" explains it.
+External services: `docs/service-access.md`; MCP setup: `docs/mcp-setup.md`.
+Credentials live in the OS keychain — never in tracked files or `.env`. The
+`gh` CLI login covers every GitHub repo; the one exception (a machine with two
+GitHub identities) is `docs/service-access.md` → "GitHub — repo-scoped access".
 
 - **Jev (typed questions).** Closed options, many items, a safe fallback for
-  low confidence, correctness confirmed elsewhere → ask through
-  `scripts/jev.sh` (`--help` teaches Choice/Score/Noul; detail:
-  `skills/jev/SKILL.md`). Never for prose or extraction. No key
-  (`scripts/jev.sh --check` exits 3) → do it the current way.
+  low confidence → `scripts/jev.sh` (`skills/jev/SKILL.md`). Never for prose
+  or extraction. No key (`scripts/jev.sh --check` exits 3) → do it the
+  current way.
 
 ## First-run Setup
 
@@ -287,89 +238,49 @@ Rules for keeping the LLM context window healthy across long sessions:
 
 ## Tool & Context Loading — Lean by Default
 
-Every always-on tool and doc taxes every session; bring capabilities in on
-demand instead. Three layers (full detail + per-runtime commands:
-`docs/mcp-setup.md`, `mcp-fragments/README.md`):
+Every always-on tool and doc taxes every session; load capabilities on demand.
+**CLI-first**: a CLI on `PATH` (`gh`, `graphify`) beats an MCP server.
+`.mcp.json` carries only the core set; heavier servers load per session from
+`mcp-fragments/`; tool-heavy work goes to a narrowed child (`.claude/agents/`).
+Detail and per-runtime commands: `docs/mcp-setup.md`, `mcp-fragments/README.md`.
 
-1. **CLI-first.** Capabilities enter as CLIs on `PATH` (`gh`, `graphify`,
-   `yt-dlp`) — zero standing context, every runtime. MCP is the exception,
-   for where it genuinely beats the CLI.
-2. **Core vs. fragments.** `.mcp.json` carries only the core set (graphify);
-   heavier servers live in `mcp-fragments/`, loaded per session
-   (`claude --mcp-config mcp-fragments/<name>.json`; other runtimes per
-   `docs/mcp-setup.md`).
-3. **Asymmetric parent/child toolsets.** The parent stays lean and delegates:
-   `.claude/agents/` profiles narrow a child (e.g. `repo-navigator`); a child
-   carrying tools the parent lacks is a scoped worker
-   (`claude -p "<task>" --mcp-config mcp-fragments/<name>.json`).
-
-Keep this file and the `MEMORY.md` index free of dates, status, and counters —
-volatile state goes in launchers and ledgers (`docs/context-budget.md` →
+Keep this file and the `MEMORY.md` index free of dates, status, and counters
+— volatile state goes in launchers and ledgers (`docs/context-budget.md` →
 "Cache the prefix, vary the tail").
 
 ## Context Budget — Measure, Don't Guess
 
-LLM quality degrades past ~150K context tokens (the "dumb zone") regardless of
-advertised window size. You **cannot introspect your own usage** — the numbers
-live in the API envelope, on disk; never estimate them. Thresholds are in
-`context-budget.env` (checked in; raise in one place as models improve).
+LLM quality degrades past ~150K context tokens regardless of advertised window
+size. You **cannot introspect your own usage** — the numbers live on disk;
+never estimate them. Thresholds are in `context-budget.env`.
 
-- At session start: `scripts/context-budget.sh register` (Claude Code and
-  Copilot VS Code agent mode: the `SessionStart` hook already ran it
-  mechanically — don't re-run; register manually only if hooks are disabled).
-- At every work-unit boundary: `scripts/context-budget.sh record --label "<what just finished>"`.
-- Act on the exit code: `1` (WARN, ≥120K) — wrap up the current unit, then ask
-  the user whether to roll over (`session-rollover` skill; declined = write
-  ahead to disk incrementally); `2` (STOP, ≥150K) — finish only the current
-  atomic step and roll over immediately, no ask. All six runtimes
-  (claude/codex/gemini/opencode/copilot CLI/Copilot VS Code agent mode) get
-  the in-band push at these thresholds via their committed hook wiring
-  (`docs/context-budget.md` → "Vendor hook deployments").
-- Dispatching a long-running subagent: open a dispatch record and emit the
-  rollover contract for its prompt in one step —
-  `scripts/fleet.sh dispatch-open --project <p> --task <slug>
-  --report <path>`; close it at yield (`dispatch-close --status <S>`); at
-  child WARN/STOP, roll (fresh `dispatch-open`), never resume
-  (`docs/context-budget.md` → "Dispatching long-running children").
+- Session start: `scripts/context-budget.sh register` (Claude Code and Copilot
+  VS Code: the `SessionStart` hook already ran it — register by hand only if
+  hooks are disabled).
+- Every work-unit boundary: `scripts/context-budget.sh record --label "<what just finished>"`,
+  then act on the exit code. `1` (WARN, ≥120K) — wrap up the unit, then ask the
+  user whether to roll over (`session-rollover`; declined = write ahead to disk).
+  `2` (STOP, ≥150K) — finish only the current atomic step and roll over
+  immediately, no ask.
+- Long-running subagent: open a dispatch record first —
+  `docs/context-budget.md` → "Dispatching long-running children".
 
-Relaunch of the successor session is governed by `ROLLOVER_RELAUNCH` in
-`context-budget.env` via `scripts/launch-next-session.sh` (see
-`docs/context-budget.md` → "Relaunch knobs"); a committed
-`work/<proj>/context-budget.env` overrides it per work item. The one state
-file is `work/<proj>/session-state.json` (machine-local; never hand-edited).
-
-**`ROLLOVER_RELAUNCH=auto` is standing authorization to launch the successor —
-do not ask, and do not stop to be told.** It is committed to disk precisely so
-agent work continues across session boundaries without a human restarting it
-each time. Needing the user's input is expressed by rolling over with
-`--loop-mode interactive`, so the successor re-poses the question on a fresh window;
-it is never expressed by declining to launch, which burns the handoff and
-strands the work. And before concluding you *cannot* launch, run
-`scripts/launch-next-session.sh <project> --dry-run` — a believed blocker is not
-a blocker until the dry-run confirms it. Details:
+**`ROLLOVER_RELAUNCH=auto` (in `context-budget.env`, or a work item's own
+copy) is standing authorization to launch the successor — do not ask, and do
+not stop to be told.** Needing the user's input is expressed by rolling over
+with `--loop-mode interactive`, never by declining to launch. Before
+concluding you *cannot* launch, run
+`scripts/launch-next-session.sh <project> --dry-run`. Details:
 `skills/session-rollover/SKILL.md` step 6.
 
-Sessions end via `session-rollover` (continue) or `checkpoint` (stop); a plain
-exit is recoverable — see "How a session ends: two doors" in
-`docs/work-directory-conventions.md`.
-
-Full reference: `docs/context-budget.md`; rollover workflow:
-`skills/session-rollover/SKILL.md`.
+Sessions end via `session-rollover` (continue) or `checkpoint` (stop) — see
+"How a session ends: two doors" in `docs/work-directory-conventions.md`. Full
+reference: `docs/context-budget.md`.
 
 ## graphify
 
-This workspace ships [graphify](https://graphify.net) wiring (a knowledge-graph
-tool: Gemini `BeforeTool` hook, OpenCode plugin), active only once a graph
-exists at `graphify-out/` — per repo, never committed. Placement, multi-repo
-setup, and removal if unused: `docs/recommended-tooling.md` §5.
-
-Rules once `graphify-out/graph.json` exists:
-- Answer codebase questions with `graphify query "<question>"` first (repo
-  root); `graphify path "<A>" "<B>"` for relationships, `graphify explain
-  "<concept>"` for focused concepts — each returns a scoped subgraph far
-  smaller than raw grep output. Use `graphify-out/wiki/index.md` (if present)
-  for broad navigation; read `graphify-out/GRAPH_REPORT.md` only for broad
-  architecture review.
-- After modifying code, run `graphify update .` (AST-only, no API cost).
-  Committed ADRs and `Decision:`/`Refs:` commit trailers let the graph answer
-  *why* (`code → commit → ADR → alternatives-rejected`), not just *what*.
+Optional knowledge-graph tool; setup, placement, and removal:
+`docs/recommended-tooling.md` §5. Once `graphify-out/graph.json` exists,
+answer codebase questions with `graphify query "<question>"` first
+(`graphify path` / `graphify explain` for relationships and concepts) before
+raw grep, and run `graphify update .` after modifying code.

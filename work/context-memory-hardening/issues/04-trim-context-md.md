@@ -18,15 +18,20 @@ Background: `work/context-memory-eval/eval.md` → C4, recommendation 4.
 
 **Blocked by:** 01 (its pointer line lands in `CONTEXT.md` first).
 
-**Status:** todo
+**Status:** done
 
-- [ ] `wc -c CONTEXT.md` ≤ ~16000; before/after sizes in the commit body
-- [ ] Every removed passage has a pointer to the doc that now owns it, and
+- [x] `wc -c CONTEXT.md` ≤ ~16000; before/after sizes in the commit body
+- [x] Every removed passage has a pointer to the doc that now owns it, and
       that doc actually contains it (grep each one)
-- [ ] Onboarding canary still in place (`test-agent-entrypoints.sh` green)
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Onboarding canary still in place (`test-agent-entrypoints.sh` green)
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+
+**Done (2026-10-07, session 3).** 20,656 → 15,206 bytes. Five sections cut
+behind pointers: Workspace Skills, Service Access, Tool & Context Loading,
+Context Budget, graphify. Each target doc was grepped and holds what was cut.
+Other sections are untouched.
