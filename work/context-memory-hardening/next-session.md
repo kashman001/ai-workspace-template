@@ -11,12 +11,14 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Position: **no ticket started.** Five tickets under `issues/`, worked in
-number order: 01 (L49) → 02 (L50) → 03 (M43) → 04 (L51, blocked by 01) →
-05 (D5, blocked by 03). Expect this to run unattended under
+Position: **tickets 01 and 02 done** (commits `9996954`, `0e489b5`). Next
+is ticket 03 (M43), then 04 (L51, unblocked now that 01 is done), then 05
+(D5, blocked by 03). Three left. Expect this to run unattended under
 `scripts/session-loop.sh context-memory-hardening`. Proceed without asking;
 only stop for something only a person can decide.
 
+0. `scripts/context-budget.sh register --project context-memory-hardening`
+   (harmless if the launcher already bound you).
 1. Take the lowest-numbered ticket whose `**Status:**` is `todo` and whose
    blockers are `done`. Set it to `in-progress` and save.
 2. Work it per the ticket, test-first where the ticket says so. Land it as
@@ -31,6 +33,10 @@ only stop for something only a person can decide.
    here and in `work/README.md`, and set the `context-memory-eval` row to
    closed. Then end through the stop door (`skills/checkpoint/SKILL.md`,
    `scripts/context-budget.sh close`).
+
+Run suites as `bash scripts/tests/<f>.sh` / `python3 …py` — three `.sh`
+suites lack the exec bit. `test-jev.sh` flaked once in session 2; rerun
+before treating a failure there as real.
 
 Every session: one ledger block on top of `handoff.md` in plain numbered
 form. Keep two blocks and archive the third. Then run
