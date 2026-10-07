@@ -16,7 +16,7 @@
 #          (work/<item>/session-state.json, block `session`) through
 #          scripts/lib/session-lib.sh; seq-sync/opts-sync/rollover-complete
 #          were retired with the side files they wrote (Stage 4 phase 3).
-# Output:  runtime= method= tokens= threshold= warn= pct= status= artifact=
+# Output:  runtime= method= tokens= threshold= warn= pct= status= cache= artifact=
 # Exit:    0 OK / 1 WARN / 2 STOP / 3 error / 4 refused (`reason=<code>` on
 #          stderr: jq_missing, not_owner, ledger_seq_mismatch, ledger_shape,
 #          and the record library's codes). release exits 1 for a non-owner.
@@ -264,21 +264,22 @@ estimate_from_size() {
 claude_measure() {
   local f="$1" jq_prog tokens
   # Sidechain (sub-agent) entries excluded — separate windows. tail-then-full
-  # keeps multi-MB transcripts fast.
+  # keeps multi-MB transcripts fast. Prints "<total> <cache_read>".
   jq_prog='[.[] | select(.message.usage.input_tokens != null) | select(.isSidechain != true)]
-    | last | if . == null then empty else
-      (.message.usage.input_tokens + (.message.usage.cache_read_input_tokens // 0)
-       + (.message.usage.cache_creation_input_tokens // 0)) end'
+    | last | if . == null then empty else .message.usage
+      | "\(.input_tokens + (.cache_read_input_tokens // 0)
+          + (.cache_creation_input_tokens // 0)) \(.cache_read_input_tokens // 0)" end'
   tokens=$(tail -n 2000 "$f" | jq -s -r "$jq_prog" 2>/dev/null)
   [ -z "$tokens" ] && tokens=$(jq -s -r "$jq_prog" "$f" 2>/dev/null)
-  [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
+  [ -n "$tokens" ] && echo "${tokens% *} exact ${tokens#* }" || estimate_from_size "$f"
 }
 
 codex_measure() {
-  local f="$1" tokens
-  tokens=$(grep -o '"last_token_usage":{[^}]*}' "$f" 2>/dev/null | tail -1 \
-    | grep -o '"total_tokens":[0-9]*' | grep -o '[0-9]*$')
-  [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
+  local f="$1" usage tokens cached
+  usage=$(grep -o '"last_token_usage":{[^}]*}' "$f" 2>/dev/null | tail -1)
+  tokens=$(printf '%s' "$usage" | grep -o '"total_tokens":[0-9]*' | grep -o '[0-9]*$')
+  cached=$(printf '%s' "$usage" | grep -o '"cached_input_tokens":[0-9]*' | grep -o '[0-9]*$')
+  [ -n "$tokens" ] && echo "$tokens exact $cached" || estimate_from_size "$f"
 }
 
 copilot_vscode_measure() {
@@ -334,14 +335,15 @@ opencode_measure() {
     "select id from session where directory='$dir_sql' order by time_updated desc limit 1" 2>/dev/null)
   [ -n "$sid" ] || return 1
   sid_sql="${sid//\'/\'\'}"
-  tokens=$(sqlite3 "$db" "select json_extract(data,'\$.tokens.total') from message
+  tokens=$(sqlite3 "$db" "select json_extract(data,'\$.tokens.total')||' '||
+    ifnull(json_extract(data,'\$.tokens.cache.read'),'') from message
     where session_id='$sid_sql' and json_extract(data,'\$.tokens.total') is not null
     order by rowid desc limit 1" 2>/dev/null)
   if [ -z "$tokens" ]; then
-    tokens=$(sqlite3 "$db" "select tokens_input+tokens_output+tokens_reasoning+tokens_cache_read
-      from session where id='$sid_sql'" 2>/dev/null)
+    tokens=$(sqlite3 "$db" "select (tokens_input+tokens_output+tokens_reasoning+tokens_cache_read)
+      ||' '||tokens_cache_read from session where id='$sid_sql'" 2>/dev/null)
   fi
-  [ -n "$tokens" ] && echo "$tokens exact" || return 1
+  [ -n "$tokens" ] && echo "${tokens%% *} exact ${tokens#* }" || return 1
 }
 
 detect_runtime() {
@@ -507,15 +509,20 @@ resolve_session() {
 }
 
 emit_check() {
-  local tokens method status pct
-  read -r tokens method < <(measure_for "$RUNTIME" "$ARTIFACT") || die "measurement failed"
+  local tokens method cached status pct share=null cache=-
+  # Third field: cache-read tokens, only where the runtime records them (L50).
+  read -r tokens method cached < <(measure_for "$RUNTIME" "$ARTIFACT") || die "measurement failed"
   [ -n "$tokens" ] || die "measurement failed for $ARTIFACT"
   if [ "$tokens" -ge "$THRESHOLD" ]; then status="STOP"
   elif [ "$tokens" -ge "$WARN" ]; then status="WARN"
   else status="OK"; fi
   pct=$(( tokens * 100 / THRESHOLD ))
-  echo "runtime=$RUNTIME method=$method tokens=$tokens threshold=$THRESHOLD warn=$WARN pct=$pct status=$status artifact=$ARTIFACT"
-  LAST_TOKENS="$tokens"; LAST_METHOD="$method"; LAST_STATUS="$status"
+  if [ -n "$cached" ] && [ "$tokens" -gt 0 ]; then
+    share=$(jq -n --argjson c "$cached" --argjson t "$tokens" '($c * 100 / $t | round) / 100')
+    cache="$(( cached * 100 / tokens ))%"
+  fi
+  echo "runtime=$RUNTIME method=$method tokens=$tokens threshold=$THRESHOLD warn=$WARN pct=$pct status=$status cache=$cache artifact=$ARTIFACT"
+  LAST_TOKENS="$tokens"; LAST_METHOD="$method"; LAST_STATUS="$status"; LAST_SHARE="$share"
   case "$status" in OK) return 0 ;; WARN) return 1 ;; STOP) return 2 ;; esac
 }
 
@@ -868,7 +875,7 @@ cmd_register() {
   # SessionStart hooks fire before the runtime writes its first transcript
   # bytes — a missing/empty artifact at register time is expected, not an error.
   if [ ! -s "$ARTIFACT" ]; then
-    echo "runtime=$RUNTIME method=deferred tokens=0 threshold=$THRESHOLD warn=$WARN pct=0 status=OK artifact=$ARTIFACT"
+    echo "runtime=$RUNTIME method=deferred tokens=0 threshold=$THRESHOLD warn=$WARN pct=0 status=OK cache=- artifact=$ARTIFACT"
     return 0
   fi
   local rc=0
@@ -892,8 +899,9 @@ cmd_record() {
     --arg session "$(basename "$ARTIFACT")" --arg method "$LAST_METHOD" \
     --arg status "$LAST_STATUS" --arg label "$LABEL" \
     --argjson tokens "$LAST_TOKENS" --argjson threshold "$THRESHOLD" \
+    --argjson share "$LAST_SHARE" \
     '{ts:$ts, runtime:$rt, session:$session, tokens:$tokens, method:$method,
-      threshold:$threshold, status:$status, label:$label}' >> "$LEDGER"
+      threshold:$threshold, status:$status, cache_read_share:$share, label:$label}' >> "$LEDGER"
   successor_advisory
   return $rc
 }

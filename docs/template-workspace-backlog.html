@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">95</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">96</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -150,14 +150,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L50</span> Context-budget ledger does not report prompt-cache hit ratio
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
-    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: <code>claude_measure()</code> (<code>scripts/context-budget.sh</code> ~l.264) already reads <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code> but only sums them; the ledger row (~l.896) has no cache field.</p>
-    <p><span class="k">Impact</span> — Prefix stability (L49) can't be measured, against the workspace's own "measure, don't guess" rule.</p>
-    <p><span class="k">Fix</span> — Record a <code>cache_read</code> share per ledger row where the runtime exposes it (Claude transcripts; Codex <code>cached_input_tokens</code> if present), <code>null</code> elsewhere; surface it in <code>record</code>/<code>status</code> output. Test-first in <code>scripts/tests/</code>. Owner: <code>work/context-memory-hardening</code> ticket 02.</p>
-  </div>
 
   <div class="find low">
     <h3><span class="id">L51</span> CONTEXT.md sits at the top of its own Z0 always-loaded budget
@@ -296,6 +288,7 @@
       <tr><td>2026-09-24</td><td>Feature: <strong>plans</strong> — a work item's work as a node graph (<code>work/&lt;item&gt;/plans/NN-&lt;slug&gt;/</code>, one markdown file per node, waves closed by a reconcile node, <code>hitl</code> nodes for a person's step), driven by <code>scripts/plan.sh</code> (status / frontier / check / start / done / sync and the rest; every state write) and the vendor-neutral <code>plans</code> skill (<code>/plan</code> on Claude Code). Tier policy and per-runtime model knobs in <code>plan-tiers.env</code> (no model name in a plan file); the supervisor (<code>session-loop.sh</code>) runs <code>frontier</code>/<code>check</code> between children. Landed over tickets 01&ndash;10 of <code>work/plans</code> (feature work tracked in the work item, recorded here per the delivering-commit rule). Front door: <code>CONTEXT.md</code> → Plans + the plan glossary under Language (worktree as an alias to avoid); reference <code>docs/plans.md</code> (format, verbs, tiers, replans, wayfinder mapping, per-runtime table, worked example), indexed from <code>docs/README.md</code>; optional <code>plans/</code> row in <code>work-directory-conventions</code>; <code>for-non-engineers</code> glossary entry. Suites: <code>test-plan.sh</code>, <code>test-session-loop.sh</code>, and <code>test-doc-consistency.sh</code> now pins every path the plans docs name. <code>TEMPLATE_VERSION</code> bumped to 2026-09-24. <strong>L48</strong> (wayfinder as a plan template) stays open, gated on the first real plan closing. No scorecard change.</td></tr>
       <tr><td>2026-10-07</td><td>New findings <strong>M43, L49, L50, L51, D5</strong> from the context/memory-engineering evaluation (<code>work/context-memory-eval/eval.md</code>, recommendations 1&ndash;4 and 6 accepted; 5 deferred). Work tracked in <code>work/context-memory-hardening/</code>. Scorecard now 5/94/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L49</strong> (archived; <code>work/context-memory-hardening/</code> ticket 01): &ldquo;Cache the prefix, vary the tail&rdquo; rule in <code>docs/context-budget.md</code> with a <code>CONTEXT.md</code> pointer, a date-line warning in <code>check-workspace-structure.sh</code> (new <code>test-context-prefix-stability.sh</code>), and a per-runtime hook-output audit (no change needed). Scorecard now 4/95/4/0/6.</td></tr>
+      <tr><td>2026-10-07</td><td>Resolved <strong>L50</strong> (archived; <code>work/context-memory-hardening/</code> ticket 02): ledger rows carry <code>cache_read_share</code> from the runtime's own cache count (Claude, Codex, OpenCode; <code>null</code> elsewhere), shown as <code>cache=NN%</code> in <code>check</code>/<code>record</code>. Scorecard now 3/96/4/0/6.</td></tr>
 </tbody>
   </table>
 

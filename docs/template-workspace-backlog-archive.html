@@ -925,6 +925,20 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L50</span> Context-budget ledger does not report prompt-cache hit ratio
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: <code>claude_measure()</code> (<code>scripts/context-budget.sh</code> ~l.264) already reads <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code> but only sums them; the ledger row (~l.896) has no cache field.</p>
+    <p><span class="k">Impact</span> — Prefix stability (L49) can't be measured, against the workspace's own "measure, don't guess" rule.</p>
+    <p><span class="k">Fix</span> — Record a <code>cache_read</code> share per ledger row where the runtime exposes it (Claude transcripts; Codex <code>cached_input_tokens</code> if present), <code>null</code> elsewhere; surface it in <code>record</code>/<code>status</code> output. Test-first in <code>scripts/tests/</code>. Owner: <code>work/context-memory-hardening</code> ticket 02.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-07 (<code>work/context-memory-hardening</code> ticket 02, commit
+      &ldquo;Fix L50&rdquo;): the measure functions now return the runtime's own cache-read count (Claude
+      <code>cache_read_input_tokens</code>, Codex <code>cached_input_tokens</code>, OpenCode <code>tokens.cache.read</code>);
+      ledger rows gain <code>cache_read_share</code> (<code>null</code> for Copilot/Gemini, never estimated) and the
+      <code>check</code>/<code>record</code> line shows <code>cache=NN%</code> before <code>artifact=</code>. Tests C1a&ndash;f in
+      <code>test-context-budget-registry.sh</code>; schema in <code>docs/context-budget.md</code> &rarr; Ledger.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L49</span> No rule protects the cache-stable prefix of always-loaded context
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · docs/context-budget.md · hooks</span></h3>
     <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: zero mentions of prompt/prefix caching across <code>docs/ skills/ scripts/ CONTEXT.md</code>. The layout is cache-friendly today only by accident (no volatile text in <code>CONTEXT.md</code>; volatile state lives in launchers).</p>

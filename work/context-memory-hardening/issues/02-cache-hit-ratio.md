@@ -17,16 +17,26 @@ backs the rule from ticket 01 with a measurement.
 
 **Blocked by:** nothing (lands after 01 by order only).
 
-**Status:** todo
+**Status:** done
 
-- [ ] Failing test first (a fixture transcript with known cache numbers →
+- [x] Failing test first (a fixture transcript with known cache numbers →
       the expected share in the ledger row; a runtime without cache data →
       `null`) in the matching `scripts/tests/` suite
-- [ ] Implementation green; ledger schema change described in
+- [x] Implementation green; ledger schema change described in
       `docs/context-budget.md` (grep for the ledger section)
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+
+**Done (2026-10-07, session 2).** Measure functions return a third field,
+the runtime's own cache-read count: Claude `cache_read_input_tokens`, Codex
+`cached_input_tokens` (field confirmed in a real rollout on this machine),
+OpenCode `tokens.cache.read` (confirmed in the real db). Copilot CLI/VS Code
+and Gemini expose none they can be read from today, so they write `null`.
+Ledger field `cache_read_share` (two decimals); check/record line gains
+`cache=NN%` / `cache=-` before `artifact=`, which stays last because
+`fleet.sh` parses it with `${line##* artifact=}`. The statusline reads only
+`tokens`/`threshold`, so it is unaffected. Tests C1a–f, red then green.

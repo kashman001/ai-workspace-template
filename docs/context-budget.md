@@ -814,8 +814,17 @@ data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
 
 ```json
 {"ts":"2026-07-22T12:00:00Z","runtime":"claude","session":"<file>","tokens":91000,
- "method":"exact","threshold":150000,"status":"OK","label":"onboard-repo: step 4 done"}
+ "method":"exact","threshold":150000,"status":"OK","cache_read_share":0.93,
+ "label":"onboard-repo: step 4 done"}
 ```
+
+`cache_read_share` is the share of the measured context read from the prompt
+cache (two decimals) — the number behind "Cache the prefix, vary the tail".
+It comes from the runtime's own count: Claude `cache_read_input_tokens`, Codex
+`cached_input_tokens`, OpenCode `tokens.cache.read`. Copilot and Gemini don't
+expose one, so they write `null`; it is never estimated. Rows written before
+the field existed lack it. `check`/`record` show the same number as `cache=NN%`
+(`cache=-` when absent), just before `artifact=`, which stays last.
 
 The ledger is **gitignored** (machine-local telemetry, same class as
 `.gemini/telemetry.log` and the session record): hook appends would

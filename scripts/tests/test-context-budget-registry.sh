@@ -635,5 +635,25 @@ err=$(run_as pin-asker check --session-id pin-live \
 assert_eq "N1l: --session-id with --transcript is refused" "$rc" "3"
 rm -f "$CB_STATE/sessions/codex-pin-codex.json"
 
+echo "C1: the cache-read share reaches the check line and the ledger row (L50)"
+LG="$CB_STATE/context-ledger.jsonl"
+last_share() { tail -1 "$LG" | jq -c '.cache_read_share'; }
+jq -cn '{message:{usage:{input_tokens:1000,cache_read_input_tokens:8000,cache_creation_input_tokens:1000}},isSidechain:false}' \
+  > "$PROJ_DIR/cache-c.jsonl"
+out=$("$CB" check --runtime claude --transcript "$PROJ_DIR/cache-c.jsonl")
+assert_contains "C1a: claude check shows the share" "$out" "cache=80%"
+assert_contains "C1b: artifact stays the last field" "$out" "cache=80% artifact="
+"$CB" record --runtime claude --transcript "$PROJ_DIR/cache-c.jsonl" --label c1 --quiet >/dev/null 2>&1
+assert_eq "C1c: claude ledger row carries the share" "$(last_share)" "0.8"
+printf '{"last_token_usage":{"input_tokens":1900,"cached_input_tokens":500,"output_tokens":100,"total_tokens":2000}}\n' \
+  > "$TMP/home/codex-cache.jsonl"
+"$CB" record --runtime codex --transcript "$TMP/home/codex-cache.jsonl" --label c2 --quiet >/dev/null 2>&1
+assert_eq "C1d: codex ledger row carries the share" "$(last_share)" "0.25"
+printf '{"promptTokens":3000}\n' > "$TMP/home/copilot-cache.jsonl"
+out=$("$CB" check --runtime copilot-cli --transcript "$TMP/home/copilot-cache.jsonl")
+assert_contains "C1e: a runtime without cache data shows cache=-" "$out" "cache=- artifact="
+"$CB" record --runtime copilot-cli --transcript "$TMP/home/copilot-cache.jsonl" --label c3 --quiet >/dev/null 2>&1
+assert_eq "C1f: and writes null, never an estimate" "$(last_share)" "null"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
