@@ -24,17 +24,23 @@ recommendation 3. Out of scope: numeric decay scores (D5 records why).
 
 **Blocked by:** nothing.
 
-**Status:** todo
+**Status:** done
 
-- [ ] Every `operational-knowledge.md` entry carries a git-derived Last
+- [x] Every `operational-knowledge.md` entry carries a git-derived Last
       confirmed line; review age stated once
-- [ ] Classification step in `checkpoint` and `decision-log` skills;
+- [x] Classification step in `checkpoint` and `decision-log` skills;
       stale-list step in `checkpoint`
-- [ ] If a script lists stale entries: failing test first, then green
+- [x] If a script lists stale entries: failing test first, then green
       (a doc-only change needs no script)
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] All `scripts/tests/test-*` suites green; `scripts/check-workspace-structure.sh` exit 0
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+
+**Done (2026-10-07, session 3).** Dates come from `git log -1 -L` over each
+entry's line range (22 entries; oldest 2026-06-24). Classification rule lives
+once in `checkpoint` → "Classify before you write"; `decision-log` points to
+it. Stale list is an `awk` one-liner in the checkpoint step, so no script and
+no test (box 3 met by the doc-only branch).

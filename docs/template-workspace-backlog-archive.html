@@ -90,6 +90,20 @@
   <h2>Medium</h2>
 
   <div class="find med resolved">
+    <h3><span class="id">M43</span> Semantic knowledge stores grow without dedup, contradiction checks, or staleness signal
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs/operational-knowledge.md · work/*/decisions.md · skills/checkpoint</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C6/C7: <code>docs/operational-knowledge.md</code> is 27&nbsp;KB / 22 sections and read "before debugging"; <code>work/*/decisions.md</code> total ~2.2K lines. Writes are append-only; nothing classifies a new entry against existing ones, and forgetting is count- or hand-driven only (ADR supersede chain is the one exception).</p>
+    <p><span class="k">Impact</span> — Duplicates and silently contradicted entries accumulate in exactly the files agents trust when debugging or deciding; no signal says an entry is stale.</p>
+    <p><span class="k">Fix</span> — Add a <code>Last confirmed: YYYY-MM-DD</code> line per operational-knowledge entry, and a checkpoint step that classifies each new semantic entry as ADD / UPDATE (edit in place) / SUPERSEDE (mark old retired, link forward) / NOOP before writing; entries unconfirmed past a stated age go to a review list, never auto-deleted. Owner: <code>work/context-memory-hardening</code> ticket 03.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-07 (<code>work/context-memory-hardening</code> ticket 03, commit
+      &ldquo;Fix M43&rdquo;): every <code>docs/operational-knowledge.md</code> entry carries a git-derived
+      <code>**Last confirmed:**</code> date, and the doc states a 6-month review age. <code>skills/checkpoint</code> gains
+      &ldquo;Classify before you write&rdquo; (ADD / UPDATE / SUPERSEDE with a <code>**Retired:**</code> line / NOOP; nothing
+      deleted) and a step that lists entries past the review age for a person; <code>skills/decision-log</code> applies the
+      same classification before a Tier-2 note. Doc-only: the stale list is an <code>awk</code> one-liner, no script.</p>
+  </div>
+
+  <div class="find med resolved">
     <h3><span class="id">M1</span> Public template depended on the author's personal agent-context tooling
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">recommended-tooling.md</span></h3>
     <p><span class="fix">Fixed:</span> added a clearly-labelled <em>"Without agent-context (fallback)"</em> section —

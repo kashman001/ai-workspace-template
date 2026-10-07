@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">96</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">97</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -139,14 +139,6 @@
 
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
-
-  <div class="find med">
-    <h3><span class="id">M43</span> Semantic knowledge stores grow without dedup, contradiction checks, or staleness signal
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/operational-knowledge.md · work/*/decisions.md · skills/checkpoint</span></h3>
-    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C6/C7: <code>docs/operational-knowledge.md</code> is 27&nbsp;KB / 22 sections and read "before debugging"; <code>work/*/decisions.md</code> total ~2.2K lines. Writes are append-only; nothing classifies a new entry against existing ones, and forgetting is count- or hand-driven only (ADR supersede chain is the one exception).</p>
-    <p><span class="k">Impact</span> — Duplicates and silently contradicted entries accumulate in exactly the files agents trust when debugging or deciding; no signal says an entry is stale.</p>
-    <p><span class="k">Fix</span> — Add a <code>Last confirmed: YYYY-MM-DD</code> line per operational-knowledge entry, and a checkpoint step that classifies each new semantic entry as ADD / UPDATE (edit in place) / SUPERSEDE (mark old retired, link forward) / NOOP before writing; entries unconfirmed past a stated age go to a review list, never auto-deleted. Owner: <code>work/context-memory-hardening</code> ticket 03.</p>
-  </div>
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
@@ -289,6 +281,7 @@
       <tr><td>2026-10-07</td><td>New findings <strong>M43, L49, L50, L51, D5</strong> from the context/memory-engineering evaluation (<code>work/context-memory-eval/eval.md</code>, recommendations 1&ndash;4 and 6 accepted; 5 deferred). Work tracked in <code>work/context-memory-hardening/</code>. Scorecard now 5/94/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L49</strong> (archived; <code>work/context-memory-hardening/</code> ticket 01): &ldquo;Cache the prefix, vary the tail&rdquo; rule in <code>docs/context-budget.md</code> with a <code>CONTEXT.md</code> pointer, a date-line warning in <code>check-workspace-structure.sh</code> (new <code>test-context-prefix-stability.sh</code>), and a per-runtime hook-output audit (no change needed). Scorecard now 4/95/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L50</strong> (archived; <code>work/context-memory-hardening/</code> ticket 02): ledger rows carry <code>cache_read_share</code> from the runtime's own cache count (Claude, Codex, OpenCode; <code>null</code> elsewhere), shown as <code>cache=NN%</code> in <code>check</code>/<code>record</code>. Scorecard now 3/96/4/0/6.</td></tr>
+      <tr><td>2026-10-07</td><td>Resolved <strong>M43</strong> (archived; <code>work/context-memory-hardening/</code> ticket 03): <code>docs/operational-knowledge.md</code> entries carry git-derived <code>Last confirmed</code> dates with a 6-month review age; <code>checkpoint</code> and <code>decision-log</code> classify a new entry ADD / UPDATE / SUPERSEDE / NOOP before writing, and <code>checkpoint</code> lists stale entries for a person. Scorecard now 2/97/4/0/6.</td></tr>
 </tbody>
   </table>
 

@@ -56,7 +56,15 @@ Default policy — deliberately light, so it doesn't die of ceremony:
 
 ## Capture a decision (Tier 2 — the common case)
 
-Append to `work/<project-name>/decisions.md` (create it if absent), newest last:
+First, grep `decisions.md` for an earlier note on the same subject and classify
+the new one as ADD, UPDATE, SUPERSEDE, or NOOP. The rule is in
+`skills/checkpoint/SKILL.md` → "Classify before you write". UPDATE edits the
+earlier note in place. SUPERSEDE appends the new note and adds a `**Retired:**`
+line under the old note's heading. Both are allowed exceptions to the file
+being append-only. Never delete a note.
+
+For an ADD or a SUPERSEDE, append to `work/<project-name>/decisions.md` (create
+it if absent), newest last:
 
 ```markdown
 ## YYYY-MM-DD — <what the decision is about>

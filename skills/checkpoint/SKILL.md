@@ -61,6 +61,16 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      block, flip the note to `done → ADR-NNNN`). This is
      where the session's ephemeral *why* becomes a durable, committed record — do it
      before context compacts.
+   - **operational knowledge** — before adding a gotcha to
+     `docs/operational-knowledge.md`, classify it (see "Classify before you write"
+     below). Then list the entries past the doc's 6-month review age:
+     ```bash
+     cutoff=$(date -v-6m +%F 2>/dev/null || date -d '6 months ago' +%F)
+     awk -v c="$cutoff" '/^## /{h=$0} /^\*\*Last confirmed:\*\*/{if ($3 < c) print $3, h}' docs/operational-knowledge.md
+     ```
+     Put any hits in the hand-off for a person to look at. Don't act on them
+     yourself. A person re-confirms an entry (bumps its date), updates it, or
+     retires it. Never delete one.
 
 2. **Write a hand-off doc** for the next chunk, under `work/<project-name>/` (the
    workspace convention). The hand-off contract:
@@ -94,6 +104,28 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
    compacted/cleared) in a fenced block — it must name the hand-off doc path and tell the next
    session to catch up + continue with the right starting skill (often
    `superpowers:brainstorming`). Keep it ~3–5 lines.
+
+## Classify before you write
+
+This applies before you append to `docs/operational-knowledge.md` or a
+`work/*/decisions.md`. First grep the target for the subject, using two or
+three key words from the new item (`grep -n -i '<word>' <file>`). Read any
+entry that matches. Then pick one:
+
+- **ADD** — nothing covers it. Append a new entry. In
+  `operational-knowledge.md`, give it a `**Last confirmed:** $(date +%F)` line
+  under the heading.
+- **UPDATE** — an entry covers it and the new item refines it without
+  reversing it. Edit that entry in place. In `operational-knowledge.md`, bump
+  its `Last confirmed` date too.
+- **SUPERSEDE** — the new item contradicts or replaces an entry. Write the new
+  entry. Under the old entry's heading, add `**Retired:** YYYY-MM-DD —
+  superseded by "<new heading>"`. Leave the old body in place. Never delete it.
+- **NOOP** — the item only matters to this session (a one-off error, a
+  transient state). Don't write it.
+
+If you can't tell UPDATE from SUPERSEDE, choose SUPERSEDE. A retired entry
+keeps its history. An overwritten one loses it.
 
 ## Verification
 

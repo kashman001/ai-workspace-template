@@ -9,10 +9,19 @@ See: docs/workspace-structure.md → "docs/ — Workspace Documentation"
 
 Gotchas and rules that prevent silent failures. Each entry: the symptom, the
 cause, and the rule that avoids it. Add to this as you hit new ones.
+
+Every entry carries a `**Last confirmed:** YYYY-MM-DD` line under its
+heading: the date someone last checked the entry still holds. **Review age is
+6 months** — an entry older than that is listed at `checkpoint` for a person to
+re-confirm (bump the date), update, or retire. Nothing is auto-deleted. Before
+adding an entry, classify it per `skills/checkpoint/SKILL.md` → "Classify
+before you write" (ADD / UPDATE / SUPERSEDE / NOOP).
 Incident narratives — how a failure unfolded, not just the rule it left behind —
 live in `docs/postmortems/` (see its README for the threshold and workflow).
 
 ## context-budget.sh — concurrent sessions clobber the registry (measure the wrong session)
+
+**Last confirmed:** 2026-09-21
 
 **Symptom:** `record`/`check` report far fewer tokens than the in-band hook
 (e.g. 47K OK vs 128K WARN), citing another session's artifact. **Cause:** the
@@ -28,6 +37,8 @@ your own artifact). Root fix (session-keyed state) is designed in
 
 ## Claude Code — /context under-reports by ~10K until the first real message
 
+**Last confirmed:** 2026-08-06
+
 **Symptom:** `/context all` run as a fresh session's first action shows ~10K
 fewer tokens (Messages ≈ 1K) than the same command after one "Hi" (Messages
 ≈ 11K), reading like a startup regression. **Cause:** the harness materializes
@@ -41,6 +52,8 @@ so its numbers are the trustworthy ones — WARN/STOP sit ~10K closer than a
 pre-message `/context` suggests.
 
 ## Claude Code — the session transcript path can be re-keyed mid-session
+
+**Last confirmed:** 2026-08-27
 
 Claude Code stores the live transcript under `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`,
 keyed by the session's cwd. `EnterWorktree` changes the cwd, so the transcript
@@ -73,6 +86,8 @@ Consequences (observed 2026-08-05, session 7):
 
 ## Claude Code — a `cd` into a worktree inside a Bash call moves the harness cwd
 
+**Last confirmed:** 2026-09-18
+
 From the primary (non-isolated) session, `cd /path/.claude/worktrees/<x> && …`
 in a Bash tool call leaves the harness working directory in that worktree for
 every later call (the tool reports "Primary working directory: … (was …)" and
@@ -81,6 +96,8 @@ starts treating the session as worktree-isolated). Bit sessions 12 and 13 of
 a `cd` is unavoidable, run a bare `cd <main-root>` as the next call.
 
 ## Claude Code — worktree-isolated Bash guard refuses compound commands
+
+**Last confirmed:** 2026-08-09
 
 In a worktree-isolated session (background jobs after `EnterWorktree`), the
 Bash permission guard rejects compound commands — `for`-loops, `;`-chains
@@ -97,6 +114,8 @@ aimed at the shared checkout).
 
 ## Agent workflow — bound your background poll loops
 
+**Last confirmed:** 2026-06-24
+
 - **Symptom:** `run_in_background` poll loops never exit and pile up as zombie
   shells, hammering an API every few seconds.
 - **Cause:** a condition like `until [ "$(... build .commit)" = "$HEAD" ]` can
@@ -109,6 +128,8 @@ aimed at the shared checkout).
 
 ## GitHub Pages — "Page build failed" is often transient
 
+**Last confirmed:** 2026-07-23
+
 - **Symptom:** a Pages build shows `status: errored` / "Page build failed.",
   and the newly-added pages 404 while previously-built pages still serve.
 - **Cause:** the "deploy from branch" build pipeline is intermittently flaky;
@@ -119,6 +140,8 @@ aimed at the shared checkout).
   serve as-is — a failure is the pipeline, not Jekyll.
 
 ## Gemini CLI on this machine — auth is the blocker, not the wiring
+
+**Last confirmed:** 2026-07-23
 
 (2026-07-23) Findings from trying to run `gemini` headlessly for the
 context-budget telemetry verification:
@@ -135,6 +158,8 @@ context-budget telemetry verification:
   backgrounded/`!` command hangs there. Pre-feed it: `printf 'Y\n' | gemini -p …`.
 
 ## Diff Review Workflow
+
+**Last confirmed:** 2026-09-11
 
 Open a commit (or commit range) for review as a directory diff with
 `scripts/diff-review.sh`. It wraps `git difftool --dir-diff` with the flags
@@ -174,6 +199,8 @@ review.
 
 ## Codex CLI on this machine — global config pins an unavailable model
 
+**Last confirmed:** 2026-08-06
+
 `~/.codex/config.toml` pins `gpt-5.6-terra`, which the account can't use:
 bare `codex exec "..."` fails at model resolution before any repo config or
 hook runs. Override per invocation (`codex exec -m gpt-5.5 "..."`) or fix the
@@ -182,12 +209,16 @@ global file. Found 2026-08-06 during the codex hook smoke check — the repo's
 
 ## opencode run — rewrites .opencode/opencode.json as a side effect
 
+**Last confirmed:** 2026-08-06
+
 Any `opencode run` appends a `"$schema": "https://opencode.ai/config.json"`
 line to `.opencode/opencode.json`. Harmless but dirties the working tree —
 don't commit it accidentally, and don't be surprised when it reappears after
 each run.
 
 ## claude-in-chrome — cannot open file:// URLs
+
+**Last confirmed:** 2026-08-06
 
 The Chrome extension refuses `file://` navigation ("browser-internal or
 unparseable URL"). To preview a local HTML file in a browser-automation
@@ -196,6 +227,8 @@ from the file's directory, then navigate to `http://127.0.0.1:<port>/…`.
 Kill the server when done (it's a background task otherwise).
 
 ## Worktree-isolated sessions vs. the main checkout — runtime state diverges
+
+**Last confirmed:** 2026-09-21
 
 > **Superseded by fix (2026-08-06, session 19, issue 05):** coordination
 > scripts now anchor `WORKSPACE_ROOT` to the repository (`git rev-parse
@@ -219,6 +252,8 @@ both hit twice (sessions 15 and 16):
   from the main checkout after pulling. *(Retired by the fix above.)*
 
 ## Local-only work items vanish in worktrees — share them in, don't copy back
+
+**Last confirmed:** 2026-09-10
 
 A `work/<item>/` ignored via `.gitignore` or `.git/info/exclude` is not in
 the index, so `git worktree add` never materializes it. Claude Code's
@@ -254,6 +289,8 @@ this with a manual `cp` per session (backlog L45).
 
 ## Ledger headings break silently — verify the count, and check the archive after prep
 
+**Last confirmed:** 2026-08-27
+
 Two separate ledger-integrity failures inside one session (2026-08-22), both of
 which passed a "looks fine" glance:
 
@@ -287,6 +324,8 @@ unbroken descending run, which would have caught failure 1 immediately.
 
 ## Workspace scripts — `die` is `exit`, so `|| true` cannot catch it
 
+**Last confirmed:** 2026-08-27
+
 Every script here defines `die() { echo "error: $*" >&2; exit 3; }`
 (`scripts/context-budget.sh`, `scripts/launch-next-session.sh`). Calling a
 helper that may `die` and guarding it with `|| true` **does not work** — `exit`
@@ -311,6 +350,8 @@ snippet: the guard would have failed the counter sync — the part that matters 
 because identity lookup, the decoration, could not resolve a runtime.
 
 ## `test-turn-end-exit.sh` needs a controlling terminal — detached it skips
+
+**Last confirmed:** 2026-08-27
 
 The suite drives the real turn-end exit path, so it uses `script(1)` to
 allocate a pty. Run **detached** — `nohup`, a background job harness, anything
@@ -357,6 +398,8 @@ identifies this suite, not the runner.
 
 ## A fork leaves the work-item lock naming the pre-fork session id
 
+**Last confirmed:** 2026-09-21
+
 > **Retired (Stage 4, ADR-0010):** the lock is gone. The record
 > (`work/<project>/session-state.json`) names the owner, liveness is the
 > owner's process id, and a forked session simply runs
@@ -394,6 +437,8 @@ Two consequences, and only one of them is a bug:
   `blocked` — that means waiting on a human, and the human is coming back.
 
 ## `git -c credential.helper=...` APPENDS — a background push still hangs
+
+**Last confirmed:** 2026-08-27
 
 The recipe commonly carried for background (non-interactive) pushes is
 
@@ -436,6 +481,8 @@ private remote.
 
 ## A clean auto-merge is not a correct merge — watch derived counts
 
+**Last confirmed:** 2026-09-21
+
 **Symptom.** A conflicted merge is resolved, every conflict marker is gone, the
 file parses, and the result is still wrong — in a place git never flagged.
 
@@ -466,6 +513,8 @@ half was the one that ended up wrong.
 
 ## Session scripts resolve their root through the repository — a worktree run drives the main checkout
 
+**Last confirmed:** 2026-09-21
+
 Every session script (`context-budget.sh`, `launch-next-session.sh`,
 `session-loop.sh`, `fleet.sh`, the hooks) resolves `WORKSPACE_ROOT` through
 `git rev-parse --git-common-dir`, by design (ADR-0006): a worktree converges on
@@ -478,6 +527,8 @@ directory and run there (phase 7 of `template-improvement-review` did exactly
 that), never the worktree and never the main checkout.
 
 ## Supervised sessions' tool shells inherit `TF_SESSION_LOOP=1` — a hand `--emit` from a sub-agent is refused `no_supervisor`
+
+**Last confirmed:** 2026-09-21
 
 `session-loop.sh` exports `TF_SESSION_LOOP=1` and `TF_SESSION_LOOP_PROJECT=<p>`
 to its child session, and every tool shell inside that session — including a
