@@ -69,13 +69,13 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-09-30 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-07 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">5</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">94</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -140,13 +140,53 @@
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
 
+  <div class="find med">
+    <h3><span class="id">M43</span> Semantic knowledge stores grow without dedup, contradiction checks, or staleness signal
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs/operational-knowledge.md · work/*/decisions.md · skills/checkpoint</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C6/C7: <code>docs/operational-knowledge.md</code> is 27&nbsp;KB / 22 sections and read "before debugging"; <code>work/*/decisions.md</code> total ~2.2K lines. Writes are append-only; nothing classifies a new entry against existing ones, and forgetting is count- or hand-driven only (ADR supersede chain is the one exception).</p>
+    <p><span class="k">Impact</span> — Duplicates and silently contradicted entries accumulate in exactly the files agents trust when debugging or deciding; no signal says an entry is stale.</p>
+    <p><span class="k">Fix</span> — Add a <code>Last confirmed: YYYY-MM-DD</code> line per operational-knowledge entry, and a checkpoint step that classifies each new semantic entry as ADD / UPDATE (edit in place) / SUPERSEDE (mark old retired, link forward) / NOOP before writing; entries unconfirmed past a stated age go to a review list, never auto-deleted. Owner: <code>work/context-memory-hardening</code> ticket 03.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L49</span> No rule protects the cache-stable prefix of always-loaded context
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">CONTEXT.md · docs/context-budget.md · hooks</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: zero mentions of prompt/prefix caching across <code>docs/ skills/ scripts/ CONTEXT.md</code>. The layout is cache-friendly today only by accident (no volatile text in <code>CONTEXT.md</code>; volatile state lives in launchers).</p>
+    <p><span class="k">Impact</span> — One innocent edit (a date, a status line, a counter in <code>CONTEXT.md</code>, or variable hook stdout) invalidates the cached prefix for every session and silently raises cost and latency.</p>
+    <p><span class="k">Fix</span> — Document "cache the prefix, vary the tail" in <code>docs/context-budget.md</code> with a one-line pointer from <code>CONTEXT.md</code>; audit SessionStart hook stdout across runtimes for per-session variance; optionally have <code>check-workspace-structure.sh</code> flag date-like lines in <code>CONTEXT.md</code>. Owner: <code>work/context-memory-hardening</code> ticket 01.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L50</span> Context-budget ledger does not report prompt-cache hit ratio
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: <code>claude_measure()</code> (<code>scripts/context-budget.sh</code> ~l.264) already reads <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code> but only sums them; the ledger row (~l.896) has no cache field.</p>
+    <p><span class="k">Impact</span> — Prefix stability (L49) can't be measured, against the workspace's own "measure, don't guess" rule.</p>
+    <p><span class="k">Fix</span> — Record a <code>cache_read</code> share per ledger row where the runtime exposes it (Claude transcripts; Codex <code>cached_input_tokens</code> if present), <code>null</code> elsewhere; surface it in <code>record</code>/<code>status</code> output. Test-first in <code>scripts/tests/</code>. Owner: <code>work/context-memory-hardening</code> ticket 02.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L51</span> CONTEXT.md sits at the top of its own Z0 always-loaded budget
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">CONTEXT.md · docs/zoom-model.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C4: <code>CONTEXT.md</code> is 20.5&nbsp;KB (~5K tokens), the ceiling of the 2&ndash;5K Z0 band in <code>docs/zoom-model.md</code>; with the global <code>CLAUDE.md</code> and <code>MEMORY.md</code> the always-loaded set is ~7K tokens before plugins.</p>
+    <p><span class="k">Impact</span> — Every session in every runtime pays for it; further additions push Z0 over budget.</p>
+    <p><span class="k">Fix</span> — Move detail that already has a home doc (Context Budget detail, vendored-skills paragraph, long skill one-liners) behind pointers; target ≤ ~4K tokens; preserve the onboarding canary and every rule an agent must see unprompted. Doc-consistency suite stays green. Owner: <code>work/context-memory-hardening</code> ticket 04.</p>
+  </div>
 
 
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
+
+  <div class="find dec">
+    <h3><span class="id">D5</span> Record non-goals: no vector store, no MMR re-ranking, no numeric decay scoring
+      <span class="sev dec">Decision</span><span class="status open">Open</span><span class="area">docs/adr · memory design</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C7/C8: the evaluated framework recommends hybrid vector+keyword+graph retrieval with MMR and Ebbinghaus-style decay scores.</p>
+    <p><span class="k">Impact</span> — Without a recorded decision, future reviews will keep re-proposing them.</p>
+    <p><span class="k">Fix</span> — Write an ADR (via <code>decision-log</code> promote) stating these are out of scope: incompatible with plain-files + agent-agnostic access, and curated indexes (C11) already cover the need; M43 is the chosen lightweight substitute for decay. Owner: <code>work/context-memory-hardening</code> ticket 05.</p>
+  </div>
 
   <!-- ========================= STRENGTHS ========================= -->
   <h2 class="good">Strengths (keep these)</h2>
@@ -262,6 +302,7 @@
           <tr><td>2026-09-30</td><td>Template change from <code>work/plans/</code> ticket 12, no card (dogfood finding s16): <code>scripts/check-ledger.py</code> now fails on a block heading filed twice (a redone ledger write that left its stale first pass); <code>test-check-ledger.py</code> gains fixtures for both s16 shapes (block spliced into the purpose comment — already caught — and the duplicate) plus a legal same-day pair in the clean baseline; <code>skills/checkpoint/SKILL.md</code> step 2 now anchors ledger writes on <code>--&gt;</code> and runs the checker, as <code>session-rollover</code> already did.</td></tr>
           <tr><td>2026-09-30</td><td>Template changes from <code>work/plans/</code> tickets 13&ndash;15 (dogfood findings), no card: a closed <code>chain.plan</code> yields to the one open plan (<code>plan.sh</code>, <code>session-loop.sh</code>); <code>plan.sh</code> ergonomics &mdash; <code>add --leaf</code> implies <code>tier: auto</code>, <code>--project=</code>/<code>--plan=</code> forms, a <code>relative-check</code> lint rule, <code>done</code> shows check output only on failure; <code>docs/plans.md</code> and <code>skills/plans/SKILL.md</code> wording (check cwd, sizing, closing a plan, <code>sync</code> after <code>done</code>, hitl launcher prose) and the L48 recipe &ldquo;Create a plan before a spec exists&rdquo;. <code>TEMPLATE_VERSION</code> bumped to 2026-09-30. Resolved <strong>L48</strong> (archived): adopt as a recipe, keep the wayfinder skill. Scorecard now 0/94/4/0/6.</td></tr>
       <tr><td>2026-09-24</td><td>Feature: <strong>plans</strong> — a work item's work as a node graph (<code>work/&lt;item&gt;/plans/NN-&lt;slug&gt;/</code>, one markdown file per node, waves closed by a reconcile node, <code>hitl</code> nodes for a person's step), driven by <code>scripts/plan.sh</code> (status / frontier / check / start / done / sync and the rest; every state write) and the vendor-neutral <code>plans</code> skill (<code>/plan</code> on Claude Code). Tier policy and per-runtime model knobs in <code>plan-tiers.env</code> (no model name in a plan file); the supervisor (<code>session-loop.sh</code>) runs <code>frontier</code>/<code>check</code> between children. Landed over tickets 01&ndash;10 of <code>work/plans</code> (feature work tracked in the work item, recorded here per the delivering-commit rule). Front door: <code>CONTEXT.md</code> → Plans + the plan glossary under Language (worktree as an alias to avoid); reference <code>docs/plans.md</code> (format, verbs, tiers, replans, wayfinder mapping, per-runtime table, worked example), indexed from <code>docs/README.md</code>; optional <code>plans/</code> row in <code>work-directory-conventions</code>; <code>for-non-engineers</code> glossary entry. Suites: <code>test-plan.sh</code>, <code>test-session-loop.sh</code>, and <code>test-doc-consistency.sh</code> now pins every path the plans docs name. <code>TEMPLATE_VERSION</code> bumped to 2026-09-24. <strong>L48</strong> (wayfinder as a plan template) stays open, gated on the first real plan closing. No scorecard change.</td></tr>
+      <tr><td>2026-10-07</td><td>New findings <strong>M43, L49, L50, L51, D5</strong> from the context/memory-engineering evaluation (<code>work/context-memory-eval/eval.md</code>, recommendations 1&ndash;4 and 6 accepted; 5 deferred). Work tracked in <code>work/context-memory-hardening/</code>. Scorecard now 5/94/4/0/6.</td></tr>
 </tbody>
   </table>
 
