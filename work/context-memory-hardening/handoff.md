@@ -6,6 +6,27 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-10-07 (session 3: tickets 03–05 done, item finished)
+
+1. Ticket 03 (M43) done, commit `f9b7067`: git-derived `Last confirmed`
+   dates on all 22 `operational-knowledge.md` entries, 6-month review age;
+   `checkpoint` → "Classify before you write" plus a stale-list step;
+   `decision-log` classifies before a note. Doc-only, no script.
+2. Ticket 04 (L51) done, commit `9d79e6d`: `CONTEXT.md` 20,656 → 15,206
+   bytes; five sections cut behind pointers, must-keep rules inline.
+3. Ticket 05 (D5) done, commit `080cd1a`: ADR-0013 (no vector store, MMR,
+   or decay scoring), promoted from the Tier-2 note.
+4. New finding L52 filed: `skills/session-rollover/SKILL.md:78` cites a
+   `CONTEXT.md` section that doesn't exist. Scorecard 1/98/5/0/6.
+5. Item finished. Nothing pushed.
+
+Learnings:
+- `git log -1 -L <start>,<end>:<file>` per `## ` range gives a defensible
+  per-entry "last touched" date without inventing one.
+- Ledger insert must anchor after the purpose comment's `-->`, not on the
+  first `# Session Handoff` text (the comment quotes it). Caught by
+  `check-ledger.py` and redone.
+
 # Session Handoff — 2026-10-07 (session 2: tickets 01–02 done, WARN rollover)
 
 1. Ticket 01 (L49) done, commit `9996954`: "Cache the prefix, vary the
@@ -24,13 +45,3 @@ Learnings:
 - `test-launch-next-session.sh`, `test-plan.sh`, `test-session-loop.sh` lack
   the exec bit and `test-check-ledger.py` is Python: run suites as
   `bash`/`python3`, not `./`.
-
-# Session Handoff — 2026-10-07 (session 1: scaffolded from context-memory-eval)
-
-1. Created this item from the `context-memory-eval` session. The user
-   accepted recommendations 1–4 and 6 and deferred 5.
-2. Backlog cards M43, L49, L50, L51, D5 opened in
-   `docs/template-workspace-backlog.html` (scorecard 5/94/4/0/6).
-3. Five tickets written under `issues/`. Per-item `ROLLOVER_RELAUNCH=auto`
-   added for the session loop.
-4. No ticket started. Next: ticket 01 (see launcher).

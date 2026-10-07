@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">98</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -142,6 +142,14 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L52</span> session-rollover cites a CONTEXT.md section that doesn't exist
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/session-rollover</span></h3>
+    <p><span class="k">Evidence</span> — <code>skills/session-rollover/SKILL.md</code> step on learnings says to use "the three-tier rule in <code>CONTEXT.md</code> &rarr; &ldquo;Recording new learnings&rdquo;". <code>CONTEXT.md</code> has no such section, and had none before L51's trim either (found while checking cross-references for L51).</p>
+    <p><span class="k">Impact</span> — An agent rolling over looks for a rule that isn't there and has to guess which tiers are meant.</p>
+    <p><span class="k">Fix</span> — Point the step at the section that holds the rule (likely <code>skills/checkpoint/SKILL.md</code> step 1 or &ldquo;Classify before you write&rdquo;), or restore a short rule. Check other skills for the same dangling name.</p>
+  </div>
 
 
 
@@ -268,6 +276,7 @@
       <tr><td>2026-10-07</td><td>Resolved <strong>M43</strong> (archived; <code>work/context-memory-hardening/</code> ticket 03): <code>docs/operational-knowledge.md</code> entries carry git-derived <code>Last confirmed</code> dates with a 6-month review age; <code>checkpoint</code> and <code>decision-log</code> classify a new entry ADD / UPDATE / SUPERSEDE / NOOP before writing, and <code>checkpoint</code> lists stale entries for a person. Scorecard now 2/97/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L51</strong> (archived; <code>work/context-memory-hardening/</code> ticket 04): <code>CONTEXT.md</code> trimmed from 20,656 to 15,206 bytes by moving detail behind pointers to the docs that already hold it; every must-see rule stays inline. Scorecard now 1/98/4/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Decided <strong>D5</strong> (archived; <code>work/context-memory-hardening/</code> ticket 05): ADR-0013 — no vector store, no MMR re-ranking, no numeric decay scoring; M43's last-confirmed dates are the substitute. All five context/memory-hardening cards closed. Scorecard now 0/98/5/0/6.</td></tr>
+      <tr><td>2026-10-07</td><td>New finding <strong>L52</strong>: <code>skills/session-rollover/SKILL.md</code> cites a <code>CONTEXT.md</code> section (&ldquo;Recording new learnings&rdquo;) that doesn't exist. Scorecard now 1/98/5/0/6.</td></tr>
 </tbody>
   </table>
 
