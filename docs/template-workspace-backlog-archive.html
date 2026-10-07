@@ -925,6 +925,22 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L49</span> No rule protects the cache-stable prefix of always-loaded context
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · docs/context-budget.md · hooks</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: zero mentions of prompt/prefix caching across <code>docs/ skills/ scripts/ CONTEXT.md</code>. The layout is cache-friendly today only by accident (no volatile text in <code>CONTEXT.md</code>; volatile state lives in launchers).</p>
+    <p><span class="k">Impact</span> — One innocent edit (a date, a status line, a counter in <code>CONTEXT.md</code>, or variable hook stdout) invalidates the cached prefix for every session and silently raises cost and latency.</p>
+    <p><span class="k">Fix</span> — Document "cache the prefix, vary the tail" in <code>docs/context-budget.md</code> with a one-line pointer from <code>CONTEXT.md</code>; audit SessionStart hook stdout across runtimes for per-session variance; optionally have <code>check-workspace-structure.sh</code> flag date-like lines in <code>CONTEXT.md</code>. Owner: <code>work/context-memory-hardening</code> ticket 01.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-07 (<code>work/context-memory-hardening</code> ticket 01, commit
+      &ldquo;Fix L49&rdquo;): new section &ldquo;Cache the prefix, vary the tail&rdquo; in <code>docs/context-budget.md</code>
+      (no dates, status or counters in <code>CONTEXT.md</code> / the <code>MEMORY.md</code> index; volatile state in launchers and
+      ledgers; byte-stable hook output) with a pointer from <code>CONTEXT.md</code> &rarr; Tool &amp; Context Loading.
+      <code>check-workspace-structure.sh</code> now warns on a date-like line in <code>CONTEXT.md</code>
+      (<code>test-context-prefix-stability.sh</code>). Hook audit: only Claude Code's <code>SessionStart</code> output reaches
+      context with per-session text, and it lands after the already-varying git status and prompt, so it was left as is;
+      the other runtimes register silently. Finding recorded in the ticket's <code>## Answer</code>.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L48</span> Wayfinder could emit a plan instead of a prose map
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills · wayfinder · plans</span></h3>
     <p><span class="k">Evidence</span> — <code>work/plans/seams.md</code> rates <code>wayfinder</code> as "wrap: a decision

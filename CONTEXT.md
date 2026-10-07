@@ -303,6 +303,10 @@ demand instead. Three layers (full detail + per-runtime commands:
    carrying tools the parent lacks is a scoped worker
    (`claude -p "<task>" --mcp-config mcp-fragments/<name>.json`).
 
+Keep this file and the `MEMORY.md` index free of dates, status, and counters —
+volatile state goes in launchers and ledgers (`docs/context-budget.md` →
+"Cache the prefix, vary the tail").
+
 ## Context Budget — Measure, Don't Guess
 
 LLM quality degrades past ~150K context tokens (the "dumb zone") regardless of

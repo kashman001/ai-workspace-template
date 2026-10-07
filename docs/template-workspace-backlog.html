@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">5</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">94</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">95</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">4</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -150,14 +150,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L49</span> No rule protects the cache-stable prefix of always-loaded context
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">CONTEXT.md · docs/context-budget.md · hooks</span></h3>
-    <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C2: zero mentions of prompt/prefix caching across <code>docs/ skills/ scripts/ CONTEXT.md</code>. The layout is cache-friendly today only by accident (no volatile text in <code>CONTEXT.md</code>; volatile state lives in launchers).</p>
-    <p><span class="k">Impact</span> — One innocent edit (a date, a status line, a counter in <code>CONTEXT.md</code>, or variable hook stdout) invalidates the cached prefix for every session and silently raises cost and latency.</p>
-    <p><span class="k">Fix</span> — Document "cache the prefix, vary the tail" in <code>docs/context-budget.md</code> with a one-line pointer from <code>CONTEXT.md</code>; audit SessionStart hook stdout across runtimes for per-session variance; optionally have <code>check-workspace-structure.sh</code> flag date-like lines in <code>CONTEXT.md</code>. Owner: <code>work/context-memory-hardening</code> ticket 01.</p>
-  </div>
 
   <div class="find low">
     <h3><span class="id">L50</span> Context-budget ledger does not report prompt-cache hit ratio
@@ -303,6 +295,7 @@
           <tr><td>2026-09-30</td><td>Template changes from <code>work/plans/</code> tickets 13&ndash;15 (dogfood findings), no card: a closed <code>chain.plan</code> yields to the one open plan (<code>plan.sh</code>, <code>session-loop.sh</code>); <code>plan.sh</code> ergonomics &mdash; <code>add --leaf</code> implies <code>tier: auto</code>, <code>--project=</code>/<code>--plan=</code> forms, a <code>relative-check</code> lint rule, <code>done</code> shows check output only on failure; <code>docs/plans.md</code> and <code>skills/plans/SKILL.md</code> wording (check cwd, sizing, closing a plan, <code>sync</code> after <code>done</code>, hitl launcher prose) and the L48 recipe &ldquo;Create a plan before a spec exists&rdquo;. <code>TEMPLATE_VERSION</code> bumped to 2026-09-30. Resolved <strong>L48</strong> (archived): adopt as a recipe, keep the wayfinder skill. Scorecard now 0/94/4/0/6.</td></tr>
       <tr><td>2026-09-24</td><td>Feature: <strong>plans</strong> — a work item's work as a node graph (<code>work/&lt;item&gt;/plans/NN-&lt;slug&gt;/</code>, one markdown file per node, waves closed by a reconcile node, <code>hitl</code> nodes for a person's step), driven by <code>scripts/plan.sh</code> (status / frontier / check / start / done / sync and the rest; every state write) and the vendor-neutral <code>plans</code> skill (<code>/plan</code> on Claude Code). Tier policy and per-runtime model knobs in <code>plan-tiers.env</code> (no model name in a plan file); the supervisor (<code>session-loop.sh</code>) runs <code>frontier</code>/<code>check</code> between children. Landed over tickets 01&ndash;10 of <code>work/plans</code> (feature work tracked in the work item, recorded here per the delivering-commit rule). Front door: <code>CONTEXT.md</code> → Plans + the plan glossary under Language (worktree as an alias to avoid); reference <code>docs/plans.md</code> (format, verbs, tiers, replans, wayfinder mapping, per-runtime table, worked example), indexed from <code>docs/README.md</code>; optional <code>plans/</code> row in <code>work-directory-conventions</code>; <code>for-non-engineers</code> glossary entry. Suites: <code>test-plan.sh</code>, <code>test-session-loop.sh</code>, and <code>test-doc-consistency.sh</code> now pins every path the plans docs name. <code>TEMPLATE_VERSION</code> bumped to 2026-09-24. <strong>L48</strong> (wayfinder as a plan template) stays open, gated on the first real plan closing. No scorecard change.</td></tr>
       <tr><td>2026-10-07</td><td>New findings <strong>M43, L49, L50, L51, D5</strong> from the context/memory-engineering evaluation (<code>work/context-memory-eval/eval.md</code>, recommendations 1&ndash;4 and 6 accepted; 5 deferred). Work tracked in <code>work/context-memory-hardening/</code>. Scorecard now 5/94/4/0/6.</td></tr>
+      <tr><td>2026-10-07</td><td>Resolved <strong>L49</strong> (archived; <code>work/context-memory-hardening/</code> ticket 01): &ldquo;Cache the prefix, vary the tail&rdquo; rule in <code>docs/context-budget.md</code> with a <code>CONTEXT.md</code> pointer, a date-line warning in <code>check-workspace-structure.sh</code> (new <code>test-context-prefix-stability.sh</code>), and a per-runtime hook-output audit (no change needed). Scorecard now 4/95/4/0/6.</td></tr>
 </tbody>
   </table>
 

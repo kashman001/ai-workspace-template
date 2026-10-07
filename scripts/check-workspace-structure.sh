@@ -45,6 +45,16 @@ if [ -f docs/workspace-structure.html ]; then
   else warn "docs/workspace-structure.html is stale — run scripts/build-guide-html.sh"; fi
 fi
 
+# CONTEXT.md loads into every session as the cached prefix: a date there
+# usually means volatile text that busts the cache (docs/context-budget.md →
+# "Cache the prefix, vary the tail"). Soft warning — a static date is legal.
+if [ -f CONTEXT.md ]; then
+  dated="$(grep -nE '20[0-9][0-9]-[01][0-9]-' CONTEXT.md | head -3)"
+  if [ -n "$dated" ]; then
+    while IFS= read -r l; do warn "CONTEXT.md has a date-like line (CONTEXT.md:${l%%:*}) — move volatile text to a launcher"; done <<<"$dated"
+  else ok "CONTEXT.md has no date-like lines"; fi
+fi
+
 # .gitignore must keep repos/README.md visible to git
 if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   if git check-ignore -q repos/README.md; then bad "repos/README.md is gitignored (should be tracked)"

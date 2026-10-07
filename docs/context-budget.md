@@ -158,6 +158,31 @@ comes from the runtime's on-disk session artifact, and the agent's role is
 inverted: it *invokes* measurement at checkpoints; it is never the source of
 the number.
 
+## Cache the prefix, vary the tail
+
+Runtimes cache the prompt prefix: everything up to the first byte that differs
+from the last request is re-read cheaply, everything after it is paid in full.
+A session's always-loaded files sit at the front, so one changing byte there
+re-bills them for every session. The rule that keeps the prefix stable:
+
+- **Always-loaded files hold no volatile text.** `CONTEXT.md` and the agent's
+  `MEMORY.md` index carry no dates, status, counters, or session-specific
+  text. `scripts/check-workspace-structure.sh` warns on a date-like line in
+  `CONTEXT.md`.
+- **Volatile state lives in the tail.** Position, status, and what happened go
+  in a work item's launcher (`next-session.md`) and ledger (`handoff.md`),
+  read after the prefix, on demand.
+- **Hooks that inject text print byte-stable output**, or print it only where
+  the context already varies.
+
+Audit (backlog L49): of the six runtimes, only Claude Code's `SessionStart`
+hook puts per-session text into context — `register`'s status line, which
+carries the `artifact=` path. It lands after the first user message's git
+status and prompt, which differ every session anyway, so it never splits the
+shared prefix, and within a session it is fixed. Left as is. The other
+runtimes' hooks register silently and speak only on a WARN/STOP escalation,
+which is tail text by design.
+
 ## Thresholds
 
 `context-budget.env` (checked in, non-secret):
