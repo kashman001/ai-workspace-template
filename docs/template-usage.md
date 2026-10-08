@@ -139,7 +139,8 @@ grep -rIn --exclude-dir=.git --exclude='*.html' -e '<[a-z-]\+>' -e 'TODO' -e 'Fi
     already use another hooks directory, call `scripts/run-checks.sh --fast`
     from your own hook instead.
   - *CI (on by default on GitHub):* `.github/workflows/checks.yml` runs the
-    full set on every push and pull request. Not on GitHub, or don't want
+    full set on every push and pull request, and weekly so the drift sweep
+    (`scripts/check-drift.sh`) catches aging with no commit. Not on GitHub, or don't want
     it: delete the file. It needs no secrets — the job's own token covers
     `check-service-access.sh`.
 

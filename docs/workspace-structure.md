@@ -532,6 +532,7 @@ scripts/
 ├── check-service-access.sh        # Credential/service access preflight checker
 ├── check-repo-context.sh          # Warn-only repo context freshness check
 ├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
+├── check-drift.sh                 # Staleness sweep: dead doc paths, aged gotchas, CONTEXT.md size, docs index
 ├── run-checks.sh                  # Run every tests/ suite and check-* script; --fast for pre-commit
 ├── git-hooks/pre-commit           # Opt-in pre-commit hook (runs run-checks.sh --fast)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
@@ -582,6 +583,16 @@ scripts/
   session number and date, and `handoff-archive.md` holds nothing newer
   than `handoff.md`. Mutation-tested by
   `scripts/tests/test-check-ledger.py`.
+- `check-drift.sh` — read-only staleness sweep, one `DRIFT`/`WARN` line
+  per finding, exit 1 on any `DRIFT`: backticked `docs/`, `skills/`,
+  `scripts/` paths in tracked `.md` files that don't exist (skips `work/`,
+  `docs/archive/`, `docs/superpowers/`; ADR hits are `WARN`, since ADRs are
+  history; known false alarms live in the script's `ALLOW` list, one reason
+  each), `docs/operational-knowledge.md` entries past their 6-month review
+  age, `CONTEXT.md` over 16,000 bytes (~4K tokens, the Z0 target), and
+  `docs/` entries missing from `docs/README.md`. Checkpoint step 1 runs it;
+  CI runs it on every push and weekly. Tested by
+  `scripts/tests/test-check-drift.sh`.
 - `run-checks.sh` — runs every `scripts/tests/test-*` suite and every
   `scripts/check-*` script (via `bash`/`python3`, so the exec bit doesn't
   matter), one `PASS`/`FAIL`/`SKIP` line each plus a total; exit 0 only if

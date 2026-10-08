@@ -1,10 +1,14 @@
-# Runs every workspace check (scripts/run-checks.sh, full tier) on push and PR.
+# Runs every workspace check (scripts/run-checks.sh, full tier) on push, PR, and weekly.
 # Adopters who don't want CI: delete this file (docs/template-usage.md →
 # "Automatic checks (pre-commit and CI)").
 name: checks
 on:
   push:
   pull_request:
+  # Weekly, so drift that needs no commit (a gotcha aging past review in
+  # scripts/check-drift.sh) still surfaces.
+  schedule:
+    - cron: '0 6 * * 1'
 jobs:
   run-checks:
     runs-on: ubuntu-latest

@@ -63,13 +63,14 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      before context compacts.
    - **operational knowledge** — before adding a gotcha to
      `docs/operational-knowledge.md`, classify it (see "Classify before you write"
-     below). Then list the entries past the doc's 6-month review age:
+     below). Then run the drift sweep, which lists the entries past the doc's
+     6-month review age along with dead doc paths, an oversize `CONTEXT.md`,
+     and docs missing from `docs/README.md`:
      ```bash
-     cutoff=$(date -v-6m +%F 2>/dev/null || date -d '6 months ago' +%F)
-     awk -v c="$cutoff" '/^## /{h=$0} /^\*\*Last confirmed:\*\*/{if ($3 < c) print $3, h}' docs/operational-knowledge.md
+     scripts/check-drift.sh
      ```
-     Put any hits in the hand-off for a person to look at. Don't act on them
-     yourself. A person re-confirms an entry (bumps its date), updates it, or
+     Fix dead paths and index gaps you caused. Put the rest in the hand-off
+     for a person to look at. Don't act on gotcha hits yourself. A person re-confirms an entry (bumps its date), updates it, or
      retires it. Never delete one.
 
 2. **Write a hand-off doc** for the next chunk, under `work/<project-name>/` (the

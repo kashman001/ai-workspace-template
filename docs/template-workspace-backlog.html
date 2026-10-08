@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc"><div class="num">5</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">106</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">107</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -141,13 +141,6 @@
   <h2>Medium</h2>
 
 
-  <div class="find med">
-    <h3><span class="id">M45</span> No drift sweep: workspace-wide staleness is found only by hand
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs, scripts</span></h3>
-    <p><span class="k">Evidence</span> — The session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>) found dead path references, a gotcha naming a removed script and stale pointers by hand. <code>scripts/tests/test-doc-consistency.sh</code> checks paths for the plans docs only. Stale <code>Last confirmed</code> entries are listed only when someone runs checkpoint step 1.</p>
-    <p><span class="k">Impact</span> — Docs drift silently between reviews; every review repeats the same manual sweep.</p>
-    <p><span class="k">Fix</span> — <code>scripts/check-drift.sh</code>: dead path references across <code>docs/</code> and <code>skills/</code> (with an allow-list for upstream provenance, generated files and skill-relative paths), gotchas past review age, <code>CONTEXT.md</code> over its byte budget, docs missing from <code>docs/README.md</code>. Run at checkpoint and on a CI schedule. Built in work item <code>harness-engineering</code>, ticket 02.</p>
-  </div>
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
@@ -185,6 +178,14 @@
   </div>
 
 
+
+  <div class="find low">
+    <h3><span class="id">L63</span> The scripts tree in workspace-structure.md lists two removed scripts
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — The <code>scripts/</code> tree block in <code>docs/workspace-structure.md</code> lists <code>rollover-prep.sh</code> and <code>capture-rollover-options.sh</code>; neither exists. <code>scripts/check-drift.sh</code> can't see it, because tree lines aren't backticked paths. Found while building M45.</p>
+    <p><span class="k">Impact</span> — A reader of the layout map looks for scripts that are gone.</p>
+    <p><span class="k">Fix</span> — Drop the two lines (and regenerate <code>docs/workspace-structure.html</code>); optionally have <code>check-workspace-structure.sh</code> check that every tree entry under <code>scripts/</code> exists.</p>
+  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -319,6 +320,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L58</strong> (archived): the ledger-splice gotcha in <code>docs/operational-knowledge.md</code> no longer sends readers to the removed <code>scripts/rollover-prep.sh</code>. Scorecard now 7/104/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L59</strong> (archived): ADR-0009 amendment repointed from the never-committed <code>docs/session-chain-scenarios.md</code> to the <code>relaunch_off</code> gate and its test. Scorecard now 6/105/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>M44</strong> (<code>work/harness-engineering</code> ticket 01): <code>scripts/run-checks.sh</code> (full + <code>--fast</code> tiers), opt-in pre-commit hook, GitHub Actions workflow (unverified until pushed); <code>test-jev.sh</code> made hermetic. Scorecard now 5/106/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>M45</strong> (<code>work/harness-engineering</code> ticket 02): <code>scripts/check-drift.sh</code> staleness sweep, run by checkpoint step 1 and by CI on push and weekly. New <strong>L63</strong> (open): two removed scripts still listed in the <code>workspace-structure.md</code> tree. Scorecard now 5/107/5/0/6.</td></tr>
 </tbody>
   </table>
 

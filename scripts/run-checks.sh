@@ -6,7 +6,8 @@
 #          (.github/workflows/checks.yml) runs the full set.
 # Conventions a check can use:
 #   - a line `# run-checks: slow` anywhere in it → left out of --fast
-#     (mark anything that takes more than ~3s or needs the network)
+#     (mark anything that takes more than ~3s, needs the network, or can
+#     start failing with no commit, like check-drift.sh)
 #   - exit 77 → SKIP, not FAIL; its last output line is printed as the reason
 #     (for a check that needs something a CI runner lacks: a CLI, a keychain)
 # See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"

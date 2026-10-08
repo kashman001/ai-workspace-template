@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 0cc27abb0adb4d330b258c76b7f9a55a3f3f91f4 -->
+  <!-- source-md-sha1: 3b31cc9d5bdf3c4ece742a941bb201f649e6b347 -->
 </head>
 <body>
 <div class="src-banner">
@@ -887,6 +887,7 @@ Bootstrap and Utility Scripts</h2>
 ├── check-service-access.sh        # Credential/service access preflight checker
 ├── check-repo-context.sh          # Warn-only repo context freshness check
 ├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
+├── check-drift.sh                 # Staleness sweep: dead doc paths, aged gotchas, CONTEXT.md size, docs index
 ├── run-checks.sh                  # Run every tests/ suite and check-* script; --fast for pre-commit
 ├── git-hooks/pre-commit           # Opt-in pre-commit hook (runs run-checks.sh --fast)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
@@ -942,6 +943,20 @@ newest-first by session number and date, and
 <code>handoff-archive.md</code> holds nothing newer than
 <code>handoff.md</code>. Mutation-tested by
 <code>scripts/tests/test-check-ledger.py</code>.</li>
+<li><code>check-drift.sh</code> — read-only staleness sweep, one
+<code>DRIFT</code>/<code>WARN</code> line per finding, exit 1 on any
+<code>DRIFT</code>: backticked <code>docs/</code>, <code>skills/</code>,
+<code>scripts/</code> paths in tracked <code>.md</code> files that don't
+exist (skips <code>work/</code>, <code>docs/archive/</code>,
+<code>docs/superpowers/</code>; ADR hits are <code>WARN</code>, since
+ADRs are history; known false alarms live in the script's
+<code>ALLOW</code> list, one reason each),
+<code>docs/operational-knowledge.md</code> entries past their 6-month
+review age, <code>CONTEXT.md</code> over 16,000 bytes (~4K tokens, the
+Z0 target), and <code>docs/</code> entries missing from
+<code>docs/README.md</code>. Checkpoint step 1 runs it; CI runs it on
+every push and weekly. Tested by
+<code>scripts/tests/test-check-drift.sh</code>.</li>
 <li><code>run-checks.sh</code> — runs every
 <code>scripts/tests/test-*</code> suite and every
 <code>scripts/check-*</code> script (via

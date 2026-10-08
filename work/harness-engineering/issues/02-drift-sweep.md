@@ -31,18 +31,33 @@ allow-list them.
 
 **Blocked by:** 01 (for the CI hook-up only; the script itself can land first).
 
-**Status:** todo
+**Status:** done
 
-- [ ] Failing test first: fixture tree with one dead path, one allow-listed
+- [x] Failing test first: fixture tree with one dead path, one allow-listed
       path, one stale gotcha, an oversize `CONTEXT.md`, an unindexed doc →
       exactly those findings
-- [ ] Script green on the fixtures; run on `main` and list its real
+- [x] Script green on the fixtures; run on `main` and list its real
       findings in the ticket
-- [ ] Checkpoint step 1 calls it; documented in `docs/workspace-structure.md`
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Checkpoint step 1 calls it; documented in `docs/workspace-structure.md`
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green (after ticket 01:
+- [x] All `scripts/tests/test-*` suites green (after ticket 01:
       `scripts/run-checks.sh` exits 0); `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+
+**Done (2026-10-08, session 2).** `scripts/check-drift.sh` + suite
+`scripts/tests/test-check-drift.sh` (D1–D4, 19 asserts, red first).
+Checkpoint step 1 runs it; CI runs it on push and weekly; full run-checks
+35/0/0. Two Tier-2 notes in `decisions.md`.
+
+Real findings on `main` at commit time:
+- `WARN docs/adr/0009-clear-based-rollover-relaunch.md:
+  scripts/hooks/rollover-clear-seed.sh` — ADR history, a warning by design.
+- L58 and L59 were already fixed by `template-maintenance` before this ran;
+  `scripts/rollover-prep.sh` (named as history by L58's fix) is allow-listed.
+- The first run flagged `docs/.nojekyll` as unindexed; dotfiles are now
+  skipped (fixture covers it).
+- Outside the sweep's reach: the `scripts/` tree block in
+  `docs/workspace-structure.md` lists two removed scripts. Filed as **L63**.

@@ -105,6 +105,22 @@
       <code>scripts/tests/test-run-checks.sh</code>.</p>
   </div>
 
+  <div class="find med resolved">
+    <h3><span class="id">M45</span> No drift sweep: workspace-wide staleness is found only by hand
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">docs, scripts</span></h3>
+    <p><span class="k">Evidence</span> — The session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>) found dead path references, a gotcha naming a removed script and stale pointers by hand. <code>scripts/tests/test-doc-consistency.sh</code> checks paths for the plans docs only. Stale <code>Last confirmed</code> entries are listed only when someone runs checkpoint step 1.</p>
+    <p><span class="k">Impact</span> — Docs drift silently between reviews; every review repeats the same manual sweep.</p>
+    <p><span class="k">Fix</span> — <code>scripts/check-drift.sh</code>: dead path references across <code>docs/</code> and <code>skills/</code> (with an allow-list for upstream provenance, generated files and skill-relative paths), gotchas past review age, <code>CONTEXT.md</code> over its byte budget, docs missing from <code>docs/README.md</code>. Run at checkpoint and on a CI schedule. Built in work item <code>harness-engineering</code>, ticket 02.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/harness-engineering</code> ticket 02, commit
+      &ldquo;Fix M45&rdquo;): <code>scripts/check-drift.sh</code>, one <code>DRIFT</code>/<code>WARN</code> line per finding:
+      dead backticked <code>docs/</code>/<code>skills/</code>/<code>scripts/</code> paths in tracked <code>.md</code> files (an
+      <code>ALLOW</code> list in the script, one reason per entry; ADR hits are warnings), gotchas past review age (the awk
+      moved here from checkpoint step 1, which now runs the script), <code>CONTEXT.md</code> over 16,000 bytes, and
+      <code>docs/</code> entries missing from <code>docs/README.md</code>. Marked <code># run-checks: slow</code> so a gotcha
+      aging with no commit never blocks pre-commit; CI runs it on push and on a new weekly schedule. Tested by
+      <code>scripts/tests/test-check-drift.sh</code>. First run on <code>main</code>: clean apart from one ADR-0009 warning.</p>
+  </div>
+
 
   <div class="find med resolved">
     <h3><span class="id">M43</span> Semantic knowledge stores grow without dedup, contradiction checks, or staleness signal
