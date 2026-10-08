@@ -6,6 +6,26 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 3 (2026-10-08)
+
+1. Ticket 03 (L60) done, commit `21d03a6`: checkpoint → "Classify before
+   you write" gains "Promote a repeat to a check"; gotchas may carry an
+   `**Enforced by:**` line (defined in the `operational-knowledge.md`
+   header), back-filled on three entries. decision-log unchanged (it
+   already points to checkpoint).
+2. Ticket 05 (L62) done, commit `ca43dec`: the fail-test rule lives in
+   `docs/workspace-structure.md` → "Authoring a Team Capability". Audit
+   table in the ticket. Three new suites: `test-check-repo-context.sh`,
+   `test-check-service-access.sh`, `test-check-workspace-structure.sh`.
+   Guide HTML regenerated. run-checks 38/0/0. Scorecard 3/109/5/0/6.
+3. Two Tier-2 notes added to `decisions.md`.
+4. Rolled over at WARN (121K) after ticket 05. Next: ticket 04 (L61), the
+   last one.
+
+Learnings:
+- "Has a suite" is not "has a suite that makes it fail": the structure
+  check's only suite asserted a warning, never exit 1.
+
 # Session Handoff — 2 (2026-10-08)
 
 1. Ticket 02 (M45) done, commit `87b5776`: `scripts/check-drift.sh`
@@ -23,24 +43,3 @@ Convention: docs/work-directory-conventions.md.
 Learnings:
 - Bash 3.2 (macOS) fails to parse a `case` with `pat)` arms inside
   `$( … )` ("syntax error near `;;`"); use `if` there.
-
-# Session Handoff — 1 (2026-10-08)
-
-1. Ticket 01 (M44) done, commit `540cdba`: `scripts/run-checks.sh` (full
-   33 checks/120s, `--fast` 23/13s), `# run-checks: slow` marker in 10
-   scripts, exit 77 = skip, opt-in `scripts/git-hooks/pre-commit`
-   (`core.hooksPath`), `.github/workflows/checks.yml`. Suite:
-   `scripts/tests/test-run-checks.sh` (R1–R7). Card M44 archived, scorecard
-   5/106/5/0/6. Two Tier-2 notes in `decisions.md`.
-2. `test-jev.sh` made hermetic. `start_stub` ran in `$(...)`, so a slow stub
-   left the endpoint empty (live-URL fallback, the session-2 flake), and stub
-   pids never reached the trap. About 90 leaked stub servers were killed.
-3. **CI is unverified.** I simulated it on macOS (agent CLIs off PATH, empty
-   HOME, `CI=true`, gh by `GH_TOKEN`, `USER` set): 33/0/0. Linux portability
-   of the suites is unknown until the user pushes. Docker's daemon was down.
-4. Rolled over at WARN (127K) after ticket 01. Next: ticket 02 (M45).
-
-Learnings:
-- Several scripts die on `USER: unbound variable` under `env -i`
-  (`context-budget.sh:672`). Real runners set USER; harmless unless a CI
-  strips env.

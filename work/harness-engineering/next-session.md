@@ -11,34 +11,36 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Position: **tickets 01 (M44, `540cdba`) and 02 (M45, `87b5776`) done**;
-2 of 5. Remaining, in order: 03 (L60) → 05 (L62) → 04 (L61, last: blocked
-by 01–03). Ticket 03 is doc and skill edits only: read
-`skills/writing-for-agents/SKILL.md` before editing checkpoint, and read
-`docs/operational-knowledge.md` by headings (grep `^## `), not whole. Expect this to run unattended under
-`scripts/session-loop.sh harness-engineering`. Proceed without asking; only
-stop for something only a person can decide.
+Position: **tickets 01, 02, 03 (L60, `21d03a6`) and 05 (L62, `ca43dec`)
+done**; 4 of 5. Remaining: **04 (L61)**, the last ticket — one table of the
+workspace's guides and checks, in `docs/workspace-structure.md`. Its
+blockers (01–03) are done. Read `skills/writing-for-agents/SKILL.md` if the
+ticket touches a skill; read long docs by headings (grep `^## `), not whole.
+Expect this to run unattended under `scripts/session-loop.sh
+harness-engineering`. Proceed without asking; only stop for something only
+a person can decide.
 
-Gate for every ticket now: `scripts/run-checks.sh` exits 0 (full, ~2 min).
-A new suite or check needs no registration; mark it `# run-checks: slow`
-if it takes more than ~3s or uses the network.
+Gate: `scripts/run-checks.sh` exits 0 (full, ~2 min, 38 checks). Editing
+`docs/workspace-structure.md` makes the guide HTML stale: run
+`scripts/build-guide-html.sh` and commit `docs/workspace-structure.html`.
 
 1. `scripts/context-budget.sh register --project harness-engineering`, then
    `git log --oneline -3` and `git status --short` (another session may be
    working `template-maintenance` on this checkout: re-read the backlog
    files right before each edit, and commit only your own files).
-2. Take the next ticket in the order above whose `**Status:**` is `todo`
-   and whose blockers are `done`. Set it to `in-progress` and save.
-3. Work it per the ticket, test-first where it says so. One commit, with
-   its backlog card resolved in the same commit. Set `**Status:** done`,
-   tick the boxes, add a short `**Done (date, session N).**` note.
-4. `scripts/context-budget.sh record --label "ticket NN done"` and act on
-   the exit code. On 0, take the next ticket. On 1 or 2, roll over
-   (`skills/session-rollover/SKILL.md`) with this launcher rewritten to the
-   new position.
-5. When all five are `done`: ledger block, mark the item finished here and
-   in `work/README.md`, then the stop door (`skills/checkpoint/SKILL.md`,
-   `scripts/context-budget.sh close`).
+2. Open `work/harness-engineering/issues/04-guides-and-checks-map.md`. Set
+   `**Status:** in-progress` and save.
+3. Work it per the ticket. One commit, with card L61 resolved in the same
+   commit (archive it under Low, scorecard → 2/110/5/0/6, change-log row).
+   Set `**Status:** done`, tick the boxes, add a short
+   `**Done (date, session N).**` note.
+4. `scripts/context-budget.sh record --label "ticket 04 done"`. On 1 or 2,
+   roll over (`skills/session-rollover/SKILL.md`) with step 5 below as the
+   launcher's position.
+5. All five done: ledger block, mark the item finished here and in
+   `work/README.md`, then the stop door (`skills/checkpoint/SKILL.md`,
+   `scripts/context-budget.sh close`). Report how far `main` is ahead of
+   origin.
 
 Every session: one ledger block on top of `handoff.md`, plain numbered
 form; keep two, archive the third; `python3 scripts/check-ledger.py
@@ -55,8 +57,9 @@ work/harness-engineering` must exit 0.
 - Choices with a rejected alternative go in `decisions.md` (Tier 2). Decide
   under stated assumptions rather than stopping, except for steps only a
   person can do.
-- `scripts/check-drift.sh` (ticket 02) is part of the full gate. New
-  backlog card L63 is open and not this item's scope.
+- `scripts/check-drift.sh` (ticket 02) is part of the full gate. Card L63
+  is open and not this item's scope.
+- New checks ship with a suite that makes them fail (ticket 05 rule).
 - Don't push main. At the end, report how far ahead of origin it is.
 - Edit `CONTEXT.md` directly, never a symlink. Targeted reads on the
   backlog HTML files and long docs.
