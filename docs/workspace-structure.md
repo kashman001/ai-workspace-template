@@ -181,6 +181,10 @@ concise (it loads into every conversation) and link out for detail:
 - **Agent context discipline** — rules for managing the LLM context window
   (disk is source of truth, demand-load, persist intermediate state).
 - **Service access** — pointer to credential framework.
+- **Size and stability** — keep the whole file inside the Z0 budget
+  (~2–5K tokens, `docs/zoom-model.md`), and keep dates, status and counters
+  out of it: they change every session and break prompt caching
+  (`docs/context-budget.md` → "Cache the prefix, vary the tail").
 
 ---
 
