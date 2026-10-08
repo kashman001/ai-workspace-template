@@ -939,6 +939,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L57</span> Retired decision notes are not explained outside the decision-log skill
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/work-directory-conventions.md, docs/for-non-engineers.md</span></h3>
+    <p><span class="k">Evidence</span> — The decision-log skill now classifies notes (ADD/UPDATE/SUPERSEDE/NOOP) and marks a replaced note <code>**Retired:**</code>; <code>docs/work-directory-conventions.md</code> (the <code>decisions.md</code> row) and <code>docs/for-non-engineers.md</code> (&ldquo;Day-to-day decisions&rdquo;) don't say so. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — A reader, or an agent quoting <code>decisions.md</code> for a non-engineer, may cite a retired note.</p>
+    <p><span class="k">Fix</span> — One clause in each: a replaced note carries <code>**Retired:**</code>; skip it.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (commit &ldquo;Fix L57&rdquo;): the <code>decisions.md</code> row in <code>docs/work-directory-conventions.md</code> and the &ldquo;Day-to-day decisions&rdquo; bullet in <code>docs/for-non-engineers.md</code> now say a replaced note carries a <code>**Retired:**</code> line and should be skipped.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L56</span> Pointers send readers to CONTEXT.md for detail the L51 trim moved out
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md, docs/mcp-setup.md</span></h3>
     <p><span class="k">Evidence</span> — <code>docs/workspace-structure.md:234</code> calls <code>.claude/agents/</code> part of &ldquo;the lean-loading model in <code>CONTEXT.md</code> &rarr; Tool &amp; Context Loading&rdquo;, and <code>docs/mcp-setup.md:26</code> cites it for the rationale; that section is now a short summary, and the three layers are explained in <code>docs/mcp-setup.md</code> / <code>mcp-fragments/README.md</code>. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>

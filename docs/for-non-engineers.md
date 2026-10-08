@@ -34,7 +34,8 @@ setup is the one part that isn't self-serve.
   the decision, the alternatives that were rejected and why. Written to be
   read cold.
 - **Day-to-day decisions:** `work/<project>/decisions.md` — short
-  Chose/Because/Rejected notes per effort.
+  Chose/Because/Rejected notes per effort. A note that was later replaced
+  carries a `**Retired:**` line — skip it and read the newer note.
 - Not sure where a decision lives? Ask your agent:
   > Why did we choose X? Check the ADRs in docs/adr/ and every
   > work/*/decisions.md, and quote the relevant record.

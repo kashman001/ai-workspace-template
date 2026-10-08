@@ -156,7 +156,7 @@ a gap the next session notes. Under `session-loop.sh`, a quit closes the chain
 | `README.md` | **Required** | Project identity: what it is, governing skill(s), and the start-here pointer. Durable — changes rarely. |
 | `next-session.md` | Recommended | The **launcher** (see above). |
 | `handoff.md` (+ `handoff-archive.md`) | Recommended | The **ledger** (see above). |
-| `decisions.md` / `docs/adr/*` | Optional | Decision records, per `skills/decision-log/SKILL.md`. |
+| `decisions.md` / `docs/adr/*` | Optional | Decision records, per `skills/decision-log/SKILL.md`. A replaced note carries a `**Retired:**` line; skip it. |
 | `STATUS.md` | Optional | Shareable program/status snapshot (per-area state, blockers). Distinct from the launcher: STATUS is for humans reviewing progress; the launcher is for an agent resuming work. |
 | `glossary.md` | Optional | Project-scoped terms/acronyms. |
 | `map.md` + `issues/NN-<slug>.md` | Optional | Wayfinder map + decision tickets for the effort, per `docs/agents/issue-tracker.md` → "Wayfinding operations" (governing skill: `skills/wayfinder/SKILL.md`). |
