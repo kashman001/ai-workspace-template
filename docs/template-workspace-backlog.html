@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">8</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">103</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">7</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">104</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -165,14 +165,6 @@
     <p><span class="k">Evidence</span> — <code>TEMPLATE_VERSION</code> reads <code>2026-09-30</code>; since then <code>CONTEXT.md</code> was trimmed and gained rules, the budget output and ledger rows changed, and checkpoint gained a classify step. No changelog exists. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
     <p><span class="k">Impact</span> — A downloader comparing versions can't tell their copy predates these changes.</p>
     <p><span class="k">Fix</span> — Maintainer decides when to cut a release and bumps the date then (<code>docs/template-usage.md</code> &rarr; &ldquo;Upgrading later&rdquo;).</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L58</span> A gotcha names a script that no longer exists
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/operational-knowledge.md</span></h3>
-    <p><span class="k">Evidence</span> — <code>docs/operational-knowledge.md</code> (the ledger-splice entry) cites <code>scripts/rollover-prep.sh</code>, removed in <code>d4fb3b6</code>. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
-    <p><span class="k">Impact</span> — The lesson stands but the reader can't find the script it describes.</p>
-    <p><span class="k">Fix</span> — Note the removal and what replaced it, and refresh the entry's <code>Last confirmed</code> line.</p>
   </div>
 
   <div class="find low">
@@ -339,6 +331,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L55</strong> (archived): <code>docs/workspace-structure.md</code> &rarr; &ldquo;What <code>CONTEXT.md</code> Should Contain&rdquo; now states the Z0 size budget and the no-dates rule. Scorecard now 10/101/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L56</strong> (archived): two stale <code>CONTEXT.md</code> &rarr; &ldquo;Tool &amp; Context Loading&rdquo; pointers fixed in <code>docs/workspace-structure.md</code> and <code>docs/mcp-setup.md</code>. Scorecard now 9/102/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L57</strong> (archived): retired decision notes explained in <code>docs/work-directory-conventions.md</code> and <code>docs/for-non-engineers.md</code>. Scorecard now 8/103/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L58</strong> (archived): the ledger-splice gotcha in <code>docs/operational-knowledge.md</code> no longer sends readers to the removed <code>scripts/rollover-prep.sh</code>. Scorecard now 7/104/5/0/6.</td></tr>
 </tbody>
   </table>
 

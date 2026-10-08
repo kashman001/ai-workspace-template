@@ -289,7 +289,7 @@ this with a manual `cp` per session (backlog L45).
 
 ## Ledger headings break silently — verify the count, and check the archive after prep
 
-**Last confirmed:** 2026-08-27
+**Last confirmed:** 2026-10-08
 
 Two separate ledger-integrity failures inside one session (2026-08-22), both of
 which passed a "looks fine" glance:
@@ -304,7 +304,8 @@ which passed a "looks fine" glance:
 2. **`scripts/rollover-prep.sh` emitted a bare `# Session Handoff` line** at
    line 1 of `handoff-archive.md` when it rotated blocks out. That one the gate
    *did* catch: `handoff-archive.md:1 not a well-formed session block heading`,
-   exit 1.
+   exit 1. (The script was removed in `d4fb3b6`; the rolling-over agent now
+   moves old blocks to the archive itself, per `skills/session-rollover/SKILL.md`.)
 
 **Rules that follow:**
 
@@ -314,9 +315,10 @@ which passed a "looks fine" glance:
 - **A patch script must assert its insertion point as strictly as its content.**
   Anchor on a line-anchored pattern (`^# Session Handoff — <n>`), never a bare
   substring that also appears in prose or comments.
-- **`rollover-prep.sh` rotates the archive unattended — check the result.** The
-  skill says so; this is the failure it is warning about. Verify the archive's
-  first line is a real numbered heading before committing the rollover.
+- **Check the archive after any rotation.** Whoever moves blocks into
+  `handoff-archive.md` — once the script, now the agent by hand — can leave a
+  bad first line. Verify it is a real numbered heading before committing the
+  rollover.
 
 **Related:** `skills/session-rollover/SKILL.md` → Verification; the standing fix
 suggestion is to have `check-ledger.py` assert the block numbers form an

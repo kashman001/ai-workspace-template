@@ -939,6 +939,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L58</span> A gotcha names a script that no longer exists
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/operational-knowledge.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/operational-knowledge.md</code> (the ledger-splice entry) cites <code>scripts/rollover-prep.sh</code>, removed in <code>d4fb3b6</code>. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — The lesson stands but the reader can't find the script it describes.</p>
+    <p><span class="k">Fix</span> — Note the removal and what replaced it, and refresh the entry's <code>Last confirmed</code> line.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (commit &ldquo;Fix L58&rdquo;): the ledger-splice entry in <code>docs/operational-knowledge.md</code> now notes that <code>scripts/rollover-prep.sh</code> was removed in <code>d4fb3b6</code> and that the rolling-over agent rotates the archive by hand (<code>skills/session-rollover/SKILL.md</code>); the &ldquo;check the archive&rdquo; rule is reworded to cover either, and <code>Last confirmed</code> is now 2026-10-08.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L57</span> Retired decision notes are not explained outside the decision-log skill
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/work-directory-conventions.md, docs/for-non-engineers.md</span></h3>
     <p><span class="k">Evidence</span> — The decision-log skill now classifies notes (ADD/UPDATE/SUPERSEDE/NOOP) and marks a replaced note <code>**Retired:**</code>; <code>docs/work-directory-conventions.md</code> (the <code>decisions.md</code> row) and <code>docs/for-non-engineers.md</code> (&ldquo;Day-to-day decisions&rdquo;) don't say so. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
