@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-check-dependencies.sh
 # Purpose: Regression tests for the runtime-aware context-budget hooks check in
 #          check-dependencies.sh (backlog M24): committed non-Claude wiring must

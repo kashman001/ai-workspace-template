@@ -118,6 +118,7 @@ work item.
 ├── mcp-fragments/              # Opt-in MCP server configs, loaded per session (checked in)
 │
 ├── .claude/                    # Claude Code project config (commands/, agents/, skills/ checked in; settings gitignored)
+├── .github/workflows/checks.yml  # CI: scripts/run-checks.sh on push and PR (checked in; delete to opt out)
 ├── .vscode/                    # VS Code settings and MCP config
 │   ├── settings.json           #   Shared IDE settings (checked in)
 │   ├── mcp.json.example        #   MCP server config template (checked in)
@@ -531,6 +532,8 @@ scripts/
 ├── check-service-access.sh        # Credential/service access preflight checker
 ├── check-repo-context.sh          # Warn-only repo context freshness check
 ├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
+├── run-checks.sh                  # Run every tests/ suite and check-* script; --fast for pre-commit
+├── git-hooks/pre-commit           # Opt-in pre-commit hook (runs run-checks.sh --fast)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
 ├── build-guide-html.sh            # Regenerate docs/workspace-structure.html
 ├── context-budget.sh              # Measure agent-session context usage vs threshold
@@ -579,6 +582,16 @@ scripts/
   session number and date, and `handoff-archive.md` holds nothing newer
   than `handoff.md`. Mutation-tested by
   `scripts/tests/test-check-ledger.py`.
+- `run-checks.sh` — runs every `scripts/tests/test-*` suite and every
+  `scripts/check-*` script (via `bash`/`python3`, so the exec bit doesn't
+  matter), one `PASS`/`FAIL`/`SKIP` line each plus a total; exit 0 only if
+  nothing failed. `--fast` leaves out checks marked `# run-checks: slow`
+  (over ~3s or networked) — that tier runs in the opt-in pre-commit hook
+  `scripts/git-hooks/pre-commit`; CI (`.github/workflows/checks.yml`) runs
+  the full set. A check exits 77 to skip (last output line is the reason)
+  when it needs something a runner lacks. New checks are picked up by name —
+  no list to update. Adopter setup: `docs/template-usage.md` → "Automatic
+  checks (pre-commit and CI)". Tested by `scripts/tests/test-run-checks.sh`.
 - `session-loop.sh` — the session-loop supervisor: launches a work item's
   successor sessions one after another, unattended, gating each handover on
   the rollover sentinel and the session counter rather than on the child's

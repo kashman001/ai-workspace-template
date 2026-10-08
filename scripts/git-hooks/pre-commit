@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# File: scripts/git-hooks/pre-commit
+# Purpose: Opt-in pre-commit check — runs scripts/run-checks.sh --fast and
+#          refuses the commit if any check fails. Nothing runs until you opt in:
+#            git config core.hooksPath scripts/git-hooks     # turn on
+#            git config --unset core.hooksPath               # turn off
+#          Skip once with `git commit --no-verify`.
+# See: docs/template-usage.md → "Automatic checks (pre-commit and CI)"
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+[ -f "$ROOT/scripts/run-checks.sh" ] || exit 0
+out="$(bash "$ROOT/scripts/run-checks.sh" --fast 2>&1)" && exit 0
+printf '%s\n' "$out" | grep -v '^PASS' >&2
+echo "pre-commit: checks failed — fix them, or skip once with git commit --no-verify" >&2
+exit 1

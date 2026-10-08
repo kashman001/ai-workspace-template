@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-launch-next-session.sh
 # Purpose: launch-next-session.sh on the session record (Stage 4 phase 4 of
 #          work/template-improvement-review). Pins exit codes, record fields and

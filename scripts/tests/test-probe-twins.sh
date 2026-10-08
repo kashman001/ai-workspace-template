@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-probe-twins.sh
 # Purpose: The stub-runtime twins of the phase-7 probes
 #          (work/template-improvement-review/evaluation/probes/), the CI

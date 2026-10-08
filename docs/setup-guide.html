@@ -280,7 +280,10 @@ gh auth login                                      # if not already authenticate
     (bring a repo in), <code>rlm</code> (query huge contexts), and <code>decision-log</code> —
     capture the <em>why</em> behind a decision (<code>/decision</code>) as an ephemeral note in
     <code>work/&lt;proj&gt;/decisions.md</code>, promoted to a committed ADR under <code>docs/adr/</code>
-    for lasting-weight calls. See the <strong>Decision Records</strong> section of <code>CONTEXT.md</code>.</p>
+    for lasting-weight calls. See the <strong>Decision Records</strong> section of <code>CONTEXT.md</code>.
+    <strong>Checks:</strong> <code>scripts/run-checks.sh</code> runs every workspace check; on GitHub,
+    <code>.github/workflows/checks.yml</code> runs it on each push (delete the file to opt out), and
+    <code>git config core.hooksPath scripts/git-hooks</code> opts you in to a pre-commit run of the fast set.</p>
   </div></div>
 
   <p style="margin-top:18px">Deeper reference: <a href="template-usage.md">docs/template-usage.md</a> ·

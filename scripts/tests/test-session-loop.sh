@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-session-loop.sh
 # Purpose: session-loop.sh against stub children on a throwaway git workspace —
 #          no model, no vendor. The stubs stand in for a session: they register

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-vendor-budget-hooks.sh
 # Purpose: Regression tests for the context-budget vendor hook wrappers and
 #          their shared lib (ADR-0003/0004 item #3). Self-contained: throwaway

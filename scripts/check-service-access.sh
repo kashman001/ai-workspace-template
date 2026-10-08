@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/check-service-access.sh
 # Purpose: Preflight that required service credentials are reachable; (re)generate
 #          .service-access.local.json. Verify + INSTRUCT only — it never logs you in

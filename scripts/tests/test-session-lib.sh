@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-session-lib.sh
 # Purpose: Contract of the record helper (scripts/lib/session-lib.sh,
 #          `session_record_update`): concurrent writers under the mkdir lock

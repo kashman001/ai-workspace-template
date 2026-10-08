@@ -1,0 +1,17 @@
+# Runs every workspace check (scripts/run-checks.sh, full tier) on push and PR.
+# Adopters who don't want CI: delete this file (docs/template-usage.md →
+# "Automatic checks (pre-commit and CI)").
+name: checks
+on:
+  push:
+  pull_request:
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run all checks
+        env:
+          # check-service-access.sh needs an authenticated gh; the job token is enough.
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/run-checks.sh

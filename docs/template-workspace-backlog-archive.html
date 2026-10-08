@@ -88,6 +88,23 @@
   </div>
 
   <h2>Medium</h2>
+  <div class="find med resolved">
+    <h3><span class="id">M44</span> The template's own checks only run when an agent remembers to run them
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/tests</span></h3>
+    <p><span class="k">Evidence</span> — 28 suites under <code>scripts/tests/</code> plus the <code>check-*.sh</code> scripts, but no single command runs them all, no pre-commit hook (<code>core.hooksPath</code> unset) and no CI (<code>.github/workflows/</code> absent). Some suites lack the exec bit and one is Python, so <code>./</code> fails on them. Source: harness-engineering review of Böckeler, &ldquo;Harness engineering for coding agent users&rdquo; (martinfowler.com, 2026-04) &mdash; &ldquo;keep quality left&rdquo;.</p>
+    <p><span class="k">Impact</span> — A change can break a check and land unnoticed; downloaders inherit a template whose gates are advisory only.</p>
+    <p><span class="k">Fix</span> — One <code>scripts/run-checks.sh</code> (fast and full tiers) called from a pre-commit hook and a CI workflow; document both. Built in work item <code>harness-engineering</code>, ticket 01.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/harness-engineering</code> ticket 01, commit
+      &ldquo;Fix M44&rdquo;): <code>scripts/run-checks.sh</code> runs every <code>scripts/tests/test-*</code> suite and
+      <code>scripts/check-*</code> script by name (no list to maintain), one PASS/FAIL/SKIP line each; <code>--fast</code>
+      drops checks marked <code># run-checks: slow</code> (23 checks, ~13s; full set ~2.5 min). Opt-in pre-commit hook
+      <code>scripts/git-hooks/pre-commit</code> (<code>git config core.hooksPath scripts/git-hooks</code>) and
+      <code>.github/workflows/checks.yml</code> (full set, push + PR; unverified until first push). Exit 77 = skip with a
+      reason. Also fixed <code>test-jev.sh</code>: a slow stub start left the endpoint empty (live-URL fallback) and stub
+      servers leaked. Documented in <code>docs/template-usage.md</code> and <code>docs/workspace-structure.md</code>; tested by
+      <code>scripts/tests/test-run-checks.sh</code>.</p>
+  </div>
+
 
   <div class="find med resolved">
     <h3><span class="id">M43</span> Semantic knowledge stores grow without dedup, contradiction checks, or staleness signal

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-context-budget-registry.sh
 # Purpose: Regression tests for context-budget.sh's session verbs on the
 #          per-item record (work/<item>/session-state.json, Stage 4 phase 3):

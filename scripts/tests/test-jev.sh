@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-jev.sh
 # Purpose: Contract of scripts/jev.sh at its one seam, the command line, with
 #          no live key and no network: a stub HTTP server (fixtures under
@@ -63,14 +64,17 @@ srv.serve_forever()
 PY
 STUB_PIDS=""
 trap 'kill $STUB_PIDS 2>/dev/null; rm -rf "$TMP"' EXIT
-# start_stub <fixture> <name>: serves <fixture>, logs to $TMP/<name>.jsonl, prints the endpoint URL.
+# start_stub <fixture> <name> <var>: serves <fixture>, logs to $TMP/<name>.jsonl,
+# sets <var> to the endpoint URL. Runs in this shell, not a $(...) subshell, so
+# the pid reaches the EXIT trap and a stub that never starts aborts the suite
+# instead of leaving <var> empty -- an empty JEV_ENDPOINT falls back to the live URL.
 start_stub() {
   python3 "$TMP/stub.py" "$1" "$TMP/$2.jsonl" "$TMP/$2.port" >/dev/null 2>&1 & STUB_PIDS="$STUB_PIDS $!"; disown
   for _ in $(seq 1 50); do [ -s "$TMP/$2.port" ] && break; sleep 0.1; done
   [ -s "$TMP/$2.port" ] || { echo "stub server $2 did not start" >&2; exit 1; }
-  echo "http://127.0.0.1:$(cat "$TMP/$2.port")"
+  printf -v "$3" 'http://127.0.0.1:%s' "$(cat "$TMP/$2.port")"
 }
-ENDPOINT="$(start_stub "$FIX/choice-batch.json" requests)"
+start_stub "$FIX/choice-batch.json" requests ENDPOINT
 requests() { [ -f "$TMP/requests.jsonl" ] && wc -l < "$TMP/requests.jsonl" | tr -d ' ' || echo 0; }
 
 # A keychain with no entry: fake `security` (macOS) and `secret-tool` (Linux)
@@ -279,7 +283,7 @@ assert_absent "T11f: the key is not in the warning" "$(cat "$TMP/t11.err")" "$KE
 
 echo "T12: malformed answers — the batch falls back to the leaf with one warning line"
 reset_leaf
-BAD_ENDPOINT="$(start_stub "$FIX/choice-batch-malformed.json" malformed)"
+start_stub "$FIX/choice-batch-malformed.json" malformed BAD_ENDPOINT
 out="$(RLM_ENV="JEV_ENDPOINT=$BAD_ENDPOINT JEV_API_KEY=$KEY" rlm_exec 2>"$TMP/t12.err" <<PY
 import json
 print(json.dumps([x["source"] for x in classify($RECORDS, $CATS)]))
@@ -291,7 +295,7 @@ assert_eq "T12c: one warning line" "$(wc -l < "$TMP/t12.err" | tr -d ' ')" "1"
 
 echo "T13: batching — 50 records per request, split further when state + longest question nears 32k tokens"
 reset_leaf
-ECHO_ENDPOINT="$(start_stub echo echo)"
+start_stub echo echo ECHO_ENDPOINT
 out="$(RLM_ENV="JEV_ENDPOINT=$ECHO_ENDPOINT JEV_API_KEY=$KEY" rlm_exec 2>"$TMP/t13.err" <<PY
 import json
 r = classify(["record %d" % i for i in range(120)], ["a", "b"])
@@ -328,7 +332,7 @@ rm -rf "$SRC_ROOT/skills/rlm/scripts/__pycache__"
 # T15+: the CLI widened to the three question types (S5), the client-side
 # limit refusals and the non-200 exit (S7).
 echo "T15: a Score question passes through; the answer line carries the score and its confidence"
-SCORE_ENDPOINT="$(start_stub "$FIX/score.json" score)"
+start_stub "$FIX/score.json" score SCORE_ENDPOINT
 SCORE_REQ='{"state":"The export button crashes the settings page in Safari. It works in Chrome.","questions":{"severity":{"type":"score","instructions":"How severe is this bug report?","criteria":["Cosmetic; no impact to functionality","Broken or degraded feature, but workaround exists","Blocking issue; no workaround exists"]}}}'
 out="$(printf '%s' "$SCORE_REQ" | JEV_ENDPOINT="$SCORE_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t15.err")"; rc=$?
 assert_eq "T15a: exit 0" "$rc" "0"
@@ -337,7 +341,7 @@ assert_eq "T15c: one line: key, score as value, confidence" "$(printf '%s' "$out
 assert_eq "T15d: nothing on stderr" "$(cat "$TMP/t15.err")" ""
 
 echo "T16: Noul questions pass through; the answer line carries the probability and no confidence"
-NOUL_ENDPOINT="$(start_stub "$FIX/noul.json" noul)"
+start_stub "$FIX/noul.json" noul NOUL_ENDPOINT
 NOUL_REQ='{"state":"I already opened ticket 4411 about this last week. Can I speak to a person?","questions":{"is_human_escalation":{"type":"noul","instructions":"Is the customer asking for a human agent?"},"is_repeat_contact":{"type":"noul","instructions":"Has the customer contacted support about this before?","criteria":{"true":"Mentions a prior attempt, ticket, or that they have asked before","false":"No sign of any previous contact"}}}}'
 out="$(printf '%s' "$NOUL_REQ" | JEV_ENDPOINT="$NOUL_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t16.err")"; rc=$?
 assert_eq "T16a: exit 0" "$rc" "0"
@@ -367,7 +371,7 @@ assert_eq "T17h: one stderr line each" "$(cat "$TMP/t17a.err" "$TMP/t17e.err" | 
 assert_eq "T17i: no request sent for the refusals" "$(requests)" "$before"
 
 echo "T18: a non-200 from the server — exit 4 with the status and the body head on stderr, empty stdout"
-DENY_ENDPOINT="$(start_stub status:429 deny)"
+start_stub status:429 deny DENY_ENDPOINT
 out="$(printf '%s' "$REQ" | JEV_ENDPOINT="$DENY_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" 2>"$TMP/t18.err")"; rc=$?
 assert_eq "T18a: exit 4" "$rc" "4"
 assert_eq "T18b: empty stdout" "$out" ""
@@ -375,7 +379,7 @@ assert_contains "T18c: stderr carries the status" "$(cat "$TMP/t18.err")" "429"
 assert_contains "T18d: stderr carries the body head" "$(cat "$TMP/t18.err")" "stub refused this request"
 assert_eq "T18e: one stderr line" "$(wc -l < "$TMP/t18.err" | tr -d ' ')" "1"
 assert_absent "T18f: the key is not on stderr" "$(cat "$TMP/t18.err")" "$KEY"
-AUTH_ENDPOINT="$(start_stub status:401 unauth)"
+start_stub status:401 unauth AUTH_ENDPOINT
 printf '%s' "$REQ" | JEV_ENDPOINT="$AUTH_ENDPOINT" JEV_API_KEY="$KEY" "$JEV" >/dev/null 2>"$TMP/t18g.err"; rc=$?
 assert_eq "T18g: 401 is also exit 4, status on stderr" "$rc/$(grep -c 401 "$TMP/t18g.err")" "4/1"
 
@@ -417,8 +421,8 @@ SREC='["The whole site is down for everyone","Button label has a typo","Export f
 SLEVELS='["Cosmetic; no impact","Degraded, workaround exists","Blocking; no workaround"]'
 CREC='["Refund me now","Thanks, all good","I want my money back","Where is my order","Cancel my plan","Nice product"]'
 CCOND='The customer asks for a refund.'
-SCORE_EP="$(start_stub "$FIX/score-batch.json" scorebatch)"
-NOUL_EP="$(start_stub "$FIX/noul-batch.json" noulbatch)"
+start_stub "$FIX/score-batch.json" scorebatch SCORE_EP
+start_stub "$FIX/noul-batch.json" noulbatch NOUL_EP
 sreq() { [ -f "$TMP/scorebatch.jsonl" ] && wc -l < "$TMP/scorebatch.jsonl" | tr -d ' ' || echo 0; }
 nreq() { [ -f "$TMP/noulbatch.jsonl" ] && wc -l < "$TMP/noulbatch.jsonl" | tr -d ' ' || echo 0; }
 

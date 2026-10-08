@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# run-checks: slow
 # File: scripts/tests/test-plan.sh
 # Purpose: Contract of scripts/plan.sh at its one seam, the command line:
 #          given the fixture plan (scripts/tests/fixtures/plan-01-concept,

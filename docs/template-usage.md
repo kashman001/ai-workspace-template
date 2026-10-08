@@ -129,6 +129,22 @@ grep -rIn --exclude-dir=.git --exclude='*.html' -e '<[a-z-]\+>' -e 'TODO' -e 'Fi
   `check-dependencies.sh`, `check-workspace-structure.sh`, and
   `check-service-access.sh` are functional out of the box; extend them as the
   workspace grows.
+- **Automatic checks (pre-commit and CI)** — `scripts/run-checks.sh` runs
+  every workspace test and `check-*` script in one go (`--fast` for the
+  quick subset). Two ways to run it without anyone remembering:
+  - *Pre-commit (opt-in, per clone):* `git config core.hooksPath scripts/git-hooks`
+    turns on `scripts/git-hooks/pre-commit`, which refuses a commit when a
+    fast check fails. Undo with `git config --unset core.hooksPath`; skip
+    once with `git commit --no-verify`. Nothing runs until you opt in. If you
+    already use another hooks directory, call `scripts/run-checks.sh --fast`
+    from your own hook instead.
+  - *CI (on by default on GitHub):* `.github/workflows/checks.yml` runs the
+    full set on every push and pull request. Not on GitHub, or don't want
+    it: delete the file. It needs no secrets — the job's own token covers
+    `check-service-access.sh`.
+
+  Add a check by dropping a `scripts/tests/test-*` or `scripts/check-*`
+  script; mark it `# run-checks: slow` if it takes more than a few seconds.
 - **Agent toolchain** — optional global tools (Claude Code status line,
   superpowers plugin, Matt Pocock engineering skills, Karpathy principles,
   graphify) are documented in `docs/recommended-tooling.md`, including the
