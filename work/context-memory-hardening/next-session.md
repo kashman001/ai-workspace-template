@@ -12,8 +12,7 @@ a session on it — `scripts/session-loop.sh` should stop.
 
 Follow-ups live elsewhere, not in this item:
 
-- Backlog card **L52** (`docs/template-workspace-backlog.html`): a dangling
-  `CONTEXT.md` section reference in `skills/session-rollover/SKILL.md`.
+- Backlog card **L52** is fixed (commit "Fix L52"); nothing is left open.
 - Recommendation 5 (async consolidation loop) stays deferred:
   `work/context-memory-eval/decisions.md`.
 - `main` is not pushed. Pushing is the user's call.

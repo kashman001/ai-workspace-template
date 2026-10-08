@@ -75,11 +75,12 @@ signal only arrives when you run `record` — in an extended discussion, run
 
 2. **Reflect — route conversation-only learnings to disk.** Anything learned this
    session that lives only in conversation is unrecoverable after rollover. Route
-   each item using the three-tier rule in `CONTEXT.md` → "Recording new learnings":
-   setup-time/environment → `scripts/setup.sh` / `scripts/check-tooling.sh` /
+   each item to one of three homes:
+   setup-time/environment → `scripts/setup.sh` / `scripts/check-dependencies.sh` /
    `.env.example` / `docs/workspace-setup.md`; operational knowledge →
-   `docs/operational-knowledge.md` (distilled anchor in `CONTEXT.md` only if
-   broadly load-bearing); code-pointer learnings → the relevant doc/skill WITH a
+   `docs/operational-knowledge.md`, classified first per
+   `skills/checkpoint/SKILL.md` → "Classify before you write" (distilled anchor
+   in `CONTEXT.md` only if broadly load-bearing); code-pointer learnings → the relevant doc/skill WITH a
    `repo/path:line` (or symbol) pointer. Decisions with a rejected alternative →
    `work/<project>/decisions.md` (the `decision-log` skill). Also update, where
    the session produced them: glossary rows, skill corrections, repo-context

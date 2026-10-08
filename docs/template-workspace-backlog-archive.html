@@ -939,6 +939,20 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L52</span> session-rollover cites a CONTEXT.md section that doesn't exist
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/session-rollover</span></h3>
+    <p><span class="k">Evidence</span> — <code>skills/session-rollover/SKILL.md</code> step on learnings says to use "the three-tier rule in <code>CONTEXT.md</code> &rarr; &ldquo;Recording new learnings&rdquo;". <code>CONTEXT.md</code> has no such section, and had none before L51's trim either (found while checking cross-references for L51).</p>
+    <p><span class="k">Impact</span> — An agent rolling over looks for a rule that isn't there and has to guess which tiers are meant.</p>
+    <p><span class="k">Fix</span> — Point the step at the section that holds the rule (likely <code>skills/checkpoint/SKILL.md</code> step 1 or &ldquo;Classify before you write&rdquo;), or restore a short rule. Check other skills for the same dangling name.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-07 (commit &ldquo;Fix L52&rdquo;): the section never existed in
+      <code>CONTEXT.md</code> (<code>git log -S</code> finds no history); the three homes were always spelled out inline in
+      the same step, so the dead pointer is dropped and operational knowledge now points to
+      <code>skills/checkpoint/SKILL.md</code> &rarr; &ldquo;Classify before you write&rdquo;. The same step and
+      <code>docs/context-budget.md</code> also named a nonexistent <code>scripts/check-tooling.sh</code>; both now name
+      <code>scripts/check-dependencies.sh</code>, which holds the Copilot <code>trustedFolders</code> check.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L51</span> CONTEXT.md sits at the top of its own Z0 always-loaded budget
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">CONTEXT.md · docs/zoom-model.md</span></h3>
     <p><span class="k">Evidence</span> — <code>work/context-memory-eval/eval.md</code> C4: <code>CONTEXT.md</code> is 20.5&nbsp;KB (~5K tokens), the ceiling of the 2&ndash;5K Z0 band in <code>docs/zoom-model.md</code>; with the global <code>CLAUDE.md</code> and <code>MEMORY.md</code> the always-loaded set is ~7K tokens before plugins.</p>
