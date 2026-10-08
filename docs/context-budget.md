@@ -67,7 +67,8 @@ scripts/context-budget.sh watch --interval 30    # hook-less runtimes: poll + ma
 scripts/fleet.sh children                        # per-subagent sweep, WARN/STOP only (claude)
 ```
 
-Output is one line: `runtime= method= tokens= threshold= warn= pct= status= artifact=`.
+Output is one line: `runtime= method= tokens= threshold= warn= pct= status= cache= artifact=`
+(`cache=` is explained under [Ledger](#ledger)).
 Exit code: `0` OK · `1` WARN · `2` STOP · `3` error. Requires `jq`.
 
 When an agent tells you it got a WARN/STOP: let it finish the current unit, have

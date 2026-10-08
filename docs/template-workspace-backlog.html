@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">12</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">99</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">11</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">100</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -158,14 +158,6 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
-
-  <div class="find low">
-    <h3><span class="id">L53</span> context-budget.md shows the old check/record output line, without <code>cache=</code>
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/context-budget.md</span></h3>
-    <p><span class="k">Evidence</span> — <code>docs/context-budget.md:70</code> lists <code>runtime= method= tokens= threshold= warn= pct= status= artifact=</code>; since L50 the script prints <code>cache=</code> before <code>artifact=</code> (<code>scripts/context-budget.sh:19</code>). Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
-    <p><span class="k">Impact</span> — A reader parsing the line by the doc misses a field.</p>
-    <p><span class="k">Fix</span> — Add <code>cache=</code> to the line and point at the Ledger section that explains it.</p>
-  </div>
 
   <div class="find low">
     <h3><span class="id">L54</span> TEMPLATE_VERSION not bumped after the context-memory-hardening changes
@@ -367,6 +359,7 @@
       <tr><td>2026-10-07</td><td>New finding <strong>L52</strong>: <code>skills/session-rollover/SKILL.md</code> cites a <code>CONTEXT.md</code> section (&ldquo;Recording new learnings&rdquo;) that doesn't exist. Scorecard now 1/98/5/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L52</strong> (archived): dropped the dead <code>CONTEXT.md</code> &rarr; &ldquo;Recording new learnings&rdquo; pointer in <code>skills/session-rollover/SKILL.md</code> and repointed two mentions of the nonexistent <code>scripts/check-tooling.sh</code> to <code>scripts/check-dependencies.sh</code>. Scorecard now 0/99/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>New findings <strong>L53&ndash;L59</strong> from the doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>), and <strong>M44, M45, L60&ndash;L62</strong> from a harness-engineering review of Böckeler, &ldquo;Harness engineering for coding agent users&rdquo; (martinfowler.com); M44&ndash;M45 and L60&ndash;L62 are built in <code>work/harness-engineering/</code>, L53&ndash;L59 in <code>work/template-maintenance/</code>. Scorecard now 12/99/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L53</strong> (archived): <code>docs/context-budget.md</code> check/record output line gains <code>cache=</code>. Scorecard now 11/100/5/0/6.</td></tr>
 </tbody>
   </table>
 

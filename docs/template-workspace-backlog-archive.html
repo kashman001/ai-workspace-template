@@ -939,6 +939,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L53</span> context-budget.md shows the old check/record output line, without <code>cache=</code>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/context-budget.md:70</code> lists <code>runtime= method= tokens= threshold= warn= pct= status= artifact=</code>; since L50 the script prints <code>cache=</code> before <code>artifact=</code> (<code>scripts/context-budget.sh:19</code>). Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — A reader parsing the line by the doc misses a field.</p>
+    <p><span class="k">Fix</span> — Add <code>cache=</code> to the line and point at the Ledger section that explains it.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (commit &ldquo;Fix L53&rdquo;): the output line in <code>docs/context-budget.md</code> now lists <code>cache=</code> before <code>artifact=</code> and points to the Ledger section that explains it.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L52</span> session-rollover cites a CONTEXT.md section that doesn't exist
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/session-rollover</span></h3>
     <p><span class="k">Evidence</span> — <code>skills/session-rollover/SKILL.md</code> step on learnings says to use "the three-tier rule in <code>CONTEXT.md</code> &rarr; &ldquo;Recording new learnings&rdquo;". <code>CONTEXT.md</code> has no such section, and had none before L51's trim either (found while checking cross-references for L51).</p>
