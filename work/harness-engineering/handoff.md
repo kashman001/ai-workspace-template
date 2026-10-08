@@ -6,6 +6,24 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2 (2026-10-08)
+
+1. Ticket 02 (M45) done, commit `87b5776`: `scripts/check-drift.sh`
+   (dead backticked paths, gotchas past review age, CONTEXT.md over 16,000
+   bytes, unindexed docs; ADR hits warn). Suite
+   `scripts/tests/test-check-drift.sh` D1–D4. Checkpoint step 1 now runs
+   it; CI gains a weekly schedule. Full run-checks 35/0/0. Card M45
+   archived; new open card **L63** (two removed scripts in the
+   `workspace-structure.md` tree). Scorecard 5/107/5/0/6. Two Tier-2 notes.
+2. First run on `main`: one ADR-0009 warning, nothing failing. L58/L59
+   were already fixed by `template-maintenance`.
+3. Rolled over at 116K by pre-flight (not WARN): ticket 03 is doc-heavy
+   and would have ended near STOP. Next: ticket 03 (L60).
+
+Learnings:
+- Bash 3.2 (macOS) fails to parse a `case` with `pat)` arms inside
+  `$( … )` ("syntax error near `;;`"); use `if` there.
+
 # Session Handoff — 1 (2026-10-08)
 
 1. Ticket 01 (M44) done, commit `540cdba`: `scripts/run-checks.sh` (full
@@ -26,11 +44,3 @@ Learnings:
 - Several scripts die on `USER: unbound variable` under `env -i`
   (`context-budget.sh:672`). Real runners set USER; harmless unless a CI
   strips env.
-
-# Session Handoff — 2026-10-08 (session 0: scaffolded from the harness-engineering review)
-
-1. Scaffolded from a `context-memory-hardening` session 4 conversation: the
-   user asked what the template could learn from Böckeler's harness
-   engineering article; five ideas were accepted and filed as cards M44,
-   M45, L60, L61, L62. Article summary in `source-notes.md`.
-2. Five tickets under `issues/`; no code yet. Next: ticket 01 (launcher).

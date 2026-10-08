@@ -11,9 +11,11 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Position: **ticket 01 (M44) done** (`540cdba`); 1 of 5. Remaining, in
-order: 02 (M45) → 03 (L60) → 05 (L62, its blocker 01 is done) → 04 (L61,
-last: blocked by 01–03). Expect this to run unattended under
+Position: **tickets 01 (M44, `540cdba`) and 02 (M45, `87b5776`) done**;
+2 of 5. Remaining, in order: 03 (L60) → 05 (L62) → 04 (L61, last: blocked
+by 01–03). Ticket 03 is doc and skill edits only: read
+`skills/writing-for-agents/SKILL.md` before editing checkpoint, and read
+`docs/operational-knowledge.md` by headings (grep `^## `), not whole. Expect this to run unattended under
 `scripts/session-loop.sh harness-engineering`. Proceed without asking; only
 stop for something only a person can decide.
 
@@ -53,6 +55,8 @@ work/harness-engineering` must exit 0.
 - Choices with a rejected alternative go in `decisions.md` (Tier 2). Decide
   under stated assumptions rather than stopping, except for steps only a
   person can do.
+- `scripts/check-drift.sh` (ticket 02) is part of the full gate. New
+  backlog card L63 is open and not this item's scope.
 - Don't push main. At the end, report how far ahead of origin it is.
 - Edit `CONTEXT.md` directly, never a symlink. Targeted reads on the
   backlog HTML files and long docs.
