@@ -235,9 +235,9 @@ never copy the hooks into the local file, or each hook fires twice.
 
 **`agents/`** (checked in) holds subagent profiles — narrow-toolset children a
 lean parent session delegates to (e.g. `repo-navigator`: read-only navigation
-via the graphify graph). Part of the lean-loading model in `CONTEXT.md` →
-"Tool & Context Loading"; the opt-in server side of that model lives in
-`mcp-fragments/` (see `docs/mcp-setup.md` → "Core vs. fragments").
+via the graphify graph). Part of the lean-loading model explained in
+`docs/mcp-setup.md` → "Core vs. fragments"; the opt-in server side of that
+model lives in `mcp-fragments/`.
 
 ### User-Level Files (Outside the Workspace)
 

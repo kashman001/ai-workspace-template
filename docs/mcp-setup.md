@@ -23,9 +23,8 @@ for every runtime. Re-add recipe, if a task ever needs the structured tools:
 ## Core vs. fragments — lean by default
 
 Every wired MCP server adds standing tool surface (and context cost) to every
-session, so servers are split by default-need (rationale: `CONTEXT.md` →
-"Tool & Context Loading"). Only Claude Code defers tool schemas until first
-use (names only until tool search — an idle wired server is cheap there);
+session, so servers are split by default-need. Only Claude Code defers tool
+schemas until first use (names only until tool search — an idle wired server is cheap there);
 other runtimes load FULL schemas up front, so keeping opt-in servers out of
 their standing config matters most. **Not wired ≠ unavailable** — an agent
 needing a capability finds it in the fragment table
