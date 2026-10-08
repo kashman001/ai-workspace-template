@@ -18,7 +18,14 @@ Convention: docs/work-directory-conventions.md.
    or decay scoring), promoted from the Tier-2 note.
 4. New finding L52 filed: `skills/session-rollover/SKILL.md:78` cites a
    `CONTEXT.md` section that doesn't exist. Scorecard 1/98/5/0/6.
-5. Item finished. Nothing pushed.
+5. Item finished. After checkpoint, at the user's request: L52 fixed
+   (`42edb9a`); a sub-agent checked ADR-0013's premise with a stdlib BM25 +
+   MMR prototype — vector search does break the design, MMR/date-decay don't
+   but add nothing; ADR reason corrected and a "scan the `## ` headings,
+   judge by meaning" rule added to CONTEXT.md, checkpoint, ADR-0013
+   (`64f8908`). User asked to push: `main` pushed to origin (0 ahead).
+6. Rolled over (user-requested, landed at STOP 154K) to hand a workspace
+   documentation gap review to a fresh session — see launcher.
 
 Learnings:
 - `git log -1 -L <start>,<end>:<file>` per `## ` range gives a defensible
