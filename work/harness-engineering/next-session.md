@@ -11,11 +11,15 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Position: **no ticket started.** Five tickets under `issues/`, worked in
-number order: 01 (M44) → 02 (M45) → 03 (L60) → 05 (L62, blocked by 01) →
-04 (L61, last: blocked by 01–03). Expect this to run unattended under
+Position: **ticket 01 (M44) done** (`540cdba`); 1 of 5. Remaining, in
+order: 02 (M45) → 03 (L60) → 05 (L62, its blocker 01 is done) → 04 (L61,
+last: blocked by 01–03). Expect this to run unattended under
 `scripts/session-loop.sh harness-engineering`. Proceed without asking; only
 stop for something only a person can decide.
+
+Gate for every ticket now: `scripts/run-checks.sh` exits 0 (full, ~2 min).
+A new suite or check needs no registration; mark it `# run-checks: slow`
+if it takes more than ~3s or uses the network.
 
 1. `scripts/context-budget.sh register --project harness-engineering`, then
    `git log --oneline -3` and `git status --short` (another session may be
