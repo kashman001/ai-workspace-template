@@ -24,7 +24,10 @@ numeric decay scoring.
 Retrieval stays curated indexes plus grep: "summaries up, pointers down"
 (`docs/zoom-model.md`), the index-only `MEMORY.md`, `docs/README.md`,
 `work/README.md`, the repos registry, and `graphify query` where a graph
-exists. Staleness is handled by M43's mechanism instead of a decay score:
+exists. Matching by meaning is the agent's own job: a keyword grep misses
+when the words differ, so before concluding an entry isn't recorded the agent
+scans the store's `## ` headings (a few hundred tokens) and judges them by
+meaning. Staleness is handled by M43's mechanism instead of a decay score:
 every `docs/operational-knowledge.md` entry carries a `**Last confirmed:**`
 date, `checkpoint` lists entries past the 6-month review age for a person,
 and new entries are classified ADD / UPDATE / SUPERSEDE / NOOP before they
@@ -33,10 +36,15 @@ Nothing is auto-deleted.
 
 ## Alternatives considered
 
-- **Adopt them** — rejected: each needs a database or an embedding service,
-  which breaks the plain-files, any-runtime property. A Codex or Gemini
-  session, or a person with a text editor, could no longer read and write
-  memory the same way.
+- **Adopt them** — rejected. Vector retrieval needs an embedding model (a
+  ~100 MB+ local install or a paid API key), which breaks the stdlib-only,
+  offline, any-runtime property. MMR and date-based decay could be done in
+  stdlib over the plain files, but at tens of KB they add nothing: keyword
+  search already puts the right entry first, the results are already varied,
+  and an age-only decay score just repeats the `Last confirmed` review list.
+  A decay score that rewards use would need a stored read counter, which
+  nothing in the workspace records. (Checked with a stdlib BM25 + MMR
+  prototype over these stores, 2026-10-07.)
 - **Ship them as an optional add-on** — rejected: ongoing maintenance cost for
   value no one has shown at this scale. The stores are tens of KB, and
   curation (the framework's own C11 conclusion) already covers the need.

@@ -86,7 +86,9 @@ workspace is organized (directories, entrypoints, conventions);
 `docs/README.md` indexes every doc by need. How product knowledge is
 layered — and what to load for a task — is `docs/zoom-model.md`.
 Hard-won operational gotchas (build/CI/shell traps) are recorded in
-`docs/operational-knowledge.md` — read it before debugging those.
+`docs/operational-knowledge.md` — read it before debugging those. A keyword
+grep misses when the words differ: before concluding a gotcha or decision
+isn't recorded, scan the file's `## ` headings and judge them by meaning.
 
 ## Work Directory Convention
 

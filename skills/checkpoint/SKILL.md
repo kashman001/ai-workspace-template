@@ -109,8 +109,10 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
 
 This applies before you append to `docs/operational-knowledge.md` or a
 `work/*/decisions.md`. First grep the target for the subject, using two or
-three key words from the new item (`grep -n -i '<word>' <file>`). Read any
-entry that matches. Then pick one:
+three key words from the new item (`grep -n -i '<word>' <file>`). The same
+subject can be worded differently, so also scan the headings
+(`grep -n '^## ' <file>`) for one that means the same thing. Read any entry
+that matches. Then pick one:
 
 - **ADD** — nothing covers it. Append a new entry. In
   `operational-knowledge.md`, give it a `**Last confirmed:** $(date +%F)` line
