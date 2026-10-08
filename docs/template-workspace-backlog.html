@@ -69,13 +69,13 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-07 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-08 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">12</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">99</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -140,8 +140,104 @@
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
 
+  <div class="find med">
+    <h3><span class="id">M44</span> The template's own checks only run when an agent remembers to run them
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/tests</span></h3>
+    <p><span class="k">Evidence</span> — 28 suites under <code>scripts/tests/</code> plus the <code>check-*.sh</code> scripts, but no single command runs them all, no pre-commit hook (<code>core.hooksPath</code> unset) and no CI (<code>.github/workflows/</code> absent). Some suites lack the exec bit and one is Python, so <code>./</code> fails on them. Source: harness-engineering review of Böckeler, &ldquo;Harness engineering for coding agent users&rdquo; (martinfowler.com, 2026-04) &mdash; &ldquo;keep quality left&rdquo;.</p>
+    <p><span class="k">Impact</span> — A change can break a check and land unnoticed; downloaders inherit a template whose gates are advisory only.</p>
+    <p><span class="k">Fix</span> — One <code>scripts/run-checks.sh</code> (fast and full tiers) called from a pre-commit hook and a CI workflow; document both. Built in work item <code>harness-engineering</code>, ticket 01.</p>
+  </div>
+
+  <div class="find med">
+    <h3><span class="id">M45</span> No drift sweep: workspace-wide staleness is found only by hand
+      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">docs, scripts</span></h3>
+    <p><span class="k">Evidence</span> — The session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>) found dead path references, a gotcha naming a removed script and stale pointers by hand. <code>scripts/tests/test-doc-consistency.sh</code> checks paths for the plans docs only. Stale <code>Last confirmed</code> entries are listed only when someone runs checkpoint step 1.</p>
+    <p><span class="k">Impact</span> — Docs drift silently between reviews; every review repeats the same manual sweep.</p>
+    <p><span class="k">Fix</span> — <code>scripts/check-drift.sh</code>: dead path references across <code>docs/</code> and <code>skills/</code> (with an allow-list for upstream provenance, generated files and skill-relative paths), gotchas past review age, <code>CONTEXT.md</code> over its byte budget, docs missing from <code>docs/README.md</code>. Run at checkpoint and on a CI schedule. Built in work item <code>harness-engineering</code>, ticket 02.</p>
+  </div>
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L53</span> context-budget.md shows the old check/record output line, without <code>cache=</code>
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/context-budget.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/context-budget.md:70</code> lists <code>runtime= method= tokens= threshold= warn= pct= status= artifact=</code>; since L50 the script prints <code>cache=</code> before <code>artifact=</code> (<code>scripts/context-budget.sh:19</code>). Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — A reader parsing the line by the doc misses a field.</p>
+    <p><span class="k">Fix</span> — Add <code>cache=</code> to the line and point at the Ledger section that explains it.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L54</span> TEMPLATE_VERSION not bumped after the context-memory-hardening changes
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">TEMPLATE_VERSION</span></h3>
+    <p><span class="k">Evidence</span> — <code>TEMPLATE_VERSION</code> reads <code>2026-09-30</code>; since then <code>CONTEXT.md</code> was trimmed and gained rules, the budget output and ledger rows changed, and checkpoint gained a classify step. No changelog exists. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — A downloader comparing versions can't tell their copy predates these changes.</p>
+    <p><span class="k">Fix</span> — Maintainer decides when to cut a release and bumps the date then (<code>docs/template-usage.md</code> &rarr; &ldquo;Upgrading later&rdquo;).</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L55</span> &ldquo;What CONTEXT.md should contain&rdquo; lacks the size budget and the no-dates rule
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/workspace-structure.md</code> &rarr; &ldquo;What <code>CONTEXT.md</code> Should Contain&rdquo; says only &ldquo;keep it concise&rdquo;. The byte budget behind L51 and the &ldquo;no dates, status or counters&rdquo; rule (<code>docs/context-budget.md</code> &rarr; &ldquo;Cache the prefix, vary the tail&rdquo;) are absent. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — Someone adapting the template reads this section first and can re-add volatile lines that break prompt caching.</p>
+    <p><span class="k">Fix</span> — Add one bullet pointing to &ldquo;Cache the prefix, vary the tail&rdquo; and the Z0 budget.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L56</span> Pointers send readers to CONTEXT.md for detail the L51 trim moved out
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md, docs/mcp-setup.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/workspace-structure.md:234</code> calls <code>.claude/agents/</code> part of &ldquo;the lean-loading model in <code>CONTEXT.md</code> &rarr; Tool &amp; Context Loading&rdquo;, and <code>docs/mcp-setup.md:26</code> cites it for the rationale; that section is now a short summary, and the three layers are explained in <code>docs/mcp-setup.md</code> / <code>mcp-fragments/README.md</code>. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — Readers follow a pointer to a summary and must search for the detail.</p>
+    <p><span class="k">Fix</span> — Point both at <code>docs/mcp-setup.md</code>.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L57</span> Retired decision notes are not explained outside the decision-log skill
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/work-directory-conventions.md, docs/for-non-engineers.md</span></h3>
+    <p><span class="k">Evidence</span> — The decision-log skill now classifies notes (ADD/UPDATE/SUPERSEDE/NOOP) and marks a replaced note <code>**Retired:**</code>; <code>docs/work-directory-conventions.md</code> (the <code>decisions.md</code> row) and <code>docs/for-non-engineers.md</code> (&ldquo;Day-to-day decisions&rdquo;) don't say so. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — A reader, or an agent quoting <code>decisions.md</code> for a non-engineer, may cite a retired note.</p>
+    <p><span class="k">Fix</span> — One clause in each: a replaced note carries <code>**Retired:**</code>; skip it.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L58</span> A gotcha names a script that no longer exists
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/operational-knowledge.md</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/operational-knowledge.md</code> (the ledger-splice entry) cites <code>scripts/rollover-prep.sh</code>, removed in <code>d4fb3b6</code>. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — The lesson stands but the reader can't find the script it describes.</p>
+    <p><span class="k">Fix</span> — Note the removal and what replaced it, and refresh the entry's <code>Last confirmed</code> line.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L59</span> ADR-0009 cites a document that was never committed
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/adr/0009</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/adr/0009-clear-based-rollover-relaunch.md</code> (2026-09-14 amendment) cites <code>docs/session-chain-scenarios.md</code> for scenario B3; the path has no git history. (Its removed hook script is expected: ADR-0010 amends it.) Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — The amendment's evidence can't be followed.</p>
+    <p><span class="k">Fix</span> — Name where scenario B3 is recorded, or drop the path.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L60</span> Recurring gotchas have no path to become checks
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/checkpoint, docs/operational-knowledge.md</span></h3>
+    <p><span class="k">Evidence</span> — Checkpoint &rarr; &ldquo;Classify before you write&rdquo; offers ADD/UPDATE/SUPERSEDE/NOOP; nothing says a gotcha that recurs should become a script or test. Böckeler's &ldquo;steering loop&rdquo;: when an issue recurs, improve a guide or add a sensor.</p>
+    <p><span class="k">Impact</span> — Prose rules pile up that a script could enforce; the same mistake is re-made and re-documented.</p>
+    <p><span class="k">Fix</span> — Add a &ldquo;promote to a check&rdquo; outcome and an optional <code>Enforced by:</code> field on gotchas. Built in work item <code>harness-engineering</code>, ticket 03.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L61</span> No single map of the workspace's guides and checks
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — Guides (<code>CONTEXT.md</code>, skills, gotchas, ADRs) and checks (scripts, suites, hooks, lints) are documented where they live; nothing lists them together with when each runs. The L51 trim left stale pointers elsewhere (L56) &mdash; the &ldquo;coherence&rdquo; problem the article names.</p>
+    <p><span class="k">Impact</span> — Gaps in coverage (e.g. path checks only for the plans docs) are invisible.</p>
+    <p><span class="k">Fix</span> — One table: each control, guide or check, script or judgement, when it runs. Built in work item <code>harness-engineering</code>, ticket 04.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L62</span> New checks aren't required to ship with a test that makes them fail
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md (Authoring a Team Capability)</span></h3>
+    <p><span class="k">Evidence</span> — Most checks have a suite feeding them bad input, but no rule requires it. The article's &ldquo;silent sensor&rdquo; problem: a check that never fires may be broken.</p>
+    <p><span class="k">Impact</span> — A check can pass forever without ever being able to fail.</p>
+    <p><span class="k">Fix</span> — Add the rule to &ldquo;Authoring a Team Capability&rdquo; and to <code>run-checks.sh</code>'s docs. Built in work item <code>harness-engineering</code>, ticket 05.</p>
+  </div>
 
 
 
@@ -270,6 +366,7 @@
       <tr><td>2026-10-07</td><td>Decided <strong>D5</strong> (archived; <code>work/context-memory-hardening/</code> ticket 05): ADR-0013 — no vector store, no MMR re-ranking, no numeric decay scoring; M43's last-confirmed dates are the substitute. All five context/memory-hardening cards closed. Scorecard now 0/98/5/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>New finding <strong>L52</strong>: <code>skills/session-rollover/SKILL.md</code> cites a <code>CONTEXT.md</code> section (&ldquo;Recording new learnings&rdquo;) that doesn't exist. Scorecard now 1/98/5/0/6.</td></tr>
       <tr><td>2026-10-07</td><td>Resolved <strong>L52</strong> (archived): dropped the dead <code>CONTEXT.md</code> &rarr; &ldquo;Recording new learnings&rdquo; pointer in <code>skills/session-rollover/SKILL.md</code> and repointed two mentions of the nonexistent <code>scripts/check-tooling.sh</code> to <code>scripts/check-dependencies.sh</code>. Scorecard now 0/99/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>New findings <strong>L53&ndash;L59</strong> from the doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>), and <strong>M44, M45, L60&ndash;L62</strong> from a harness-engineering review of Böckeler, &ldquo;Harness engineering for coding agent users&rdquo; (martinfowler.com); M44&ndash;M45 and L60&ndash;L62 are built in <code>work/harness-engineering/</code>, L53&ndash;L59 in <code>work/template-maintenance/</code>. Scorecard now 12/99/5/0/6.</td></tr>
 </tbody>
   </table>
 

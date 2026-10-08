@@ -21,6 +21,13 @@ The lane, as the map defines it: test infrastructure, coaching, risk
 analysis — where modern dedicated-QA sits (Google SETI/TE, Atlassian QA)
 and the natural anchor for AI test tooling.
 
+## Related
+
+- `work/harness-engineering/` builds the *template's own* check runner,
+  pre-commit hook and CI (card M44). Reuse its runner and its
+  guides-vs-checks framing (`work/harness-engineering/source-notes.md`)
+  when writing gate guidance here.
+
 ## Success criteria
 
 - CI quality-gate guidance exists (G3, the first deliverable): which gates a

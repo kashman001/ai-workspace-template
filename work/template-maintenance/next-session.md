@@ -1,51 +1,46 @@
-# Next Session — template-maintenance (session 16)
+# Catchup prompt — template-maintenance (paste into a new agent session)
 
-## Mission
+> **This file is the LAUNCHER.** Forward-only, REPLACED at each rollover.
+> Provenance lives in `handoff.md`. Convention: docs/work-directory-conventions.md.
 
-> **Superseded 2026-09-10:** `work/template-improvement-review/` built all
-> five cards under stated assumptions (its `decisions.md`; backlog now
-> 1 open / 86 resolved, M27/M28/M29/L38/L39 archived) after the user
-> authorised autonomous improvement. Walking the brief is no longer needed;
-> the user's review of those choices, if any, replaces it. Next session:
-> verify state, then take direction — the paragraph below is history.
+## >>> START HERE <<<
 
-Blocked on user input. Session 15 wrote
-`work/template-maintenance/open-cards-options-brief.md` — an options brief
-for the 5 remaining open cards (M27 testability prompt, M28 UAT/beta,
-M29 postmortem, L38 dep/suite health, L39 generic backlog), each with a
-proposed shape and open questions. Nothing should be built until the user
-answers those questions. With a user present: walk the brief card by card,
-take direction, then implement per their picks. Unattended: there is
-nothing further to prepare — do NOT design conventions solo and do NOT
-regenerate the brief; verify state and stop.
+Mission: fix seven small doc-gap cards, **L53–L59**, filed 2026-10-08 from
+`work/context-memory-hardening/doc-gap-review.md` (each card's Evidence/Fix
+says what to do; the review file has the context). Expect this to run
+unattended under `scripts/session-loop.sh template-maintenance`. Proceed
+without asking.
 
-## Read these, in order
+1. `scripts/context-budget.sh register --project template-maintenance`, then
+   `git log --oneline -3` and `git status --short`. Another session may be
+   working `harness-engineering` on this checkout: re-read the backlog files
+   right before each edit, and commit only your own files.
+2. For each card in order L53, L55, L56, L57, L58, L59 (grep the ID in
+   `docs/template-workspace-backlog.html`): make the fix, verify it with
+   `grep`, resolve the card (badge → Resolved, `Fixed:` line, `class=
+   "resolved"`, move to the archive's Low section, scorecard −1 open +1
+   resolved, "Last updated", change-log row), one commit `Fix <ID>: …` with
+   a `Decision:` trailer.
+3. **L54 is the maintainer's call** (when to cut a release and bump
+   `TEMPLATE_VERSION`). Don't bump it. Leave the card open and list it for
+   the user in the ledger.
+4. After each card: `scripts/context-budget.sh record --label "<ID> done"`;
+   on 1 or 2, roll over with this launcher rewritten to the remaining cards.
+5. All done: run every `scripts/tests/test-*` suite (`bash`/`python3`, not
+   `./`) and `scripts/check-workspace-structure.sh`; ledger block; stop door
+   (`skills/checkpoint/SKILL.md`, `scripts/context-budget.sh close`). Leave
+   the next launcher as "standing — take direction from the user".
 
-1. `work/template-maintenance/open-cards-options-brief.md` — the deliverable
-   to walk through with the user.
-2. `work/template-maintenance/handoff.md` — top block only (session-15 close).
+Ledger: one block on top of `handoff.md`; keep two, archive the third;
+`python3 scripts/check-ledger.py work/template-maintenance` must exit 0.
 
-## Do NOT reload
+## Constraints
 
-- The 5 card bodies in the backlog — the brief summarizes them; grep the
-  backlog only if the user challenges a detail.
-- M16/M35 delivery details, `handoff-archive.md`, exit-ux-plan.md — historical.
+- Doc edits only. Surgical: fix what each card names, nothing adjacent.
+- Don't push main. Report how far ahead of origin it is.
+- Older history (options brief, M27–M29) is closed; don't reload it.
 
-## State snapshot
+## Read these first
 
-- Session-15 branch `worktree-tm-s15-options-brief` is merged into main
-  (verified s16, 2026-09-03). Three fixes landed on main after it via PRs
-  #41–#43 (M36 check-ledger heading, L44 TF_SESSION_LOOP scrub, M37
-  --unstage atomic abandon); each carried its own backlog update.
-- Suites re-run on current main in s16: 21/21 green (registry 122/0,
-  launcher 249/0, loop 76/0, vendor-hooks 85/0). Backlog: 5 open / 80
-  resolved at s16; 1 open / 86 resolved after 2026-09-10 (see note above).
-- All five `.claude/worktrees/*` branches are merged into main; the
-  worktrees are still present and locked — cleanup is a user call.
-
-## First actions
-
-1. `scripts/context-budget.sh register --project template-maintenance`
-2. `git fetch origin && git log HEAD..origin/main --oneline` — empty
-   before trusting this launcher (staleness guard).
-3. Continue per Mission.
+1. The card (grep its ID in the backlog HTML — targeted read).
+2. `work/context-memory-hardening/doc-gap-review.md` (short).
