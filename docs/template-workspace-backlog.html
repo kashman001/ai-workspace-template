@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">5</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">107</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">108</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -151,14 +151,6 @@
     <p><span class="k">Evidence</span> — <code>TEMPLATE_VERSION</code> reads <code>2026-09-30</code>; since then <code>CONTEXT.md</code> was trimmed and gained rules, the budget output and ledger rows changed, and checkpoint gained a classify step. No changelog exists. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
     <p><span class="k">Impact</span> — A downloader comparing versions can't tell their copy predates these changes.</p>
     <p><span class="k">Fix</span> — Maintainer decides when to cut a release and bumps the date then (<code>docs/template-usage.md</code> &rarr; &ldquo;Upgrading later&rdquo;).</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L60</span> Recurring gotchas have no path to become checks
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/checkpoint, docs/operational-knowledge.md</span></h3>
-    <p><span class="k">Evidence</span> — Checkpoint &rarr; &ldquo;Classify before you write&rdquo; offers ADD/UPDATE/SUPERSEDE/NOOP; nothing says a gotcha that recurs should become a script or test. Böckeler's &ldquo;steering loop&rdquo;: when an issue recurs, improve a guide or add a sensor.</p>
-    <p><span class="k">Impact</span> — Prose rules pile up that a script could enforce; the same mistake is re-made and re-documented.</p>
-    <p><span class="k">Fix</span> — Add a &ldquo;promote to a check&rdquo; outcome and an optional <code>Enforced by:</code> field on gotchas. Built in work item <code>harness-engineering</code>, ticket 03.</p>
   </div>
 
   <div class="find low">
@@ -321,6 +313,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L59</strong> (archived): ADR-0009 amendment repointed from the never-committed <code>docs/session-chain-scenarios.md</code> to the <code>relaunch_off</code> gate and its test. Scorecard now 6/105/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>M44</strong> (<code>work/harness-engineering</code> ticket 01): <code>scripts/run-checks.sh</code> (full + <code>--fast</code> tiers), opt-in pre-commit hook, GitHub Actions workflow (unverified until pushed); <code>test-jev.sh</code> made hermetic. Scorecard now 5/106/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>M45</strong> (<code>work/harness-engineering</code> ticket 02): <code>scripts/check-drift.sh</code> staleness sweep, run by checkpoint step 1 and by CI on push and weekly. New <strong>L63</strong> (open): two removed scripts still listed in the <code>workspace-structure.md</code> tree. Scorecard now 5/107/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L60</strong> (<code>work/harness-engineering</code> ticket 03): checkpoint gains &ldquo;Promote a repeat to a check&rdquo;; gotchas may carry an <code>**Enforced by:**</code> line, back-filled on three entries. Scorecard now 4/108/5/0/6.</td></tr>
 </tbody>
   </table>
 

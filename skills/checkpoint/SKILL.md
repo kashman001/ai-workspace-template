@@ -130,6 +130,15 @@ that matches. Then pick one:
 If you can't tell UPDATE from SUPERSEDE, choose SUPERSEDE. A retired entry
 keeps its history. An overwritten one loses it.
 
+**Promote a repeat to a check.** An UPDATE to an `operational-knowledge.md`
+entry means the same mistake happened again. Ask whether a script or test
+could catch it next time. If yes, write the check now when it is small (a new
+`scripts/check-*` script or `scripts/tests/` suite; `scripts/run-checks.sh`
+picks it up), or file a backlog card for it. Then add an
+`**Enforced by:** <script or test>` line below the entry's `Last confirmed`
+line, naming the check or the card. The entry stays as the *why*; the check is
+the guard.
+
 ## Verification
 
 - Hand-off doc is on disk: `ls work/<project-name>/` shows it.

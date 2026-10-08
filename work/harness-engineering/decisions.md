@@ -49,3 +49,18 @@ Tier-2 decision notes (newest on top). Promote lasting-weight ones to
 - **Rejected:** a `setup.sh` step that copies into `.git/hooks` — silently
   turns hooks on for adopters and drifts from the checked-in copy;
   Husky/npm — the template is bash.
+
+## 2026-10-08 — promote a gotcha to a check on recurrence, not on first write (ticket 03)
+
+- **Decision:** checkpoint asks "could a script catch this?" only on an
+  UPDATE (the same mistake again). `Enforced by:` is back-filled only where a
+  check fails when the mistake recurs: three entries (registry clobber,
+  transcript re-key, ledger headings).
+- **Why:** most gotchas are one-off facts about outside tools (Gemini auth,
+  Pages builds) that no in-repo script can see; asking on every ADD makes the
+  question noise. A recurrence is Böckeler's steering-loop cue. A loose
+  `Enforced by:` (a test that exercises the area but would not fail on the
+  mistake) would claim a guard that isn't there.
+- **Rejected:** asking on every ADD; tagging every entry whose script has a
+  suite (e.g. the `no_supervisor` refusal is tested, but the test does not
+  stop a sub-agent from making the hand `--emit` call).

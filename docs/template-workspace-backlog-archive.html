@@ -970,6 +970,21 @@
       pruned; reversal path and rejected shapes in the item's <code>decisions.md</code>.</p>
   </div>
   <h2>Low</h2>
+  <div class="find low resolved">
+    <h3><span class="id">L60</span> Recurring gotchas have no path to become checks
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/checkpoint, docs/operational-knowledge.md</span></h3>
+    <p><span class="k">Evidence</span> — Checkpoint &rarr; &ldquo;Classify before you write&rdquo; offers ADD/UPDATE/SUPERSEDE/NOOP; nothing says a gotcha that recurs should become a script or test. Böckeler's &ldquo;steering loop&rdquo;: when an issue recurs, improve a guide or add a sensor.</p>
+    <p><span class="k">Impact</span> — Prose rules pile up that a script could enforce; the same mistake is re-made and re-documented.</p>
+    <p><span class="k">Fix</span> — Add a &ldquo;promote to a check&rdquo; outcome and an optional <code>Enforced by:</code> field on gotchas. Built in work item <code>harness-engineering</code>, ticket 03.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/harness-engineering</code> ticket 03, commit
+      &ldquo;Fix L60&rdquo;): checkpoint &rarr; &ldquo;Classify before you write&rdquo; gains &ldquo;Promote a repeat to a
+      check&rdquo;: an UPDATE to a gotcha means the mistake recurred, so write a small check now or file a card, then add an
+      <code>**Enforced by:**</code> line under the entry. The <code>docs/operational-knowledge.md</code> header defines the
+      line (the entry stays the <em>why</em>, the check is the guard). Back-filled on three entries: registry clobber and
+      transcript re-key (<code>scripts/tests/test-context-budget-registry.sh</code> T1, M16) and ledger headings
+      (<code>scripts/check-ledger.py</code>). <code>skills/decision-log</code> already points to checkpoint, so it is unchanged.</p>
+  </div>
+
 
   <div class="find low resolved">
     <h3><span class="id">L59</span> ADR-0009 cites a document that was never committed

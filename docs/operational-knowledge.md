@@ -16,12 +16,18 @@ heading: the date someone last checked the entry still holds. **Review age is
 re-confirm (bump the date), update, or retire. Nothing is auto-deleted. Before
 adding an entry, classify it per `skills/checkpoint/SKILL.md` → "Classify
 before you write" (ADD / UPDATE / SUPERSEDE / NOOP).
+An entry may also carry an `**Enforced by:** <script or test>` line under its
+`Last confirmed` line: a check that fails when the mistake recurs. The entry
+still explains *why*; the check is the guard. A gotcha that recurs is the cue
+to add one (same section → "Promote a repeat to a check").
 Incident narratives — how a failure unfolded, not just the rule it left behind —
 live in `docs/postmortems/` (see its README for the threshold and workflow).
 
 ## context-budget.sh — concurrent sessions clobber the registry (measure the wrong session)
 
 **Last confirmed:** 2026-09-21
+
+**Enforced by:** `scripts/tests/test-context-budget-registry.sh` (T1)
 
 **Symptom:** `record`/`check` report far fewer tokens than the in-band hook
 (e.g. 47K OK vs 128K WARN), citing another session's artifact. **Cause:** the
@@ -54,6 +60,8 @@ pre-message `/context` suggests.
 ## Claude Code — the session transcript path can be re-keyed mid-session
 
 **Last confirmed:** 2026-08-27
+
+**Enforced by:** `scripts/tests/test-context-budget-registry.sh` (M16a–f)
 
 Claude Code stores the live transcript under `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`,
 keyed by the session's cwd. `EnterWorktree` changes the cwd, so the transcript
@@ -290,6 +298,8 @@ this with a manual `cp` per session (backlog L45).
 ## Ledger headings break silently — verify the count, and check the archive after prep
 
 **Last confirmed:** 2026-10-08
+
+**Enforced by:** `scripts/check-ledger.py` (headings inside the purpose comment, ordering, archive first line)
 
 Two separate ledger-integrity failures inside one session (2026-08-22), both of
 which passed a "looks fine" glance:

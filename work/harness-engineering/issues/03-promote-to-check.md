@@ -19,14 +19,22 @@ Follow `skills/writing-for-agents/SKILL.md` for the skill edit.
 
 **Blocked by:** nothing.
 
-**Status:** todo
+**Status:** done
 
-- [ ] Rule added to checkpoint; `Enforced by:` defined in the doc header
-- [ ] Back-fill done; list which entries got the line in the ticket
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Rule added to checkpoint; `Enforced by:` defined in the doc header
+- [x] Back-fill done; list which entries got the line in the ticket
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green (after ticket 01:
+- [x] All `scripts/tests/test-*` suites green (after ticket 01:
       `scripts/run-checks.sh` exits 0); `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+
+**Done (2026-10-08, session 3).** Rule is "Promote a repeat to a check" in
+checkpoint → "Classify before you write"; the doc header defines
+`**Enforced by:**`. Back-filled: "context-budget.sh — concurrent sessions
+clobber the registry" and "Claude Code — the session transcript path can be
+re-keyed mid-session" (`scripts/tests/test-context-budget-registry.sh` T1,
+M16), "Ledger headings break silently" (`scripts/check-ledger.py`).
+`skills/decision-log/SKILL.md` already points to checkpoint; unchanged.
