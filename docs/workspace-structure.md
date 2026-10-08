@@ -398,6 +398,14 @@ block in `scripts/check-service-access.sh` per service, and a row in
 then fail (exit 1) on any machine missing it, instead of the capability
 failing mid-task.
 
+A new **check** — a `check-*` script, a hook, a lint verb like `plan.sh
+check` — ships with a suite under `scripts/tests/` that feeds it bad input
+and asserts it fails: the exit code (or, for a warn-only check, its
+`Status:` line) and the reason line it prints. A check that has never been
+seen to fail may be unable to; the suite proves it can. Assert the passing
+case too, so the suite tells the two apart. `scripts/run-checks.sh` picks
+the suite up by name.
+
 Before writing the `SKILL.md`, consult the `writing-for-agents` skill for
 style; keep the skill agent-vendor-neutral (plain Markdown, no
 runtime-specific syntax).
@@ -572,11 +580,13 @@ scripts/
 - `check-service-access.sh` — verifies service credentials are reachable
   (database, cloud CLI, Atlassian, etc.); required services (today: GitHub
   via `gh`) exit 1 when unreachable, optional ones only degrade the status.
+  Tested by `scripts/tests/test-check-service-access.sh`.
 - `check-workspace-structure.sh` — validates that documented directories
   exist, symlinks resolve, scripts are executable, the repo-context doc
   templates are present, `repos/README.md` is not git-ignored, and the
   generated guide HTML matches its Markdown source (sha1 freshness warning).
   (It does **not** reconcile the registry against the on-disk repos.)
+  Tested by `scripts/tests/test-check-workspace-structure.sh`.
 - `check-ledger.py` — validates every `work/<project>/` ledger: each
   `# Session Handoff` heading is well-formed (both title conventions),
   none is buried inside the purpose comment, blocks run newest-first by
@@ -601,7 +611,8 @@ scripts/
   `scripts/git-hooks/pre-commit`; CI (`.github/workflows/checks.yml`) runs
   the full set. A check exits 77 to skip (last output line is the reason)
   when it needs something a runner lacks. New checks are picked up by name —
-  no list to update. Adopter setup: `docs/template-usage.md` → "Automatic
+  no list to update; each must ship with a suite that makes it fail
+  ("Authoring a Team Capability"). Adopter setup: `docs/template-usage.md` → "Automatic
   checks (pre-commit and CI)". Tested by `scripts/tests/test-run-checks.sh`.
 - `session-loop.sh` — the session-loop supervisor: launches a work item's
   successor sessions one after another, unattended, gating each handover on

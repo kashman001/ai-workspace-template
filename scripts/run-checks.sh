@@ -10,6 +10,8 @@
 #     start failing with no commit, like check-drift.sh)
 #   - exit 77 → SKIP, not FAIL; its last output line is printed as the reason
 #     (for a check that needs something a CI runner lacks: a CLI, a keychain)
+# Every new check ships with a scripts/tests/ suite that makes it fail
+# (docs/workspace-structure.md → "Authoring a Team Capability").
 # See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"
 set -uo pipefail
 

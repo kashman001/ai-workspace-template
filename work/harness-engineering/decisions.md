@@ -64,3 +64,17 @@ Tier-2 decision notes (newest on top). Promote lasting-weight ones to
 - **Rejected:** asking on every ADD; tagging every entry whose script has a
   suite (e.g. the `no_supervisor` refusal is tested, but the test does not
   stop a sub-agent from making the hand `--emit` call).
+
+## 2026-10-08 — the fail-test rule lives in one place (ticket 05)
+
+- **Decision:** the "ships with a suite that makes it fail" rule is written
+  once, in `docs/workspace-structure.md` → "Authoring a Team Capability";
+  the `run-checks.sh` entry and script header point to it. Gaps found by the
+  audit were all filled with new suites, none carded.
+- **Why:** one home per rule (`writing-for-agents` → single source of
+  truth). Each gap was a sub-100-line suite, cheaper to write than to track.
+  The structure check's only suite asserted a warning, so "has a suite" was
+  not the same as "has a suite that makes it fail".
+- **Rejected:** copying the full rule into `run-checks.sh` docs (two homes
+  drift); counting `test-context-prefix-stability.sh` as the structure
+  check's failing case (it never sees exit 1).

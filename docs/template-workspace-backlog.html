@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">108</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">109</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -159,14 +159,6 @@
     <p><span class="k">Evidence</span> — Guides (<code>CONTEXT.md</code>, skills, gotchas, ADRs) and checks (scripts, suites, hooks, lints) are documented where they live; nothing lists them together with when each runs. The L51 trim left stale pointers elsewhere (L56) &mdash; the &ldquo;coherence&rdquo; problem the article names.</p>
     <p><span class="k">Impact</span> — Gaps in coverage (e.g. path checks only for the plans docs) are invisible.</p>
     <p><span class="k">Fix</span> — One table: each control, guide or check, script or judgement, when it runs. Built in work item <code>harness-engineering</code>, ticket 04.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L62</span> New checks aren't required to ship with a test that makes them fail
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md (Authoring a Team Capability)</span></h3>
-    <p><span class="k">Evidence</span> — Most checks have a suite feeding them bad input, but no rule requires it. The article's &ldquo;silent sensor&rdquo; problem: a check that never fires may be broken.</p>
-    <p><span class="k">Impact</span> — A check can pass forever without ever being able to fail.</p>
-    <p><span class="k">Fix</span> — Add the rule to &ldquo;Authoring a Team Capability&rdquo; and to <code>run-checks.sh</code>'s docs. Built in work item <code>harness-engineering</code>, ticket 05.</p>
   </div>
 
 
@@ -314,6 +306,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>M44</strong> (<code>work/harness-engineering</code> ticket 01): <code>scripts/run-checks.sh</code> (full + <code>--fast</code> tiers), opt-in pre-commit hook, GitHub Actions workflow (unverified until pushed); <code>test-jev.sh</code> made hermetic. Scorecard now 5/106/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>M45</strong> (<code>work/harness-engineering</code> ticket 02): <code>scripts/check-drift.sh</code> staleness sweep, run by checkpoint step 1 and by CI on push and weekly. New <strong>L63</strong> (open): two removed scripts still listed in the <code>workspace-structure.md</code> tree. Scorecard now 5/107/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L60</strong> (<code>work/harness-engineering</code> ticket 03): checkpoint gains &ldquo;Promote a repeat to a check&rdquo;; gotchas may carry an <code>**Enforced by:**</code> line, back-filled on three entries. Scorecard now 4/108/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L62</strong> (<code>work/harness-engineering</code> ticket 05): every new check ships with a suite that makes it fail; three new suites close the gaps the audit found. Scorecard now 3/109/5/0/6.</td></tr>
 </tbody>
   </table>
 

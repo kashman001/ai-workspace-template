@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 3b31cc9d5bdf3c4ece742a941bb201f649e6b347 -->
+  <!-- source-md-sha1: 41fd407fc877dc6c87276deee04231848774a43a -->
 </head>
 <body>
 <div class="src-banner">
@@ -774,6 +774,14 @@ required block in <code>scripts/check-service-access.sh</code> per
 service, and a row in <code>docs/recommended-tooling.md</code> →
 "Required for everyone". The check scripts then fail (exit 1) on any
 machine missing it, instead of the capability failing mid-task.</p>
+<p>A new <strong>check</strong> — a <code>check-*</code> script, a hook,
+a lint verb like <code>plan.sh check</code> — ships with a suite under
+<code>scripts/tests/</code> that feeds it bad input and asserts it
+fails: the exit code (or, for a warn-only check, its
+<code>Status:</code> line) and the reason line it prints. A check that
+has never been seen to fail may be unable to; the suite proves it can.
+Assert the passing case too, so the suite tells the two apart.
+<code>scripts/run-checks.sh</code> picks the suite up by name.</p>
 <p>Before writing the <code>SKILL.md</code>, consult the
 <code>writing-for-agents</code> skill for style; keep the skill
 agent-vendor-neutral (plain Markdown, no runtime-specific syntax).</p>
@@ -928,13 +936,15 @@ YouTube MCP server) warn only. Human-readable view:
 <li><code>check-service-access.sh</code> — verifies service credentials
 are reachable (database, cloud CLI, Atlassian, etc.); required services
 (today: GitHub via <code>gh</code>) exit 1 when unreachable, optional
-ones only degrade the status.</li>
+ones only degrade the status. Tested by
+<code>scripts/tests/test-check-service-access.sh</code>.</li>
 <li><code>check-workspace-structure.sh</code> — validates that
 documented directories exist, symlinks resolve, scripts are executable,
 the repo-context doc templates are present, <code>repos/README.md</code>
 is not git-ignored, and the generated guide HTML matches its Markdown
 source (sha1 freshness warning). (It does <strong>not</strong> reconcile
-the registry against the on-disk repos.)</li>
+the registry against the on-disk repos.) Tested by
+<code>scripts/tests/test-check-workspace-structure.sh</code>.</li>
 <li><code>check-ledger.py</code> — validates every
 <code>work/&lt;project&gt;/</code> ledger: each
 <code># Session Handoff</code> heading is well-formed (both title
@@ -969,8 +979,9 @@ that tier runs in the opt-in pre-commit hook
 (<code>.github/workflows/checks.yml</code>) runs the full set. A check
 exits 77 to skip (last output line is the reason) when it needs
 something a runner lacks. New checks are picked up by name — no list to
-update. Adopter setup: <code>docs/template-usage.md</code> → "Automatic
-checks (pre-commit and CI)". Tested by
+update; each must ship with a suite that makes it fail ("Authoring a
+Team Capability"). Adopter setup: <code>docs/template-usage.md</code> →
+"Automatic checks (pre-commit and CI)". Tested by
 <code>scripts/tests/test-run-checks.sh</code>.</li>
 <li><code>session-loop.sh</code> — the session-loop supervisor: launches
 a work item's successor sessions one after another, unattended, gating

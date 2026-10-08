@@ -971,6 +971,21 @@
   </div>
   <h2>Low</h2>
   <div class="find low resolved">
+    <h3><span class="id">L62</span> New checks aren't required to ship with a test that makes them fail
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md (Authoring a Team Capability)</span></h3>
+    <p><span class="k">Evidence</span> — Most checks have a suite feeding them bad input, but no rule requires it. The article's &ldquo;silent sensor&rdquo; problem: a check that never fires may be broken.</p>
+    <p><span class="k">Impact</span> — A check can pass forever without ever being able to fail.</p>
+    <p><span class="k">Fix</span> — Add the rule to &ldquo;Authoring a Team Capability&rdquo; and to <code>run-checks.sh</code>'s docs. Built in work item <code>harness-engineering</code>, ticket 05.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/harness-engineering</code> ticket 05, commit
+      &ldquo;Fix L62&rdquo;): <code>docs/workspace-structure.md</code> &rarr; &ldquo;Authoring a Team Capability&rdquo; now
+      requires every new check to ship with a <code>scripts/tests/</code> suite that makes it fail (exit code or
+      <code>Status:</code> line, plus the reason line) and passes the good case; the <code>run-checks.sh</code> entry and
+      script header point there. Audit of every <code>check-*</code> and <code>plan.sh check</code> found three checks with no
+      failing case; new suites <code>test-check-repo-context.sh</code>, <code>test-check-service-access.sh</code> (stub
+      <code>gh</code>), <code>test-check-workspace-structure.sh</code>. Audit table in the ticket.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L60</span> Recurring gotchas have no path to become checks
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/checkpoint, docs/operational-knowledge.md</span></h3>
     <p><span class="k">Evidence</span> — Checkpoint &rarr; &ldquo;Classify before you write&rdquo; offers ADD/UPDATE/SUPERSEDE/NOOP; nothing says a gotcha that recurs should become a script or test. Böckeler's &ldquo;steering loop&rdquo;: when an issue recurs, improve a guide or add a sensor.</p>
