@@ -123,8 +123,10 @@ one place. A parallel script would have duplicated both.
   not spawn a successor behind my back"; an explicitly typed `--clear` is not
   that. Regression-tested (C5).
   *(Amended 2026-09-14: `off` was widened to also refuse a `session-loop.sh`
-  start against that work item — scenario B3 in
-  `docs/session-chain-scenarios.md`. This bullet is unaffected: `--clear` is
+  start against that work item — scenario B3 of a scenario note that was
+  never committed to this repo; the gate is `relaunch_off` in
+  `scripts/session-loop.sh`, regression-tested by R5 in
+  `scripts/tests/test-session-loop.sh`. This bullet is unaffected: `--clear` is
   still an explicitly typed act, and the widening only added a gate on the
   supervisor's startup path.)*
 - The session keeps its old display name and registry entry, since the process

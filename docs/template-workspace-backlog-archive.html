@@ -939,6 +939,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L59</span> ADR-0009 cites a document that was never committed
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/adr/0009</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/adr/0009-clear-based-rollover-relaunch.md</code> (2026-09-14 amendment) cites <code>docs/session-chain-scenarios.md</code> for scenario B3; the path has no git history. (Its removed hook script is expected: ADR-0010 amends it.) Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — The amendment's evidence can't be followed.</p>
+    <p><span class="k">Fix</span> — Name where scenario B3 is recorded, or drop the path.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (commit &ldquo;Fix L59&rdquo;): the 2026-09-14 amendment in ADR-0009 no longer cites <code>docs/session-chain-scenarios.md</code> (a downstream note never committed here); it now names where B3 is recorded in this repo &mdash; the <code>relaunch_off</code> gate in <code>scripts/session-loop.sh</code> and its regression test R5 in <code>scripts/tests/test-session-loop.sh</code>.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L58</span> A gotcha names a script that no longer exists
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/operational-knowledge.md</span></h3>
     <p><span class="k">Evidence</span> — <code>docs/operational-knowledge.md</code> (the ledger-splice entry) cites <code>scripts/rollover-prep.sh</code>, removed in <code>d4fb3b6</code>. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>

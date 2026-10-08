@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">7</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">104</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">6</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">105</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -165,14 +165,6 @@
     <p><span class="k">Evidence</span> — <code>TEMPLATE_VERSION</code> reads <code>2026-09-30</code>; since then <code>CONTEXT.md</code> was trimmed and gained rules, the budget output and ledger rows changed, and checkpoint gained a classify step. No changelog exists. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
     <p><span class="k">Impact</span> — A downloader comparing versions can't tell their copy predates these changes.</p>
     <p><span class="k">Fix</span> — Maintainer decides when to cut a release and bumps the date then (<code>docs/template-usage.md</code> &rarr; &ldquo;Upgrading later&rdquo;).</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L59</span> ADR-0009 cites a document that was never committed
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/adr/0009</span></h3>
-    <p><span class="k">Evidence</span> — <code>docs/adr/0009-clear-based-rollover-relaunch.md</code> (2026-09-14 amendment) cites <code>docs/session-chain-scenarios.md</code> for scenario B3; the path has no git history. (Its removed hook script is expected: ADR-0010 amends it.) Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
-    <p><span class="k">Impact</span> — The amendment's evidence can't be followed.</p>
-    <p><span class="k">Fix</span> — Name where scenario B3 is recorded, or drop the path.</p>
   </div>
 
   <div class="find low">
@@ -332,6 +324,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L56</strong> (archived): two stale <code>CONTEXT.md</code> &rarr; &ldquo;Tool &amp; Context Loading&rdquo; pointers fixed in <code>docs/workspace-structure.md</code> and <code>docs/mcp-setup.md</code>. Scorecard now 9/102/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L57</strong> (archived): retired decision notes explained in <code>docs/work-directory-conventions.md</code> and <code>docs/for-non-engineers.md</code>. Scorecard now 8/103/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L58</strong> (archived): the ledger-splice gotcha in <code>docs/operational-knowledge.md</code> no longer sends readers to the removed <code>scripts/rollover-prep.sh</code>. Scorecard now 7/104/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L59</strong> (archived): ADR-0009 amendment repointed from the never-committed <code>docs/session-chain-scenarios.md</code> to the <code>relaunch_off</code> gate and its test. Scorecard now 6/105/5/0/6.</td></tr>
 </tbody>
   </table>
 
