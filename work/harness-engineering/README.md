@@ -18,6 +18,9 @@ sweeps for drift, and repeated gotchas never become checks. Five backlog
 cards, one ticket each: **M44, M45, L60, L61, L62**. Built to run unattended
 under `scripts/session-loop.sh harness-engineering`.
 
+**Status: finished (2026-10-08, session 4).** All five tickets done; follow-up
+gaps are open cards L64 and L65.
+
 Article summary (read on demand, don't refetch): `source-notes.md`.
 
 Related but separate: `work/quality-gates/` writes gate guidance for the

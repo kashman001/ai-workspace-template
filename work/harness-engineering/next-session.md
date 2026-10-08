@@ -11,40 +11,14 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-Position: **tickets 01, 02, 03 (L60, `21d03a6`) and 05 (L62, `ca43dec`)
-done**; 4 of 5. Remaining: **04 (L61)**, the last ticket — one table of the
-workspace's guides and checks, in `docs/workspace-structure.md`. Its
-blockers (01–03) are done. Read `skills/writing-for-agents/SKILL.md` if the
-ticket touches a skill; read long docs by headings (grep `^## `), not whole.
-Expect this to run unattended under `scripts/session-loop.sh
-harness-engineering`. Proceed without asking; only stop for something only
-a person can decide.
+Position: **item finished** — tickets 01–05 all done (last: 04, L61,
+`67c5455`). Nothing to run. Follow-up gaps are open backlog cards **L64**
+(plan lint not in the gate) and **L65** (skill frontmatter unchecked); pick
+them up under `template-maintenance` or a new item, not here.
 
-Gate: `scripts/run-checks.sh` exits 0 (full, ~2 min, 38 checks). Editing
-`docs/workspace-structure.md` makes the guide HTML stale: run
-`scripts/build-guide-html.sh` and commit `docs/workspace-structure.html`.
-
-1. `scripts/context-budget.sh register --project harness-engineering`, then
-   `git log --oneline -3` and `git status --short` (another session may be
-   working `template-maintenance` on this checkout: re-read the backlog
-   files right before each edit, and commit only your own files).
-2. Open `work/harness-engineering/issues/04-guides-and-checks-map.md`. Set
-   `**Status:** in-progress` and save.
-3. Work it per the ticket. One commit, with card L61 resolved in the same
-   commit (archive it under Low, scorecard → 2/110/5/0/6, change-log row).
-   Set `**Status:** done`, tick the boxes, add a short
-   `**Done (date, session N).**` note.
-4. `scripts/context-budget.sh record --label "ticket 04 done"`. On 1 or 2,
-   roll over (`skills/session-rollover/SKILL.md`) with step 5 below as the
-   launcher's position.
-5. All five done: ledger block, mark the item finished here and in
-   `work/README.md`, then the stop door (`skills/checkpoint/SKILL.md`,
-   `scripts/context-budget.sh close`). Report how far `main` is ahead of
-   origin.
-
-Every session: one ledger block on top of `handoff.md`, plain numbered
-form; keep two, archive the third; `python3 scripts/check-ledger.py
-work/harness-engineering` must exit 0.
+If a session lands here anyway: confirm `scripts/run-checks.sh` exits 0,
+report how far `main` is ahead of origin, and stop. CI is unverified until
+the user pushes.
 
 ## Constraints already decided (do not re-litigate)
 

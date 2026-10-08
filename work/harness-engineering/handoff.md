@@ -6,6 +6,22 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-10-08)
+
+1. Ticket 04 (L61) done, commit `67c5455`: `docs/workspace-structure.md` →
+   "Guides and Checks — One Map" (under `scripts/`), one table of every
+   guide and check with what it guards and when it runs. Guide HTML
+   regenerated. run-checks 38/0/0.
+2. Gaps the table showed, filed as open cards: **L64** (`plan.sh check`
+   not in the gate, committed plans unlinted) and **L65** (no check for
+   `SKILL.md` frontmatter). Scorecard 4/110/5/0/6. One Tier-2 note.
+3. All five tickets done; item finished. CI still unverified until the
+   user pushes.
+
+Learnings:
+- Mapping controls against their triggers finds gaps a per-script audit
+  misses: `plan.sh check` had a suite, but nothing ran it on commit.
+
 # Session Handoff — 3 (2026-10-08)
 
 1. Ticket 03 (L60) done, commit `21d03a6`: checkpoint → "Classify before
@@ -25,21 +41,3 @@ Convention: docs/work-directory-conventions.md.
 Learnings:
 - "Has a suite" is not "has a suite that makes it fail": the structure
   check's only suite asserted a warning, never exit 1.
-
-# Session Handoff — 2 (2026-10-08)
-
-1. Ticket 02 (M45) done, commit `87b5776`: `scripts/check-drift.sh`
-   (dead backticked paths, gotchas past review age, CONTEXT.md over 16,000
-   bytes, unindexed docs; ADR hits warn). Suite
-   `scripts/tests/test-check-drift.sh` D1–D4. Checkpoint step 1 now runs
-   it; CI gains a weekly schedule. Full run-checks 35/0/0. Card M45
-   archived; new open card **L63** (two removed scripts in the
-   `workspace-structure.md` tree). Scorecard 5/107/5/0/6. Two Tier-2 notes.
-2. First run on `main`: one ADR-0009 warning, nothing failing. L58/L59
-   were already fixed by `template-maintenance`.
-3. Rolled over at 116K by pre-flight (not WARN): ticket 03 is doc-heavy
-   and would have ended near STOP. Next: ticket 03 (L60).
-
-Learnings:
-- Bash 3.2 (macOS) fails to parse a `case` with `pat)` arms inside
-  `$( … )` ("syntax error near `;;`"); use `if` there.
