@@ -23,6 +23,7 @@ when you need to bring several related repos under a single agent-aware roof.
 - [`references/` — External References](#references--external-references)
 - [`repos/` — Product Repositories](#repos--product-repositories)
 - [`scripts/` — Bootstrap and Utility Scripts](#scripts--bootstrap-and-utility-scripts)
+  - [Guides and Checks — One Map](#guides-and-checks--one-map)
 - [Environment Parameterization](#environment-parameterization)
 - [Service Access Pattern](#service-access-pattern)
 - [Gitignored vs. Checked In](#gitignored-vs-checked-in)
@@ -632,6 +633,44 @@ scripts/
   parameterization regressions (version-pinned tool paths, personal
   identifiers in tracked files) — configure its `PII_PATTERNS` when
   instantiating.
+
+### Guides and Checks — One Map
+
+Every control in the workspace is either a **guide** (text an agent or
+person reads before acting) or a **check** (something that runs and fails).
+A guide with no check depends on someone remembering it; a check nobody runs
+guards nothing. This table lists both, with when each runs. The framing comes
+from the harness-engineering article (`work/harness-engineering/source-notes.md`).
+
+"Gate" below means `scripts/run-checks.sh`: full in CI
+(`.github/workflows/checks.yml`, on push, PR, and weekly), `--fast` in the
+opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
+
+| Control | What it guards | Guide or check | Script or judgement | When it runs |
+|---|---|---|---|---|
+| `CONTEXT.md` (+ `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` symlinks) | How agents work here; the domain language | Guide | Judgement | Every session (loaded by the runtime) |
+| `skills/*/SKILL.md` | How to run each workflow | Guide | Judgement | When a skill is invoked |
+| `skills/writing-for-agents/SKILL.md` | How skills and agent docs are written | Guide | Judgement | By hand, before editing `skills/` |
+| `docs/operational-knowledge.md` | Known build/shell/tool traps | Guide | Judgement; repeats become checks via `**Enforced by:**` | Before debugging; written at checkpoint |
+| `docs/adr/` | Lasting decisions | Guide | Judgement | When a decision is promoted |
+| `work/<item>/decisions.md`, `Decision:` commit trailers | Why a choice was made | Guide | Judgement | Each decision; reviewed at checkpoint |
+| `scripts/check-workspace-structure.sh` | Dirs, symlinks, exec bits, guide HTML freshness | Check | Script | Gate (fast); after setup |
+| `scripts/check-dependencies.sh` | Required tools installed | Check | Script | Gate (fast); `setup.sh` |
+| `scripts/check-service-access.sh` | Service credentials reachable | Check | Script | Gate (full only); before service work |
+| `scripts/check-repo-context.sh` | Per-repo context docs not stale (warn only) | Check | Script | Gate (fast) |
+| `scripts/check-ledger.py` | Work-item ledger shape | Check | Script | Gate (fast); after each ledger write (checkpoint, rollover) |
+| `scripts/check-drift.sh` | Dead doc paths, aged gotchas, `CONTEXT.md` size, docs index | Check | Script | Gate (full only, and weekly); checkpoint step 1 |
+| `scripts/tests/test-*` | Each script's behaviour, and doc–script agreement (`test-doc-consistency.sh`) | Check | Script | Gate (fast unless marked slow) |
+| `scripts/run-checks.sh` | Runs every check and suite above | Check (runner) | Script | Pre-commit (opt-in), CI, by hand |
+| `scripts/plan.sh check` | A plan's node files are well-formed | Check | Script | Plan create/reconcile/replan, rollover, each `session-loop.sh` turn |
+| Context-budget hooks (`scripts/hooks/`, wired in `.claude/settings.json`, `.codex/config.toml`, `.gemini/settings.json`, `.github/hooks/`, `.opencode/plugins/`) | Session size: WARN at 120K, STOP at 150K | Check | Script | Session start, each tool call or turn, session end |
+| `scripts/context-budget.sh record` | Same, at a work-unit boundary | Check | Script | By hand (agent), each work unit |
+
+Gaps the table shows, filed as cards: committed plans are linted only when a
+session touches them — `plan.sh check` is not in the gate (L64); nothing
+checks that each `SKILL.md` has the `name`/`description` frontmatter runtimes
+need to find it (L65). The judgement-only guides (ADRs, `decisions.md`,
+trailers) are judgement by design.
 
 ---
 

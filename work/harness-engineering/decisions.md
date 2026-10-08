@@ -78,3 +78,15 @@ Tier-2 decision notes (newest on top). Promote lasting-weight ones to
 - **Rejected:** copying the full rule into `run-checks.sh` docs (two homes
   drift); counting `test-context-prefix-stability.sh` as the structure
   check's failing case (it never sees exit 1).
+
+## 2026-10-08 — the map is a section, and its gaps are carded, not fixed (ticket 04)
+
+- **Decision:** the guides-and-checks table is a `### ` section under
+  `scripts/` in `docs/workspace-structure.md`, not a new doc. The two gaps it
+  showed (plan lint not in the gate; skill frontmatter unchecked) became
+  cards L64 and L65.
+- **Why:** the table is ~20 rows, sits next to the scripts it describes, and
+  needs no new `docs/README.md` entry. The ticket says file gaps, don't fix.
+- **Rejected:** a new `docs/guides-and-checks.md` (one more doc to index and
+  keep in step); fixing L64 here (a new check needs its own fail-test suite —
+  out of this ticket's scope).

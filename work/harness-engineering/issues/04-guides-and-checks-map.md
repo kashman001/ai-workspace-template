@@ -17,15 +17,28 @@ Last on purpose: it describes what 01–03 built.
 
 **Blocked by:** 01, 02, 03.
 
-**Status:** todo
+**Status:** done
 
-- [ ] Table written from `ls scripts`, `ls skills`, the hook config files
+**Done (2026-10-08, session 4).** Section "Guides and Checks — One Map" in
+`docs/workspace-structure.md`, under the `scripts/` section.
+
+Gaps the table shows:
+
+- `plan.sh check` is not in the gate; committed plans are linted only when a
+  session touches them → card **L64**.
+- No check that each `SKILL.md` carries `name`/`description` frontmatter
+  (all do today) → card **L65**.
+- ADRs, `decisions.md`, `Decision:` trailers: judgement only, by design —
+  not filed.
+- Every `check-*` script runs in the gate; no check nobody runs.
+
+- [x] Table written from `ls scripts`, `ls skills`, the hook config files
       — not from memory
-- [ ] Gaps it shows listed in the ticket; real ones filed as cards
-- [ ] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
+- [x] Gaps it shows listed in the ticket; real ones filed as cards
+- [x] Backlog card resolved in the same commit: badge → Resolved, `Fixed:`
       line with the commit, card moved to the matching section of
       `docs/template-workspace-backlog-archive.html`, scorecard and "Last
       updated" changed, change-log row added
-- [ ] All `scripts/tests/test-*` suites green (after ticket 01:
+- [x] All `scripts/tests/test-*` suites green (after ticket 01:
       `scripts/run-checks.sh` exits 0); `scripts/check-workspace-structure.sh` exit 0
-- [ ] One commit, `Fix <ID>: …`, with a `Decision:` trailer
+- [x] One commit, `Fix <ID>: …`, with a `Decision:` trailer

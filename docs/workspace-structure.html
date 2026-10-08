@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 41fd407fc877dc6c87276deee04231848774a43a -->
+  <!-- source-md-sha1: 3bfddc261b15a978a175828eebc2ed949ba83fde -->
 </head>
 <body>
 <div class="src-banner">
@@ -329,7 +329,11 @@ Prompt Contracts</a></li>
 Repositories</a></li>
 <li><a
 href="#scripts--bootstrap-and-utility-scripts"><code>scripts/</code> —
-Bootstrap and Utility Scripts</a></li>
+Bootstrap and Utility Scripts</a>
+<ul>
+<li><a href="#guides-and-checks--one-map">Guides and Checks — One
+Map</a></li>
+</ul></li>
 <li><a href="#environment-parameterization">Environment
 Parameterization</a></li>
 <li><a href="#service-access-pattern">Service Access Pattern</a></li>
@@ -1008,6 +1012,166 @@ parameterization regressions (version-pinned tool paths, personal
 identifiers in tracked files) — configure its <code>PII_PATTERNS</code>
 when instantiating.</li>
 </ul>
+<h3 id="guides-and-checks--one-map">Guides and Checks — One Map</h3>
+<p>Every control in the workspace is either a <strong>guide</strong>
+(text an agent or person reads before acting) or a
+<strong>check</strong> (something that runs and fails). A guide with no
+check depends on someone remembering it; a check nobody runs guards
+nothing. This table lists both, with when each runs. The framing comes
+from the harness-engineering article
+(<code>work/harness-engineering/source-notes.md</code>).</p>
+<p>"Gate" below means <code>scripts/run-checks.sh</code>: full in CI
+(<code>.github/workflows/checks.yml</code>, on push, PR, and weekly),
+<code>--fast</code> in the opt-in pre-commit hook
+(<code>scripts/git-hooks/pre-commit</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it guards</th>
+<th>Guide or check</th>
+<th>Script or judgement</th>
+<th>When it runs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CONTEXT.md</code> (+
+<code>CLAUDE.md</code>/<code>AGENTS.md</code>/<code>GEMINI.md</code>
+symlinks)</td>
+<td>How agents work here; the domain language</td>
+<td>Guide</td>
+<td>Judgement</td>
+<td>Every session (loaded by the runtime)</td>
+</tr>
+<tr>
+<td><code>skills/*/SKILL.md</code></td>
+<td>How to run each workflow</td>
+<td>Guide</td>
+<td>Judgement</td>
+<td>When a skill is invoked</td>
+</tr>
+<tr>
+<td><code>skills/writing-for-agents/SKILL.md</code></td>
+<td>How skills and agent docs are written</td>
+<td>Guide</td>
+<td>Judgement</td>
+<td>By hand, before editing <code>skills/</code></td>
+</tr>
+<tr>
+<td><code>docs/operational-knowledge.md</code></td>
+<td>Known build/shell/tool traps</td>
+<td>Guide</td>
+<td>Judgement; repeats become checks via
+<code>**Enforced by:**</code></td>
+<td>Before debugging; written at checkpoint</td>
+</tr>
+<tr>
+<td><code>docs/adr/</code></td>
+<td>Lasting decisions</td>
+<td>Guide</td>
+<td>Judgement</td>
+<td>When a decision is promoted</td>
+</tr>
+<tr>
+<td><code>work/&lt;item&gt;/decisions.md</code>, <code>Decision:</code>
+commit trailers</td>
+<td>Why a choice was made</td>
+<td>Guide</td>
+<td>Judgement</td>
+<td>Each decision; reviewed at checkpoint</td>
+</tr>
+<tr>
+<td><code>scripts/check-workspace-structure.sh</code></td>
+<td>Dirs, symlinks, exec bits, guide HTML freshness</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast); after setup</td>
+</tr>
+<tr>
+<td><code>scripts/check-dependencies.sh</code></td>
+<td>Required tools installed</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast); <code>setup.sh</code></td>
+</tr>
+<tr>
+<td><code>scripts/check-service-access.sh</code></td>
+<td>Service credentials reachable</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (full only); before service work</td>
+</tr>
+<tr>
+<td><code>scripts/check-repo-context.sh</code></td>
+<td>Per-repo context docs not stale (warn only)</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast)</td>
+</tr>
+<tr>
+<td><code>scripts/check-ledger.py</code></td>
+<td>Work-item ledger shape</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast); after each ledger write (checkpoint, rollover)</td>
+</tr>
+<tr>
+<td><code>scripts/check-drift.sh</code></td>
+<td>Dead doc paths, aged gotchas, <code>CONTEXT.md</code> size, docs
+index</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (full only, and weekly); checkpoint step 1</td>
+</tr>
+<tr>
+<td><code>scripts/tests/test-*</code></td>
+<td>Each script's behaviour, and doc–script agreement
+(<code>test-doc-consistency.sh</code>)</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast unless marked slow)</td>
+</tr>
+<tr>
+<td><code>scripts/run-checks.sh</code></td>
+<td>Runs every check and suite above</td>
+<td>Check (runner)</td>
+<td>Script</td>
+<td>Pre-commit (opt-in), CI, by hand</td>
+</tr>
+<tr>
+<td><code>scripts/plan.sh check</code></td>
+<td>A plan's node files are well-formed</td>
+<td>Check</td>
+<td>Script</td>
+<td>Plan create/reconcile/replan, rollover, each
+<code>session-loop.sh</code> turn</td>
+</tr>
+<tr>
+<td>Context-budget hooks (<code>scripts/hooks/</code>, wired in
+<code>.claude/settings.json</code>, <code>.codex/config.toml</code>,
+<code>.gemini/settings.json</code>, <code>.github/hooks/</code>,
+<code>.opencode/plugins/</code>)</td>
+<td>Session size: WARN at 120K, STOP at 150K</td>
+<td>Check</td>
+<td>Script</td>
+<td>Session start, each tool call or turn, session end</td>
+</tr>
+<tr>
+<td><code>scripts/context-budget.sh record</code></td>
+<td>Same, at a work-unit boundary</td>
+<td>Check</td>
+<td>Script</td>
+<td>By hand (agent), each work unit</td>
+</tr>
+</tbody>
+</table>
+<p>Gaps the table shows, filed as cards: committed plans are linted only
+when a session touches them — <code>plan.sh check</code> is not in the
+gate (L64); nothing checks that each <code>SKILL.md</code> has the
+<code>name</code>/<code>description</code> frontmatter runtimes need to
+find it (L65). The judgement-only guides (ADRs,
+<code>decisions.md</code>, trailers) are judgement by design.</p>
 <hr />
 <h2 id="environment-parameterization">Environment Parameterization</h2>
 <p>A <code>.env</code> file at the workspace root holds machine-specific

@@ -971,6 +971,19 @@
   </div>
   <h2>Low</h2>
   <div class="find low resolved">
+    <h3><span class="id">L61</span> No single map of the workspace's guides and checks
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — Guides (<code>CONTEXT.md</code>, skills, gotchas, ADRs) and checks (scripts, suites, hooks, lints) are documented where they live; nothing lists them together with when each runs. The L51 trim left stale pointers elsewhere (L56) &mdash; the &ldquo;coherence&rdquo; problem the article names.</p>
+    <p><span class="k">Impact</span> — Gaps in coverage (e.g. path checks only for the plans docs) are invisible.</p>
+    <p><span class="k">Fix</span> — One table: each control, guide or check, script or judgement, when it runs. Built in work item <code>harness-engineering</code>, ticket 04.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/harness-engineering</code> ticket 04, commit
+      &ldquo;Fix L61&rdquo;): <code>docs/workspace-structure.md</code> &rarr; &ldquo;Guides and Checks &mdash; One Map&rdquo;
+      lists every guide and check with what it guards, script or judgement, and when it runs (gate, pre-commit,
+      CI, checkpoint, hooks, by hand), built from <code>ls scripts</code>, <code>ls skills</code> and the hook config files.
+      Gaps it showed filed as <strong>L64</strong> (plan lint not in the gate) and <strong>L65</strong> (skill frontmatter unchecked).</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L62</span> New checks aren't required to ship with a test that makes them fail
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md (Authoring a Team Capability)</span></h3>
     <p><span class="k">Evidence</span> — Most checks have a suite feeding them bad input, but no rule requires it. The article's &ldquo;silent sensor&rdquo; problem: a check that never fires may be broken.</p>
