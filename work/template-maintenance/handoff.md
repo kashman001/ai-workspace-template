@@ -6,6 +6,33 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 17 (2026-10-08): doc-gap cards L53, L55–L59 resolved; L54 left for the maintainer
+
+**What got done (on main, one commit per card):**
+- L53 `48cef9f` — `docs/context-budget.md` output line gains `cache=`.
+- L55 `18f2021` — `docs/workspace-structure.md` "What CONTEXT.md Should
+  Contain" gains a Size-and-stability bullet (Z0 budget, no dates).
+- L56 `08c330c` — stale `CONTEXT.md` → "Tool & Context Loading" pointers:
+  repointed in workspace-structure; dropped in mcp-setup (self-pointer).
+- L57 `e562940` — `**Retired:**` notes explained in
+  work-directory-conventions and for-non-engineers.
+- L58 `d557d56` — ledger-splice gotcha notes `rollover-prep.sh` removal;
+  `Last confirmed` → 2026-10-08.
+- L59 `f3445b5` — ADR-0009 amendment names the `relaunch_off` gate and
+  test R5 instead of the never-committed `docs/session-chain-scenarios.md`.
+- Each card archived; scorecard now 6/105/5/0/6.
+
+**Verification:** all 27 `scripts/tests/test-*` suites pass;
+`scripts/check-workspace-structure.sh` passes; no operational-knowledge
+entries past the 6-month review age.
+
+**For the user:**
+- **L54 still open, your call:** when to cut a release and bump
+  `TEMPLATE_VERSION` (still `2026-09-30`).
+- Main is ahead of origin; not pushed.
+- `work/harness-engineering/issues/01-run-checks.md` has an uncommitted
+  edit from the other session; left untouched.
+
 # Session Handoff — 15 (2026-08-31): options brief for the 5 open design-gap cards; blocked on user direction
 
 **What got done (worktree branch tm-s15-options-brief):**
