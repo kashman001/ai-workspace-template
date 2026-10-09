@@ -5,9 +5,8 @@
 
 ## >>> START HERE <<<
 
-**Mission.** No queued jobs. The backlog has one open card, **L74**
-(`scripts/tests/test-session-lib.sh` S8 fails intermittently). Ask the user
-whether to take it, or what's next.
+**Mission.** No queued jobs, and the backlog is empty (0/127/5/0/6). Ask the
+user what's next.
 
 **Waiting on the user:**
 - Run `scripts/migrate-glossary.sh` on `~/Developer/experiments/NeogeoEmu`?
@@ -19,9 +18,9 @@ whether to take it, or what's next.
 **State:** `main` pushed at the end of session 23. On a push after 2026-10-09,
 bump `TEMPLATE_VERSION` to that day.
 
-**Do NOT reload:** L72/M49/L73 are done (ledger block 23).
+**Do NOT reload:** L72/M49/L73/L74 are done (ledger block 23).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`.
-2. Ask the user what to take next (L74 is the only open card).
+2. Ask the user what to take next.

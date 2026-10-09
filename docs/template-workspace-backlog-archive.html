@@ -1022,6 +1022,15 @@
 
   <h2>Low</h2>
   <div class="find low resolved">
+    <h3><span class="id">L74</span> <code>test-session-lib.sh</code> fails intermittently
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/tests</span></h3>
+    <p><span class="k">Evidence</span> — In session 23, one of six reruns of <code>scripts/tests/test-session-lib.sh</code> failed S8a (&ldquo;writer 2: rc=4&rdquo;) and S8c (&ldquo;seq == 60, got 59&rdquo;); the other runs, and the next full <code>scripts/run-checks.sh</code>, passed. No change in that session touched the session library.</p>
+    <p><span class="k">Impact</span> — A red <code>run-checks</code> or CI run that is not a real failure; or, if S8 is right, a lost write under concurrent writers.</p>
+    <p><span class="k">Fix</span> — Reproduce with a loop of S8 alone; decide whether the test's timing or the writer lock is at fault, and fix that.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 23). A second lost race in <code>_session_record_lock</code> (<code>scripts/lib/session-lib.sh</code>): after a failed <code>mkdir</code> found no lock, a third writer took it before the &ldquo;nothing else at the lock path&rdquo; check, so a live lock directory was refused as <code>record_unwritable</code>. Confirmed with a probe (dir present and writable, lock path a directory in every failure). The check now refuses only a non-directory at the lock path; a directory retries on the same wait budget. New S10r&ndash;t plant the lock between the two checks (red without the fix, green with it). Stress loop of S8 alone: 4/30 failed before, 0/100 after.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L73</span> Patched vendored skills are not tracked against upstream
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/sync-vendored-skills.sh, scripts/check-drift.sh</span></h3>
     <p><span class="k">Evidence</span> — A patched vendored skill (<code>skills/code-review/workspace.patch</code>) records no link to the upstream issue it works around, and nothing flags vendored skills that have not been refreshed for a long time.</p>

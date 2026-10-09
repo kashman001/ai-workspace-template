@@ -19,6 +19,8 @@ Convention: docs/work-directory-conventions.md.
 
 **Decisions:** user chose both patch-tracking checks, and to build on main, commit, then push. Glossary migration design choices are in the M49 Fixed line.
 
+**L74 (same session, after the push):** fixed a second lost race in `_session_record_lock` — a lock re-taken by a third writer between the failed `mkdir` and the path check was refused as `record_unwritable`. Probe-confirmed; test S10r–t; S8 stress loop 4/30 → 0/100. Backlog now 0/127/5/0/6.
+
 **Open questions:** NeogeoEmu has no commits yet (unborn `master`), so the script will refuse there until the user makes an initial commit. Running it there needs the user's go-ahead. The 60-day warning uses the upstream commit date, so it persists after a refresh if upstream goes quiet.
 
 # Session Handoff — 22 (2026-10-09): L70 patched class, M48 and L71 resolved; backlog empty

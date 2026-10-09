@@ -160,6 +160,19 @@ cmp -s "$REC" "$TMP/before" && ok "S10h: byte-identical" || bad "S10h: record ch
 assert_eq       "S10i: lock gone by the existence check → retried, return 0" "$rc" "0"
 assert_eq       "S10j: seq == 4"   "$(jq -r '.seq' "$REC")" "4"
 no_leftovers "S10k"
+# The second lost race (L74): after the holder released, a third writer took
+# the lock before this writer's "nothing else sits at the lock path" check, so
+# a live lock directory read as an unwritable path. Deterministic here: mkdir
+# fails once without creating anything, and dirname (called between the two
+# checks) plants the lock, released 0.3 s later.
+( . "$LIB"; _n=0
+  mkdir() { _n=$((_n+1)); [ "$_n" -gt 1 ] || return 1; command mkdir "$@"; }
+  dirname() { command mkdir "$REC.lock"; ( sleep 0.3; rmdir "$REC.lock" ) >/dev/null 2>&1 & command dirname "$@"; }
+  session_record_update "$REC" 'true' '.seq += 1' 2>"$TMP/s10r.err" ); rc=$?
+assert_eq       "S10r: lock re-taken before the path check → waited, return 0" "$rc" "0"
+assert_eq       "S10s: seq == 5"   "$(jq -r '.seq' "$REC")" "5"
+_i=0; while [ -d "$REC.lock" ] && [ $_i -lt 20 ]; do sleep 0.05; _i=$((_i+1)); done  # planted lock's release, if refused early
+no_leftovers "S10t"
 t0=$(date +%s)
 out="$(session_record_update "$TMP/nodir/session-state.json" 'true' '.seq = 1' 2>&1)"; rc=$?
 assert_eq       "S10l: a record whose directory does not exist → 4" "$rc" "4"
