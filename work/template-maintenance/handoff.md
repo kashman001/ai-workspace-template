@@ -39,6 +39,16 @@ maintainer's call). The backlog has 1 Open card (L70), waiting on upstream.
 `checks` run 37987347172 passed 40/0/0, so no check skips on the runner.
 #1242 is open and labelled `needs-triage`, with no replies yet.
 
+**Rolled over at WARN (131K tokens) with two jobs for session 21.** The user
+does not want to rely on #1242 being merged, and chose the "patched" vendored
+class for L70 (`decisions.md`, 2026-10-09). The user also asked to update to
+the latest `mattpocock/skills` and integrate any new skills. The local clone
+`~/Developer/references/mattpocock-skills` is at `068b6e0`, the commit every
+vendored skill is pinned to; it has not been pulled.
+
+**Suggested skills for session 21:** `writing-for-agents` (before any edit under
+`skills/`), `tdd` (sync-script change), `decision-log`.
+
 # Session Handoff — 19 (2026-10-08): CI Linux failures fixed in all three suites
 
 **What got done (on main, one commit per suite):**

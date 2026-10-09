@@ -130,3 +130,10 @@ newest match wins so a stale copy left behind loses. Rejected: a
 worktree-entry hook that re-registers — claude-only, heals only the entry
 moment, and does nothing for other sessions' liveness reads of a record the
 holder never refreshed.
+
+## 2026-10-09 — L70: how to carry a local change to a vendored skill
+**Chose:** a third vendored-skill class, "patched". `scripts/sync-vendored-skills.sh` re-copies upstream, then applies a saved patch (`skills/<name>/workspace.patch`), and fails loudly when the patch no longer applies. L70 (code-review: group each axis into blockers and suggestions) is its first user.
+**Because:** upstream issue mattpocock/skills#1242 may never be merged. A patch survives refreshes, works for every agent runtime, and costs effort only when upstream rewrites the patched lines.
+**Rejected:** a rule outside the skill (CONTEXT.md or a doc) — the skill would not point to it, and CONTEXT.md is at 15.5K of its 16K limit; forking code-review — upstream improvements stop arriving; won't fix — the gap stays.
+**Blast radius:** scripts/sync-vendored-skills.sh, its test, skills/vendored-skills.md (class list), skills/code-review/, backlog L70.
+**Promote?:** maybe — if a second skill adopts the patched class (L67 could move back into writing-for-agents).
