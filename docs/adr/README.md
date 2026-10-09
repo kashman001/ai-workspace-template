@@ -66,3 +66,4 @@ keep it here.
 - [ADR-0011: Every load-bearing session step is a script that refuses with a reason code](0011-mechanical-gates-and-reason-codes.md) — accepted 2026-09-21
 - [ADR-0012: Runtime contract — one adapter table, a probe-gated support matrix, fleet machinery isolated](0012-runtime-contract-adapter-table.md) — accepted 2026-09-21
 - [ADR-0013: No vector store, no MMR re-ranking, no numeric decay scoring](0013-no-vector-store-mmr-or-decay-scoring.md) — accepted 2026-10-07
+- [ADR-0014: Keep the project glossary in a root `GLOSSARY.md`, not in `CONTEXT.md`](0014-glossary-in-its-own-file.md) — accepted 2026-10-09

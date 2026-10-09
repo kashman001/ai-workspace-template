@@ -568,6 +568,7 @@ scripts/
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
 ├── diff-review.sh                 # Open a commit, range, or working tree as a directory diff (symlink-safe)
 ├── sync-vendored-skills.sh        # Refresh the vendored Matt Pocock skills from an upstream clone
+├── migrate-glossary.sh            # Move an older project's CONTEXT.md glossary to GLOSSARY.md (on a branch)
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
 │   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
 ├── mcp/                           # Workspace-local MCP servers

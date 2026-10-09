@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: b60312d41076e578c37a2a31d0417f74ebb4b413 -->
+  <!-- source-md-sha1: 14962aaac4a347fce32d360dd729825a841e201f -->
 </head>
 <body>
 <div class="src-banner">
@@ -418,10 +418,14 @@ then, treat the workspace as single-user per work item.</p>
 │                               #   repo index, skills, conventions, constraints)
 ├── CLAUDE.md -&gt; CONTEXT.md     # Symlink — Claude Code entrypoint
 ├── AGENTS.md -&gt; CONTEXT.md     # Symlink — Codex / generic agent entrypoint
+├── GLOSSARY.md                 # Domain glossary (`## Language`) — read/written by the
+│                               #   vendored domain-modeling / grill-with-docs skills
 ├── README.md                   # Workspace one-pager — short pitch + pointer to CONTEXT.md
 ├── TEMPLATE_VERSION            # Template generation this workspace was cut from (ISO date;
 │                               #   bumped by the template maintainer; docs/template-usage.md §6)
 ├── .gitignore                  # See &quot;Gitignored vs. Checked In&quot; + Agent Bootstrap section
+├── .rgignore                   # Hides archives from ripgrep directory walks (agents&#39; grep
+│                               #   tools); a nudge, not a wall — grep -r / git grep ignore it
 ├── &lt;Project&gt;.code-workspace    # VS Code multi-root workspace definition (if using VS Code)
 │
 ├── docs/                       # Workspace-level documentation
@@ -770,6 +774,13 @@ an existing one as the pattern. This gives Claude Code the
 list is hand-maintained; a skill absent from it is invisible to every
 non-Claude runtime.</li>
 </ol>
+<p>A <strong>user-invoked-only</strong> skill
+(<code>disable-model-invocation: true</code> in its frontmatter) also
+needs <code>skills/&lt;name&gt;/agents/openai.yaml</code> with
+<code>policy: allow_implicit_invocation: false</code>, or Codex fires it
+on its own. Copy an existing one;
+<code>scripts/tests/test-agent-entrypoints.sh</code> (E6) fails when the
+two switches disagree.</p>
 <p>To make a capability <strong>required</strong> — "run the tests
 before finishing a branch" as a non-negotiable — put its prerequisites
 in the manifest: a <code>req</code> line in
@@ -916,6 +927,7 @@ Bootstrap and Utility Scripts</h2>
 ├── statusline-context-budget.sh   # Claude Code statusLine: work-item role + last measurement
 ├── diff-review.sh                 # Open a commit, range, or working tree as a directory diff (symlink-safe)
 ├── sync-vendored-skills.sh        # Refresh the vendored Matt Pocock skills from an upstream clone
+├── migrate-glossary.sh            # Move an older project&#39;s CONTEXT.md glossary to GLOSSARY.md (on a branch)
 ├── hooks/                         # Per-runtime in-band WARN/STOP hooks
 │   └── context-budget-*-hook.sh   #   claude/codex/gemini/opencode/copilot(+vscode) + shared lib
 ├── mcp/                           # Workspace-local MCP servers
@@ -967,10 +979,11 @@ ADRs are history; known false alarms live in the script's
 <code>ALLOW</code> list, one reason each),
 <code>docs/operational-knowledge.md</code> entries past their 6-month
 review age, <code>CONTEXT.md</code> over 16,000 bytes (~4K tokens, the
-Z0 target), and <code>docs/</code> entries missing from
-<code>docs/README.md</code>. Checkpoint step 1 runs it; CI runs it on
-every push and weekly. Tested by
-<code>scripts/tests/test-check-drift.sh</code>.</li>
+Z0 target; when over, move content to its proper home first, then
+condense, and raise the limit only with a stated reason), and
+<code>docs/</code> entries missing from <code>docs/README.md</code>.
+Checkpoint step 1 runs it; CI runs it on every push and weekly. Tested
+by <code>scripts/tests/test-check-drift.sh</code>.</li>
 <li><code>check-plans.sh</code> — runs <code>plan.sh check</code> on
 every committed plan
 (<code>work/&lt;item&gt;/plans/NN-&lt;slug&gt;/</code>; older flat
@@ -989,11 +1002,12 @@ that tier runs in the opt-in pre-commit hook
 <code>scripts/git-hooks/pre-commit</code>; CI
 (<code>.github/workflows/checks.yml</code>) runs the full set. A check
 exits 77 to skip (last output line is the reason) when it needs
-something a runner lacks. New checks are picked up by name — no list to
-update; each must ship with a suite that makes it fail ("Authoring a
-Team Capability"). Adopter setup: <code>docs/template-usage.md</code> →
-"Automatic checks (pre-commit and CI)". Tested by
-<code>scripts/tests/test-run-checks.sh</code>.</li>
+something the machine lacks; under CI a skip fails the run unless the
+check carries <code># run-checks: may-skip-in-ci</code>. New checks are
+picked up by name — no list to update; each must ship with a suite that
+makes it fail ("Authoring a Team Capability"). Adopter setup:
+<code>docs/template-usage.md</code> → "Automatic checks (pre-commit and
+CI)". Tested by <code>scripts/tests/test-run-checks.sh</code>.</li>
 <li><code>session-loop.sh</code> — the session-loop supervisor: launches
 a work item's successor sessions one after another, unattended, gating
 each handover on the rollover sentinel and the session counter rather
@@ -1046,10 +1060,17 @@ from the harness-engineering article
 <td><code>CONTEXT.md</code> (+
 <code>CLAUDE.md</code>/<code>AGENTS.md</code>/<code>GEMINI.md</code>
 symlinks)</td>
-<td>How agents work here; the domain language</td>
+<td>How agents work here</td>
 <td>Guide</td>
 <td>Judgement</td>
 <td>Every session (loaded by the runtime)</td>
+</tr>
+<tr>
+<td><code>GLOSSARY.md</code></td>
+<td>The domain language — terms and aliases to avoid</td>
+<td>Guide</td>
+<td>Judgement</td>
+<td>When naming a domain concept (CONTEXT.md points to it)</td>
 </tr>
 <tr>
 <td><code>skills/*/SKILL.md</code></td>
@@ -1291,6 +1312,11 @@ files, and out of agent conversation history.</p>
 <code>CONTEXT.md</code>)</td>
 </tr>
 <tr>
+<td><code>GLOSSARY.md</code></td>
+<td>Yes</td>
+<td>Domain glossary shared by every agent and the vendored skills</td>
+</tr>
+<tr>
 <td><code>&lt;Project&gt;.code-workspace</code></td>
 <td>Yes</td>
 <td>Shared VS Code workspace definition (VS Code only — create per
@@ -1337,6 +1363,13 @@ project if used; not shipped in the template)</td>
 <td>Yes</td>
 <td>Shared Gemini CLI config (graphify hook + context-budget
 telemetry)</td>
+</tr>
+<tr>
+<td><code>.rgignore</code></td>
+<td>Yes</td>
+<td>Archives (<code>docs/archive/</code>,
+<code>handoff-archive.md</code>, the backlog archive) out of ripgrep
+directory walks; name a file to search it anyway</td>
 </tr>
 <tr>
 <td><code>.env.example</code></td>

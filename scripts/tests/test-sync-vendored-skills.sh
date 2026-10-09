@@ -5,7 +5,9 @@
 #          provenance comment, adapted skills keep their frontmatter + comment,
 #          and a patched skill (a pristine skill carrying workspace.patch) gets
 #          its patch re-applied after the re-copy; a patch that no longer
-#          applies fails the sync, naming the skill.
+#          applies fails the sync, naming the skill. A patch's `Upstream:`
+#          issue, checked via a stubbed gh, yields a delete-the-patch hint when
+#          closed and nothing when open, unlinked, gh-less, or gh fails.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
@@ -81,6 +83,68 @@ out="$(bash "$TMP/ws/scripts/sync-vendored-skills.sh" "$TMP/up" 2>&1)"; rc=$?
 assert_eq "exit non-zero" "$([ "$rc" -ne 0 ] && echo nz || echo 0)" "nz"
 assert_contains "error names the skill" "$out" "tdd"
 assert_contains "error says the patch failed" "$out" "workspace.patch"
+
+# Upstream-link check. Tools the sync needs, linked into one dir so PATH can
+# hold exactly them (plus an optional gh stub) on macOS and Linux alike.
+TOOLS="$TMP/tools"; mkdir -p "$TOOLS"
+for t in bash env git rsync patch awk sed grep head tail cut tr mktemp mv cat basename dirname; do
+  ln -s "$(command -v "$t")" "$TOOLS/$t"
+done
+STUB="$TMP/stub"; mkdir -p "$STUB"
+# gh stub: logs its args, prints $GH_STATE, exits $GH_RC.
+printf '#!/bin/sh\necho "$*" >> "%s/gh.log"\n[ -n "$GH_STATE" ] && echo "$GH_STATE"\nexit "${GH_RC:-0}"\n' "$TMP" > "$STUB/gh"
+chmod +x "$STUB/gh"
+HINT="upstream may have landed this; delete the patch"
+# upstream_patch <Upstream value>: the applying tdd patch with that header line.
+upstream_patch() {
+  { printf 'Upstream: %s\n\n' "$1"
+    (cd "$TMP/patch" && diff -u a/SKILL.md b/SKILL.md); } > "$TMP/ws/skills/tdd/workspace.patch"
+}
+sync_with() { env PATH="$1" GH_STATE="${2:-}" GH_RC="${3:-0}" bash "$TMP/ws/scripts/sync-vendored-skills.sh" "$TMP/up" 2>&1; }
+
+echo "S3: a patch whose upstream issue is closed — hint names skill and issue"
+upstream_patch "owner/repo#42"; rm -f "$TMP/gh.log"
+out="$(sync_with "$STUB:$TOOLS" closed)"; rc=$?
+assert_eq "exit 0" "$rc" "0"
+assert_contains "patch with header still applies" "$(cat "$TMP/ws/skills/tdd/SKILL.md")" "Workspace line 2."
+assert_contains "hint shown" "$out" "$HINT"
+assert_contains "hint names the skill" "$out" "skills/tdd/workspace.patch"
+assert_contains "hint names the issue" "$out" "owner/repo#42"
+assert_contains "gh asked about that issue" "$(cat "$TMP/gh.log" 2>/dev/null)" "repos/owner/repo/issues/42"
+
+echo "S4: open issue — no hint"
+upstream_patch "owner/repo#42"
+out="$(sync_with "$STUB:$TOOLS" open)"; rc=$?
+assert_eq "exit 0" "$rc" "0"
+assert_absent "no hint" "$out" "$HINT"
+
+echo "S5: gh fails (offline/unauthenticated) — quiet"
+upstream_patch "owner/repo#42"
+out="$(sync_with "$STUB:$TOOLS" "" 1)"; rc=$?
+assert_eq "exit 0" "$rc" "0"
+assert_absent "no hint" "$out" "$HINT"
+assert_absent "no gh noise" "$out" "gh"
+
+echo "S6: gh not installed — quiet"
+upstream_patch "owner/repo#42"
+out="$(sync_with "$TOOLS")"; rc=$?
+assert_eq "exit 0" "$rc" "0"
+assert_absent "no hint" "$out" "$HINT"
+assert_absent "no command-not-found noise" "$out" "not found"
+
+echo "S7: no issue filed — gh not called, quiet"
+upstream_patch "none filed"; rm -f "$TMP/gh.log"
+out="$(sync_with "$STUB:$TOOLS" closed)"; rc=$?
+assert_eq "exit 0" "$rc" "0"
+assert_absent "no hint" "$out" "$HINT"
+[ -f "$TMP/gh.log" ] && bad "gh called without a link" || ok "gh not called"
+
+echo "S8: closed issue and a patch that no longer applies — hint precedes the failure"
+printf -- 'Upstream: owner/repo#42\n\n--- a/SKILL.md\n+++ b/SKILL.md\n@@ -1,2 +1,2 @@\n Nonexistent context.\n-Gone line.\n+New line.\n' \
+  > "$TMP/ws/skills/tdd/workspace.patch"
+out="$(sync_with "$STUB:$TOOLS" closed)"; rc=$?
+assert_eq "exit non-zero" "$([ "$rc" -ne 0 ] && echo nz || echo 0)" "nz"
+assert_contains "hint shown" "$out" "$HINT"
 
 echo
 echo "sync-vendored-skills: $PASS passed, $FAIL failed"

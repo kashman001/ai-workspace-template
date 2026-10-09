@@ -15,6 +15,7 @@ why loading less is the point).
 | Find status, decisions, or how to contribute — without being an engineer | [`for-non-engineers.md`](for-non-engineers.md) (entry point + glossary); status index: [`work/README.md`](../work/README.md) |
 | Instantiate the template for my project | [`template-usage.md`](template-usage.md) (markdown) or the rendered [`setup-guide.html`](setup-guide.html) |
 | Get a machine ready (tools, auth) | [`runbooks/`](runbooks/README.md) — paired with `scripts/check-*.sh`; required-vs-optional table in [`recommended-tooling.md`](recommended-tooling.md) |
+| Move an older project's glossary out of `CONTEXT.md` into `GLOSSARY.md` | [`runbooks/glossary-migration.md`](runbooks/glossary-migration.md) — runs `scripts/migrate-glossary.sh` |
 | Understand the directory layout and conventions | [`workspace-structure.md`](workspace-structure.md) (rendered: [`workspace-structure.html`](workspace-structure.html)) |
 | Recreate this workspace from scratch | [`workspace-setup.md`](workspace-setup.md) |
 | Know what context to load for a task | [`zoom-model.md`](zoom-model.md) |

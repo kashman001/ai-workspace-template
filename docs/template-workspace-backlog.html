@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">123</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">126</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -144,8 +144,19 @@
 
 
 
+
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L74</span> <code>test-session-lib.sh</code> fails intermittently
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/tests</span></h3>
+    <p><span class="k">Evidence</span> — In session 23, one of six reruns of <code>scripts/tests/test-session-lib.sh</code> failed S8a (&ldquo;writer 2: rc=4&rdquo;) and S8c (&ldquo;seq == 60, got 59&rdquo;); the other runs, and the next full <code>scripts/run-checks.sh</code>, passed. No change in that session touched the session library.</p>
+    <p><span class="k">Impact</span> — A red <code>run-checks</code> or CI run that is not a real failure; or, if S8 is right, a lost write under concurrent writers.</p>
+    <p><span class="k">Fix</span> — Reproduce with a loop of S8 alone; decide whether the test's timing or the writer lock is at fault, and fix that.</p>
+  </div>
+
+
 
 
 
@@ -301,6 +312,7 @@
       <tr><td>2026-10-09</td><td>Filed <strong>M48</strong> (<code>isolated: yes</code> has no effect) and <strong>L71</strong> (plans for code work have no review step), both from the implement-spec vs plans comparison. Scorecard now 3/120/5/0/6.</td></tr>
       <tr><td>2026-10-09</td><td>Resolved <strong>L70</strong>: new <em>patched</em> class of vendored skill (upstream copy plus a <code>workspace.patch</code> the sync re-applies, failing loudly when it no longer applies), with <code>scripts/tests/test-sync-vendored-skills.sh</code>. <code>code-review</code> is the first: its patch groups each axis into blockers and suggestions. Scorecard now 2/121/5/0/6.</td></tr>
       <tr><td>2026-10-09</td><td>Resolved <strong>M48</strong> (what an orchestrator does with <code>isolated: yes</code>: own worktree and branch, merged back before <code>done</code>) and <strong>L71</strong> (a plan that changes code ends with a <code>code-review</code> wave), both in <code>skills/plans/SKILL.md</code>. Scorecard now 0/123/5/0/6.</td></tr>
+      <tr><td>2026-10-09</td><td>Resolved <strong>L72</strong> (ADR-0014: the glossary lives in <code>GLOSSARY.md</code>), <strong>M49</strong> (<code>scripts/migrate-glossary.sh</code> + runbook for older projects) and <strong>L73</strong> (patches name their upstream issue; the sync flags closed ones; <code>check-drift</code> warns on vendored skills over 60 days old). Opened <strong>L74</strong> (intermittent <code>test-session-lib.sh</code> S8 failure). Scorecard now 1/126/5/0/6.</td></tr>
 </tbody>
   </table>
 

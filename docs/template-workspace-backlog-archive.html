@@ -89,6 +89,15 @@
 
   <h2>Medium</h2>
   <div class="find med resolved">
+    <h3><span class="id">M49</span> Older projects keep their glossary inside CONTEXT.md
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts, docs/runbooks</span></h3>
+    <p><span class="k">Evidence</span> — Projects made with the old <code>init-project-ai-infra</code> keep their glossary as <code>## Language</code> inside <code>CONTEXT.md</code> (e.g. <code>~/Developer/experiments/NeogeoEmu</code>). Since the 49dd158 refresh, the vendored skills read and write a root <code>GLOSSARY.md</code>.</p>
+    <p><span class="k">Impact</span> — In those projects the skills miss the existing glossary and start a second one in <code>GLOSSARY.md</code>; the two drift apart.</p>
+    <p><span class="k">Fix</span> — Ship an idempotent migration script plus a runbook under <code>docs/runbooks/</code>: refuse a dirty tree, work on a <code>migrate/glossary</code> branch in the target repo, move <code>## Language</code> into <code>GLOSSARY.md</code>, leave a pointer, fix references. TDD with a <code>scripts/tests/</code> suite.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 23). New <code>scripts/migrate-glossary.sh &lt;repo&gt;</code>: refuses a dirty tracked tree (untracked files are fine), a repo with no commits, an existing <code>migrate/glossary</code> branch, or a <code>GLOSSARY.md</code> that already exists beside real terms; otherwise it moves the <code>## Language</code> body verbatim into a root <code>GLOSSARY.md</code>, leaves a pointer in <code>CONTEXT.md</code>, rewrites four clear reference patterns in tracked <code>.md</code> files (not <code>work/</code>/<code>repos/</code>), commits on <code>migrate/glossary</code>, and lists other mentions to check by hand. A second run is a no-op. Runbook: <code>docs/runbooks/glossary-migration.md</code>. Suite: <code>scripts/tests/test-migrate-glossary.sh</code> (64 checks, red before the script existed).</p>
+  </div>
+
+  <div class="find med resolved">
     <h3><span class="id">M44</span> The template's own checks only run when an agent remembers to run them
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/tests</span></h3>
     <p><span class="k">Evidence</span> — 28 suites under <code>scripts/tests/</code> plus the <code>check-*.sh</code> scripts, but no single command runs them all, no pre-commit hook (<code>core.hooksPath</code> unset) and no CI (<code>.github/workflows/</code> absent). Some suites lack the exec bit and one is Python, so <code>./</code> fails on them. Source: harness-engineering review of Böckeler, &ldquo;Harness engineering for coding agent users&rdquo; (martinfowler.com, 2026-04) &mdash; &ldquo;keep quality left&rdquo;.</p>
@@ -1012,6 +1021,24 @@
   </div>
 
   <h2>Low</h2>
+  <div class="find low resolved">
+    <h3><span class="id">L73</span> Patched vendored skills are not tracked against upstream
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/sync-vendored-skills.sh, scripts/check-drift.sh</span></h3>
+    <p><span class="k">Evidence</span> — A patched vendored skill (<code>skills/code-review/workspace.patch</code>) records no link to the upstream issue it works around, and nothing flags vendored skills that have not been refreshed for a long time.</p>
+    <p><span class="k">Impact</span> — A patch can outlive the upstream fix it stands in for, and the vendored set can go stale without anyone noticing.</p>
+    <p><span class="k">Fix</span> — Add an <code>Upstream: &lt;owner/repo#N&gt;</code> header to each <code>workspace.patch</code>; the sync checks it with <code>gh issue view</code> and says &ldquo;upstream may have landed this; delete the patch&rdquo; when the issue is closed (quiet without <code>gh</code>). <code>check-drift.sh</code> warns when the vendored provenance date is over ~60 days old. TDD both; document in <code>skills/vendored-skills.md</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 23). <code>skills/code-review/workspace.patch</code> now starts <code>Upstream: mattpocock/skills#1242</code>. During a sync, <code>scripts/sync-vendored-skills.sh</code> asks <code>gh api repos/&lt;o&gt;/&lt;r&gt;/issues/&lt;N&gt;</code> for the state and, when closed, prints &ldquo;upstream may have landed this; delete the patch&rdquo;; it says nothing without <code>gh</code>, offline, or with <code>Upstream: none filed</code>. <code>scripts/check-drift.sh</code> warns when the oldest Matt Pocock provenance commit date is over 60 days old (<code>VENDORED_MAX_AGE_DAYS</code>; <code>DRIFT_TODAY</code> for tests). Documented in <code>skills/vendored-skills.md</code>; tests S3–S8 and D5–D6, red first. The date is the upstream commit date, so if upstream goes quiet for 60 days the warning stays after a refresh.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L72</span> GLOSSARY.md decision has no ADR
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/adr</span></h3>
+    <p><span class="k">Evidence</span> — <code>work/template-maintenance/decisions.md</code> note &ldquo;2026-10-09 — Adopt upstream's GLOSSARY.md&rdquo; is marked <code>Promote?: yes</code> but has no ADR.</p>
+    <p><span class="k">Impact</span> — The move changes the workspace's context-file layout; without an ADR a future refresh or review may move the glossary back into <code>CONTEXT.md</code>.</p>
+    <p><span class="k">Fix</span> — Promote the note to <code>docs/adr/</code> per <code>skills/decision-log/SKILL.md</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 23). Promoted to <code>docs/adr/0014-glossary-in-its-own-file.md</code> (ADR-0014), indexed in <code>docs/adr/README.md</code>; the note is marked <code>done → ADR-0014</code>.</p>
+  </div>
+
   <div class="find low resolved">
     <h3><span class="id">L61</span> No single map of the workspace's guides and checks
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md</span></h3>

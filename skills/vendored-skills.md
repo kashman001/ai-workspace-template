@@ -11,7 +11,8 @@ compatibility.
 Each vendored `SKILL.md` opens with a provenance comment pinning the upstream
 commit. Refresh all of them with `scripts/sync-vendored-skills.sh` (needs a
 local clone of the upstream repo; the script prints instructions if missing).
-Three classes:
+`scripts/check-drift.sh` warns once the oldest pinned commit is more than 60
+days old; refresh then. Three classes:
 
 - **Pristine** — the whole directory is upstream content, unmodified. Keep it
   that way so refreshes stay a clean re-copy.
@@ -24,7 +25,11 @@ Three classes:
   applies, the sync stops and names the skill, so rewrite the patch against
   the re-copied file. To change a patched skill, edit the patch, not
   `SKILL.md`. Prefer sending the change upstream; patch only what upstream
-  has not taken.
+  has not taken. Start the patch with a line `Upstream: <owner>/<repo>#<N>`
+  naming the upstream issue or PR, above the diff (`patch` ignores it), or
+  `Upstream: none filed`. When `gh` reports that issue or PR closed, the sync
+  prints "upstream may have landed this; delete the patch"; without `gh`, or
+  offline, it says nothing.
 
 Skills marked *(slash)* have a Claude Code shortcut under `.claude/commands/`;
 the rest are model-invoked (triggered by their `description`).

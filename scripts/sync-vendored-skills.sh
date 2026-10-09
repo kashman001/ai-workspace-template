@@ -8,6 +8,10 @@
 #   - Patched: a PRISTINE entry whose directory holds a workspace.patch. It is
 #     re-copied like a pristine skill (the patch file is kept), then the patch
 #     is re-applied; the sync fails, naming the skill, if it no longer applies.
+#     A patch may open with an `Upstream: <owner>/<repo>#<N>` line (before the
+#     diff, where patch ignores it). When gh reports that issue or PR closed,
+#     the sync prints a hint to delete the patch; it says nothing when gh is
+#     missing or the call fails, or when there is no such line.
 #   - Adapted: the SKILL.md frontmatter + provenance comment are workspace-
 #     specific and preserved; only the body below the comment (and the
 #     supporting files) are re-copied from upstream.
@@ -63,6 +67,21 @@ ADAPTED=(
   productivity/writing-for-agents
 )
 
+# upstream_hint <name> <patch>: print a hint when the patch's Upstream issue/PR
+# is closed. Quiet without gh, on any gh failure, or with no valid link
+# (e.g. `Upstream: none filed`). gh api's issues endpoint covers PRs too.
+upstream_hint() {
+  local ref state
+  ref="$(awk '/^(--- |diff )/{exit} /^Upstream: /{print $2; exit}' "$2")"
+  [[ "$ref" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+$ ]] || return 0
+  command -v gh >/dev/null 2>&1 || return 0
+  state="$(gh api "repos/${ref%#*}/issues/${ref##*#}" -q .state 2>/dev/null)" || return 0
+  case "$state" in
+    closed|CLOSED|merged|MERGED)
+      echo "note: skills/$1/workspace.patch — $ref is closed; upstream may have landed this; delete the patch (and re-run the sync) if so" ;;
+  esac
+}
+
 # Line number of the closing '---' of the YAML frontmatter.
 frontmatter_end() {
   awk '/^---$/{c++; if (c==2) {print NR; exit}}' "$1"
@@ -106,6 +125,8 @@ EOF
   } > "$tmp"
   mv "$tmp" "$dst/SKILL.md"
   if [ -f "$patch_file" ]; then
+    # Before applying: an upstream fix is the likely reason a patch stops applying.
+    upstream_hint "$name" "$patch_file"
     # Dry-run first so a patch that fails leaves no .orig/.rej files behind.
     patch -p1 -d "$dst" -F0 -N -s --dry-run -i "$patch_file" >/dev/null 2>&1 \
       || { echo "error: skills/$name/workspace.patch no longer applies to upstream $SHA — rewrite it against the re-copied skills/$name/SKILL.md" >&2; exit 1; }

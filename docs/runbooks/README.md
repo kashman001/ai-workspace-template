@@ -16,6 +16,7 @@ missing, then the agent follows the matching runbook to fix it on this OS.
 |---|---|---|
 | [`dependencies.md`](dependencies.md) | Install required/recommended tools (git, gh, jq, hook wiring, node, uv, python3, yt-dlp, graphify) | `scripts/check-dependencies.sh` |
 | [`authentication.md`](authentication.md) | Authenticate to services (GitHub via `gh`) | `scripts/check-service-access.sh` |
+| [`glossary-migration.md`](glossary-migration.md) | Move an older project's `## Language` glossary from `CONTEXT.md` to `GLOSSARY.md` | — (runs `scripts/migrate-glossary.sh`) |
 
 ## How an agent should use these
 

@@ -6,6 +6,21 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 23 (2026-10-09): ADR-0014, glossary migration script, patch tracking
+
+**Summary.** All three jobs queued in session 22 are done. Backlog: 1 open (L74), 1/126/5/0/6.
+
+**What got done (on main; pushed at session end):**
+- **L72**: `docs/adr/0014-glossary-in-its-own-file.md` is promoted from the decisions.md GLOSSARY note (now `done → ADR-0014`) and indexed.
+- **M49**: `scripts/migrate-glossary.sh <repo>` + `docs/runbooks/glossary-migration.md` + `scripts/tests/test-migrate-glossary.sh` (64 checks, red first). It refuses on a dirty tracked tree (untracked is OK), no commits, an existing `migrate/glossary` branch, or GLOSSARY.md beside real terms. It commits on `migrate/glossary` in the target. Not run on any real project.
+- **L73**: `Upstream: mattpocock/skills#1242` header on `skills/code-review/workspace.patch`; the sync prints "upstream may have landed this; delete the patch" when `gh api` reports it closed (quiet without gh). `check-drift.sh` warns when the oldest Matt Pocock provenance date is >60 days old. Documented in `skills/vendored-skills.md`.
+- Opened **L74**: `test-session-lib.sh` S8 failed once in six reruns (subagent's report); the final `run-checks.sh` passed 42/0/0.
+- Jobs 2 and 3 ran as parallel subagents; the ADR, backlog, ledger and launcher stayed in the main session.
+
+**Decisions:** user chose both patch-tracking checks, and to build on main, commit, then push. Glossary migration design choices are in the M49 Fixed line.
+
+**Open questions:** NeogeoEmu has no commits yet (unborn `master`), so the script will refuse there until the user makes an initial commit. Running it there needs the user's go-ahead. The 60-day warning uses the upstream commit date, so it persists after a refresh if upstream goes quiet.
+
 # Session Handoff — 22 (2026-10-09): L70 patched class, M48 and L71 resolved; backlog empty
 
 **Summary.** The launcher's L70 mission is done, and the user also approved finishing M48 and L71 in this session. The backlog now has 0 open cards (0/123/5/0/6).

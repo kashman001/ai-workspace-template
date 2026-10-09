@@ -143,7 +143,7 @@ holder never refreshed.
 **Because:** after the rename, the upstream skills look for the glossary in `GLOSSARY.md`. Moving it costs one move, frees part of CONTEXT.md's 16K budget, and keeps the refreshes clean.
 **Rejected:** keep the glossary in CONTEXT.md and patch about 15 vendored files from GLOSSARY.md back to CONTEXT.md — a large patch that every upstream edit could break; pin the affected skills at 068b6e0 — they go stale.
 **Blast radius:** CONTEXT.md, new GLOSSARY.md, docs naming the `## Language` section, `init-project-ai-infra`/global CLAUDE.md wording (outside this repo; report it).
-**Promote?:** yes — it changes the workspace's context-file layout.
+**Promote?:** done → ADR-0014
 
 ## 2026-10-09 — Vendor implement-spec despite its overlap with plans
 **Chose:** vendor upstream `implement-spec` as pristine and user-invoked only; its catalog line routes tracker-backed specs/tickets to it and multi-session work items to `/plan`.

@@ -4,8 +4,9 @@
 #          reports exactly: dead backticked docs/skills/scripts paths in tracked
 #          .md files (allow-listed and placeholder paths skipped, ADR hits only
 #          warned), gotchas past review age, an oversize CONTEXT.md, and docs/
-#          entries missing from docs/README.md. One line per finding, exit 1 if
-#          any failure; warnings alone exit 0.
+#          entries missing from docs/README.md, and (as a warning, DRIFT_TODAY
+#          fixing the date) vendored skills pinned over 60 days ago. One line
+#          per finding, exit 1 if any failure; warnings alone exit 0.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
@@ -82,6 +83,25 @@ clean "$TMP/d"
 printf '`scripts/untracked-ref.sh`\n' > "$TMP/d/skills/foo/draft.md"
 out="$(DRIFT_ROOT="$TMP/d" bash "$CD" 2>&1)"; rc=$?
 assert_absent "D4 untracked file ignored" "$out" "untracked-ref"
+
+echo "D5: vendored skills pinned more than 60 days ago — warning, exit 0"
+clean "$TMP/e"
+mkdir -p "$TMP/e/skills/tdd" "$TMP/e/skills/grill-me"
+prov() { printf -- '---\nname: x\n---\n\n<!--\nVendored from github.com/mattpocock/skills — skills/engineering/x/\nat commit abc1234 (%s). Upstream content.\n-->\n' "$1"; }
+prov 2026-01-01 > "$TMP/e/skills/tdd/SKILL.md"
+prov 2026-02-20 > "$TMP/e/skills/grill-me/SKILL.md"
+git -C "$TMP/e" add -A
+out="$(DRIFT_ROOT="$TMP/e" DRIFT_TODAY=2026-03-15 bash "$CD" 2>&1)"; rc=$?
+assert_eq "D5 exit" "$rc" "0"
+assert_contains "D5 warning" "$out" "WARN vendored"
+assert_contains "D5 names the oldest pin" "$out" "2026-01-01"
+assert_contains "D5 says how to refresh" "$out" "scripts/sync-vendored-skills.sh"
+assert_eq "D5 one line" "$(printf '%s\n' "$out" | grep -c 'scripts/sync-vendored-skills.sh')" "1"
+
+echo "D6: pinned within 60 days — no warning"
+out="$(DRIFT_ROOT="$TMP/e" DRIFT_TODAY=2026-03-01 bash "$CD" 2>&1)"; rc=$?
+assert_eq "D6 exit" "$rc" "0"
+assert_absent "D6 no warning" "$out" "vendored"
 
 echo
 echo "check-drift: $PASS passed, $FAIL failed"
