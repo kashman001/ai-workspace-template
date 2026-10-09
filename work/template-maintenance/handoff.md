@@ -25,6 +25,8 @@ Convention: docs/work-directory-conventions.md.
 - A test for a script that writes into `$ROOT` should run a *copy* of the script placed inside the fixture. Running the real one would clobber the repo before any override exists.
 - New user preference (memory `parallelize-independent-tasks`): dispatch dependency-free tasks to parallel subagents.
 
+**Rollover addendum (after the push).** `main` was pushed (`4f56d4d..c0b4d2e`); CI checks and Pages are green. At 137K tokens, the user queued three jobs for session 23, all written into `next-session.md`: (1) promote the GLOSSARY.md decision to an ADR; (2) a runbook plus script so an agent can migrate older projects whose glossary is still in CONTEXT.md; (3) tracking for patched vendored skills (proposed to the user: an `Upstream:` header in each patch that the sync checks with `gh`, plus a check-drift age warning; the user has not yet confirmed the design).
+
 # Session Handoff — 21 (2026-10-09): Matt Pocock skills refreshed to 49dd158; GLOSSARY.md adopted
 
 **Summary.** Mission job 1 (refresh) is done. Job 2 (L70 patched class) has not started.

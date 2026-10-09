@@ -5,26 +5,40 @@
 
 ## >>> START HERE <<<
 
-**Mission.** Standing upkeep. Nothing is queued: the template backlog has
-**0 open cards**. Session 22 resolved L70, M48 and L71 (ledger block 22).
+**Mission.** The user queued three jobs at the end of session 22. Do them in this
+order. File each one as a backlog card first, then resolve it (backlog rules: grep
+`Maintaining this backlog` in `docs/template-workspace-backlog.html`; the scorecard
+is 0/123/5/0/6). Use parallel subagents for jobs that touch different files (user
+preference); keep backlog, ledger and launcher edits in the main session.
 
-**State:** `main` is clean and 6 commits ahead of origin. Pushing is the user's call.
-`TEMPLATE_VERSION` is already `2026-10-09` on origin, so a push needs no bump
-today; on a later day, bump it to that day before pushing.
+1. **ADR for GLOSSARY.md.** Promote the `decisions.md` note "2026-10-09 — Adopt
+   upstream's GLOSSARY.md" to `docs/adr/` (`skills/decision-log/SKILL.md`, the
+   promote procedure; `docs/adr/README.md` for numbering and format).
+2. **Migration runbook + script.** Older projects made with the old
+   `init-project-ai-infra` still keep their glossary as `## Language` inside
+   `CONTEXT.md`; `~/Developer/experiments/NeogeoEmu` is one. Write a runbook (under
+   `docs/runbooks/`) plus an idempotent script that an agent in any runtime can run in such a
+   repo. The script moves the `## Language` section into a root `GLOSSARY.md`,
+   leaves a pointer in CONTEXT.md, and fixes references. TDD it with a
+   `scripts/tests/` suite. Ship it with the template (memory: template additions are
+   first-class). Ask the user before running it on any real project.
+3. **Track patched vendored skills.** Proposed to the user; they have not yet confirmed the design:
+   (a) an `Upstream: mattpocock/skills#1242` header line in each `workspace.patch`.
+   The sync checks it with `gh issue view --json state` and prints "upstream may
+   have landed this; delete the patch" when the issue is closed, and stays quiet
+   without `gh`. (b) `check-drift.sh` warns when the vendored skills' provenance
+   date is more than ~60 days old. Confirm with the user in plain terms first, then TDD
+   in `test-sync-vendored-skills.sh` / `test-check-drift.sh` and document it in
+   `skills/vendored-skills.md`.
 
-**Do NOT reload:**
-- The patched vendored-skill class (`scripts/sync-vendored-skills.sh`,
-  `skills/code-review/workspace.patch`) is done and tested.
-- The `isolated: yes` recipe and the closing review wave in
-  `skills/plans/SKILL.md` are done.
+**State:** `main` is pushed, clean, and CI is green. Pushing again is the user's call.
+On a push after today, bump `TEMPLATE_VERSION` to that day.
+
+**Do NOT reload:** L70/M48/L71 are done (ledger block 22).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`.
-2. Ask the user what to take on next. Candidates:
-   - push `main`;
-   - comment on mattpocock/skills#1242, only if the user asks;
-   - promote the GLOSSARY.md decision to an ADR (`decisions.md`, "Promote?: yes");
-   - migrate older projects whose glossary still lives in CONTEXT.md (ledger block 21, open question).
-3. At the next Matt Pocock refresh, if the code-review patch fails, rewrite it
-   against the re-copied file. If upstream has landed #1242, delete the patch.
+2. Job 3's design question to the user (one question, plain terms), and in parallel,
+   job 1 (ADR) yourself.
+3. Job 2, then job 3, then `scripts/run-checks.sh`, commit, and report.
