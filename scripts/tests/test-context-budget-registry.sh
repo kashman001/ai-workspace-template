@@ -178,7 +178,7 @@ assert_eq       "R6j: stop-door owner -> seq minted"  "$(rec .seq)" "6"
 assert_contains "R6k: reason=minted with the loser"   "$err" "reason=minted loser=claude-ccc"
 # pid-less owner (registered from outside the process tree): transcript age decides.
 mk_transcript ddd 1000
-run_as ddd register --project testproj --quiet >/dev/null; strip_pid   # ddd owns, no pid
+run_as ddd register --project testproj --takeover --quiet >/dev/null; strip_pid   # ddd owns, no pid (--takeover: aaa may look live outside a claude session)
 cp "$REC" "$TMP/before"
 err=$(run_as aaa register --project testproj 2>&1 >/dev/null)
 assert_contains "R6d: fresh transcript, no pid -> owner_live" "$err" "reason=owner_live"
@@ -602,7 +602,7 @@ CB_STATE="$TMP/.context-budget"
 snap_state() {
   find "$CB_STATE" -type f 2>/dev/null | sort | while read -r f; do
     printf '%s %s %s\n' "$f" \
-      "$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null)" "$(cksum < "$f")"
+      "$(stat -f%m "$f" 2>/dev/null || stat -c%Y "$f" 2>/dev/null)" "$(cksum < "$f")"
   done
 }
 mk_transcript pin-live 155000
