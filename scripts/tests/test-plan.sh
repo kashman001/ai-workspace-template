@@ -23,6 +23,8 @@ cp -R "$SRC_ROOT/scripts/tests/fixtures/plan-01-concept" "$TMP/work/demo/plans/0
 PLAN="$TMP/scripts/plan.sh"
 cd "$TMP/elsewhere"
 unset TF_SESSION_PROJECT
+# sed -i '' is BSD-only (GNU reads '' as the script); edit through a temp file instead.
+sedi() { local s="$1" f; shift; for f in "$@"; do sed "$s" "$f" > "$f.sedi" && mv "$f.sedi" "$f"; done; }
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
@@ -87,7 +89,7 @@ echo "T5: new — refuses while a plan is open, then numbers the next one"
 err="$("$PLAN" new second --project demo 2>&1 >/dev/null)"; rc=$?
 assert_eq "T5a: exit 1 while 01-concept is open" "$rc" "1"
 assert_contains "T5b: names the open plan" "$err" "01-concept"
-sed -i '' 's/^status: open$/status: closed/' "$TMP/work/demo/plans/01-concept/plan.md"
+sedi 's/^status: open$/status: closed/' "$TMP/work/demo/plans/01-concept/plan.md"
 out="$("$PLAN" new second --project demo)"; rc=$?
 assert_eq "T5c: exit 0" "$rc" "0"
 P2="$TMP/work/demo/plans/02-second"
@@ -111,7 +113,7 @@ assert_eq "T6g: a closed chain.plan yields to the one open plan" "$("$PLAN" stat
 grep -qF -- "· rebound" "$P2/plan.md" && ok "T6i: the note landed in 02-second" || bad "T6i: the note did not land in 02-second"
 assert_eq "T6j: --plan still picks the closed plan" "$("$PLAN" status --project demo --plan 01-concept | cut -d' ' -f2)" "01-concept"
 rm "$TMP/work/demo/session-state.json"
-sed -i '' 's/^status: closed$/status: open/' "$TMP/work/demo/plans/01-concept/plan.md"
+sedi 's/^status: closed$/status: open/' "$TMP/work/demo/plans/01-concept/plan.md"
 assert_eq "T6d: two open — a read verb falls back to the latest" "$("$PLAN" status --project demo | cut -d' ' -f2)" "02-second"
 printf '{"schema":1,"chain":{"plan":"01-concept"}}\n' > "$TMP/work/demo/session-state.json"
 assert_eq "T6c: an open chain.plan wins over another open plan" "$("$PLAN" status --project demo | cut -d' ' -f2)" "01-concept"
@@ -137,7 +139,7 @@ jq '.pid_start = "Mon Jan  1 00:00:00 2001"' "$TMP/.context-budget/sessions/test
 # Derived read verbs (ticket 02). Each case edits a copy of the fixture, then reset.
 NODES="$TMP/work/demo/plans/01-concept/nodes"; mkdir -p "$TMP/orig"; cp "$NODES"/*.md "$TMP/orig/"
 reset() { rm -f "$NODES"/*.md; cp "$TMP/orig"/*.md "$NODES/"; }
-setf()  { sed -i '' "s/^$2: .*$/$2: $3/" "$NODES/$1.md"; }   # <id> <key> <value>
+setf()  { sedi "s/^$2: .*$/$2: $3/" "$NODES/$1.md"; }   # <id> <key> <value>
 squeeze() { tr -s ' ' | sed 's/^ //;s/ $//'; }
 
 echo "T8: frontier — todo nodes whose blockers are done or dropped, in the lowest unfinished wave"
@@ -201,7 +203,7 @@ assert_eq "T10e: nodes and edges" "$(printf '%s' "$out" | jq -c '[.plan, (.nodes
 assert_eq "T10f: an edge runs blocker -> node" "$(printf '%s' "$out" | jq -c '.edges | map(select(.to == "08-tickets"))')" '[{"from":"07-spec","to":"08-tickets"}]'
 
 echo "T11: check — one line per violation, exit 1; silence and exit 0 on a clean plan"
-addf() { sed -i '' "1a\\
+addf() { sedi "1a\\
 $2: $3
 " "$NODES/$1.md"; }   # <id> <key> <value>: a new frontmatter line
 PM="$TMP/work/demo/plans/01-concept/plan.md"; cp "$PM" "$TMP/plan.bak"
@@ -259,13 +261,13 @@ assert_contains "T11y: the line" "$(printf '%s' "$out" | squeeze)" "wave 1: 3 no
 printf 'PLAN_WAVE_MAX=2\n' > "$TMP/context-budget.env"
 assert_eq "T11z1: context-budget.env sets the default" "$("$PLAN" check --project demo | grep -c .)" "3"
 assert_eq "T11z2: explicit env beats the file" "$(PLAN_WAVE_MAX=3 "$PLAN" check --project demo | grep -c .)" "0"
-sed -i '' 's/^status: open$/status: open\
+sedi 's/^status: open$/status: open\
 wave_max: 3/' "$PM"
 assert_eq "T11z3: plan frontmatter wave_max beats both" "$(PLAN_WAVE_MAX=2 "$PLAN" check --project demo; echo "rc=$?")" "rc=0"
 rm "$TMP/context-budget.env"
-sed -i '' 's/^wave_max: 3$/wave_max: 2/' "$PM"
+sedi 's/^wave_max: 3$/wave_max: 2/' "$PM"
 assert_eq "T11z4: wave_max: 2 in the plan trips all three waves" "$("$PLAN" check --project demo | grep -c .)" "3"
-sed -i '' 's/^wave_max: 2$/wave_max: many/' "$PM"
+sedi 's/^wave_max: 2$/wave_max: many/' "$PM"
 assert_eq "T11z5: a non-integer wave_max is a malformed violation on plan.md" "$("$PLAN" check --project demo --json | jq -c '[.[] | [.rule, (.path | endswith("plan.md"))]]')" '[["malformed",true]]'
 sed '1d' "$TMP/plan.bak" > "$PM"
 assert_eq "T11z6: malformed plan.md frontmatter (with --plan) is a violation" "$("$PLAN" check --project demo --plan 01-concept --json 2>/dev/null | jq -c '[.[] | [.rule, .message]]')" '[["malformed","malformed frontmatter"]]'
@@ -314,7 +316,7 @@ err="$("$PLAN" start 08-tickets --project demo 2>&1 >/dev/null)"; rc=$?
 assert_eq "T12t: no session number anywhere is refused" "$rc:$(fm 08-tickets status)" "2:todo"
 assert_contains "T12u: ... naming the fix" "$err" "--session"
 printf '{"schema":1,"seq":3}\n' > "$SS"
-sed -i '' 's/^status: open$/status: closed/' "$PM"
+sedi 's/^status: open$/status: closed/' "$PM"
 "$PLAN" start 08-tickets --project demo --plan 01-concept >/dev/null 2>&1; assert_eq "T12v: a write into a closed plan is refused" "$?" "1"
 cp "$TMP/plan.bak" "$PM"
 reset
@@ -488,7 +490,7 @@ assert_eq "T18s: plan.md missing its end marker exits 1" "$rc" "1"
 assert_contains "T18t: ... naming plan.md and the marker" "$err" "plan.md: no <!-- plan:end board --> marker"
 assert_eq "T18u: nothing was written — the launcher still says stale" "$(between "$LAUNCH" position)" "stale"
 cp "$TMP/plan.bak" "$PM"; reset
-sed -i '' 's/^status: open$/status: closed/' "$PM"
+sedi 's/^status: open$/status: closed/' "$PM"
 "$PLAN" sync --project demo --plan 01-concept >/dev/null 2>&1; rc=$?
 assert_eq "T18v: a closed plan still syncs (a projection, not a transition)" "$rc:$(between "$LAUNCH" position | head -1 | cut -d, -f2)" "0: closed"
 cp "$TMP/plan.bak" "$PM"; rm -f "$LAUNCH"
@@ -504,18 +506,18 @@ setf 08-tickets tier auto
 assert_eq "T19b: auto with no leaf label falls to the plan default" "$(tiers 08-tickets)" '["auto","standard"]'
 addf 08-tickets leaf research
 assert_eq "T19c: auto + leaf label looks the workspace table up" "$(tiers 08-tickets)" '["auto","cheap"]'
-sed -i '' 's/^default_tier: standard$/default_tier: standard\
+sedi 's/^default_tier: standard$/default_tier: standard\
 tier_research: frontier/' "$PM"
 assert_eq "T19d: a plan override beats the workspace table" "$(tiers 08-tickets)" '["auto","frontier"]'
 cp "$TMP/plan.bak" "$PM"; setf 08-tickets leaf nosuchlabel
 assert_eq "T19e: an unknown label falls to the plan default" "$(tiers 08-tickets)" '["auto","standard"]'
-sed -i '' 's/^default_tier: standard$/default_tier: cheap/' "$PM"
+sedi 's/^default_tier: standard$/default_tier: cheap/' "$PM"
 assert_eq "T19f: ... which is the wave default" "$(tiers 08-tickets)" '["auto","cheap"]'
-sed -i '' 's/^default_tier: cheap$/default_tier: auto/' "$PM"
+sedi 's/^default_tier: cheap$/default_tier: auto/' "$PM"
 assert_eq "T19g: a plan default of auto bottoms out at standard" "$(tiers 08-tickets)" '["auto","standard"]'
 cp "$TMP/plan.bak" "$PM"; rm "$TENV"
 assert_eq "T19h: no plan-tiers.env at all — the label just misses" "$(setf 08-tickets leaf research; tiers 08-tickets)" '["auto","standard"]'
-reset; sed -i '' '/^tier: frontier$/d' "$NODES/04-grill-open-items.md"; setf 09-reconcile-verdict tier auto
+reset; sedi '/^tier: frontier$/d' "$NODES/04-grill-open-items.md"; setf 09-reconcile-verdict tier auto
 assert_eq "T19i: hitl defaults to frontier, reconcile resolves auto to frontier (fan-in)" "$(tiers 04-grill-open-items):$(tiers 09-reconcile-verdict)" '["frontier","frontier"]:["auto","frontier"]'
 "$PLAN" check --project demo >/dev/null 2>&1; assert_eq "T19j: ... and the plan passes check" "$?" "0"
 printf 'PLAN_TIER_RESEARCH=cheap\nPLAN_MODEL_CLAUDE_CHEAP=haiku\nPLAN_MODEL_CLAUDE_STANDARD=sonnet\nPLAN_MODEL_GEMINI_FRONTIER=gemini-pro\n' > "$TENV"
@@ -556,7 +558,7 @@ assert_eq "T20a: add --leaf writes the label" "$rc:$(fm 10-leafy leaf):$(fm 10-l
 assert_eq "T20ba: --leaf without --tier implies tier auto" "$(fm 11-leafy3 tier)" "auto"
 "$PLAN" add leafy4 --wave 3 --leaf research --tier cheap --project demo >/dev/null
 assert_eq "T20bb: ... an explicit --tier wins" "$(fm 12-leafy4 tier)" "cheap"
-reset; sed -i '' 's/^default_tier: standard$/default_tier: standard\
+reset; sedi 's/^default_tier: standard$/default_tier: standard\
 tier_research: auto/' "$PM"
 err="$("$PLAN" show 08-tickets --project demo --json 2>&1 >/dev/null)"; rc=$?
 assert_eq "T20c: a tier_<label>: outside frontier|standard|cheap is refused" "$rc" "1"
