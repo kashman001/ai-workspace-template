@@ -996,6 +996,21 @@
       rather than a list kept inside the runner. <code>test-run-checks.sh</code> R3b went red, then green. R3 now pins <code>CI</code> unset so it still
       tests the local behaviour. Documented in <code>docs/workspace-structure.md</code> and <code>docs/template-usage.md</code>.</p>
   </div>
+  <div class="find med resolved">
+    <h3><span class="id">M48</span> Plan nodes accept <code>isolated: yes</code>, but nothing acts on it
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">plans</span></h3>
+    <p><span class="k">Evidence</span> — <code>scripts/plan.sh</code> parses <code>--isolated</code> (line 80), stores it (line 164) and writes <code>isolated: yes</code> (line 571); <code>docs/plans.md:63</code> lists the field. Nothing reads it to change how a node runs. Found while comparing upstream <code>implement-spec</code> with plans (<code>work/template-maintenance/implement-spec-vs-plans.md</code>).</p>
+    <p><span class="k">Impact</span> — An author who marks a node isolated expects parallel children to stay apart. They still share one checkout, so parallel nodes can overwrite each other's work.</p>
+    <p><span class="k">Fix</span> — Document what an orchestrator does with <code>isolated: yes</code>: dispatch the child in its own worktree and branch, and have the wave's reconcile node merge it back. Use <code>skills/implement-spec/SKILL.md</code> steps 4&ndash;5 and 9 as the recipe. Touches the subagent prompt template in <code>skills/plans/SKILL.md</code> and the <code>isolated</code> row in <code>docs/plans.md</code>. Plan files still never say &ldquo;worktree&rdquo;.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 22). <code>skills/plans/SKILL.md</code>
+      &rarr; &ldquo;Subagent prompt template&rdquo; now says what an orchestrator does with <code>isolated: yes</code>, adapted from
+      <code>implement-spec</code> steps 4, 5 and 9: commit the plan state after <code>start</code>, give the child its own worktree and branch
+      cut from that commit, have the child confirm its base and merge the base branch in before finishing, then merge the branch back,
+      verify, run <code>done</code>, and remove the worktree and branch. The merge happens before <code>done</code>, not at the reconcile node,
+      because the child's Log lines live in its worktree's copy of the node file. The <code>isolated</code> row in <code>docs/plans.md</code>
+      points there, and the Dispatch verification line covers isolated nodes. Plan node files still never mention worktrees.</p>
+  </div>
+
   <h2>Low</h2>
   <div class="find low resolved">
     <h3><span class="id">L61</span> No single map of the workspace's guides and checks
@@ -2093,6 +2108,20 @@
       mark to the Spec brief, groups each axis's findings under Blockers and Suggestions in step 5, and drops findings that a passing check
       already enforces. New <code>scripts/tests/test-sync-vendored-skills.sh</code> covers all three classes and the failed-patch case (it failed
       before the change). Documented in <code>skills/vendored-skills.md</code>. The upstream issue stays open; when upstream lands it, delete the patch.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L71</span> Plans for code work have no review step
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/plans</span></h3>
+    <p><span class="k">Evidence</span> — <code>skills/plans/SKILL.md</code> (&ldquo;Create a plan&rdquo;, step 3) builds waves that each end in a reconcile node, which verifies on disk but never reviews the diff. Upstream <code>implement-spec</code> runs <code>code-review</code> on the integration branch, then fixes the findings, before it closes (step 7). Source: <code>work/template-maintenance/implement-spec-vs-plans.md</code>.</p>
+    <p><span class="k">Impact</span> — Code built through a plan can pass every node check and still ship standards or spec drift that a review would catch.</p>
+    <p><span class="k">Fix</span> — When <code>/plan</code> creates a plan for code work, add a final-wave <code>work</code> node, &ldquo;Run <code>code-review</code> on the work since &lt;base&gt;; fix the findings&rdquo;, ahead of the closing reconcile. Change only <code>skills/plans/SKILL.md</code>; no script change.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 22). In <code>skills/plans/SKILL.md</code>
+      &ldquo;Create a plan&rdquo; step 3, a plan that changes code ends with one more wave: a <code>review</code> node blocked by the last
+      reconcile node, which runs <code>code-review</code> since the plan's base SHA and fixes the findings, then that wave's reconcile node.
+      It gets its own wave, not a place in the last ticket wave, because it must run after every node it reviews. The step gives the
+      node's Goal and Acceptance, since it has no ticket. The commands were checked with <code>scripts/plan.sh</code> in a scratch
+      workspace (<code>check</code> silent).</p>
   </div>
 
   <h2>Decisions</h2>

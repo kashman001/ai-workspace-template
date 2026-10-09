@@ -60,7 +60,7 @@ inside `check`, is kept). Sections below it: `## Goal`, `## Acceptance`, `## Log
 | `loop` | integer, attempts before `blocked` | `1` |
 | `check` | a shell command, kept verbatim; it runs with the work item directory as cwd and `WORKSPACE_ROOT` exported, so name workspace scripts as `"$WORKSPACE_ROOT/scripts/…"` | none |
 | `sessions` | `[n, n]` — session numbers that worked the node | `[]` |
-| `isolated` | `yes` / `no` | `no` |
+| `isolated` | `yes` / `no` — `yes`: the node's child runs in its own worktree and branch, merged back before `done` (`skills/plans/SKILL.md` → "Subagent prompt template") | `no` |
 
 `blocked` is explicit, with the reason as the latest Log line; "waiting on
 edges" is derived, never written. Anything else — a missing opening or closing

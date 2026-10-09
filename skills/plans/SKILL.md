@@ -56,6 +56,16 @@ with `plan.sh check` silent.
    script is `"$WORKSPACE_ROOT/scripts/<name>.sh"`. Then close the wave:
    `scripts/plan.sh add reconcile-w<n> --wave <n> --kind reconcile
    --blocked-by <every work id in the wave> --title "Join wave n"`.
+   A plan that changes code ends with one more wave, after the last ticket
+   wave: `scripts/plan.sh add review --wave <n+1> --blocked-by
+   NN-reconcile-w<n> --title "Run code-review on the work since <base>; fix
+   the findings"`, where `<base>` is the SHA the plan started from, then
+   that wave's reconcile node. Reconcile nodes verify each claim on disk;
+   this node reviews the whole diff against standards and spec
+   (`skills/code-review/SKILL.md`). It has no ticket: its Goal names the
+   `<base>` SHA and the spec; its Acceptance is three boxes — review run ·
+   every blocker fixed, each suggestion fixed or logged · the item's checks
+   pass.
 4. **Body.** Into each node file, under `## Goal`: a `Ticket: issues/NN-….md`
    pointer line and the ticket's "What to build" paragraph (from a spec: the
    story text and a `Spec: S<n>` pointer); under `## Acceptance`: the ticket's
@@ -191,6 +201,20 @@ Fill `<actor>` (e.g. `s13-a`), `<root>`, `<item>`, `<plan>`, `<id>`. The
 returned summary is a hint; step 2 of the reconcile procedure is where it
 becomes a fact.
 
+**`isolated: yes`** — the child gets its own git worktree on its own branch
+(Claude Code: the Agent tool's `isolation: "worktree"`; elsewhere `git
+worktree add`), so parallel children cannot overwrite each other. A worktree
+sees only commits, so run `start <id>` and commit the plan state first; the
+branch is cut from that commit (`<base>`). `<root>` in the prompt is the
+worktree's path. Add to the prompt: "First confirm your branch contains
+`<base>` (`git merge-base --is-ancestor <base> HEAD`); if not, reset onto
+it. Commit your work on your branch; before you finish, merge the current
+`<base branch>` into it and resolve any conflicts." Its Log lines and ticks
+land in the worktree's copy of the node file, so the orchestrator commits
+its own checkout, merges the branch in, then verifies and runs `done <id>`,
+then removes the worktree and deletes the branch. A node without the flag
+runs in the shared checkout.
+
 ## Verification
 
 - Create: `plan.sh check` silent; `plan.sh frontier` names the first ready
@@ -199,4 +223,5 @@ becomes a fact.
   `plan.sh status` shows the next wave.
 - Replan: `check` silent, a new `## Replans` line, `sync` run.
 - Dispatch: the child's node file differs from before only under `## Log` and
-  in Acceptance ticks (`git diff` or `diff` against a copy).
+  in Acceptance ticks (`git diff` or `diff` against a copy; for an isolated
+  node, `git diff <base> <branch> -- <node file>` before the merge).
