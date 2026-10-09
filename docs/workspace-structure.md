@@ -655,6 +655,7 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 |---|---|---|---|---|
 | `CONTEXT.md` (+ `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` symlinks) | How agents work here; the domain language | Guide | Judgement | Every session (loaded by the runtime) |
 | `skills/*/SKILL.md` | How to run each workflow | Guide | Judgement | When a skill is invoked |
+| `scripts/tests/test-agent-entrypoints.sh` | Entrypoint symlinks reach `CONTEXT.md`; each `SKILL.md` has the `name`/`description` frontmatter runtimes find it by | Check | Script | Gate (fast) |
 | `skills/writing-for-agents/SKILL.md` | How skills and agent docs are written | Guide | Judgement | By hand, before editing `skills/` |
 | `docs/operational-knowledge.md` | Known build/shell/tool traps | Guide | Judgement; repeats become checks via `**Enforced by:**` | Before debugging; written at checkpoint |
 | `docs/adr/` | Lasting decisions | Guide | Judgement | When a decision is promoted |
@@ -674,8 +675,8 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 
 Gaps the table showed, filed as cards: committed plans were linted only when a
 session touched them — fixed by `check-plans.sh` (L64); nothing
-checks that each `SKILL.md` has the `name`/`description` frontmatter runtimes
-need to find it (L65). The judgement-only guides (ADRs, `decisions.md`,
+checked that each `SKILL.md` has the `name`/`description` frontmatter runtimes
+need to find it — fixed by a case in `test-agent-entrypoints.sh` (L65). The judgement-only guides (ADRs, `decisions.md`,
 trailers) are judgement by design.
 
 ---

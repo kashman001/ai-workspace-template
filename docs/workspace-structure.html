@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 53d772a4fba84f2f6a8121e1754e55918c7ca981 -->
+  <!-- source-md-sha1: b60312d41076e578c37a2a31d0417f74ebb4b413 -->
 </head>
 <body>
 <div class="src-banner">
@@ -1059,6 +1059,15 @@ symlinks)</td>
 <td>When a skill is invoked</td>
 </tr>
 <tr>
+<td><code>scripts/tests/test-agent-entrypoints.sh</code></td>
+<td>Entrypoint symlinks reach <code>CONTEXT.md</code>; each
+<code>SKILL.md</code> has the <code>name</code>/<code>description</code>
+frontmatter runtimes find it by</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast)</td>
+</tr>
+<tr>
 <td><code>skills/writing-for-agents/SKILL.md</code></td>
 <td>How skills and agent docs are written</td>
 <td>Guide</td>
@@ -1183,10 +1192,11 @@ index</td>
 </table>
 <p>Gaps the table showed, filed as cards: committed plans were linted
 only when a session touched them — fixed by <code>check-plans.sh</code>
-(L64); nothing checks that each <code>SKILL.md</code> has the
+(L64); nothing checked that each <code>SKILL.md</code> has the
 <code>name</code>/<code>description</code> frontmatter runtimes need to
-find it (L65). The judgement-only guides (ADRs,
-<code>decisions.md</code>, trailers) are judgement by design.</p>
+find it — fixed by a case in <code>test-agent-entrypoints.sh</code>
+(L65). The judgement-only guides (ADRs, <code>decisions.md</code>,
+trailers) are judgement by design.</p>
 <hr />
 <h2 id="environment-parameterization">Environment Parameterization</h2>
 <p>A <code>.env</code> file at the workspace root holds machine-specific

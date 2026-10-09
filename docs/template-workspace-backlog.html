@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">112</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">113</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -158,13 +158,6 @@
 
 
 
-  <div class="find low">
-    <h3><span class="id">L65</span> Nothing checks that each skill has the frontmatter runtimes need
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/</span></h3>
-    <p><span class="k">Evidence</span> — Runtimes find a skill by the <code>name</code>/<code>description</code> frontmatter in its <code>SKILL.md</code>. All skills have it today, but only <code>skills/writing-for-agents/SKILL.md</code> (a guide) asks for it; no check does. Found by the L61 guides-and-checks map.</p>
-    <p><span class="k">Impact</span> — A new or edited skill without frontmatter silently stops being discoverable.</p>
-    <p><span class="k">Fix</span> — A check (or a case in an existing suite) that every <code>skills/*/SKILL.md</code> opens with frontmatter carrying <code>name</code> and <code>description</code>.</p>
-  </div>
 
   <!-- ========================= DECISIONS ========================= -->
   <h2>Decisions</h2>
@@ -305,6 +298,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L61</strong> (<code>work/harness-engineering</code> ticket 04): one table of the workspace's guides and checks in <code>docs/workspace-structure.md</code>; its gaps filed as <strong>L64</strong> and <strong>L65</strong>. Scorecard now 4/110/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L63</strong>: two removed scripts dropped from the <code>workspace-structure.md</code> tree; <code>check-workspace-structure.sh</code> now checks the tree against disk. Scorecard now 3/111/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L64</strong>: <code>scripts/check-plans.sh</code> puts <code>plan.sh check</code> for every committed plan in the gate (fast tier). Scorecard now 2/112/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L65</strong>: <code>test-agent-entrypoints.sh</code> case E5 checks every <code>SKILL.md</code> has <code>name</code>/<code>description</code> frontmatter. Scorecard now 1/113/5/0/6.</td></tr>
 </tbody>
   </table>
 

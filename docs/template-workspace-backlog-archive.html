@@ -1976,6 +1976,19 @@
       on a node with an unknown status. Listed in <code>docs/workspace-structure.md</code> (tree, scripts, one map).</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L65</span> Nothing checks that each skill has the frontmatter runtimes need
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
+    <p><span class="k">Evidence</span> — Runtimes find a skill by the <code>name</code>/<code>description</code> frontmatter in its <code>SKILL.md</code>. All skills have it today, but only <code>skills/writing-for-agents/SKILL.md</code> (a guide) asks for it; no check does. Found by the L61 guides-and-checks map.</p>
+    <p><span class="k">Impact</span> — A new or edited skill without frontmatter silently stops being discoverable.</p>
+    <p><span class="k">Fix</span> — A check (or a case in an existing suite) that every <code>skills/*/SKILL.md</code> opens with frontmatter carrying <code>name</code> and <code>description</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/template-maintenance</code> session 18, commit
+      &ldquo;Fix L65&rdquo;): case E5 in <code>scripts/tests/test-agent-entrypoints.sh</code> (the runtime-discovery suite)
+      fails when any <code>skills/*/SKILL.md</code> does not open with a frontmatter block carrying non-empty
+      <code>name</code> and <code>description</code>; E5a runs it on a fixture with a bare skill and one missing its
+      description, so the check is shown to fail. Listed in the one-map table.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

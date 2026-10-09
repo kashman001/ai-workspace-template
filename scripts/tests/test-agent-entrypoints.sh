@@ -6,7 +6,8 @@
 #          prerequisite for the live per-runtime checks in
 #          docs/agent-onboarding-check.md. Complements
 #          check-workspace-structure.sh (which asserts symlinks resolve but
-#          not what they point at).
+#          not what they point at). Also: every skills/*/SKILL.md opens with
+#          the name/description frontmatter runtimes use to find a skill.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -58,6 +59,37 @@ if [ -f docs/agent-onboarding-check.md ]; then
   ok "E4: docs/agent-onboarding-check.md exists"
 else
   bad "E4: docs/agent-onboarding-check.md missing"
+fi
+
+# skill_fm_problems <skills-dir>: one line per SKILL.md that does not open with
+# a --- frontmatter block carrying non-empty name: and description: lines.
+skill_fm_problems() {
+  local f
+  for f in "$1"/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    awk 'NR==1 { if ($0 != "---") exit 1; next }
+         $0 == "---" { closed=1; exit }
+         /^name:[ \t]*[^ \t]/ { n=1 } /^description:[ \t]*[^ \t]/ { d=1 }
+         END { exit !(closed && n && d) }' "$f" || echo "$f"
+  done
+}
+
+FM_TMP="$(mktemp -d)"; trap 'rm -rf "$FM_TMP"' EXIT
+mkdir -p "$FM_TMP"/{good,bare,nodesc}
+printf -- '---\nname: good\ndescription: Does a thing\n---\n# good\n' > "$FM_TMP/good/SKILL.md"
+printf -- '# bare — no frontmatter\nname: bare\n' > "$FM_TMP/bare/SKILL.md"
+printf -- '---\nname: nodesc\n---\ndescription: too late\n' > "$FM_TMP/nodesc/SKILL.md"
+got="$(skill_fm_problems "$FM_TMP" | sed "s|$FM_TMP/||" | tr '\n' ' ')"
+if [ "$got" = "bare/SKILL.md nodesc/SKILL.md " ]; then
+  ok "E5a: skill frontmatter check flags a fixture with none and one without description"
+else
+  bad "E5a: skill frontmatter check flagged [$got], want [bare/SKILL.md nodesc/SKILL.md ]"
+fi
+got="$(skill_fm_problems skills)"
+if [ -z "$got" ]; then
+  ok "E5b: every skills/*/SKILL.md has name and description frontmatter"
+else
+  bad "E5b: skills missing name/description frontmatter: $(echo $got)"
 fi
 
 echo
