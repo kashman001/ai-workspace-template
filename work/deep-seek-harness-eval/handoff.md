@@ -6,6 +6,32 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 3 (2026-10-08)
+
+**Summary.** Filed the seven accepted recommendations as Open cards in
+`docs/template-workspace-backlog.html`: R1 → M46, R4 → M47 (Medium: real
+gaps), R2 → L66, R3 → L67, R5 → L68, R6 → L69, R7 → L70 (Low: doc/config
+nudges). Each card cites `eval.md` with its R-number and scorecard row, and
+its change type. Open count 0 → 7. Nothing built.
+
+**Decisions.** Severity: R1 and R4 are Medium because each is a defect that
+exists today (Codex can fire manual-only skills; CI skips pass silently).
+The rest are Low. Rejected: all seven as Low, which would hide the two
+defects among advice.
+
+**Current state.** Item finished. README success criterion marked done,
+`eval.md` records the card IDs and the answer, `work/README.md` row closed.
+R1 evidence re-checked at HEAD (same six skills lack `agents/openai.yaml`).
+`scripts/check-drift.sh`: only the pre-existing ADR-history WARN.
+Side note: IDs `L19` and `L20` each appear twice across the backlog files
+(pre-existing, not touched).
+
+**Suggested skills.** `tdd` for M46/M47; `writing-for-agents` before L66,
+L67, L70.
+
+**Key files.** `docs/template-workspace-backlog.html` (M46, M47, L66–L70),
+`work/deep-seek-harness-eval/eval.md`.
+
 # Session Handoff — 2 (2026-10-08)
 
 **Summary.** Wrote `eval.md`: a 45-row scorecard (Already have 14 · Partial 11
@@ -35,35 +61,3 @@ left alone.
 before carding anything that touches `skills/`.
 
 **Key files.** `work/deep-seek-harness-eval/eval.md`.
-
-# Session Handoff — 1 (2026-10-08)
-
-**Summary.** Cloned upstream shallow into the session scratchpad (outside the
-repo) at `5badb15009ae1756c3afe0ae0cef1faafc290ccc`; nothing upstream was run.
-Read root `AGENTS.md` directly; three read-only subagents covered (A) the
-Agent Notes system + doc rules, (B) the agent skills, (C) checks/CI/review
-policy. Their notes were spot-checked against the clone (8 claims, all held)
-and assembled into `source-notes.md` (424 lines). Rolled over proactively at
-~100K, before WARN, because `eval.md` needs a full read of the notes.
-
-**Decisions.** Delegated upstream reading to three parallel subagents to keep
-this session's context lean (rejected: reading ~400 files inline).
-
-**Current state.** `source-notes.md` written, uncommitted until this
-rollover's commit. `eval.md`, `decisions.md` not started. Unrelated
-uncommitted edits in `scripts/session-loop.sh`, `scripts/tests/test-plan.sh`,
-`scripts/tests/test-session-loop.sh` belong to another session — left alone.
-
-**Candidate themes for eval** (from the notes, not yet judged): decision-note
-lifecycle by folder + format gate + frozen hash-sealed archive (vs our
-`decisions.md`/ADR tiers); doc word budgets with a repair order (vs
-`check-drift.sh` CONTEXT.md size); exact-shrinking ratchet baselines;
-"report only commands run" + negative controls ("break it, watch it fail");
-CoT-leakage skill (vs writing-for-agents, ledger hygiene); `.claude/skills`
-symlink + cross-runtime invocation-metadata gate (vs `test-agent-entrypoints.sh`);
-single gate graph with skipped = failed; scoped subtree AGENTS.md.
-
-**Suggested skills.** none required; `writing-for-agents` when drafting
-recommendations that touch `skills/`.
-
-**Key files.** `work/deep-seek-harness-eval/source-notes.md`.

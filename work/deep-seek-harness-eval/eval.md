@@ -127,8 +127,8 @@ Not for us 16. Some Partial rows feed a recommendation (noted inline).
 
 ## Ranked recommendations
 
-Each is small. None is filed yet; each becomes a backlog card only if the
-user accepts it.
+Each is small. The user accepted all seven; they are backlog cards
+R1 → M46, R2 → L66, R3 → L67, R4 → M47, R5 → L68, R6 → L69, R7 → L70.
 
 **R1 — Check that manual-only skills agree across Claude and Codex.**
 *Script change.* Add a case to `scripts/tests/test-agent-entrypoints.sh`: for
@@ -195,3 +195,6 @@ any is rejected outright, it goes in `decisions.md`.
 Which of R1–R7 to accept? Accepted ones become backlog cards in
 `docs/template-workspace-backlog.html`. Rejected ones, and any non-goal you
 disagree with, go in `decisions.md`.
+
+**Answered (2026-10-08):** all seven accepted; carded as listed under
+"Ranked recommendations". None rejected.

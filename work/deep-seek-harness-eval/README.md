@@ -26,7 +26,8 @@ only after the user accepts it.
   change, or a deliberate non-goal.
 - The user has reviewed the recommendations. Each accepted one is carded in
   `docs/template-workspace-backlog.html`, and each rejected one is noted in
-  `decisions.md`.
+  `decisions.md`. **Done:** all seven (R1–R7) accepted and carded as M46,
+  M47, L66–L70; none rejected, so `decisions.md` was not needed.
 - No upstream code was run, and no upstream files were committed here.
 
 ## Files
@@ -39,6 +40,5 @@ only after the user accepts it.
 - `source-notes.md` — the upstream repo's practices, paraphrased,
   with paths and the SHA read.
 - `eval.md` — side-by-side scorecard, one-page summary, ranked
-  recommendations (awaiting user review).
-- `decisions.md` — *(planned)* which recommendations were accepted or
-  rejected, and why.
+  recommendations (all accepted; carded M46, M47, L66–L70).
+- `decisions.md` — not created: no recommendation was rejected.
