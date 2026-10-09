@@ -6,6 +6,21 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 5 (2026-10-08)
+
+1. Scaffolded `work/deep-seek-harness-eval/` as asked (`8148704`): README
+   with success criteria, launcher, ledger, per-item `context-budget.env`
+   (`ROLLOVER_RELAUNCH=auto`), row in `work/README.md`. Its launcher says:
+   shallow clone outside the repo, never run upstream code, plain-language
+   report first, no backlog cards until the user accepts.
+2. Handed the user `scripts/session-loop.sh deep-seek-harness-eval
+   --max-sessions 4`. This item's chain ends here (stop door).
+
+Learnings:
+- `launch-next-session.sh <new-item> --dry-run` refuses `not_owner` from a
+  session bound to another item. That is expected: `session-loop.sh` stages
+  the first session itself.
+
 # Session Handoff — 4 (2026-10-08)
 
 1. Documentation gap review done: `doc-gap-review.md` (commit `fdfbbd1`),
