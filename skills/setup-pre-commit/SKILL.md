@@ -5,7 +5,7 @@ description: Set up Husky pre-commit hooks with lint-staged (Prettier), type che
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/misc/setup-pre-commit/
-at commit 068b6e0 (2026-08-15). Upstream content (MIT — see
+at commit 49dd158 (2026-10-09). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
@@ -89,7 +89,7 @@ Only create if no Prettier config exists. Use these defaults:
 
 Stage all changed/created files and commit with message: `Add pre-commit hooks (husky + lint-staged + prettier)`
 
-This will run through the new pre-commit hooks — a good smoke test that everything works.
+This will run through the new pre-commit hooks: a good smoke test that everything works.
 
 ## Notes
 

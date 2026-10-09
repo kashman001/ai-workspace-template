@@ -31,15 +31,21 @@ the rest are model-invoked (triggered by their `description`).
 - **codebase-design** — shared vocabulary for designing deep modules.
 - **diagnosing-bugs** — diagnosis loop for hard bugs and perf regressions.
 - **domain-modeling** — build and sharpen the project's domain model
-  (CONTEXT.md glossary, ADRs).
+  (`GLOSSARY.md` glossary, ADRs).
 - **grill-with-docs** *(slash)* — grill a plan, creating ADRs/glossary as you go.
 - **implement** *(slash)* — implement a piece of work from a spec or tickets.
+- **implement-spec** *(slash)* — implement a whole spec's tickets as a task
+  graph, with parallel subagents on one integration branch. Use it for
+  tracker-backed to-spec/to-tickets output; a multi-session work item with
+  waves or HITL steps belongs to `/plan`.
 - **improve-codebase-architecture** *(slash)* — find deepening opportunities,
   HTML report, grill through your pick.
+- **pr** — template for a PR body that is fast to review.
 - **prototype** — throwaway prototype to answer a design question.
 - **research** — investigate a question against primary sources, capture as
   a Markdown file.
-- **resolving-merge-conflicts** — resolve an in-progress merge/rebase conflict.
+- **retro** *(slash)* — retrospective on a session: suggest improvements to
+  the agent's environment (navigation, checks, standards, steering files).
 - **setup-matt-pocock-skills** *(slash)* — one-time per-repo config (issue
   tracker, triage labels, domain docs) the engineering skills consume.
 - **tdd** — red-green-refactor, one vertical slice at a time.

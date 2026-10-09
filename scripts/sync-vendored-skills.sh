@@ -33,10 +33,12 @@ PRISTINE=(
   engineering/domain-modeling
   engineering/grill-with-docs
   engineering/implement
+  engineering/implement-spec
   engineering/improve-codebase-architecture
+  engineering/pr
   engineering/prototype
   engineering/research
-  engineering/resolving-merge-conflicts
+  engineering/retro
   engineering/setup-matt-pocock-skills
   engineering/tdd
   engineering/wizard

@@ -196,9 +196,11 @@ get every skill in this table with zero setup:
 | `implement` | Build from a spec/tickets — drives `tdd` at agreed seams, closes with `code-review` |
 | `code-review` | Two-axis review of the diff (Standards + Spec) as parallel sub-agents |
 | `diagnosing-bugs` | Reproduce → minimise → fix a hard bug or perf regression |
-| `resolving-merge-conflicts` | Work an in-progress merge/rebase conflict hunk-by-hunk by intent (never `--abort`) |
 | `improve-codebase-architecture` | Find consolidation/deepening opportunities |
 | `to-spec` / `to-tickets` | Turn discussion into a spec / tracer-bullet tickets with blocking edges |
+| `implement-spec` | Implement a whole spec's tickets as a task graph with parallel subagents on one integration branch (multi-session work items use `/plan` instead) |
+| `pr` | Write a PR body that is fast to review (summary sketch, before/after evidence, merge danger) |
+| `retro` | Retrospective on a session: suggest improvements to the agent's environment |
 | `wayfinder` | Plan work bigger than one session as a map of decision tickets, resolved one at a time |
 | `wizard` | Generate an interactive bash wizard walking a human through steps only they can do (credentials, dashboards, one-off migrations) — pairs with `docs/runbooks/` |
 | `to-questionnaire` | Turn a decision you can't fully answer into a questionnaire for someone else — pairs with wayfinder's HITL decision tickets |
@@ -214,7 +216,7 @@ get every skill in this table with zero setup:
 > engine; `ask-matt` is a router — describe your situation and it points you at
 > the skill that fits. Both come with the same clone.
 
-> `domain-modeling` and `grill-with-docs` both write to `CONTEXT.md` and
+> `domain-modeling` and `grill-with-docs` both write to `GLOSSARY.md` and
 > `docs/adr/`, so they pair directly with this workspace's **decision-log**
 > scheme (see `CONTEXT.md` → *Decision Records*): grill/model a decision, then
 > promote the durable ones to an ADR.
@@ -278,7 +280,7 @@ skill once in the repo. It interviews you and scaffolds:
 - An `## Agent skills` block in `CLAUDE.md` (or `AGENTS.md`) describing the repo's:
   - **Issue tracker** — GitHub (`gh`), GitLab (`glab`), local markdown under `.scratch/`, or freeform
   - **Triage labels** — the five canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) mapped to your repo's actual labels
-  - **Domain docs** — single-context (`CONTEXT.md` + `docs/adr/`) vs. multi-context (`CONTEXT-MAP.md`)
+  - **Domain docs** — single-context (`GLOSSARY.md` + `docs/adr/`) vs. multi-context (`GLOSSARY-MAP.md`)
 - `docs/agents/issue-tracker.md` and `docs/agents/domain.md` — plus
   `docs/agents/triage-labels.md` only when the `triage` skill is installed
 

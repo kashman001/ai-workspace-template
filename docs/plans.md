@@ -5,8 +5,8 @@ markdown file per node under `work/<item>/plans/NN-<slug>/`. `scripts/plan.sh`
 reads and writes it. Node files are the truth; `plan.md` is hand-written prose
 plus a rendered board. Concept and glossary: `work/plans/concept.md`; spec:
 `work/plans/spec.md`; procedures (create, reconcile, replan, subagent prompt):
-`skills/plans/SKILL.md`. Front door: `CONTEXT.md` → "Plans" and the glossary
-under "Language".
+`skills/plans/SKILL.md`. Front door: `CONTEXT.md` → "Plans"; plan vocabulary:
+`GLOSSARY.md`.
 
 ## Format
 

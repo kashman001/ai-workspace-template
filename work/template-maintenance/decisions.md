@@ -137,3 +137,17 @@ holder never refreshed.
 **Rejected:** a rule outside the skill (CONTEXT.md or a doc) — the skill would not point to it, and CONTEXT.md is at 15.5K of its 16K limit; forking code-review — upstream improvements stop arriving; won't fix — the gap stays.
 **Blast radius:** scripts/sync-vendored-skills.sh, its test, skills/vendored-skills.md (class list), skills/code-review/, backlog L70.
 **Promote?:** maybe — if a second skill adopts the patched class (L67 could move back into writing-for-agents).
+
+## 2026-10-09 — Adopt upstream's GLOSSARY.md (glossary leaves CONTEXT.md)
+**Chose:** follow mattpocock/skills (#876) and move the project glossary (`## Language`) out of `CONTEXT.md` into a root `GLOSSARY.md`, which `CONTEXT.md` links to. The vendored skills sync unpatched.
+**Because:** after the rename, the upstream skills look for the glossary in `GLOSSARY.md`. Moving it costs one move, frees part of CONTEXT.md's 16K budget, and keeps the refreshes clean.
+**Rejected:** keep the glossary in CONTEXT.md and patch about 15 vendored files from GLOSSARY.md back to CONTEXT.md — a large patch that every upstream edit could break; pin the affected skills at 068b6e0 — they go stale.
+**Blast radius:** CONTEXT.md, new GLOSSARY.md, docs naming the `## Language` section, `init-project-ai-infra`/global CLAUDE.md wording (outside this repo; report it).
+**Promote?:** yes — it changes the workspace's context-file layout.
+
+## 2026-10-09 — Vendor implement-spec despite its overlap with plans
+**Chose:** vendor upstream `implement-spec` as pristine and user-invoked only; its catalog line routes tracker-backed specs/tickets to it and multi-session work items to `/plan`.
+**Because:** downloaders who use the Matt Pocock flow (to-spec → to-tickets) expect the closing step.
+**Rejected:** skipping it — the vendored flow would have a missing last step.
+**Blast radius:** skills/implement-spec/, sync script list, vendored-skills.md, recommended-tooling §3.
+**Promote?:** no.

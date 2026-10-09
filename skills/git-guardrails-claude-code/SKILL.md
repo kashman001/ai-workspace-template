@@ -5,7 +5,7 @@ description: Set up Claude Code hooks to block dangerous git commands (push, res
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/misc/git-guardrails-claude-code/
-at commit 068b6e0 (2026-08-15). Upstream content (MIT — see
+at commit 49dd158 (2026-10-09). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
@@ -85,7 +85,7 @@ Add to the appropriate settings file:
 }
 ```
 
-If the settings file already exists, merge the hook into existing `hooks.PreToolUse` array — don't overwrite other settings.
+If the settings file already exists, merge the hook into the existing `hooks.PreToolUse` array. Don't overwrite other settings.
 
 ### 4. Ask about customization
 

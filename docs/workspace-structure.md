@@ -102,6 +102,8 @@ work item.
 │                               #   repo index, skills, conventions, constraints)
 ├── CLAUDE.md -> CONTEXT.md     # Symlink — Claude Code entrypoint
 ├── AGENTS.md -> CONTEXT.md     # Symlink — Codex / generic agent entrypoint
+├── GLOSSARY.md                 # Domain glossary (`## Language`) — read/written by the
+│                               #   vendored domain-modeling / grill-with-docs skills
 ├── README.md                   # Workspace one-pager — short pitch + pointer to CONTEXT.md
 ├── TEMPLATE_VERSION            # Template generation this workspace was cut from (ISO date;
 │                               #   bumped by the template maintainer; docs/template-usage.md §6)
@@ -664,7 +666,8 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 
 | Control | What it guards | Guide or check | Script or judgement | When it runs |
 |---|---|---|---|---|
-| `CONTEXT.md` (+ `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` symlinks) | How agents work here; the domain language | Guide | Judgement | Every session (loaded by the runtime) |
+| `CONTEXT.md` (+ `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` symlinks) | How agents work here | Guide | Judgement | Every session (loaded by the runtime) |
+| `GLOSSARY.md` | The domain language — terms and aliases to avoid | Guide | Judgement | When naming a domain concept (CONTEXT.md points to it) |
 | `skills/*/SKILL.md` | How to run each workflow | Guide | Judgement | When a skill is invoked |
 | `scripts/tests/test-agent-entrypoints.sh` | Entrypoint symlinks reach `CONTEXT.md`; each `SKILL.md` has the `name`/`description` frontmatter runtimes find it by | Check | Script | Gate (fast) |
 | `skills/writing-for-agents/SKILL.md` | How skills and agent docs are written | Guide | Judgement | By hand, before editing `skills/` |
@@ -768,6 +771,7 @@ agent conversation history.
 | Path | Checked in? | Why |
 |---|---|---|
 | `CONTEXT.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` | Yes | Agent entrypoints (the last three are symlinks → `CONTEXT.md`) |
+| `GLOSSARY.md` | Yes | Domain glossary shared by every agent and the vendored skills |
 | `<Project>.code-workspace` | Yes | Shared VS Code workspace definition (VS Code only — create per project if used; not shipped in the template) |
 | `docs/`, `skills/`, `prompt-library/` | Yes | Shared documentation and skills |
 | `work/` | Yes | Project work and persisted state |
