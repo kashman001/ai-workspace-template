@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">120</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">121</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -162,14 +162,6 @@
     <p><span class="k">Fix</span> — When <code>/plan</code> creates a plan for code work, add a final-wave <code>work</code> node, &ldquo;Run <code>code-review</code> on the work since &lt;base&gt;; fix the findings&rdquo;, ahead of the closing reconcile. Change only <code>skills/plans/SKILL.md</code>; no script change.</p>
   </div>
 
-  <div class="find low">
-    <h3><span class="id">L70</span> Code review mixes blockers with suggestions
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/code-review</span></h3>
-    <p><span class="k">Evidence</span> — <code>skills/code-review/SKILL.md</code> step 5 reports findings in one list and keeps ones a passing check already enforces. Source: <code>work/deep-seek-harness-eval/eval.md</code> R7, scorecard row 23. <em>Correction (2026-10-09):</em> step 3 and the step-4 Standards brief already say &ldquo;skip anything tooling enforces&rdquo; and already separate hard violations from judgement calls. The real gap is narrower: the Spec brief has no such split, and step 5 does not group findings by it.</p>
-    <p><span class="k">Impact</span> — Readers must sort must-fix from nice-to-have themselves; findings duplicated by checks add noise.</p>
-    <p><span class="k">Fix</span> — <em>Doc change to a vendored skill.</em> In step 5, sort findings into blockers and suggestions and drop any a passing check already enforces. This turns <code>code-review</code> from pristine to adapted (<code>skills/vendored-skills.md</code>), a cost at every refresh — consider sending it upstream instead.</p>
-    <p><span class="k">Sent upstream</span> — 2026-10-09: <a href="https://github.com/mattpocock/skills/issues/1242">mattpocock/skills#1242</a> (draft: <code>work/template-maintenance/upstream-issue-code-review.md</code>). The local copy stays pristine. Close this card when upstream lands it and a refresh pulls it in, or as Won't fix if upstream declines.</p>
-  </div>
 
 
 
@@ -321,6 +313,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L54</strong>: <code>TEMPLATE_VERSION</code> bumped to 2026-10-08 for the release push. Scorecard now 0/114/5/0/6.</td></tr>
       <tr><td>2026-10-09</td><td>Refreshed the vendored Matt Pocock skills from <code>068b6e0</code> to <code>49dd158</code>. Added <code>implement-spec</code>, <code>pr</code> and <code>retro</code>. Dropped <code>resolving-merge-conflicts</code>, which upstream removed. Moved the glossary from <code>CONTEXT.md</code> into a new <code>GLOSSARY.md</code>, following upstream's rename (<code>work/template-maintenance/decisions.md</code>).</td></tr>
       <tr><td>2026-10-09</td><td>Filed <strong>M48</strong> (<code>isolated: yes</code> has no effect) and <strong>L71</strong> (plans for code work have no review step), both from the implement-spec vs plans comparison. Scorecard now 3/120/5/0/6.</td></tr>
+      <tr><td>2026-10-09</td><td>Resolved <strong>L70</strong>: new <em>patched</em> class of vendored skill (upstream copy plus a <code>workspace.patch</code> the sync re-applies, failing loudly when it no longer applies), with <code>scripts/tests/test-sync-vendored-skills.sh</code>. <code>code-review</code> is the first: its patch groups each axis into blockers and suggestions. Scorecard now 2/121/5/0/6.</td></tr>
 </tbody>
   </table>
 

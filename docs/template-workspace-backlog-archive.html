@@ -2079,6 +2079,22 @@
       checked-in table.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L70</span> Code review mixes blockers with suggestions
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/code-review</span></h3>
+    <p><span class="k">Evidence</span> — <code>skills/code-review/SKILL.md</code> step 5 reports findings in one list and keeps ones a passing check already enforces. Source: <code>work/deep-seek-harness-eval/eval.md</code> R7, scorecard row 23. <em>Correction (2026-10-09):</em> step 3 and the step-4 Standards brief already say &ldquo;skip anything tooling enforces&rdquo; and already separate hard violations from judgement calls. The real gap is narrower: the Spec brief has no such split, and step 5 does not group findings by it.</p>
+    <p><span class="k">Impact</span> — Readers must sort must-fix from nice-to-have themselves; findings duplicated by checks add noise.</p>
+    <p><span class="k">Fix</span> — <em>Doc change to a vendored skill.</em> In step 5, sort findings into blockers and suggestions and drop any a passing check already enforces. This turns <code>code-review</code> from pristine to adapted (<code>skills/vendored-skills.md</code>), a cost at every refresh — consider sending it upstream instead.</p>
+    <p><span class="k">Sent upstream</span> — 2026-10-09: <a href="https://github.com/mattpocock/skills/issues/1242">mattpocock/skills#1242</a> (draft: <code>work/template-maintenance/upstream-issue-code-review.md</code>). The local copy stays pristine. Close this card when upstream lands it and a refresh pulls it in, or as Won't fix if upstream declines.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 22), by a new third vendored-skill
+      class, <em>patched</em>, instead of turning <code>code-review</code> into an adapted skill. A pristine skill whose directory holds a
+      <code>workspace.patch</code> is re-copied from upstream, then <code>scripts/sync-vendored-skills.sh</code> re-applies the patch, and the
+      sync stops, naming the skill, if the patch no longer applies. <code>skills/code-review/workspace.patch</code> adds the blocker/suggestion
+      mark to the Spec brief, groups each axis's findings under Blockers and Suggestions in step 5, and drops findings that a passing check
+      already enforces. New <code>scripts/tests/test-sync-vendored-skills.sh</code> covers all three classes and the failed-patch case (it failed
+      before the change). Documented in <code>skills/vendored-skills.md</code>. The upstream issue stays open; when upstream lands it, delete the patch.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

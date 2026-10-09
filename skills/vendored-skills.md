@@ -11,13 +11,20 @@ compatibility.
 Each vendored `SKILL.md` opens with a provenance comment pinning the upstream
 commit. Refresh all of them with `scripts/sync-vendored-skills.sh` (needs a
 local clone of the upstream repo; the script prints instructions if missing).
-Two classes:
+Three classes:
 
 - **Pristine** — the whole directory is upstream content, unmodified. Keep it
   that way so refreshes stay a clean re-copy.
 - **Adapted** — the `SKILL.md` frontmatter + provenance comment are
   workspace-specific (wired to this workspace's tracker/spec conventions);
   the body below the comment is pristine upstream content.
+- **Patched** — a pristine skill whose directory also holds a
+  `workspace.patch` (a unified diff against its `SKILL.md`). The sync
+  re-copies upstream, then re-applies the patch; if the patch no longer
+  applies, the sync stops and names the skill, so rewrite the patch against
+  the re-copied file. To change a patched skill, edit the patch, not
+  `SKILL.md`. Prefer sending the change upstream; patch only what upstream
+  has not taken.
 
 Skills marked *(slash)* have a Claude Code shortcut under `.claude/commands/`;
 the rest are model-invoked (triggered by their `description`).
@@ -25,8 +32,9 @@ the rest are model-invoked (triggered by their `description`).
 ## Engineering
 
 - **ask-matt** *(slash)* — router: ask which skill or flow fits your situation.
-- **code-review** — review changes since a fixed point along Standards + Spec
-  axes. ⚠ Name collides with Claude Code's built-in `/code-review` command
+- **code-review** *(patched)* — review changes since a fixed point along
+  Standards + Spec axes; the patch groups each axis into blockers and
+  suggestions. ⚠ Name collides with Claude Code's built-in `/code-review` command
   and the `code-review` plugin; invoke via the Skill tool if ambiguous.
 - **codebase-design** — shared vocabulary for designing deep modules.
 - **diagnosing-bugs** — diagnosis loop for hard bugs and perf regressions.

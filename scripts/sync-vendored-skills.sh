@@ -2,9 +2,12 @@
 # Sync the vendored Matt Pocock skills under skills/ from an upstream clone of
 # github.com/mattpocock/skills (MIT — see skills/vendored-skills.md).
 #
-# Two classes of vendored skill:
+# Three classes of vendored skill:
 #   - Pristine: the whole directory is upstream content. Re-copied wholesale;
 #     a provenance comment is stamped into SKILL.md below the frontmatter.
+#   - Patched: a PRISTINE entry whose directory holds a workspace.patch. It is
+#     re-copied like a pristine skill (the patch file is kept), then the patch
+#     is re-applied; the sync fails, naming the skill, if it no longer applies.
 #   - Adapted: the SKILL.md frontmatter + provenance comment are workspace-
 #     specific and preserved; only the body below the comment (and the
 #     supporting files) are re-copied from upstream.
@@ -70,13 +73,26 @@ for path in "${PRISTINE[@]}"; do
   src="$CLONE/skills/$path"
   dst="$ROOT/skills/$name"
   [ -d "$src" ] || { echo "error: $src missing upstream — update this script" >&2; exit 1; }
-  rsync -a --delete "$src/" "$dst/"
+  patch_file="$dst/workspace.patch"
+  rsync -a --delete --exclude workspace.patch "$src/" "$dst/"
   fm="$(frontmatter_end "$dst/SKILL.md")"
   [ -n "$fm" ] || { echo "error: no frontmatter in $dst/SKILL.md" >&2; exit 1; }
   tmp="$(mktemp)"
   {
     head -n "$fm" "$dst/SKILL.md"
-    cat <<EOF
+    if [ -f "$patch_file" ]; then
+      cat <<EOF
+
+<!--
+Vendored from github.com/mattpocock/skills — skills/$path/
+at commit $SHA ($DATE). Upstream content (MIT — see
+skills/vendored-skills.md) plus skills/$name/workspace.patch, which
+scripts/sync-vendored-skills.sh re-applies at every refresh. Change the
+patch, not this file.
+-->
+EOF
+    else
+      cat <<EOF
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/$path/
@@ -85,10 +101,19 @@ skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
 EOF
+    fi
     tail -n "+$((fm + 1))" "$dst/SKILL.md"
   } > "$tmp"
   mv "$tmp" "$dst/SKILL.md"
-  echo "synced (pristine): $name @ $SHA"
+  if [ -f "$patch_file" ]; then
+    # Dry-run first so a patch that fails leaves no .orig/.rej files behind.
+    patch -p1 -d "$dst" -F0 -N -s --dry-run -i "$patch_file" >/dev/null 2>&1 \
+      || { echo "error: skills/$name/workspace.patch no longer applies to upstream $SHA — rewrite it against the re-copied skills/$name/SKILL.md" >&2; exit 1; }
+    patch -p1 -d "$dst" -F0 -N -s --no-backup-if-mismatch -i "$patch_file"
+    echo "synced (patched):  $name @ $SHA (workspace.patch applied)"
+  else
+    echo "synced (pristine): $name @ $SHA"
+  fi
 done
 
 for path in "${ADAPTED[@]}"; do
