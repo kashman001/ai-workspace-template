@@ -151,3 +151,10 @@ holder never refreshed.
 **Rejected:** skipping it — the vendored flow would have a missing last step.
 **Blast radius:** skills/implement-spec/, sync script list, vendored-skills.md, recommended-tooling §3.
 **Promote?:** no.
+
+## 2026-10-09 — M48: isolated nodes merge back before `done`, not at the reconcile node
+**Chose:** the orchestrator merges an isolated child's branch into its own checkout, then verifies and runs `done <id>`; the plan state is committed after `start` so the worktree sees it.
+**Because:** the child's Log lines and Acceptance ticks live in its worktree's copy of the node file; `done` and the reconcile's on-disk verification need them in the main checkout. Matches upstream implement-spec step 5 (merge on completion).
+**Rejected:** merge at the wave's reconcile node (the card's proposal) — the reconcile would verify node files that don't yet hold the child's claims.
+**Blast radius:** skills/plans/SKILL.md ("Subagent prompt template", Verification), docs/plans.md `isolated` row.
+**Promote?:** no.

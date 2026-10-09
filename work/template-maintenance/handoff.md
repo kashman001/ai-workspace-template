@@ -6,6 +6,25 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 22 (2026-10-09): L70 patched class, M48 and L71 resolved; backlog empty
+
+**Summary.** The launcher's L70 mission is done, and the user also approved finishing M48 and L71 in this session. The backlog now has 0 open cards (0/123/5/0/6).
+
+**What got done (on main, not pushed; 6 commits ahead of origin):**
+- `244ccd0` **L70**: a new *patched* vendored-skill class. `scripts/sync-vendored-skills.sh` re-copies a pristine skill, keeps its `workspace.patch` (rsync exclude), and re-applies it with `patch -F0 --dry-run`, then `--no-backup-if-mismatch`. If the patch no longer applies, it exits non-zero and names the skill. The first user is `skills/code-review/workspace.patch` (Spec brief marks blocker/suggestion; step 5 groups each axis into Blockers/Suggestions and drops findings a passing check enforces). The patch was cut so it applies at zero offset against `49dd158`. New `scripts/tests/test-sync-vendored-skills.sh` runs a copy of the script inside a temp workspace against a fake upstream: it was red 7/17 before the change and 17/17 after. `skills/vendored-skills.md` lists three classes.
+- `d0afd03` **M48 + L71** in `skills/plans/SKILL.md`. M48 describes what an orchestrator does with `isolated: yes`: own worktree and branch, merged back before `done`. L71 adds a closing review wave for code plans. A review subagent found 6 gaps (an uncommitted `start` is invisible to the worktree, the review node has no Goal/Acceptance, the base SHA is only in the title, and others); all were fixed before the commit.
+- `TEMPLATE_VERSION` was not bumped. It is an ISO date and origin already holds today's `2026-10-09`.
+- `run-checks.sh` passed 41/0/0 on each commit's final state.
+
+**Decisions:** in `decisions.md`, the L70 note (patched class, recorded in s21) and the new 2026-10-09 "M48: merge back before done". The choice to give the review its own wave is in the `d0afd03` trailer.
+
+**Open questions:** whether to comment on mattpocock/skills#1242 (only if the user asks). Delete `skills/code-review/workspace.patch` once upstream lands the change.
+
+**Learnings:**
+- Apple `patch` 2.0 writes `SKILL.md.orig` whenever a hunk applies at an offset. `--no-backup-if-mismatch` stops it and is GNU-compatible.
+- A test for a script that writes into `$ROOT` should run a *copy* of the script placed inside the fixture. Running the real one would clobber the repo before any override exists.
+- New user preference (memory `parallelize-independent-tasks`): dispatch dependency-free tasks to parallel subagents.
+
 # Session Handoff — 21 (2026-10-09): Matt Pocock skills refreshed to 49dd158; GLOSSARY.md adopted
 
 **Summary.** Mission job 1 (refresh) is done. Job 2 (L70 patched class) has not started.
