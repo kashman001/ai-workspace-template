@@ -21,7 +21,10 @@ preference); keep backlog, ledger and launcher edits in the main session.
    repo. The script moves the `## Language` section into a root `GLOSSARY.md`,
    leaves a pointer in CONTEXT.md, and fixes references. TDD it with a
    `scripts/tests/` suite. Ship it with the template (memory: template additions are
-   first-class). Ask the user before running it on any real project.
+   first-class). The script refuses a dirty tree and works on a new
+   branch in the target repo (`migrate/glossary`), so the user reviews, merges
+   or deletes it. Template work stays on `main` (user agreed, s22). Ask the
+   user before running it on any real project.
 3. **Track patched vendored skills.** Proposed to the user; they have not yet confirmed the design:
    (a) an `Upstream: mattpocock/skills#1242` header line in each `workspace.patch`.
    The sync checks it with `gh issue view --json state` and prints "upstream may
