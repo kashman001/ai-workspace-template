@@ -25,9 +25,19 @@ Convention: docs/work-directory-conventions.md.
 (before the bump); `test-template-version.sh` passes after it;
 `check-drift.sh` exit 0 (one old ADR-history WARN, not new).
 
-**For the user:**
-- Main is 25 commits ahead of origin; not pushed. Push, then check the
-  first CI run; if CI fails, fix it without changing the date.
+**After the stop door (user asked):** pushed `main` (`c3f2e2b..40f4389`).
+First-ever `checks` CI run (37884567606, ubuntu-24.04) FAILED 37/3/0 —
+all three pass on macOS, none touched this session:
+- `test-plan.sh` T20c–e: `tier_<label>: auto` in plan.md not refused.
+- `test-session-loop.sh` A2a, A2b, A3b: killed child not `rc_nonzero`;
+  writing child not paged.
+- `test-context-budget-registry.sh`: 195/3; the failing ids are cut off
+  (run-checks prints only the last 15 lines).
+User chose to roll over and fix CI in a fresh session.
+
+Learnings:
+- `run-checks.sh` keeps only a failing suite's last 15 lines, so CI can hide
+  which assertions failed; rerun the suite alone to see them.
 
 # Session Handoff — 17 (2026-10-08): doc-gap cards L53, L55–L59 resolved; L54 left for the maintainer
 
