@@ -1963,6 +1963,19 @@
       <code>test-check-workspace-structure.sh</code> makes it fail.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L64</span> Committed plans are never linted by the gate
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/plan.sh, scripts/run-checks.sh</span></h3>
+    <p><span class="k">Evidence</span> — <code>scripts/plan.sh check</code> runs only inside the plans skill, rollover, and <code>session-loop.sh</code>, one work item at a time. It is not a <code>check-*</code> script, so <code>run-checks.sh</code>, pre-commit and CI never run it; plans are committed under <code>work/*/plans/</code>. Found by the L61 guides-and-checks map.</p>
+    <p><span class="k">Impact</span> — A hand edit or merge that breaks a plan nobody is working on passes every gate until the next session trips on it.</p>
+    <p><span class="k">Fix</span> — A <code>scripts/check-plans.sh</code> that runs <code>plan.sh check --project</code> for every work item with a <code>plans/</code> dir in the node-directory format, plus a suite that makes it fail.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/template-maintenance</code> session 18, commit
+      &ldquo;Fix L64&rdquo;): new <code>scripts/check-plans.sh</code> runs <code>plan.sh check</code> on every
+      <code>work/*/plans/NN-*/</code> plan (flat <code>plans/*.md</code> skipped); <code>run-checks.sh</code> picks it up by name
+      in the fast tier, so pre-commit and CI lint every committed plan. <code>test-check-plans.sh</code> makes it fail
+      on a node with an unknown status. Listed in <code>docs/workspace-structure.md</code> (tree, scripts, one map).</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

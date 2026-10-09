@@ -542,6 +542,7 @@ scripts/
 ├── check-repo-context.sh          # Warn-only repo context freshness check
 ├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
 ├── check-drift.sh                 # Staleness sweep: dead doc paths, aged gotchas, CONTEXT.md size, docs index
+├── check-plans.sh                 # Run plan.sh check on every committed plan
 ├── run-checks.sh                  # Run every tests/ suite and check-* script; --fast for pre-commit
 ├── git-hooks/pre-commit           # Opt-in pre-commit hook (runs run-checks.sh --fast)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
@@ -603,6 +604,11 @@ scripts/
   `docs/` entries missing from `docs/README.md`. Checkpoint step 1 runs it;
   CI runs it on every push and weekly. Tested by
   `scripts/tests/test-check-drift.sh`.
+- `check-plans.sh` — runs `plan.sh check` on every committed plan
+  (`work/<item>/plans/NN-<slug>/`; older flat `plans/*.md` files are
+  skipped), one line per plan, exit 1 when any fails. Puts plan lint in the
+  gate, so a broken plan nobody is working on still fails. Tested by
+  `scripts/tests/test-check-plans.sh`.
 - `run-checks.sh` — runs every `scripts/tests/test-*` suite and every
   `scripts/check-*` script (via `bash`/`python3`, so the exec bit doesn't
   matter), one `PASS`/`FAIL`/`SKIP` line each plus a total; exit 0 only if
@@ -662,11 +668,12 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 | `scripts/tests/test-*` | Each script's behaviour, and doc–script agreement (`test-doc-consistency.sh`) | Check | Script | Gate (fast unless marked slow) |
 | `scripts/run-checks.sh` | Runs every check and suite above | Check (runner) | Script | Pre-commit (opt-in), CI, by hand |
 | `scripts/plan.sh check` | A plan's node files are well-formed | Check | Script | Plan create/reconcile/replan, rollover, each `session-loop.sh` turn |
+| `scripts/check-plans.sh` | `plan.sh check` on every committed plan | Check | Script | Gate (fast) |
 | Context-budget hooks (`scripts/hooks/`, wired in `.claude/settings.json`, `.codex/config.toml`, `.gemini/settings.json`, `.github/hooks/`, `.opencode/plugins/`) | Session size: WARN at 120K, STOP at 150K | Check | Script | Session start, each tool call or turn, session end |
 | `scripts/context-budget.sh record` | Same, at a work-unit boundary | Check | Script | By hand (agent), each work unit |
 
-Gaps the table shows, filed as cards: committed plans are linted only when a
-session touches them — `plan.sh check` is not in the gate (L64); nothing
+Gaps the table showed, filed as cards: committed plans were linted only when a
+session touched them — fixed by `check-plans.sh` (L64); nothing
 checks that each `SKILL.md` has the `name`/`description` frontmatter runtimes
 need to find it (L65). The judgement-only guides (ADRs, `decisions.md`,
 trailers) are judgement by design.
