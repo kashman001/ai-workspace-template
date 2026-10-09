@@ -36,7 +36,7 @@ only after the user accepts it.
   to `handoff-archive.md` when it exceeds the two most recent sessions.
 - `context-budget.env` — `ROLLOVER_RELAUNCH=auto` for this item, so the
   study chains unattended.
-- `source-notes.md` — *(planned)* the upstream repo's practices, paraphrased,
+- `source-notes.md` — the upstream repo's practices, paraphrased,
   with paths and the SHA read.
 - `eval.md` — *(planned)* side-by-side comparison, one-page summary, ranked
   recommendations.

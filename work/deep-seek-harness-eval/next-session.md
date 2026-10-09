@@ -9,60 +9,68 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > `handoff.md` (the append-only ledger). Convention:
 > docs/work-directory-conventions.md.
 
-## >>> START HERE <<<
+## Mission
 
-Study <https://github.com/deepseek-ai/deepseek-harness> and find what this
-template can learn from it. Session 1 has not started.
+Find what this template can learn from DeepSeek Harness. Reading is done
+(`source-notes.md`); this session writes `eval.md` and hands it to the user
+for review.
+
+## Position
+
+Step 4 of 5 in the README's success criteria: `source-notes.md` done
+(session 1); `eval.md` not started; user review pending after that.
+
+## Read these, in order
+
+1. `work/deep-seek-harness-eval/source-notes.md` (whole; it is the input)
+2. `work/deep-seek-harness-eval/handoff.md` — top block ("Candidate themes")
+3. `docs/workspace-structure.md` → "Guides and Checks — One Map" (line ~642)
+4. Format model: the top ~40 lines of `work/context-memory-eval/eval.md`
+
+## Do NOT reload
+
+- The upstream repo: don't re-clone or re-read it for the eval; the notes
+  carry paths. Re-open a single upstream file only to settle a specific
+  doubt — the clone may be gone; if so, shallow-clone again outside the repo
+  (`git clone --depth 1 --filter=blob:limit=1m https://github.com/deepseek-ai/deepseek-harness.git <scratch>/deepseek-harness`)
+  and note if the SHA moved from `5badb15`.
+
+## First actions
 
 1. `scripts/context-budget.sh register --project deep-seek-harness-eval`
-2. Get a read-only copy **outside this repo**, in your scratchpad or another
-   temp dir (never under this checkout). The repo is ~270 MB, so fetch it
-   shallow and skip big blobs:
-   `git clone --depth 1 --filter=blob:limit=1m https://github.com/deepseek-ai/deepseek-harness.git <scratch>/deepseek-harness`.
-   Record `git -C <scratch>/deepseek-harness rev-parse HEAD` in
-   `source-notes.md`. If a later session finds the clone gone, clone again
-   and note if the SHA moved.
-3. Read the agent-facing files first, with targeted reads: `AGENTS.md`,
-   `CLAUDE.md`, `.agents/`, `.claude/`, `README.md`, `CONTRIBUTING.md`,
-   `SAFETY.md`, `BENCHMARK.md`, `Makefile`, CI (`.github/`,
-   `.gitlab-ci.yml`), lint/dup config (`.oxlintrc*.json`, `.jscpd.json`).
-   Go into `apps/` only where those files point.
-4. Write `source-notes.md`: each practice, paraphrased, with its upstream
-   path. Then write `eval.md`, comparing with this template's guides and
-   checks — start from `docs/workspace-structure.md` → "Guides and Checks —
-   One Map". Model both on `work/context-memory-eval/` and
-   `work/harness-engineering/source-notes.md`.
-5. Finish `eval.md` with a one-page plain-language summary at the top
-   (short, no workspace jargon, glossary for any term it must use), then
-   ranked recommendations. Tell the user it is ready for review.
-6. At every work-unit boundary run
-   `scripts/context-budget.sh record --label "<what finished>"` and act on
-   the exit code (see Constraints).
+2. Read the files above.
+3. Write `work/deep-seek-harness-eval/eval.md`: scorecard, one row per
+   upstream practice — verdict **Already have / Partial / Worth adopting /
+   Not for us**, evidence paths on both sides (upstream path; template path
+   found with targeted greps). Check template evidence on disk, not from
+   memory.
+4. Put a one-page plain-language summary at the top (short, no workspace
+   jargon, glossary for any term it must use), then ranked recommendations;
+   each says doc change / script change / deliberate non-goal.
+5. Update `README.md` Files list (source-notes and eval no longer planned),
+   commit `work/deep-seek-harness-eval/` only.
+6. Tell the user `eval.md` is ready for review, and end through
+   `skills/checkpoint/SKILL.md` (the review needs a person).
+7. At every work-unit boundary: `scripts/context-budget.sh record --label "<what finished>"`;
+   WARN (exit 1) → finish the unit and roll over without asking; STOP
+   (exit 2) → roll over at once.
+
+**No human in the loop:** if nobody answers, leave `eval.md` committed and
+the review question open in the checkpoint; don't card or reject anything.
 
 ## Constraints already decided (do not re-litigate)
 
-- **Never run upstream code** — no installs, builds, scripts, tests, or
-  hooks from the clone. Read files only.
-- **Never copy upstream files into this repo.** Paraphrase in
-  `source-notes.md` and cite paths. MIT licensed; a short quote is fine.
-- **Don't file or build anything.** Recommendations become backlog cards
-  only after the user accepts them; record rejections in `decisions.md`.
-- **Runs unattended** (`context-budget.env` has `ROLLOVER_RELAUNCH=auto`).
-  Split the study across sessions by budget: at WARN (exit 1) finish the
-  current unit and roll over without asking (`skills/session-rollover/SKILL.md`);
-  at STOP (exit 2) roll over at once. Only the final user review needs a
-  person — end that session through `skills/checkpoint/SKILL.md`.
-- Pushing `main` is the user's call; commit locally only.
+- Never run upstream code; never copy upstream files into this repo
+  (paraphrase, cite paths; short quotes fine — MIT).
+- Don't file or build anything. Recommendations become backlog cards only
+  after the user accepts them; rejections go in `decisions.md`.
+- `ROLLOVER_RELAUNCH=auto` for this item.
+- Pushing `main` is the user's call; commit locally only, and commit only
+  this work item's files — other sessions may have uncommitted edits in the
+  checkout.
 
-## Read these first, in order
+## State snapshot
 
-1. `work/deep-seek-harness-eval/README.md`
-2. `work/deep-seek-harness-eval/handoff.md` (top block)
-3. `docs/workspace-structure.md` → "Guides and Checks — One Map"
-
-## Facts already checked (don't redo)
-
-Repo exists: MIT, default branch `master`, ~270 MB, pushed 2026-10-03,
-tagline "DeepSeek Harness: Everything is a Plugin". Root has `AGENTS.md`,
-`CLAUDE.md`, `.agents/`, `.claude/`, `apps/`, `Makefile`, `BENCHMARK.md`,
-`SAFETY.md`, `.github/`, `.gitlab-ci.yml`, `.oxlintrc*.json`, `.jscpd.json`.
+Branch `main`, local commits only. Unrelated uncommitted edits under
+`scripts/` (session-loop, test-plan, test-session-loop) belong to another
+session — leave them.
