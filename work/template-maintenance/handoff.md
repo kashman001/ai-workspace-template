@@ -35,6 +35,10 @@ commits. E6b failed on exactly the six skills until their yaml existed.
 **State:** `main` is 4 ahead of `origin` and unpushed (push is the
 maintainer's call). The backlog has 1 Open card (L70), waiting on upstream.
 
+**After the stop door (user asked):** pushed `main` (`8d3c7dc..570096c`).
+`checks` run 37987347172 passed 40/0/0, so no check skips on the runner.
+#1242 is open and labelled `needs-triage`, with no replies yet.
+
 # Session Handoff — 19 (2026-10-08): CI Linux failures fixed in all three suites
 
 **What got done (on main, one commit per suite):**
