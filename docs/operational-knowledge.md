@@ -551,3 +551,31 @@ finds no live supervisor for that item. Correct for the chain, surprising from
 inside it. The probe lib and the stub-twin suite `unset TF_SESSION_LOOP
 TF_SESSION_LOOP_PROJECT TF_SESSION_PROJECT TF_SESSION_SEQ` first; do the same
 in any ad-hoc run.
+
+## Shell scripts and tests — BSD-only idioms pass on macOS and break on Linux CI
+
+**Last confirmed:** 2026-10-08
+
+The `checks` CI job runs on ubuntu (GNU tools); a macOS run is not proof. Three
+traps that pass on a Mac and fail or no-op on Linux:
+
+- **`sed -i ''`** is BSD syntax. GNU sed reads `''` as the script and the real
+  script as a filename, so the edit silently does nothing. Use
+  `sed -i.bak … && rm -f file.bak`, or edit through a temp file
+  (`sedi()` in `scripts/tests/test-plan.sh`).
+- **`stat -f %m f || stat -c %Y f`** — with the space, GNU `stat -f` prints a
+  filesystem-info block to stdout *and then* fails, so the fallback runs too and
+  the "mtime" is that block plus a number. Write it without the space
+  (`stat -f%m`): GNU then rejects the option cleanly with no output.
+- **A test that passes only inside a Claude session.** `context-budget.sh`
+  records a pid only when a `claude` ancestor exists, so owner-liveness differs
+  between a Claude-hosted run and CI. Seed or `--takeover` the owner; never rely
+  on which side of that the run lands.
+
+Reproduce CI locally in a container that mirrors the runner — `USER` and
+`LANG=C.UTF-8` are set there, and a bare container fails dozens of extra cases
+without them (the ledger regex's `[—-]` needs a UTF-8 locale):
+`docker run --rm -e USER=runner -e LANG=C.UTF-8 -v "$PWD":/src:ro ubuntu:24.04 bash -c 'apt-get update -qq && apt-get install -y -qq jq git python3 procps >/dev/null && cp -a /src /w && cd /w && bash scripts/tests/<suite>'`.
+
+Caught 2026-10-08: the first `checks` run (37884567606) failed `test-plan.sh`,
+`test-session-loop.sh`, and `test-context-budget-registry.sh` on these.
