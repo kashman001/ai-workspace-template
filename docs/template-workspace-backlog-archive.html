@@ -1989,6 +1989,19 @@
       description, so the check is shown to fail. Listed in the one-map table.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L54</span> TEMPLATE_VERSION not bumped after the context-memory-hardening changes
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">TEMPLATE_VERSION</span></h3>
+    <p><span class="k">Evidence</span> — <code>TEMPLATE_VERSION</code> reads <code>2026-09-30</code>; since then <code>CONTEXT.md</code> was trimmed and gained rules, the budget output and ledger rows changed, and checkpoint gained a classify step. No changelog exists. Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <p><span class="k">Impact</span> — A downloader comparing versions can't tell their copy predates these changes.</p>
+    <p><span class="k">Fix</span> — Maintainer decides when to cut a release and bumps the date then (<code>docs/template-usage.md</code> &rarr; &ldquo;Upgrading later&rdquo;).</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/template-maintenance</code> session 18, commit
+      &ldquo;Fix L54&rdquo;): <code>TEMPLATE_VERSION</code> bumped to <code>2026-10-08</code> as the last commit before the
+      maintainer&rsquo;s push, after L63&ndash;L65 and with <code>scripts/run-checks.sh</code> passing. No changelog file
+      (maintainer decision: <code>git log --since=&lt;date&gt;</code> is the record). Rule going forward: bump on each push of
+      template-facing changes; <code>work/</code>-only changes need none.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">
