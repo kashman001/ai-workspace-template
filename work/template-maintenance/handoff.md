@@ -6,6 +6,27 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 21 (2026-10-09): Matt Pocock skills refreshed to 49dd158; GLOSSARY.md adopted
+
+**Summary.** Mission job 1 (refresh) is done. Job 2 (L70 patched class) has not started.
+
+**What got done (on main, not pushed):**
+- `08eeee3` synced the vendored set `068b6e0` → `49dd158`. It added `implement-spec`, `pr` and `retro` (all pristine, with slash wrappers for implement-spec and retro) and removed `resolving-merge-conflicts` (dropped upstream). Catalog: `skills/vendored-skills.md`; table: `docs/recommended-tooling.md` §3.
+- Same commit: the glossary moved from `CONTEXT.md` `## Language` into a new root `GLOSSARY.md`, following upstream's CONTEXT.md→GLOSSARY.md rename (#876). CONTEXT.md is now 13.9K. Map rows are in `docs/workspace-structure.md`.
+- `a447345` filed backlog cards **M48** (`isolated: yes` has no effect) and **L71** (plans for code work have no review step). Source: `work/template-maintenance/implement-spec-vs-plans.md`, a subagent's comparison. Its isolated claim was verified at `scripts/plan.sh:80,164,571`.
+- Outside the repo (no git), backups in the s21 scratchpad: `~/.claude/skills` symlinks fixed (the stale link was removed and 3 new ones added). The GLOSSARY.md wording was applied to `~/.config/agent-context/{global.md,README.md,project-template/CONTEXT.md,project-template/docs/agents/domain.md}` and `~/.local/bin/init-project-ai-infra`, and `init --full` was smoke-tested.
+- `run-checks.sh` passed 40/0/0 twice.
+
+**Decisions:** `decisions.md` has 2026-10-09 "Adopt upstream's GLOSSARY.md" (Promote?: yes, ADR candidate) and "Vendor implement-spec despite its overlap with plans". Both were chosen by the user.
+
+**Open questions:** existing projects made with the old init (e.g. `~/Developer/experiments/NeogeoEmu`) still keep their glossary in CONTEXT.md. They were not migrated and the user was not asked.
+
+**Learnings:**
+- The global `~/.claude/skills/<matt-skill>` entries are symlinks into the upstream clone, so `git pull` there updates the global skills at once, before any sync.
+- Upstream changed `code-review` in this refresh (3da8c01), so the L70 patch must be rewritten against the new text and not taken from the old issue draft.
+
+**Suggested skills:** `tdd` (L70 sync-script test), `writing-for-agents` (vendored-skills.md class text), `decision-log` (promote the GLOSSARY ADR at checkpoint).
+
 # Session Handoff — 20 (2026-10-09): DeepSeek Harness cards M46, M47, L66–L69 fixed; L70 sent upstream
 
 **What got done (on main, not pushed):**
@@ -49,28 +70,3 @@ vendored skill is pinned to; it has not been pulled.
 **Suggested skills for session 21:** `writing-for-agents` (before any edit under
 `skills/`), `tdd` (sync-script change), `decision-log`.
 
-# Session Handoff — 19 (2026-10-08): CI Linux failures fixed in all three suites
-
-**What got done (on main, one commit per suite):**
-- `57bac67` test-plan.sh — `sed -i ''` (BSD-only; a silent no-op on GNU)
-  replaced by a temp-file `sedi()` helper, 14 call sites.
-- `e5a4e2f` test-session-loop.sh — `scripts/session-loop.sh` `mtime_of()`
-  used spaced `stat -f %m`, which on GNU prints fs info *and* falls through,
-  so transcript age was junk (A2a/b, A3b). Now `stat -f%m`. The suite's
-  3 `sed -i ''` edits moved to `sedi()`.
-- `8ef3510` test-context-budget-registry.sh — R6d/R6f passed only inside a
-  Claude session (aaa got a live claude pid); `--takeover` makes the setup
-  host-independent. Also a spaced `stat -f %m` fingerprint (latent flake).
-- `5980d02` docs/operational-knowledge.md — new entry "Shell scripts and
-  tests — BSD-only idioms pass on macOS and break on Linux CI" (with the
-  runner-faithful docker repro: needs `USER` and `LANG=C.UTF-8`).
-
-**Verification:** Ubuntu 24.04 container (USER=runner, LANG=C.UTF-8):
-the three suites 252/144/198 pass; full `run-checks.sh` 38/2 — the two are
-check-dependencies / check-service-access (no `gh`/token in the container;
-they pass on the runner). macOS `run-checks.sh` 40/0/0 twice; one earlier
-macOS run had 1 failure, not captured — an unidentified flake.
-
-**After the stop door (user asked):** pushed `main` (`40f4389..8d3c7dc`);
-`checks` run 37886203906 green, 40/0/0. No `TEMPLATE_VERSION` change
-(already 2026-10-08). No backlog card.
