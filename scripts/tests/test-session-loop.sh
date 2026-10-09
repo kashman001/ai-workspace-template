@@ -9,6 +9,8 @@
 #          never log prose (evaluation/stage3-design-v2.md, "Tests").
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# sed -i '' is BSD-only (GNU reads '' as the script); edit through a temp file instead.
+sedi() { local s="$1" f; shift; for f in "$@"; do sed "$s" "$f" > "$f.sedi" && mv "$f.sedi" "$f"; done; }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 MAIN="$TMP/main"
 mkdir -p "$MAIN/scripts/lib" "$MAIN/work/testproj" "$MAIN/.context-budget/sessions"
@@ -391,14 +393,14 @@ assert_eq "P1k: reason plan_invalid leg=ambiguous"        "$(refused)" "plan_inv
 
 echo "P5: a stale chain.plan naming a closed plan rebinds to the one open plan (s18)"
 reset; mkplan closed done done done; cp -R "$W/plans/01-demo" "$W/plans/02-demo"
-sed -i '' 's/^plan: 01-demo$/plan: 02-demo/; s/^status: closed$/status: open/' "$W/plans/02-demo/plan.md"
-sed -i '' 's/^status: done$/status: todo/' "$W/plans/02-demo/nodes/"*.md
+sedi 's/^plan: 01-demo$/plan: 02-demo/; s/^status: closed$/status: open/' "$W/plans/02-demo/plan.md"
+sedi 's/^status: done$/status: todo/' "$W/plans/02-demo/nodes/"*.md
 jq '.chain = {supervisor: null, used: 0, cap: 3, closed: null, plan: "01-demo"}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"
 export STUB_BEHAVIOUR=stage-plan; run --max-sessions 2
 assert_eq "P5a: the open plan is bound"                   "$(rec '.chain.plan')" "02-demo"
 assert_eq "P5b: no false plan_closed"                     "$(verdicts)" "staged seq=8 staged seq=9 cap seq=10"
 assert_contains "P5c: the Position block shows plan 02"   "$(cat "$W/next-session.md")" "Position: plan 02-demo, open"
-cp -R "$W/plans/02-demo" "$W/plans/03-demo"; sed -i '' 's/^plan: 02-demo$/plan: 03-demo/' "$W/plans/03-demo/plan.md"
+cp -R "$W/plans/02-demo" "$W/plans/03-demo"; sedi 's/^plan: 02-demo$/plan: 03-demo/' "$W/plans/03-demo/plan.md"
 jq '.chain = {supervisor: null, used: 0, cap: 3, closed: null, plan: "01-demo"}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"
 run --max-sessions 2
 assert_eq "P5d: two open plans besides it: plan_invalid leg=ambiguous" "$(refused)" "plan_invalid leg=ambiguous"

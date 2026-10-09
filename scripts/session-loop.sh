@@ -215,7 +215,7 @@ rec_write true \
 # `page=` token: unidentified, silent, blocked (past STOP with nothing staged),
 # staged_alive (staged, still running two ticks later).
 ALARM_STOPF="$(mktemp "${TMPDIR:-/tmp}/session-loop.XXXXXX")"; rm -f "$ALARM_STOPF"
-mtime_of() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null; }
+mtime_of() { stat -f%m "$1" 2>/dev/null || stat -c%Y "$1" 2>/dev/null; }
 child_probe() {   # echoes "<pid> <transcript-age-seconds>"; rc 1 when the child cannot be identified
   local pid art m
   rec_load; [ "$REC_STATE" = ok ] || return 1
