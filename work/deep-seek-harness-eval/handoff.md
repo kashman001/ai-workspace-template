@@ -21,8 +21,12 @@ workspace-native manual-only skills (`create-work-item`, `doc-review`,
 may invoke them unprompted. Rejected: ranking the "report what you ran" rule
 (R2) first. It has the widest reach, but it is advice, not a found defect.
 
+**Verdict.** The user accepted all of R1–R7 and gave no rejections, so
+`decisions.md` gets nothing. Carding was left to session 3, because this
+session reached budget WARN (125K) right after the verdict.
+
 **Current state.** `eval.md` committed. README Files list updated. No backlog
-cards and no `decisions.md` yet: both wait on the user's review of R1–R7.
+cards yet: R1–R7 are accepted, and session 3 cards them.
 `scripts/check-drift.sh` shows only pre-existing WARN lines (ADR history
 paths). Unrelated uncommitted `scripts/` edits belong to another session;
 left alone.
