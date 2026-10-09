@@ -11,66 +11,48 @@ Codex, Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Find what this template can learn from DeepSeek Harness. Reading is done
-(`source-notes.md`); this session writes `eval.md` and hands it to the user
-for review.
+Find what this template can learn from DeepSeek Harness. `eval.md` is
+written; this session acts on the user's verdicts on its recommendations.
 
 ## Position
 
-Step 4 of 5 in the README's success criteria: `source-notes.md` done
-(session 1); `eval.md` not started; user review pending after that.
+Step 5 of 5 in the README's success criteria. Blocked on the user: they
+review `eval.md` → "Ranked recommendations" (R1–R7) and the non-goals list.
 
 ## Read these, in order
 
-1. `work/deep-seek-harness-eval/source-notes.md` (whole; it is the input)
-2. `work/deep-seek-harness-eval/handoff.md` — top block ("Candidate themes")
-3. `docs/workspace-structure.md` → "Guides and Checks — One Map" (line ~642)
-4. Format model: the top ~40 lines of `work/context-memory-eval/eval.md`
+1. `work/deep-seek-harness-eval/eval.md` — summary + "Ranked recommendations"
+   (the scorecard only for rows a verdict touches)
+2. `work/deep-seek-harness-eval/handoff.md` — top block
+3. `docs/template-workspace-backlog.html` → "Maintaining this backlog"
+   (grep the heading; never load the file whole)
 
 ## Do NOT reload
 
-- The upstream repo: don't re-clone or re-read it for the eval; the notes
-  carry paths. Re-open a single upstream file only to settle a specific
-  doubt — the clone may be gone; if so, shallow-clone again outside the repo
-  (`git clone --depth 1 --filter=blob:limit=1m https://github.com/deepseek-ai/deepseek-harness.git <scratch>/deepseek-harness`)
-  and note if the SHA moved from `5badb15`.
+- `source-notes.md` or the upstream repo; `eval.md` carries the paths.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project deep-seek-harness-eval`
-2. Read the files above.
-3. Write `work/deep-seek-harness-eval/eval.md`: scorecard, one row per
-   upstream practice — verdict **Already have / Partial / Worth adopting /
-   Not for us**, evidence paths on both sides (upstream path; template path
-   found with targeted greps). Check template evidence on disk, not from
-   memory.
-4. Put a one-page plain-language summary at the top (short, no workspace
-   jargon, glossary for any term it must use), then ranked recommendations;
-   each says doc change / script change / deliberate non-goal.
-5. Update `README.md` Files list (source-notes and eval no longer planned),
-   commit `work/deep-seek-harness-eval/` only.
-6. Tell the user `eval.md` is ready for review, and end through
-   `skills/checkpoint/SKILL.md` (the review needs a person).
-7. At every work-unit boundary: `scripts/context-budget.sh record --label "<what finished>"`;
-   WARN (exit 1) → finish the unit and roll over without asking; STOP
-   (exit 2) → roll over at once.
-
-**No human in the loop:** if nobody answers, leave `eval.md` committed and
-the review question open in the checkpoint; don't card or reject anything.
+2. Ask the user which of R1–R7 they accept (one question at a time, plain
+   terms). If no one answers, end through `skills/checkpoint/SKILL.md` and
+   leave the question open; don't card or reject anything.
+3. Each accepted one → one backlog card per the backlog's maintenance rules
+   (cite `eval.md` row and R-number). Each rejected one, and any non-goal the
+   user disputes → `decisions.md` via `skills/decision-log/SKILL.md`.
+4. Mark the README success criterion done, commit this work item plus the
+   backlog only, and close the item in `work/README.md`.
+5. At every work-unit boundary: `scripts/context-budget.sh record --label "<what finished>"`.
 
 ## Constraints already decided (do not re-litigate)
 
-- Never run upstream code; never copy upstream files into this repo
-  (paraphrase, cite paths; short quotes fine — MIT).
-- Don't file or build anything. Recommendations become backlog cards only
-  after the user accepts them; rejections go in `decisions.md`.
-- `ROLLOVER_RELAUNCH=auto` for this item.
-- Pushing `main` is the user's call; commit locally only, and commit only
-  this work item's files — other sessions may have uncommitted edits in the
-  checkout.
+- Don't build anything here: accepted items become cards, built later.
+- Never copy upstream files into this repo (paraphrase, cite paths).
+- Pushing `main` is the user's call; commit locally only, and only this
+  item's files (+ backlog). Other sessions may have uncommitted edits.
+- `ROLLOVER_RELAUNCH=auto` for this item, but step 2 needs a person.
 
 ## State snapshot
 
 Branch `main`, local commits only. Unrelated uncommitted edits under
-`scripts/` (session-loop, test-plan, test-session-loop) belong to another
-session — leave them.
+`scripts/` belong to another session — leave them.

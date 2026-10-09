@@ -38,7 +38,7 @@ only after the user accepts it.
   study chains unattended.
 - `source-notes.md` — the upstream repo's practices, paraphrased,
   with paths and the SHA read.
-- `eval.md` — *(planned)* side-by-side comparison, one-page summary, ranked
-  recommendations.
+- `eval.md` — side-by-side scorecard, one-page summary, ranked
+  recommendations (awaiting user review).
 - `decisions.md` — *(planned)* which recommendations were accepted or
   rejected, and why.

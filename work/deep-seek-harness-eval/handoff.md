@@ -6,6 +6,32 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2 (2026-10-08)
+
+**Summary.** Wrote `eval.md`: a 45-row scorecard (Already have 14 · Partial 11
+· Worth adopting 4 · Not for us 16), a plain-language one-page summary with
+glossary, and seven ranked recommendations R1–R7, each tagged doc, script or
+config change. Template evidence was checked on disk with targeted greps.
+Upstream was not re-opened.
+
+**Decisions.** R1 ranks first because it is a real gap found on disk: six
+workspace-native manual-only skills (`create-work-item`, `doc-review`,
+`onboard-repo`, `plans`, `research-wave`, `rlm`) set
+`disable-model-invocation: true` but have no `agents/openai.yaml`, so Codex
+may invoke them unprompted. Rejected: ranking the "report what you ran" rule
+(R2) first. It has the widest reach, but it is advice, not a found defect.
+
+**Current state.** `eval.md` committed. README Files list updated. No backlog
+cards and no `decisions.md` yet: both wait on the user's review of R1–R7.
+`scripts/check-drift.sh` shows only pre-existing WARN lines (ADR history
+paths). Unrelated uncommitted `scripts/` edits belong to another session;
+left alone.
+
+**Suggested skills.** `decision-log` for rejections; `writing-for-agents`
+before carding anything that touches `skills/`.
+
+**Key files.** `work/deep-seek-harness-eval/eval.md`.
+
 # Session Handoff — 1 (2026-10-08)
 
 **Summary.** Cloned upstream shallow into the session scratchpad (outside the
@@ -37,12 +63,3 @@ single gate graph with skipped = failed; scoped subtree AGENTS.md.
 recommendations that touch `skills/`.
 
 **Key files.** `work/deep-seek-harness-eval/source-notes.md`.
-
-# Session Handoff — 2026-10-08 (session 0: scaffolded)
-
-Scaffolded from `context-memory-hardening` session 5 at the user's request.
-Created `README.md`, `next-session.md`, `context-budget.env`
-(`ROLLOVER_RELAUNCH=auto`) and this ledger, and added a row to
-`work/README.md`. The upstream repo has not been cloned or read yet.
-`source-notes.md`, `eval.md`, and `decisions.md` are planned, not created.
-Next: session 1 follows the launcher's START HERE.
