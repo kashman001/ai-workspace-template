@@ -24,6 +24,7 @@ excluded by rule, not by oversight.
 | [`kimi-k3-agent-integration`](kimi-k3-agent-integration/README.md) | Bring Kimi K3 (Moonshot) in as an agent runtime | Stalled since 2026-08-10 — waiting on the user's runtime choice (4 options in its launcher) |
 | [`feedback-intake`](feedback-intake/README.md) | Route production/user signal into discovery (SDLC gap G1) | Scaffolded — design work not started |
 | [`context-memory-hardening`](context-memory-hardening/README.md) | Ship the accepted context/memory-engineering recommendations (L49, L50, M43, L51, D5) | Finished — tickets 01–05 done (L49, L50, M43, L51 resolved; D5 decided as ADR-0013); follow-up L52 on the backlog |
+| [`deep-seek-harness-eval`](deep-seek-harness-eval/README.md) | Study DeepSeek Harness (`deepseek-ai/deepseek-harness`) for practices this template could adopt | Scaffolded — study not started; runs unattended via `session-loop.sh` |
 | [`context-memory-eval`](context-memory-eval/README.md) | Evaluate the workspace against an outside context/memory-engineering framework (@marfinxx article) | Closed — recs 1–4, 6 shipped via `context-memory-hardening`; 5 deferred (`decisions.md`) |
 | [`context-decay`](context-decay/README.md) | The context-budget system (measure, warn, roll over) | Dormant — all backlog findings resolved; remaining items externally gated |
 | [`devex-review`](devex-review/README.md) | Persona-based DevEx review of this template + fix program | Complete — all review findings carded and fixed (final package: M23 + L35) |
