@@ -6,6 +6,29 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 18 (2026-10-08): L63, L64, L65 fixed; L54 release bump done
+
+**What got done (on main, one commit per card):**
+- L63 `18c922f` — two removed scripts dropped from the `scripts/` tree in
+  `docs/workspace-structure.md`; `check-workspace-structure.sh` now fails
+  on a tree entry missing on disk (test case W5).
+- L64 `e5af815` — new `scripts/check-plans.sh` runs `plan.sh check` on
+  every committed plan; fast tier of `run-checks.sh`; suite
+  `test-check-plans.sh`.
+- L65 `ce44234` — case E5 in `test-agent-entrypoints.sh`: every
+  `skills/*/SKILL.md` has `name`/`description` frontmatter (E5a fixture
+  shows it fails).
+- L54 `125fb37` — `TEMPLATE_VERSION` → `2026-10-08`.
+- Backlog: no open cards; scorecard 0/114/5/0/6. Guide HTML regenerated.
+
+**Verification:** `scripts/run-checks.sh` 40 passed, 0 failed, 0 skipped
+(before the bump); `test-template-version.sh` passes after it;
+`check-drift.sh` exit 0 (one old ADR-history WARN, not new).
+
+**For the user:**
+- Main is 25 commits ahead of origin; not pushed. Push, then check the
+  first CI run; if CI fails, fix it without changing the date.
+
 # Session Handoff — 17 (2026-10-08): doc-gap cards L53, L55–L59 resolved; L54 left for the maintainer
 
 **What got done (on main, one commit per card):**
@@ -32,31 +55,3 @@ entries past the 6-month review age.
 - Main is ahead of origin; not pushed.
 - `work/harness-engineering/issues/01-run-checks.md` has an uncommitted
   edit from the other session; left untouched.
-
-# Session Handoff — 15 (2026-08-31): options brief for the 5 open design-gap cards; blocked on user direction
-
-**What got done (worktree branch tm-s15-options-brief):**
-- Ran unattended; per the session-15 mission, did NOT design conventions
-  solo. Wrote `open-cards-options-brief.md`: per-card proposed shape,
-  landing place, and open questions for M27 (testability prompt), M28
-  (UAT/beta), M29 (postmortem), L38 (dep/suite health — recommendation:
-  route into `work/quality-gates/`), L39 (generic backlog — extract vs.
-  declare bring-your-own-tracker).
-- No code, test, doc, or backlog changes. Suites untouched (21 green as
-  of s14); backlog still 5 open / 77 resolved.
-
-**State:** blocked on user input — every card needs its open questions
-answered before building. Next session walks the brief with the user.
-Rolled over at user request (they exit and pick up later themselves —
-no successor launched); pick up via `scripts/launch-next-session.sh
-template-maintenance` from the main checkout so the self-heal ff-pushes
-this worktree branch to main first.
-
-Learnings:
-- M16 fix verified live a second time: `record` from this session's
-  worktree re-pinned the relocated artifact correctly (glob resolution).
-
-Suggested skills next session: none required — conversation over the
-brief, then per-card implementation skills as picked (tdd for anything
-with scripts/tests).
-
