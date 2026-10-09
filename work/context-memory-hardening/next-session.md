@@ -5,56 +5,47 @@
 
 ## Mission
 
-The five tickets are done and pushed. The user asked for one follow-up:
-**review the workspace documentation and report the gaps** — first, gaps
-left by this work item's changes; then any other documentation gaps you find.
-This is a review: report findings to the user, don't fix them unless asked.
+This item is finished. This session has one job the user asked for: create a
+**new work item `deep-seek-harness-eval`** to evaluate
+<https://github.com/deepseek-ai/deepseek-harness> and find what this
+workspace template can learn from and integrate. Then print the
+session-loop command and end this chain.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project context-memory-hardening`
-2. List what this item changed: `git log --stat a753c1b..64f8908`.
-3. **Gaps from this change.** For each change below, check the docs that
-   should mention it but may not. Use `grep`, not whole-file reads.
-   - `Last confirmed` dates, 6-month review, ADD/UPDATE/SUPERSEDE/NOOP
-     (`docs/operational-knowledge.md` header, `skills/checkpoint/SKILL.md`
-     → "Classify before you write") — are `docs/work-directory-conventions.md`,
-     `docs/zoom-model.md`, `docs/for-non-engineers.md`, `docs/postmortems/`
-     README, and `docs/template-usage.md` consistent with it?
-   - `cache_read_share` / `cache=NN%` (`docs/context-budget.md` → Ledger) —
-     is it explained wherever the record/check output is shown?
-   - "Cache the prefix, vary the tail" and the date-line warning — reflected
-     in `docs/workspace-structure.md` / `docs/template-usage.md` guidance on
-     editing `CONTEXT.md`?
-   - `CONTEXT.md` trim (L51) — does any doc still say a detail "is in
-     CONTEXT.md" that now lives elsewhere? (`git show 9d79e6d -- CONTEXT.md`
-     for what moved.)
-   - ADR-0013 + the "scan headings" rule — referenced from
-     `docs/zoom-model.md` / memory docs where retrieval is described?
-   - Is the change recorded for downloaders (`TEMPLATE_VERSION`,
-     `docs/template-usage.md` / changelog, if the repo keeps one)?
-4. **Other gaps.** Sweep `docs/README.md` (the doc index) against `ls docs/`;
-   run `bash scripts/tests/test-doc-consistency.sh`; spot-check for dead
-   path references (`git grep -oE '`(docs|skills|scripts)/[^` ]+`'` and test
-   each path exists). Note other gaps you meet, ranked.
-5. Report to the user as one prioritized list (gap · where · suggested fix),
-   plain language. Offer to file the real ones as backlog cards.
+2. Scaffold per `skills/create-work-item/SKILL.md`. Model it on
+   `work/context-memory-eval/` and `work/harness-engineering/source-notes.md`:
+   `README.md` (success criteria), `next-session.md`, `handoff.md`, and
+   planned outputs `source-notes.md`, `eval.md` (ranked recommendations,
+   evidence by path), `decisions.md`.
+3. The launcher you write for it must say:
+   - Read the repo through a shallow clone **outside this repo** (scratch
+     dir) or a gitignored path; **never run its code**. It is ~270 MB:
+     `git clone --depth 1 --filter=blob:limit=1m` and targeted reads.
+   - Start from its `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`,
+     `README.md`, `CONTRIBUTING.md`, CI (`.github/`, `.gitlab-ci.yml`) —
+     compare to what this template has (`docs/workspace-structure.md` →
+     "Guides and Checks — One Map").
+   - End with a plain-language report for the user (one page first,
+     `review-docs-plain-language` style). Recommendations become backlog
+     cards **only after the user accepts them** — don't file or build.
+   - Runs unattended; split into sessions by budget, roll over at WARN.
+4. `context-budget.env` with `ROLLOVER_RELAUNCH=auto`; add a row to
+   `work/README.md`; `python3 scripts/check-ledger.py work/deep-seek-harness-eval`
+   exits 0; commit.
+5. Tell the user: `scripts/session-loop.sh deep-seek-harness-eval --max-sessions 4`.
+   Then end through the stop door (`skills/checkpoint/SKILL.md`,
+   `scripts/context-budget.sh close`) with nothing staged.
 
-**No human in the loop:** do steps 1–4, write the findings to
-`work/context-memory-hardening/doc-gap-review.md`, commit it, and stop with
-the offer from step 5 still open.
+## Facts already checked (don't redo)
 
-## Read these, in order
-
-1. `work/context-memory-hardening/handoff.md` (top block)
-2. `work/context-memory-hardening/README.md` (only if you need the scope)
-
-## Do NOT reload
-
-- Vector search / MMR / decay — settled in ADR-0013 (reason corrected after a
-  prototype check); don't re-research.
-- L52 — fixed and archived.
+Repo exists: MIT, default branch `master`, ~270 MB, pushed 2026-10-03,
+tagline "DeepSeek Harness: Everything is a Plugin". Root has `AGENTS.md`,
+`CLAUDE.md`, `.agents/`, `.claude/`, `apps/`, `Makefile`, `BENCHMARK.md`,
+`SAFETY.md`, `.github/`, `.gitlab-ci.yml`, `.oxlintrc*.json`, `.jscpd.json`.
 
 ## State snapshot
 
-`main` clean and pushed (0 ahead of origin at `64f8908`). Backlog: 0 open.
+`main` at `40f4389` + this rollover commit; not pushed (pushing is the
+user's call). Backlog: all cards resolved.

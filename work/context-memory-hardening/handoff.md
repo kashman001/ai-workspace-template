@@ -6,6 +6,30 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-10-08)
+
+1. Documentation gap review done: `doc-gap-review.md` (commit `fdfbbd1`),
+   nine gaps ranked. Filed as cards L53–L59 (+ harness ideas below).
+2. User asked what the template could learn from Böckeler's harness
+   engineering article (martinfowler.com). Five ideas accepted, filed as
+   M44, M45, L60–L62; new work item `work/harness-engineering/` scaffolded
+   (`0316f26`). Both it and `template-maintenance` (L53–L59, then L63–L65,
+   then the L54 `TEMPLATE_VERSION` bump) were run by the user's
+   session-loop chains and finished — HEAD `40f4389`, all cards resolved.
+3. User decision: bump `TEMPLATE_VERSION` on each push of template-facing
+   changes, no changelog file (`bc14373`).
+4. User asked for a new work item `deep-seek-harness-eval` (evaluate
+   github.com/deepseek-ai/deepseek-harness). Not started: hit STOP (150K).
+   Repo checked: exists, MIT, ~270 MB, branch `master`, has `AGENTS.md`,
+   `CLAUDE.md`, `.agents/`, `.claude/`, `apps/`; tagline "Everything is a
+   Plugin". Rolled over (user-requested) to hand the scaffold to a fresh
+   session — see launcher.
+
+Learnings:
+- Two session-loop chains on one checkout (harness-engineering,
+  template-maintenance) both editing the backlog HTML worked when run
+  back-to-back; launchers told each to re-read before editing.
+
 # Session Handoff — 2026-10-07 (session 3: tickets 03–05 done, item finished)
 
 1. Ticket 03 (M43) done, commit `f9b7067`: git-derived `Last confirmed`
@@ -33,22 +57,3 @@ Learnings:
 - Ledger insert must anchor after the purpose comment's `-->`, not on the
   first `# Session Handoff` text (the comment quotes it). Caught by
   `check-ledger.py` and redone.
-
-# Session Handoff — 2026-10-07 (session 2: tickets 01–02 done, WARN rollover)
-
-1. Ticket 01 (L49) done, commit `9996954`: "Cache the prefix, vary the
-   tail" in `docs/context-budget.md`, pointer in `CONTEXT.md`, date-line
-   warning in `check-workspace-structure.sh` + `test-context-prefix-stability.sh`.
-   Hook audit in the ticket's `## Answer`: no hook change needed.
-2. Ticket 02 (L50) done, commit `0e489b5`: ledger rows carry
-   `cache_read_share` (Claude, Codex, OpenCode; `null` elsewhere); the
-   check/record line shows `cache=NN%`. This session read `cache=99%`.
-3. Three Tier-2 notes written to `decisions.md`. Scorecard now 3/96/4/0/6.
-4. Rolled over at WARN (131K). Next: ticket 03 (M43).
-
-Learnings:
-- `scripts/tests/test-jev.sh` failed once (stub endpoint unused, request hit
-  the live URL → 401), then passed on rerun with no change. Flaky; not filed.
-- `test-launch-next-session.sh`, `test-plan.sh`, `test-session-loop.sh` lack
-  the exec bit and `test-check-ledger.py` is Python: run suites as
-  `bash`/`python3`, not `./`.
