@@ -78,6 +78,15 @@ the top block; the rest is history. That title form is the preferred one for
 grandfathered — the checker accepts them, so don't rewrite history to
 "modernize" headings.
 
+**Readable without the transcript.** A block outlives the session that wrote
+it; its reader has the files, not the conversation. Before writing, ask: would
+someone who never saw this session understand every line? Tell-tale phrases
+that fail it: "as decided above", "no longer", "this session", "per review",
+"the earlier approach" — replace each with the fact it points at (the
+decision, what changed from what, the session number, who reviewed what). The
+same test applies to decision notes (`skills/decision-log/SKILL.md`) and the
+launcher.
+
 **One heading rule, two parsers.** A block heading opens with exactly
 `# Session Handoff` (or `# Session Handoff addendum`, a grandfathered form
 some downstream histories carry — never write a new one) followed by a dash,

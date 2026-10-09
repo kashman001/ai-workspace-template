@@ -174,6 +174,8 @@ the synthesis draws on the corrected records.
 
 Write down, where the next session will read it: the corrected errors and
 what each was, the findings that change something already published, the
-patterns the fact-checks found, and the sweeps still outstanding. **The
+patterns the fact-checks found, and the sweeps still outstanding. Name
+which subjects were fact-checked; one that was not is reported as
+unchecked, never as verified. **The
 patterns are the most valuable output** — they are what makes the next
 wave cheaper, and they are invisible in any individual subject's files.

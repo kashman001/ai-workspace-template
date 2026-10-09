@@ -106,6 +106,8 @@ work item.
 ├── TEMPLATE_VERSION            # Template generation this workspace was cut from (ISO date;
 │                               #   bumped by the template maintainer; docs/template-usage.md §6)
 ├── .gitignore                  # See "Gitignored vs. Checked In" + Agent Bootstrap section
+├── .rgignore                   # Hides archives from ripgrep directory walks (agents' grep
+│                               #   tools); a nudge, not a wall — grep -r / git grep ignore it
 ├── <Project>.code-workspace    # VS Code multi-root workspace definition (if using VS Code)
 │
 ├── docs/                       # Workspace-level documentation
@@ -391,6 +393,12 @@ A new **skill** takes two mechanical wiring steps, or agents won't find it:
    (name, one-line trigger/description). This list is hand-maintained; a
    skill absent from it is invisible to every non-Claude runtime.
 
+A **user-invoked-only** skill (`disable-model-invocation: true` in its
+frontmatter) also needs `skills/<name>/agents/openai.yaml` with
+`policy: allow_implicit_invocation: false`, or Codex fires it on its own.
+Copy an existing one; `scripts/tests/test-agent-entrypoints.sh` (E6) fails
+when the two switches disagree.
+
 To make a capability **required** — "run the tests before finishing a
 branch" as a non-negotiable — put its prerequisites in the manifest: a `req`
 line in `scripts/check-dependencies.sh` per binary it needs, a required
@@ -600,7 +608,9 @@ scripts/
   `docs/archive/`, `docs/superpowers/`; ADR hits are `WARN`, since ADRs are
   history; known false alarms live in the script's `ALLOW` list, one reason
   each), `docs/operational-knowledge.md` entries past their 6-month review
-  age, `CONTEXT.md` over 16,000 bytes (~4K tokens, the Z0 target), and
+  age, `CONTEXT.md` over 16,000 bytes (~4K tokens, the Z0 target; when
+  over, move content to its proper home first, then condense, and raise the
+  limit only with a stated reason), and
   `docs/` entries missing from `docs/README.md`. Checkpoint step 1 runs it;
   CI runs it on every push and weekly. Tested by
   `scripts/tests/test-check-drift.sh`.
@@ -616,7 +626,8 @@ scripts/
   (over ~3s or networked) — that tier runs in the opt-in pre-commit hook
   `scripts/git-hooks/pre-commit`; CI (`.github/workflows/checks.yml`) runs
   the full set. A check exits 77 to skip (last output line is the reason)
-  when it needs something a runner lacks. New checks are picked up by name —
+  when it needs something the machine lacks; under CI a skip fails the run
+  unless the check carries `# run-checks: may-skip-in-ci`. New checks are picked up by name —
   no list to update; each must ship with a suite that makes it fail
   ("Authoring a Team Capability"). Adopter setup: `docs/template-usage.md` → "Automatic
   checks (pre-commit and CI)". Tested by `scripts/tests/test-run-checks.sh`.
@@ -766,6 +777,7 @@ agent conversation history.
 | `.vscode/settings.json` | Yes | Shared IDE settings |
 | `opencode.json`, `.opencode/` | Yes | Shared OpenCode config and plugins |
 | `.gemini/settings.json` | Yes | Shared Gemini CLI config (graphify hook + context-budget telemetry) |
+| `.rgignore` | Yes | Archives (`docs/archive/`, `handoff-archive.md`, the backlog archive) out of ripgrep directory walks; name a file to search it anyway |
 | `.env.example` | Yes | Template for required env vars |
 | `context-budget.env` | Yes | Non-secret context-budget thresholds + relaunch knobs (a count is never a credential) |
 | `plan-tiers.env` | Yes | Plan tier policy and per-runtime model aliases (`docs/plans.md` → "Tiers"); a model name is not a secret |

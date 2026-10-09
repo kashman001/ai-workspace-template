@@ -9,7 +9,10 @@
 #     (mark anything that takes more than ~3s, needs the network, or can
 #     start failing with no commit, like check-drift.sh)
 #   - exit 77 → SKIP, not FAIL; its last output line is printed as the reason
-#     (for a check that needs something a CI runner lacks: a CLI, a keychain)
+#     (for a check that needs something this machine lacks: a CLI, a keychain)
+#   - under CI (CI set non-empty) a skip is a FAIL — a check that silently
+#     stops running there would look like a pass — unless the check carries
+#     a line `# run-checks: may-skip-in-ci` (it needs what no runner has)
 # Every new check ships with a scripts/tests/ suite that makes it fail
 # (docs/workspace-structure.md → "Authoring a Team Capability").
 # See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"
@@ -21,7 +24,7 @@ for a in "$@"; do
   case "$a" in
     --fast) FAST=1 ;;
     --list) LIST=1 ;;
-    -h|--help) sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "run-checks: unknown argument: $a (use --fast, --list)" >&2; exit 2 ;;
   esac
 done
@@ -49,6 +52,9 @@ for f in "${checks[@]}"; do
   dt=$((SECONDS - t0))
   if [ "$rc" -eq 0 ]; then
     passed=$((passed+1)); printf 'PASS  %s  (%ss)\n' "$n" "$dt"
+  elif [ "$rc" -eq 77 ] && [ -n "${CI:-}" ] && ! grep -q '^# run-checks: may-skip-in-ci' "$f"; then
+    failed=$((failed+1)); printf 'FAIL  %s  (skipped in CI — mark it may-skip-in-ci if that is expected)\n' "$n"
+    tail -1 "$LOG/$n" | sed 's/^/      | /'
   elif [ "$rc" -eq 77 ]; then
     skipped=$((skipped+1)); printf 'SKIP  %s  — %s\n' "$n" "$(tail -1 "$LOG/$n")"
   else

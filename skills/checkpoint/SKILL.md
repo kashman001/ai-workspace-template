@@ -155,5 +155,8 @@ the guard.
 - A hand-off doc under `work/<project-name>/`.
 - A catch-up prompt the user pastes into the next session.
 
+Report only the commands actually run; a pending or skipped check is reported as
+pending or skipped, never as passed (`CONTEXT.md` → Agent Coding Principles, rule 4).
+
 End by telling the user to compact/clear context, then paste the catch-up prompt to continue.
 Keep the whole response tight — this is a transition, not a status essay.

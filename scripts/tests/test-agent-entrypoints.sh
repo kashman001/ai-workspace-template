@@ -92,6 +92,46 @@ else
   bad "E5b: skills missing name/description frontmatter: $(echo $got)"
 fi
 
+# manual_only_problems <skills-dir>: one line per skill whose Claude and Codex
+# manual-only switches disagree — disable-model-invocation: true in SKILL.md
+# frontmatter must pair with allow_implicit_invocation: false in
+# agents/openai.yaml, and the reverse.
+manual_only_problems() {
+  local f d claude codex
+  for f in "$1"/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    d="$(dirname "$f")"
+    claude=0; codex=0
+    awk 'NR==1 && $0 != "---" { exit } NR>1 && $0 == "---" { exit }
+         /^disable-model-invocation:[ \t]*true[ \t]*$/ { m=1; exit }
+         END { exit !m }' "$f" && claude=1
+    grep -Eq '^[ \t]*allow_implicit_invocation:[ \t]*false[ \t]*$' \
+      "$d/agents/openai.yaml" 2>/dev/null && codex=1
+    [ "$claude" = "$codex" ] || echo "$d"
+  done
+}
+
+mkdir -p "$FM_TMP/mo"/{manual,auto,noyaml,reverse}/agents
+printf -- '---\nname: manual\ndisable-model-invocation: true\n---\n' > "$FM_TMP/mo/manual/SKILL.md"
+printf -- 'policy:\n  allow_implicit_invocation: false\n' > "$FM_TMP/mo/manual/agents/openai.yaml"
+printf -- '---\nname: auto\n---\n' > "$FM_TMP/mo/auto/SKILL.md"
+printf -- 'interface:\n  display_name: "Auto"\n' > "$FM_TMP/mo/auto/agents/openai.yaml"
+printf -- '---\nname: noyaml\ndisable-model-invocation: true\n---\n' > "$FM_TMP/mo/noyaml/SKILL.md"
+printf -- '---\nname: reverse\n---\ndisable-model-invocation: true\n' > "$FM_TMP/mo/reverse/SKILL.md"
+printf -- 'policy:\n  allow_implicit_invocation: false\n' > "$FM_TMP/mo/reverse/agents/openai.yaml"
+got="$(manual_only_problems "$FM_TMP/mo" | sed "s|$FM_TMP/mo/||" | tr '\n' ' ')"
+if [ "$got" = "noyaml reverse " ]; then
+  ok "E6a: manual-only check flags a fixture missing the Codex switch and one missing the Claude switch"
+else
+  bad "E6a: manual-only check flagged [$got], want [noyaml reverse ]"
+fi
+got="$(manual_only_problems skills)"
+if [ -z "$got" ]; then
+  ok "E6b: manual-only skills agree across Claude (SKILL.md) and Codex (agents/openai.yaml)"
+else
+  bad "E6b: manual-only switches disagree in: $(echo $got)"
+fi
+
 echo
 echo "pass=$PASS fail=$FAIL"
 [ "$FAIL" -eq 0 ]

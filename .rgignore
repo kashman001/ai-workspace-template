@@ -1,0 +1,7 @@
+# Ripgrep-based search (most agents' grep tools) skips these during directory
+# walks, so archived facts stop outranking current ones. Name a file explicitly
+# to search it anyway. grep -r and git grep ignore this file.
+# See docs/workspace-structure.md → "Gitignored vs. Checked In".
+docs/archive/
+handoff-archive.md
+docs/template-workspace-backlog-archive.html

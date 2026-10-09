@@ -145,7 +145,9 @@ grep -rIn --exclude-dir=.git --exclude='*.html' -e '<[a-z-]\+>' -e 'TODO' -e 'Fi
     `check-service-access.sh`.
 
   Add a check by dropping a `scripts/tests/test-*` or `scripts/check-*`
-  script; mark it `# run-checks: slow` if it takes more than a few seconds.
+  script; mark it `# run-checks: slow` if it takes more than a few seconds,
+  and `# run-checks: may-skip-in-ci` if it may exit 77 (skip) on a CI
+  runner — otherwise a skip there fails the run.
 - **Agent toolchain** — optional global tools (Claude Code status line,
   superpowers plugin, Matt Pocock engineering skills, Karpathy principles,
   graphify) are documented in `docs/recommended-tooling.md`, including the

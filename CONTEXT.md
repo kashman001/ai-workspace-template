@@ -219,7 +219,9 @@ Behavioral guidance that reduces common AI coding mistakes:
 3. **Surgical changes.** Touch only what's required. Don't refactor
    adjacent code or "improve" formatting outside the task scope.
 4. **Goal-driven execution.** Define verifiable success criteria; loop
-   until verified.
+   until verified. Report only the commands you actually ran; pending is
+   pending and a skip is a skip, never a pass. A new check counts only once
+   seen to fail on a bad case.
 
 ## Agent Context Discipline
 

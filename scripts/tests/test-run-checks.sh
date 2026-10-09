@@ -4,7 +4,9 @@
 #          scripts/check-* script under RUN_CHECKS_ROOT, runs each with the
 #          right interpreter (exec bit not needed), prints one line per check
 #          plus a total, exits 0 only when nothing failed. Exit 77 is a skip
-#          with a reason; `# run-checks: slow` drops a check from --fast.
+#          with a reason locally, but a FAIL under CI unless the check carries
+#          `# run-checks: may-skip-in-ci`; `# run-checks: slow` drops a check
+#          from --fast.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
@@ -52,11 +54,22 @@ assert_contains "R2 total" "$out" "5 passed, 1 failed, 0 skipped"
 echo "R3: exit 77 is a skip with the last output line as reason, and does not fail the run"
 fixture "$TMP/c"
 printf '#!/usr/bin/env bash\necho "probing"\necho "no claude CLI on PATH"\nexit 77\n' > "$TMP/c/scripts/tests/test-skip.sh"
-out="$(RUN_CHECKS_ROOT="$TMP/c" bash "$RC" 2>&1)"; rc=$?
+out="$(env -u CI RUN_CHECKS_ROOT="$TMP/c" bash "$RC" 2>&1)"; rc=$?
 assert_eq "R3 exit" "$rc" "0"
 assert_contains "R3 SKIP line with reason" "$out" "SKIP  test-skip.sh"
 assert_contains "R3 reason" "$out" "no claude CLI on PATH"
 assert_contains "R3 total" "$out" "5 passed, 0 failed, 1 skipped"
+
+echo "R3b: under CI a skip fails the run, unless the check is marked may-skip-in-ci"
+out="$(CI=true RUN_CHECKS_ROOT="$TMP/c" bash "$RC" 2>&1)"; rc=$?
+assert_eq "R3b unmarked skip in CI: exit" "$rc" "1"
+assert_contains "R3b FAIL line names the skip" "$out" "FAIL  test-skip.sh  (skipped in CI"
+assert_contains "R3b reason still shown" "$out" "no claude CLI on PATH"
+assert_contains "R3b total" "$out" "5 passed, 1 failed, 0 skipped"
+printf '#!/usr/bin/env bash\n# run-checks: may-skip-in-ci\necho "no keychain"\nexit 77\n' > "$TMP/c/scripts/tests/test-skip.sh"
+out="$(CI=true RUN_CHECKS_ROOT="$TMP/c" bash "$RC" 2>&1)"; rc=$?
+assert_eq "R3b marked skip in CI: exit" "$rc" "0"
+assert_contains "R3b marked skip is a SKIP" "$out" "SKIP  test-skip.sh  — no keychain"
 
 echo "R4: --fast leaves out checks marked slow"
 out="$(RUN_CHECKS_ROOT="$TMP/a" bash "$RC" --fast 2>&1)"; rc=$?

@@ -81,7 +81,8 @@ file into context (in a long-lived work item it can run to thousands of tokens).
 
 Write it *when you decide*, not in a cleanup pass — the reasoning is freshest (and only)
 in the moment. Keep it to the fork that mattered; skip decisions with no real alternative.
-Never put secrets in it.
+Never put secrets in it. It must read without the transcript — no "as decided above"
+(`docs/work-directory-conventions.md` → "Readable without the transcript").
 
 **Archive when it grows.** ~16KB (`wc -c`) is a *trigger*, not a size target:
 when `decisions.md` passes it, move the settled notes — `Promote?:` reads `no`

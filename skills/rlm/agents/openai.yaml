@@ -1,0 +1,5 @@
+interface:
+  display_name: "RLM"
+  short_description: "Answer a query over a context too big to read"
+policy:
+  allow_implicit_invocation: false

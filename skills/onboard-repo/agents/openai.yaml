@@ -1,0 +1,5 @@
+interface:
+  display_name: "Onboard Repo"
+  short_description: "Registry entry, graphify index, repo docs"
+policy:
+  allow_implicit_invocation: false

@@ -104,7 +104,8 @@ tier, never in a subagent.
    as a `## Replans` line in `plan.md`.
 5. Tick the reconcile node's Acceptance boxes (verified on disk · decisions
    recorded · replan applied, `check` silent), append a Log line with the
-   verdict, then `scripts/plan.sh check` and `scripts/plan.sh done <id>`.
+   verdict and the commands actually run — a skipped or pending check is
+   logged as such, never as a pass — then `scripts/plan.sh check` and `scripts/plan.sh done <id>`.
    `done` does not look at blockers, so anything the replan added is a node
    for the next wave, not a new blocker of the node being closed.
 6. `scripts/plan.sh sync` after the `done`. The board in `plan.md` and the

@@ -19,7 +19,9 @@ ROOT="${DRIFT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT" || exit 2
 
 # CONTEXT.md budget: ~4K tokens at ~4 bytes/token, the target the L51 trim set
-# inside the Z0 band (docs/zoom-model.md).
+# inside the Z0 band (docs/zoom-model.md). Over it, repair in this order: move
+# content to its proper home (a doc CONTEXT.md links to), then condense; raise
+# this number only with the reason stated in the commit.
 CONTEXT_MAX_BYTES=16000
 
 # Paths that look dead but aren't — one per line, `path  # reason`. Prefix match.
@@ -70,7 +72,7 @@ fi
 if [ -f CONTEXT.md ]; then
   bytes=$(wc -c < CONTEXT.md | tr -d ' ')
   [ "$bytes" -gt "$CONTEXT_MAX_BYTES" ] &&
-    drift "CONTEXT.md is $bytes bytes, over its $CONTEXT_MAX_BYTES-byte Z0 budget"
+    drift "CONTEXT.md is $bytes bytes, over its $CONTEXT_MAX_BYTES-byte Z0 budget — move content to its proper home first, then condense; raise the limit only with a stated reason"
 fi
 
 # 4. docs/ entries missing from the index.

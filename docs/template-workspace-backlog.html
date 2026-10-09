@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-08 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-09 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">7</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">114</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">1</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">120</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -140,20 +140,6 @@
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
 
-  <div class="find med">
-    <h3><span class="id">M46</span> Manual-only skills are not manual-only in Codex
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">skills / scripts/tests</span></h3>
-    <p><span class="k">Evidence</span> — Six workspace skills set <code>disable-model-invocation: true</code> but have no <code>agents/openai.yaml</code>: <code>create-work-item</code>, <code>doc-review</code>, <code>onboard-repo</code>, <code>plans</code>, <code>research-wave</code>, <code>rlm</code>. The 14 vendored manual-only skills do carry it with <code>allow_implicit_invocation: false</code>. <code>CONTEXT.md</code> calls <code>research-wave</code> &ldquo;user-invoked only&rdquo;, yet Codex may invoke it on its own. Source: <code>work/deep-seek-harness-eval/eval.md</code> R1, scorecard row 19.</p>
-    <p><span class="k">Impact</span> — Codex users get skills fired implicitly that Claude Code users never see fire; the agent-agnostic promise is broken and nothing catches it.</p>
-    <p><span class="k">Fix</span> — <em>Script change.</em> Add a case to <code>scripts/tests/test-agent-entrypoints.sh</code>: every <code>skills/*/SKILL.md</code> with <code>disable-model-invocation: true</code> needs <code>agents/openai.yaml</code> with <code>allow_implicit_invocation: false</code>, and the reverse. Seed one bad fixture to prove the case fails. Then add the yaml to the six skills.</p>
-  </div>
-  <div class="find med">
-    <h3><span class="id">M47</span> A check that skips in CI looks the same as one that passes
-      <span class="sev med">Medium</span><span class="status open">Open</span><span class="area">scripts/run-checks.sh</span></h3>
-    <p><span class="k">Evidence</span> — <code>scripts/run-checks.sh</code> L11, L52-53: exit 77 is SKIP, never FAIL, in CI as well as locally. Source: <code>work/deep-seek-harness-eval/eval.md</code> R4, scorecard row 31.</p>
-    <p><span class="k">Impact</span> — A check that silently stops running in CI (missing tool, missing env) keeps the run green; the gap is invisible until something it guarded breaks.</p>
-    <p><span class="k">Fix</span> — <em>Script change.</em> When <code>CI</code> is set, a skip fails the run unless the check is on a short &ldquo;may skip&rdquo; list (e.g. <code>check-service-access.sh</code>, which needs credentials). Locally, skips stay non-fatal. First list which checks skip in CI today, then pick the list.</p>
-  </div>
 
 
 
@@ -161,39 +147,12 @@
   <h2>Low</h2>
 
   <div class="find low">
-    <h3><span class="id">L66</span> No standing rule to report only the commands actually run
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">CONTEXT.md / skills</span></h3>
-    <p><span class="k">Evidence</span> — No match for &ldquo;commands run&rdquo; or &ldquo;pending is pending&rdquo; in <code>CONTEXT.md</code> or <code>skills/</code>; the rule reaches Claude only, through a plugin. It is the most repeated rule upstream. Source: <code>work/deep-seek-harness-eval/eval.md</code> R2, scorecard row 20.</p>
-    <p><span class="k">Impact</span> — Agents in other runtimes can report a skip or a pending wait as a pass, or count a new check that was never seen to fail.</p>
-    <p><span class="k">Fix</span> — <em>Doc change.</em> Two lines in <code>CONTEXT.md</code> → Agent Coding Principles (rule 4): list the commands actually run; waiting is waiting, a skip is a skip, never a pass; a new check counts only after it has failed on a bad case. Mirror it where skills end with a report (<code>checkpoint</code>, <code>research-wave</code>, <code>plans</code> reconcile). Mind the <code>CONTEXT.md</code> byte budget (see L68).</p>
-  </div>
-  <div class="find low">
-    <h3><span class="id">L67</span> No test for hand-off text that only makes sense with the transcript
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/writing-for-agents</span></h3>
-    <p><span class="k">Evidence</span> — <code>skills/writing-for-agents/SKILL.md</code> → Pruning has no &ldquo;readable without the transcript?&rdquo; test. Source: <code>work/deep-seek-harness-eval/eval.md</code> R3, scorecard row 7.</p>
-    <p><span class="k">Impact</span> — Ledger entries and decision notes outlive the session that wrote them; phrases like &ldquo;as decided above&rdquo; or &ldquo;this session&rdquo; leave later readers guessing.</p>
-    <p><span class="k">Fix</span> — <em>Doc change.</em> Add the one-question test and a short list of tell-tale phrases (&ldquo;as decided above&rdquo;, &ldquo;no longer&rdquo;, &ldquo;this session&rdquo;, &ldquo;per review&rdquo;) to Pruning. Point to it from the ledger and decision-note write steps (<code>docs/work-directory-conventions.md</code>, <code>skills/decision-log/SKILL.md</code>).</p>
-  </div>
-  <div class="find low">
-    <h3><span class="id">L68</span> The CONTEXT.md byte limit has no repair order
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/check-drift.sh / docs</span></h3>
-    <p><span class="k">Evidence</span> — <code>scripts/check-drift.sh</code> L21-23, L69-73 cap <code>CONTEXT.md</code> at 16,000 bytes; it is at 15,364 (96%). Nothing says what to do when over. Source: <code>work/deep-seek-harness-eval/eval.md</code> R5, scorecard row 4.</p>
-    <p><span class="k">Impact</span> — The next session to hit the limit will likely raise it or cut useful lines at random.</p>
-    <p><span class="k">Fix</span> — <em>Doc change.</em> Next to the limit and where the budget is documented, say: when over, first move content to its proper home, then condense, and raise the limit only with a stated reason.</p>
-  </div>
-  <div class="find low">
-    <h3><span class="id">L69</span> Archives show up in default searches next to current docs
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">repo root</span></h3>
-    <p><span class="k">Evidence</span> — No <code>.rgignore</code> or <code>.ignore</code> at the root, so ripgrep-based search returns <code>docs/archive/</code>, <code>**/handoff-archive.md</code> and the backlog archive alongside current files. Source: <code>work/deep-seek-harness-eval/eval.md</code> R6, scorecard row 17.</p>
-    <p><span class="k">Impact</span> — Stale facts can outrank current ones in an agent's search results.</p>
-    <p><span class="k">Fix</span> — <em>Config change (one file).</em> Add a root <code>.rgignore</code> listing those three. Caveat: it affects ripgrep only; <code>grep -r</code> and <code>git grep</code> still see everything, so it is a nudge, not a wall.</p>
-  </div>
-  <div class="find low">
     <h3><span class="id">L70</span> Code review mixes blockers with suggestions
       <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/code-review</span></h3>
-    <p><span class="k">Evidence</span> — <code>skills/code-review/SKILL.md</code> step 5 reports findings in one list and keeps ones a passing check already enforces. Source: <code>work/deep-seek-harness-eval/eval.md</code> R7, scorecard row 23.</p>
+    <p><span class="k">Evidence</span> — <code>skills/code-review/SKILL.md</code> step 5 reports findings in one list and keeps ones a passing check already enforces. Source: <code>work/deep-seek-harness-eval/eval.md</code> R7, scorecard row 23. <em>Correction (2026-10-09):</em> step 3 and the step-4 Standards brief already say &ldquo;skip anything tooling enforces&rdquo; and already separate hard violations from judgement calls. The real gap is narrower: the Spec brief has no such split, and step 5 does not group findings by it.</p>
     <p><span class="k">Impact</span> — Readers must sort must-fix from nice-to-have themselves; findings duplicated by checks add noise.</p>
     <p><span class="k">Fix</span> — <em>Doc change to a vendored skill.</em> In step 5, sort findings into blockers and suggestions and drop any a passing check already enforces. This turns <code>code-review</code> from pristine to adapted (<code>skills/vendored-skills.md</code>), a cost at every refresh — consider sending it upstream instead.</p>
+    <p><span class="k">Sent upstream</span> — 2026-10-09: <a href="https://github.com/mattpocock/skills/issues/1242">mattpocock/skills#1242</a> (draft: <code>work/template-maintenance/upstream-issue-code-review.md</code>). The local copy stays pristine. Close this card when upstream lands it and a refresh pulls it in, or as Won't fix if upstream declines.</p>
   </div>
 
 

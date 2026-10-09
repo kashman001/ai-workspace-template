@@ -1,0 +1,5 @@
+interface:
+  display_name: "Plans"
+  short_description: "Create, reconcile, or replan a work item plan"
+policy:
+  allow_implicit_invocation: false

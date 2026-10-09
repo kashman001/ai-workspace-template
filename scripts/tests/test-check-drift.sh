@@ -62,6 +62,7 @@ assert_contains "D2 ADR path named" "$out" "scripts/hooks/old-hook.sh"
 assert_contains "D2 stale gotcha" "$out" "2000-01-01 ## Stale gotcha"
 assert_absent "D2 fresh gotcha not reported" "$out" "Fresh gotcha"
 assert_contains "D2 CONTEXT.md over budget" "$out" "CONTEXT.md is"
+assert_contains "D2 over budget names the repair order" "$out" "move content to its proper home first, then condense"
 assert_contains "D2 unindexed doc" "$out" "docs/unindexed.md"
 assert_absent "D2 indexed folder not reported" "$out" "docs/runbooks"
 assert_eq "D2 one line per finding (4 failures + 1 warning)" \
