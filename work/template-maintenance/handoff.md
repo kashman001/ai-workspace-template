@@ -28,9 +28,9 @@ check-dependencies / check-service-access (no `gh`/token in the container;
 they pass on the runner). macOS `run-checks.sh` 40/0/0 twice; one earlier
 macOS run had 1 failure, not captured — an unidentified flake.
 
-**Not done:** push (user's call); CI confirmation on GitHub. `main` is 11
-ahead of origin (includes another work item's commits). No `TEMPLATE_VERSION`
-change, per instruction. No backlog card.
+**After the stop door (user asked):** pushed `main` (`40f4389..8d3c7dc`);
+`checks` run 37886203906 green, 40/0/0. No `TEMPLATE_VERSION` change
+(already 2026-10-08). No backlog card.
 
 # Session Handoff — 18 (2026-10-08): L63, L64, L65 fixed; L54 release bump done
 
