@@ -1950,6 +1950,19 @@
       <code>git status</code> on this instance without further action.</p>
   </div>
 
+  <div class="find low resolved">
+    <h3><span class="id">L63</span> The scripts tree in workspace-structure.md lists two removed scripts
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/workspace-structure.md</span></h3>
+    <p><span class="k">Evidence</span> — The <code>scripts/</code> tree block in <code>docs/workspace-structure.md</code> lists <code>rollover-prep.sh</code> and <code>capture-rollover-options.sh</code>; neither exists. <code>scripts/check-drift.sh</code> can't see it, because tree lines aren't backticked paths. Found while building M45.</p>
+    <p><span class="k">Impact</span> — A reader of the layout map looks for scripts that are gone.</p>
+    <p><span class="k">Fix</span> — Drop the two lines (and regenerate <code>docs/workspace-structure.html</code>); optionally have <code>check-workspace-structure.sh</code> check that every tree entry under <code>scripts/</code> exists.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (<code>work/template-maintenance</code> session 18, commit
+      &ldquo;Fix L63&rdquo;): the two stale lines dropped from the <code>scripts/</code> tree and
+      <code>docs/workspace-structure.html</code> regenerated. <code>check-workspace-structure.sh</code> now fails when a
+      top-level entry in that tree names a path missing under <code>scripts/</code>; case W5 in
+      <code>test-check-workspace-structure.sh</code> makes it fail.</p>
+  </div>
+
   <h2>Decisions</h2>
 
   <div class="find dec resolved">

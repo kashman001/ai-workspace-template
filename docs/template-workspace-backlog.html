@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">110</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">111</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -156,13 +156,6 @@
 
 
 
-  <div class="find low">
-    <h3><span class="id">L63</span> The scripts tree in workspace-structure.md lists two removed scripts
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/workspace-structure.md</span></h3>
-    <p><span class="k">Evidence</span> — The <code>scripts/</code> tree block in <code>docs/workspace-structure.md</code> lists <code>rollover-prep.sh</code> and <code>capture-rollover-options.sh</code>; neither exists. <code>scripts/check-drift.sh</code> can't see it, because tree lines aren't backticked paths. Found while building M45.</p>
-    <p><span class="k">Impact</span> — A reader of the layout map looks for scripts that are gone.</p>
-    <p><span class="k">Fix</span> — Drop the two lines (and regenerate <code>docs/workspace-structure.html</code>); optionally have <code>check-workspace-structure.sh</code> check that every tree entry under <code>scripts/</code> exists.</p>
-  </div>
 
   <div class="find low">
     <h3><span class="id">L64</span> Committed plans are never linted by the gate
@@ -317,6 +310,7 @@
       <tr><td>2026-10-08</td><td>Resolved <strong>L60</strong> (<code>work/harness-engineering</code> ticket 03): checkpoint gains &ldquo;Promote a repeat to a check&rdquo;; gotchas may carry an <code>**Enforced by:**</code> line, back-filled on three entries. Scorecard now 4/108/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L62</strong> (<code>work/harness-engineering</code> ticket 05): every new check ships with a suite that makes it fail; three new suites close the gaps the audit found. Scorecard now 3/109/5/0/6.</td></tr>
       <tr><td>2026-10-08</td><td>Resolved <strong>L61</strong> (<code>work/harness-engineering</code> ticket 04): one table of the workspace's guides and checks in <code>docs/workspace-structure.md</code>; its gaps filed as <strong>L64</strong> and <strong>L65</strong>. Scorecard now 4/110/5/0/6.</td></tr>
+      <tr><td>2026-10-08</td><td>Resolved <strong>L63</strong>: two removed scripts dropped from the <code>workspace-structure.md</code> tree; <code>check-workspace-structure.sh</code> now checks the tree against disk. Scorecard now 3/111/5/0/6.</td></tr>
 </tbody>
   </table>
 

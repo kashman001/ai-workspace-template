@@ -2,7 +2,9 @@
 # File: scripts/tests/test-check-workspace-structure.sh
 # Purpose: check-workspace-structure.sh fails on a broken workspace: a minimal
 #          valid fixture exits 0, then a missing dir, a broken entrypoint
-#          symlink, and a non-executable script each exit 1 with a ✗ reason.
+#          symlink, a non-executable script, and a scripts/ tree entry in
+#          docs/workspace-structure.md naming a missing file each exit 1 with a
+#          ✗ reason.
 #          (The date-line warning is covered by test-context-prefix-stability.sh.)
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -47,6 +49,28 @@ fixture "$TMP/w"; printf '#!/bin/sh\n' > "$TMP/w/scripts/x.sh"; chmod -x "$TMP/w
 out="$(run "$TMP/w")"; rc=$?
 assert_eq "W4 exit 1" "$rc" "1"
 assert_contains "W4 reason" "$out" "not executable scripts/x.sh"
+
+echo "W5: scripts/ tree in workspace-structure.md names a missing script — exit 1"
+fixture "$TMP/w"
+cat > "$TMP/w/docs/workspace-structure.md" <<'MD'
+## `scripts/` — Bootstrap and Utility Scripts
+
+```
+scripts/
+├── check-workspace-structure.sh   # this check
+├── gone.sh                        # removed long ago
+├── hooks/                         # a dir
+│   └── nested-*.sh                #   nested lines are not checked
+└── tests/                         # suites
+```
+MD
+mkdir -p "$TMP/w/scripts/hooks" "$TMP/w/scripts/tests"
+out="$(run "$TMP/w")"; rc=$?
+assert_eq "W5 exit 1" "$rc" "1"
+assert_contains "W5 reason" "$out" "scripts/gone.sh"
+touch "$TMP/w/scripts/gone.sh"; chmod +x "$TMP/w/scripts/gone.sh"
+out="$(run "$TMP/w")"; rc=$?
+assert_eq "W5 exit 0 once the script exists" "$rc" "0"
 
 echo
 echo "check-workspace-structure: $PASS passed, $FAIL failed"

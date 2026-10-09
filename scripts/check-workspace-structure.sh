@@ -36,6 +36,20 @@ for f in code-structure.md design.md api.md; do
     || bad "missing template docs/repo-context/_templates/$f"
 done
 
+# Every top-level entry in the scripts/ tree of docs/workspace-structure.md
+# exists (check-drift.sh can't see tree lines — they aren't backticked paths).
+if [ -f docs/workspace-structure.md ]; then
+  tree="$(awk '/^## `scripts\/`/{s=1} s&&/^```/{n++; if(n==2) exit; next} s&&n==1' docs/workspace-structure.md \
+    | sed -nE 's/^[├└]── ([^ ]+).*/\1/p')"
+  if [ -n "$tree" ]; then
+    missing=0
+    while IFS= read -r e; do
+      [ -e "scripts/${e%/}" ] || { bad "workspace-structure.md scripts/ tree lists missing scripts/${e%/}"; missing=1; }
+    done <<<"$tree"
+    [ "$missing" = 0 ] && ok "scripts/ tree in workspace-structure.md matches disk"
+  fi
+fi
+
 # Generated guide HTML in sync with its Markdown source (regenerate if drifted).
 # Soft warning — the structure is valid, the published HTML just needs rebuilding.
 if [ -f docs/workspace-structure.html ]; then

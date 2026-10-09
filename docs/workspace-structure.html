@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 3bfddc261b15a978a175828eebc2ed949ba83fde -->
+  <!-- source-md-sha1: 504e44e8780dafc3b1fae7372d14f9f234814d33 -->
 </head>
 <body>
 <div class="src-banner">
@@ -909,8 +909,6 @@ Bootstrap and Utility Scripts</h2>
 ├── context-inspect.sh             # Break down what fills a session&#39;s context window
 ├── context-experiment.sh          # Reproducible headless context experiment harness
 ├── link-local-work.sh             # Share ignored work/&lt;item&gt;/ dirs into a worktree by symlink (L45)
-├── rollover-prep.sh               # One-shot mechanical prep for a session rollover
-├── capture-rollover-options.sh    # Capture the session&#39;s launch options for replay
 ├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt
 ├── attach-session.sh              # Re-attach a chained rollover successor to its work item
 ├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
@@ -944,8 +942,9 @@ ones only degrade the status. Tested by
 <code>scripts/tests/test-check-service-access.sh</code>.</li>
 <li><code>check-workspace-structure.sh</code> — validates that
 documented directories exist, symlinks resolve, scripts are executable,
-the repo-context doc templates are present, <code>repos/README.md</code>
-is not git-ignored, and the generated guide HTML matches its Markdown
+the repo-context doc templates are present, every top-level entry in the
+<code>scripts/</code> tree above exists, <code>repos/README.md</code> is
+not git-ignored, and the generated guide HTML matches its Markdown
 source (sha1 freshness warning). (It does <strong>not</strong> reconcile
 the registry against the on-disk repos.) Tested by
 <code>scripts/tests/test-check-workspace-structure.sh</code>.</li>
@@ -1083,7 +1082,8 @@ commit trailers</td>
 </tr>
 <tr>
 <td><code>scripts/check-workspace-structure.sh</code></td>
-<td>Dirs, symlinks, exec bits, guide HTML freshness</td>
+<td>Dirs, symlinks, exec bits, scripts/ tree entries, guide HTML
+freshness</td>
 <td>Check</td>
 <td>Script</td>
 <td>Gate (fast); after setup</td>

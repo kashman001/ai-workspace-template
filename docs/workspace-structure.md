@@ -551,8 +551,6 @@ scripts/
 ├── context-inspect.sh             # Break down what fills a session's context window
 ├── context-experiment.sh          # Reproducible headless context experiment harness
 ├── link-local-work.sh             # Share ignored work/<item>/ dirs into a worktree by symlink (L45)
-├── rollover-prep.sh               # One-shot mechanical prep for a session rollover
-├── capture-rollover-options.sh    # Capture the session's launch options for replay
 ├── launch-next-session.sh         # Relaunch a rollover successor seeded with the bootstrap prompt
 ├── attach-session.sh              # Re-attach a chained rollover successor to its work item
 ├── session-loop.sh                # Supervisor: run a chain of rollover sessions unattended
@@ -584,8 +582,9 @@ scripts/
   Tested by `scripts/tests/test-check-service-access.sh`.
 - `check-workspace-structure.sh` — validates that documented directories
   exist, symlinks resolve, scripts are executable, the repo-context doc
-  templates are present, `repos/README.md` is not git-ignored, and the
-  generated guide HTML matches its Markdown source (sha1 freshness warning).
+  templates are present, every top-level entry in the `scripts/` tree above
+  exists, `repos/README.md` is not git-ignored, and the generated guide HTML
+  matches its Markdown source (sha1 freshness warning).
   (It does **not** reconcile the registry against the on-disk repos.)
   Tested by `scripts/tests/test-check-workspace-structure.sh`.
 - `check-ledger.py` — validates every `work/<project>/` ledger: each
@@ -654,7 +653,7 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 | `docs/operational-knowledge.md` | Known build/shell/tool traps | Guide | Judgement; repeats become checks via `**Enforced by:**` | Before debugging; written at checkpoint |
 | `docs/adr/` | Lasting decisions | Guide | Judgement | When a decision is promoted |
 | `work/<item>/decisions.md`, `Decision:` commit trailers | Why a choice was made | Guide | Judgement | Each decision; reviewed at checkpoint |
-| `scripts/check-workspace-structure.sh` | Dirs, symlinks, exec bits, guide HTML freshness | Check | Script | Gate (fast); after setup |
+| `scripts/check-workspace-structure.sh` | Dirs, symlinks, exec bits, scripts/ tree entries, guide HTML freshness | Check | Script | Gate (fast); after setup |
 | `scripts/check-dependencies.sh` | Required tools installed | Check | Script | Gate (fast); `setup.sh` |
 | `scripts/check-service-access.sh` | Service credentials reachable | Check | Script | Gate (full only); before service work |
 | `scripts/check-repo-context.sh` | Per-repo context docs not stale (warn only) | Check | Script | Gate (fast) |
