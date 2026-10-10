@@ -15,7 +15,7 @@ user what's next.
 - Delete `skills/code-review/workspace.patch` once mattpocock/skills#1242 lands
   (the sync now says so when the issue closes).
 
-**State:** `main` pushed at the end of session 23. On a push after 2026-10-09,
+**State:** `main` pushed at `a030733`; the session-23 rollover commit sits on top, unpushed (pushing is the user's call). On a push after 2026-10-09,
 bump `TEMPLATE_VERSION` to that day.
 
 **Do NOT reload:** L72/M49/L73/L74 are done (ledger block 23).
