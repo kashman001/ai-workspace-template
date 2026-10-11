@@ -46,3 +46,25 @@ pair (opus), L79 `why` rewrite (opus).
 wiring (orchestrator); wave 3 = L81 round trip + audit + `run-checks.sh`.
 
 **Open.** Nothing blocked. Nothing needs the user's decision so far.
+
+## [gen 1] Waves 1–2 committed; wave 3 audit running
+
+**Finished.** Wave 1 verified on disk (entrypoint tests 14/0; provenance
+comments, patches, Codex switches, references all as specified) and
+committed: `771a23c` (analysis + cards), `ecb2389` (L75–L79, 16 skills),
+`149c4bc` (M50: sync 61/0, drift 32/0), `aebca1a` (L80 wiring: catalog,
+CONTEXT.md pointer at 14.1K/16K, workspace-structure md+html,
+recommended-tooling §3, references/README, two `.claude/commands/`).
+Round trip: ran the new sync for all three upstreams against the pinned
+clones; zero diff under `skills/` and `references/`. Full
+`scripts/run-checks.sh`: 42 passed, 0 failed, 0 skipped (129s). One
+pre-existing drift WARN (ADR-0009 history), unrelated.
+
+**Running.** L81 audit (sonnet, read-only) of every new skill for
+runtime-specific leftovers.
+
+**Next.** Act on any BLOCKER from the audit; flip M50, L75–L81 to Resolved
+and move them to the archive (scorecard 0/135/5/0/6, log row); final
+commit; hand-back.
+
+**Open.** Nothing blocked; nothing for the user to decide.

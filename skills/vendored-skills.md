@@ -127,6 +127,14 @@ Pinned at `1be8e34` (2026-10-10). All model-invoked; every skill carries a
 each rebutted) and a "Red Flags" list. Several link to shared checklists with
 `../../references/<file>.md`; those six files are vendored at the repo root
 `references/` (see `references/README.md`) so the links resolve unchanged.
+One of them, `orchestration-patterns.md`, describes Claude Code's subagent
+mechanics only; on another runtime, use its own subagent or second-CLI path.
+Where a skill names a pack skill we did not take, use ours:
+`interview-me` → `grill-me`, `test-driven-development` → `tdd`,
+`code-review-and-quality` (and `/review`) → `code-review`,
+`debugging-and-error-recovery` → `diagnosing-bugs`,
+`source-driven-development` → `research`, `incremental-implementation` →
+`implement`, `planning-and-task-breakdown` → `to-tickets`.
 
 - **security-and-hardening** — threat model, OWASP walk, input and auth
   handling, dependency audit, privacy; own `references/hardening-patterns.md`.
@@ -154,9 +162,8 @@ each rebutted) and a "Red Flags" list. Several link to shared checklists with
   (suppressions, skipped tests, lowered thresholds); own
   `references/floor-guard.md`. The patch points its "add a line" step and
   checklist at `CONTEXT.md` instead of the `AGENTS.md`/`CLAUDE.md` symlinks.
-  Where it names pack skills we did not take, use ours: `interview-me` →
-  `grill-me`, `test-driven-development` → `tdd`, `code-review-and-quality`
-  → `code-review`.
+  Its `/build`, `/test`, `/review`, `/ship` table names phases, not commands
+  that exist here.
 
 Not vendored from this pack: its slash commands (the skills trigger by
 description; its `/plan` would clash with ours), the four persona agents,
