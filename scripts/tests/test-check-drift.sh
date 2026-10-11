@@ -5,7 +5,8 @@
 #          .md files (allow-listed and placeholder paths skipped, ADR hits only
 #          warned), gotchas past review age, an oversize CONTEXT.md, and docs/
 #          entries missing from docs/README.md, and (as a warning, DRIFT_TODAY
-#          fixing the date) vendored skills pinned over 60 days ago. One line
+#          fixing the date) vendored skills or references/ files pinned over
+#          60 days ago, from any upstream, naming the oldest. One line
 #          per finding, exit 1 if any failure; warnings alone exit 0.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -95,6 +96,7 @@ out="$(DRIFT_ROOT="$TMP/e" DRIFT_TODAY=2026-03-15 bash "$CD" 2>&1)"; rc=$?
 assert_eq "D5 exit" "$rc" "0"
 assert_contains "D5 warning" "$out" "WARN vendored"
 assert_contains "D5 names the oldest pin" "$out" "2026-01-01"
+assert_contains "D5 names the oldest file" "$out" "skills/tdd/SKILL.md"
 assert_contains "D5 says how to refresh" "$out" "scripts/sync-vendored-skills.sh"
 assert_eq "D5 one line" "$(printf '%s\n' "$out" | grep -c 'scripts/sync-vendored-skills.sh')" "1"
 
@@ -102,6 +104,19 @@ echo "D6: pinned within 60 days — no warning"
 out="$(DRIFT_ROOT="$TMP/e" DRIFT_TODAY=2026-03-01 bash "$CD" 2>&1)"; rc=$?
 assert_eq "D6 exit" "$rc" "0"
 assert_absent "D6 no warning" "$out" "vendored"
+
+echo "D7: a non-mattpocock pin (a references/ file) is the oldest — it is the one named"
+mkdir -p "$TMP/e/references" "$TMP/e/skills/unslop"
+printf -- '<!--\nVendored from github.com/addyosmani/agent-skills — references/security-checklist.md\nat commit def5678 (2025-12-01). Upstream content.\n-->\n\n# Sec\n' \
+  > "$TMP/e/references/security-checklist.md"
+printf -- '---\nname: unslop\n---\n\n<!--\nVendored from github.com/cursor/plugins — pstack/skills/unslop/\nat commit 0a1b2c3 (2025-12-15). Adapted.\n-->\n' \
+  > "$TMP/e/skills/unslop/SKILL.md"
+git -C "$TMP/e" add -A
+out="$(DRIFT_ROOT="$TMP/e" DRIFT_TODAY=2026-03-01 bash "$CD" 2>&1)"; rc=$?
+assert_eq "D7 exit" "$rc" "0"
+assert_contains "D7 names the oldest pin" "$out" "2025-12-01"
+assert_contains "D7 names the oldest file" "$out" "references/security-checklist.md"
+assert_eq "D7 one line" "$(printf '%s\n' "$out" | grep -c 'scripts/sync-vendored-skills.sh')" "1"
 
 echo
 echo "check-drift: $PASS passed, $FAIL failed"

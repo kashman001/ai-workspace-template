@@ -8,8 +8,8 @@
 #            2. operational-knowledge gotchas past the 6-month review age
 #            3. CONTEXT.md over its Z0 byte budget
 #            4. docs/ entries not linked from docs/README.md
-#            5. vendored Matt Pocock skills pinned to an upstream commit older
-#               than VENDORED_MAX_AGE_DAYS (WARN)
+#            5. vendored skills / references/ files (any upstream) pinned to an
+#               upstream commit older than VENDORED_MAX_AGE_DAYS (WARN)
 #          DRIFT_ROOT overrides the workspace root, DRIFT_TODAY (YYYY-MM-DD)
 #          the date (tests).
 # See: docs/workspace-structure.md → "scripts/ — Bootstrap and Utility Scripts"
@@ -91,17 +91,19 @@ if [ -f docs/README.md ]; then
   done < <(git ls-files docs | cut -d/ -f2 | sort -u)
 fi
 
-# 5. Vendored skills' age: the oldest `at commit <sha> (<date>)` pin in a
-#    mattpocock/skills provenance comment (the sync writes these).
-pinned=$(git ls-files 'skills/*/SKILL.md' | while read -r f; do
-  grep -q 'github.com/mattpocock/skills' "$f" &&
-    grep -o -E 'at commit [0-9a-f]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)' "$f" | head -1 | grep -o -E '[0-9]{4}-[0-9-]+'
+# 5. Vendored files' age: the oldest `at commit <sha> (<date>)` pin in a
+#    `Vendored from github.com/…` provenance comment (the sync writes these).
+oldest=$(git ls-files 'skills/*/SKILL.md' 'references/*.md' | while read -r f; do
+  grep -q 'Vendored from github.com/' "$f" &&
+    d=$(grep -o -E 'at commit [0-9a-f]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)' "$f" | head -1 | grep -o -E '[0-9]{4}-[0-9-]+') &&
+    echo "$d $f"
 done | sort | head -1)
+pinned="${oldest%% *}"
 if [ -n "$pinned" ]; then
   vcut=$(date -j -v-"$VENDORED_MAX_AGE_DAYS"d -f %F "$TODAY" +%F 2>/dev/null ||
          date -d "$TODAY - $VENDORED_MAX_AGE_DAYS days" +%F)
   [[ "$pinned" < "$vcut" ]] &&
-    warn "vendored skills pinned to an upstream commit from $pinned, over $VENDORED_MAX_AGE_DAYS days old — refresh: scripts/sync-vendored-skills.sh (see skills/vendored-skills.md)"
+    warn "vendored skills pinned to an upstream commit from $pinned (${oldest#* }), over $VENDORED_MAX_AGE_DAYS days old — refresh: scripts/sync-vendored-skills.sh (see skills/vendored-skills.md)"
 fi
 
 exit "$fail"
