@@ -286,7 +286,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 14962aaac4a347fce32d360dd729825a841e201f -->
+  <!-- source-md-sha1: 6bb7ce174f8193898ce5cfcdb5cb44d1076a089c -->
 </head>
 <body>
 <div class="src-banner">
@@ -708,6 +708,8 @@ persisted.</li>
 ├── wayfinder/                  # Map-of-decision-tickets planning (adapted)
 ├── writing-for-agents/         # Style guide for agent-consumed docs (adapted)
 ├── tdd/, grill-with-docs/, …   # Vendored Matt Pocock engineering set — see skills/vendored-skills.md
+├── security-and-hardening/, …  # Vendored Addy Osmani lifecycle set (same catalog)
+├── unslop/, why/, …            # Vendored pstack skills (same catalog)
 └── &lt;your-domain-skills&gt;/       # Project-specific workflows</code></pre>
 <p>The template ships with the native skills above
 (<code>checkpoint</code>, <code>session-rollover</code>,
@@ -718,8 +720,14 @@ persisted.</li>
 <code>to-spec</code>/<code>to-tickets</code>/<code>triage</code>/<code>wayfinder</code>/<code>writing-for-agents</code>,
 and the vendored <a
 href="https://github.com/mattpocock/skills">mattpocock/skills</a>
-engineering set — one-liners, slash-command map, refresh workflow
-(<code>scripts/sync-vendored-skills.sh</code>), and license in
+engineering set, nine lifecycle skills from <a
+href="https://github.com/addyosmani/agent-skills">addyosmani/agent-skills</a>
+(security, observability, launch, CI/CD, …) and seven from <a
+href="https://github.com/cursor/plugins/tree/main/pstack">pstack</a>
+(<code>unslop</code>, <code>why</code>, <code>blast-radius</code>, a
+per-repo verification-skill generator, …) — one-liners, slash-command
+map, refresh workflow (<code>scripts/sync-vendored-skills.sh</code>, one
+script for all three upstreams), and licenses in
 <code>skills/vendored-skills.md</code>; add your own alongside them.
 <code>decision-log</code> captures decision provenance — the
 <em>why</em> code can't record — as ephemeral notes under
@@ -841,10 +849,17 @@ consistent across generations and agents.</p>
 External References</h2>
 <pre><code>references/
 ├── README.md                   # Registry of external repos (checked in)
+├── *.md                        # Vendored checklists the Addy Osmani skills link to (checked in)
 └── &lt;cloned-repo&gt;/              # Gitignored</code></pre>
 <p>A registry of third-party repos (research code, reference
 implementations, training material) that the team finds useful. The
-registry is checked in; the clones are gitignored.</p>
+registry is checked in; the clones are gitignored. The Markdown files
+beside the README are vendored checklists (security, performance,
+observability, accessibility, definition of done, orchestration
+patterns) that several vendored skills reach with
+<code>../../references/&lt;file&gt;.md</code>; they are tracked
+(<code>!references/*.md</code>) and refreshed by
+<code>scripts/sync-vendored-skills.sh</code>.</p>
 <hr />
 <h2 id="repos--product-repositories"><code>repos/</code> — Product
 Repositories</h2>

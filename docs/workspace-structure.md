@@ -342,6 +342,8 @@ skills/
 ├── wayfinder/                  # Map-of-decision-tickets planning (adapted)
 ├── writing-for-agents/         # Style guide for agent-consumed docs (adapted)
 ├── tdd/, grill-with-docs/, …   # Vendored Matt Pocock engineering set — see skills/vendored-skills.md
+├── security-and-hardening/, …  # Vendored Addy Osmani lifecycle set (same catalog)
+├── unslop/, why/, …            # Vendored pstack skills (same catalog)
 └── <your-domain-skills>/       # Project-specific workflows
 ```
 
@@ -350,8 +352,13 @@ The template ships with the native skills above (`checkpoint`,
 `doc-review`, `onboard-repo`, `research-wave`, `rlm`), the adapted
 `to-spec`/`to-tickets`/`triage`/`wayfinder`/`writing-for-agents`, and the
 vendored [mattpocock/skills](https://github.com/mattpocock/skills) engineering
-set — one-liners, slash-command map, refresh workflow
-(`scripts/sync-vendored-skills.sh`), and license in `skills/vendored-skills.md`;
+set, nine lifecycle skills from
+[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
+(security, observability, launch, CI/CD, …) and seven from
+[pstack](https://github.com/cursor/plugins/tree/main/pstack) (`unslop`,
+`why`, `blast-radius`, a per-repo verification-skill generator, …) — one-liners,
+slash-command map, refresh workflow (`scripts/sync-vendored-skills.sh`, one
+script for all three upstreams), and licenses in `skills/vendored-skills.md`;
 add your own alongside them. `decision-log` captures decision provenance — the
 *why* code can't record — as ephemeral notes under `work/<project>/decisions.md`,
 promoted to committed ADRs under `docs/adr/` for lasting-weight decisions.
@@ -474,12 +481,17 @@ across generations and agents.
 ```
 references/
 ├── README.md                   # Registry of external repos (checked in)
+├── *.md                        # Vendored checklists the Addy Osmani skills link to (checked in)
 └── <cloned-repo>/              # Gitignored
 ```
 
 A registry of third-party repos (research code, reference implementations,
 training material) that the team finds useful. The registry is checked in;
-the clones are gitignored.
+the clones are gitignored. The Markdown files beside the README are vendored
+checklists (security, performance, observability, accessibility, definition
+of done, orchestration patterns) that several vendored skills reach with
+`../../references/<file>.md`; they are tracked (`!references/*.md`) and
+refreshed by `scripts/sync-vendored-skills.sh`.
 
 ---
 

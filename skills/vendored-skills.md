@@ -1,25 +1,46 @@
-# Vendored Skills — Matt Pocock Engineering Set
+# Vendored Skills
 
-The skills listed here are vendored from
-[github.com/mattpocock/skills](https://github.com/mattpocock/skills) (MIT,
-license text below) so they ship with this workspace — no per-user clone or
-symlink setup required, and every runtime (Claude Code, Codex, Gemini,
-OpenCode, Copilot) reads the same `skills/<name>/SKILL.md`. Each directory
-also carries upstream's `agents/openai.yaml` metadata for OpenAI-runtime
-compatibility.
+The skills listed here are vendored from three upstreams, all MIT (one
+license text, three copyright holders, at the bottom), so they ship with this
+workspace — no per-user clone or symlink setup required, and every runtime
+(Claude Code, Codex, Gemini, OpenCode, Copilot) reads the same
+`skills/<name>/SKILL.md`:
+
+- **Matt Pocock engineering set** —
+  [github.com/mattpocock/skills](https://github.com/mattpocock/skills). The
+  core workflow: grilling, specs, tickets, TDD, review. Each directory also
+  carries upstream's `agents/openai.yaml` metadata for OpenAI-runtime
+  compatibility.
+- **Addy Osmani lifecycle set** —
+  [github.com/addyosmani/agent-skills](https://github.com/addyosmani/agent-skills).
+  Nine skills for the lifecycle areas the core set lacks (security,
+  observability, launch, CI/CD, deprecation, performance, a written quality
+  bar, in-flight adversarial review, simplification).
+- **pstack** (Lauren Tan, "poteto") —
+  [github.com/cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack),
+  directory `pstack/`. Seven short plain-text skills: prose, benchmarks, blast
+  radius, decision archaeology, a per-repo "drive the real app" harness.
+
+Why these and not the rest of each pack (duplicates, Cursor-only, domain
+specific) is recorded in `work/template-maintenance/skill-packs-analysis.md`.
 
 Each vendored `SKILL.md` opens with a provenance comment pinning the upstream
-commit. Refresh all of them with `scripts/sync-vendored-skills.sh` (needs a
-local clone of the upstream repo; the script prints instructions if missing).
-`scripts/check-drift.sh` warns once the oldest pinned commit is more than 60
-days old; refresh then. Three classes:
+commit. Refresh with `scripts/sync-vendored-skills.sh [<upstream> [<clone>]]`
+— upstream keys `mattpocock`, `addyosmani`, `pstack`; with no arguments it
+refreshes every upstream whose clone it finds and prints `git clone`
+instructions for the missing ones (a sparse clone of only `pstack/` is enough
+for `cursor/plugins`). The pstack pin is the last commit touching `pstack/`,
+not the repo HEAD. `scripts/check-drift.sh` warns once the oldest pinned
+commit of any upstream is more than 60 days old; refresh then. Three classes:
 
 - **Pristine** — the whole directory is upstream content, unmodified. Keep it
   that way so refreshes stay a clean re-copy.
 - **Adapted** — the `SKILL.md` frontmatter + provenance comment are
-  workspace-specific (wired to this workspace's tracker/spec conventions);
-  the body below the comment is pristine upstream content.
-- **Patched** — a pristine skill whose directory also holds a
+  workspace-specific (wired to this workspace's tracker/spec conventions, or
+  switching a skill between user- and model-invoked); the body below the
+  comment is pristine upstream content. A workspace-owned
+  `agents/openai.yaml` survives the refresh when upstream ships none.
+- **Patched** — a pristine or adapted skill whose directory also holds a
   `workspace.patch` (a unified diff against its `SKILL.md`). The sync
   re-copies upstream, then re-applies the patch; if the patch no longer
   applies, the sync stops and names the skill, so rewrite the patch against
@@ -34,7 +55,9 @@ days old; refresh then. Three classes:
 Skills marked *(slash)* have a Claude Code shortcut under `.claude/commands/`;
 the rest are model-invoked (triggered by their `description`).
 
-## Engineering
+## Matt Pocock engineering set
+
+### Engineering
 
 - **ask-matt** *(slash)* — router: ask which skill or flow fits your situation.
 - **code-review** *(patched)* — review changes since a fixed point along
@@ -69,7 +92,7 @@ the rest are model-invoked (triggered by their `description`).
   map of decision tickets.
 - **wizard** — generate an interactive bash wizard for human-only steps.
 
-## Productivity
+### Productivity
 
 - **grill-me** *(slash)* — relentless interview to sharpen a plan or design.
 - **grilling** — the underlying grilling technique (used by grill-me /
@@ -83,7 +106,7 @@ the rest are model-invoked (triggered by their `description`).
 - **writing-for-agents** *(adapted)* — style guide for any document an agent
   consumes (skills, `AGENTS.md`/`CLAUDE.md`, pointed-to docs).
 
-## Setup / misc
+### Setup / misc
 
 - **git-guardrails-claude-code** — Claude Code hooks that block dangerous git
   commands.
@@ -96,6 +119,97 @@ Workspace-authored skills (`checkpoint`, `session-rollover`, `create-work-item`,
 `decision-log`, `design-for-testability`, `doc-review`, `onboard-repo`,
 `research-wave`, `rlm`, `jev`) live alongside these in `skills/` and are indexed in
 `CONTEXT.md`.
+
+## Addy Osmani lifecycle set
+
+Pinned at `1be8e34` (2026-10-10). All model-invoked; every skill carries a
+"Common Rationalizations" table (the excuses an agent makes to skip a step,
+each rebutted) and a "Red Flags" list. Several link to shared checklists with
+`../../references/<file>.md`; those six files are vendored at the repo root
+`references/` (see `references/README.md`) so the links resolve unchanged.
+
+- **security-and-hardening** — threat model, OWASP walk, input and auth
+  handling, dependency audit, privacy; own `references/hardening-patterns.md`.
+- **observability-and-instrumentation** — logs, metrics, traces and alerts
+  added while the feature is written, not after.
+- **shipping-and-launch** — pre-launch checklist, staged rollout, monitoring,
+  rollback plan. Upstream's `/ship` command fans this out to three persona
+  subagents; here, run the security, test and performance reviews yourself
+  (in parallel where your runtime can).
+- **ci-cd-and-automation** — pipelines, quality gates, deploy strategies.
+- **deprecation-and-migration** — retire code and APIs safely
+  (expand/contract, sunsets, zero-downtime schema changes).
+- **performance-optimization** — measure, find the bottleneck, fix, measure
+  again; own `references/optimization-patterns.md`. One example step names
+  the Chrome DevTools MCP; use whatever profiler the stack has.
+- **code-simplification** — clarity without behaviour change; the
+  runtime-neutral counterpart of Claude Code's built-in `simplify`.
+- **doubt-driven-development** *(patched)* — each non-trivial decision gets
+  an adversarial, fresh-context review before it stands, with an optional
+  second model through the Codex or Gemini CLI. The patch replaces the
+  pointer to a Claude Code `agents/` persona roster with runtime-neutral
+  wording. Its `/review` means our `code-review`.
+- **constraint-driven-development** *(patched)* — writes the project's
+  quality bar into `CONSTRAINTS.md` and flags changes that quietly lower it
+  (suppressions, skipped tests, lowered thresholds); own
+  `references/floor-guard.md`. The patch points its "add a line" step and
+  checklist at `CONTEXT.md` instead of the `AGENTS.md`/`CLAUDE.md` symlinks.
+  Where it names pack skills we did not take, use ours: `interview-me` →
+  `grill-me`, `test-driven-development` → `tdd`, `code-review-and-quality`
+  → `code-review`.
+
+Not vendored from this pack: its slash commands (the skills trigger by
+description; its `/plan` would clash with ours), the four persona agents,
+the Claude Code hooks, the Node eval framework, and sixteen skills that
+duplicate the core set or are web-domain specific (`frontend-ui-engineering`,
+`browser-testing-with-devtools`; add those per project).
+
+## pstack
+
+Pinned at `978ca6e` (2026-10-10, the last commit touching `pstack/`). Upstream
+marks every skill user-invoked and runs them through Cursor's model routing;
+here they are adapted (frontmatter ours, body upstream's) and four carry a
+small patch.
+
+- **unslop** *(adapted)* — a numbered catalog of AI-prose tells to cut from
+  any writing. Model-invoked so it applies whenever prose is produced.
+- **technical-writing** *(adapted)* — a layered standard for human-facing
+  docs, RFCs, READMEs, PR and commit text (Diátaxis, Google developer style,
+  STE, Global English). `writing-for-agents` covers agent readers; this
+  covers people.
+- **benchmark-checklist** *(adapted, patched)* — seven questions that vet a
+  performance number (limiter, tuning, limits, errors, repeatability,
+  relevance, did the work happen) before you report or act on it. The patch
+  points at `pr` and `diagnosing-bugs` instead of poteto-mode playbooks.
+- **blast-radius** *(adapted, patched)* — what a change could break beyond
+  the diff, and proof of the one fact that makes it safe by running real
+  code. The patch drops the `how`/`arena` references: use the repo's own
+  navigation, and a second model as in `doubt-driven-development`.
+- **why** *(adapted, rewritten)* — traces the commits, PRs, tickets, docs and
+  chat behind a piece of code into a cited answer graded by confidence, after
+  first checking `docs/adr/` and `decisions.md`; `references/epistemics.md`
+  is upstream's verbatim. A rewrite, not a copy, so the sync does not touch
+  it; refresh by re-reading upstream's `pstack/skills/why/`.
+- **create-verification-skill** *(adapted, patched, slash)* — generates a
+  project-local `skills/verify-<app>/` skill that launches, drives and
+  captures evidence from the real app the way a user would, with a feature
+  map. User-invoked.
+- **maintain-verification-skill** *(adapted, patched, slash)* — the upkeep
+  pass for that skill: source check per feature, one live pass, at most one
+  PR of proven corrections. Where the runtime has no subagents, it reads the
+  feature files sequentially. User-invoked.
+
+Not vendored from this pack: `poteto-mode` (the operating mode and its 23
+playbooks: Cursor Custom Mode, named models, `/loop`, cloud workers, bundled
+Bun scripts), `setup-pstack`, the 24 `principle-*` cards (inert without
+poteto-mode; four contradict this workspace's "surgical changes" and "ask
+when uncertain"), and the skills with an equivalent here — `tdd` and `teach`
+(same names; ours stay), `bro` (`wait-what`), `reflect`/`correct` (`retro`),
+`poteto-help` (`ask-matt`), `show-me-your-work` (`decision-log`), `recall`
+(`handoff`), `figure-it-out` (`plans`/`wayfinder`), `interrogate`
+(`code-review`), `how` (graphify, `onboard-repo`), `architect`
+(`codebase-design`, `prototype`) — plus `arena`, `swarm`, `automate-me`,
+`make-bot-ui`, `no-comments`, `ketchup` and `typescript-best-practices`.
 
 ## TypeSafe agent skill (vendored beside `jev`)
 
@@ -114,11 +228,16 @@ Workspace-authored skills (`checkpoint`, `session-rollover`, `create-work-item`,
   same terms as the Matt Pocock license below with a different copyright
   holder.
 
-## Upstream license (Matt Pocock set)
+## Upstream licenses
+
+All three upstreams use the MIT License with the same permission text; only
+the copyright line differs. Reproduced once, with every holder:
 
 MIT License
 
-Copyright (c) 2026 Matt Pocock
+Copyright (c) 2026 Matt Pocock (github.com/mattpocock/skills)
+Copyright (c) 2025 Addy Osmani (github.com/addyosmani/agent-skills)
+Copyright (c) 2026 Lauren Tan (github.com/cursor/plugins, pstack/)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

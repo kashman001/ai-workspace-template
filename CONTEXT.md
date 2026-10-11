@@ -132,7 +132,10 @@ non-engineers to drive (`docs/for-non-engineers.md`). Adding a capability:
 `diagnosing-bugs`, `implement`, `code-review` and the rest also ship in
 `skills/`; one-liners, slash map, refresh, and license:
 `skills/vendored-skills.md`. Run `setup-matt-pocock-skills` once per repo
-before the tracker-dependent ones.
+before the tracker-dependent ones. The same catalog lists the **Addy Osmani
+lifecycle set** (`security-and-hardening`, `shipping-and-launch`,
+`doubt-driven-development`, …) and the **pstack** skills (`unslop`, `why`,
+`blast-radius`, `create-verification-skill`, …), all agent-agnostic.
 
 ## Service Access
 

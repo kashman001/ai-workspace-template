@@ -237,6 +237,29 @@ and note `claude-handoff` competes with this workspace's `session-rollover`/
 (`scaffold-exercises`, `migrate-to-shoehorn`). Link those manually (below) if
 you want them.
 
+**Two more vendored sets, same mechanism.** The catalog
+(`skills/vendored-skills.md`) also carries nine lifecycle skills from
+[`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills) and
+seven from Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/pstack)
+(the `pstack/` directory of `cursor/plugins`), both MIT, all plain
+`SKILL.md` files any runtime reads:
+
+| Skill | Use when |
+|---|---|
+| `security-and-hardening` / `observability-and-instrumentation` / `shipping-and-launch` / `ci-cd-and-automation` / `deprecation-and-migration` / `performance-optimization` | The lifecycle phase the core set does not cover: harden, instrument, launch, pipeline, retire, optimise |
+| `code-simplification` | Make code clearer without changing behaviour (runtime-neutral `simplify`) |
+| `doubt-driven-development` | Have a non-trivial decision cross-examined in a fresh context, optionally by a second model via the Codex or Gemini CLI |
+| `constraint-driven-development` | Write the project's quality bar into `CONSTRAINTS.md` and catch changes that lower it |
+| `unslop` / `technical-writing` | Cut AI tells from prose; write human-facing docs to a standard |
+| `benchmark-checklist` | Vet a performance number before reporting it |
+| `blast-radius` | "What could this break?" — prove the one safety fact by running code |
+| `why` | Recover why code is shaped as it is when no ADR answers (git, PRs, tickets, docs; confidence-graded) |
+| `create-verification-skill` / `maintain-verification-skill` | Give a repo a scripted "drive the real app" skill at `skills/verify-<app>/`, and keep it honest |
+
+Refresh them with the same `scripts/sync-vendored-skills.sh` (`addyosmani`
+and `pstack` upstream keys; the script prints the clone commands). What was
+left out of each pack and why: `work/template-maintenance/skill-packs-analysis.md`.
+
 **Global install (optional — for repos outside this workspace, or the
 maintainer keeping the reference clone fresh):** clone the repo into the
 references dir, then let `agent-context-sync` link the skills (it offers each
