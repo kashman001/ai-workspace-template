@@ -69,13 +69,13 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-09 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-11 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">8</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">127</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -140,6 +140,15 @@
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
 
+  <div class="find medium">
+    <h3><span class="id">M50</span> The vendored-skills sync knows only one upstream
+      <span class="sev medium">Medium</span><span class="status open">Open</span><span class="area">scripts/sync-vendored-skills.sh, scripts/check-drift.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>scripts/sync-vendored-skills.sh</code> hard-codes <code>mattpocock/skills</code>; <code>check-drift.sh</code> item 5 ages only provenance lines that name that repo; patches apply only to pristine skills; the adapted class deletes any workspace-owned <code>agents/openai.yaml</code>. The session-24 analysis (<code>work/template-maintenance/skill-packs-analysis.md</code>) vendors 15 skills from two more upstreams (<code>addyosmani/agent-skills</code>, <code>cursor/plugins</code> &rarr; <code>pstack/</code>), six of them adapted + patched, two user-invoked.</p>
+    <p><span class="k">Impact</span> &mdash; Without this the new skills have no refresh path and no staleness warning, and a refresh would wipe the Codex switch of the user-invoked pair.</p>
+    <p><span class="k">Fix</span> &mdash; Declare the three upstreams in the script (repo, clone env var and default path, source prefix, pin rule: HEAD, or the last commit touching <code>pstack/</code>); apply <code>workspace.patch</code> to adapted skills too; keep a local <code>agents/openai.yaml</code> when upstream has none; stamp the six Addy checklists copied to <code>references/*.md</code>; <code>check-drift.sh</code> ages every <code>Vendored from github.com/</code> line. Usage <code>sync-vendored-skills.sh [&lt;key&gt; [&lt;clone&gt;]]</code>; no args syncs every upstream whose clone exists. Red-first tests in both suites.</p>
+    <p><span class="k">Depends on</span> &mdash; nothing (wave 1).</p>
+  </div>
+
 
 
 
@@ -147,6 +156,69 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L75</span> Addy Osmani lifecycle skills the template lacks (pristine set)
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/, references/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The template has no skill for security hardening, observability, launch readiness, CI/CD, deprecation, performance optimisation or code simplification (<code>skill-packs-inventory-addy.md</code>). <code>addyosmani/agent-skills</code> (MIT) covers each with a plain <code>SKILL.md</code> any runtime reads.</p>
+    <p><span class="k">Impact</span> &mdash; Agents improvise in those areas or fall back to runtime-specific features (Claude Code's <code>simplify</code>).</p>
+    <p><span class="k">Fix</span> &mdash; Vendor pristine at <code>1be8e34</code>: <code>security-and-hardening</code>, <code>observability-and-instrumentation</code>, <code>shipping-and-launch</code>, <code>ci-cd-and-automation</code>, <code>deprecation-and-migration</code>, <code>performance-optimization</code>, <code>code-simplification</code>, plus the six shared checklists at <code>references/*.md</code> (the skills' <code>../../references/</code> links resolve there) with a <code>!references/*.md</code> gitignore exception. Skipped as duplicates or domain-specific: the other 16 (reasons in the analysis).</p>
+    <p><span class="k">Depends on</span> &mdash; nothing (wave 1); refresh path via M50.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L76</span> Addy Osmani doubt-driven and constraint-driven skills (patched pair)
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/doubt-driven-development, skills/constraint-driven-development</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>doubt-driven-development</code> (in-flight adversarial review, second model via Codex or Gemini CLI) points at a Claude Code <code>agents/</code> persona roster the template does not ship; <code>constraint-driven-development</code> (a written quality bar + floor guard) tells the agent to edit <code>AGENTS.md</code> and <code>CLAUDE.md</code>, which are symlinks here and refuse writes.</p>
+    <p><span class="k">Impact</span> &mdash; Vendored as-is, one skill sends Claude Code users to a missing directory and the other fails its own last step on every runtime.</p>
+    <p><span class="k">Fix</span> &mdash; Vendor as the patched class: upstream copy plus <code>workspace.patch</code> (<code>Upstream: none filed</code>) replacing the roster sentences with a runtime-neutral fallback, and <code>AGENTS.md</code>/<code>CLAUDE.md</code> with <code>CONTEXT.md</code>. The catalog maps the pack skills they name to ours (<code>interview-me</code>&rarr;<code>grill-me</code>, <code>test-driven-development</code>&rarr;<code>tdd</code>, <code>code-review-and-quality</code>&rarr;<code>code-review</code>).</p>
+    <p><span class="k">Depends on</span> &mdash; nothing (wave 1); refresh path via M50.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L77</span> pstack writing and benchmark skills (adapted trio)
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/unslop, skills/technical-writing, skills/benchmark-checklist</span></h3>
+    <p><span class="k">Evidence</span> &mdash; pstack (<code>cursor/plugins</code> &rarr; <code>pstack/</code>, MIT, Lauren Tan) has three short plain-text skills with no equivalent here: a catalog of AI-prose tells, a technical-writing standard for human readers, and a seven-question check on any performance number. Upstream marks them user-invoked; <code>benchmark-checklist</code> names poteto-mode playbooks.</p>
+    <p><span class="k">Impact</span> &mdash; Prose and perf claims go out unchecked; <code>writing-for-agents</code> covers agent readers only.</p>
+    <p><span class="k">Fix</span> &mdash; Vendor as adapted (frontmatter ours, model-invoked; body verbatim) at <code>978ca6e</code>; <code>benchmark-checklist</code> also patched to point at the <code>pr</code> and <code>diagnosing-bugs</code> skills instead of playbooks.</p>
+    <p><span class="k">Depends on</span> &mdash; nothing (wave 1); refresh path via M50.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L78</span> pstack blast-radius and the verification-skill pair (adapted + patched)
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/blast-radius, skills/create-verification-skill, skills/maintain-verification-skill</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>blast-radius</code> proves the one fact a change is safe because of by running code (<code>code-review</code> reads the diff only). <code>create-verification-skill</code> generates a per-repo skill that drives the real app and captures evidence; <code>maintain-verification-skill</code> keeps it honest. They name Cursor paths (<code>.cursor/skills/verify-*</code>), the <code>how</code> and <code>arena</code> skills, and a subagent step.</p>
+    <p><span class="k">Impact</span> &mdash; No workspace skill proves safety by execution or gives a repo a scripted "drive the real app" harness; copied raw, the paths and skill names dangle.</p>
+    <p><span class="k">Fix</span> &mdash; Vendor as adapted + patched: paths &rarr; <code>skills/verify-&lt;app&gt;/</code>; <code>how</code> &rarr; the repo's own navigation; <code>arena</code> &rarr; a second model as in <code>doubt-driven-development</code>; the subagent step gets a sequential fallback. The two generator/upkeep skills stay user-invoked with <code>agents/openai.yaml</code> and <code>.claude/commands/</code> shortcuts (L80).</p>
+    <p><span class="k">Depends on</span> &mdash; nothing (wave 1); refresh path via M50.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L79</span> A runtime-neutral <code>why</code> skill (adapted rewrite of pstack's)
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/why</span></h3>
+    <p><span class="k">Evidence</span> &mdash; pstack's <code>why</code> recovers why code is shaped as it is (git, PRs, tickets, docs, incidents) with a confidence-graded synthesis. Nothing here does this when no ADR exists. Upstream's text is built on Cursor's <code>Task</code> tool, named models and an <code>mcps/</code> directory (920 lines with support files).</p>
+    <p><span class="k">Impact</span> &mdash; "Why is it like this?" is answered from one commit message or a guess.</p>
+    <p><span class="k">Fix</span> &mdash; Rewrite the <code>SKILL.md</code> in the workspace's words (80&ndash;130 lines, subagents optional, sources from <code>docs/service-access.md</code> and configured MCPs, checks <code>docs/adr/</code> and <code>decisions.md</code> first), crediting pstack; vendor <code>references/epistemics.md</code> verbatim. Not covered by the sync, like <code>rlm</code>.</p>
+    <p><span class="k">Depends on</span> &mdash; nothing (wave 1).</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L80</span> Catalog and wiring for the new vendored skills
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/vendored-skills.md, CONTEXT.md, docs/workspace-structure.md, docs/recommended-tooling.md, references/README.md, .claude/commands/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; A skill absent from <code>CONTEXT.md</code> is invisible to every non-Claude runtime (<code>docs/workspace-structure.md</code> &rarr; "Authoring a Team Capability"); the catalog doc names one upstream and one license.</p>
+    <p><span class="k">Impact</span> &mdash; Fifteen new skills nobody finds; two license notices missing.</p>
+    <p><span class="k">Fix</span> &mdash; Catalog: retitle <code>skills/vendored-skills.md</code> for three upstreams, add their sections, catalog lines, name-collision calls and both MIT texts. <code>CONTEXT.md</code>: one lean pointer line (file is at 13.9K of its 16K budget). Tree and prose in <code>workspace-structure.md</code>; a row block in <code>recommended-tooling.md</code> &sect;3; <code>references/README.md</code> lists the vendored checklists; <code>.claude/commands/</code> for <code>create-verification-skill</code> and <code>maintain-verification-skill</code>; Tier-2 notes in <code>decisions.md</code>.</p>
+    <p><span class="k">Depends on</span> &mdash; M50, L75, L76, L77, L78, L79 (wave 2).</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L81</span> Prove the vendored copies match the sync and carry no runtime-specific text
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/sync-vendored-skills.sh, skills/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; Wave 1 copied files by hand with the agreed provenance comments while M50 changed the script; nothing yet shows the two agree, and no one has read every new skill for leftover Cursor or Claude-only wording.</p>
+    <p><span class="k">Impact</span> &mdash; A first real refresh could rewrite 15 skills unexpectedly, and a skill could still send a Codex or Gemini user to a tool it lacks.</p>
+    <p><span class="k">Fix</span> &mdash; Run the sync for all three upstreams against the pinned clones and require an empty <code>git diff</code>; a fresh agent audits each new <code>SKILL.md</code> for runtime-specific text; <code>scripts/run-checks.sh</code> passes.</p>
+    <p><span class="k">Depends on</span> &mdash; L80 (wave 3).</p>
+  </div>
 
 
 
@@ -307,6 +379,7 @@
       <tr><td>2026-10-09</td><td>Resolved <strong>M48</strong> (what an orchestrator does with <code>isolated: yes</code>: own worktree and branch, merged back before <code>done</code>) and <strong>L71</strong> (a plan that changes code ends with a <code>code-review</code> wave), both in <code>skills/plans/SKILL.md</code>. Scorecard now 0/123/5/0/6.</td></tr>
       <tr><td>2026-10-09</td><td>Resolved <strong>L72</strong> (ADR-0014: the glossary lives in <code>GLOSSARY.md</code>), <strong>M49</strong> (<code>scripts/migrate-glossary.sh</code> + runbook for older projects) and <strong>L73</strong> (patches name their upstream issue; the sync flags closed ones; <code>check-drift</code> warns on vendored skills over 60 days old). Opened <strong>L74</strong> (intermittent <code>test-session-lib.sh</code> S8 failure). Scorecard now 1/126/5/0/6.</td></tr>
       <tr><td>2026-10-09</td><td>Resolved <strong>L74</strong>: a second lost race in the session-record lock (a lock re-taken between two checks read as <code>record_unwritable</code>); deterministic test S10r&ndash;t. Scorecard now 0/127/5/0/6.</td></tr>
+      <tr><td>2026-10-11</td><td>Session 24: analysed Addy Osmani's <code>agent-skills</code> and pstack against the vendored Matt Pocock set (<code>work/template-maintenance/skill-packs-analysis.md</code>): take 16 of 77 skills, skip the rest as duplicates, Cursor-bound or domain-specific. Opened <strong>M50</strong> (multi-upstream sync + drift) and <strong>L75&ndash;L81</strong> (vendoring in three waves, catalog + wiring, round-trip proof). Scorecard now 8/127/5/0/6.</td></tr>
 </tbody>
   </table>
 

@@ -158,3 +158,45 @@ holder never refreshed.
 **Rejected:** merge at the wave's reconcile node (the card's proposal) — the reconcile would verify node files that don't yet hold the child's claims.
 **Blast radius:** skills/plans/SKILL.md ("Subagent prompt template", Verification), docs/plans.md `isolated` row.
 **Promote?:** no.
+
+## 2026-10-11 — Skill packs: vendor pstack from cursor/plugins, not from a port
+**Chose:** vendor pstack skills from the canonical `github.com/cursor/plugins` repo, directory `pstack/` (MIT © 2026 Lauren Tan, who is "poteto"), pinned to the last commit touching `pstack/`.
+**Because:** it is the author's source with its own LICENSE; the seven skills we take are plain text that needs no port.
+**Rejected:** `michael-denyer/pstack-claude` — 47 local forks and a second copyright holder; `backnotprop/pstack` — a mirror, one step removed.
+**Blast radius:** scripts/sync-vendored-skills.sh (pstack upstream block), skills/vendored-skills.md.
+**Promote?:** no.
+
+## 2026-10-11 — Skill packs: name collisions go to the existing skill
+**Chose:** do not vendor pstack `tdd` and `teach`, Addy `interview-me` (fires on "grill me"), `planning-and-task-breakdown` (Claude command `/plan`), `using-agent-skills` and pstack `poteto-help` (routers beside `ask-matt`), Addy `code-review-and-quality` (beside `code-review`). `create-verification-skill` writes `skills/verify-<app>/`, which does not collide with Claude Code's built-in `/verify`.
+**Because:** the brief's rule: prefer the existing skill, never shadow one; each has an equivalent already.
+**Rejected:** renaming the incoming skill (two skills for one job) or replacing ours (loses the patched `code-review`, the grilling primitive, the plans machinery).
+**Blast radius:** none in code; recorded in the analysis and catalog.
+**Promote?:** no.
+
+## 2026-10-11 — Skill packs: Addy's shared checklists live at the repo root `references/`
+**Chose:** copy the six checklists the adopted skills link to as `references/<file>.md`, with a `!references/*.md` gitignore exception, so the skills' `../../references/...` links resolve unchanged and the skills stay pristine.
+**Because:** the folder already exists for external references; no link rewrite means no patch to break at every upstream refresh (322 commits in 90 days).
+**Rejected:** rewriting links by `workspace.patch` (fragile); a sub-folder under `references/` (still needs a rewrite); copying the checklists into each skill (duplicates, and the links still break).
+**Blast radius:** .gitignore, references/README.md, scripts/sync-vendored-skills.sh (stamps the copies), check-drift item 5.
+**Promote?:** no.
+
+## 2026-10-11 — Skill packs: one sync script for three upstreams
+**Chose:** extend `scripts/sync-vendored-skills.sh` with per-upstream blocks (repo, clone, source prefix, pin rule) instead of sibling scripts; patches apply to adapted skills too; adapted skills keep a workspace `agents/openai.yaml`.
+**Because:** one provenance format, one drift check, one refresh command for downloaders; the logic is identical per upstream.
+**Rejected:** a sibling script per upstream (three copies of the same loop); a manifest file (more machinery than three arrays).
+**Blast radius:** the sync script and its suite, check-drift and its suite, skills/vendored-skills.md refresh paragraph.
+**Promote?:** maybe — if a fourth upstream arrives, promote the "vendored skill classes and refresh" scheme to an ADR.
+
+## 2026-10-11 — Skill packs: poteto-mode and the 24 principles are not adopted
+**Chose:** skip pstack's operating mode, its 23 playbooks, and all `principle-*` skills.
+**Because:** poteto-mode needs Cursor (Custom Mode, `Task` with named models, `/loop`, cloud workers, 6,700 lines of Bun scripts) and its autonomy rule ("just do it") contradicts the workspace's "ask when uncertain" and "push of main is the user's call". The principles are inert without it; six repeat our coding principles and four contradict "surgical changes".
+**Rejected:** a trimmed poteto-mode (a fork we would own); vendoring the principles as reference cards (24 skills nothing points at).
+**Blast radius:** none.
+**Promote?:** no.
+
+## 2026-10-11 — Skill packs: `why` is rewritten, not patched
+**Chose:** write `skills/why/SKILL.md` in the workspace's words, crediting pstack, with upstream's `references/epistemics.md` verbatim; not covered by the sync (like `rlm`).
+**Because:** upstream's text is built on Cursor's `Task` tool, model lines and an `mcps/` directory in most paragraphs; a patch would touch more than it keeps and break at every refresh.
+**Rejected:** patched vendoring; skipping it (nothing else recovers rationale when no ADR exists).
+**Blast radius:** skills/why/, catalog line.
+**Promote?:** no.
