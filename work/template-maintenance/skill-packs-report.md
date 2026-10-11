@@ -68,3 +68,32 @@ and move them to the archive (scorecard 0/135/5/0/6, log row); final
 commit; hand-back.
 
 **Open.** Nothing blocked; nothing for the user to decide.
+
+## [gen 1] Done
+
+**Finished.** L81: sync round trip clean for all three upstreams; audit
+(sonnet, read-only) zero blockers, its notes folded into the catalog; full
+`scripts/run-checks.sh` 42/0/0. Cards M50, L75–L81 resolved and archived;
+scorecard 0/135/5/0/6. Commits on `main`, not pushed: `771a23c` analysis +
+cards, `ecb2389` L75–L79, `149c4bc` M50, `aebca1a` L80, and the L81 commit
+(see `git log`). This report file was committed with L81; this closing block
+is uncommitted on purpose (the ledger write belongs to the parent session's
+rollover).
+
+**Checks run.** `test-agent-entrypoints.sh` 14/0 (×6, once per worker and
+once by me); `test-sync-vendored-skills.sh` 61/0; `test-check-drift.sh`
+32/0; `run-checks.sh --fast` 31/0 (M50 worker); `run-checks.sh` full 42/0/0
+(129s); `check-drift.sh` one pre-existing WARN (ADR-0009 history);
+`build-guide-html.sh` ok; sync round trip `git diff` empty under `skills/`
+and `references/`.
+
+**For the user.** Nothing blocked. One judgment to confirm at leisure: the
+set taken (16 of 77) errs toward restraint; `arena`/`swarm` (best-of-N and
+fan-out), the `hillclimb` playbook and a few pstack principles
+(`make-operations-idempotent`, `separate-before-serializing-shared-state`)
+were left out and could be revisited if a subagent-capable, model-routing
+runtime becomes the norm. Push of `main` is the user's call.
+
+**Not done.** No `scripts/plan.sh` plan (one session; the cards carried the
+graph). The handoff ledger / launcher for `work/template-maintenance` were
+not touched; the parent session owns the rollover.
