@@ -1,0 +1,5 @@
+interface:
+  display_name: "Maintain Verification Skill"
+  short_description: "Audit and correct a verification skill and feature map"
+policy:
+  allow_implicit_invocation: false

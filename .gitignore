@@ -5,6 +5,7 @@ repos/*
 # Cloned external references
 references/*
 !references/README.md
+!references/*.md
 
 # Environment and credentials
 .env
