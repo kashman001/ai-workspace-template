@@ -53,6 +53,13 @@ are done; the IDE probes are the user's.
   user's `~/.copilot` trust list stays untouched (see `probes/copilot-cli.md`).
 - `agy` skip-permissions runs are the user's to launch (the Claude Code classifier blocks them).
 
+## Plan position
+
+<!-- plan:begin position -->
+Position: plan 01-session-identity-fixes, open, wave 1 of 5, done 0/16, doing 0, todo 16, blocked 0, dropped 0, sessions 0.
+Frontier: 01-refuse-instead-of-guess. Remaining: 16 of 16 — wave 1: 01-refuse-instead-of-guess todo, 02-reconcile-w1 todo.
+<!-- plan:end position -->
+
 ## State snapshot
 
 - Branch `main`, clean, 3 commits ahead of origin (pushing is the user's call).

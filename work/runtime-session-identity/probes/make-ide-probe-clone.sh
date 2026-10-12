@@ -9,7 +9,7 @@ DEST="${1:-$HOME/Developer/experiments/ws-identity-probe}"
 [ -e "$DEST" ] && { echo "exists: $DEST (remove it first)" >&2; exit 1; }
 git clone -q "$WS" "$DEST"
 cp "$WS/work/runtime-session-identity/probes/probe-env.sh" "$DEST/probe-env.sh"
-for h in codex copilot copilot-vscode gemini; do
+for h in codex copilot copilot-vscode gemini stop; do
   f="$DEST/scripts/hooks/context-budget-$h-hook.sh"
   mv "$f" "$f.orig"
   cat > "$f" <<'WRAP'
