@@ -1,11 +1,11 @@
 ---
 id: 09-phantom-records
 title: Ignore phantom records with a never-written artifact (node 8c)
-status: todo
+status: doing
 kind: work
 wave: 3
 blocked_by: [08-reconcile-w2]
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -24,3 +24,4 @@ missing after a grace period, so they never shadow a real session. Codex in VS C
 - [ ] Existing suites pass
 
 ## Log
+- s7 · started, tier standard

@@ -1,12 +1,12 @@
 ---
 id: 11-copilot-vscode-measure-inputtokens
 title: copilot-vscode measures inputTokens on session-state transcripts
-status: todo
+status: doing
 kind: work
 wave: 3
 blocked_by: [08-reconcile-w2]
 tier: standard
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -24,3 +24,4 @@ copilot-vscode measure exact on a session-state transcript; keep the `chatSessio
 - [ ] Old chatSessions `promptTokens` cases still pass
 
 ## Log
+- s7 · started, tier standard

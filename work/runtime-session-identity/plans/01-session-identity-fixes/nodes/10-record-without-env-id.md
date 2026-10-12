@@ -1,11 +1,11 @@
 ---
 id: 10-record-without-env-id
 title: Agent-run record finds its own session without the env var (node 5)
-status: todo
+status: doing
 kind: work
 wave: 3
 blocked_by: [08-reconcile-w2]
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -24,3 +24,4 @@ for `--session-id`.
 - [ ] Existing suites pass
 
 ## Log
+- s7 · started, tier standard
