@@ -215,6 +215,17 @@ its own checkout, merges the branch in, then verifies and runs `done <id>`,
 then removes the worktree and deletes the branch. A node without the flag
 runs in the shared checkout.
 
+## Common rationalizations
+
+Each of these has let a wrong state through a plan in this workspace.
+
+| Rationalization | Reality |
+|---|---|
+| "The subagent reported it done; I can tick the reconcile box" | A report is a claim. One subagent survey named a branch that did not exist on disk. Open the files and run `verify` before you tick. |
+| "Order doesn't matter: `sync`, then `done`" | `sync` before `done` left the launcher's Position block one state behind. Run `done`, then `sync`. |
+| "The check skipped, so nothing failed" | A skip is not a pass. A check that skipped in CI kept the run green while it guarded nothing. Log it as skipped. |
+| "It only needs a couple of paid calls; it can stay a `work` node" | A node needing the user's key and money was created as a `work` node and caught only at the join; a hands-off chain would have run it. Put a `hitl` node ahead of anything that needs a person, a key, spend, or a specific machine. |
+
 ## Verification
 
 - Create: `plan.sh check` silent; `plan.sh frontier` names the first ready

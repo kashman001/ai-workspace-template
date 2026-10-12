@@ -306,6 +306,16 @@ Full signal list, including the pages a human gets while you are running:
   `register`, `release`/`close` and the supervisor are its only writers; a
   hand edit is how a chain ends up refusing `staged_invalid`.
 
+## Common rationalizations
+
+Each of these has stranded or bloated a rollover in this workspace.
+
+| Rationalization | Reality |
+|---|---|
+| "WARN is only a warning; I can fit one more unit" | The rollover itself costs 10–20K tokens. Rollovers put off until STOP finished at 170–190K, inside compaction range. Wrap up at WARN. |
+| "The handoff is written, so the rollover is done" | It is done when the successor is staged or launched. One supervised session recorded completion, skipped the staging step, and its chain sat idle for about five hours with no notice. |
+| "I'll add this session's progress to `next-session.md`" | The launcher is replaced each rollover, never appended to; what happened goes in the ledger. Mixing the two is the main reason context grew from session to session. |
+
 ## Verification
 
 - `scripts/launch-next-session.sh <project> --check` exits 0 — the one check

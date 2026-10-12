@@ -1,6 +1,6 @@
 ---
 name: unslop
-description: Cut AI tells from any writing. Must always apply.
+description: Final editing pass that cuts AI-prose tells from human-facing text (docs, READMEs, PR text, reports); not code, commit messages, or agent-facing skill text.
 ---
 
 <!--

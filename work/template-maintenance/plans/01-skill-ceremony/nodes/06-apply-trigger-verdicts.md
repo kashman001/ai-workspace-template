@@ -1,11 +1,11 @@
 ---
 id: 06-apply-trigger-verdicts
 title: Apply the trigger verdicts to workspace skills; set the description budget
-status: todo
+status: doing
 kind: work
 wave: 2
 blocked_by: [02-trigger-review, 03-budget-check, 04-anti-rationalization]
-sessions: []
+sessions: [24]
 ---
 
 ## Goal
@@ -30,3 +30,4 @@ the wiring lines the orchestrator must add in the Log.
 - [ ] Wiring lines for the shared files listed in the Log
 
 ## Log
+- s24 · started, tier standard

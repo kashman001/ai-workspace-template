@@ -207,3 +207,45 @@ holder never refreshed.
 **Rejected:** a `workspace.patch` (breaks the second sync); moving `unslop` to the pristine class plus a patch (loses the user-/model-invoked switch the adapted class exists for).
 **Blast radius:** skills/unslop/SKILL.md frontmatter; the catalog line in skills/vendored-skills.md.
 **Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: `ask-matt` stays pristine; the guide and `CONTEXT.md` carry the pointer
+**Chose:** leave `skills/ask-matt/` untouched; `docs/stakes-to-ceremony.md` points at `ask-matt` for the detailed route, and `CONTEXT.md` points at the guide.
+**Because:** `ask-matt` is user-invoked, so whoever opens it has already chosen the full map; the always-loaded `CONTEXT.md` pointer reaches every agent first, which a line inside the router cannot. The router is upstream's highest-churn file, so a patch there is the one most likely to stop applying at a refresh.
+**Rejected:** a one-line `workspace.patch` ("Size the change first: docs/stakes-to-ceremony.md") near the top of the router — one more re-apply per refresh for a pointer the agent already holds.
+**Blast radius:** none to the vendored tree; the sync round trip stays an empty diff. Revisit if ledgers show agents routing tweaks through the full flow despite the pointer.
+**Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: `unslop` is a final pass on human-facing prose
+**Chose:** `description: Final editing pass that cuts AI-prose tells from human-facing text (docs, READMEs, PR text, reports); not code, commit messages, or agent-facing skill text.` (156 bytes, in the adapted frontmatter).
+**Because:** "Must always apply" made it fire on every token of output, including code and skill files, where its catalog of tells (no em dashes, no triads) conflicts with `writing-for-agents`; an editing pass is the shape upstream's body describes ("Edit text to remove AI patterns").
+**Rejected:** user-invoking it (then nobody runs it: the whole point is a pass the author forgets); keeping "always" with a shorter list (still fires on code).
+**Blast radius:** skills/unslop/SKILL.md frontmatter; the catalog line in skills/vendored-skills.md ("Model-invoked so it applies whenever prose is produced" needs rewording).
+**Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: `checkpoint`, `session-rollover`, `design-for-testability` become user-invoked
+**Chose:** `disable-model-invocation: true` + a workspace `agents/openai.yaml` with `allow_implicit_invocation: false` for the three; their `.claude/commands/` shortcuts already exist. Short identifying descriptions; the trigger policy stays in each body.
+**Because:** none is reached by description matching. `session-rollover` is named by the hook WARN/STOP text, by `context-budget.sh` exit codes 1/2 and by CONTEXT.md, all by file path; `checkpoint` is the user's word or a launcher instruction; `design-for-testability` is an advisory interrogation beside the already user-invoked grill skills, and an accidental fire costs the user six questions. Together they are 1,421 bytes weighed every turn for zero description-driven invocations. `plans` is the precedent: user-invoked, still followed from `plan.sh` prompts by reading the file.
+**Rejected:** keeping `session-rollover` model-invoked as a safety net (the net is the hook/exit-code path, which names the file; a description cannot fire on a token count the model cannot see); tightening the three instead (still a per-turn tax for a skill that is never triggered by text).
+**Blast radius:** the three SKILL.md frontmatters, three new openai.yaml files, skills/vendored-skills.md footnote, docs/workspace-structure.md and CONTEXT.md where "model-invoked" is claimed; the `(slash)` markers are already right.
+**Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: vendored descriptions are patched only where a patch already exists
+**Chose:** tighten `constraint-driven-development` and `doubt-driven-development` by adding a frontmatter hunk to their existing `workspace.patch`; leave every other pristine vendored description as upstream wrote it (`security-and-hardening` at 581 bytes and `code-review` at 421 included); pstack adapted frontmatters (`unslop`, `technical-writing`) are edited directly.
+**Because:** a patch is re-applied at every refresh and breaks whenever upstream touches the hunk (Addy's repo: 322 commits in 90 days); for a skill that already carries a patch the marginal cost is one hunk on a line upstream rarely edits, and those two were the only vendored descriptions that over-trigger ("any time a confident output…", "when an agent writes more code than anyone will read"). The long keepers are long because they list real situations, not synonyms.
+**Rejected:** new patches for brevity alone; user-invoking `git-guardrails-claude-code` / `setup-pre-commit` (needs the adapted class in the sync script to own their openai.yaml, for 480 bytes whose trigger already requires an explicit ask).
+**Blast radius:** the two patches and SKILL.md files; the sync round trip must still produce an empty diff (patches verified with `patch -p1 -R -F0 --dry-run` and a forward apply onto the reconstructed upstream file).
+**Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: `technical-writing` drops the slash and commit messages from its trigger
+**Chose:** `description: "Standard for human-facing technical prose: … Use when writing or reviewing a doc, README, RFC, or PR description."` (197 bytes).
+**Because:** "Use for /technical-writing" names a Claude Code command as a trigger, which means nothing to Codex or Gemini; "commit messages" made it fire on every commit, where the four-layer standard is overkill and `pr` already owns PR bodies.
+**Rejected:** user-invoking it (it should catch a README being written without being asked).
+**Blast radius:** skills/technical-writing/SKILL.md frontmatter; vendored-skills.md catalog line mentions commit text.
+**Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: `SKILL_DESC_MAX_BYTES` = 7500
+**Chose:** set the budget in `scripts/check-skill-descriptions.sh` to 7500: the projected total after all verdicts (7,303 bytes) rounded up to the next 500.
+**Because:** the budget is a ratchet, not a ceiling with slack; ~200 bytes of headroom means adding a model-invoked skill forces a trim or a user-invoke swap, with the reason in the commit, which is the discipline the video argued for.
+**Rejected:** 9000 (the initial value; leaves room for four more untrimmed skills); 8000 (room for one long one, which is how the pack grew to 10 KB).
+**Blast radius:** scripts/check-skill-descriptions.sh constant and its comment; the test's fixture budget is set per case and is unaffected.
+**Promote?:** no.

@@ -26,17 +26,17 @@ pushing `main`; a per-runtime skill registry.
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-ceremony-guide | work | standard | doing |
-| 1 | 02-trigger-review | work | standard | doing |
-| 1 | 03-budget-check | work | standard | doing |
-| 1 | 04-anti-rationalization | work | standard | doing |
-| 1 | 05-reconcile-w1 | reconcile | frontier | todo |
-| 2 | 06-apply-trigger-verdicts | work | standard | todo |
+| 1 | 01-ceremony-guide | work | standard | done |
+| 1 | 02-trigger-review | work | standard | done |
+| 1 | 03-budget-check | work | standard | done |
+| 1 | 04-anti-rationalization | work | standard | done |
+| 1 | 05-reconcile-w1 | reconcile | frontier | done |
+| 2 | 06-apply-trigger-verdicts | work | standard | doing |
 | 2 | 07-reconcile-w2 | reconcile | frontier | todo |
 | 3 | 08-docs-worker | work | standard | todo |
 | 3 | 09-docs-shared | work | standard | todo |
 | 3 | 10-reconcile-w3 | reconcile | frontier | todo |
 | 4 | 11-code-review-pass | work | standard | todo |
 | 4 | 12-reconcile-w4 | reconcile | frontier | todo |
-Frontier: none (01-ceremony-guide doing, 02-trigger-review doing, 03-budget-check doing, 04-anti-rationalization doing). Remaining: 12 of 12. Sessions used: 1.
+Frontier: none (06-apply-trigger-verdicts doing). Remaining: 7 of 12. Sessions used: 1.
 <!-- plan:end board -->

@@ -160,6 +160,16 @@ agent-neutral state on disk.
    (`CONTEXT.md`, `docs/workspace-structure.md`). Those may name the directory as
    a location pointer only.
 
+## Common rationalizations
+
+Each of these has cost a work item in this workspace.
+
+| Rationalization | Reality |
+|---|---|
+| "A folder with a few notes is enough for now" | One item started that way. When the convention arrived it needed a README and purpose headers, and its ledger had to be rebuilt, with one session's block recovered from git history. Create all three backbone files now. |
+| "Any heading will do for the first ledger block" | Scripts read the session number from the `# Session Handoff` heading. A `— sNNN` heading made the launcher skip its lineage check without saying so. Copy the template heading. |
+| "This item is only for me, so I'll gitignore it" | A background session writes in a git worktree, which holds tracked files only. One local-only item lost each background session's output unless its owner copied it back by hand. |
+
 ## Verification
 
 - `ls work/<project>/README.md work/<project>/next-session.md work/<project>/handoff.md`

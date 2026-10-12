@@ -139,6 +139,18 @@ picks it up), or file a backlog card for it. Then add an
 line, naming the check or the card. The entry stays as the *why*; the check is
 the guard.
 
+## Common rationalizations
+
+Each of these has cut a checkpoint short in this workspace.
+
+| Rationalization | Reality |
+|---|---|
+| "That change came from another session, so the backlog is not mine to update" | The session that pulls the work reconciles it. Three changes delivered from other sessions in one day landed with no backlog row, and a fixed card reached the archive without its change-log row. |
+| "The work index still describes this item" | Re-read the item's row in `work/README.md`. One row kept saying "running its plan" until a later session noticed and fixed it. |
+| "I'll prepend the corrected ledger block; the old one is harmless" | Delete the block you are replacing, and anchor on `-->`. One session left a stale first pass under its corrected block, and another spliced its block into the purpose comment; nobody saw either until the next session read the file. Run `scripts/check-ledger.py`. |
+| "The tree was clean when I started" | Another session on the same checkout can commit while you work. Run `git status` and `git log -1 -- <path>` now. One session rewrote another item's launcher from a stale copy and had to redo it. |
+| "The work is on disk; the ledger block can wait" | A quit with no ledger block could not be told apart from a corrupted session counter, and recovering took a manual fix. Write the block before you stop. |
+
 ## Verification
 
 - Hand-off doc is on disk: `ls work/<project-name>/` shows it.

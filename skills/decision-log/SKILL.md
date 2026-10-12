@@ -141,6 +141,16 @@ let `graphify query "why does <X> work this way?"` traverse
 `code symbol → commit → ADR → alternatives-rejected` — the "how did it get there" path
 plain code can't answer. Keep it fresh with `graphify update .` after adding an ADR.
 
+## Common rationalizations
+
+Each of these has lost or weakened a decision record in this workspace.
+
+| Rationalization | Reality |
+|---|---|
+| "It says `Promote?: yes`; the next checkpoint will promote it" | A note flagged `yes` sat with no ADR until a backlog card was filed for it. Without the ADR, the next refresh could have moved the glossary back. Promote it now, or write the condition that has to hold first. |
+| "I'll read `decisions.md` and edit my note in" | Append with a heredoc instead. One `decisions.md` grew to about 45KB, and every read-and-edit loaded all of it into context. |
+| "The inputs are in `/tmp`; the note can point there" | Put what a rerun needs in the note or a tracked file. `/tmp` was cleared, the category descriptions behind one run were never recorded, and the next session could not repeat the run exactly. |
+
 ## Verification
 
 - Tier-2 note landed: `tail -8 work/<project-name>/decisions.md` shows the new entry
