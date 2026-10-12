@@ -263,10 +263,10 @@ copilot_cli_discover() {
   local rc
   ls -t "$state"/*/events.jsonl 2>/dev/null | pick_unambiguous; rc=$?
   [ "$rc" -eq 1 ] || return "$rc"
-  for d in "$state" "$root/history-session-state"; do
-    [ -d "$d" ] || continue
-    find "$d" -type f \( -name '*.json' -o -name '*.jsonl' \) 2>/dev/null | xargs ls -t 2>/dev/null | head -1 && return 0
-  done
+  d="$root/history-session-state"
+  [ -d "$d" ] \
+    && find "$d" -type f \( -name '*.json' -o -name '*.jsonl' \) 2>/dev/null | xargs ls -t 2>/dev/null | head -1 \
+    && return 0
   return 1
 }
 

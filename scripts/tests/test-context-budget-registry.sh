@@ -787,6 +787,13 @@ for rt in copilot-cli copilot-vscode; do
   assert_contains "U1 ($rt): binds \$COPILOT_STATE_DIR/<sid>/events.jsonl" "$out" "artifact=$U1T"
 done
 
+echo "U2: copilot-cli discovery never binds another project's session-state transcript"
+U2T="$TMP/u2-state/other/events.jsonl"
+mkdir -p "$(dirname "$U2T")"; printf '{"type":"session.start","data":{"cwd":"/elsewhere/proj"}}\n' > "$U2T"
+out=$(noid env -u COPILOT_HOME COPILOT_STATE_DIR="$TMP/u2-state" "$CB" check --runtime copilot-cli 2>&1)
+case "$out" in *"artifact=$U2T"*) bad "U2: bound a session-state transcript whose cwd is another project" ;;
+  *) ok "U2: no cwd match in session-state -> not bound" ;; esac
+
 echo "E1: codex registers from its hooks — id + transcript from the payload, no CODEX_* env"
 # Hook processes get no CODEX_* env (probes/codex-cli.md, codex-vscode.md): the
 # SessionStart payload alone must name the record and its artifact.
