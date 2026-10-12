@@ -6,6 +6,25 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-10-12 (session 4: VS Code probes; plan 01 created)
+
+The user ran the Codex and Copilot VS Code probes in `~/Developer/experiments/ws-identity-probe`.
+Written up in `probes/codex-vscode.md` and `probes/copilot-vscode.md`, folded into
+`findings.md` (summary + nodes 5, 8a–8d). Then created plan
+`plans/01-session-identity-fixes` (16 nodes, 5 waves); `check` is silent. Commit `1d51030`.
+
+- **Codex VS Code:** like the CLI. Trust prompt comes after the turn, then applies to
+  open chats; sandbox blocks `ps` (`pid: null`).
+- **Copilot VS Code:** runs on the Copilot CLI runtime now; the copilot-vscode adapter
+  registers a nonexistent `~/.copilot/chatSessions/<sid>.jsonl` and never measures; three
+  hook configs fire per event (VS Code, CLI, Claude Stop).
+- **Claude Code extension:** pre-spawns two idle sessions → phantom records.
+- `make-ide-probe-clone.sh` now also wraps the Stop hook (it was missing).
+- Decision (`decisions.md`): the remaining-probes hitl node sits in wave 3.
+- Not run: Antigravity IDE/app and Codex desktop app probes (now node 11).
+
+Suggested skills: `plan` (reconcile nodes), `tdd` (each node's suite cases).
+
 # Session Handoff — 2026-10-12 (session 3: Antigravity CLI probe)
 
 Probed `agy` 1.3.3 in a scratch clone → `probes/antigravity-cli.md`. Hooks
@@ -35,16 +54,3 @@ Learnings:
   flag, so the user has to run that command.
 - Its hook spec is only in the binary (`strings agy` → "Lifecycle Hooks").
 
-# Session Handoff — 2026-10-12 (session 2: scaffolded; CLI probes done; draft plan)
-
-Scaffolded after a Q&A on how non-Claude runtimes identify sessions. Ran three
-CLI probes in parallel in scratch clones: `probes/codex-cli.md` and
-`probes/copilot-cli.md` (live), and `probes/gemini-cli.md` (static only; no
-auth: needs `GEMINI_API_KEY`). Headline: Codex and Copilot set an id env var
-in the agent's shell and bind correctly with it; without it, two concurrent
-sessions swap transcripts (both seen live). All three runtimes' hooks carry
-`session_id` + `transcript_path`, so hook-side registration (the Claude
-model) is viable. Copilot CLI also fires our VS Code hook file and likely the
-Claude hooks. Draft plan in `findings.md`. IDE probe kit built and
-smoke-tested (`probes/make-ide-probe-clone.sh`, `probe-env.sh`,
-`user-checklist.md`); waiting on the user. Nothing committed.
