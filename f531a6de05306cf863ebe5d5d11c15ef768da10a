@@ -1,0 +1,19 @@
+scripts/tests/test-attach-session.sh
+  s_e7f6e576a11087::t_74467c18fb8af6 17-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f531a6de05306cf863ebe5d5d11c15ef768da10a",
+  "prompts": {},
+  "sessions": {
+    "s_e7f6e576a11087": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8847b473-026a-4992-88a2-4b4f7fb99240",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
