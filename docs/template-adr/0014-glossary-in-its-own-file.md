@@ -1,4 +1,4 @@
-# ADR-0014: Keep the project glossary in a root `GLOSSARY.md`, not in `CONTEXT.md`
+# TADR-0014: Keep the project glossary in a root `GLOSSARY.md`, not in `CONTEXT.md`
 
 - Status: accepted
 - Date: 2026-10-09

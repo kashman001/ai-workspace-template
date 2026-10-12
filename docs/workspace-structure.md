@@ -70,7 +70,7 @@ the underlying product repos.
 
 ### Before You Add a Teammate
 
-The coordination model is **one developer, many sessions** (ADR-0004).
+The coordination model is **one developer, many sessions** (TADR-0004).
 Session locks, registries, and dispatch records identify sessions by
 `user@host`, but liveness and mutual exclusion are machine-local. A second
 person breaks these assumptions **silently** — nothing errors, state just
@@ -278,7 +278,8 @@ docs/
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 ├── plans.md                    # Plans: node-file format, plan.sh verbs, tiers, replans
 │
-├── adr/                        # Architecture Decision Records (Tier 3 of the decision scheme)
+├── adr/                        # This project's decision records, ADR-NNNN (Tier 3 of the decision scheme)
+├── template-adr/               # The template machinery's decision records, TADR-NNNN (arrive with syncs)
 ├── postmortems/                # Blameless incident write-ups
 ├── agents/                     # Per-repo config the engineering skills consume
 │   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
@@ -700,7 +701,7 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 | `scripts/tests/test-agent-entrypoints.sh` | Entrypoint symlinks reach `CONTEXT.md`; each `SKILL.md` has the `name`/`description` frontmatter runtimes find it by | Check | Script | Gate (fast) |
 | `skills/writing-for-agents/SKILL.md` | How skills and agent docs are written | Guide | Judgement | By hand, before editing `skills/` |
 | `docs/operational-knowledge.md` | Known build/shell/tool traps | Guide | Judgement; repeats become checks via `**Enforced by:**` | Before debugging; written at checkpoint |
-| `docs/adr/` | Lasting decisions | Guide | Judgement | When a decision is promoted |
+| `docs/adr/`, `docs/template-adr/` | Lasting decisions — the project's, and the template machinery's | Guide | Judgement | When a decision is promoted |
 | `work/<item>/decisions.md`, `Decision:` commit trailers | Why a choice was made | Guide | Judgement | Each decision; reviewed at checkpoint |
 | `scripts/check-workspace-structure.sh` | Dirs, symlinks, exec bits, scripts/ tree entries, guide HTML freshness | Check | Script | Gate (fast); after setup |
 | `scripts/check-dependencies.sh` | Required tools installed | Check | Script | Gate (fast); `setup.sh` |
@@ -947,7 +948,7 @@ fillable templates for exactly this:
 4. **How is each component built, run, and debugged locally** — the
    actual entry-point commands? → `docs/system-design.md` entry-points
    table.
-5. **Which decisions are already settled, and why?** → `docs/adr/`
+5. **Which decisions are already settled, and why?** → `docs/adr/` (the project), `docs/template-adr/` (the workspace machinery)
    (one record per settled decision worth keeping).
 
 The workspace has its Z0 pane when `SPEC.md` and `docs/system-design.md`

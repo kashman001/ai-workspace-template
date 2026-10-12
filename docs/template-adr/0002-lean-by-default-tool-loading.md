@@ -1,4 +1,4 @@
-# ADR-0002: Load tools lean-by-default — CLI-first, MCP split into core and opt-in fragments
+# TADR-0002: Load tools lean-by-default — CLI-first, MCP split into core and opt-in fragments
 
 - Status: accepted
 - Date: 2026-08-01

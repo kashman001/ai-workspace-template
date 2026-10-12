@@ -27,7 +27,7 @@ references/*
 # mining it for analysis, never track the live file).
 .context-budget/
 
-# Live-session state under work/ — machine-local by design (ADR-0010): the
+# Live-session state under work/ — machine-local by design (TADR-0010): the
 # session record names processes on THIS machine, so a tracked copy would dirty
 # every session and resurrect a dead owner on checkout. Durable work/ files
 # (README, next-session.md, handoff.md, decisions.md, the committed per-item

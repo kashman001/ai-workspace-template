@@ -66,7 +66,7 @@ it if absent), newest last:
 **Because:** <the reason — the constraint or force that decided it>
 **Rejected:** <alternative> — <one-line why it lost>; <alternative> — <why>
 **Blast radius:** <files / symbols / flows this touches>
-**Promote?:** no | maybe — <condition> | yes — <why it's ADR-worthy>
+**Promote?:** no | maybe — <condition> | yes — <why it's ADR-worthy> | upstream — <template PR>
 ```
 
 Append with a shell heredoc (`cat >> work/<project-name>/decisions.md <<'EOF' … EOF`)
@@ -112,18 +112,26 @@ count too: a `work/<effort>/map.md` "Decisions so far" entry is a Tier-2 note an
 promoted the same way (per `docs/agents/issue-tracker.md` → "Decision-log tie-in").
 Steps:
 
-1. Pick the home by scope (see `docs/adr/README.md`): cross-repo or workspace
-   decisions → `docs/adr/` (the default); a decision contained in one product repo
-   → that repo's `repos/<repo>/docs/adr/`. `ls <adr-dir>/` → next free `NNNN`
-   (zero-padded, never reuse a number; the two sequences are independent).
-2. Copy `docs/adr/0000-template.md` → `<adr-dir>/NNNN-kebab-slug.md`; fill Context /
+1. Pick the namespace by subject (see `docs/adr/README.md`). A decision about the
+   **workspace machinery** the template ships (skills, scripts, session and
+   decision conventions) is a template ADR, `TADR-NNNN` in `docs/template-adr/`:
+   write it there only in the template repo itself. In an instance, leave it a
+   Tier-2 note marked `Promote?: upstream` and propose the TADR to the template —
+   the template assigns the number, and a local one collides at the next sync.
+   Everything else is the project's: cross-repo or workspace decisions →
+   `docs/adr/` (the default); a decision contained in one product repo → that
+   repo's `repos/<repo>/docs/adr/`. `ls <adr-dir>/` → next free `NNNN`
+   (zero-padded, never reuse a number; each directory's sequence is independent).
+2. Copy `<adr-dir>/0000-template.md` → `<adr-dir>/NNNN-kebab-slug.md` (a product
+   repo without one uses `docs/adr/0000-template.md`); fill Context /
    Decision / Alternatives / Consequences from the note (expand, don't just paste).
 3. Fill the **Provenance** block: `Promoted from:` the note anchor, `Commits:` the shas,
    `Supersedes:` any ADR this replaces (and set that ADR's status to
    `superseded by ADR-NNNN`).
-4. Set `Status: accepted` and today's date; for a workspace-scope ADR, add it to the
-   index in `docs/adr/README.md`.
-5. Flip the note's `Promote?:` to `done → ADR-NNNN` so it isn't re-promoted next checkpoint.
+4. Set `Status: accepted` and today's date; add it to that directory's `README.md`
+   index (`docs/adr/` or `docs/template-adr/`).
+5. Flip the note's `Promote?:` to `done → ADR-NNNN` (or `TADR-NNNN`) so it isn't
+   re-promoted next checkpoint.
 6. If a graph exists (`graphify-out/graph.json`), run `graphify update .` so the ADR's
    edges enter the graph.
 
@@ -150,13 +158,14 @@ Each of these has lost or weakened a decision record in this workspace.
 - Tier-2 note landed: `tail -8 work/<project-name>/decisions.md` shows the new entry
   with all five fields.
 - Tier-1 trailer landed: `git log -1 --format=%B | grep '^Decision:'` (after the commit).
-- Promotion: the new `docs/adr/NNNN-*.md` exists, the `docs/adr/README.md` index lists
-  it (workspace scope), and the source note reads `Promote?: done → ADR-NNNN`.
+- Promotion: the new `<adr-dir>/NNNN-*.md` exists, that directory's `README.md` index
+  lists it, and the source note reads `Promote?: done → ADR-NNNN` (or `TADR-NNNN`).
 
 ## Outputs
 
 - A Tier-2 note appended to `work/<project-name>/decisions.md` (the common case).
 - Commit trailers on the implementing commit.
-- On promotion: a new `docs/adr/NNNN-*.md` + updated `docs/adr/README.md` index (or a
+- On promotion: a new `docs/adr/NNNN-*.md` + updated `docs/adr/README.md` index (or
+  `docs/template-adr/` for a machinery decision in the template repo, or a
   `repos/<repo>/docs/adr/NNNN-*.md` for a repo-contained decision), and a refreshed
   graph if graphify is live.

@@ -4,7 +4,7 @@
 #          deployments plan; ticket 01 of work/session-management-followups
 #          moved ownership onto the record). Self-contained: throwaway
 #          workspace in mktemp -d; the owner is work/<p>/session-state.json's
-#          `session` block, alive while its pid is (ADR-0010) — a live pid is
+#          `session` block, alive while its pid is (TADR-0010) — a live pid is
 #          this test shell, a dead one a reaped child; the fallback paths keep
 #          the artifact-mtime liveness (touch -t) against CONTEXT_LOCK_STALE_SECS.
 set -u

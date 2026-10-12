@@ -56,10 +56,11 @@ Do these in order, concisely (reference artifacts by path — do NOT duplicate p
      entries — a resolved wayfinder ticket is a Tier-2 decision and the map substitutes
      for `decisions.md` (per `docs/agents/issue-tracker.md` → "Decision-log tie-in").
      For each, follow `skills/decision-log/SKILL.md`'s promotion steps (draft the
-     ADR in the home its **scope** dictates — cross-repo or workspace →
+     ADR in the home its **subject and scope** dictate — workspace machinery →
+     a TADR, proposed upstream from an instance; cross-repo or workspace →
      `docs/adr/`; contained in one product repo → `repos/<repo>/docs/adr/`, per
-     `docs/adr/README.md` → "Where it lives (scope)" — fill its Provenance
-     block, flip the note to `done → ADR-NNNN`). This is
+     `docs/adr/README.md` — fill its Provenance block, flip the note to
+     `done → ADR-NNNN`). This is
      where the session's ephemeral *why* becomes a durable, committed record — do it
      before context compacts.
    - **operational knowledge** — before adding a gotcha to

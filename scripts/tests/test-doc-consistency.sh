@@ -2,7 +2,7 @@
 # File: scripts/tests/test-doc-consistency.sh
 # Purpose: pin docs/context-budget.md to the session scripts, both ways: every
 #          verb and reason code the doc names exists in the scripts, and every
-#          one the scripts emit is named in the doc (ADR-0011: one canonical
+#          one the scripts emit is named in the doc (TADR-0011: one canonical
 #          list). No temp workspace; this is a static read of the tree.
 #
 # Doc side — one section, two tables. Under "## Verbs and reason codes":

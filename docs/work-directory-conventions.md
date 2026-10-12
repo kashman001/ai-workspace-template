@@ -99,7 +99,7 @@ more; `scripts/tests/test-check-ledger.py` runs a fixture set of headings
 through both and fails when they disagree. Change the rule here first, then
 both parsers.
 
-**Session numbering — one source of truth (ADR-0010, keeping ADR-0007's
+**Session numbering — one source of truth (TADR-0010, keeping TADR-0007's
 ruling):** N is the number from your own bootstrap prompt, **verbatim**. The
 canonical source is the record's `seq` (the launcher advances it and derives
 the prompt number from it); ledger block titles and worktree/branch names copy

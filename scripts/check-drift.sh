@@ -62,7 +62,7 @@ while read -r f; do
     sed -E 's/[:#].*$//; s/[.,;)]+$//' | grep -v -E '[*<>{}]|…|\.\.\.|NN' | sort -u |
   while read -r p; do
     [ -e "$p" ] || allowed "$p" && continue
-    if [ "${f#docs/adr/}" != "$f" ]; then warn "$f: $p (ADR history)"; else drift "$f: $p"; fi
+    if [ "${f#docs/adr/}" != "$f" ] || [ "${f#docs/template-adr/}" != "$f" ]; then warn "$f: $p (ADR history)"; else drift "$f: $p"; fi
   done
 done)
 [ -n "$paths" ] && echo "$paths"

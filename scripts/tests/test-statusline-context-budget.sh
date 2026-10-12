@@ -4,7 +4,7 @@
 #          display). Self-contained: throwaway workspace in mktemp -d; the
 #          statusline input JSON is fed on stdin as Claude Code does. The
 #          owner is work/<p>/session-state.json's `session` block, alive while
-#          its pid is (ADR-0010; ticket 01 of work/session-management-followups).
+#          its pid is (TADR-0010; ticket 01 of work/session-management-followups).
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT

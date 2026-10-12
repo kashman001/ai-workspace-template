@@ -412,7 +412,7 @@ identifies this suite, not the runner.
 
 **Last confirmed:** 2026-09-21
 
-> **Retired (Stage 4, ADR-0010):** the lock is gone. The record
+> **Retired (Stage 4, TADR-0010):** the lock is gone. The record
 > (`work/<project>/session-state.json`) names the owner, liveness is the
 > owner's process id, and a forked session simply runs
 > `register --project <project>` (it adopts the slot when the old process is
@@ -529,7 +529,7 @@ half was the one that ended up wrong.
 
 Every session script (`context-budget.sh`, `launch-next-session.sh`,
 `session-loop.sh`, `fleet.sh`, the hooks) resolves `WORKSPACE_ROOT` through
-`git rev-parse --git-common-dir`, by design (ADR-0006): a worktree converges on
+`git rev-parse --git-common-dir`, by design (TADR-0006): a worktree converges on
 the main checkout's `.context-budget/` and `work/<item>/session-state.json`.
 The sharp edge: a supervisor or launcher started **from a worktree** for a
 "live-ish" try-out is not sandboxed — it stages, launches and records against

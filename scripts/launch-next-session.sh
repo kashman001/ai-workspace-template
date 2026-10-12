@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # File: scripts/launch-next-session.sh
-# Purpose: Relaunch step of session-rollover (ADR-0003/0004) on the work item's
+# Purpose: Relaunch step of session-rollover (TADR-0003/0004) on the work item's
 #          session record (work/<project>/session-state.json, Stage 4). The
 #          launcher checks the two handoff files itself, then in ONE atomic
 #          write advances `seq`, copies the outgoing owner into
@@ -15,7 +15,7 @@
 #            [--clear] [--check] [--dry-run] [--skip-freshness]
 #          --emit:  stage the successor's command for a supervisor (write the
 #                   record's `staged`, spawn nothing).
-#          --clear: in-place relaunch (ADR-0009, claude-only) — the successor is
+#          --clear: in-place relaunch (TADR-0009, claude-only) — the successor is
 #                   THIS process after /clear; the prompt travels in
 #                   launch.pending.prompt.
 #          --check: run every gate, write nothing, exit 0 or 4.
@@ -389,7 +389,7 @@ if [ "$SEEN_SEQ" = null ]; then
 else
   LAST_SEQ="$SEEN_SEQ"; SEQ=$((SEEN_SEQ + 1))
 fi
-# The canonical bootstrap prompt (ADR-0003: wording is load-bearing, verbatim).
+# The canonical bootstrap prompt (TADR-0003: wording is load-bearing, verbatim).
 PROMPT="Work item $PROJECT - rollover session #$SEQ. Read \`work/$PROJECT/next-session.md\` and continue from **First actions**."
 # The env pair leads the command: how an attached successor finds its number.
 CMD=("TF_SESSION_PROJECT=$PROJECT" "TF_SESSION_SEQ=$SEQ")

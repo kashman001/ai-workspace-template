@@ -2,7 +2,7 @@
 # File: scripts/lib/session-lib.sh
 # Purpose: The one way to write a work item's session record
 #          (work/<item>/session-state.json, schema 1), plus the two readers
-#          that answer "who owns this item, and is it alive" (ADR-0010;
+#          that answer "who owns this item, and is it alive" (TADR-0010;
 #          `session_record_owner`, `session_owner_live` at the end). Sourced,
 #          not executed; bash 3.2. Every writer (launcher, measurer, supervisor) goes through
 #          `session_record_update`: read the record, apply a jq filter, write a
