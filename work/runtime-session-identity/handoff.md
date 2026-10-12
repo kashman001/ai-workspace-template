@@ -18,8 +18,12 @@ gemini and binds a stale `logs.json` while reporting OK. Q1 (agent's shell) is
 blocked: headless `agy` auto-denies `run_command`, hook `permissionOverrides`
 don't lift it, and the Claude Code classifier denied
 `--dangerously-skip-permissions`. Rewrote draft node 6 as "Antigravity: add as
-a runtime" and added the Antigravity column to `findings.md`. IDE probes still
-waiting on the user.
+a runtime" and added the Antigravity column to `findings.md`. Then the user
+ran the skip-permissions command: Q1 = YES (`ANTIGRAVITY_CONVERSATION_ID`,
+`ANTIGRAVITY_APP_DATA_DIR` in the agent's shell). Because `agy` was launched
+from Claude Code, `register` inside it bound the parent Claude session:
+`detect_runtime` lets an inherited `CLAUDECODE` win. That is now part of node 6
+and node 4's check. IDE probes still waiting on the user.
 
 # Session Handoff — 2026-10-12 (session 2: scaffolded; CLI probes done; draft plan)
 
