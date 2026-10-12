@@ -200,7 +200,7 @@ copilot_vscode_discover() {
   # COPILOT_AGENT_SESSION_ID; its transcript is the CLI's session-state file.
   # Authoritative id: return it existing or not, as below.
   if [ -n "${COPILOT_AGENT_SESSION_ID:-}" ]; then
-    echo "${COPILOT_HOME:-$HOME/.copilot}/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl"
+    echo "${COPILOT_STATE_DIR:-${COPILOT_HOME:-$HOME/.copilot}/session-state}/$COPILOT_AGENT_SESSION_ID/events.jsonl"
     return 0
   fi
   local t="${VSCODE_TARGET_SESSION_LOG:-}" sid=""
@@ -251,18 +251,19 @@ copilot_cli_discover() {
   # from the CLI changelog, not probed. COPILOT_AGENT_SESSION_ID (CLI >=1.0.29)
   # is exported to shell commands and names this session's session-state dir;
   # newest-mtime alone races a concurrent session.
-  local root d
+  local root state d
   root="${COPILOT_HOME:-$HOME/.copilot}"
+  state="${COPILOT_STATE_DIR:-$root/session-state}"
   if [ -n "${COPILOT_AGENT_SESSION_ID:-}" ]; then
-    local t="$root/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl"
+    local t="$state/$COPILOT_AGENT_SESSION_ID/events.jsonl"
     [ -f "$t" ] && { echo "$t"; return 0; }
   fi
   # Current format: one session-state/<id>/events.jsonl per session, cwd in
   # its first line. Legacy (history-session-state/) keeps newest-mtime.
   local rc
-  ls -t "$root"/session-state/*/events.jsonl 2>/dev/null | pick_unambiguous; rc=$?
+  ls -t "$state"/*/events.jsonl 2>/dev/null | pick_unambiguous; rc=$?
   [ "$rc" -eq 1 ] || return "$rc"
-  for d in "$root/session-state" "$root/history-session-state"; do
+  for d in "$state" "$root/history-session-state"; do
     [ -d "$d" ] || continue
     find "$d" -type f \( -name '*.json' -o -name '*.jsonl' \) 2>/dev/null | xargs ls -t 2>/dev/null | head -1 && return 0
   done

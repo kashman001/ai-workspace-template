@@ -778,6 +778,15 @@ assert_contains "H3a: auto-detects copilot-cli" "$out" "runtime=copilot-cli"
 assert_contains "H3b: binds its own session-state transcript" "$out" "artifact=$H2T"
 rm -rf "$HOME/.copilot"
 
+echo "U1: an agent shell honours COPILOT_STATE_DIR, as the hook does (decisions.md)"
+U1T="$TMP/u1-state/vs-u1/events.jsonl"
+mkdir -p "$(dirname "$U1T")"; printf '{"type":"session.start"}\n' > "$U1T"
+for rt in copilot-cli copilot-vscode; do
+  out=$(noid env -u COPILOT_HOME COPILOT_STATE_DIR="$TMP/u1-state" COPILOT_AGENT_SESSION_ID=vs-u1 \
+    "$CB" check --runtime "$rt" 2>&1)
+  assert_contains "U1 ($rt): binds \$COPILOT_STATE_DIR/<sid>/events.jsonl" "$out" "artifact=$U1T"
+done
+
 echo "E1: codex registers from its hooks — id + transcript from the payload, no CODEX_* env"
 # Hook processes get no CODEX_* env (probes/codex-cli.md, codex-vscode.md): the
 # SessionStart payload alone must name the record and its artifact.
