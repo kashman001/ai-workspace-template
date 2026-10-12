@@ -1,17 +1,17 @@
-# ADR-0005: Session roles with the lock as primary marker, and a parent/child session registry
+# TADR-0005: Session roles with the lock as primary marker, and a parent/child session registry
 
-- Status: superseded by ADR-0010 (roles, lineage stamps, child locks); the child registry moved to `scripts/fleet.sh` unchanged (ADR-0012)
+- Status: superseded by TADR-0010 (roles, lineage stamps, child locks); the child registry moved to `scripts/fleet.sh` unchanged (TADR-0012)
 - Date: 2026-08-06
 - Deciders: Kashif + Claude Code sessions 15–17 (automatic-session-rollover project)
 
-> **Superseded (2026-09-21, ADR-0010).** Roles, `superseded_*` stamps and
+> **Superseded (2026-09-21, TADR-0010).** Roles, `superseded_*` stamps and
 > per-child locks are gone: the record names one owner, liveness is its
 > process, and the back-stamped lineage is `launch.predecessor`. The
 > parent/child registry (`register --parent-session … --agent-id …`) and the
-> child sweep survive unchanged in `scripts/fleet.sh` (ADR-0012). Kept for
+> child sweep survive unchanged in `scripts/fleet.sh` (TADR-0012). Kept for
 > the history below.
 
-Extends ADR-0004's multi-session model. That ADR made measurement and
+Extends TADR-0004's multi-session model. That ADR made measurement and
 work-item ownership hold under N concurrent sessions; this one records what a
 session *is* relative to a work item — its role, its lineage across
 rollovers, and how subagent (child) sessions attach to the tree.
@@ -88,7 +88,7 @@ Three pressures made roles a real decision:
 - Wedged items have a sanctioned, auditable human override (`--takeover`)
   instead of ad-hoc lock-file deletion.
 - More gitignored runtime state per work directory (`.agent-locks/`); the
-  stale sweep inherits ADR-0004's caveat that artifact-mtime liveness is a
+  stale sweep inherits TADR-0004's caveat that artifact-mtime liveness is a
   heuristic, not a guarantee.
 - The role field is now schema: future session kinds must extend this set
   deliberately rather than overloading an existing role.
@@ -100,7 +100,7 @@ Three pressures made roles a real decision:
   `…#2026-08-06--slice-1-child-registry-artifact-keyed-identity-role-child-blocked-release-i4-guard-session-16`,
   `…#2026-08-06--rollover-lineage-completed-successor-side-takeover-is-a-recorded-steal-session-17`
 - Commits: 0339ad7, 4c6569e (+ the slice-1 T13/T14 commit)
-- Refs: ADR-0004 (the model this extends);
+- Refs: TADR-0004 (the model this extends);
   `work/automatic-session-rollover/plans/slice-1-registry-schema.md`;
   `work/automatic-session-rollover/issues/03-session-roles.md`;
   tests `scripts/tests/test-context-budget-registry.sh` T6–T14

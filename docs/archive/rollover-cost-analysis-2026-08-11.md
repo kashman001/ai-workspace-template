@@ -31,7 +31,7 @@ tokens loaded per rollover)** across the same window:
 | 07-22 | 3c7b44a | 4.6KB | initial system |
 | 08-05 | 91e3e32 | 5.7KB | promotion scan, verification, boundary arbitration |
 | 08-06 | e0cb70d | 7.7KB | `.rollover-options` capture/inheritance |
-| 08-06 | 1a3fa5b | 10.0KB | session-seq counter-sync canon (ADR-0007) |
+| 08-06 | 1a3fa5b | 10.0KB | session-seq counter-sync canon (TADR-0007) |
 | 08-10 | 3ffcf5a | ~11KB | block-marker hazard guardrail |
 | 08-11 | 6a6f1fa | 12.1KB | ledger-evidence trigger policy |
 

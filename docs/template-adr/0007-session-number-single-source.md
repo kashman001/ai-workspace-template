@@ -1,10 +1,10 @@
-# ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers
+# TADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers
 
-- Status: superseded by ADR-0010 (mechanism) — the canonical-source ruling stands; amended by [ADR-0008](0008-session-counter-assertion-not-write.md)
+- Status: superseded by TADR-0010 (mechanism) — the canonical-source ruling stands; amended by [TADR-0008](0008-session-counter-assertion-not-write.md)
 - Date: 2026-08-06
 - Deciders: Kashif (user) + agent, session 30 of automatic-session-rollover
 
-> **Superseded (2026-09-21, ADR-0010).** `.session-seq`, its bootstrap-prompt
+> **Superseded (2026-09-21, TADR-0010).** `.session-seq`, its bootstrap-prompt
 > sync and `seq-sync` are gone; the session number is the record's `seq`
 > (`work/<proj>/session-state.json`), advanced only by the launcher and never
 > reused. The ruling that the bootstrap prompt's number is canonical and the
@@ -15,7 +15,7 @@
 > step-6 *mechanism* — an unconditional `echo <N> >` by the dying session — was
 > replaced: it is redundant for launcher-launched sessions and drifted the
 > counter upward in a way max-wins makes permanent. Step 6 is now an assertion
-> that writes only to correct. Read this ADR with ADR-0008.
+> that writes only to correct. Read this ADR with TADR-0008.
 
 ## Context
 
@@ -70,7 +70,7 @@ start) takes counter + 1 as its number; its rollover sync counts it in.
 the session number in the handoff's top block, printing the `seq-sync` command
 that reconciles them.
 
-Why it is not redundant with ADR-0008's `seq-sync`: `seq-sync` compares the
+Why it is not redundant with TADR-0008's `seq-sync`: `seq-sync` compares the
 counter against the **live** session's own number, at rollover-write time. The
 gate compares it against the **ledger the successor is about to inherit**, at
 launch time. Both can be satisfied independently, and the observed failure —

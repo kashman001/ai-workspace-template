@@ -1,5 +1,5 @@
 // .opencode/plugins/context-budget.js
-// Context-budget WARN/STOP push (ADR-0003/0004): on each user message, ask
+// Context-budget WARN/STOP push (TADR-0003/0004): on each user message, ask
 // scripts/hooks/context-budget-opencode-hook.sh for an escalation message and
 // inject it as an in-band text Part. Part MUST carry id/sessionID/messageID —
 // a bare {type,text} part fails schema validation and kills the turn.

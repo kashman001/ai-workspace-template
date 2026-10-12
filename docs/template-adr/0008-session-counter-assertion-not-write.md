@@ -1,10 +1,10 @@
-# ADR-0008: Rollover step 6 asserts the session counter rather than writing it
+# TADR-0008: Rollover step 6 asserts the session counter rather than writing it
 
-- Status: superseded by ADR-0010 (mechanism) — the assert-not-write ruling stands
+- Status: superseded by TADR-0010 (mechanism) — the assert-not-write ruling stands
 - Date: 2026-08-25
 - Deciders: Kashif + Claude Code session 5 (session-loop-automation project)
 
-> **Superseded (2026-09-21, ADR-0010).** There is no counter to assert and no
+> **Superseded (2026-09-21, TADR-0010).** There is no counter to assert and no
 > `seq-sync`: the launcher advances the record's `seq` in the same atomic write
 > that records the rollover, and refuses `ledger_seq_mismatch` when the ledger's
 > top block disagrees. The ruling — a session asserts its number, never writes
@@ -21,15 +21,15 @@
 > `.session-seq`; step 1's `.rollover-options` hand-edit likewise moved behind
 > `opts-sync`. The decision itself (assert, write only to correct) stands.
 
-Amends ADR-0007. That ADR's core ruling stands unchanged: `.session-seq`, as
+Amends TADR-0007. That ADR's core ruling stands unchanged: `.session-seq`, as
 surfaced through each session's bootstrap prompt, is the canonical session
 number, and on disagreement the ledger note is repaired, never the counter. What
-this ADR changes is the **mechanism** ADR-0007 chose to keep the counter honest —
+this ADR changes is the **mechanism** TADR-0007 chose to keep the counter honest —
 the unconditional `echo <N> >` in `session-rollover` step 6.
 
 ## Context
 
-ADR-0007 closed a drift vector in which the *ledger* disagreed with the counter,
+TADR-0007 closed a drift vector in which the *ledger* disagreed with the counter,
 and it closed it by having the dying session write its own prompt number to
 `.session-seq` at every rollover. Its final consequence line conceded the
 remaining exposure: *"No mechanical validator exists."*
@@ -37,7 +37,7 @@ remaining exposure: *"No mechanical validator exists."*
 The exposure turned out to run the other way. On 2026-08-25, session 3 of
 `session-loop-automation` reached step 6, wrote `4`, and
 `launch-next-session.sh` launched **`#5`**. There was no session 4. **The counter
-drifted, not the ledger** — the case ADR-0007 did not anticipate, since it treats
+drifted, not the ledger** — the case TADR-0007 did not anticipate, since it treats
 the counter as the thing that corrects prose.
 
 Three properties made a one-character slip permanent:
@@ -52,11 +52,11 @@ Three properties made a one-character slip permanent:
    max-wins (`:194`), needed only because step 6's bare relative path strands
    copies in worktrees. Max-wins cannot decrease, so an over-count is absorbed
    and ratified: every later session writes its own inflated number, still the
-   max. ADR-0007's self-heal is one-directional — it recovers a counter set too
+   max. TADR-0007's self-heal is one-directional — it recovers a counter set too
    *low* by a launcher-bypassing start, and has no path back from one set too
    high.
 
-Under a human-driven chain the cost is a heading repair, which is what ADR-0007
+Under a human-driven chain the cost is a heading repair, which is what TADR-0007
 prescribes. Under the supervisor designed in
 `docs/superpowers/specs/2026-08-21-session-loop-design.md` nobody reads the
 prompt, so the drift is silent and compounding, and the number stops being usable
@@ -72,7 +72,7 @@ handoff block. A write that is not a correction is a defect.
 
 Three consequences follow:
 
-- **Any write resolves through the repository's common dir**, per ADR-0006 —
+- **Any write resolves through the repository's common dir**, per TADR-0006 —
   `git rev-parse --path-format=absolute --git-common-dir` — never a bare
   relative path. Step 6 was the workspace's last agent-hand write at a bare
   relative path in the rollover path, and therefore the reason the counter
@@ -88,11 +88,11 @@ Three consequences follow:
 
 ## Alternatives considered
 
-- **Keep the unconditional write, add a validator.** Rejected: ADR-0007 already
+- **Keep the unconditional write, add a validator.** Rejected: TADR-0007 already
   rejected a `register`-time checker for reintroducing prose parsing, and a
   checker leaves both the redundancy and the stranding in place. Removing the
   write removes the defect class; checking it only reports the class.
-- **Derive the number from the ledger.** Rejected by ADR-0007 as parsing
+- **Derive the number from the ledger.** Rejected by TADR-0007 as parsing
   agent-written prose. That ruling stands and is not reopened here.
 - **Make `.session-seq` a JSON record carrying provenance.**
   `launch-next-session.sh:191` parses the file with `tr -cd '0-9'`, which would
@@ -102,16 +102,16 @@ Three consequences follow:
 - **Retire max-wins immediately.** Rejected: it is the only thing currently
   rescuing a counter stranded in a worktree. Removing it before the stranding is
   closed trades a recoverable error for an unrecoverable one.
-- **Supersede ADR-0007 outright.** Rejected: its canonical-source ruling is
+- **Supersede TADR-0007 outright.** Rejected: its canonical-source ruling is
   correct and still governs. Only the step-6 mechanism was wrong, and the
-  workspace convention is to amend by forward-linked ADR (as ADR-0006 amends
-  ADR-0004 and ADR-0005).
+  workspace convention is to amend by forward-linked ADR (as TADR-0006 amends
+  TADR-0004 and TADR-0005).
 
 ## Consequences
 
 - The common case costs nothing: a launcher-launched session performs a
   comparison and no write at all. Every rollover does strictly less work.
-- ADR-0007's eventual, one-rollover-lagged self-heal for ad-hoc starts is
+- TADR-0007's eventual, one-rollover-lagged self-heal for ad-hoc starts is
   preserved verbatim — the correction branch is exactly that self-heal, now
   fired conditionally instead of unconditionally.
 - The failure this ADR removes is *silent by construction*, so its absence is
@@ -123,15 +123,15 @@ Three consequences follow:
 - Until the write moves behind a script mode, correctness still depends on an
   agent following prose. The residual risk is smaller (a comparison, not a
   derivation) but not zero.
-- **The 2026-08-25 over-count is not repaired.** Per ADR-0007 the counter wins;
+- **The 2026-08-25 over-count is not repaired.** Per TADR-0007 the counter wins;
   `session-loop-automation` has no session 4 and its lineage stays as launched.
 
 ## Provenance
 
 - Promoted from: `work/session-loop-automation/decisions.md` — 2026-08-25
   "Rollover step 6 becomes an assertion; the agent stops hand-writing the counter"
-- Amends: ADR-0007 (canonical-source ruling retained; step-6 mechanism replaced)
-- Refs: ADR-0006 (common-dir resolution this depends on);
+- Amends: TADR-0007 (canonical-source ruling retained; step-6 mechanism replaced)
+- Refs: TADR-0006 (common-dir resolution this depends on);
   `skills/session-rollover/SKILL.md` step 6 + Verification;
   `docs/superpowers/specs/2026-08-21-session-loop-design.md` →
   "Session number progression", failure mode 10;

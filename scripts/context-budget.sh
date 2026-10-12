@@ -744,7 +744,7 @@ bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or e
     printf '%s' "$cur" | jq -e 'type=="object" and .schema == 1' >/dev/null 2>&1 \
       || { note "register: work/$PROJECT/session-state.json is unreadable or not schema 1 — not bound"; return 0; }
     seq=$(printf '%s' "$cur" | jq -r '.seq // empty')
-    # The /clear seed (ADR-0009 as amended): the launcher's --clear left the
+    # The /clear seed (TADR-0009 as amended): the launcher's --clear left the
     # bootstrap prompt in launch.pending. Binding nulls the block, so the
     # prompt is taken here and printed once, below, for the pending binding
     # only — Claude Code adds SessionStart hook stdout to the session context.

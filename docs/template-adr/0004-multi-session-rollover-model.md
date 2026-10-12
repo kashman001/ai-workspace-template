@@ -1,19 +1,19 @@
-# ADR-0004: Operate rollover automation under a multi-session model — session-keyed budget state, per-project locks, hybrid trigger
+# TADR-0004: Operate rollover automation under a multi-session model — session-keyed budget state, per-project locks, hybrid trigger
 
-- Status: accepted — amended by ADR-0010 (2026-09-21)
+- Status: accepted — amended by TADR-0010 (2026-09-21)
 - Date: 2026-08-05
 - Deciders: Kashif + Claude Code session (automatic-session-rollover project)
 
-> **Amendment (2026-09-21, ADR-0010).** The per-project lock
+> **Amendment (2026-09-21, TADR-0010).** The per-project lock
 > (`.active-session`) is the record's owner slot in
 > `work/<proj>/session-state.json`; staleness is process liveness (pid +
 > start time), not artifact age. The WARN ask is keyed to `ROLLOVER_RELAUNCH`
 > (ask under `manual`/`off`, not under `auto`). Runtimes in scope are the
-> support matrix of ADR-0012; the background launch (`--bg`) is gone. The
+> support matrix of TADR-0012; the background launch (`--bg`) is gone. The
 > "no per-project override" rule was reversed earlier by the committed
 > `work/<proj>/context-budget.env`; the root default is `manual`.
 
-Companion to ADR-0003, which decided *that* the rollover→relaunch pipeline is
+Companion to TADR-0003, which decided *that* the rollover→relaunch pipeline is
 automated by a workspace script. This ADR records *how it behaves*: under what
 identity model concurrent sessions coexist, who consents to a rollover, and
 which runtimes are in scope.
@@ -33,7 +33,7 @@ Three forces surfaced while designing the automation:
    while the real session sat at ~128K (WARN).
 2. **Automation needs a consent story.** Fully automatic rollover at every
    threshold surrenders a human decision; asking at every step recreates the
-   manual copy-paste burden ADR-0003 removed.
+   manual copy-paste burden TADR-0003 removed.
 3. **Detection was believed unreliable off Claude Code** (no in-band WARN/STOP
    push), which had kept codex/gemini/opencode/copilot hook work out of scope.
    Live smoke tests (2026-08-05) refuted this: all four ship a usable
@@ -122,7 +122,7 @@ Three forces surfaced while designing the automation:
   `work/automatic-session-rollover/decisions.md#2026-08-05--multi-session-identity-redesign-approved-session-3`,
   `…#2026-08-05--relaunch-knobs-home-shape-defaults-session-3`,
   `…#2026-08-05--detection--runtime-scope-after-smoke-tests-session-3`
-- Refs: ADR-0003 (the companion decision this refines);
+- Refs: TADR-0003 (the companion decision this refines);
   `work/automatic-session-rollover/relaunch-analysis.md` (settled design,
   conductor state machine D1–D8);
   `work/automatic-session-rollover/smoke-test-opencode.md`,
