@@ -23,6 +23,7 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 - s6 · Correction to the s6-c prompt_tokens note: copilot_cli_measure reads inputTokens (exact on live events.jsonl); only copilot_vscode_measure (promptTokens only) falls back to a size estimate on a session-state transcript. Follow-up node copilot-vscode-measure-inputtokens (wave 3).
 - s6 · For node 13 (docs): docs/context-budget.md needs the antigravity adapter row, .agents/hooks.json in the support matrix (agy fires hooks with no trust step, runs them from .agents/ — hence cd ..), the inject-json-only envelope, that the Copilot CLI config is the only Copilot config that acts, and that Claude SessionStart requires transcript_path.
 - s6 · resolve_runtime_pid matches the process name to the runtime name, so antigravity (process agy) and sandboxed codex hooks record no pid; liveness for them must not rely on pid. No live run yet of codex SessionStart, copilot sessionStart, or agy against the committed hook configs — fixture-tested only; node 11 probes are the place to confirm.
+- s7 · s7 · node 09: prune_phantoms deletes (not hides) a record whose artifact is missing >60 min after its last write, in register/record only; read-only check/--session-id don't prune, so fleet.sh/attach-session.sh see a phantom until some session registers/records. A pre-spawned session first used >1h later loses its record until it re-registers. Node 13 docs: document the 60-min phantom grace in docs/context-budget.md.
 
 ## Out of scope
 
