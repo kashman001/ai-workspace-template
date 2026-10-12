@@ -6,6 +6,21 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 24 (2026-10-11): Addy Osmani + pstack vendored; stakes-matched ceremony
+
+**Summary.** Two jobs, each run by a Fable orchestrator subagent under a dispatch record (both closed). Backlog 0/138/5/0/6, empty.
+
+**What got done (on main, NOT pushed; 11 commits ahead of `1b8fb68`):**
+- Pushed `1b8fb68` at session start (user's go-ahead).
+- **Skill packs** (M50, L75–L81): analysis `skill-packs-analysis.md` (16 of 77 skills taken: 9 Addy Osmani MIT `1be8e34`, 7 pstack MIT from canonical `cursor/plugins` `978ca6e`); sync + drift cover three upstreams. Report `skill-packs-report.md`.
+- **Ceremony** (M51, L82, L83), after the user shared Rob Shocks' "Pocock vs Pstack vs Osmani" video: `docs/stakes-to-ceremony.md`; `trigger-review.md` (3 skills user-invoked, 6 tightened); `scripts/check-skill-descriptions.sh` budget 7,500 B (now 7,303); rationalization tables in checkpoint, session-rollover, decision-log, create-work-item, plans. Plan `plans/01-skill-ceremony` closed 12/12. Report `skill-ceremony-report.md`.
+
+**Verified by the parent:** `run-checks.sh` 42/0/0 after job 1 and 44/0/0 after job 2; `plan.sh status` closed; description check 7303/7500.
+
+**Concerns carried:** `unslop` narrowed via adapted-class frontmatter, not a patch (a patch would fail the second sync; Tier-2 note). Job-2 commits carry a `Claude Fable 5.1` co-author trailer (the model that wrote them), not Opus 5.5. `retro` untouched (pristine). Addy/pstack clones are not under `~/Developer/references`; the sync needs them cloned there (or pointed at) to refresh. `check-drift.sh`: one pre-existing WARN (ADR-0009).
+
+**Learnings:** skill descriptions are always-loaded context; the new budget check ratchets them. A Fable orchestrator with model-tiered workers ran each job in ~25–30 min with no parent context cost beyond the brief.
+
 # Session Handoff — 23 (2026-10-09): ADR-0014, glossary migration script, patch tracking
 
 **Summary.** All three jobs queued in session 22 are done. Backlog: 1 open (L74), 1/126/5/0/6.

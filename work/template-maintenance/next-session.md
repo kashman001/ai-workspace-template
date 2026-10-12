@@ -5,25 +5,29 @@
 
 ## >>> START HERE <<<
 
-**Mission.** No queued jobs, and the backlog is empty (0/127/5/0/6). Ask the
+**Mission.** No queued jobs, and the backlog is empty (0/138/5/0/6). Ask the
 user what's next.
 
 **Waiting on the user:**
+- Push `main`: 11 commits ahead of origin (session 24: skill packs M50/L75–L81,
+  ceremony M51/L82/L83). Pushing is the user's call; on push, bump
+  `TEMPLATE_VERSION` to that day.
 - Run `scripts/migrate-glossary.sh` on `~/Developer/experiments/NeogeoEmu`?
-  It will refuse until that repo has a first commit (it has none). Never run it
-  on a real project without the user's go-ahead.
+  It refuses until that repo has a first commit. Never run it on a real
+  project without the user's go-ahead.
 - Delete `skills/code-review/workspace.patch` once mattpocock/skills#1242 lands
-  (the sync now says so when the issue closes).
+  (the sync says so when the issue closes).
 
-**State:** `main` pushed at `a030733`; the session-23 rollover commit sits on top, unpushed (pushing is the user's call). On a push after 2026-10-09,
-bump `TEMPLATE_VERSION` to that day.
+**Optional later (not queued):** pstack `arena`/`swarm`/`hillclimb` were left out
+as Cursor-bound; revisit only as an agent-agnostic rewrite.
 
-**Do NOT reload:** L72/M49/L73/L74 are done (ledger block 23).
+**Do NOT reload:** skill-packs and skill-ceremony work is done (ledger block 24;
+reports `skill-packs-report.md`, `skill-ceremony-report.md`).
 
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-skill-ceremony, open, wave 4 of 4, done 12/12, doing 0, todo 0, blocked 0, dropped 0, sessions 1.
+Position: plan 01-skill-ceremony, closed, wave 4 of 4, done 12/12, doing 0, todo 0, blocked 0, dropped 0, sessions 1.
 Frontier: none. Remaining: 0 of 12.
 <!-- plan:end position -->
 
