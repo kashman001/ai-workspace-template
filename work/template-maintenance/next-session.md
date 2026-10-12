@@ -9,14 +9,14 @@
 user what's next.
 
 **Waiting on the user:**
-- Push `main`: 11 commits ahead of origin (session 24: skill packs M50/L75–L81,
-  ceremony M51/L82/L83). Pushing is the user's call; on push, bump
-  `TEMPLATE_VERSION` to that day.
 - Run `scripts/migrate-glossary.sh` on `~/Developer/experiments/NeogeoEmu`?
   It refuses until that repo has a first commit. Never run it on a real
   project without the user's go-ahead.
 - Delete `skills/code-review/workspace.patch` once mattpocock/skills#1242 lands
   (the sync says so when the issue closes).
+
+**State:** `main` pushed at session-24 end (TEMPLATE_VERSION 2026-10-12).
+On the next push after that day, bump it again.
 
 **Optional later (not queued):** pstack `arena`/`swarm`/`hillclimb` were left out
 as Cursor-bound; revisit only as an agent-agnostic rewrite.
