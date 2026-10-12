@@ -20,6 +20,9 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 - s6 · In a VS Code agent shell, auto-detect says copilot-cli, so agent register writes copilot-cli-<sid> while the VS Code hook writes copilot-vscode-<sid>: two records for one events.jsonl (from s6-c).
 - s6 · A live Copilot events.jsonl names its token count prompt_tokens; neither copilot measure function reads it, so both fall back to a size estimate (from s6-c).
 - s6 · Dispatcher now registers-only on non-check/non-turn-end events for register=hook rows; copilot/copilot-vscode shims called with no event argument now register instead of staying silent. Codex sandbox hook records carry pid:null — liveness must not rely on pid for codex (from s6-a).
+- s6 · Correction to the s6-c prompt_tokens note: copilot_cli_measure reads inputTokens (exact on live events.jsonl); only copilot_vscode_measure (promptTokens only) falls back to a size estimate on a session-state transcript. Follow-up node copilot-vscode-measure-inputtokens (wave 3).
+- s6 · For node 13 (docs): docs/context-budget.md needs the antigravity adapter row, .agents/hooks.json in the support matrix (agy fires hooks with no trust step, runs them from .agents/ — hence cd ..), the inject-json-only envelope, that the Copilot CLI config is the only Copilot config that acts, and that Claude SessionStart requires transcript_path.
+- s6 · resolve_runtime_pid matches the process name to the runtime name, so antigravity (process agy) and sandboxed codex hooks record no pid; liveness for them must not rely on pid. No live run yet of codex SessionStart, copilot sessionStart, or agy against the committed hook configs — fixture-tested only; node 11 probes are the place to confirm.
 
 ## Out of scope
 
@@ -29,6 +32,8 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 
 ## Replans
 
+- 2026-10-12 (08-reconcile-w2): added 11-copilot-vscode-measure-inputtokens to wave 3 and to 12-reconcile-w3's blocked_by — copilot_vscode_measure reads only promptTokens, so a session-state transcript falls back to a size estimate. Local replan.
+
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
@@ -37,16 +42,17 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 2 | 03-codex-hook-registration | work | standard | done |
 | 2 | 04-copilot-cli-hook-registration | work | standard | done |
 | 2 | 05-copilot-vscode-cli-runtime | work | standard | done |
-| 2 | 06-one-hook-per-copilot-event | work | standard | doing |
-| 2 | 07-antigravity-runtime | work | standard | doing |
-| 2 | 08-reconcile-w2 | reconcile | frontier | todo |
+| 2 | 06-one-hook-per-copilot-event | work | standard | done |
+| 2 | 07-antigravity-runtime | work | standard | done |
+| 2 | 08-reconcile-w2 | reconcile | frontier | done |
 | 3 | 09-phantom-records | work | standard | todo |
 | 3 | 10-record-without-env-id | work | standard | todo |
+| 3 | 11-copilot-vscode-measure-inputtokens | work | standard | todo |
 | 3 | 11-remaining-surface-probes | hitl | frontier | todo |
 | 3 | 12-reconcile-w3 | reconcile | frontier | todo |
 | 4 | 13-docs | work | standard | todo |
 | 4 | 14-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 15-review | work | standard | todo |
 | 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: none (06-one-hook-per-copilot-event doing, 07-antigravity-runtime doing). Remaining: 11 of 16. Sessions used: 2.
+Frontier: 09-phantom-records, 10-record-without-env-id, 11-copilot-vscode-measure-inputtokens, 11-remaining-surface-probes. Remaining: 9 of 17. Sessions used: 2.
 <!-- plan:end board -->

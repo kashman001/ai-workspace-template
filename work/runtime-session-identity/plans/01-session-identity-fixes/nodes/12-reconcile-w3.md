@@ -4,7 +4,7 @@ title: Join wave 3
 status: todo
 kind: reconcile
 wave: 3
-blocked_by: [09-phantom-records, 10-record-without-env-id, 11-remaining-surface-probes]
+blocked_by: [09-phantom-records, 10-record-without-env-id, 11-remaining-surface-probes, 11-copilot-vscode-measure-inputtokens]
 sessions: []
 ---
 
