@@ -59,8 +59,8 @@ run the Antigravity IDE/app and Codex desktop app probes now
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-session-identity-fixes, open, wave 1 of 5, done 0/16, doing 0, todo 16, blocked 0, dropped 0, sessions 0.
-Frontier: 01-refuse-instead-of-guess. Remaining: 16 of 16 — wave 1: 01-refuse-instead-of-guess todo, 02-reconcile-w1 todo.
+Position: plan 01-session-identity-fixes, open, wave 1 of 5, done 1/16, doing 0, todo 15, blocked 0, dropped 0, sessions 1.
+Frontier: 02-reconcile-w1. Remaining: 15 of 16 — wave 1: 02-reconcile-w1 todo.
 <!-- plan:end position -->
 
 ## State snapshot

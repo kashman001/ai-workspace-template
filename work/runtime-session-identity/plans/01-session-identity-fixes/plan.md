@@ -27,7 +27,7 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-refuse-instead-of-guess | work | standard | todo |
+| 1 | 01-refuse-instead-of-guess | work | standard | done |
 | 1 | 02-reconcile-w1 | reconcile | frontier | todo |
 | 2 | 03-codex-hook-registration | work | standard | todo |
 | 2 | 04-copilot-cli-hook-registration | work | standard | todo |
@@ -43,5 +43,5 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 4 | 14-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 15-review | work | standard | todo |
 | 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 01-refuse-instead-of-guess. Remaining: 16 of 16. Sessions used: 0.
+Frontier: 02-reconcile-w1. Remaining: 15 of 16. Sessions used: 1.
 <!-- plan:end board -->

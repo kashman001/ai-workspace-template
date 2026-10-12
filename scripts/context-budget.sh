@@ -72,9 +72,6 @@ WARN="${CONTEXT_DUMB_ZONE_WARN_TOKENS:-$(( THRESHOLD * 80 / 100 ))}"
 LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
-# Set by copilot_vscode_discover when it pins by newest-mtime while >1 Copilot
-# session is concurrently active (no authoritative id) — an unsafe guess.
-COPILOT_PIN_AMBIGUOUS=0
 PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; CHECK=0
 # --session-id: ask the budget question about a session that is NOT this
 # process. check only, and never a writer — see the guard below resolve_session.
@@ -126,6 +123,23 @@ fi
 
 newest_of() { ls -t "$@" 2>/dev/null | head -1; }
 
+# The discovery fallback (no runtime id var) must never guess. Reads candidate
+# paths on stdin, newest first, and keeps those whose head names the cwd. More
+# than one written in the last 2 min means a sibling session is live and
+# newest-mtime may bind it (the false-STOP bug): return 2, print nothing.
+# Else print the newest; rc 1 when none match.
+pick_unambiguous() {
+  local f first="" live=0
+  while IFS= read -r f; do
+    head -c 8192 "$f" 2>/dev/null | grep -qF "$(pwd)" || continue
+    [ -n "$first" ] || first="$f"
+    [ -n "$(find "$f" -mmin -2 2>/dev/null)" ] && live=$((live+1))
+  done
+  [ "$live" -gt 1 ] && return 2
+  [ -n "$first" ] || return 1
+  echo "$first"
+}
+
 glob_artifact_for() {
   # $1 = runtime, $2 = session id. Id-keyed artifact resolution across every
   # project slug dir — survives EnterWorktree relocating a claude transcript
@@ -166,11 +180,9 @@ codex_discover() {
     f="$(find "$base" -name "rollout-*-${CODEX_THREAD_ID}.jsonl" 2>/dev/null | head -1)"
     [ -n "$f" ] && [ -f "$f" ] && { echo "$f"; return 0; }
   fi
-  while IFS= read -r f; do
-    if head -c 8192 "$f" 2>/dev/null | grep -qF "$(pwd)"; then echo "$f"; return 0; fi
-  done < <(find "$base" -name 'rollout-*.jsonl' -mtime -7 2>/dev/null | xargs ls -t 2>/dev/null)
   # No cwd-matching rollout: fail rather than bind another project's session.
-  return 1
+  find "$base" -name 'rollout-*.jsonl' -mtime -7 2>/dev/null | xargs ls -t 2>/dev/null \
+    | pick_unambiguous
 }
 
 copilot_vscode_discover() {
@@ -213,12 +225,11 @@ copilot_vscode_discover() {
         # No authoritative id (VSCODE_TARGET_SESSION_LOG absent — e.g. an agent's
         # run_in_terminal shell, which does not export it). If >1 chatSessions
         # file was written in the last 2 min, sibling sessions are live and
-        # newest-mtime would pin the wrong one (false STOP off another context).
-        # Flag it so register refuses to guess (resolve_session).
-        if [ "$(find "${d}chatSessions" -name '*.jsonl' -mmin -2 2>/dev/null | wc -l | tr -d ' ')" -gt 1 ]; then
-          COPILOT_PIN_AMBIGUOUS=1
-          note "warning: multiple Copilot sessions active and VSCODE_TARGET_SESSION_LOG unset — pinning by newest-mtime may bind a sibling session's context"
-        fi
+        # newest-mtime would pin the wrong one (false STOP off another context):
+        # rc 2, and resolve_session refuses.
+        local n
+        n=$(find "${d}chatSessions" -name '*.jsonl' -mmin -2 2>/dev/null | wc -l | tr -d ' ')
+        [ "$n" -gt 1 ] && return 2
         newest_of "$d"chatSessions/*.jsonl "$d"chatSessions/*.json && return 0
       fi
     done
@@ -237,7 +248,11 @@ copilot_cli_discover() {
     local t="$root/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl"
     [ -f "$t" ] && { echo "$t"; return 0; }
   fi
-  # Current format (session-state/) then legacy (history-session-state/).
+  # Current format: one session-state/<id>/events.jsonl per session, cwd in
+  # its first line. Legacy (history-session-state/) keeps newest-mtime.
+  local rc
+  ls -t "$root"/session-state/*/events.jsonl 2>/dev/null | pick_unambiguous; rc=$?
+  [ "$rc" -eq 1 ] || return "$rc"
   for d in "$root/session-state" "$root/history-session-state"; do
     [ -d "$d" ] || continue
     find "$d" -type f \( -name '*.json' -o -name '*.jsonl' \) 2>/dev/null | xargs ls -t 2>/dev/null | head -1 && return 0
@@ -347,6 +362,12 @@ opencode_measure() {
 }
 
 detect_runtime() {
+  # A runtime's own session id var first: a runtime nested in another (Codex or
+  # Antigravity launched from a Claude Code shell) inherits the outer runtime's
+  # vars, e.g. CLAUDECODE, but only it sets its own id var.
+  if [ -n "${ANTIGRAVITY_CONVERSATION_ID:-}" ]; then echo "antigravity"; return; fi
+  if [ -n "${COPILOT_AGENT_SESSION_ID:-}" ]; then echo "copilot-cli"; return; fi
+  if [ -n "${CODEX_THREAD_ID:-}" ]; then echo "codex"; return; fi
   if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ]; then echo "claude"; return; fi
   if [ -n "${CODEX_SANDBOX:-}" ] || [ -n "${CODEX_HOME:-}" ]; then echo "codex"; return; fi
   if [ -n "${OPENCODE_SESSION_ID:-}" ]; then echo "opencode"; return; fi
@@ -488,22 +509,17 @@ resolve_session() {
     fi
   fi
   if [ -z "$ARTIFACT" ]; then
-    ARTIFACT=$(discover_for "$RUNTIME") || true
+    local drc=0
+    ARTIFACT=$(discover_for "$RUNTIME") || drc=$?
+    # Discovery found several live transcripts for this cwd and no id var to
+    # choose: refuse rather than measure, or pin, a sibling's context.
+    [ "$drc" -eq 2 ] && refuse ambiguous_artifact "runtime=$RUNTIME — several sessions are live in $(pwd) and this one's id var is unset; pass --transcript <own transcript>"
     [ -n "$ARTIFACT" ] || die "no session artifact found for runtime=$RUNTIME"
     # copilot-vscode may return an authoritative-but-not-yet-flushed path at
     # session start; accept it (measures as fresh) rather than dying or, worse,
     # rediscovering into a sibling. Every other runtime requires it to exist.
     [ -f "$ARTIFACT" ] || [ "$RUNTIME" = copilot-vscode ] \
       || die "no session artifact found for runtime=$RUNTIME"
-    # register pins identity, so it must never guess: an ambiguous newest-mtime
-    # pin here would write a sibling session's context as ours (the false-STOP
-    # bug). Fail loud with the fix instead. check/record only warned (above) and
-    # fall through — a read is less harmful than a wrong pin, and they prefer the
-    # registry when one exists.
-    if [ "$COMMAND" = register ] && [ "$RUNTIME" = copilot-vscode ] \
-       && [ "$COPILOT_PIN_AMBIGUOUS" = 1 ]; then
-      die "cannot identify this Copilot VS Code session: several are active and \$VSCODE_TARGET_SESSION_LOG is unset, so register would pin a sibling and mis-report context. Re-run with the session log, e.g.: VSCODE_TARGET_SESSION_LOG=\"<...>/GitHub.copilot-chat/debug-logs/<your-session-id>\" scripts/context-budget.sh register"
-    fi
   fi
   [ -n "$SESSION_ID" ] || SESSION_ID="$(session_id_for "$RUNTIME" "$ARTIFACT")" || SESSION_ID="unknown"
 }

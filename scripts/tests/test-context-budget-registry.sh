@@ -656,5 +656,57 @@ assert_contains "C1e: a runtime without cache data shows cache=-" "$out" "cache=
 "$CB" record --runtime copilot-cli --transcript "$TMP/home/copilot-cache.jsonl" --label c3 --quiet >/dev/null 2>&1
 assert_eq "C1f: and writes null, never an estimate" "$(last_share)" "null"
 
+echo "D1: discovery refuses, never guesses, when >1 live transcript matches the cwd"
+# Hermetic: no runtime id var may reach the discovery fallback.
+noid() { env -u CODEX_THREAD_ID -u COPILOT_AGENT_SESSION_ID -u VSCODE_TARGET_SESSION_LOG \
+  -u CLAUDE_CODE_SESSION_ID -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT -u ANTIGRAVITY_CONVERSATION_ID "$@"; }
+snap() { { ls "$SESS" 2>/dev/null; cat "$REC" 2>/dev/null; } | cksum; }
+expect_refused() {  # $1=label $2=runtime; register must exit non-zero with a reason, writing nothing
+  local before err rc
+  before=$(snap)
+  err=$(noid "$CB" register --runtime "$2" --project testproj 2>&1 >/dev/null); rc=$?
+  [ "$rc" -ne 0 ] && ok "$1: register exits non-zero" || bad "$1: register exited 0"
+  assert_contains "$1: with a reason code" "$err" "reason=ambiguous_artifact"
+  assert_eq "$1: no record written" "$(snap)" "$before"
+}
+CX="$HOME/.codex/sessions/2026/10/12"; mkdir -p "$CX"
+for id in 11111111-aaaa 22222222-bbbb; do
+  printf '{"payload":{"cwd":"%s"}}\n{"last_token_usage":{"total_tokens":10}}\n' "$TMP" \
+    > "$CX/rollout-2026-10-12T10-00-00-$id.jsonl"
+done
+expect_refused "D1a codex" codex
+touch -t 202601010000 "$CX/rollout-2026-10-12T10-00-00-11111111-aaaa.jsonl"
+out=$(noid "$CB" check --runtime codex 2>&1)
+assert_contains "D1b codex: one live candidate still binds" "$out" "22222222-bbbb"
+rm -rf "$HOME/.codex"
+export COPILOT_HOME="$TMP/home/cph"
+for id in cp-one cp-two; do
+  mkdir -p "$COPILOT_HOME/session-state/$id"
+  printf '{"type":"session.start","data":{"context":{"cwd":"%s"}}}\n' "$TMP" \
+    > "$COPILOT_HOME/session-state/$id/events.jsonl"
+done
+expect_refused "D1c copilot-cli" copilot-cli
+unset COPILOT_HOME
+WSS="$HOME/Library/Application Support/Code/User/workspaceStorage/h1"
+mkdir -p "$WSS/chatSessions"
+printf '{"folder":"file://%s"}\n' "$TMP" > "$WSS/workspace.json"
+printf '{"requests":[]}\n' > "$WSS/chatSessions/vs-one.jsonl"
+printf '{"requests":[]}\n' > "$WSS/chatSessions/vs-two.jsonl"
+expect_refused "D1d copilot-vscode" copilot-vscode
+rm -rf "$HOME/Library"
+
+echo "D2: a nested runtime's own id var outranks an inherited CLAUDECODE"
+mkdir -p "$CX"
+printf '{"last_token_usage":{"total_tokens":10}}\n' > "$CX/rollout-2026-10-12T10-00-00-nested-cx.jsonl"
+out=$(noid CLAUDECODE=1 CODEX_THREAD_ID=nested-cx "$CB" check 2>&1)
+assert_contains "D2a: CLAUDECODE + CODEX_THREAD_ID detects codex" "$out" "runtime=codex"
+mkdir -p "$TMP/home/.copilot/session-state/nested-cp"
+printf '{"promptTokens":10}\n' > "$TMP/home/.copilot/session-state/nested-cp/events.jsonl"
+out=$(noid CLAUDECODE=1 COPILOT_AGENT_SESSION_ID=nested-cp "$CB" check 2>&1)
+assert_contains "D2b: CLAUDECODE + COPILOT_AGENT_SESSION_ID detects copilot-cli" "$out" "runtime=copilot-cli"
+out=$(noid CLAUDECODE=1 ANTIGRAVITY_CONVERSATION_ID=nested-ag "$CB" check 2>&1)
+assert_contains "D2c: CLAUDECODE + ANTIGRAVITY_CONVERSATION_ID detects antigravity" "$out" "runtime=antigravity"
+rm -rf "$HOME/.codex" "$TMP/home/.copilot"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

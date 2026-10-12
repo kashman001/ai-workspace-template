@@ -564,6 +564,7 @@ free-form and never a test contract.
 | --- | --- |
 | record library (relayed by every writer) | `record_unreadable`, `schema_mismatch`, `record_unwritable`, `lock_timeout`, `precondition_invalid`, `filter_invalid`, `filter_empty`, `jq_missing` |
 | register, binding outcomes (info) | `opened`, `filled`, `refreshed`, `adopted`, `minted`, `takeover`; a kept slot is `owner_live` |
+| discovery without a runtime id var (check, register, record) | `ambiguous_artifact` (several live transcripts for this cwd; pass `--transcript`) |
 | release and close | `not_owner`, `ledger_shape`, `ledger_seq_mismatch` |
 | launcher gates, in order | `chain_closed`, `runtime_path_unsupported`, `supervised_stage_only`, `no_supervisor`, `owner_live`, `not_owner`, `worktree_unsynced`, `launcher_stale`, `launcher_unchanged`, `ledger_shape`, `ledger_seq_mismatch` (plus `schema_mismatch` and `jq_missing` first) |
 | supervisor start | `relaunch_off`, `chain_closed`, `supervisor_live`, `stage_failed` (the bootstrap launcher refused without a code), `staged_invalid` (leg spent), `plan_invalid` (legs unresolved, ambiguous) |
