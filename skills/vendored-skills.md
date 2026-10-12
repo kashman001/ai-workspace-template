@@ -53,7 +53,11 @@ commit of any upstream is more than 60 days old; refresh then. Three classes:
   offline, it says nothing.
 
 Skills marked *(slash)* have a Claude Code shortcut under `.claude/commands/`;
-the rest are model-invoked (triggered by their `description`).
+the rest are model-invoked (triggered by their `description`). Every
+model-invoked description is weighed by the runtime on every turn, so
+`scripts/check-skill-descriptions.sh` bounds their total (7,500 bytes);
+adding one means trimming another or making a procedure skill user-invoked.
+Which skills a change needs at all: `docs/stakes-to-ceremony.md`.
 
 ## Matt Pocock engineering set
 
@@ -122,7 +126,8 @@ Workspace-authored skills (`checkpoint`, `session-rollover`, `create-work-item`,
 
 ## Addy Osmani lifecycle set
 
-Pinned at `1be8e34` (2026-10-10). All model-invoked; every skill carries a
+Pinned at `1be8e34` (2026-10-10). All model-invoked (two with a tightened
+description through their patch, below); every skill carries a
 "Common Rationalizations" table (the excuses an agent makes to skip a step,
 each rebutted) and a "Red Flags" list. Several link to shared checklists with
 `../../references/<file>.md`; those six files are vendored at the repo root
@@ -134,7 +139,8 @@ Where a skill names a pack skill we did not take, use ours:
 `code-review-and-quality` (and `/review`) → `code-review`,
 `debugging-and-error-recovery` → `diagnosing-bugs`,
 `source-driven-development` → `research`, `incremental-implementation` →
-`implement`, `planning-and-task-breakdown` → `to-tickets`.
+`implement`, `planning-and-task-breakdown` → `to-tickets`; the pack's
+`/build auto` (implement a whole plan with subagents) → `implement-spec`.
 
 - **security-and-hardening** — threat model, OWASP walk, input and auth
   handling, dependency audit, privacy; own `references/hardening-patterns.md`.
@@ -156,14 +162,15 @@ Where a skill names a pack skill we did not take, use ours:
   an adversarial, fresh-context review before it stands, with an optional
   second model through the Codex or Gemini CLI. The patch replaces the
   pointer to a Claude Code `agents/` persona roster with runtime-neutral
-  wording. Its `/review` means our `code-review`.
+  wording and narrows the description to high-stakes work (upstream's fired
+  on any confident output). Its `/review` means our `code-review`.
 - **constraint-driven-development** *(patched)* — writes the project's
   quality bar into `CONSTRAINTS.md` and flags changes that quietly lower it
   (suppressions, skipped tests, lowered thresholds); own
   `references/floor-guard.md`. The patch points its "add a line" step and
-  checklist at `CONTEXT.md` instead of the `AGENTS.md`/`CLAUDE.md` symlinks.
-  Its `/build`, `/test`, `/review`, `/ship` table names phases, not commands
-  that exist here.
+  checklist at `CONTEXT.md` instead of the `AGENTS.md`/`CLAUDE.md` symlinks,
+  and shortens the description to its real triggers. Its `/build`, `/test`,
+  `/review`, `/ship` table names phases, not commands that exist here.
 
 Not vendored from this pack: its slash commands (the skills trigger by
 description; its `/plan` would clash with ours), the four persona agents,
@@ -179,11 +186,14 @@ here they are adapted (frontmatter ours, body upstream's) and four carry a
 small patch.
 
 - **unslop** *(adapted)* — a numbered catalog of AI-prose tells to cut from
-  any writing. Model-invoked so it applies whenever prose is produced.
+  writing. Model-invoked as a final pass on human-facing text (docs,
+  READMEs, PR text, reports); upstream's "must always apply" fired on code
+  and agent-facing text too, where it contradicts `writing-for-agents`.
 - **technical-writing** *(adapted)* — a layered standard for human-facing
-  docs, RFCs, READMEs, PR and commit text (Diátaxis, Google developer style,
-  STE, Global English). `writing-for-agents` covers agent readers; this
-  covers people.
+  docs, RFCs, READMEs and PR descriptions (Diátaxis, Google developer style,
+  STE, Global English); the trigger no longer names a slash command or
+  commit messages. `writing-for-agents` covers agent readers; this covers
+  people.
 - **benchmark-checklist** *(adapted, patched)* — seven questions that vet a
   performance number (limiter, tuning, limits, errors, repeatability,
   relevance, did the work happen) before you report or act on it. The patch

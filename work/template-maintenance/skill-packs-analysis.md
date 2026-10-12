@@ -164,3 +164,34 @@ L79 ─┘
 
 No `scripts/plan.sh` plan was created: the work is one session, the
 orchestrator holds the graph, and the cards and this table record it.
+
+## After the video (2026-10-11)
+
+Rob Shocks' video on Addy Osmani's agent-skills made three points. What plan
+`01-skill-ceremony` did for each:
+
+1. **Match ceremony to stakes.** New guide `docs/stakes-to-ceremony.md`: a table
+   from a change's size and risk to the skills it deserves, plus an "Adopting
+   the skills" note (roll out gradually, verification first, prune).
+2. **More skills is not a smarter agent.** Trigger review with counts, verdicts
+   and reasons: `work/template-maintenance/trigger-review.md`. Applied:
+   - `checkpoint`, `session-rollover`, `design-for-testability` became
+     user-invoked (`disable-model-invocation: true`; slash commands already existed).
+   - `unslop` is a final editing pass on human-facing prose, no longer "always apply";
+     `technical-writing` no longer triggers on commit messages or a slash command.
+   - `constraint-driven-development` and `doubt-driven-development` got tighter
+     descriptions through their patches.
+   - New check `scripts/check-skill-descriptions.sh` bounds the model-invoked
+     description total at 7500 bytes (29 skills, 7,303 bytes; was 10,174).
+3. **Steal Addy's anti-rationalization tables.** `## Common rationalizations`
+   tables now sit in `checkpoint`, `session-rollover`, `decision-log`,
+   `create-work-item` and `plans`.
+
+Mapping: Addy's `/build auto` corresponds to `implement-spec` here.
+
+Not done: Addy's "update the skill when the agent repeats a mistake" line was
+not added to `retro`, because `retro` is pristine vendored (edits would break
+the sync round trip). The guide's "Floors" section carries that advice instead.
+
+The Tier-2 notes for these choices are at the end of
+`work/template-maintenance/decisions.md`.

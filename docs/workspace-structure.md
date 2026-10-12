@@ -359,7 +359,10 @@ set, nine lifecycle skills from
 `why`, `blast-radius`, a per-repo verification-skill generator, …) — one-liners,
 slash-command map, refresh workflow (`scripts/sync-vendored-skills.sh`, one
 script for all three upstreams), and licenses in `skills/vendored-skills.md`;
-add your own alongside them. `decision-log` captures decision provenance — the
+add your own alongside them. Which of them a given change needs — tweak,
+small, big or fuzzy, irreversible — is `docs/stakes-to-ceremony.md`, which
+also carries the adoption advice for a new workspace (gradual, verification
+first, prune what you don't use). `decision-log` captures decision provenance — the
 *why* code can't record — as ephemeral notes under `work/<project>/decisions.md`,
 promoted to committed ADRs under `docs/adr/` for lasting-weight decisions.
 
@@ -406,7 +409,12 @@ A **user-invoked-only** skill (`disable-model-invocation: true` in its
 frontmatter) also needs `skills/<name>/agents/openai.yaml` with
 `policy: allow_implicit_invocation: false`, or Codex fires it on its own.
 Copy an existing one; `scripts/tests/test-agent-entrypoints.sh` (E6) fails
-when the two switches disagree.
+when the two switches disagree. Prefer user-invoked for any procedure a
+person or a script starts by name (session mechanics, setup, advisory
+interrogations): a model-invoked description is weighed on every turn, and
+`scripts/check-skill-descriptions.sh` fails the gate once the total passes
+7,500 bytes. Which band of ceremony a change needs at all is
+`docs/stakes-to-ceremony.md`.
 
 To make a capability **required** — "run the tests before finishing a
 branch" as a non-negotiable — put its prerequisites in the manifest: a `req`
@@ -565,6 +573,7 @@ scripts/
 ├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
 ├── check-drift.sh                 # Staleness sweep: dead doc paths, aged gotchas, CONTEXT.md size, docs index
 ├── check-plans.sh                 # Run plan.sh check on every committed plan
+├── check-skill-descriptions.sh    # Model-invoked skill descriptions stay under a byte budget
 ├── run-checks.sh                  # Run every tests/ suite and check-* script; --fast for pre-commit
 ├── git-hooks/pre-commit           # Opt-in pre-commit hook (runs run-checks.sh --fast)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
@@ -634,6 +643,13 @@ scripts/
   skipped), one line per plan, exit 1 when any fails. Puts plan lint in the
   gate, so a broken plan nobody is working on still fails. Tested by
   `scripts/tests/test-check-plans.sh`.
+- `check-skill-descriptions.sh` — sums the `description:` bytes of every
+  model-invoked `skills/*/SKILL.md` (one without `disable-model-invocation:
+  true`), prints them largest first, exit 1 over `SKILL_DESC_MAX_BYTES`
+  (7,500: the trimmed total rounded up, so a new model-invoked skill forces
+  a trim or a user-invoke swap, with the reason in the commit). Every such
+  description is weighed by the runtime on every turn. Tested by
+  `scripts/tests/test-check-skill-descriptions.sh`.
 - `run-checks.sh` — runs every `scripts/tests/test-*` suite and every
   `scripts/check-*` script (via `bash`/`python3`, so the exec bit doesn't
   matter), one `PASS`/`FAIL`/`SKIP` line each plus a total; exit 0 only if
@@ -697,6 +713,7 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 | `scripts/run-checks.sh` | Runs every check and suite above | Check (runner) | Script | Pre-commit (opt-in), CI, by hand |
 | `scripts/plan.sh check` | A plan's node files are well-formed | Check | Script | Plan create/reconcile/replan, rollover, each `session-loop.sh` turn |
 | `scripts/check-plans.sh` | `plan.sh check` on every committed plan | Check | Script | Gate (fast) |
+| `scripts/check-skill-descriptions.sh` | Model-invoked skill descriptions under 7,500 bytes in total | Check | Script | Gate (fast); when adding a skill |
 | Context-budget hooks (`scripts/hooks/`, wired in `.claude/settings.json`, `.codex/config.toml`, `.gemini/settings.json`, `.github/hooks/`, `.opencode/plugins/`) | Session size: WARN at 120K, STOP at 150K | Check | Script | Session start, each tool call or turn, session end |
 | `scripts/context-budget.sh record` | Same, at a work-unit boundary | Check | Script | By hand (agent), each work unit |
 

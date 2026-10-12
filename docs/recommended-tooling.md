@@ -260,6 +260,10 @@ Refresh them with the same `scripts/sync-vendored-skills.sh` (`addyosmani`
 and `pstack` upstream keys; the script prints the clone commands). What was
 left out of each pack and why: `work/template-maintenance/skill-packs-analysis.md`.
 
+Which skills a change needs: `docs/stakes-to-ceremony.md`. Addy's `/build auto`
+corresponds to `implement-spec` here, and the pack's own adoption advice
+(roll out gradually, verification first, prune what you don't use) is in that guide.
+
 **Global install (optional — for repos outside this workspace, or the
 maintainer keeping the reference clone fresh):** clone the repo into the
 references dir, then let `agent-context-sync` link the skills (it offers each

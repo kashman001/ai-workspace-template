@@ -22,6 +22,7 @@ why loading less is the point).
 | Track a multi-session effort under `work/` | [`work-directory-conventions.md`](work-directory-conventions.md) |
 | Measure context and roll sessions over | [`context-budget.md`](context-budget.md) |
 | Plan a work item as a node graph and drive it with `plan.sh` | [`plans.md`](plans.md) |
+| Decide how much process a change needs — which skills, by size and risk | [`stakes-to-ceremony.md`](stakes-to-ceremony.md) |
 | Authenticate to services / add a credential | [`service-access.md`](service-access.md) + [`runbooks/authentication.md`](runbooks/authentication.md) |
 | Configure MCP servers (lean-by-default) | [`mcp-setup.md`](mcp-setup.md) |
 | Verify an agent runtime loads the workspace context | [`agent-onboarding-check.md`](agent-onboarding-check.md) (canary + live checks; static test: `scripts/tests/test-agent-entrypoints.sh`) |

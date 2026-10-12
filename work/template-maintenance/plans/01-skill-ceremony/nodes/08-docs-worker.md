@@ -1,7 +1,7 @@
 ---
 id: 08-docs-worker
 title: Docs: recommended-tooling, README, for-non-engineers, analysis addendum
-status: doing
+status: done
 kind: work
 wave: 3
 blocked_by: [01-ceremony-guide, 06-apply-trigger-verdicts]
@@ -23,9 +23,11 @@ edits only; do not touch `CONTEXT.md`, `skills/vendored-skills.md`,
 
 ## Acceptance
 
-- [ ] The three docs point at the guide where they list skills; no stale "model-invoked" claims for skills that changed
-- [ ] Addendum present in `skill-packs-analysis.md`, under ~40 lines
-- [ ] `scripts/tests/test-doc-consistency.sh` passes
+- [x] The three docs point at the guide where they list skills; no stale "model-invoked" claims for skills that changed
+- [x] Addendum present in `skill-packs-analysis.md`, under ~40 lines
+- [x] `scripts/tests/test-doc-consistency.sh` passes
 
 ## Log
 - s24 · started, tier standard
+- s24-f · README.md, docs/recommended-tooling.md, docs/for-non-engineers.md each point at docs/stakes-to-ceremony.md (tooling also has the /build auto -> implement-spec sentence); no stale claims found in the three (no skill counts, no auto-fire claims). Addendum on disk in work/template-maintenance/skill-packs-analysis.md (retro pristine vendored, so no one-liner added). test-doc-consistency passed 17/0; check-drift reports only "docs/stakes-to-ceremony.md not linked from docs/README.md" (orchestrator's file, not fixed here). Not on disk: nothing committed.
+- s24 · done

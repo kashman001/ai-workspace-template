@@ -1,11 +1,11 @@
 ---
 id: 11-code-review-pass
 title: Run code-review on the work since 8e16d66; fix the findings
-status: todo
+status: doing
 kind: work
 wave: 4
 blocked_by: [10-reconcile-w3]
-sessions: []
+sessions: [24]
 ---
 
 ## Goal
@@ -22,3 +22,4 @@ workspace standards (`CONTEXT.md` coding principles,
 - [ ] `scripts/run-checks.sh` passes in full; sync round trip leaves an empty diff
 
 ## Log
+- s24 · started, tier standard

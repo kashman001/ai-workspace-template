@@ -59,6 +59,10 @@ If a mentioned workflow (like `to-spec` or `to-tickets`) isn't installed on
 your machine, the fallback is always the same: describe the outcome to the
 agent in plain language — it can do the work without the named skill.
 
+Not sure how much process a change needs? A small fix needs little and a big
+or risky one needs more; `docs/stakes-to-ceremony.md` lays out which skills
+fit which size of change.
+
 ## Glossary — the six terms you actually need
 
 - **Work item** — one tracked effort, living in `work/<name>/`.

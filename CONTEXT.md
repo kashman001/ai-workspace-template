@@ -113,6 +113,7 @@ for picking a skill, not for running it. *(anyone)* marks skills safe for
 non-engineers to drive (`docs/for-non-engineers.md`). Adding a capability:
 `docs/workspace-structure.md` → "Authoring a Team Capability".
 
+- **Stakes first** — `docs/stakes-to-ceremony.md` maps a change's size and risk to the skills it deserves; read it before picking a skill below.
 - **checkpoint** — session-boundary wrap-up and catch-up prompt (the stop door). `/checkpoint`
 - **session-rollover** — pruned handoff to a fresh session at budget WARN/STOP; takes precedence over checkpoint then. `/session-rollover`
 - **create-work-item** *(anyone)* — scaffold `work/<project>/` for multi-session work. `/create-work-item <name>`

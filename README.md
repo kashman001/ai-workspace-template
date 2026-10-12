@@ -22,6 +22,9 @@ Gemini.
 every workspace doc by need (using the workspace · developing your product ·
 developing the template).
 
+**Which skills does a change need?** A one-line fix and a multi-session
+feature deserve different ceremony: [`docs/stakes-to-ceremony.md`](docs/stakes-to-ceremony.md).
+
 **Want to see how the workspace is meant to be used?** Two docs:
 [`docs/zoom-model.md`](docs/zoom-model.md) — how product knowledge is layered
 so agents load only what a task needs — and the scenario catalog
