@@ -778,5 +778,47 @@ assert_contains "H3a: auto-detects copilot-cli" "$out" "runtime=copilot-cli"
 assert_contains "H3b: binds its own session-state transcript" "$out" "artifact=$H2T"
 rm -rf "$HOME/.copilot"
 
+echo "E1: codex registers from its hooks — id + transcript from the payload, no CODEX_* env"
+# Hook processes get no CODEX_* env (probes/codex-cli.md, codex-vscode.md): the
+# SessionStart payload alone must name the record and its artifact.
+cp -R "$SRC_ROOT/scripts/hooks" "$TMP/scripts/"
+CXH="$TMP/scripts/hooks/context-budget-codex-hook.sh"
+CX="$HOME/.codex/sessions/2026/10/12"; mkdir -p "$CX"
+ESID="01a131b8-7e41-7cd0-823b-e2e99d02c54d"
+ETX="$CX/rollout-2026-10-12T15-05-36-$ESID.jsonl"
+printf '{"payload":{"cwd":"%s"}}\n{"last_token_usage":{"total_tokens":10}}\n' "$TMP" > "$ETX"
+epay() {  # $1=event
+  jq -cn --arg s "$ESID" --arg t "$ETX" --arg e "$1" --arg c "$TMP" \
+    '{session_id:$s, transcript_path:$t, cwd:$c, hook_event_name:$e, source:"startup"}'
+}
+out=$(epay SessionStart | noid WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 "$CXH" SessionStart 2>/dev/null)
+if [ -f "$SESS/codex-$ESID.json" ]; then
+  ok "E1a: SessionStart wrote codex-<sid>.json"
+  assert_eq "E1b: its artifact is the payload's transcript_path" "$(jq -r .artifact "$SESS/codex-$ESID.json")" "$ETX"
+  assert_eq "E1c: its session_id is the payload's" "$(jq -r .session_id "$SESS/codex-$ESID.json")" "$ESID"
+else
+  bad "E1a: SessionStart wrote no codex-$ESID.json"
+fi
+assert_eq "E1d: SessionStart stdout stays silent" "$out" ""
+grep -A3 '^\[\[hooks.SessionStart\]\]' "$SRC_ROOT/.codex/config.toml" \
+  | grep -q 'context-budget-codex-hook.sh SessionStart' \
+  && ok "E1e: .codex/config.toml wires SessionStart to the codex hook" \
+  || bad "E1e: .codex/config.toml has no SessionStart -> context-budget-codex-hook.sh SessionStart"
+echo "E2: a UserPromptSubmit payload heals a missing codex registration"
+rm -f "$SESS/codex-$ESID.json"
+epay UserPromptSubmit | noid WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 "$CXH" >/dev/null 2>&1
+if [ -f "$SESS/codex-$ESID.json" ]; then
+  assert_eq "E2a: UserPromptSubmit re-registered it at the payload's transcript" \
+    "$(jq -r .artifact "$SESS/codex-$ESID.json")" "$ETX"
+else
+  bad "E2a: UserPromptSubmit did not heal the missing codex-$ESID.json"
+fi
+echo "E3: the payload's id outranks a CODEX_THREAD_ID inherited by the hook process"
+rm -f "$SESS"/codex-*.json
+epay SessionStart | noid CODEX_THREAD_ID=inherited-outer WORKSPACE_ROOT="$TMP" "$CXH" SessionStart >/dev/null 2>&1
+assert_eq "E3a: registered under the payload's session_id only" \
+  "$(cd "$SESS" && ls codex-*.json 2>/dev/null)" "codex-$ESID.json"
+rm -rf "$HOME/.codex"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -6,6 +6,15 @@ type = "command"
 command = "scripts/hooks/context-budget-codex-hook.sh"
 timeout = 30
 
+# Registry record at session start: id + transcript from the payload (hook
+# processes get no CODEX_* env). Seen firing in codex-cli 0.153.4, rollout
+# already on disk (work/runtime-session-identity/probes/codex-cli.md).
+[[hooks.SessionStart]]
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "scripts/hooks/context-budget-codex-hook.sh SessionStart"
+timeout = 30
+
 # Session-loop supervisor exit. Verdict for codex 0.149.0 `Stop`: FIRES, observed
 # live on 2026-08-26 (probe log never committed; verdict folded into
 # docs/superpowers/specs/2026-08-21-session-loop-design.md) — the hook
