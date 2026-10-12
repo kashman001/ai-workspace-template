@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L84</span> Template and project ADRs share one number sequence in <code>docs/adr/</code>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/adr/, docs/template-adr/, skills/decision-log</span></h3>
+    <p><span class="k">Evidence</span> &mdash; A downstream workspace (token-factory) syncing <code>d7cf6c4..ccb4ed3</code> found its own ADR-0010..0015 colliding with the template's ADR-0010..0014: both write <code>docs/adr/00NN-*.md</code> from one sequence, so every sync after either side mints an ADR is a filename and number clash.</p>
+    <p><span class="k">Impact</span> &mdash; Instances must renumber on every sync, breaking every cross-reference to the renumbered records, or stop taking template ADRs.</p>
+    <p><span class="k">Fix</span> &mdash; Split the namespace: template machinery ADRs move to <code>docs/template-adr/</code> as <code>TADR-NNNN</code>; <code>docs/adr/</code> belongs to the project, with an empty index. An instance never mints a TADR (it would collide with the template's next one); it keeps a Tier-2 note marked <code>Promote?: upstream</code> and proposes the TADR here.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-12 (branch <code>docs/template-adr-namespace</code>). <code>git mv</code> of 0001..0014 + README to <code>docs/template-adr/</code> plus a TADR <code>0000-template.md</code>; <code>ADR-00NN</code> &rarr; <code>TADR-00NN</code> and paths re-linked in 40 files (vendored example numbers and <code>test-check-drift.sh</code> fixtures excluded); <code>decision-log</code> picks the namespace by subject and gains <code>Promote?: upstream</code>; <code>check-drift.sh</code> warns for both ADR dirs; <code>docs/runbooks/adr-namespace-migration.md</code> for existing instances.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L83</span> Anti-rationalization tables for the workspace skills where agents cut corners
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
     <p><span class="k">Evidence</span> &mdash; The ledgers and this archive record repeated shortcuts: ledger blocks written without the header grep (session 15 corrupted two), hand-offs skipped at WARN, decisions left in chat, reconcile nodes closed on a subagent's word. The vendored Addy Osmani skills carry a &ldquo;Common Rationalizations&rdquo; table (excuse &rarr; reality) for exactly this; ours carry none.</p>
