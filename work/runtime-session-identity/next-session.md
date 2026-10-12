@@ -59,8 +59,8 @@ run the Antigravity IDE/app and Codex desktop app probes now
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-session-identity-fixes, open, wave 1 of 5, done 1/16, doing 0, todo 15, blocked 0, dropped 0, sessions 1.
-Frontier: 02-reconcile-w1. Remaining: 15 of 16 — wave 1: 02-reconcile-w1 todo.
+Position: plan 01-session-identity-fixes, open, wave 2 of 5, done 2/16, doing 0, todo 14, blocked 0, dropped 0, sessions 1.
+Frontier: 03-codex-hook-registration, 04-copilot-cli-hook-registration, 05-copilot-vscode-cli-runtime, 06-one-hook-per-copilot-event, 07-antigravity-runtime. Remaining: 14 of 16 — wave 2: 03-codex-hook-registration todo, 04-copilot-cli-hook-registration todo, 05-copilot-vscode-cli-runtime todo, 06-one-hook-per-copilot-event todo, 07-antigravity-runtime todo, 08-reconcile-w2 todo.
 <!-- plan:end position -->
 
 ## State snapshot

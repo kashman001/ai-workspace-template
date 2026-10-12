@@ -15,6 +15,8 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 1–8). Base SHA `bc1cce4`.
 
 ## Not yet specified
+- s5 · detect_runtime now returns antigravity on ANTIGRAVITY_CONVERSATION_ID, ahead of CLAUDECODE; node 07 adds the adapter (discover/measure/session_id_for). Until then such a session dies with 'no session artifact'.
+- s5 · detect_runtime order is now ANTIGRAVITY > COPILOT_AGENT_SESSION_ID > CODEX_THREAD_ID > CLAUDECODE > CODEX_SANDBOX/HOME > OPENCODE > VSCODE_TARGET_SESSION_LOG. Nodes 05 and 06 should check that a Copilot CLI run inside a VS Code terminal still resolves as intended.
 
 ## Out of scope
 
@@ -28,7 +30,7 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
 | 1 | 01-refuse-instead-of-guess | work | standard | done |
-| 1 | 02-reconcile-w1 | reconcile | frontier | todo |
+| 1 | 02-reconcile-w1 | reconcile | frontier | done |
 | 2 | 03-codex-hook-registration | work | standard | todo |
 | 2 | 04-copilot-cli-hook-registration | work | standard | todo |
 | 2 | 05-copilot-vscode-cli-runtime | work | standard | todo |
@@ -43,5 +45,5 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 4 | 14-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 15-review | work | standard | todo |
 | 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 02-reconcile-w1. Remaining: 15 of 16. Sessions used: 1.
+Frontier: 03-codex-hook-registration, 04-copilot-cli-hook-registration, 05-copilot-vscode-cli-runtime, 06-one-hook-per-copilot-event, 07-antigravity-runtime. Remaining: 14 of 16. Sessions used: 1.
 <!-- plan:end board -->
