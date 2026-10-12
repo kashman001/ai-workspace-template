@@ -194,6 +194,13 @@ copilot_vscode_discover() {
   # sibling session whose log happened to flush later (the silent-freeze bug),
   # or — at session start, before VS Code has flushed our own token file — a
   # *larger* sibling, producing a false STOP (fresh-session false-STOP bug).
+  # Agent mode on the Copilot CLI runtime (probed s5) exports only
+  # COPILOT_AGENT_SESSION_ID; its transcript is the CLI's session-state file.
+  # Authoritative id: return it existing or not, as below.
+  if [ -n "${COPILOT_AGENT_SESSION_ID:-}" ]; then
+    echo "${COPILOT_HOME:-$HOME/.copilot}/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl"
+    return 0
+  fi
   local t="${VSCODE_TARGET_SESSION_LOG:-}" sid=""
   if [ -n "$t" ]; then
     [ -f "$t" ] && { echo "$t"; return 0; }
@@ -434,8 +441,9 @@ session_id_for() {
     codex)   [ -n "${CODEX_THREAD_ID:-}" ] && { echo "$CODEX_THREAD_ID"; return 0; } ;;
     copilot-cli) [ -n "${COPILOT_AGENT_SESSION_ID:-}" ] && { echo "$COPILOT_AGENT_SESSION_ID"; return 0; } ;;
     copilot-vscode)
+      [ -n "${COPILOT_AGENT_SESSION_ID:-}" ] && { echo "$COPILOT_AGENT_SESSION_ID"; return 0; }
       if [ -n "${VSCODE_TARGET_SESSION_LOG:-}" ]; then
-        b="$(basename "$VSCODE_TARGET_SESSION_LOG")"; echo "${b%.jsonl}"; return 0
+        session_id_for_artifact_only copilot-vscode "$VSCODE_TARGET_SESSION_LOG"; return 0
       fi ;;
     gemini)  echo "workspace"; return 0 ;;  # no per-session identity exists (see docs)
     opencode) [ -n "${OPENCODE_SESSION_ID:-}" ] && { echo "$OPENCODE_SESSION_ID"; return 0; } ;;
@@ -455,7 +463,11 @@ session_id_for_artifact_only() {
     claude)         echo "${b%.jsonl}" ;;
     codex)          b="${b%.jsonl}"; echo "${b#rollout-????-??-??T??-??-??-}" ;;
     copilot-cli)    basename "$(dirname "$af")" ;;
-    copilot-vscode) b="${b%.jsonl}"; echo "${b%.json}" ;;
+    copilot-vscode)
+      case "$af" in  # Copilot CLI runtime: the id is the session-state dir
+        */session-state/*/events.jsonl) basename "$(dirname "$af")" ;;
+        *) b="${b%.jsonl}"; echo "${b%.json}" ;;
+      esac ;;
     antigravity)    basename "$(dirname "$(dirname "$(dirname "$af")")")" ;;  # brain/<id>/.system_generated/logs/
     *) return 1 ;;
   esac
