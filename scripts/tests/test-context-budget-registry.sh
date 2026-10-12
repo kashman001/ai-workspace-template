@@ -708,5 +708,75 @@ out=$(noid CLAUDECODE=1 ANTIGRAVITY_CONVERSATION_ID=nested-ag "$CB" check 2>&1)
 assert_contains "D2c: CLAUDECODE + ANTIGRAVITY_CONVERSATION_ID detects antigravity" "$out" "runtime=antigravity"
 rm -rf "$HOME/.codex" "$TMP/home/.copilot"
 
+echo "F1: Copilot CLI sessionStart registers its own transcript under COPILOT_HOME (hook-side)"
+# Hooks never see COPILOT_AGENT_SESSION_ID (probes/copilot-cli.md Q1): identity
+# comes from the payload sessionId, the transcript from COPILOT_HOME.
+mkdir -p "$TMP/scripts/hooks"
+cp "$SRC_ROOT"/scripts/hooks/context-budget-* "$TMP/scripts/hooks/"
+FCH="$TMP/home/f1-cph"
+fhook() {  # $1 = sid; the CLI's sessionStart payload, run as the hook process sees it
+  printf '{"sessionId":"%s","timestamp":1791835552928,"cwd":"%s","source":"new"}' "$1" "$TMP" \
+    | env -u COPILOT_AGENT_SESSION_ID -u COPILOT_STATE_DIR -u CLAUDE_CODE_SESSION_ID \
+        COPILOT_HOME="$FCH" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 \
+        "$TMP/scripts/hooks/context-budget-copilot-hook.sh" sessionStart 2>"$TMP/f1.err"
+}
+out=$(fhook f1-fresh); rc=$?
+assert_eq "F1a: fresh session (no events.jsonl yet) registers the COPILOT_HOME path" \
+  "$(jq -r '.artifact // empty' "$SESS/copilot-cli-f1-fresh.json" 2>/dev/null)" \
+  "$FCH/session-state/f1-fresh/events.jsonl"
+assert_eq "F1b: fresh session — hook exits 0 and stays silent" "$rc:$out" "0:"
+mkdir -p "$FCH/session-state/f1-live"
+printf '{"type":"assistant.usage","data":{"inputTokens":160000}}\n' > "$FCH/session-state/f1-live/events.jsonl"
+out=$(fhook f1-live)
+assert_eq "F1c: existing transcript — registered by sessionId" \
+  "$(jq -r '.artifact // empty' "$SESS/copilot-cli-f1-live.json" 2>/dev/null)" \
+  "$FCH/session-state/f1-live/events.jsonl"
+assert_contains "F1d: the check hook measures the COPILOT_HOME transcript (STOP speaks)" "$out" "additionalContext"
+
+echo "H1: copilot-vscode on the Copilot CLI runtime — the hook binds session-state/<sid>/events.jsonl (node 8a)"
+# Real dispatcher + real context-budget.sh: the hook's register=hook call is
+# what writes the record, so the record's artifact is what the hook derived.
+mkdir -p "$TMP/scripts/hooks"
+cp "$SRC_ROOT"/scripts/hooks/context-budget-* "$TMP/scripts/hooks/"
+vshook() {  # $1=event, payload on stdin
+  noid env -u COPILOT_HOME WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 \
+    "$TMP/scripts/hooks/context-budget-copilot-vscode-hook.sh" "$1" >/dev/null 2>&1
+}
+H1T="$HOME/.copilot/session-state/vs-h1/events.jsonl"
+mkdir -p "$(dirname "$H1T")"; printf '{"type":"session.start"}\n' > "$H1T"
+jq -nc --arg t "$H1T" '{session_id:"vs-h1",transcript_path:$t,stop_reason:"end_turn"}' | vshook Stop
+assert_eq "H1a: Stop payload registers the existing events.jsonl" \
+  "$(jq -r .artifact "$SESS/copilot-vscode-vs-h1.json" 2>/dev/null)" "$H1T"
+[ ! -e "$SESS/copilot-vscode-events.json" ] && ok "H1b: no record keyed on the transcript basename" \
+  || bad "H1b: a copilot-vscode-events record was written"
+[ -f "$TMP/.context-budget/hook-copilot-vscode-vs-h1.status" ] && ok "H1c: the hook measured it (not silent)" \
+  || bad "H1c: the hook never measured the session-state transcript"
+WSH="$HOME/Library/Application Support/Code/User/workspaceStorage/hh"
+mkdir -p "$WSH/GitHub.copilot-chat/transcripts" "$WSH/chatSessions"
+touch "$WSH/GitHub.copilot-chat/transcripts/vs-h1d.jsonl"
+printf '{"promptTokens":10}\n' > "$WSH/chatSessions/vs-h1d.jsonl"
+jq -nc --arg t "$WSH/GitHub.copilot-chat/transcripts/vs-h1d.jsonl" '{session_id:"vs-h1d",transcript_path:$t}' | vshook Stop
+assert_eq "H1d: an old workspaceStorage transcript still derives chatSessions/<sid>.jsonl" \
+  "$(jq -r .artifact "$SESS/copilot-vscode-vs-h1d.json" 2>/dev/null)" "$WSH/chatSessions/vs-h1d.jsonl"
+rm -rf "$HOME/Library"
+
+echo "H2: agent register --runtime copilot-vscode with only COPILOT_AGENT_SESSION_ID binds its events.jsonl"
+H2T="$HOME/.copilot/session-state/vs-h2/events.jsonl"
+mkdir -p "$(dirname "$H2T")"; printf '{"type":"session.start"}\n' > "$H2T"
+noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-h2 AI_AGENT=github_copilot_vscode_agent \
+  "$CB" register --runtime copilot-vscode --quiet >/dev/null 2>&1; rc=$?
+assert_eq "H2a: register succeeds" "$rc" "0"
+assert_eq "H2b: the record is keyed on the env id and binds session-state/<sid>/events.jsonl" \
+  "$(jq -r .artifact "$SESS/copilot-vscode-vs-h2.json" 2>/dev/null)" "$H2T"
+
+echo "H3: Copilot CLI run inside a VS Code terminal resolves as copilot-cli on its own session"
+# A Copilot-chat-opened terminal may leak VSCODE_TARGET_SESSION_LOG into a CLI
+# launched from it; COPILOT_AGENT_SESSION_ID must win (detect_runtime order, s5).
+out=$(noid env -u COPILOT_HOME TERM_PROGRAM=vscode COPILOT_AGENT_SESSION_ID=vs-h2 \
+  VSCODE_TARGET_SESSION_LOG="$TMP/elsewhere/debug-logs/foreign-sid" "$CB" check 2>&1)
+assert_contains "H3a: auto-detects copilot-cli" "$out" "runtime=copilot-cli"
+assert_contains "H3b: binds its own session-state transcript" "$out" "artifact=$H2T"
+rm -rf "$HOME/.copilot"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

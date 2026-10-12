@@ -112,13 +112,18 @@ case "$tx_src" in
       case "${transcript##*/}" in "$sid.jsonl") : ;; *) key="$sid-sidechain" ;; esac ;;
     esac ;;
   copilot-state)
-    transcript="${COPILOT_STATE_DIR:-$HOME/.copilot/session-state}/$sid/events.jsonl" ;;
+    transcript="${COPILOT_STATE_DIR:-${COPILOT_HOME:-$HOME/.copilot}/session-state}/$sid/events.jsonl" ;;
   chat-sessions)
     # Token counts live beside the transcript: …/GitHub.copilot-chat/transcripts/
     # <sid>.jsonl -> ../../../chatSessions/<sid>.jsonl (verified live, session 28).
     t=$(printf '%s' "$input" | jq -r '.transcript_path // empty')
     [ -n "$t" ] || silent
-    transcript="$(dirname "$(dirname "$(dirname "$t")")")/chatSessions/$sid.jsonl" ;;
+    # Builds on the Copilot CLI runtime send the CLI transcript itself,
+    # ~/.copilot/session-state/<sid>/events.jsonl (probed s5): use it as is.
+    case "$t" in
+      */session-state/*/events.jsonl) transcript="$t" ;;
+      *) transcript="$(dirname "$(dirname "$(dirname "$t")")")/chatSessions/$sid.jsonl" ;;
+    esac ;;
 esac
 case "$pin" in
   -|'') ;;
