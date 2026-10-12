@@ -61,8 +61,8 @@ are the spec.
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-session-identity-fixes, open, wave 4 of 5, done 12/17, doing 0, todo 4, blocked 0, dropped 1, sessions 3.
-Frontier: 13-docs. Remaining: 4 of 17 — wave 4: 13-docs todo, 14-reconcile-w4 todo.
+Position: plan 01-session-identity-fixes, open, wave 5 of 5, done 14/17, doing 0, todo 2, blocked 0, dropped 1, sessions 3.
+Frontier: 15-review. Remaining: 2 of 17 — wave 5: 15-review todo, 16-reconcile-w5 todo.
 <!-- plan:end position -->
 
 ## State snapshot

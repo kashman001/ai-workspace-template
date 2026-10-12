@@ -51,9 +51,9 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 3 | 11-copilot-vscode-measure-inputtokens | work | standard | done |
 | 3 | 11-remaining-surface-probes | hitl | frontier | dropped |
 | 3 | 12-reconcile-w3 | reconcile | frontier | done |
-| 4 | 13-docs | work | standard | todo |
-| 4 | 14-reconcile-w4 | reconcile | frontier | todo |
+| 4 | 13-docs | work | standard | done |
+| 4 | 14-reconcile-w4 | reconcile | frontier | done |
 | 5 | 15-review | work | standard | todo |
 | 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 13-docs. Remaining: 4 of 17. Sessions used: 3.
+Frontier: 15-review. Remaining: 2 of 17. Sessions used: 3.
 <!-- plan:end board -->
