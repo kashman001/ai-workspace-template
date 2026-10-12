@@ -1,11 +1,11 @@
 ---
 id: 13-docs
 title: Docs: hook trust, support matrix, adapter table (nodes 7 + 8d)
-status: todo
+status: doing
 kind: work
 wave: 4
 blocked_by: [12-reconcile-w3]
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -24,3 +24,4 @@ Antigravity), and the adapter table.
 - [ ] Doc-link checks pass
 
 ## Log
+- s7 · started, tier standard
