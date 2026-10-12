@@ -1,0 +1,22 @@
+docs/template-workspace-backlog.html
+  s_2875b0d25d6bc1::t_c08ac3f713c408 72,79,314
+docs/template-workspace-backlog-archive.html
+  s_2875b0d25d6bc1::t_c08ac3f713c408 1045-1052
+  s_2875b0d25d6bc1::t_16abd1b4e7c18a 1044
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b85ecdffdba440e02c8711ec6389d5584524b6f7",
+  "prompts": {},
+  "sessions": {
+    "s_2875b0d25d6bc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bf887261-38a4-47de-b6e6-5eb526393114",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
