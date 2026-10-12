@@ -54,6 +54,18 @@ case "$sid_src" in
 esac
 [ -n "$sid" ] || silent
 
+# One hook config acts per Copilot event. Copilot (CLI, and VS Code agent mode on
+# the CLI runtime) fires .github/hooks/context-budget.json, the VS Code file and
+# .claude/settings.json for the same turn. The CLI config (row `copilot`) owns it:
+# a payload whose transcript is a Copilot session-state file is refused as
+# `claude`, and as `copilot-vscode` while the CLI config is installed.
+case "$rt" in claude|copilot-vscode)
+  if printf '%s' "$input" | jq -e '(.transcript_path // "") | test("/session-state/[^/]+/events\\.jsonl$")' >/dev/null 2>&1; then
+    [ "$rt" = claude ] && silent
+    [ -f "$WORKSPACE_ROOT/.github/hooks/context-budget.json" ] && silent
+  fi ;;
+esac
+
 case "$ev" in
   "$check_ev") mode=check ;;
   "$end_ev")   mode=end ;;

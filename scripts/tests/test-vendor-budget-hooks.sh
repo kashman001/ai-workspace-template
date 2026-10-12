@@ -515,4 +515,84 @@ out=$(env -i PATH="$NOJQ" HOME="$HOME" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 FAKE_
 assert_empty "J3a: opencode stdout silent (nothing injected)" "$out"
 assert_contains "J3b: jq_missing on stderr" "$(cat "$TMP/j.err")" "reason=jq_missing"
 
+echo "K: one hook config acts per Copilot event (runtime-session-identity node 06)"
+# One Copilot turn (CLI, or VS Code agent mode on the CLI runtime) fires three
+# configs with one session id: .github/hooks/context-budget.json (camelCase),
+# .github/hooks/context-budget-vscode.json and .claude/settings.json (both the
+# snake_case payload). Only the CLI config may act (probes/copilot-cli.md,
+# probes/copilot-vscode.md). Own workspace: a stub measurer that logs every call.
+KT="$(mktemp -d)"; mkdir -p "$KT/scripts/hooks" "$KT/.context-budget" "$KT/.github/hooks" "$KT/.claude" "$KT/work/p"
+cp "$SRC_ROOT"/scripts/hooks/context-budget-* "$KT/scripts/hooks/"
+cp "$SRC_ROOT"/.github/hooks/*.json "$KT/.github/hooks/"
+cp "$SRC_ROOT/.claude/settings.json" "$KT/.claude/"
+cat > "$KT/scripts/context-budget.sh" <<KSTUB
+#!/usr/bin/env bash
+echo "\$*" >> "$KT/calls.log"
+[ "\${1:-}" = "check" ] || exit 0
+echo "runtime=stub method=exact tokens=1000 threshold=150000 warn=120000 pct=1 status=OK artifact=/dev/null"
+KSTUB
+chmod +x "$KT/scripts/context-budget.sh"
+ksid="cp-k1"; ktx="$KT/cphome/session-state/$ksid/events.jsonl"
+mkdir -p "$(dirname "$ktx")"; : > "$ktx"
+# Whatever the copilot-vscode chat-sessions derivation resolves to exists, so a
+# duplicate that is not refused measures and stamps.
+mkdir -p "$KT/cphome/chatSessions"; : > "$KT/cphome/chatSessions/$ksid.jsonl"
+kstop=$(jq -cn --arg s "$ksid" --arg t "$ktx" '{hook_event_name:"Stop",session_id:$s,cwd:"/x",transcript_path:$t,stop_reason:"end_turn",stop_hook_active:false}')
+kastop=$(jq -cn --arg s "$ksid" --arg t "$ktx" '{sessionId:$s,cwd:"/x",transcriptPath:$t,stopReason:"end_turn",stop_hook_active:false}')
+kstart=$(jq -cn --arg s "$ksid" '{hook_event_name:"SessionStart",session_id:$s,cwd:"/x",source:"new",initial_prompt:"hi"}')
+kreset() { rm -f "$KT/.context-budget"/hook-* "$KT/calls.log" "$KT/k.err"; }
+# kagent <stdin> <cmd...>: run a hook the way a vendor does, as a child of an
+# "agent" that outlives it, so a SIGTERM to $PPID hits the agent, not the suite.
+kagent() {
+  local in="$1"; shift
+  ( printf '%s' "$in" | env -u TF_SESSION_LOOP_PROJECT WORKSPACE_ROOT="$KT" CHECK_EVERY=0 \
+      CLAUDE_PROJECT_DIR="$KT" COPILOT_STATE_DIR="$KT/cphome/session-state" \
+      bash -c '"$@" 2>>"'"$KT"'/k.err"; sleep 0.5; echo "STILL ALIVE" >>"'"$KT"'/k.err"' agent "$@" \
+      >/dev/null 2>&1 ) 2>/dev/null
+}
+jq -n --arg by "$ksid" '{schema:1, seq:3, staged:{successor:3, command:"true", by:$by}}' > "$KT/work/p/session-state.json"
+kreset
+kagent "$kstop" env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p "$KT/scripts/hooks/context-budget-stop-hook.sh" claude
+case "$(cat "$KT/k.err")" in *"terminating claude session"*) bad "K1a: claude Stop shim acted on a Copilot payload (SIGTERM as claude)" ;;
+  *) ok "K1a: claude Stop shim refuses a Copilot payload, even supervised and staged" ;; esac
+assert_contains "K1b: the agent survived the claude shim" "$(cat "$KT/k.err")" "STILL ALIVE"
+assert_empty "K1c: no claude stamp" "$(ls "$KT/.context-budget" | grep '^hook-claude-' || true)"
+kreset
+kagent "$kstart" env CLAUDE_CODE_SESSION_ID=leaked-parent CLAUDECODE=1 VSCODE_TARGET_SESSION_LOG="$KT/nope.log" \
+  bash -c "$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K1d: claude SessionStart writes no record for a Copilot payload (no register call, leaked Claude env)" \
+  "$(grep register "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg t "$KT/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,source:"startup"}')" \
+  bash -c "$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_contains "K1e: control: Claude's own SessionStart still registers" "$(cat "$KT/calls.log" 2>/dev/null)" "register --runtime claude --transcript $KT/claude-own.jsonl"
+jq -n '{schema:1, seq:3, staged:{successor:3, command:"true", by:"claude-own"}}' > "$KT/work/p/session-state.json"
+kreset
+kagent "$(jq -cn --arg t "$HOME/.claude/projects/x/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,stop_hook_active:false}')" \
+  env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p "$KT/scripts/hooks/context-budget-stop-hook.sh" claude
+assert_contains "K1f: control: Claude's own Stop still runs the turn-end exit" "$(cat "$KT/k.err")" "terminating claude session claude-own"
+
+kreset
+kagent "$kastop"  "$KT/scripts/hooks/context-budget-copilot-hook.sh" agentStop
+kagent "$kstop"   "$KT/scripts/hooks/context-budget-copilot-vscode-hook.sh" Stop
+kagent "$kstop"   "$KT/scripts/hooks/context-budget-stop-hook.sh" claude
+assert_eq "K2a: one Copilot turn through all three configs leaves exactly one stamp" \
+  "$(ls "$KT/.context-budget" | grep -c '\.stamp$' | tr -d ' ')" "1"
+assert_eq "K2b: and it is the CLI config's (copilot-cli)" "$(ls "$KT/.context-budget" | grep '\.stamp$')" "hook-copilot-cli-$ksid.stamp"
+assert_empty "K2c: no copilot-vscode registration for a CLI-runtime payload" \
+  "$(grep 'register --runtime copilot-vscode' "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$kstart"  "$KT/scripts/hooks/context-budget-copilot-vscode-hook.sh" SessionStart
+kagent "$(jq -cn --arg s "$ksid" '{sessionId:$s,cwd:"/x",source:"new",initialPrompt:"hi"}')" \
+  "$KT/scripts/hooks/context-budget-copilot-hook.sh" sessionStart
+assert_eq "K2d: the session-start trio leaves at most the CLI config's stamp" \
+  "$(ls "$KT/.context-budget" | grep '\.stamp$' | grep -v "^hook-copilot-cli-$ksid.stamp$" || true)" ""
+# The dedup holds only while the CLI config is installed: a workspace that keeps
+# just the VS Code file still measures a CLI-runtime turn through it.
+rm "$KT/.github/hooks/context-budget.json"; kreset
+kagent "$kstop" "$KT/scripts/hooks/context-budget-copilot-vscode-hook.sh" Stop
+assert_eq "K2e: without the CLI config, copilot-vscode still acts" \
+  "$(ls "$KT/.context-budget" | grep -c "^hook-copilot-vscode-$ksid.stamp$" | tr -d ' ')" "1"
+rm -rf "$KT"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]
