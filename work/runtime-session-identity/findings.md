@@ -1,16 +1,16 @@
 # Findings and draft plan: runtime session identity
 
-Evidence: `probes/<surface>.md`. CLI probes ran 2026-10-12 (session 1). The
+Evidence: `probes/<surface>.md`. CLI probes ran 2026-10-12 (sessions 2 and 3). The
 IDE probes are pending (`probes/user-checklist.md`).
 
 ## Where we stand
 
-| | Codex CLI 0.153.4 | Copilot CLI 1.0.78 | Gemini CLI 0.46.0 |
-|---|---|---|---|
-| Q1: id env var in the agent's shell | YES (`CODEX_THREAD_ID`, `CODEX_SESSION_ID`) | YES (`COPILOT_AGENT_SESSION_ID`) | NO (only `GEMINI_CLI=1`); hooks get `GEMINI_SESSION_ID` |
-| Q2: hooks fire, payload has the id and transcript | YES once trusted; untrusted = skipped silently. A SessionStart event exists, and its payload has `session_id` + `transcript_path` | YES once trusted. `sessionStart` has `sessionId`; `transcriptPath` only on `agentStop` (path derivable from the id) | Code says YES (SessionStart/SessionEnd, `session_id` + `transcript_path`); not seen live (no auth) |
-| Q3: `register` binds its own transcript | YES when the var is set | YES when the var is set | NO: `no session artifact found`; the `logs.json` fallback is out of date for 0.46 |
-| Q4: two sessions at once, var unset | **NO: each bound the other's transcript** | **NO: each bound the other's transcript** | Blocked live; telemetry carries `session.id`, so it is separable |
+| | Codex CLI 0.153.4 | Copilot CLI 1.0.78 | Gemini CLI 0.46.0 | Antigravity CLI 1.3.3 |
+|---|---|---|---|---|
+| Q1: id env var in the agent's shell | YES (`CODEX_THREAD_ID`, `CODEX_SESSION_ID`) | YES (`COPILOT_AGENT_SESSION_ID`) | NO (only `GEMINI_CLI=1`); hooks get `GEMINI_SESSION_ID` | Blocked (headless mode auto-denies `run_command`); hook processes get `ANTIGRAVITY_CONVERSATION_ID` |
+| Q2: hooks fire, payload has the id and transcript | YES once trusted; untrusted = skipped silently. A SessionStart event exists, and its payload has `session_id` + `transcript_path` | YES once trusted. `sessionStart` has `sessionId`; `transcriptPath` only on `agentStop` (path derivable from the id) | Code says YES (SessionStart/SessionEnd, `session_id` + `transcript_path`); not seen live (no auth) | YES, no trust step. `.agents/hooks.json`; every payload has `conversationId` + `transcriptPath`. No SessionStart: first `PreInvocation` (`invocationNum: 0`) |
+| Q3: `register` binds its own transcript | YES when the var is set | YES when the var is set | NO: `no session artifact found`; the `logs.json` fallback is out of date for 0.46 | **NO: auto-detects as gemini, binds a stale `logs.json`, reports OK** |
+| Q4: two sessions at once, var unset | **NO: each bound the other's transcript** | **NO: each bound the other's transcript** | Blocked live; telemetry carries `session.id`, so it is separable | YES on the hook side (each payload carried its own id); agent shell blocked |
 
 When the env var is set (the normal CLI case), Codex and Copilot bind
 correctly. The newest-file fallback is wrong whenever two sessions are live.
@@ -42,12 +42,18 @@ That makes it unsafe for any surface that doesn't set the var.
    pids to the registered `pid`, or have the hook's context message carry
    the id for `--session-id`. The choice depends on the IDE probes (one app
    server process can host several threads).
-6. **Gemini: give it a real session id.** `session_id_for gemini` uses the
-   payload/`GEMINI_SESSION_ID` id (not `workspace`); register from a
-   SessionStart hook; measure from the per-session
-   `~/.gemini/tmp/<project>/chats/session-*.jsonl` (`tokens.input`) or
-   filter `telemetry.log` by `session.id`; drop the reset-the-log and
-   estimate-when-concurrent workarounds. Needs `GEMINI_API_KEY` for a live check.
+6. **Antigravity: add as a runtime** (replaces the Gemini node; Gemini CLI is
+   superseded). New `antigravity` adapter row with `register=hook`; a committed
+   `.agents/hooks.json` whose `PreInvocation` handler registers on
+   `invocationNum == 0` from the payload's `conversationId` + `transcriptPath`;
+   discover/measure over
+   `~/.gemini/antigravity-cli/brain/<id>/.system_generated/logs/transcript_full.jsonl`
+   (last `PLANNER_RESPONSE` `input_tokens` + `cache_read_tokens`); a
+   `detect_runtime` case on `ANTIGRAVITY_CONVERSATION_ID` so auto-detect stops
+   mis-binding to gemini. Check: suite case where a `PreInvocation` payload writes
+   `antigravity-<id>.json` pointing at its transcript, and `register` with only
+   the env var set picks `antigravity`. Evidence: `probes/antigravity-cli.md`.
+   Open: whether the agent's shell gets the env var (Q1 blocked).
 7. **Docs.** Hook trust is required (Codex and Copilot skip untrusted hooks
    silently); update the support matrix and the adapter table in
    `docs/context-budget.md`.
@@ -58,6 +64,7 @@ can run in parallel. 5 follows the IDE probes. 7 closes.
 
 ## Cleanup owed
 
+- Antigravity probe leftovers: see `probes/antigravity-cli.md` → "Cleanup owed".
 - Scratch clones `ws-codex`, `ws-copilot`, `ws-gemini` and
   `codex-payloads/` are in this session's scratchpad (disposable).
 - About 8 probe rollouts in `~/.codex/sessions/2026/10/12/` (15:04–15:07);

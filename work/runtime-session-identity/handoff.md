@@ -6,6 +6,21 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 2026-10-12 (session 3: Antigravity CLI probe)
+
+Probed `agy` 1.3.3 in a scratch clone → `probes/antigravity-cli.md`. Hooks
+live in `.agents/hooks.json` (spec found embedded in the binary), fire with no
+trust step, and every payload carries `conversationId` + `transcriptPath`; hook
+processes also get `ANTIGRAVITY_CONVERSATION_ID`. No SessionStart event: the
+first `PreInvocation` (`invocationNum: 0`) stands in. Two concurrent runs each
+got their own id on the hook side. `register` auto-detects Antigravity as
+gemini and binds a stale `logs.json` while reporting OK. Q1 (agent's shell) is
+blocked: headless `agy` auto-denies `run_command`, hook `permissionOverrides`
+don't lift it, and the Claude Code classifier denied
+`--dangerously-skip-permissions`. Rewrote draft node 6 as "Antigravity: add as
+a runtime" and added the Antigravity column to `findings.md`. IDE probes still
+waiting on the user.
+
 # Session Handoff — 2026-10-12 (session 2: scaffolded; CLI probes done; draft plan)
 
 Scaffolded after a Q&A on how non-Claude runtimes identify sessions. Ran three

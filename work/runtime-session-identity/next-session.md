@@ -13,25 +13,27 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 **First actions:** `scripts/context-budget.sh register --project runtime-session-identity`, then:
 
-0. **Antigravity CLI probe** (agent, no human needed): item 2 below. Do it first.
-
-**No human in the loop:** do item 0 and item 2, commit, then stop with items 1 and 3 waiting on the user's IDE probes. Do not create the plan without the IDE results.
-
-The CLI probes are done; `findings.md` has the results table and a draft plan (nodes 1–8).
+All agent-only probes are done (Codex, Copilot, Antigravity CLIs); `findings.md`
+has the results table and draft plan nodes 1–8. Everything left needs the user.
 
 1. **IDE probes (user).** If the user says "IDE probes done", read
    `~/Developer/experiments/ws-identity-probe/probe-out/{env.log,hook-*.log}`
    and write `probes/codex-vscode.md` and `probes/copilot-vscode.md` in the
    Q1–Q4 format the CLI probe files use. Still open with the user: whether
-   to include the Codex desktop app (not installed).
-2. **Antigravity CLI probe (agent).** Antigravity replaces Gemini (user
-   decision). It has NO adapter row, hook wiring or measurer today: a new
-   runtime. First find out how `agy` works: hooks? a session-id env var?
-   where transcripts live (`~/.gemini/antigravity-cli/`)? Then run Q1–Q4 in a
-   scratch clone → `probes/antigravity-cli.md`. Draft-plan node 6 (Gemini)
-   becomes "Antigravity: add as a runtime".
+   to include the Codex desktop app (not installed), and how to probe the
+   Antigravity IDE + app (`probes/antigravity-ide.md`; no kit yet).
+2. **Antigravity Q1 (needs the user's OK).** Headless `agy` auto-denies
+   `run_command`, so whether the agent's shell gets `ANTIGRAVITY_CONVERSATION_ID`
+   is unmeasured. Ask the user to pick one: allow one
+   `agy -p … --dangerously-skip-permissions` run in a scratch clone (the
+   Claude Code classifier denied it without approval), a temporary
+   `command(sh .agents/probe.sh)` allow-rule in `~/.gemini/antigravity-cli/settings.json`,
+   or the user runs `agy` interactively. Recipe: `probes/antigravity-cli.md`.
 3. Turn `findings.md` → "Gaps" into the plan with `/plan` (skills/plans/SKILL.md),
-   adding the IDE-driven nodes (5 and 8).
+   adding the IDE-driven nodes (5 and 8). Do not create the plan without the
+   IDE results.
+
+**No human in the loop:** nothing left to do; stop and report.
 
 ## Constraints already decided (do not re-litigate)
 
