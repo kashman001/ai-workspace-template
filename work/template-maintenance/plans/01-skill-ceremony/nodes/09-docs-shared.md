@@ -1,11 +1,11 @@
 ---
 id: 09-docs-shared
 title: Shared docs (orchestrator): vendored-skills.md, workspace-structure.md, CONTEXT.md
-status: todo
+status: doing
 kind: work
 wave: 3
 blocked_by: [01-ceremony-guide, 06-apply-trigger-verdicts]
-sessions: []
+sessions: [24]
 ---
 
 ## Goal
@@ -22,3 +22,4 @@ lean pointer to the guide; stays under `CONTEXT_MAX_BYTES` (16000).
 - [ ] `skills/vendored-skills.md` classes match the directories (`workspace.patch` present ⇔ *(patched)*)
 
 ## Log
+- s24 · started, tier standard

@@ -2,12 +2,10 @@
 name: jev
 description: >-
   Ask Jev (TypeSafe's typed-question model) a Choice, Score, or Noul question
-  about some state through `scripts/jev.sh`, and get a typed answer with a
-  confidence instead of generated text. Use when a decision has closed
-  options, many items to judge, a safe fallback for uncertain answers, and
-  correctness confirmed elsewhere (routing, classification, ranking,
-  yes/no checks). Never for prose or extraction. Without a key
-  (`scripts/jev.sh --check` exits 3) do the work the current way.
+  through scripts/jev.sh and get a typed answer with a confidence. Use when a
+  decision has closed options, many items to judge, and a safe fallback
+  (routing, classification, ranking, yes/no checks); never for prose or
+  extraction.
 ---
 
 # jev — typed questions through the one CLI

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Session Rollover"
+  short_description: "Roll over to a fresh session at context WARN/STOP"
+policy:
+  allow_implicit_invocation: false

@@ -1,6 +1,7 @@
 ---
 name: checkpoint
-description: Use at a session boundary between major chunks of work to wrap up what shipped and prepare a clean hand-off into the next chunk — reconcile the backlog/issue tracker, project memory, and reference docs; write a hand-off doc; confirm clean branch state; and emit a catch-up prompt for the next (post-context-compaction) session. Trigger when finishing a work chunk, before compacting/clearing context, or when the user says "checkpoint".
+description: 'Wrap up a finished chunk of work: reconcile the backlog, memory and docs, write the hand-off, confirm a clean branch, and emit a catch-up prompt for the next session.'
+disable-model-invocation: true
 ---
 
 # checkpoint

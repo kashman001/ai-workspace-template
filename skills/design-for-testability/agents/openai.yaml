@@ -1,0 +1,5 @@
+interface:
+  display_name: "Design for Testability"
+  short_description: "Six testability questions before the code is written"
+policy:
+  allow_implicit_invocation: false

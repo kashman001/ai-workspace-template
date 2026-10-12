@@ -31,12 +31,12 @@ pushing `main`; a per-runtime skill registry.
 | 1 | 03-budget-check | work | standard | done |
 | 1 | 04-anti-rationalization | work | standard | done |
 | 1 | 05-reconcile-w1 | reconcile | frontier | done |
-| 2 | 06-apply-trigger-verdicts | work | standard | doing |
-| 2 | 07-reconcile-w2 | reconcile | frontier | todo |
-| 3 | 08-docs-worker | work | standard | todo |
-| 3 | 09-docs-shared | work | standard | todo |
+| 2 | 06-apply-trigger-verdicts | work | standard | done |
+| 2 | 07-reconcile-w2 | reconcile | frontier | done |
+| 3 | 08-docs-worker | work | standard | doing |
+| 3 | 09-docs-shared | work | standard | doing |
 | 3 | 10-reconcile-w3 | reconcile | frontier | todo |
 | 4 | 11-code-review-pass | work | standard | todo |
 | 4 | 12-reconcile-w4 | reconcile | frontier | todo |
-Frontier: none (06-apply-trigger-verdicts doing). Remaining: 7 of 12. Sessions used: 1.
+Frontier: none (08-docs-worker doing, 09-docs-shared doing). Remaining: 5 of 12. Sessions used: 1.
 <!-- plan:end board -->

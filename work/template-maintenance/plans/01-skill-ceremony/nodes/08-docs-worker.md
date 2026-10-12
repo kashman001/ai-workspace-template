@@ -1,11 +1,11 @@
 ---
 id: 08-docs-worker
 title: Docs: recommended-tooling, README, for-non-engineers, analysis addendum
-status: todo
+status: doing
 kind: work
 wave: 3
 blocked_by: [01-ceremony-guide, 06-apply-trigger-verdicts]
-sessions: []
+sessions: [24]
 ---
 
 ## Goal
@@ -28,3 +28,4 @@ edits only; do not touch `CONTEXT.md`, `skills/vendored-skills.md`,
 - [ ] `scripts/tests/test-doc-consistency.sh` passes
 
 ## Log
+- s24 · started, tier standard

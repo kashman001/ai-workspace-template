@@ -1,13 +1,10 @@
 ---
 name: design-for-testability
 description: >-
-  Advisory design-time interrogation: how will we test this, how does it fail,
-  what is observable when it does, and what is the cheapest check that proves it
-  works. Use alongside any design work — while grilling a plan (grill-with-docs /
-  grill-me), drafting a spec (to-spec) or an ADR, or before implement/tdd starts
-  on a non-trivial feature. Six questions, answers written down where the design
-  lives. Not a gate: it never blocks a design, it makes the testability bill
-  visible before the code is written.
+  Advisory six-question interrogation of a design: how will we test it, how
+  does it fail, what is observable, and what is the cheapest check that proves
+  it works. Answers land where the design lives; never a gate.
+disable-model-invocation: true
 allowed-tools:
   - Bash
   - Read

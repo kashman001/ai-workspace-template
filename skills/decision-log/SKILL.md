@@ -1,17 +1,11 @@
 ---
 name: decision-log
 description: >-
-  Capture the WHY behind a decision so it survives context compaction and is
-  recoverable later. Code records what exists, not how it got there — the reasoning,
-  the rejected alternatives, and the constraints evaporate unless written down at the
-  moment of deciding. Use this WHENEVER you pick one approach over a real alternative,
-  make a non-obvious tradeoff, or the user asks "why did we do it this way?" and the
-  answer isn't in the code. Three tiers by permanence: a commit trailer (always), a
-  cheap decision note in work/<proj>/decisions.md (for anything with a rejected
-  alternative), and — only for decisions with lasting weight — a promoted ADR under
-  docs/adr/. Trigger it even without the word "decision": "let's go with", "instead of",
-  "we could either… but", "the reason is", and any architecture/contract/convention
-  fork are all signals. Promotion of notes to ADRs happens here or at `checkpoint`.
+  Capture the why behind a decision (choice, rejected alternative, constraint)
+  as a commit trailer, a Tier-2 note in work/<project>/decisions.md, or a
+  promoted ADR. Use when you pick one approach over a real alternative or make
+  a non-obvious tradeoff, and when the user asks why something was done this
+  way.
 allowed-tools:
   - Bash
   - Read

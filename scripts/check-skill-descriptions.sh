@@ -15,9 +15,10 @@ cd "$ROOT" || exit 2
 # agents/openai.yaml); this bounds their sum. Over it, repair in this order:
 # make a procedure skill user-invoked (disable-model-invocation + openai.yaml
 # + a command), then tighten descriptions; raise this number only with the
-# reason stated in the commit. 10000 is interim: node 06 of plan
-# 01-skill-ceremony lowers it to 7500 once the trim lands.
-SKILL_DESC_MAX_BYTES="${SKILL_DESC_MAX_BYTES:-10000}"
+# reason stated in the commit. 7500 is a ratchet: the total after the trim
+# (7,303) rounded up to the next 500, so ~200 bytes of headroom make a new
+# model-invoked skill force a trim or a user-invoke swap.
+SKILL_DESC_MAX_BYTES="${SKILL_DESC_MAX_BYTES:-7500}"
 
 rows=""; total=0; n=0
 for f in skills/*/SKILL.md; do

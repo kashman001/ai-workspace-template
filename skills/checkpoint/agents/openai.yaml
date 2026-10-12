@@ -1,0 +1,5 @@
+interface:
+  display_name: "Checkpoint"
+  short_description: "Wrap up a work chunk and hand off cleanly"
+policy:
+  allow_implicit_invocation: false

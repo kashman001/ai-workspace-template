@@ -1,6 +1,7 @@
 ---
 name: session-rollover
-description: Use when the context budget hits WARN/STOP (hook message, `context-budget.sh` exit code 1/2, or the user asks) to roll work over to a fresh session via a deliberate, pruned handoff instead of uncontrolled automatic compaction. Rollover = reflect (route conversation-only learnings to disk) + flush (make disk fully current) + handoff (backward-looking handoff.md, forward-looking next-session.md) + the launcher (which checks both files, then launches or stages the successor).
+description: 'Roll work over to a fresh session through a pruned handoff when the context budget hits WARN/STOP: reflect, flush, handoff.md, next-session.md, then stage or launch the successor.'
+disable-model-invocation: true
 ---
 
 # session-rollover
