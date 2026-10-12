@@ -1,4 +1,4 @@
-# ADR-0011: Every load-bearing session step is a script that refuses with a reason code
+# TADR-0011: Every load-bearing session step is a script that refuses with a reason code
 
 - Status: accepted
 - Date: 2026-09-21

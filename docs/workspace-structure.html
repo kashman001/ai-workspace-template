@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc 3.11" />
+  <meta name="generator" content="pandoc 3.12" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Dev-AI Workspace Structure — ai-workspace-template
 guide</title>
@@ -12,7 +12,10 @@ guide</title>
     */
     html {
       color: #1a1a1a;
+      color: light-dark(#1a1a1a, #fdfdfd);
       background-color: #fdfdfd;
+      background-color: light-dark(#fdfdfd, #1a1a1a);
+      color-scheme: light dark;
     }
     body {
       margin: 0 auto;
@@ -37,11 +40,16 @@ guide</title>
     }
     @media print {
       html {
-        background-color: white;
+        color-scheme: light only;
       }
-      body {
+      html, body, pre, code {
         background-color: transparent;
+      }
+      body, a, a:visited, blockquote {
         color: black;
+      }
+      pre, code {
+        padding: 0;
       }
       p, h2, h3 {
         orphans: 3;
@@ -54,11 +62,8 @@ guide</title>
     p {
       margin: 1em 0;
     }
-    a {
-      color: #1a1a1a;
-    }
-    a:visited {
-      color: #1a1a1a;
+    a, a:visited {
+      color: inherit;
     }
     img {
       max-width: 100%;
@@ -87,8 +92,11 @@ guide</title>
     blockquote {
       margin: 1em 0 1em 1.7em;
       padding-left: 1em;
-      border-left: 2px solid #e6e6e6;
+      border-left: 2px solid;
+      border-color: #e6e6e6;
+      border-color: light-dark(#e6e6e6, #4c4c4c);
       color: #606060;
+      color: light-dark(#606060, #b6b6b6);
     }
     code {
       white-space: pre-wrap;
@@ -112,7 +120,7 @@ guide</title>
     }
     hr {
       border: none;
-      border-top: 1px solid #1a1a1a;
+      border-top: 1px solid currentColor;
       height: 1px;
       margin: 1em 0;
     }
@@ -129,11 +137,11 @@ guide</title>
     }
     tbody {
       margin-top: 0.5em;
-      border-top: 1px solid #1a1a1a;
-      border-bottom: 1px solid #1a1a1a;
+      border-top: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
     }
     th {
-      border-top: 1px solid #1a1a1a;
+      border-top: 1px solid currentColor;
       padding: 0.25em 0.5em 0.25em 0.5em;
     }
     td {
@@ -286,7 +294,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 6bb7ce174f8193898ce5cfcdb5cb44d1076a089c -->
+  <!-- source-md-sha1: 593280131cc046577a9ac0dd7ccaa1b2e8186e61 -->
 </head>
 <body>
 <div class="src-banner">
@@ -386,7 +394,7 @@ config) lives in user-level locations outside the workspace.</li>
 </ol>
 <h3 id="before-you-add-a-teammate">Before You Add a Teammate</h3>
 <p>The coordination model is <strong>one developer, many
-sessions</strong> (ADR-0004). Session locks, registries, and dispatch
+sessions</strong> (TADR-0004). Session locks, registries, and dispatch
 records identify sessions by <code>user@host</code>, but liveness and
 mutual exclusion are machine-local. A second person breaks these
 assumptions <strong>silently</strong> — nothing errors, state just gets
@@ -641,7 +649,8 @@ Documentation</h2>
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 ├── plans.md                    # Plans: node-file format, plan.sh verbs, tiers, replans
 │
-├── adr/                        # Architecture Decision Records (Tier 3 of the decision scheme)
+├── adr/                        # This project&#39;s decision records, ADR-NNNN (Tier 3 of the decision scheme)
+├── template-adr/               # The template machinery&#39;s decision records, TADR-NNNN (arrive with syncs)
 ├── postmortems/                # Blameless incident write-ups
 ├── agents/                     # Per-repo config the engineering skills consume
 │   └── issue-tracker.md        #   Tracker conventions incl. wayfinder map operations
@@ -729,10 +738,14 @@ per-repo verification-skill generator, …) — one-liners, slash-command
 map, refresh workflow (<code>scripts/sync-vendored-skills.sh</code>, one
 script for all three upstreams), and licenses in
 <code>skills/vendored-skills.md</code>; add your own alongside them.
-<code>decision-log</code> captures decision provenance — the
-<em>why</em> code can't record — as ephemeral notes under
-<code>work/&lt;project&gt;/decisions.md</code>, promoted to committed
-ADRs under <code>docs/adr/</code> for lasting-weight decisions.</p>
+Which of them a given change needs — tweak, small, big or fuzzy,
+irreversible — is <code>docs/stakes-to-ceremony.md</code>, which also
+carries the adoption advice for a new workspace (gradual, verification
+first, prune what you don't use). <code>decision-log</code> captures
+decision provenance — the <em>why</em> code can't record — as ephemeral
+notes under <code>work/&lt;project&gt;/decisions.md</code>, promoted to
+committed ADRs under <code>docs/adr/</code> for lasting-weight
+decisions.</p>
 <p>Skills are agent-vendor-neutral — write them in plain Markdown with
 no runtime-specific syntax. List each skill in the
 <code>CONTEXT.md</code> "Workspace Skills" section with a one-line
@@ -788,7 +801,11 @@ needs <code>skills/&lt;name&gt;/agents/openai.yaml</code> with
 <code>policy: allow_implicit_invocation: false</code>, or Codex fires it
 on its own. Copy an existing one;
 <code>scripts/tests/test-agent-entrypoints.sh</code> (E6) fails when the
-two switches disagree.</p>
+two switches disagree. Prefer user-invoked for any procedure a person or
+a script starts by name (session mechanics, setup, advisory
+interrogations): a model-invoked description is weighed on every turn,
+and <code>scripts/check-skill-descriptions.sh</code> fails the gate once
+their total passes its budget.</p>
 <p>To make a capability <strong>required</strong> — "run the tests
 before finishing a branch" as a non-negotiable — put its prerequisites
 in the manifest: a <code>req</code> line in
@@ -927,6 +944,7 @@ Bootstrap and Utility Scripts</h2>
 ├── check-ledger.py                # Work-item ledger shape validation (newest-first, well-formed blocks)
 ├── check-drift.sh                 # Staleness sweep: dead doc paths, aged gotchas, CONTEXT.md size, docs index
 ├── check-plans.sh                 # Run plan.sh check on every committed plan
+├── check-skill-descriptions.sh    # Model-invoked skill descriptions stay under a byte budget
 ├── run-checks.sh                  # Run every tests/ suite and check-* script; --fast for pre-commit
 ├── git-hooks/pre-commit           # Opt-in pre-commit hook (runs run-checks.sh --fast)
 ├── onboard-repo.sh                # Mechanical half of repo onboarding
@@ -1006,6 +1024,15 @@ every committed plan
 when any fails. Puts plan lint in the gate, so a broken plan nobody is
 working on still fails. Tested by
 <code>scripts/tests/test-check-plans.sh</code>.</li>
+<li><code>check-skill-descriptions.sh</code> — sums the
+<code>description:</code> bytes of every model-invoked
+<code>skills/*/SKILL.md</code> (one without
+<code>disable-model-invocation: true</code>), prints them largest first,
+exit 1 over <code>SKILL_DESC_MAX_BYTES</code> (7,500: the trimmed total
+rounded up, so a new model-invoked skill forces a trim or a user-invoke
+swap, with the reason in the commit). Every such description is weighed
+by the runtime on every turn. Tested by
+<code>scripts/tests/test-check-skill-descriptions.sh</code>.</li>
 <li><code>run-checks.sh</code> — runs every
 <code>scripts/tests/test-*</code> suite and every
 <code>scripts/check-*</code> script (via
@@ -1119,8 +1146,8 @@ frontmatter runtimes find it by</td>
 <td>Before debugging; written at checkpoint</td>
 </tr>
 <tr>
-<td><code>docs/adr/</code></td>
-<td>Lasting decisions</td>
+<td><code>docs/adr/</code>, <code>docs/template-adr/</code></td>
+<td>Lasting decisions — the project's, and the template machinery's</td>
 <td>Guide</td>
 <td>Judgement</td>
 <td>When a decision is promoted</td>
@@ -1206,6 +1233,14 @@ index</td>
 <td>Check</td>
 <td>Script</td>
 <td>Gate (fast)</td>
+</tr>
+<tr>
+<td><code>scripts/check-skill-descriptions.sh</code></td>
+<td>Model-invoked skill descriptions under their byte budget in
+total</td>
+<td>Check</td>
+<td>Script</td>
+<td>Gate (fast); when adding a skill</td>
 </tr>
 <tr>
 <td>Context-budget hooks (<code>scripts/hooks/</code>, wired in
@@ -1621,7 +1656,8 @@ section.</li>
 locally</strong> — the actual entry-point commands? →
 <code>docs/system-design.md</code> entry-points table.</li>
 <li><strong>Which decisions are already settled, and why?</strong> →
-<code>docs/adr/</code> (one record per settled decision worth
+<code>docs/adr/</code> (the project), <code>docs/template-adr/</code>
+(the workspace machinery) (one record per settled decision worth
 keeping).</li>
 </ol>
 <p>The workspace has its Z0 pane when <code>SPEC.md</code> and

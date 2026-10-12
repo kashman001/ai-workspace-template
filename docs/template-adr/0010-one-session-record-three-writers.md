@@ -1,4 +1,4 @@
-# ADR-0010: One session-state record per work item, with three writers and process liveness as the only ownership test
+# TADR-0010: One session-state record per work item, with three writers and process liveness as the only ownership test
 
 - Status: accepted
 - Date: 2026-09-21
@@ -64,12 +64,12 @@ bump.
 ## Consequences
 
 - One file to read when anything is in doubt; one lib to test for atomicity.
-- Superseded mechanisms: ADR-0007's `.session-seq` counter and ADR-0008's
+- Superseded mechanisms: TADR-0007's `.session-seq` counter and TADR-0008's
   `seq-sync` (their rulings — the bootstrap prompt's number is canonical, and
   a session asserts rather than writes — stand, carried by `seq` and the
-  launcher's `ledger_seq_mismatch` gate). ADR-0005's roles, lineage stamps and
+  launcher's `ledger_seq_mismatch` gate). TADR-0005's roles, lineage stamps and
   child locks are gone; its child registry moved unchanged to `scripts/fleet.sh`.
-  ADR-0004's lock is the record's owner slot; ADR-0009's seed file is
+  TADR-0004's lock is the record's owner slot; TADR-0009's seed file is
   `launch.pending`.
 - A hand edit of the record is the new way to break a chain (`staged_invalid`);
   the skill forbids it.
@@ -84,8 +84,8 @@ bump.
   … `phase-8.md` (per-phase decisions).
 - Commits: Stage 4 phases 1–8 on `stage4` (phase 8: `12ba7d8`, the last
   mirrors removed).
-- Supersedes: ADR-0007, ADR-0008 (mechanism); amends ADR-0004, ADR-0005,
-  ADR-0006, ADR-0009.
+- Supersedes: TADR-0007, TADR-0008 (mechanism); amends TADR-0004, TADR-0005,
+  TADR-0006, TADR-0009.
 - Refs: `work/template-improvement-review/evaluation/stage3-design-v2.md`
   ("The record and its three writers", "Who is alive", "How the successor
   finds its number"); `session-management-review-findings.md` §(k).

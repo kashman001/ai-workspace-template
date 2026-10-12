@@ -2,7 +2,7 @@
 # run-checks: slow
 # File: scripts/tests/test-vendor-budget-hooks.sh
 # Purpose: Regression tests for the context-budget vendor hook wrappers and
-#          their shared lib (ADR-0003/0004 item #3). Self-contained: throwaway
+#          their shared lib (TADR-0003/0004 item #3). Self-contained: throwaway
 #          workspace in mktemp -d, stub context-budget.sh driven by FAKE_* env.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

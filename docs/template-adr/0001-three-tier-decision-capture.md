@@ -1,4 +1,4 @@
-# ADR-0001: Capture decision provenance in three tiers, promoting notes to ADRs
+# TADR-0001: Capture decision provenance in three tiers, promoting notes to ADRs
 
 - Status: accepted
 - Date: 2026-07-14

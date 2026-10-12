@@ -146,7 +146,7 @@
       moved here from checkpoint step 1, which now runs the script), <code>CONTEXT.md</code> over 16,000 bytes, and
       <code>docs/</code> entries missing from <code>docs/README.md</code>. Marked <code># run-checks: slow</code> so a gotcha
       aging with no commit never blocks pre-commit; CI runs it on push and on a new weekly schedule. Tested by
-      <code>scripts/tests/test-check-drift.sh</code>. First run on <code>main</code>: clean apart from one ADR-0009 warning.</p>
+      <code>scripts/tests/test-check-drift.sh</code>. First run on <code>main</code>: clean apart from one TADR-0009 warning.</p>
   </div>
 
 
@@ -319,7 +319,7 @@
       re-discovery, and the registry is one file per <em>runtime</em>, not per session.</p>
     <p><span class="k">Impact</span> — wrong WARN/STOP decisions under the multi-session operating model (N concurrent
       sessions per workspace); a session can be told it's fine while deep in the dumb zone.</p>
-    <p><span class="k">Fix</span> — approved (ADR-0004): session-keyed registry
+    <p><span class="k">Fix</span> — approved (TADR-0004): session-keyed registry
       <code>.context-budget/sessions/&lt;runtime&gt;-&lt;session-id&gt;.json</code> (each session writes only its own
       file, resolve-self via env-var identity first) + per-project advisory lock
       <code>work/&lt;proj&gt;/.active-session</code>; gemini's exact path stays single-session-per-workspace.
@@ -778,7 +778,7 @@
 
   <div class="find med resolved">
     <h3><span class="id">M16</span> EnterWorktree mid-session stales the registry artifact path — wrongful stale-primary sweeps
-      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · ADR-0006</span></h3>
+      <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh · TADR-0006</span></h3>
     <p><span class="fix">Fixed:</span> 2026-08-31 (template-maintenance session 14). The session id is stable across
       the move, so artifact resolution is now id-keyed everywhere it matters: new <code>glob_artifact_for()</code>
       resolves <code>~/.claude/projects/*/&lt;sid&gt;.jsonl</code> (newest match wins when a stale copy remains at the
@@ -823,13 +823,13 @@
     <p><span class="fix">Fixed:</span> 2026-09-03 (downstream contribution, <code>fix/unstage-atomic-abandon</code>).
       New <code>--unstage</code> mode: the atomic inverse of staging — removes whichever staged artifacts exist
       (<code>.pending-clear-seed</code>, <code>.next-command</code>, the successor-pending handshake) AND rewinds the
-      counter through seq-sync (ADR-0008 single-writer preserved), only on the one-ahead staged-bump signature;
+      counter through seq-sync (TADR-0008 single-writer preserved), only on the one-ahead staged-bump signature;
       other mismatches refuse the rewind and name the manual fix. The gate's evidence refusal now detects the
       resumed-predecessor fingerprint (all post-staging evidence is rollover bookkeeping: <code>rollover
       start/complete</code> records + commits touching only <code>work/&lt;p&gt;/</code>, clean tree) and leads with
       that diagnosis and <code>--unstage</code>; the neutral message and <code>--clear</code>'s abandon hint name
       <code>--unstage</code> too. Docs/skill updated (context-budget.md, work-directory-conventions.md,
-      session-rollover SKILL.md, ADR-0009 amendment note). Regression cover: U-series in
+      session-rollover SKILL.md, TADR-0009 amendment note). Regression cover: U-series in
       <code>test-launch-next-session.sh</code> (249/0; T23i/C2g updated to the new message contract).</p>
     <p><span class="k">Evidence</span> — downstream incident 2026-09-03: a session staged its successor, the IDE
       restart resumed the predecessor under a NEW transcript id, and it converted the <code>--clear</code> seed to a
@@ -952,7 +952,7 @@
       (<code>locked=no</code> always) and the statusline never showed PRIMARY. Ticket 01 of
       <code>work/session-management-followups/</code>.</p>
     <p><span class="k">Fix:</span> read the owner from the record (<code>work/&lt;p&gt;/session-state.json</code>, its open
-      <code>session</code> block) with the ADR-0010 liveness rule (pid running and <code>pid_start</code> matches).</p>
+      <code>session</code> block) with the TADR-0010 liveness rule (pid running and <code>pid_start</code> matches).</p>
     <p><span class="fix">Fixed:</span> two readers added to <code>scripts/lib/session-lib.sh</code>
       (<code>session_record_owner</code>, <code>session_owner_live</code>; contract tests O1–O4 in <code>test-session-lib.sh</code>);
       both scripts source the lib and keep their output shape; a stray <code>.active-session</code> file is proven inert
@@ -1040,6 +1040,15 @@
   </div>
 
   <h2>Low</h2>
+
+  <div class="find low resolved">
+    <h3><span class="id">L84</span> Template and project ADRs share one number sequence in <code>docs/adr/</code>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/adr/, docs/template-adr/, skills/decision-log</span></h3>
+    <p><span class="k">Evidence</span> &mdash; A downstream workspace (token-factory) syncing <code>d7cf6c4..ccb4ed3</code> found its own ADR-0010..0015 colliding with the template's ADR-0010..0014: both write <code>docs/adr/00NN-*.md</code> from one sequence, so every sync after either side mints an ADR is a filename and number clash.</p>
+    <p><span class="k">Impact</span> &mdash; Instances must renumber on every sync, breaking every cross-reference to the renumbered records, or stop taking template ADRs.</p>
+    <p><span class="k">Fix</span> &mdash; Split the namespace: template machinery ADRs move to <code>docs/template-adr/</code> as <code>TADR-NNNN</code>; <code>docs/adr/</code> belongs to the project, with an empty index. An instance never mints a TADR (it would collide with the template's next one); it keeps a Tier-2 note marked <code>Promote?: upstream</code> and proposes the TADR here.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-12 (branch <code>docs/template-adr-namespace</code>). <code>git mv</code> of 0001..0014 + README to <code>docs/template-adr/</code> plus a TADR <code>0000-template.md</code>; <code>ADR-00NN</code> &rarr; <code>TADR-00NN</code> and paths re-linked in 40 files (vendored example numbers and <code>test-check-drift.sh</code> fixtures excluded); <code>decision-log</code> picks the namespace by subject and gains <code>Promote?: upstream</code>; <code>check-drift.sh</code> warns for both ADR dirs; <code>docs/runbooks/adr-namespace-migration.md</code> for existing instances.</p>
+  </div>
 
   <div class="find low resolved">
     <h3><span class="id">L83</span> Anti-rationalization tables for the workspace skills where agents cut corners
@@ -1152,7 +1161,7 @@
     <p><span class="k">Evidence</span> — <code>work/template-maintenance/decisions.md</code> note &ldquo;2026-10-09 — Adopt upstream's GLOSSARY.md&rdquo; is marked <code>Promote?: yes</code> but has no ADR.</p>
     <p><span class="k">Impact</span> — The move changes the workspace's context-file layout; without an ADR a future refresh or review may move the glossary back into <code>CONTEXT.md</code>.</p>
     <p><span class="k">Fix</span> — Promote the note to <code>docs/adr/</code> per <code>skills/decision-log/SKILL.md</code>.</p>
-    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 23). Promoted to <code>docs/adr/0014-glossary-in-its-own-file.md</code> (ADR-0014), indexed in <code>docs/adr/README.md</code>; the note is marked <code>done → ADR-0014</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-09 (<code>work/template-maintenance</code> session 23). Promoted to <code>docs/template-adr/0014-glossary-in-its-own-file.md</code> (TADR-0014), indexed in <code>docs/adr/README.md</code>; the note is marked <code>done → TADR-0014</code>.</p>
   </div>
 
   <div class="find low resolved">
@@ -1200,12 +1209,12 @@
 
 
   <div class="find low resolved">
-    <h3><span class="id">L59</span> ADR-0009 cites a document that was never committed
-      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/adr/0009</span></h3>
-    <p><span class="k">Evidence</span> — <code>docs/adr/0009-clear-based-rollover-relaunch.md</code> (2026-09-14 amendment) cites <code>docs/session-chain-scenarios.md</code> for scenario B3; the path has no git history. (Its removed hook script is expected: ADR-0010 amends it.) Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
+    <h3><span class="id">L59</span> TADR-0009 cites a document that was never committed
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/template-adr/0009</span></h3>
+    <p><span class="k">Evidence</span> — <code>docs/template-adr/0009-clear-based-rollover-relaunch.md</code> (2026-09-14 amendment) cites <code>docs/session-chain-scenarios.md</code> for scenario B3; the path has no git history. (Its removed hook script is expected: TADR-0010 amends it.) Found by the session-4 doc gap review (<code>work/context-memory-hardening/doc-gap-review.md</code>).</p>
     <p><span class="k">Impact</span> — The amendment's evidence can't be followed.</p>
     <p><span class="k">Fix</span> — Name where scenario B3 is recorded, or drop the path.</p>
-    <p><span class="fix">Fixed:</span> 2026-10-08 (commit &ldquo;Fix L59&rdquo;): the 2026-09-14 amendment in ADR-0009 no longer cites <code>docs/session-chain-scenarios.md</code> (a downstream note never committed here); it now names where B3 is recorded in this repo &mdash; the <code>relaunch_off</code> gate in <code>scripts/session-loop.sh</code> and its regression test R5 in <code>scripts/tests/test-session-loop.sh</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-08 (commit &ldquo;Fix L59&rdquo;): the 2026-09-14 amendment in TADR-0009 no longer cites <code>docs/session-chain-scenarios.md</code> (a downstream note never committed here); it now names where B3 is recorded in this repo &mdash; the <code>relaunch_off</code> gate in <code>scripts/session-loop.sh</code> and its regression test R5 in <code>scripts/tests/test-session-loop.sh</code>.</p>
   </div>
 
   <div class="find low resolved">
@@ -1733,7 +1742,7 @@
     <p><span class="k">Impact</span> — autonomous chains had to choose between prompt-heavy <code>acceptEdits</code>
       and tripwire-free <code>full</code> bypass; the middle mode the CLI actually offers was unreachable.</p>
     <p><span class="fix">Fixed:</span> re-pointed <code>auto</code> to the classifier tier (claude
-      <code>--permission-mode auto</code>, verified against live <code>--help</code> 2.1.223 per ADR-0003) and renamed
+      <code>--permission-mode auto</code>, verified against live <code>--help</code> 2.1.223 per TADR-0003) and renamed
       the acceptEdits tier to <code>edits</code> — ladder <code>default &lt; edits &lt; auto &lt; full</code>.
       Runtimes with no classifier equivalent (codex/gemini/opencode/copilot) fall back to their <code>edits</code>
       mapping with a stderr note (chosen over refusing, which breaks cross-runtime chains, and over falling up to
@@ -1888,13 +1897,13 @@
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">mcp-fragments/ · scripts/check-* · docs</span></h3>
     <p><span class="k">Evidence</span> — 2026-08-06 context audit: GitHub MCP was the largest per-server context
       cost (~900 tokens/session standing; ~2.2K when its instruction block landed), while the CLI-first doctrine
-      and ADR-0002 already prefer <code>gh</code>; the transcript scan behind ADR-0002 found the structured tools
+      and TADR-0002 already prefer <code>gh</code>; the transcript scan behind TADR-0002 found the structured tools
       almost never used.</p>
     <p><span class="fix">Fixed:</span> full removal 2026-08-07 — <code>mcp-fragments/github.json</code> deleted
       (re-add recipe kept in the fragments README), <code>opencode.json</code> github block and PAT-export
       plumbing removed (auth runbook, service-access check + doc, workspace-setup, setup-guide.html,
       mcp-setup.md per-runtime blocks); <code>gh</code> flipped to <em>required</em> in check-dependencies.sh
-      and the dependencies runbook; docker dependency dropped (GitHub-MCP-only consumer); ADR-0002 amended.
+      and the dependencies runbook; docker dependency dropped (GitHub-MCP-only consumer); TADR-0002 amended.
       GitHub now rides <code>gh auth login</code> + the gh CLI in every runtime.</p>
   </div>
 
@@ -2276,7 +2285,7 @@
     <p><span class="k">Impact</span> — Without a recorded decision, future reviews will keep re-proposing them.</p>
     <p><span class="k">Fix</span> — Write an ADR (via <code>decision-log</code> promote) stating these are out of scope: incompatible with plain-files + agent-agnostic access, and curated indexes (C11) already cover the need; M43 is the chosen lightweight substitute for decay. Owner: <code>work/context-memory-hardening</code> ticket 05.</p>
     <p><span class="fix">Decided:</span> 2026-10-07 (<code>work/context-memory-hardening</code> ticket 05, commit
-      &ldquo;Fix D5&rdquo;): ADR-0013 (<code>docs/adr/0013-no-vector-store-mmr-or-decay-scoring.md</code>) records that the template
+      &ldquo;Fix D5&rdquo;): TADR-0013 (<code>docs/template-adr/0013-no-vector-store-mmr-or-decay-scoring.md</code>) records that the template
       won't adopt hybrid vector retrieval, MMR re-ranking, or numeric decay scores. They need a database or embedding
       service (breaks plain-files, any-runtime access), and curated indexes already meet the need. M43's
       <code>Last confirmed</code> dates and checkpoint review sweep are the substitute for decay. Rejected: adopting
@@ -2323,7 +2332,7 @@
       workspaces, but added noise for the common single-user case. Updated <code>CONTEXT.md</code>, the
       <code>decision-log</code>/<code>checkpoint</code> skills, <code>/decision</code> command,
       <code>workspace-structure</code>/<code>usage-scenarios</code>/<code>setup-guide</code> docs (md + html), and the
-      ADR template/README/ADR-0001.</p>
+      ADR template/README/TADR-0001.</p>
   </div>
 </body>
 </html>

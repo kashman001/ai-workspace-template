@@ -99,7 +99,8 @@ decide. Three tiers by permanence, captured cheap and promoted upward:
 - **Tier 2 — decision note** (for any choice with a rejected alternative): appended to
   `work/<project-name>/decisions.md`. Ephemeral, per-project, cheap — the wide net.
 - **Tier 3 — ADR** (only for lasting-weight decisions): a committed record under `docs/adr/`,
-  **promoted** from a Tier-2 note (on demand, or at `checkpoint`). See `docs/adr/README.md`.
+  **promoted** from a Tier-2 note (on demand, or at `checkpoint`). See `docs/adr/README.md`;
+  the template machinery's own decisions are `TADR-NNNN` in `docs/template-adr/`.
 
 Driven by the **decision-log** skill (`skills/decision-log/SKILL.md`); Claude Code shortcut
 **`/decision <what + why + rejected alternative>`** (or `/decision promote <note>`).

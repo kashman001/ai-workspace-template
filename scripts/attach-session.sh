@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # File: scripts/attach-session.sh
-# Purpose: Re-attach step of session-rollover (ADR-0003) for chained claude
+# Purpose: Re-attach step of session-rollover (TADR-0003) for chained claude
 #          successors: find the latest session for a work item and, when it
 #          is alive and holds the work-item lock, connect this terminal to
 #          it. Resolution: the owner named by work/<project>/session-state.json
-#          (its `session` block, alive while its pid is — ADR-0010; read via
+#          (its `session` block, alive while its pid is — TADR-0010; read via
 #          scripts/lib/session-lib.sh; corrected for a fork that re-keyed the
 #          owning session — see fork_of() below) >
 #          newest .context-budget/sessions/*.json record for the project
@@ -25,7 +25,7 @@
 # picks: attach for background, `-r/--resume` otherwise (resume replays a
 # transcript into a NEW process, so it is the wrong verb for a live background
 # session and the right one for anything else). Re-verify before changing
-# (ADR-0003: a nonexistent flag already slipped in once).
+# (TADR-0003: a nonexistent flag already slipped in once).
 
 set -u
 
@@ -139,7 +139,7 @@ fi
 
 [ -n "$RUNTIME" ] && [ -n "$SID" ] || die "no session known for work/$PROJECT"
 
-# Liveness: the owner is alive while its pid is (session_owner_live, ADR-0010;
+# Liveness: the owner is alive while its pid is (session_owner_live, TADR-0010;
 # a pid-less owner falls back to its artifact's age vs LOCK_STALE). A session
 # found through the fallbacks has no pid on record, so it keeps the artifact-
 # age rule — mirror of lock_holder_age() in scripts/context-budget.sh (NOT
