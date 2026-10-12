@@ -1,0 +1,21 @@
+scripts/tests/test-session-loop.sh
+  s_e7f6e576a11087::t_b8e05622e4d617 493-513
+docs/template-workspace-backlog.html
+  s_e7f6e576a11087::t_9233f8cece5e36 314
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a7ccb19e297cb271295fac3dd1a4bccd641c3d66",
+  "prompts": {},
+  "sessions": {
+    "s_e7f6e576a11087": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8847b473-026a-4992-88a2-4b4f7fb99240",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
