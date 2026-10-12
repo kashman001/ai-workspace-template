@@ -99,6 +99,11 @@ registration block above the measurement guard (commit 27010c7;
 (fix-B prefixed form below) is retained only as a fallback for hook-less
 contexts (e.g. hooks disabled by enterprise policy). Full evidence:
 `work/context-decay/copilot-vscode-hook-research-findings.md`.
+Copilot CLI registers by mechanism too, in a trusted folder only (untrusted
+folders load no repo hooks): `.github/hooks/context-budget.json` →
+`context-budget-copilot-hook.sh` registers on `sessionStart` from the payload
+`sessionId`, pinning `${COPILOT_HOME:-~/.copilot}/session-state/<sessionId>/events.jsonl`
+(evidence: `work/runtime-session-identity/probes/copilot-cli.md`).
 Unregistered sessions still measure — `check` falls back to
 newest-mtime discovery — but only registration pins the exact artifact, which
 is what keeps concurrent sessions from reading each other's counts.
