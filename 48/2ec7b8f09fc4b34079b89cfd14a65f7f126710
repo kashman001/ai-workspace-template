@@ -1,0 +1,31 @@
+docs/context-budget.md
+  s_3de40a3232f37d::t_fe238b4332756a 134,136,632-633,654,658-660
+docs/plans.md
+  s_3de40a3232f37d::t_6ea5a4096c376b 19-23,148-151
+scripts/fleet.sh
+  s_3de40a3232f37d::t_abb17c19d4ef62 239-241
+scripts/plan.sh
+  s_3de40a3232f37d::t_849fa1d64739f4 166-171,226,451-456,462
+scripts/tests/test-fleet-dispatch-records.sh
+  s_3de40a3232f37d::t_9e1e672b1744f6 57-61,155-163
+scripts/tests/test-plan.sh
+  s_3de40a3232f37d::t_547b69a55ec022 576-616
+skills/plans/SKILL.md
+  s_3de40a3232f37d::t_a1118fcebb52cc 182-184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "482ec7b8f09fc4b34079b89cfd14a65f7f126710",
+  "prompts": {},
+  "sessions": {
+    "s_3de40a3232f37d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_3de40a3232f37d",
+        "model": "unknown"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
