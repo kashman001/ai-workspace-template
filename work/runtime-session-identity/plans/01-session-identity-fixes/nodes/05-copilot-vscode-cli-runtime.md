@@ -1,11 +1,11 @@
 ---
 id: 05-copilot-vscode-cli-runtime
 title: Copilot VS Code on the CLI runtime (node 8a)
-status: todo
+status: doing
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
-sessions: []
+sessions: [6]
 ---
 
 ## Goal
@@ -27,3 +27,4 @@ before `VSCODE_TARGET_SESSION_LOG`/newest-mtime.
 - [ ] Old workspaceStorage cases still pass
 
 ## Log
+- s6 · started, tier standard

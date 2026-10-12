@@ -1,11 +1,11 @@
 ---
 id: 06-one-hook-per-copilot-event
 title: One hook config per Copilot event (nodes 3 + 8b)
-status: todo
+status: doing
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
-sessions: []
+sessions: [6]
 ---
 
 ## Goal
@@ -24,3 +24,4 @@ Copilot payload (e.g. a `.copilot/session-state/` transcript path or the payload
 - [ ] Existing suites pass
 
 ## Log
+- s6 · started, tier standard

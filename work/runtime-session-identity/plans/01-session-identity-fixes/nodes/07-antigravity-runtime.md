@@ -1,11 +1,11 @@
 ---
 id: 07-antigravity-runtime
 title: Antigravity: add as a runtime (node 6)
-status: todo
+status: doing
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
-sessions: []
+sessions: [6]
 ---
 
 ## Goal
@@ -26,3 +26,4 @@ New `antigravity` adapter row with `register=hook`; a committed `.agents/hooks.j
 - [ ] Existing suites pass
 
 ## Log
+- s6 · started, tier standard

@@ -1,11 +1,11 @@
 ---
 id: 03-codex-hook-registration
 title: Hook-side registration for Codex (node 1)
-status: todo
+status: doing
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
-sessions: []
+sessions: [6]
 ---
 
 ## Goal
@@ -23,3 +23,4 @@ no `CODEX_*` env (CLI and VS Code both).
 - [ ] Existing suites pass
 
 ## Log
+- s6 · started, tier standard
