@@ -877,7 +877,7 @@ bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or e
 # and agy records carry none). The id-keyed glob keeps a relocated one (M16).
 prune_phantoms() {
   local f rt sid af
-  for f in $(find "$STATE_DIR/sessions" -name '*.json' -mmin +60 2>/dev/null); do
+  find "$STATE_DIR/sessions" -name '*.json' -mmin +60 2>/dev/null | while IFS= read -r f; do
     rt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
     sid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
     [ "$rt-$sid" = "$RUNTIME-$SESSION_ID" ] && continue
