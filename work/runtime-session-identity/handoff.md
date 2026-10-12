@@ -25,6 +25,16 @@ from Claude Code, `register` inside it bound the parent Claude session:
 `detect_runtime` lets an inherited `CLAUDECODE` win. That is now part of node 6
 and node 4's check. IDE probes still waiting on the user.
 
+Suggested skills: `plans` (once IDE probes land), `diagnosing-bugs` for probes.
+Committed: `46666f6`, `b32ecac`, `97e2f93` (main, 3 ahead of origin, unpushed).
+
+Learnings:
+- `agy` headless (`-p`) auto-denies `run_command` unless the global settings
+  allow-list or `--dangerously-skip-permissions` permits it; hook
+  `permissionOverrides` don't help. The Claude Code classifier blocks the skip
+  flag, so the user has to run that command.
+- Its hook spec is only in the binary (`strings agy` → "Lifecycle Hooks").
+
 # Session Handoff — 2026-10-12 (session 2: scaffolded; CLI probes done; draft plan)
 
 Scaffolded after a Q&A on how non-Claude runtimes identify sessions. Ran three
