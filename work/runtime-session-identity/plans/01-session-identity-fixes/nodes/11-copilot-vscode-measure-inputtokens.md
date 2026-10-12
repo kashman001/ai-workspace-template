@@ -27,3 +27,4 @@ copilot-vscode measure exact on a session-state transcript; keep the `chatSessio
 - s7 · started, tier standard
 - s7-c · Q1/Q2 cases appended to scripts/tests/test-context-budget-registry.sh; Q1b red before fix (method=estimate tokens=34)
 - s7-c · copilot_vscode_measure in scripts/context-budget.sh now delegates to copilot_cli_measure (promptTokens|inputTokens|input_tokens) after the fresh check; registry 240/0, statusline 20/0, vendor-budget-hooks 165/0
+- s7-c · on disk: fix commit c0f4dd4 + main merged (95800af) on branch worktree-agent-ad8b099e257d3ad3e, registry 240/0 after merge; not done: push, plan.sh status write
