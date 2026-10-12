@@ -57,7 +57,9 @@ esac
 case "$ev" in
   "$check_ev") mode=check ;;
   "$end_ev")   mode=end ;;
-  *) silent ;;   # not this row's hook: silent, as the wrappers were
+  # Any other event of a register=hook row (codex SessionStart) only registers:
+  # it fires before the first turn, so the record exists from the start.
+  *) [ "$register" = hook ] || silent; mode=register ;;
 esac
 
 # --- turn-end: guard, then the session-loop exit ------------------------------
@@ -122,6 +124,7 @@ if [ "$register" = hook ]; then
     || "$WORKSPACE_ROOT/scripts/context-budget.sh" register \
          --runtime "$measure_as" --transcript "$transcript" >/dev/null 2>&1 || true
 fi
+[ "$mode" = register ] && silent
 [ "$tx_src" = - ] || [ -f "$transcript" ] || silent   # fresh session: nothing to measure yet
 
 # --- measure ------------------------------------------------------------------
