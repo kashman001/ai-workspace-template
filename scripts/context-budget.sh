@@ -305,13 +305,13 @@ codex_measure() {
 }
 
 copilot_vscode_measure() {
-  local f="$1" tokens
+  local f="$1"
   # Authoritative token file not flushed yet (fresh session at register time):
   # report empty context, never fail or bind a sibling's transcript.
   [ -f "$f" ] || { echo "0 fresh"; return 0; }
-  # grep -o, not jq: multi-MB single-line records; survives nesting changes.
-  tokens=$(grep -o '"promptTokens":[0-9]*' "$f" 2>/dev/null | tail -1 | grep -o '[0-9]*$')
-  [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
+  # chatSessions carry promptTokens; a session-state events.jsonl (the agent's
+  # transcript since node 05) carries inputTokens — the CLI measure reads both.
+  copilot_cli_measure "$f"
 }
 
 copilot_cli_measure() {

@@ -20,8 +20,10 @@ copilot-vscode measure exact on a session-state transcript; keep the `chatSessio
 
 ## Acceptance
 
-- [ ] Suite case: `check` on a copilot-vscode record whose artifact is a session-state `events.jsonl` with `inputTokens` reports `method=exact` and that count
-- [ ] Old chatSessions `promptTokens` cases still pass
+- [x] Suite case: `check` on a copilot-vscode record whose artifact is a session-state `events.jsonl` with `inputTokens` reports `method=exact` and that count
+- [x] Old chatSessions `promptTokens` cases still pass
 
 ## Log
 - s7 · started, tier standard
+- s7-c · Q1/Q2 cases appended to scripts/tests/test-context-budget-registry.sh; Q1b red before fix (method=estimate tokens=34)
+- s7-c · copilot_vscode_measure in scripts/context-budget.sh now delegates to copilot_cli_measure (promptTokens|inputTokens|input_tokens) after the fresh check; registry 240/0, statusline 20/0, vendor-budget-hooks 165/0

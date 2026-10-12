@@ -851,5 +851,23 @@ assert_contains "L3a: measure = last PLANNER_RESPONSE input_tokens + cache_read_
 assert_contains "L3b: cache share from cache_read_tokens" "$out" "cache=90%"
 rm -rf "$HOME/.gemini" "$TMP/scripts/hooks"
 
+echo "Q1: copilot-vscode measures inputTokens on a session-state events.jsonl (node 11)"
+Q1T="$HOME/.copilot/session-state/vs-q1/events.jsonl"
+mkdir -p "$(dirname "$Q1T")"
+{ printf '{"type":"session.start"}\n'
+  printf '{"type":"assistant.usage","data":{"inputTokens":41000}}\n'
+  printf '{"type":"assistant.usage","data":{"inputTokens":52345}}\n'; } > "$Q1T"
+noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-q1 \
+  "$CB" register --runtime copilot-vscode --quiet >/dev/null 2>&1
+assert_eq "Q1a: the record binds the session-state transcript" \
+  "$(jq -r .artifact "$SESS/copilot-vscode-vs-q1.json" 2>/dev/null)" "$Q1T"
+out=$(noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-q1 "$CB" check --runtime copilot-vscode 2>&1)
+assert_contains "Q1b: check reports the last inputTokens exactly" "$out" "method=exact tokens=52345"
+rm -rf "$HOME/.copilot"
+Q2C="$TMP/home/q2-chat.jsonl"
+printf '{"promptTokens":7000}\n{"promptTokens":7777}\n' > "$Q2C"
+out=$(noid "$CB" check --runtime copilot-vscode --transcript "$Q2C" 2>&1)
+assert_contains "Q2a: a chatSessions promptTokens transcript stays exact" "$out" "method=exact tokens=7777"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
