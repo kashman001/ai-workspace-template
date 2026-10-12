@@ -14,6 +14,11 @@ mkdir -p "$TMP/scripts/lib" "$TMP/work/testproj" "$TMP/.context-budget/sessions"
 cp "$SRC_ROOT/scripts/attach-session.sh" "$TMP/scripts/"
 cp "$SRC_ROOT/scripts/lib/session-lib.sh" "$TMP/scripts/lib/"
 printf 'CONTEXT_LOCK_STALE_SECS=10800\n' > "$TMP/context-budget.env"
+# attach-session.sh asks `claude agents --json` for live sessions; on a machine
+# running real ones (a `testproj #N` among them) T5 resolved one and exited 0.
+# A stub reporting none keeps every case on the fixtures it builds.
+mkdir -p "$TMP/bin"; printf '#!/bin/sh\necho "[]"\n' > "$TMP/bin/claude"; chmod +x "$TMP/bin/claude"
+export PATH="$TMP/bin:$PATH"
 cd "$TMP"
 AS="$TMP/scripts/attach-session.sh"
 SESS="$TMP/.context-budget/sessions"
