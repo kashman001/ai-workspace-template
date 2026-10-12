@@ -233,10 +233,12 @@ dispatch_record_path() {
 
 cmd_dispatch_open() {
   [ -n "$TASK" ] || die "dispatch-open requires --task <slug>"
-  [ -n "$REPORT_FILE" ] || die "dispatch-open requires --report <path>"
   [ "$GEN_SET" -eq 0 ] || die "dispatch-open: --gen is computed from the record, never passed"
   local rec gen
   rec=$(dispatch_record_path) || exit 3
+  # No --report: keep the file earlier generations wrote, else default beside the record.
+  [ -n "$REPORT_FILE" ] || { [ -f "$rec" ] && REPORT_FILE="$(jq -r '.report // empty' "$rec")"; }
+  [ -n "$REPORT_FILE" ] || REPORT_FILE="work/$PROJECT/.agent-dispatch/$TASK.report.md"
   mkdir -p "${rec%/*}"
   if [ -f "$rec" ]; then
     gen=$(jq -r '.generations | length' "$rec")
