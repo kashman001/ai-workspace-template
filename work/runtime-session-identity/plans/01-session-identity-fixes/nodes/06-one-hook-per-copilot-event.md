@@ -1,7 +1,7 @@
 ---
 id: 06-one-hook-per-copilot-event
 title: One hook config per Copilot event (nodes 3 + 8b)
-status: doing
+status: done
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
@@ -32,3 +32,4 @@ Copilot payload (e.g. a `.copilot/session-state/` transcript path or the payload
 - s6-d · every context-budget suite under scripts/tests/ (18 files) exits 0: registry 211/0, vendor hooks 161/0, session-loop 149/0, launch-next-session 188/0, probe-twins rc 0
 - s6-d · merged main (nodes 04 + 05 landed; clean auto-merge of scripts/hooks/context-budget-hook.sh): node 05's H1 (registry suite) still passes only because its workspace carries no .github/hooks/context-budget.json, so with the committed CLI config a CLI-runtime VS Code turn is measured as copilot-cli, never copilot-vscode; this also closes node 05's "two records, one session" side finding at the hook side. All 18 context-budget suites exit 0 after the merge (registry 223/0, vendor hooks 161/0)
 - s6-d · done: on disk (branch worktree-agent-a02e079124bd0fd3d) the dispatcher refusal, the Claude SessionStart transcript_path guard, K1a-f/K2a-e. Not on disk: no docs/context-budget.md change (node 13), no live re-probe in Copilot CLI or VS Code, no change to the .github/hooks files (both still fire; the refusal is in the dispatcher)
+- s6 · done
