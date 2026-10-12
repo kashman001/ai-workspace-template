@@ -869,6 +869,25 @@ bind_record() {  # $1 = via (project|env|pending), $2 = seq the env demands or e
   return 0
 }
 
+# Phantom records (node 8c): the Claude Code VS Code extension pre-spawns idle
+# sessions whose SessionStart registers a transcript that is never written.
+# A record whose artifact is still missing an hour after it was last written
+# names no session to measure: drop it so it never shadows a real one. Artifact
+# existence only — never the pid (the idle process is alive; sandboxed codex
+# and agy records carry none). The id-keyed glob keeps a relocated one (M16).
+prune_phantoms() {
+  local f rt sid af
+  for f in $(find "$STATE_DIR/sessions" -name '*.json' -mmin +60 2>/dev/null); do
+    rt=$(jq -r '.runtime // empty' "$f" 2>/dev/null)
+    sid=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
+    [ "$rt-$sid" = "$RUNTIME-$SESSION_ID" ] && continue
+    af=$(jq -r '.artifact // empty' "$f" 2>/dev/null)
+    [ -n "$af" ] && [ -e "$af" ] && continue
+    glob_artifact_for "$rt" "$sid" >/dev/null && continue
+    rm -f "$f"
+  done
+}
+
 cmd_register() {
   resolve_session
   # D8/R2.10 — resolved once, here, and used by the session block, the
@@ -899,6 +918,7 @@ cmd_register() {
   mkdir -p "$STATE_DIR/sessions"
   rm -f "$STATE_DIR/session-$RUNTIME.json"                      # legacy scalar registry
   find "$STATE_DIR/sessions" -name '*.json' -mtime +7 -delete 2>/dev/null  # dead sessions
+  prune_phantoms
   DEPTH=0
   if [ -n "$PARENT_SESSION" ]; then
     local prec
@@ -946,6 +966,7 @@ cmd_record() {
   # this one touch keeps every disciplined session's record alive.
   [ -f "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json" ] \
     && touch "$STATE_DIR/sessions/$RUNTIME-$SESSION_ID.json"
+  prune_phantoms
   local rc=0
   emit_check || rc=$?
   mkdir -p "$(dirname "$LEDGER")"

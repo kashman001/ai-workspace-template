@@ -851,5 +851,46 @@ assert_contains "L3a: measure = last PLANNER_RESPONSE input_tokens + cache_read_
 assert_contains "L3b: cache share from cache_read_tokens" "$out" "cache=90%"
 rm -rf "$HOME/.gemini" "$TMP/scripts/hooks"
 
+echo "A: phantom records (node 8c) — artifact never written past the grace period"
+# The Claude Code VS Code extension pre-spawns idle sessions whose SessionStart
+# registers a transcript that is never written. pid is no liveness signal here
+# (the idle process is alive; codex-in-VS-Code and agy records carry none).
+seed_reg() {  # $1=runtime $2=sid $3=artifact $4=pid ("" = none)
+  jq -n --arg rt "$1" --arg sid "$2" --arg af "$3" --arg pid "$4" --arg ps "$LIVE_START" \
+    '{runtime:$rt, session_id:$sid, artifact:$af, project:"", registered_at:"2026-01-01T00:00:00Z", user:"t"}
+     + (if $pid == "" then {} else {pid:($pid|tonumber), pid_start:$ps} end)' > "$SESS/$1-$2.json"
+}
+old() { touch -t "$(date -v-2H +%Y%m%d%H%M 2>/dev/null || date -d '-2 hours' +%Y%m%d%H%M)" "$@"; }
+mk_transcript areal 40000
+run_as areal register --quiet >/dev/null
+seed_reg claude aphantom "$PROJ_DIR/aphantom.jsonl" "$LIVE_PID"; old "$SESS/claude-aphantom.json"
+seed_reg codex acodex "$HOME/.codex/sessions/rollout-acodex.jsonl" ""; old "$SESS/codex-acodex.json"
+seed_reg claude afresh "$PROJ_DIR/afresh.jsonl" ""
+mk_transcript aold 1000; seed_reg claude aold "$PROJ_DIR/aold.jsonl" ""; old "$SESS/claude-aold.json"
+out=$(run_as areal record --label a1 2>/dev/null)
+assert_contains "A1a: record measures the real session" "$out" "tokens=40000"
+[ -f "$SESS/claude-aphantom.json" ] && bad "A1b: record kept a phantom (missing artifact past grace, live pid)" \
+  || ok "A1b: record drops a phantom with a live pid (pid is not liveness)"
+[ -f "$SESS/codex-acodex.json" ] && bad "A1c: record kept a pid-less phantom" \
+  || ok "A1c: record drops a pid-less phantom"
+[ -f "$SESS/claude-afresh.json" ] && ok "A2a: record keeps a fresh record whose artifact is not flushed yet" \
+  || bad "A2a: record dropped a record inside the grace period"
+[ -f "$SESS/claude-aold.json" ] && ok "A2b: record keeps an old record whose artifact exists" \
+  || bad "A2b: record dropped a record with a written artifact"
+seed_reg claude aphantom2 "$PROJ_DIR/aphantom2.jsonl" ""; old "$SESS/claude-aphantom2.json"
+mkdir -p "$HOME/.claude/projects/a-moved"; mk_transcript amoved 1000
+mv "$PROJ_DIR/amoved.jsonl" "$HOME/.claude/projects/a-moved/amoved.jsonl"
+seed_reg claude amoved "$PROJ_DIR/amoved.jsonl" ""; old "$SESS/claude-amoved.json"
+mk_transcript anew 2000
+run_as anew register --quiet >/dev/null
+[ -f "$SESS/claude-aphantom2.json" ] && bad "A1d: register kept a phantom" \
+  || ok "A1d: register drops a phantom too"
+[ -f "$SESS/claude-afresh.json" ] && ok "A2c: register keeps the fresh record" \
+  || bad "A2c: register dropped a record inside the grace period"
+[ -f "$SESS/claude-amoved.json" ] && ok "A2d: a relocated transcript (M16) is not a phantom" \
+  || bad "A2d: register dropped a record whose transcript moved"
+rm -rf "$HOME/.claude/projects/a-moved"
+rm -f "$SESS"/claude-{areal,afresh,aold,amoved,anew}.json "$PROJ_DIR"/{areal,aold,anew}.jsonl
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

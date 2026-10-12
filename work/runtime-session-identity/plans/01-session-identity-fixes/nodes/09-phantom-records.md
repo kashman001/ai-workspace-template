@@ -19,9 +19,12 @@ missing after a grace period, so they never shadow a real session. Codex in VS C
 
 ## Acceptance
 
-- [ ] Suite case: a record whose artifact is missing past the grace period is ignored by `record`/`status`
-- [ ] Suite case: a fresh record (inside the grace period, artifact not yet flushed) is kept
-- [ ] Existing suites pass
+- [x] Suite case: a record whose artifact is missing past the grace period is ignored by `record`/`status`
+- [x] Suite case: a fresh record (inside the grace period, artifact not yet flushed) is kept
+- [x] Existing suites pass
 
 ## Log
 - s7 · started, tier standard
+- s7-a · red: suite cases A1a-A1d/A2a-A2d added at the end of scripts/tests/test-context-budget-registry.sh; A1b, A1c, A1d failed (242/3) before the fix
+- s7-a · green: prune_phantoms() in scripts/context-budget.sh, called by register and record, drops sessions/*.json whose artifact (recorded path or claude id-keyed glob) is missing and whose record file is >60 min old; never consults the pid; skips the caller's own record. Registry suite 245/0
+- s7-a · existing suites pass: statusline 20/0, vendor-budget-hooks 165/0, attach-session 27/0, fleet-children 29/0, fleet-dispatch-records 55/0, fleet-dispatch-contract 24/0, session-numbering 18/0, launch-next-session 188/0, doc-consistency 17/0
