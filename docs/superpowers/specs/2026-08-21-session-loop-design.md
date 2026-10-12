@@ -245,7 +245,7 @@ session whether the design plans for one or not.
 Three layers stack, and each must hold before the next is coherent:
 
 1. **The workspace** — what a worktree does to coordination state at all.
-   *Settled by ADR-0006*, with one residue named below.
+   *Settled by TADR-0006*, with one residue named below.
 2. **Rollover** — what a worktree does to a human-driven handoff. *Already
    mechanized*; this section states the inherited contract.
 3. **Automated rollover** — what removing the human changes about layers 1–2.
@@ -253,7 +253,7 @@ Three layers stack, and each must hold before the next is coherent:
 
 ### Layer 1 — worktrees in this workspace
 
-ADR-0006 made the governing choice: **coordination state is keyed to repository
+TADR-0006 made the governing choice: **coordination state is keyed to repository
 identity, never to a checkout.** Five scripts resolve `WORKSPACE_ROOT` through
 `git rev-parse --git-common-dir`, so every worktree of this repo converges on one
 `.context-budget/`, one lock per work item, one ledger.
@@ -288,7 +288,7 @@ Two further layer-1 facts the supervisor inherits:
 - **Vendor `~`-side state forks per checkout.** Entering a worktree moves Claude's
   transcript path (`~/.claude/projects/<cwd-slug>/`) and **context-budget
   measurement silently stops** until the session re-registers. Observed
-  2026-08-24; reproduced 2026-08-25 while writing this section. ADR-0006 named
+  2026-08-24; reproduced 2026-08-25 while writing this section. TADR-0006 named
   this exact pattern as its cautionary tale, and it sits outside the ADR's reach
   because the path is the vendor's, not ours.
 - **Worktrees accumulate unevenly across vendors.** Claude auto-removes an
@@ -427,7 +427,7 @@ off-by-one in this work item on 2026-08-25.
 
 `.session-seq` holds the number of the **last-launched** session.
 `launch-next-session.sh:187` computes `SEQ = max(over all checkouts) + 1`, writes
-it back to the main checkout, and puts it in the bootstrap prompt. ADR-0007 makes
+it back to the main checkout, and puts it in the bootstrap prompt. TADR-0007 makes
 that prompt canonical: a session takes its number from its own prompt verbatim,
 and on disagreement the ledger note is repaired, never the counter.
 `session-rollover` step 6 closes the loop — the dying session writes **its own**
@@ -447,11 +447,11 @@ There was no session 4.
 (`:194`) — justified because a counter only grows, and needed only because step 6
 strands copies in worktrees. Max-wins cannot decrease, so an over-count is
 absorbed and permanently ratified: every later session writes its own inflated
-number, which is still the max. ADR-0007's self-heal is **one-directional** — it
+number, which is still the max. TADR-0007's self-heal is **one-directional** — it
 corrects a counter that is too *low* (a hand-pasted, launcher-bypassing start)
 and has no path back from one that is too high.
 
-ADR-0007 anticipated the *ledger* drifting from the counter and ruled that the
+TADR-0007 anticipated the *ledger* drifting from the counter and ruled that the
 counter wins. This is the inverse — the **counter** drifted — and the ADR's final
 consequence already names why nothing caught it: *"No mechanical validator
 exists."*

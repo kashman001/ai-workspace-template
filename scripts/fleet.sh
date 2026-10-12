@@ -222,7 +222,7 @@ EOF
 # the (dead) predecessor's session id. Generation fencing lives in
 # dispatch-open: gen N+1 exists only after gen N was closed (clean yield or a
 # parent KILLED ruling), so each report file has at most one live writer.
-# Records are workspace-root-anchored runtime state (ADR-0006), one JSON per
+# Records are workspace-root-anchored runtime state (TADR-0006), one JSON per
 # task under work/<proj>/.agent-dispatch/, same class as .agent-locks/.
 dispatch_record_path() {
   local dir="$WORKSPACE_ROOT/work/$PROJECT"

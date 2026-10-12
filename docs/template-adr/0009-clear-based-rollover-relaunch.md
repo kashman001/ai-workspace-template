@@ -1,9 +1,9 @@
-# ADR-0009: `/clear`-based rollover relaunch
+# TADR-0009: `/clear`-based rollover relaunch
 
-- **Status:** Accepted — amended by ADR-0010 (2026-09-21)
+- **Status:** Accepted — amended by TADR-0010 (2026-09-21)
 - **Date:** 2026-08-28
 
-> **Amendment (2026-09-21, ADR-0010).** The mechanism moved into the record:
+> **Amendment (2026-09-21, TADR-0010).** The mechanism moved into the record:
 > `--clear` writes the prompt, this process's pid and start time to
 > `launch.pending` (no `.pending-clear-seed`, no `rollover-clear-seed.sh`);
 > on `/clear` the existing `SessionStart` `register` matches the pid, binds the
@@ -17,14 +17,14 @@
 > resets with no further work. Measurement caveat: the old transcript is frozen
 > at the clear instant, so a `record` in the cleared session reads near zero
 > until its first response lands.
-- **Supersedes:** nothing. **Extends:** ADR-0003 (automate rollover relaunch).
-- **Related:** ADR-0004 (multi-session model), ADR-0005 (session roles and
-  child registry), ADR-0007 (session-number single source).
+- **Supersedes:** nothing. **Extends:** TADR-0003 (automate rollover relaunch).
+- **Related:** TADR-0004 (multi-session model), TADR-0005 (session roles and
+  child registry), TADR-0007 (session-number single source).
 - **Closes:** `work/automatic-session-rollover/issues/04-in-place-clear-relaunch.md`
 
 ## Context
 
-ADR-0003 automated the relaunch step by spawning a fresh runtime process seeded
+TADR-0003 automated the relaunch step by spawning a fresh runtime process seeded
 with the canonical bootstrap prompt. That works, but a fresh process pays two
 costs the rollover does not actually need:
 
@@ -40,7 +40,7 @@ same working directory, continuing the same work item — which is the ordinary
 rollover.
 
 `/clear` resets the conversation inside the existing process. It preserves what
-ADR-0003 actually cared about: ADR-0003 rejected conversation-as-carrier
+TADR-0003 actually cared about: TADR-0003 rejected conversation-as-carrier
 handoffs, and `/clear` keeps disk as the carrier — the cleared context still
 bootstraps by reading `next-session.md`.
 
@@ -60,8 +60,8 @@ instructs the human to press `/clear`. A SessionStart hook,
 marker, and returns it as `additionalContext`, so the fresh context arrives
 already carrying its mission and the human types nothing beyond the keystroke.
 
-Keeping this as a mode of the existing script is deliberate: ADR-0003 puts the
-prompt wording in exactly one place and ADR-0007 puts the counter in exactly
+Keeping this as a mode of the existing script is deliberate: TADR-0003 puts the
+prompt wording in exactly one place and TADR-0007 puts the counter in exactly
 one place. A parallel script would have duplicated both.
 
 **Selection rule — by whether the MCP server set must change:**
@@ -131,7 +131,7 @@ one place. A parallel script would have duplicated both.
   supervisor's startup path.)*
 - The session keeps its old display name and registry entry, since the process
   is the same. Cosmetic, but `claude agents` listings show the pre-rollover
-  number; ADR-0005's registry keying is unchanged.
+  number; TADR-0005's registry keying is unchanged.
 - The hook fails open on every error path and emits nothing unless a marker is
   pending, so it cannot block session startup. It resolves the workspace root
   through git's common dir — the same resolution the writer uses — rather than
@@ -142,11 +142,11 @@ one place. A parallel script would have duplicated both.
 
 ## Alternatives considered
 
-- **Replace the spawn path entirely** — rejected: ADR-0004's multi-session
+- **Replace the spawn path entirely** — rejected: TADR-0004's multi-session
   cases and any MCP-fragment change genuinely need a new process (losses 1 and
   5 above).
 - **A standalone `rollover-clear.sh`** — rejected: would duplicate the prompt
-  wording (against ADR-0003) and the counter logic (against ADR-0007).
+  wording (against TADR-0003) and the counter logic (against TADR-0007).
 - **Teach `register` that a `clear`-sourced session inherits its predecessor's
   lock** (issue 04's own sketch) — rejected as unnecessary once the path stops
   releasing the lock in the first place. The simpler fix is to not create the

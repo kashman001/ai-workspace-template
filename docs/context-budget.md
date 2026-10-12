@@ -17,8 +17,8 @@ dispatcher over `context-budget-adapters.conf`, one row per runtime) ·
 workflow) · `context-budget.env` (thresholds + relaunch knobs) ·
 `work/<item>/session-state.json` (the per-item session record) ·
 `.context-budget/context-ledger.jsonl` (measurement ledger). The design these
-implement: ADR-0010 (one record, three writers), ADR-0011 (mechanical gates
-and reason codes), ADR-0012 (runtime contract).
+implement: TADR-0010 (one record, three writers), TADR-0011 (mechanical gates
+and reason codes), TADR-0012 (runtime contract).
 
 > **Minimal mode — solo dev, one session at a time?** You need exactly three
 > things: `register` at session start (automatic via hook in Claude Code),
@@ -207,8 +207,8 @@ role class, or pre-120K degradation attributable to a role. Full reasoning:
 
 ## Rollover trigger policy (hybrid: WARN asks, STOP goes)
 
-> **Status:** implemented 2026-08-05 (ADR-0003/ADR-0004); rebuilt on the
-> session record 2026-09 (ADR-0010/0011): the `session-rollover` skill carries
+> **Status:** implemented 2026-08-05 (TADR-0003/TADR-0004); rebuilt on the
+> session record 2026-09 (TADR-0010/0011): the `session-rollover` skill carries
 > the policy, `register` and `scripts/launch-next-session.sh` implement it
 > (tests: `scripts/tests/test-launch-next-session.sh`, `test-emit-mode.sh`).
 
@@ -269,7 +269,7 @@ successor whatever `ROLLOVER_RUNTIME` says.
 ## The session record
 
 Everything about a work item's current launch lives in one machine-local file,
-`work/<item>/session-state.json` (gitignored; ADR-0010). Three scripts write it,
+`work/<item>/session-state.json` (gitignored; TADR-0010). Three scripts write it,
 each its own block, all through `scripts/lib/session-lib.sh`
 (`session_record_update`: read, precondition, filter, temp file, rename, under a
 directory lock — a lost race is a silent no-op, never a blind overwrite).
@@ -360,7 +360,7 @@ past), `session` empties, and:
   the login and the connected servers); choose a fresh process when it needs a
   different fragment or runtime.
 
-The bootstrap prompt is built in one place and is verbatim (ADR-0003):
+The bootstrap prompt is built in one place and is verbatim (TADR-0003):
 `Work item <p> - rollover session #<n>. Read work/<p>/next-session.md and continue from **First actions**.`
 Claude successors also get `--name "<p> #<n>"`, so session titles read as
 work item + lineage number. Vendor flags live only in the script.
@@ -576,7 +576,7 @@ free-form and never a test contract.
 ## Worktrees (workspace-root anchoring)
 
 **Coordination state is keyed to the repository, never to a checkout**
-(ADR-0006). Every script resolves `WORKSPACE_ROOT` through
+(TADR-0006). Every script resolves `WORKSPACE_ROOT` through
 `git rev-parse --git-common-dir` (the parent of the shared `.git`) when the git
 root is this workspace, and through the script-anchored fallback otherwise, so
 a script invoked from any git worktree reads and writes the **main
@@ -665,7 +665,7 @@ runtime with no child handles at all (research §5/§8/§10/§11):
   `task= gen= status= report=` line per record and exits 1 while any
   generation is open — the drain check a rolling parent runs before its own
   rollover. Records are gitignored runtime state anchored to the workspace
-  root (ADR-0006), same class as the session record.
+  root (TADR-0006), same class as the session record.
 
 The records are what make parent rollover fleet-safe: a successor parent
 cannot resume the predecessor's children (resume is keyed to the dead
@@ -741,7 +741,7 @@ produces every runtime's hook payload from the adapter table
 session id and transcript come from, the measurer's `--runtime`, who runs
 `register`, which vendor event measures each turn and with which output
 envelope, which event ends a turn and how, and what a logout looks like
-(ADR-0012). The shared core, `scripts/hooks/context-budget-hook-lib.sh`, holds
+(TADR-0012). The shared core, `scripts/hooks/context-budget-hook-lib.sh`, holds
 what must not drift between runtimes: the throttle (`CHECK_EVERY`, default
 60s), escalation-only emission (one WARN and one STOP per session, tracked in
 `.context-budget/hook-<runtime>-<session>.status`), the message text, and the

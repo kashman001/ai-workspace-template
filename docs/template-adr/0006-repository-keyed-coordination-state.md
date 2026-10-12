@@ -1,10 +1,10 @@
-# ADR-0006: Key coordination state to repository identity, never to a checkout
+# TADR-0006: Key coordination state to repository identity, never to a checkout
 
 - Status: accepted
 - Date: 2026-08-06
 - Deciders: Kashif + Claude Code session 19 (automatic-session-rollover project)
 
-Amends ADR-0004 and ADR-0005. Both were written under an implicit assumption
+Amends TADR-0004 and TADR-0005. Both were written under an implicit assumption
 that a workspace has exactly one checkout — "the workspace root" meant the
 directory the script happened to live in. This ADR records the correction:
 the unit that owns coordination state is the *repository*, and every checkout
@@ -59,7 +59,7 @@ discipline are retired.
 - **A shared sourced library for the resolver** — rejected at the time: the
   test suites and the vendor-hook deployment copy scripts around as
   self-contained units; ~12 duplicated lines per script was the cheaper cost.
-  *(Amended 2026-09-21, ADR-0010: the root resolver stays duplicated per
+  *(Amended 2026-09-21, TADR-0010: the root resolver stays duplicated per
   script, but the record writer is one sourced library,
   `scripts/lib/session-lib.sh`, and the suites copy it beside the scripts they
   copy. A worktree run therefore drives the main checkout's `work/` — use a
@@ -87,7 +87,7 @@ discipline are retired.
 - Promoted from:
   `work/automatic-session-rollover/decisions.md#2026-08-06--coordination-state-keyed-to-repository-identity-not-checkout-path-session-19`
 - Commits: a850d7b
-- Refs: ADR-0004, ADR-0005 (the model this amends);
+- Refs: TADR-0004, TADR-0005 (the model this amends);
   `work/automatic-session-rollover/plans/workspace-root-anchoring.md`;
   `work/automatic-session-rollover/issues/05-workspace-root-anchoring.md`;
   `docs/context-budget.md` → "Worktrees";

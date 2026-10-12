@@ -25,14 +25,28 @@ upstream `domain-modeling` skill):
 If any leg is missing, leave it as a Tier-2 note in `work/…/decisions.md`. "Every
 decision gets an ADR" is the scheme that dies in a month — don't.
 
+## Two namespaces: this project's, and the template's
+
+`docs/adr/` holds **this project's** decisions, labelled `ADR-NNNN`. The decisions
+behind the workspace machinery inherited from the template (session rollover,
+context budget, decision capture, tool loading) live in
+[`docs/template-adr/`](../template-adr/README.md), labelled `TADR-NNNN`, and arrive
+with template syncs. The two sequences are independent, so a template sync never
+collides with a number here.
+
+Route a new ADR by subject. A decision about the **workspace machinery itself**
+(the skills, scripts and conventions the template ships) is a TADR: written
+directly in the template repo, proposed upstream from an instance, because the
+template assigns TADR numbers. Everything else goes here. When unsure, it goes
+here.
+
 ## Where it lives (scope)
 
 `docs/adr/` is the **workspace-scope** home — the default, and the right place for any
-decision that spans more than one repo or governs the workspace itself (skills,
-conventions, tooling). If this workspace grows product repos under `repos/` and a
-decision is contained entirely within one of them, it may instead live in that repo's
-own `repos/<repo>/docs/adr/`, numbered in its own independent sequence. When unsure,
-keep it here.
+project decision that spans more than one repo. If this workspace grows product repos
+under `repos/` and a decision is contained entirely within one of them, it may instead
+live in that repo's own `repos/<repo>/docs/adr/`, numbered in its own independent
+sequence. When unsure, keep it here.
 
 ## Conventions
 
@@ -53,17 +67,5 @@ keep it here.
 <!-- Add a line per ADR: -->
 <!-- - [ADR-NNNN: <title>](NNNN-slug.md) — accepted YYYY-MM-DD -->
 
-- [ADR-0001: Capture decision provenance in three tiers, promoting notes to ADRs](0001-three-tier-decision-capture.md) — accepted 2026-07-14
-- [ADR-0002: Load tools lean-by-default — CLI-first, MCP split into core and opt-in fragments](0002-lean-by-default-tool-loading.md) — accepted 2026-08-01
-- [ADR-0003: Automate the rollover→relaunch handoff with a workspace script, not vendor prompt mechanisms](0003-automate-rollover-relaunch.md) — accepted 2026-08-05
-- [ADR-0004: Operate rollover automation under a multi-session model — session-keyed budget state, per-project locks, hybrid trigger](0004-multi-session-rollover-model.md) — accepted 2026-08-05, amended by ADR-0010
-- [ADR-0005: Session roles with the lock as primary marker, and a parent/child session registry](0005-session-roles-and-child-registry.md) — accepted 2026-08-06, superseded by ADR-0010 (roles; registry moved to fleet)
-- [ADR-0006: Key coordination state to repository identity, never to a checkout](0006-repository-keyed-coordination-state.md) — accepted 2026-08-06, amended by ADR-0010
-- [ADR-0007: Make `.session-seq` (via the bootstrap prompt) the single source of session numbers](0007-session-number-single-source.md) — accepted 2026-08-06, amended by ADR-0008, superseded by ADR-0010
-- [ADR-0008: Rollover step 6 asserts the session counter rather than writing it](0008-session-counter-assertion-not-write.md) — accepted 2026-08-25, superseded by ADR-0010
-- [ADR-0009: `/clear`-based rollover relaunch](0009-clear-based-rollover-relaunch.md) — accepted 2026-08-28, amended by ADR-0010
-- [ADR-0010: One session-state record per work item, with three writers and process liveness as the only ownership test](0010-one-session-record-three-writers.md) — accepted 2026-09-21
-- [ADR-0011: Every load-bearing session step is a script that refuses with a reason code](0011-mechanical-gates-and-reason-codes.md) — accepted 2026-09-21
-- [ADR-0012: Runtime contract — one adapter table, a probe-gated support matrix, fleet machinery isolated](0012-runtime-contract-adapter-table.md) — accepted 2026-09-21
-- [ADR-0013: No vector store, no MMR re-ranking, no numeric decay scoring](0013-no-vector-store-mmr-or-decay-scoring.md) — accepted 2026-10-07
-- [ADR-0014: Keep the project glossary in a root `GLOSSARY.md`, not in `CONTEXT.md`](0014-glossary-in-its-own-file.md) — accepted 2026-10-09
+None yet. The template's own decisions are indexed in
+[`docs/template-adr/README.md`](../template-adr/README.md).

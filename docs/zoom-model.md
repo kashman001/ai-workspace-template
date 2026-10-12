@@ -90,7 +90,7 @@ up, pointers down" extended from documents to computation.
 | Z3 | Reader/editor | Nothing standing — targeted reads only | Diffs, verified facts |
 
 The shipped `.claude/agents/repo-navigator` **is** the Z1 profile
-(read-only tools, graph-first method, file:line returns); ADR-0002's
+(read-only tools, graph-first method, file:line returns); TADR-0002's
 asymmetric parent/child toolsets is the same principle applied to tools.
 Add profiles for other levels only when a product's size demands them.
 

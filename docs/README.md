@@ -36,7 +36,7 @@ why loading less is the point).
 |---|---|
 | Capture what the product is (Z0) | root `SPEC.md` + [`system-design.md`](system-design.md) |
 | Add a team capability (script/skill/agent/runbook) | [`workspace-structure.md`](workspace-structure.md) → "Authoring a Team Capability" |
-| Record why a decision was made | [`adr/README.md`](adr/README.md) (three tiers; `/decision`) |
+| Record why a decision was made | [`adr/README.md`](adr/README.md) (three tiers; `/decision`); the template machinery's own: [`template-adr/README.md`](template-adr/README.md) |
 | Know where issues are tracked (what `to-spec`/`to-tickets`/`triage`/`wayfinder` consume) | [`agents/issue-tracker.md`](agents/issue-tracker.md) |
 | Set up the optional agent toolchain | [`recommended-tooling.md`](recommended-tooling.md) |
 

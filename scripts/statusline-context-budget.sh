@@ -38,7 +38,7 @@ PROJECT=""
 SEGMENT=""
 if [ -n "$PROJECT" ]; then
   # The item's record is authoritative for primary: its open `session` block
-  # is the owner, alive while its pid is (ADR-0010, read through
+  # is the owner, alive while its pid is (TADR-0010, read through
   # scripts/lib/session-lib.sh). The registry record's role is a cached claim.
   ROLE=$(jq -r '.role // "none"' "$REC" 2>/dev/null)
   LIB="$ROOT/scripts/lib/session-lib.sh"

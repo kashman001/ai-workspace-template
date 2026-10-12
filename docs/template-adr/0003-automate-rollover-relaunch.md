@@ -1,4 +1,4 @@
-# ADR-0003: Automate the rollover→relaunch handoff with a workspace script, not vendor prompt mechanisms
+# TADR-0003: Automate the rollover→relaunch handoff with a workspace script, not vendor prompt mechanisms
 
 - Status: accepted
 - Date: 2026-08-05
@@ -52,7 +52,7 @@ carries a single runtime-neutral pointer to it.
   flags (`--yolo`)** — rejected: trades permission safety for cross-vendor
   symmetry; those runtimes get the interactive core instead.
 - **Inline vendor launch commands in the `session-rollover` skill** —
-  rejected: violates the workspace's CLI-first rule (ADR-0002 direction);
+  rejected: violates the workspace's CLI-first rule (TADR-0002 direction);
   vendor specifics belong in scripts, keeping skills runtime-neutral.
 
 ## Consequences
@@ -71,7 +71,7 @@ carries a single runtime-neutral pointer to it.
 
 ## Provenance
 
-- Refined by: ADR-0004 (multi-session model, trigger policy, knobs, runtime scope)
+- Refined by: TADR-0004 (multi-session model, trigger policy, knobs, runtime scope)
 - Promoted from: `work/automatic-session-rollover/decisions.md#2026-08-05--automate-the-rolloverrelaunch-pipeline-the-effort-itself`
 - Commits: 69dd976
 - Refs: `work/automatic-session-rollover/relaunch-analysis.md` (verified vendor

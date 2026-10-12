@@ -1,4 +1,4 @@
-# ADR-0013: No vector store, no MMR re-ranking, no numeric decay scoring
+# TADR-0013: No vector store, no MMR re-ranking, no numeric decay scoring
 
 - Status: accepted
 - Date: 2026-10-07

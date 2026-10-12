@@ -1,4 +1,4 @@
-# ADR-0012: Runtime contract — one adapter table, a probe-gated support matrix, fleet machinery isolated
+# TADR-0012: Runtime contract — one adapter table, a probe-gated support matrix, fleet machinery isolated
 
 - Status: accepted
 - Date: 2026-09-21
@@ -43,7 +43,7 @@ and is never called by the daily loop.
   grain (a record per work item, children per session) and a fourth writer.
 - **Keeping the transitive child-lock hierarchy in the launcher and `release`**
   — rejected: no incident ever needed it, and it depended on the roles
-  ADR-0010 removes.
+  TADR-0010 removes.
 - **Deleting the opencode and Copilot VS Code rows as "non-goals"** —
   rejected: both ship with committed wiring that works; a row costs one line
   (integrations must stay agent-agnostic).
