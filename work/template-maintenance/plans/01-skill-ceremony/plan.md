@@ -1,6 +1,6 @@
 ---
 plan: 01-skill-ceremony
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---
@@ -36,7 +36,7 @@ pushing `main`; a per-runtime skill registry.
 | 3 | 08-docs-worker | work | standard | done |
 | 3 | 09-docs-shared | work | standard | done |
 | 3 | 10-reconcile-w3 | reconcile | frontier | done |
-| 4 | 11-code-review-pass | work | standard | doing |
-| 4 | 12-reconcile-w4 | reconcile | frontier | todo |
-Frontier: none (11-code-review-pass doing). Remaining: 2 of 12. Sessions used: 1.
+| 4 | 11-code-review-pass | work | standard | done |
+| 4 | 12-reconcile-w4 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 12. Sessions used: 1.
 <!-- plan:end board -->

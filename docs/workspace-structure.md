@@ -412,9 +412,8 @@ Copy an existing one; `scripts/tests/test-agent-entrypoints.sh` (E6) fails
 when the two switches disagree. Prefer user-invoked for any procedure a
 person or a script starts by name (session mechanics, setup, advisory
 interrogations): a model-invoked description is weighed on every turn, and
-`scripts/check-skill-descriptions.sh` fails the gate once the total passes
-7,500 bytes. Which band of ceremony a change needs at all is
-`docs/stakes-to-ceremony.md`.
+`scripts/check-skill-descriptions.sh` fails the gate once their total passes
+its budget.
 
 To make a capability **required** — "run the tests before finishing a
 branch" as a non-negotiable — put its prerequisites in the manifest: a `req`
@@ -713,7 +712,7 @@ opt-in pre-commit hook (`scripts/git-hooks/pre-commit`).
 | `scripts/run-checks.sh` | Runs every check and suite above | Check (runner) | Script | Pre-commit (opt-in), CI, by hand |
 | `scripts/plan.sh check` | A plan's node files are well-formed | Check | Script | Plan create/reconcile/replan, rollover, each `session-loop.sh` turn |
 | `scripts/check-plans.sh` | `plan.sh check` on every committed plan | Check | Script | Gate (fast) |
-| `scripts/check-skill-descriptions.sh` | Model-invoked skill descriptions under 7,500 bytes in total | Check | Script | Gate (fast); when adding a skill |
+| `scripts/check-skill-descriptions.sh` | Model-invoked skill descriptions under their byte budget in total | Check | Script | Gate (fast); when adding a skill |
 | Context-budget hooks (`scripts/hooks/`, wired in `.claude/settings.json`, `.codex/config.toml`, `.gemini/settings.json`, `.github/hooks/`, `.opencode/plugins/`) | Session size: WARN at 120K, STOP at 150K | Check | Script | Session start, each tool call or turn, session end |
 | `scripts/context-budget.sh record` | Same, at a work-unit boundary | Check | Script | By hand (agent), each work unit |
 

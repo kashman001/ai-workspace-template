@@ -180,7 +180,8 @@ Rob Shocks' video on Addy Osmani's agent-skills made three points. What plan
    - `unslop` is a final editing pass on human-facing prose, no longer "always apply";
      `technical-writing` no longer triggers on commit messages or a slash command.
    - `constraint-driven-development` and `doubt-driven-development` got tighter
-     descriptions through their patches.
+     descriptions through their patches; `decision-log` (910 → 305 bytes) and
+     `jev` (482 → 303) in their own frontmatter.
    - New check `scripts/check-skill-descriptions.sh` bounds the model-invoked
      description total at 7500 bytes (29 skills, 7,303 bytes; was 10,174).
 3. **Steal Addy's anti-rationalization tables.** `## Common rationalizations`

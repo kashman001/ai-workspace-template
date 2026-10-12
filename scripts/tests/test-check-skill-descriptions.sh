@@ -20,30 +20,31 @@ SINGLE="Use when you need the single-line thing done."
 FOLD1="Use when the folded thing is needed,"
 FOLD2="and also when it spans a second line."
 FOLDED="$FOLD1 $FOLD2"
+CRLF="Use when the file has CRLF line endings."
 HUGE="$(printf 'h%.0s' $(seq 1 500))"
 bytes() { local LC_ALL=C; local s="$1"; echo "${#s}"; }
 
-# fixture <dir>: four skills — single-line, folded, user-invoked huge, no description.
+# fixture <dir>: five skills — single-line, folded (>-), CRLF, user-invoked huge, no description.
 fixture() {
   rm -rf "$1"
-  mkdir -p "$1/scripts" "$1/skills/single" "$1/skills/folded" "$1/skills/manual" "$1/skills/nodesc"
+  mkdir -p "$1/scripts" "$1/skills/single" "$1/skills/folded" "$1/skills/manual" "$1/skills/nodesc" "$1/skills/crlf"
   cp "$SRC_ROOT/scripts/check-skill-descriptions.sh" "$1/scripts/"
   printf -- '---\nname: single\ndescription: %s\n---\n# body\n' "$SINGLE" > "$1/skills/single/SKILL.md"
-  printf -- '---\nname: folded\ndescription: >\n  %s\n  %s\n---\n# body\n' "$FOLD1" "$FOLD2" > "$1/skills/folded/SKILL.md"
+  printf -- '---\nname: folded\ndescription: >-\n  %s\n  %s\n---\n# body\n' "$FOLD1" "$FOLD2" > "$1/skills/folded/SKILL.md"
   printf -- '---\nname: manual\ndescription: %s\ndisable-model-invocation: true\n---\n# body\n' "$HUGE" > "$1/skills/manual/SKILL.md"
   printf -- '---\nname: nodesc\n---\n# body\n' > "$1/skills/nodesc/SKILL.md"
+  printf -- '---\r\nname: crlf\r\ndescription: %s\r\n---\r\n# body\r\n' "$CRLF" > "$1/skills/crlf/SKILL.md"
 }
-run() { (cd "$1" && env -u SKILL_DESC_MAX_BYTES -u CHECK_ROOT "$@" bash scripts/check-skill-descriptions.sh 2>&1); }
 runb() { local d="$1"; shift; (cd "$d" && env -u CHECK_ROOT "$@" bash scripts/check-skill-descriptions.sh 2>&1); }
 
-WANT=$(( $(bytes "$SINGLE") + $(bytes "$FOLDED") ))
+WANT=$(( $(bytes "$SINGLE") + $(bytes "$FOLDED") + $(bytes "$CRLF") ))
 
 echo "P1: under budget — exit 0, both model-invoked names, exact total"
 fixture "$TMP/w"; out="$(runb "$TMP/w" SKILL_DESC_MAX_BYTES=9000)"; rc=$?
 assert_eq "P1 exit 0" "$rc" "0"
 assert_contains "P1 lists single" "$out" "single"
 assert_contains "P1 lists folded" "$out" "folded"
-assert_contains "P1 exact total" "$out" "total: $WANT bytes over 3 model-invoked skills"
+assert_contains "P1 exact total" "$out" "total: $WANT bytes over 4 model-invoked skills"
 
 echo "P2: over budget — exit 1, OVER BUDGET, names the largest skill"
 fixture "$TMP/w"; out="$(runb "$TMP/w" SKILL_DESC_MAX_BYTES=10)"; rc=$?
@@ -56,8 +57,9 @@ fixture "$TMP/w"; out="$(runb "$TMP/w" SKILL_DESC_MAX_BYTES=9000)"
 assert_lacks "P3 manual absent" "$out" "manual"
 assert_lacks "P3 huge bytes absent" "$out" "$(bytes "$HUGE")"
 
-echo "P4: folded description counts as the joined trimmed text"
+echo "P4: folded (>-) and CRLF descriptions count as the joined trimmed text"
 assert_contains "P4 folded bytes" "$out" "$(printf '%6d  folded' "$(bytes "$FOLDED")")"
+assert_contains "P4 crlf bytes" "$out" "$(printf '%6d  crlf' "$(bytes "$CRLF")")"
 assert_contains "P4 nodesc counts 0" "$out" "$(printf '%6d  nodesc' 0)"
 
 echo

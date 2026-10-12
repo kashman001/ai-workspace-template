@@ -88,6 +88,15 @@
   </div>
 
   <h2>Medium</h2>
+
+  <div class="find medium resolved">
+    <h3><span class="id">M51</span> Trim skill triggers: narrow <code>unslop</code>, review every model-invoked description, budget their total
+      <span class="sev medium">Medium</span><span class="status resolved">Resolved</span><span class="area">skills/, scripts/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; 56 skills; the 34 model-invoked descriptions total about 8.7 KB that every runtime weighs on every turn. <code>skills/unslop/SKILL.md</code> says &ldquo;Must always apply.&rdquo;, so it fires on almost any writing. No check bounds the total, so each vendored pack grows it silently (Rob Shocks, &ldquo;Pocock vs Pstack vs Osmani&rdquo;: more skills is not a smarter agent).</p>
+    <p><span class="k">Impact</span> &mdash; Accidental auto-triggering and a per-turn context tax that rises with every skill added.</p>
+    <p><span class="k">Fix</span> &mdash; Narrow <code>unslop</code> through the adapted-class frontmatter; review each model-invoked skill (keep / tighten / user-invoke with <code>disable-model-invocation</code>, <code>agents/openai.yaml</code>, a <code>.claude/commands/</code> shortcut); add <code>scripts/check-skill-descriptions.sh</code> with a budget and a test seen to fail first; one Tier-2 note per call.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-11 (<code>work/template-maintenance</code> session 24, plan <code>01-skill-ceremony</code>). Narrowed <code>unslop</code> in its adapted frontmatter (the sync preserves it; a patch there would fail the second refresh &mdash; decisions.md), reviewed all 32 model-invoked skills (<code>work/template-maintenance/trigger-review.md</code>: keep 23, tighten 6, user-invoke 3 &mdash; <code>checkpoint</code>, <code>session-rollover</code>, <code>design-for-testability</code>, each with <code>disable-model-invocation</code>, <code>agents/openai.yaml</code> and its existing command), tightened <code>technical-writing</code>, <code>decision-log</code>, <code>jev</code> and, via their existing patches, <code>constraint-driven-development</code> and <code>doubt-driven-development</code>; measured baseline was 10,174 bytes over 32 skills (the card&rsquo;s 8.7 KB / 34 undercounted folded descriptions), now 7,303 over 29. <code>scripts/check-skill-descriptions.sh</code> ratchets at 7,500 with <code>scripts/tests/test-check-skill-descriptions.sh</code> (seen failing first, 3/8; now 12/12); seven Tier-2 notes.</p>
+  </div>
   <div class="find med resolved">
     <h3><span class="id">M50</span> The vendored-skills sync knows only one upstream
       <span class="sev med">Medium</span><span class="status resolved">Resolved</span><span class="area">scripts/sync-vendored-skills.sh, scripts/check-drift.sh</span></h3>
@@ -1031,6 +1040,24 @@
   </div>
 
   <h2>Low</h2>
+
+  <div class="find low resolved">
+    <h3><span class="id">L83</span> Anti-rationalization tables for the workspace skills where agents cut corners
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The ledgers and this archive record repeated shortcuts: ledger blocks written without the header grep (session 15 corrupted two), hand-offs skipped at WARN, decisions left in chat, reconcile nodes closed on a subagent's word. The vendored Addy Osmani skills carry a &ldquo;Common Rationalizations&rdquo; table (excuse &rarr; reality) for exactly this; ours carry none.</p>
+    <p><span class="k">Impact</span> &mdash; The same mistakes recur across sessions despite being documented in prose.</p>
+    <p><span class="k">Fix</span> &mdash; Short tables in Addy's format for <code>checkpoint</code>, <code>session-rollover</code>, <code>decision-log</code>, <code>create-work-item</code> and <code>plans</code> (the reconcile verification), each row a recorded failure mode; no tables in vendored skills.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-11 (<code>work/template-maintenance</code> session 24, plan <code>01-skill-ceremony</code>). <code>## Common rationalizations</code> tables in <code>checkpoint</code> (5 rows), <code>session-rollover</code> (3), <code>decision-log</code> (3), <code>create-work-item</code> (3), <code>plans</code> (4); every row traces to a ledger block or an archive card (L14, M38, M18, L72, L26, M33, L45, M47, the s15 ledger splice), sources listed in the plan node&rsquo;s Log. No vendored skill touched.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L82</span> A stakes-to-ceremony guide: which skills a change of a given size and risk needs
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/, CONTEXT.md</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The only ceremony guidance is one clause in <code>CONTEXT.md</code> (&ldquo;use judgement rather than full ceremony&rdquo;); <code>ask-matt</code> routes by situation, not by stakes. With 56 skills an agent either runs them all or picks by habit.</p>
+    <p><span class="k">Impact</span> &mdash; Tweaks get grilled and spec'd; risky changes skip the adversarial review and hardening passes.</p>
+    <p><span class="k">Fix</span> &mdash; A short runtime-neutral table (tweak &rarr; do it and check it; small feature &rarr; <code>grill-me</code> + <code>tdd</code>; big or fuzzy &rarr; <code>to-spec</code> + <code>plans</code>; production / security / irreversible &rarr; <code>doubt-driven-development</code> + <code>security-and-hardening</code> + review) at <code>docs/stakes-to-ceremony.md</code>, a lean pointer from <code>CONTEXT.md</code>, an adoption note for downloaders; <code>ask-matt</code> wired by patch or left pointing at the guide.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-11 (<code>work/template-maintenance</code> session 24, plan <code>01-skill-ceremony</code>). <code>docs/stakes-to-ceremony.md</code> (2.8 KB): four bands (tweak / small / big or fuzzy / production-irreversible) with the skills each needs, two questions that tell the band, floors at every band, and the adoption note for downloaders; pointers from <code>CONTEXT.md</code> (one bullet, 14,260 bytes), <code>docs/README.md</code>, <code>README.md</code>, <code>docs/for-non-engineers.md</code>, <code>docs/recommended-tooling.md</code>, <code>docs/workspace-structure.md</code>, <code>skills/vendored-skills.md</code>. <code>ask-matt</code> left pristine (decisions.md: a patch on upstream&rsquo;s highest-churn file for a pointer the agent already holds).</p>
+  </div>
   <div class="find low resolved">
     <h3><span class="id">L75</span> Addy Osmani lifecycle skills the template lacks (pristine set)
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/, references/</span></h3>

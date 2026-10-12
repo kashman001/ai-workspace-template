@@ -32,7 +32,7 @@ for f in skills/*/SKILL.md; do
     folded && /^[ \t]+[^ \t]/ { t = $0; gsub(/^[ \t]+|[ \t]+$/, "", t); d = (d == "" ? t : d " " t); next }
     folded && /^[ \t]*$/ { next }
     { folded = 0 }
-    /^disable-model-invocation:[ \t]*true/ { skip = 1 }
+    /^disable-model-invocation:[ \t]*true[ \t]*$/ { skip = 1 }
     /^description:/ {
       v = $0; sub(/^description:[ \t]*/, "", v); gsub(/[ \t]+$/, "", v)
       if (v ~ /^[>|][-+]?$/) { folded = 1; d = "" } else d = v

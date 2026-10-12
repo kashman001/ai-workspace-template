@@ -23,8 +23,8 @@ bump `TEMPLATE_VERSION` to that day.
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-skill-ceremony, open, wave 4 of 4, done 10/12, doing 1, todo 1, blocked 0, dropped 0, sessions 1.
-Frontier: none (11-code-review-pass doing). Remaining: 2 of 12 — wave 4: 11-code-review-pass doing, 12-reconcile-w4 todo.
+Position: plan 01-skill-ceremony, open, wave 4 of 4, done 12/12, doing 0, todo 0, blocked 0, dropped 0, sessions 1.
+Frontier: none. Remaining: 0 of 12.
 <!-- plan:end position -->
 
 ## First actions

@@ -55,7 +55,7 @@ commit of any upstream is more than 60 days old; refresh then. Three classes:
 Skills marked *(slash)* have a Claude Code shortcut under `.claude/commands/`;
 the rest are model-invoked (triggered by their `description`). Every
 model-invoked description is weighed by the runtime on every turn, so
-`scripts/check-skill-descriptions.sh` bounds their total (7,500 bytes);
+`scripts/check-skill-descriptions.sh` bounds their total;
 adding one means trimming another or making a procedure skill user-invoked.
 Which skills a change needs at all: `docs/stakes-to-ceremony.md`.
 

@@ -68,3 +68,67 @@ each sourced to a ledger block or archive card). Seven Tier-2 notes in
 set the budget to 7500); reconcile 07; then wave 3 docs.
 
 **Open items.** Waves 2–4; cards still open.
+
+## [gen 1] 2026-10-11 — waves 2 and 3 committed, wave 4 review running
+
+**Finished.** Wave 2 (`e86b89f`): checkpoint, session-rollover and
+design-for-testability user-invoked (frontmatter flag + `agents/openai.yaml`;
+commands already existed); decision-log and jev tightened; model-invoked
+total 7,303 bytes over 29 skills; `SKILL_DESC_MAX_BYTES` 7500. Wave 3
+(`5e92f27`): CONTEXT.md "Stakes first" bullet (14,260 bytes), vendored
+catalog, workspace-structure (tree, check list, checks table, authoring
+note), docs/README.md row, README / for-non-engineers / recommended-tooling
+pointers, `/build auto` → `implement-spec`, analysis addendum; `retro` left
+alone (pristine). Verification so far: `run-checks.sh` full 44 passed, 0
+failed, 0 skipped (152 s); sync round trip against the pinned clones of all
+three upstreams (mattpocock from `~/Developer/references`, addyosmani and
+cursor/plugins cloned into the scratchpad at `1be8e34` / `978ca6e`) leaves
+`git status` empty; `check-drift.sh` no DRIFT.
+
+**Running.** Node 11: code-review pass (opus) over `8e16d66..HEAD`, findings
+to `skill-ceremony-review.md`.
+
+**Next.** Fix blockers, reconcile 12, close the plan, resolve M51/L82/L83
+into the archive, final commit.
+
+**Open items.** Wave 4; the three cards.
+
+## [gen 1] 2026-10-11 — closing block: plan closed, cards resolved
+
+**Finished.** Node 11 review (`skill-ceremony-review.md`): 0 blockers, 10
+suggestions — 7 fixed (orphan `run()` removed; CRLF fixture added and folded
+fixture switched to `>-`, seen red with the CR strip removed, 12/12 after;
+`disable-model-invocation: true` anchored to end of line like E6; the
+7,500 figure now lives only in the check and its workspace-structure bullet;
+duplicate stakes pointer and `/build auto` mapping removed; addendum names
+the decision-log/jev tightenings), 3 logged without change (CONTEXT.md
+"user-invoked only" labels; unslop narrowed in frontmatter rather than by
+patch, see decisions; M51 numbers corrected in its Fixed: note). Node 12
+reconciled; plan `01-skill-ceremony` closed (12/12 done). Cards M51, L82,
+L83 resolved into the archive with Fixed: notes; scorecard 0/138/5/0/6.
+
+**Verification (commands actually run).**
+- `scripts/run-checks.sh` (full, after the review fixes): 44 passed, 0
+  failed, 0 skipped (151 s). Earlier full run before the fixes: 44/0/0.
+- `scripts/tests/test-check-skill-descriptions.sh`: 12 passed (first seen
+  failing 3/8 against a broken check; CRLF case seen failing on its own).
+- `scripts/check-skill-descriptions.sh`: 7,303 bytes over 29 skills, budget
+  7,500, exit 0 (baseline 10,174 over 32).
+- `scripts/tests/test-agent-entrypoints.sh`: 14 passed (E6b covers the
+  three new user-invoked skills). `test-doc-consistency.sh`: 17 passed.
+- `scripts/check-drift.sh`: no DRIFT; CONTEXT.md 14,260 bytes.
+- `scripts/sync-vendored-skills.sh` for mattpocock (local clone), addyosmani
+  (`1be8e34`) and pstack (`978ca6e`, scratchpad clones): `git status` empty.
+- `scripts/plan.sh check`: silent; `status`: closed, 12/12.
+
+**Deviations from the brief.** `unslop` narrowed in its adapted-class
+frontmatter, not by `workspace.patch` (Tier-2 note explains why a patch
+would break the second sync). `retro` untouched (pristine). Commit trailer
+is `Claude Fable 5.1`, the model that ran this task, not the brief's
+"Opus 5.5".
+
+**Open items.** None from the brief. The item launcher
+(`next-session.md`) still carries the session-23 mission text above its new
+Position block; the parent session rewrites it at rollover. The two
+upstream clones for a future sync live only in the scratchpad; the sync
+prints the `git clone` lines when they are missing.
