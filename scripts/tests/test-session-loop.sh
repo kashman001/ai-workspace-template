@@ -490,6 +490,27 @@ out="$(SESSION_LOOP_ALARM=20 "$SL" testproj --max-sessions 1 --min-lifetime 0 --
 [ $(( $(date +%s) - t0 )) -lt 10 ] && ok "A4: the alarm never holds the caller's pipe after the loop returns" \
   || bad "A4: the caller was held by a leaked alarm sleep"
 
+echo "W1: a supervisor run from a worktree's own copy drives the MAIN checkout's record"
+# Every other case runs the main checkout's script. This one runs the copy a
+# worktree checks out, from inside the worktree: the record is gitignored, so
+# the worktree has none, and a resolver that fell back to SCRIPT_ROOT would
+# find no staged session there. The worktree sits outside $MAIN so reset's
+# `git clean` leaves it alone.
+reset; export STUB_BEHAVIOUR=quit
+WT="$TMP/wt-loop"
+git -C "$MAIN" worktree add -q --detach "$WT" HEAD
+[ -x "$WT/scripts/session-loop.sh" ] && [ ! -e "$WT/work/testproj/session-state.json" ] \
+  && ok "W1a: precondition — the worktree has its own supervisor copy and no record" \
+  || bad "W1a: precondition — worktree copy missing or a record already there"
+(cd "$WT" && "$WT/scripts/session-loop.sh" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 \
+  >"$TMP/out" 2>&1 </dev/null); RC=$?; OUT="$(cat "$TMP/out")"
+assert_eq "W1b: exit 0"                                       "$RC" "0"
+assert_eq "W1c: it ran the session staged in the MAIN record" "$(verdicts)" "quit_plain seq=8"
+assert_eq "W1d: the MAIN record's chain was charged"          "$(rec '.chain.used')" "1"
+assert_eq "W1e: nothing was written into the worktree" \
+  "$(git -C "$WT" status --porcelain --ignored -- work scripts | tr -d '\n')" ""
+git -C "$MAIN" worktree remove --force "$WT"
+
 echo
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
