@@ -571,6 +571,16 @@ kreset
 kagent "$(jq -cn --arg t "$HOME/.claude/projects/x/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,stop_hook_active:false}')" \
   env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p "$KT/scripts/hooks/context-budget-stop-hook.sh" claude
 assert_contains "K1f: control: Claude's own Stop still runs the turn-end exit" "$(cat "$KT/k.err")" "terminating claude session claude-own"
+kreset
+kagent "$(jq -cn --arg s "$ksid" '{hook_event_name:"SessionEnd",session_id:$s,cwd:"/x",reason:"exit"}')" \
+  env CLAUDE_CODE_SESSION_ID=leaked-parent CLAUDECODE=1 \
+  bash -c "$(jq -r '.hooks.SessionEnd[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K1g: claude SessionEnd releases nothing for a payload with no transcript_path (no sibling release by discovery)" \
+  "$(grep release "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg t "$KT/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,reason:"exit"}')" \
+  bash -c "$(jq -r '.hooks.SessionEnd[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_contains "K1h: control: Claude's own SessionEnd still releases" "$(cat "$KT/calls.log" 2>/dev/null)" "release --runtime claude --transcript $KT/claude-own.jsonl"
 
 kreset
 kagent "$kastop"  "$KT/scripts/hooks/context-budget-copilot-hook.sh" agentStop

@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; c=\"$d/scripts/context-budget.sh\"; [ -x \"$c\" ] || exit 0; t=$(jq -r '.transcript_path // empty' 2>/dev/null); \"$c\" release --runtime claude ${t:+--transcript \"$t\"} --quiet || true"
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; c=\"$d/scripts/context-budget.sh\"; [ -x \"$c\" ] || exit 0; t=$(jq -r '.transcript_path // empty' 2>/dev/null); [ -n \"$t\" ] || exit 0; \"$c\" release --runtime claude --transcript \"$t\" --quiet || true"
           }
         ]
       }
