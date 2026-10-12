@@ -7,10 +7,10 @@ IDE probes are pending (`probes/user-checklist.md`).
 
 | | Codex CLI 0.153.4 | Copilot CLI 1.0.78 | Gemini CLI 0.46.0 | Antigravity CLI 1.3.3 |
 |---|---|---|---|---|
-| Q1: id env var in the agent's shell | YES (`CODEX_THREAD_ID`, `CODEX_SESSION_ID`) | YES (`COPILOT_AGENT_SESSION_ID`) | NO (only `GEMINI_CLI=1`); hooks get `GEMINI_SESSION_ID` | Blocked (headless mode auto-denies `run_command`); hook processes get `ANTIGRAVITY_CONVERSATION_ID` |
+| Q1: id env var in the agent's shell | YES (`CODEX_THREAD_ID`, `CODEX_SESSION_ID`) | YES (`COPILOT_AGENT_SESSION_ID`) | NO (only `GEMINI_CLI=1`); hooks get `GEMINI_SESSION_ID` | YES (`ANTIGRAVITY_CONVERSATION_ID`, plus `ANTIGRAVITY_APP_DATA_DIR`); hooks get it too |
 | Q2: hooks fire, payload has the id and transcript | YES once trusted; untrusted = skipped silently. A SessionStart event exists, and its payload has `session_id` + `transcript_path` | YES once trusted. `sessionStart` has `sessionId`; `transcriptPath` only on `agentStop` (path derivable from the id) | Code says YES (SessionStart/SessionEnd, `session_id` + `transcript_path`); not seen live (no auth) | YES, no trust step. `.agents/hooks.json`; every payload has `conversationId` + `transcriptPath`. No SessionStart: first `PreInvocation` (`invocationNum: 0`) |
-| Q3: `register` binds its own transcript | YES when the var is set | YES when the var is set | NO: `no session artifact found`; the `logs.json` fallback is out of date for 0.46 | **NO: auto-detects as gemini, binds a stale `logs.json`, reports OK** |
-| Q4: two sessions at once, var unset | **NO: each bound the other's transcript** | **NO: each bound the other's transcript** | Blocked live; telemetry carries `session.id`, so it is separable | YES on the hook side (each payload carried its own id); agent shell blocked |
+| Q3: `register` binds its own transcript | YES when the var is set | YES when the var is set | NO: `no session artifact found`; the `logs.json` fallback is out of date for 0.46 | **NO: from a plain shell it auto-detects gemini (stale `logs.json`, reports OK); launched from Claude Code it binds the parent Claude session** |
+| Q4: two sessions at once, var unset | **NO: each bound the other's transcript** | **NO: each bound the other's transcript** | Blocked live; telemetry carries `session.id`, so it is separable | YES on the hook side (each payload carried its own id); each shell has its own env id |
 
 When the env var is set (the normal CLI case), Codex and Copilot bind
 correctly. The newest-file fallback is wrong whenever two sessions are live.
@@ -53,7 +53,10 @@ That makes it unsafe for any surface that doesn't set the var.
    mis-binding to gemini. Check: suite case where a `PreInvocation` payload writes
    `antigravity-<id>.json` pointing at its transcript, and `register` with only
    the env var set picks `antigravity`. Evidence: `probes/antigravity-cli.md`.
-   Open: whether the agent's shell gets the env var (Q1 blocked).
+   Also: `detect_runtime` must rank `ANTIGRAVITY_CONVERSATION_ID` above
+   inherited outer-runtime vars (`CLAUDECODE`). An `agy` launched from Claude
+   Code otherwise registers as the parent Claude session. That ordering bug hits
+   any nested runtime, so check node 4 against it too.
 7. **Docs.** Hook trust is required (Codex and Copilot skip untrusted hooks
    silently); update the support matrix and the adapter table in
    `docs/context-budget.md`.

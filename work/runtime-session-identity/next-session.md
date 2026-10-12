@@ -22,14 +22,7 @@ has the results table and draft plan nodes 1–8. Everything left needs the user
    Q1–Q4 format the CLI probe files use. Still open with the user: whether
    to include the Codex desktop app (not installed), and how to probe the
    Antigravity IDE + app (`probes/antigravity-ide.md`; no kit yet).
-2. **Antigravity Q1 (needs the user's OK).** Headless `agy` auto-denies
-   `run_command`, so whether the agent's shell gets `ANTIGRAVITY_CONVERSATION_ID`
-   is unmeasured. Ask the user to pick one: allow one
-   `agy -p … --dangerously-skip-permissions` run in a scratch clone (the
-   Claude Code classifier denied it without approval), a temporary
-   `command(sh .agents/probe.sh)` allow-rule in `~/.gemini/antigravity-cli/settings.json`,
-   or the user runs `agy` interactively. Recipe: `probes/antigravity-cli.md`.
-3. Turn `findings.md` → "Gaps" into the plan with `/plan` (skills/plans/SKILL.md),
+2. Turn `findings.md` → "Gaps" into the plan with `/plan` (skills/plans/SKILL.md),
    adding the IDE-driven nodes (5 and 8). Do not create the plan without the
    IDE results.
 

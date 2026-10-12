@@ -17,9 +17,10 @@
      `{"decision":"allow","permissionOverrides":["command(sh .agents/probe.sh)"]}` (run2)
   3. two concurrent `agy -p` runs, started 2 s apart (q4a/q4b)
   4. from my shell, in the clone: `env -i HOME USER PATH ANTIGRAVITY_CONVERSATION_ID=<run2 id> scripts/context-budget.sh register` (with and without `--runtime antigravity`)
-- **Not run:** `--dangerously-skip-permissions`. The Claude Code auto-mode classifier
-  denied it ("Create Unsafe Agents"). Without it, headless mode auto-denies every
-  `run_command`, so the agent's own shell never ran (see Q1).
+- **Skip-permissions run:** the Claude Code auto-mode classifier denied
+  `--dangerously-skip-permissions` when I tried it, so the user ran that one
+  command (run q1) from Claude Code's `!` prompt. Without the flag, headless
+  mode auto-denies every `run_command`.
 
 ## How Antigravity works (facts the plan needs)
 
@@ -43,35 +44,31 @@
 
 ## Q1 — env id in the agent's shell
 
-**Verdict: blocked in the agent's shell; YES in hook processes.**
+**Verdict: YES.** Hook processes and the agent's shell both get it.
 
-Hook processes get `ANTIGRAVITY_CONVERSATION_ID` equal to the payload's `conversationId`
-(run1, `PreInvocation-152305-2386.env`):
-
-```
-ANTIGRAVITY_CONVERSATION_ID=ed75a355-63bb-44d4-9a2b-8aee475bfaf2
-PWD=<scratchpad>/ws-agy/.agents
-```
-
-The agent's `run_command` never ran. run1 and run2 both ended with
-`"denied_actions":[{"action":"command","display_name":"RunCommand"}]` and stderr:
+The user ran this from Claude Code's `!` prompt (so it inherited that session's env; see Q3):
+`agy -p '… sh .agents/probe.sh scripts/context-budget.sh register' --dangerously-skip-permissions --print-timeout 150s --output-format json`
+(run q1, conversation `c2d716d4-0746-40eb-8520-11f747580f2a`). The agent shell's env
+(`ANTIGRAVITY_SOURCE_METADATA` and `ANTIGRAVITY_CSRF_TOKEN` values trimmed):
 
 ```
-jetski: no output produced — a tool required the "command" permission that headless mode
-cannot prompt for, so it was auto-denied. Add an allow-rule under permissions.allow in
-settings.json (e.g. command(<target>)). Alternatively, re-run with
---dangerously-skip-permissions to auto-approve all tools.
+ANTIGRAVITY_AGENT=1
+ANTIGRAVITY_CONVERSATION_ID=c2d716d4-0746-40eb-8520-11f747580f2a
+ANTIGRAVITY_APP_DATA_DIR=/Users/kashif/.gemini/antigravity-cli
+ANTIGRAVITY_LS_VERSION=cli-1.3.3
+ANTIGRAVITY_SOURCE_METADATA={"tool":{"conversationId":"c2d716d4-…","stepIndex":2,"toolCall":{…}}}
+ANTIGRAVITY_TRAJECTORY_ID=c3151dcb-4533-48ef-9271-af8e158e72a4
+ANTIGRAVITY_PROJECT_ID=default-cli-project
 ```
 
-A PreToolUse hook answering `allow` plus `permissionOverrides` did **not** lift the
-headless deny (run2). The only allow-list is the user's global
-`~/.gemini/antigravity-cli/settings.json`; I did not edit it. The binary references
-`process.env.ANTIGRAVITY_CONVERSATION_ID` in embedded JS, which suggests (unverified)
-that spawned processes inherit it too.
+`ANTIGRAVITY_CONVERSATION_ID` equals the `conversation_id` in stdout and in every hook payload.
+`ANTIGRAVITY_APP_DATA_DIR` gives the transcript root directly
+(`$ANTIGRAVITY_APP_DATA_DIR/brain/$ANTIGRAVITY_CONVERSATION_ID/.system_generated/logs/transcript_full.jsonl`),
+so the IDE (`antigravity-ide/`) and app (`antigravity/`) need no path guessing.
 
-**To unblock:** one run with `--dangerously-skip-permissions` in the scratch clone, or a
-temporary `command(sh .agents/probe.sh)` allow-rule in the global settings, or an
-interactive `agy` session where a person approves the command.
+Before that, headless runs without `--dangerously-skip-permissions` auto-denied
+every `run_command` (runs 1–2, `"denied_actions":[{"action":"command",…}]`), and a
+PreToolUse hook answering `allow` + `permissionOverrides` did not lift the deny.
 
 ## Q2 — hooks fire? payload fields
 
@@ -97,8 +94,10 @@ silently.)
 same `conversationId` / `transcriptPath`. `transcriptPath` exists on disk by the time
 the run ends (`ls` of the `logs/` dir shows `transcript_full.jsonl`, 1482 bytes).
 
-`PostToolUse`, `PostInvocation` and `Stop` did **not** fire in these runs: each one
-ended on the denied tool call. Their firing is unverified.
+Run q1 (the command ran) also fired `PostToolUse` (`stepIdx`, `error: ""`),
+`PostInvocation` (`invocationNum` 0 and 1) and `Stop` (`terminationReason: "NO_TOOL_CALL"`),
+all with the same `conversationId` + `transcriptPath`. In runs 1–2 these events never
+fired, because each run ended on the denied tool call.
 
 ## Q3 — `register` binds its own transcript
 
@@ -115,6 +114,21 @@ runtime=gemini method=estimate tokens=0 threshold=150000 warn=120000 pct=0 statu
 the stale Gemini CLI log. `--runtime antigravity` → `error: no session artifact found
 for runtime=antigravity` (exit 3).
 
+**From inside the agent's shell (run q1): it bound the *parent* Claude Code session.**
+
+```
+registered claude session 62df08d9-… artifact: ~/.claude/projects/…/62df08d9-….jsonl
+runtime=claude method=exact tokens=121140 … status=WARN
+```
+
+`agy` was launched from Claude Code's `!` prompt, so its agent shell inherited
+`CLAUDECODE` / `CLAUDE_CODE_SESSION_ID` / `TF_SESSION_SEQ`. `detect_runtime`
+checks `CLAUDECODE` first and wins. Any runtime started from another runtime's shell
+hits this: the outer runtime's id vars leak in. Fix: detect the innermost runtime
+first. `ANTIGRAVITY_AGENT=1` / `ANTIGRAVITY_CONVERSATION_ID` belong to the
+process that's actually running, so they should beat the inherited `CLAUDECODE`.
+The record went to the scratch clone's `.context-budget/`, not this checkout.
+
 Side finding: under `env -i` without `USER`, `register` dies with
 `scripts/context-budget.sh: line 862: USER: unbound variable`. That's harmless in
 normal shells, which set `USER`.
@@ -122,7 +136,8 @@ normal shells, which set `USER`.
 ## Q4 — concurrency
 
 **Verdict: YES on the hook side** (two live sessions, each hook payload carried its
-own id and transcript). Agent shell: blocked, as in Q1.
+own id and transcript). Agent shell: not run concurrently, but Q1 shows each shell
+carries its own `ANTIGRAVITY_CONVERSATION_ID`, so it is separable.
 
 | Run | `conversation_id` (stdout) | hook `conversationId` + env var | PreToolUse `CommandLine` |
 |---|---|---|---|
@@ -140,11 +155,12 @@ exact id and transcript, keyed on `conversationId`, using `PreInvocation` /
 (`antigravity`), a committed `.agents/hooks.json`, a discover/measure pair over
 `brain/<id>/…/transcript_full.jsonl`, and a `detect_runtime` case on
 `ANTIGRAVITY_CONVERSATION_ID`. Without that case, auto-detection actively mis-binds
-(Q3). Whether agent-run `record` can use the env var waits on Q1.
+(Q3). Agent-run `record` can key on `ANTIGRAVITY_CONVERSATION_ID` (Q1), and
+`detect_runtime` must rank it above inherited outer-runtime vars like `CLAUDECODE`.
 
 ## Cleanup owed
 
 - `<scratchpad>/ws-agy`, `agy-payloads/`, `agy-cap.sh`, `agy-run*.json` (disposable).
-- 4 probe conversations under `~/.gemini/antigravity-cli/brain/` and
-  `conversations/` (ids `ed75a355`, `88f69013`, `3f54bbb1`, `1c5c2d00`):
+- 5 probe conversations under `~/.gemini/antigravity-cli/brain/` and
+  `conversations/` (ids `ed75a355`, `88f69013`, `3f54bbb1`, `1c5c2d00`, `c2d716d4`):
   delete them on the user's say-so.
