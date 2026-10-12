@@ -1,6 +1,6 @@
 ---
 plan: 01-session-identity-fixes
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---

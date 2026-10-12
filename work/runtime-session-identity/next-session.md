@@ -61,7 +61,7 @@ with the question verbatim.
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-session-identity-fixes, open, wave 5 of 5, done 16/17, doing 0, todo 0, blocked 0, dropped 1, sessions 4.
+Position: plan 01-session-identity-fixes, closed, wave 5 of 5, done 16/17, doing 0, todo 0, blocked 0, dropped 1, sessions 4.
 Frontier: none. Remaining: 0 of 17.
 <!-- plan:end position -->
 
