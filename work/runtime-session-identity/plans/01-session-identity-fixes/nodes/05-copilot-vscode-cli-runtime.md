@@ -1,7 +1,7 @@
 ---
 id: 05-copilot-vscode-cli-runtime
 title: Copilot VS Code on the CLI runtime (node 8a)
-status: doing
+status: done
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
@@ -34,3 +34,4 @@ before `VSCODE_TARGET_SESSION_LOG`/newest-mtime.
 - s6-c · Copilot-CLI-in-VS-Code-terminal check (H3): COPILOT_AGENT_SESSION_ID + TERM_PROGRAM=vscode + a leaked VSCODE_TARGET_SESSION_LOG auto-detects copilot-cli and binds its own session-state events.jsonl — passed before and after the fix, so the s5 detect_runtime order holds; H1d (old workspaceStorage → chatSessions/<sid>.jsonl) and hooks-suite T11/vscode-* cases still pass
 - s6-c · side finding for other nodes: in a VS Code agent shell (AI_AGENT=github_copilot_vscode_agent) auto-detect still says copilot-cli, so agent `register` writes copilot-cli-<sid> while the VS Code hook writes copilot-vscode-<sid> for the same events.jsonl (two records, one session; node 06/8b territory). Also neither copilot measure fn reads the real events.jsonl token key (`prompt_tokens`, seen in a live probe transcript), so both fall back to a size estimate (node 04's adapter row)
 - s6-c · done: on disk (branch worktree-agent-a8ce3513b31e7ca21, merged with main — already up to date) the hook + discovery fix and H1–H3; all 18 context-budget/hook suites pass (registry 219/0, hooks 150/0). Not on disk: no docs/context-budget.md update, no copilot-vscode measure change, no live re-probe in VS Code
+- s6 · done

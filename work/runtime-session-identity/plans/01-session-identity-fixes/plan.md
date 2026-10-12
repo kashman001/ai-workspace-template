@@ -33,7 +33,7 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 1 | 02-reconcile-w1 | reconcile | frontier | done |
 | 2 | 03-codex-hook-registration | work | standard | doing |
 | 2 | 04-copilot-cli-hook-registration | work | standard | done |
-| 2 | 05-copilot-vscode-cli-runtime | work | standard | doing |
+| 2 | 05-copilot-vscode-cli-runtime | work | standard | done |
 | 2 | 06-one-hook-per-copilot-event | work | standard | doing |
 | 2 | 07-antigravity-runtime | work | standard | doing |
 | 2 | 08-reconcile-w2 | reconcile | frontier | todo |
@@ -45,5 +45,5 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 4 | 14-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 15-review | work | standard | todo |
 | 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: none (03-codex-hook-registration doing, 05-copilot-vscode-cli-runtime doing, 06-one-hook-per-copilot-event doing, 07-antigravity-runtime doing). Remaining: 13 of 16. Sessions used: 2.
+Frontier: none (03-codex-hook-registration doing, 06-one-hook-per-copilot-event doing, 07-antigravity-runtime doing). Remaining: 12 of 16. Sessions used: 2.
 <!-- plan:end board -->
