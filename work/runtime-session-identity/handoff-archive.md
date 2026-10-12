@@ -1,3 +1,22 @@
+# Session Handoff — 2026-10-12 (session 4: VS Code probes; plan 01 created)
+
+The user ran the Codex and Copilot VS Code probes in `~/Developer/experiments/ws-identity-probe`.
+Written up in `probes/codex-vscode.md` and `probes/copilot-vscode.md`, folded into
+`findings.md` (summary + nodes 5, 8a–8d). Then created plan
+`plans/01-session-identity-fixes` (16 nodes, 5 waves); `check` is silent. Commit `1d51030`.
+
+- **Codex VS Code:** like the CLI. Trust prompt comes after the turn, then applies to
+  open chats; sandbox blocks `ps` (`pid: null`).
+- **Copilot VS Code:** runs on the Copilot CLI runtime now; the copilot-vscode adapter
+  registers a nonexistent `~/.copilot/chatSessions/<sid>.jsonl` and never measures; three
+  hook configs fire per event (VS Code, CLI, Claude Stop).
+- **Claude Code extension:** pre-spawns two idle sessions → phantom records.
+- `make-ide-probe-clone.sh` now also wraps the Stop hook (it was missing).
+- Decision (`decisions.md`): the remaining-probes hitl node sits in wave 3.
+- Not run: Antigravity IDE/app and Codex desktop app probes (now node 11).
+
+Suggested skills: `plan` (reconcile nodes), `tdd` (each node's suite cases).
+
 # Session Handoff — 2026-10-12 (session 3: Antigravity CLI probe)
 
 Probed `agy` 1.3.3 in a scratch clone → `probes/antigravity-cli.md`. Hooks
