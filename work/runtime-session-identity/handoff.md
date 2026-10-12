@@ -6,6 +6,40 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 7 (2026-10-12) (session 7: waves 3 and 4 closed)
+
+**Summary.** Wave 3 ran as three parallel worktree children (s7-a/b/c, suite prefixes A/B/Q),
+each test-first and each seen red before its fix; all merged to main and verified on disk.
+The user deferred the Antigravity IDE/app + Codex desktop probes: node
+`11-remaining-surface-probes` dropped → template backlog card **L86**. Reconcile 12 closed.
+Node 13 (docs) ran as one in-place child (s7-d); reconcile 14 closed. Rolled over before node
+15 (review) — pre-flight: 111K + review cost would cross STOP.
+
+**Shipped (main, not pushed).**
+- Node 09 `prune_phantoms` (`scripts/context-budget.sh`): register/record delete non-own records
+  whose artifact is missing >60 min after last write; never the pid. Orchestrator fix 769f54b:
+  the loop word-split paths with spaces (repro shown; suite's mktemp can't build a spaced path).
+- Node 10: no id var + >1 live registered session in cwd → every command refuses
+  `ambiguous_artifact` naming `--session-id`; `record --session-id` now allowed. Hook-message
+  id half NOT built (decision note).
+- Node 11-copilot-vscode: `copilot_vscode_measure` delegates to `copilot_cli_measure` →
+  `inputTokens` exact.
+- Node 13: `docs/context-budget.md` — hook trust, support matrix, antigravity adapter, nodes
+  09/10/11 behaviour (3c7b555).
+- Backlog L86 added (220279c).
+
+**Decisions.** `decisions.md`: 60-min phantom grace; no session-id field in hook payloads;
+probes deferred to L86.
+
+**State.** Plan wave 5 of 5; frontier `15-review`. Checks on main at s7 end: registry 269/0,
+statusline 20/0, vendor-budget-hooks 165/0, attach-session 27/0, doc-consistency 17/0. All
+s7 worktrees removed. Probe clone kept (needed for L86).
+
+**Suggested skills.** `code-review` (node 15), `plan` reconcile (node 16).
+
+Learnings:
+- Worktree children were again cut without the base SHA; the reset instruction in the prompt worked every time.
+
 # Session Handoff — 6 (2026-10-12) (session 6: wave 2 closed)
 
 **Summary.** Ran wave 2 of plan `01-session-identity-fixes`: nodes 03–07 dispatched to five
@@ -36,26 +70,3 @@ now the frontier, including hitl node `11-remaining-surface-probes`.
 Learnings:
 - Agent-tool worktrees (isolation: worktree) were cut without the local base commit 5/5 times; the template's "confirm base, else reset" line saved every child.
 - Parallel children appending to the same suite tail conflict on every merge; append-vs-append, resolved by keeping both. A per-child section anchor would avoid it.
-
-# Session Handoff — 5 (2026-10-12) (session 5: wave 1 closed)
-
-Wave 1 of plan `plans/01-session-identity-fixes` is done (2/16 nodes). Rolled over before
-wave 2: five parallel nodes on shared files don't fit in the headroom left.
-
-- **Node 01 (refuse-instead-of-guess):** commit `3828bf2`. `scripts/context-budget.sh`:
-  `pick_unambiguous` (codex and copilot-cli fallbacks), copilot-vscode rc 2, and
-  `resolve_session` refuses `reason=ambiguous_artifact` (exit 4) on every command;
-  `detect_runtime` checks id vars before `CLAUDECODE`. Suite sections D1/D2 in
-  `scripts/tests/test-context-budget-registry.sh` (211/0); doc row in
-  `docs/context-budget.md` → Reason codes.
-- **Found:** the old copilot-vscode register guard was dead code (flag set in a `$(...)`
-  subshell). Decision note in `decisions.md`.
-- **Node 02 (reconcile w1):** commit `95ddf21`. No replan; two `plan.sh note` lines in
-  `plan.md` for nodes 05–07.
-- All other context-budget suites pass.
-
-Suggested skills: `plans` (dispatch template, reconcile), `tdd`.
-
-Learnings:
-- A discover function's globals never reach the caller (`ARTIFACT=$(discover_for …)` is a
-  subshell); signal through the exit code.

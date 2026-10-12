@@ -11,52 +11,52 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Execute plan `plans/01-session-identity-fixes` so concurrent sessions in one
-workspace never bind each other's transcript. Each node's Goal and Acceptance
-are the spec.
+Finish plan `plans/01-session-identity-fixes`: node `15-review` (review the whole plan's work
+and fix findings), then `16-reconcile-w5` closes the plan.
 
 ## >>> START HERE <<<
 
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. `scripts/plan.sh status --project=runtime-session-identity` and `… frontier …`.
-3. Ask the user, verbatim (still unanswered from session 6):
-   **"Do you want to run the Antigravity IDE/app and Codex desktop app probes now
-   (`probes/user-checklist.md` steps 3–4), or skip them?"**
-   Skip → `scripts/plan.sh drop 11-remaining-surface-probes "<reason>"`. Run → walk them
-   through the checklist and write the probe files per node 11's Goal.
-4. Without waiting on that answer, dispatch the three wave-3 work nodes —
-   `09-phantom-records`, `10-record-without-env-id`, `11-copilot-vscode-measure-inputtokens` —
-   to parallel subagents with `isolation: worktree`, per `skills/plans/SKILL.md` →
-   "Subagent prompt template": `start` each and commit before dispatch, actors `s7-a`…`s7-c`,
-   test-first (every Acceptance case seen failing first), distinct suite prefixes
-   (unused so far: **A, B, Q** — E/F/H/K/L/D/R/T/… are taken). Tell each child the base SHA
-   and to reset onto it if missing (worktrees were cut without it every time in s6).
-   Merge each branch (suite-tail conflicts are append-vs-append: keep both), verify on disk,
-   `done`, then reconcile `12-reconcile-w3` once node 11 is done or dropped.
-5. Read the plan's "Not yet specified" notes before dispatch and pass the relevant ones on
-   (node 10 ↔ the pid-less antigravity/codex note; node 09 ↔ Claude VS Code idle records).
+2. `scripts/plan.sh status --project=runtime-session-identity` and `… frontier …` (expect `15-review`).
+3. `scripts/plan.sh start 15-review --project=runtime-session-identity`, commit.
+4. Run the `code-review` skill (`skills/code-review/SKILL.md`) on `bc1cce4..main` with
+   `work/runtime-session-identity/findings.md` → "Gaps" as the spec. Its reviewers run as
+   sub-agents — keep their output out of this context. Fix each blocker test-first (a suite
+   case seen failing first; unused suite prefixes: **C, G, M**); fix or Log each suggestion.
+   Run the item's checks (below), tick Acceptance, `done 15-review`.
+5. Reconcile `16-reconcile-w5` per `skills/plans/SKILL.md` → "Run a reconcile node". If the plan
+   then closes, end via `checkpoint` (the stop door), not another rollover.
+
+**No human in the loop:** all of the above runs unattended. Only stop for the user if a review
+finding needs a product decision — write it into the node Log and `decisions.md` and roll over
+with the question verbatim.
+
+**The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
+`test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,
+`test-doc-consistency.sh` (all green at s7 end: 269/20/165/27/17).
 
 ## Read these, in order
 
 1. `plans/01-session-identity-fixes/plan.md` (notes + Replans)
-2. Wave-3 node files 09, 10, 11-copilot-vscode-measure-inputtokens, 11-remaining-surface-probes, 12
-3. `probes/user-checklist.md` only if the user runs the probes
+2. `plans/01-session-identity-fixes/nodes/15-review.md`, then `16-reconcile-w5.md`
+3. `decisions.md` — settled forks the review must not flag as defects
 
 ## Do NOT reload
 
-- `findings.md` in full: every gap is a node with its own Goal.
-- `probes/gemini-cli.md`: superseded by Antigravity (user decision).
-- Wave-1/2 diffs: done and reconciled (`handoff.md` top block; `decisions.md`).
+- Wave 1–4 diffs one by one: done and reconciled; the review reads them as one range.
+- `probes/*`: probing is finished or deferred (backlog L86).
+- `findings.md` beyond "Gaps": the rest is evidence for settled nodes.
 
 ## Constraints already decided (do not re-litigate)
 
 - Fixes must be agent-agnostic, proven by a suite case that fails before the fix.
-- Pid-walk is out for identifying a session (Copilot shares one process; Codex sandbox blocks `ps`).
-- Ambiguous discovery refuses on every command; the Copilot CLI hook config owns every Copilot payload (`decisions.md`).
+- Pid-walk is out for identifying a session; liveness never relies on pid.
+- Ambiguous discovery refuses on every command; the Copilot CLI hook config owns every Copilot payload.
+- No session-id field in hook payloads; phantom grace is a fixed 60 min (`decisions.md`).
 - Pushing `main` is the user's call; never push.
-- Probe cleanup (`findings.md` → "Cleanup owed") waits for the user's say-so.
+- Probe cleanup (`findings.md` → "Cleanup owed") waits for L86 and the user's say-so.
 
 ## Plan position
 
@@ -69,4 +69,4 @@ Frontier: 15-review. Remaining: 2 of 17 — wave 5: 15-review todo, 16-reconcile
 
 - Branch `main`, clean after the rollover commit; many commits ahead of origin (not pushed).
 - Unrelated pre-existing worktrees (doc-review-skill, stage4, tir-s2) — leave them.
-- Probe clone `~/Developer/experiments/ws-identity-probe` still exists ("Cleanup owed").
+- Probe clone `~/Developer/experiments/ws-identity-probe` kept for backlog L86.
