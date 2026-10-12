@@ -149,7 +149,7 @@
   <h2>Low</h2>
 
   <div class="find low">
-    <h3><span class="id">L84</span> Template-only suites fail in every instance instead of skipping
+    <h3><span class="id">L85</span> Template-only suites fail in every instance instead of skipping
       <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/tests/</span></h3>
     <p><span class="k">Evidence</span> &mdash; In a downstream instance synced to <code>ccb4ed3</code>, <code>run-checks.sh</code> reports four suites red that read files only the template carries: <code>test-probe-twins</code> (sources <code>work/template-improvement-review/&hellip;/lib.sh</code>), <code>test-template-version</code> V2a/V3a/V3b and <code>test-template-instantiation</code> T1c (<code>docs/template-usage.md</code>), <code>test-doc-consistency</code> (<code>docs/plans.md</code> names the template&rsquo;s <code>work/plans/*</code>).</p>
     <p><span class="k">Impact</span> &mdash; Every instance carries four permanent reds after a sync; each one has to be classified by hand, and a real regression in those suites hides among them.</p>
@@ -321,7 +321,7 @@
       <tr><td>2026-10-11</td><td>Resolved <strong>M51</strong> (unslop narrowed, 32 model-invoked skills reviewed, three made user-invoked, <code>check-skill-descriptions.sh</code> ratchets at 7,500 bytes; 10,174 &rarr; 7,303), <strong>L82</strong> (<code>docs/stakes-to-ceremony.md</code> + pointers) and <strong>L83</strong> (rationalization tables in five workspace skills). 44 checks pass; sync round trip clean. Scorecard now 0/138/5/0/6.</td></tr>
       <tr><td>2026-10-12</td><td>Resolved <strong>L84</strong> (from the token-factory sync of <code>ccb4ed3</code>): template ADRs move to <code>docs/template-adr/</code> as <code>TADR-NNNN</code>, <code>docs/adr/</code> is the project&rsquo;s own; instances propose TADRs upstream via <code>Promote?: upstream</code>; migration runbook <code>docs/runbooks/adr-namespace-migration.md</code>. Scorecard now 0/139/5/0/6.</td></tr>
       <tr><td>2026-10-12</td><td>Test only: <code>test-session-loop.sh</code> gains <strong>W1</strong> &mdash; the supervisor run from a worktree&rsquo;s own copy of <code>session-loop.sh</code> drives the main checkout&rsquo;s record and writes nothing into the worktree (the <code>--git-common-dir</code> resolver had no loop case from a worktree; seen red with the resolver forced to <code>SCRIPT_ROOT</code>). Replaces PR #61, whose other three worktree cases tested the <code>.next-command</code> pair and <code>--emit &lt;path&gt;</code> that Stage 4 removed. No card-count change.</td></tr>
-      <tr><td>2026-10-12</td><td>Test only: <code>test-attach-session.sh</code> stubs <code>claude</code> on PATH (<code>agents --json</code> &rarr; <code>[]</code>); on a machine running a live session named <code>testproj #N</code>, T5a/T5b resolved it and exited 0 (seen red 25/2, now 27/0). Opened <strong>L84</strong> (template-only suites should skip in instances). Scorecard now 1/138/5/0/6.</td></tr>
+      <tr><td>2026-10-12</td><td>Test only: <code>test-attach-session.sh</code> stubs <code>claude</code> on PATH (<code>agents --json</code> &rarr; <code>[]</code>); on a machine running a live session named <code>testproj #N</code>, T5a/T5b resolved it and exited 0 (seen red 25/2, now 27/0). Opened <strong>L85</strong> (template-only suites should skip in instances). Scorecard now 1/139/5/0/6.</td></tr>
 </tbody>
   </table>
 
