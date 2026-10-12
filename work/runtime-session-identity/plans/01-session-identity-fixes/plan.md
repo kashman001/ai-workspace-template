@@ -46,14 +46,14 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 2 | 06-one-hook-per-copilot-event | work | standard | done |
 | 2 | 07-antigravity-runtime | work | standard | done |
 | 2 | 08-reconcile-w2 | reconcile | frontier | done |
-| 3 | 09-phantom-records | work | standard | todo |
-| 3 | 10-record-without-env-id | work | standard | todo |
-| 3 | 11-copilot-vscode-measure-inputtokens | work | standard | todo |
-| 3 | 11-remaining-surface-probes | hitl | frontier | todo |
-| 3 | 12-reconcile-w3 | reconcile | frontier | todo |
+| 3 | 09-phantom-records | work | standard | done |
+| 3 | 10-record-without-env-id | work | standard | done |
+| 3 | 11-copilot-vscode-measure-inputtokens | work | standard | done |
+| 3 | 11-remaining-surface-probes | hitl | frontier | dropped |
+| 3 | 12-reconcile-w3 | reconcile | frontier | done |
 | 4 | 13-docs | work | standard | todo |
 | 4 | 14-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 15-review | work | standard | todo |
 | 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 09-phantom-records, 10-record-without-env-id, 11-copilot-vscode-measure-inputtokens, 11-remaining-surface-probes. Remaining: 9 of 17. Sessions used: 2.
+Frontier: 13-docs. Remaining: 4 of 17. Sessions used: 3.
 <!-- plan:end board -->

@@ -52,3 +52,17 @@ none, refuses as ambiguous and names `record --session-id`, and its SessionStart
 already prints `artifact=<…>/<session-id>.jsonl`. Rejected: an explicit id field in every hook
 payload — it rewrites 14 byte-for-byte fixtures in `test-vendor-budget-hooks.sh` (a payload
 contract change) for an id the agent can already read. Node 10, commit c367404.
+
+## 2026-10-12 — Phantom records are deleted after a fixed 60-min grace (node 09)
+
+`prune_phantoms` (in `register`/`record`) deletes a non-own registry record whose artifact is
+missing — recorded path absent and the claude id-keyed glob finds nothing — once the record
+file is >60 min old. Artifact existence only, never the pid. Rejected: hiding phantoms in every
+reader (check/attach-session/fleet) — more surface for the same outcome; and a configurable
+grace — no caller needs it. Cost: a pre-spawned session first used >1h later re-registers.
+Node 09, commits 79c5a6a, 769f54b (space-safe loop).
+
+## 2026-10-12 — Antigravity IDE/app and Codex desktop probes deferred (node 11-remaining-surface-probes)
+
+User call: no time now; kept as template backlog card L86 instead of blocking wave 3. Rejected:
+holding the plan open on the hitl node. The probe clone stays until L86 is run.

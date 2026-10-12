@@ -61,8 +61,8 @@ are the spec.
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-session-identity-fixes, open, wave 3 of 5, done 8/17, doing 0, todo 9, blocked 0, dropped 0, sessions 2.
-Frontier: 09-phantom-records, 10-record-without-env-id, 11-copilot-vscode-measure-inputtokens, 11-remaining-surface-probes. Remaining: 9 of 17 — wave 3: 09-phantom-records todo, 10-record-without-env-id todo, 11-copilot-vscode-measure-inputtokens todo, 11-remaining-surface-probes todo, 12-reconcile-w3 todo.
+Position: plan 01-session-identity-fixes, open, wave 4 of 5, done 12/17, doing 0, todo 4, blocked 0, dropped 1, sessions 3.
+Frontier: 13-docs. Remaining: 4 of 17 — wave 4: 13-docs todo, 14-reconcile-w4 todo.
 <!-- plan:end position -->
 
 ## State snapshot
