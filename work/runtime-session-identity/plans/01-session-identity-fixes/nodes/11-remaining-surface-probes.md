@@ -1,7 +1,7 @@
 ---
 id: 11-remaining-surface-probes
 title: User runs Antigravity IDE/app and Codex desktop app probes
-status: todo
+status: dropped
 kind: hitl
 wave: 3
 blocked_by: [08-reconcile-w2]
@@ -22,3 +22,4 @@ and adds any new gaps as follow-up nodes. `drop` this node if the user skips the
 - [ ] New gaps added as nodes or noted
 
 ## Log
+- s7 · dropped: User deferred the Antigravity IDE/app and Codex desktop app probes until they have time; tracked as template backlog card L86.
