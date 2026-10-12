@@ -17,6 +17,8 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 ## Not yet specified
 - s5 · detect_runtime now returns antigravity on ANTIGRAVITY_CONVERSATION_ID, ahead of CLAUDECODE; node 07 adds the adapter (discover/measure/session_id_for). Until then such a session dies with 'no session artifact'.
 - s5 · detect_runtime order is now ANTIGRAVITY > COPILOT_AGENT_SESSION_ID > CODEX_THREAD_ID > CLAUDECODE > CODEX_SANDBOX/HOME > OPENCODE > VSCODE_TARGET_SESSION_LOG. Nodes 05 and 06 should check that a Copilot CLI run inside a VS Code terminal still resolves as intended.
+- s6 · In a VS Code agent shell, auto-detect says copilot-cli, so agent register writes copilot-cli-<sid> while the VS Code hook writes copilot-vscode-<sid>: two records for one events.jsonl (from s6-c).
+- s6 · A live Copilot events.jsonl names its token count prompt_tokens; neither copilot measure function reads it, so both fall back to a size estimate (from s6-c).
 
 ## Out of scope
 
