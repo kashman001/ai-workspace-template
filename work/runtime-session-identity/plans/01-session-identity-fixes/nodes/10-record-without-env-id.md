@@ -1,7 +1,7 @@
 ---
 id: 10-record-without-env-id
 title: Agent-run record finds its own session without the env var (node 5)
-status: doing
+status: done
 kind: work
 wave: 3
 blocked_by: [08-reconcile-w2]
@@ -31,3 +31,4 @@ for `--session-id`.
 - s7-b · hook-message half of the Goal NOT done. Making the hook's context message carry the id changed 14 byte-for-byte fixtures in `test-vendor-budget-hooks.sh` (a payload-contract change), so it was reverted. Every probed runtime exports an env id. Left for the orchestrator to decide.
 - s7-b · verified: registry 258/0, statusline 20/0, vendor-budget-hooks 165/0, attach-session 27/0, doc-consistency 17/0.
 - s7-b · merged main (with nodes 09 and 11). Registry conflict resolved by keeping both, with Q/A first and then B. After the merge: registry 269/0, statusline 20/0, vendor-budget-hooks 165/0, attach-session 27/0, doc-consistency 17/0. On disk and committed on the branch, not pushed: the fix in `scripts/context-budget.sh`, the B1/B2 cases in `scripts/tests/test-context-budget-registry.sh`, and the doc fix in `docs/context-budget.md`. Not on disk: the hook message carrying the session id.
+- s7 · done

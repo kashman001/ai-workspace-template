@@ -43,3 +43,12 @@ first firing heals on the next. Nodes 03 (1f8f4e5) and 07 (a7e2da5).
 Transcript root is `${COPILOT_STATE_DIR:-${COPILOT_HOME:-~/.copilot}/session-state}`.
 Rejected: dropping `COPILOT_STATE_DIR`; the hooks suite's byte-for-byte fixtures set it and
 removing it changes fixtures with no behaviour gain. Node 04, commit d811946.
+
+## 2026-10-12 — Hook context message does not add a session-id field (node 10)
+
+An agent shell with no id var finds its own record by the runtime's env id
+(ANTIGRAVITY_CONVERSATION_ID, COPILOT_AGENT_SESSION_ID, CODEX_THREAD_ID); Claude, which has
+none, refuses as ambiguous and names `record --session-id`, and its SessionStart context line
+already prints `artifact=<…>/<session-id>.jsonl`. Rejected: an explicit id field in every hook
+payload — it rewrites 14 byte-for-byte fixtures in `test-vendor-budget-hooks.sh` (a payload
+contract change) for an id the agent can already read. Node 10, commit c367404.
