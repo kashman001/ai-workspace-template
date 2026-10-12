@@ -1,0 +1,115 @@
+.claude/commands/decision.md
+  s_a224f527911f32::t_ffe5a3f7d8396f 13-17
+.codex/config.toml
+  s_a224f527911f32::t_8b5cbc4f0a7a0a 1
+.gitignore
+  s_a224f527911f32::t_fb767ecced515e 30
+.opencode/plugins/context-budget.js
+  s_a224f527911f32::t_ffcb598fff3877 2
+CONTEXT.md
+  s_a224f527911f32::t_fb4fa0be33889c 102-103
+context-budget.env
+  s_a224f527911f32::t_631dc94efa6fb7 17
+docs/README.md
+  s_a224f527911f32::t_67eb0c03cfffa7 39
+docs/adr/README.md
+  s_a224f527911f32::t_eef2ec5c331ebb 28-42,46-49,70-71
+docs/archive/rollover-cost-analysis-2026-08-11.md
+  s_a224f527911f32::t_abaa81a535d56c 34
+docs/context-budget.md
+  s_a224f527911f32::t_5de30af5bd5484 20-21,210-211,272,363,579,668,744
+docs/operational-knowledge.md
+  s_a224f527911f32::t_523ef5854798f0 415,532
+docs/runbooks/README.md
+  s_a224f527911f32::t_bfe5f7dc7f502f 19
+docs/runbooks/adr-namespace-migration.md
+  s_a224f527911f32::t_a8034cb2a545e5 1-43
+docs/superpowers/specs/2026-08-21-session-loop-design.md
+  s_a224f527911f32::t_7b2dfaf972dd29 248,256,291,430,450,454
+docs/template-adr/0000-template.md
+  s_a224f527911f32::t_bae78348144268 1-37
+docs/template-adr/0001-three-tier-decision-capture.md
+  s_a224f527911f32::t_b195767e01aab1 1
+docs/template-adr/0002-lean-by-default-tool-loading.md
+  s_a224f527911f32::t_ead978c90b32fa 1
+docs/template-adr/0003-automate-rollover-relaunch.md
+  s_a224f527911f32::t_632b5c4590ee44 1,55,74
+docs/template-adr/0004-multi-session-rollover-model.md
+  s_a224f527911f32::t_b92e663b826a07 1,3,7,12,16,36,125
+docs/template-adr/0005-session-roles-and-child-registry.md
+  s_a224f527911f32::t_afbc4f3145c10d 1,3,7,11,14,91,103
+docs/template-adr/0006-repository-keyed-coordination-state.md
+  s_a224f527911f32::t_4e28e21331f402 1,7,62,90
+docs/template-adr/0007-session-number-single-source.md
+  s_a224f527911f32::t_84c9b243e5a41b 1,3,7,18,73
+docs/template-adr/0008-session-counter-assertion-not-write.md
+  s_a224f527911f32::t_b1970b52fa7e8f 1,3,7,24,27,32,40,55,59,75,91,95,105,107-108,114,126,133-134
+docs/template-adr/0009-clear-based-rollover-relaunch.md
+  s_a224f527911f32::t_dd607952784beb 1,3,6,20-22,27,43,63-64,134,145,149
+docs/template-adr/0010-one-session-record-three-writers.md
+  s_a224f527911f32::t_b856478aa90322 1,67,70,72,87-88
+docs/template-adr/0011-mechanical-gates-and-reason-codes.md
+  s_a224f527911f32::t_d3da1a11789af0 1
+docs/template-adr/0012-runtime-contract-adapter-table.md
+  s_a224f527911f32::t_2a3626285c3c25 1,46
+docs/template-adr/0013-no-vector-store-mmr-or-decay-scoring.md
+  s_a224f527911f32::t_f17bdb1bf53c41 1
+docs/template-adr/0014-glossary-in-its-own-file.md
+  s_a224f527911f32::t_1a5b05b87b00c3 1
+docs/template-adr/README.md
+  s_a224f527911f32::t_1350cb59d3db68 1-36
+docs/template-workspace-backlog-archive.html
+  s_a224f527911f32::t_a3a1bfbc0c8faf 149,322,781,826,832,955,1044-1052,1164,1212-1214,1217,1745,1900,1906,2288,2335
+docs/template-workspace-backlog.html
+  s_a224f527911f32::t_675a855153f983 79,88,224-226,233,237,240,250,276,281,293,302,316,322
+docs/work-directory-conventions.md
+  s_a224f527911f32::t_0e21eb7d9a55d0 102
+docs/workspace-structure.html
+  s_a224f527911f32::t_ba6e251165588d 5,15,17-18,43,45,47-48,51-53,65-66,95-97,99,123,140-141,144,297,397,652-653,741-748,804-808,947,1027-1035,1149-1150,1238-1245,1659-1660
+docs/workspace-structure.md
+  s_a224f527911f32::t_efaf702c13b962 73,281-282,704,951
+docs/zoom-model.md
+  s_a224f527911f32::t_d5526ce3564e3a 93
+scripts/attach-session.sh
+  s_a224f527911f32::t_b3b55d93e25417 3,7,28,142
+scripts/check-drift.sh
+  s_a224f527911f32::t_d7a212ebae4c11 65
+scripts/context-budget.sh
+  s_a224f527911f32::t_f69b8e1e71fad8 747
+scripts/fleet.sh
+  s_a224f527911f32::t_deebe4cf01fd18 225
+scripts/launch-next-session.sh
+  s_a224f527911f32::t_33617649ab8f06 3,18,392
+scripts/lib/session-lib.sh
+  s_a224f527911f32::t_7012c7cce0eb01 5
+scripts/statusline-context-budget.sh
+  s_a224f527911f32::t_b7358147c6c701 41
+scripts/tests/test-attach-session.sh
+  s_a224f527911f32::t_ac219c4161917b 7
+scripts/tests/test-doc-consistency.sh
+  s_a224f527911f32::t_91745633210147 5
+scripts/tests/test-statusline-context-budget.sh
+  s_a224f527911f32::t_1d22c7f236f3ac 7
+scripts/tests/test-vendor-budget-hooks.sh
+  s_a224f527911f32::t_e90c3f034cf55f 5
+skills/checkpoint/SKILL.md
+  s_a224f527911f32::t_365d0330b23955 59-60,62-63
+skills/decision-log/SKILL.md
+  s_a224f527911f32::t_449bbbaad68b39 69,115-126,131-134,161-162,168-169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa0c8f208ec1099a5c12f43e403a049587c88ebd",
+  "prompts": {},
+  "sessions": {
+    "s_a224f527911f32": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e41321f-2b56-4568-91b4-e19c587e30ec",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
