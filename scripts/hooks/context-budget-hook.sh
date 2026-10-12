@@ -100,7 +100,7 @@ case "$tx_src" in
       case "${transcript##*/}" in "$sid.jsonl") : ;; *) key="$sid-sidechain" ;; esac ;;
     esac ;;
   copilot-state)
-    transcript="${COPILOT_STATE_DIR:-$HOME/.copilot/session-state}/$sid/events.jsonl" ;;
+    transcript="${COPILOT_STATE_DIR:-${COPILOT_HOME:-$HOME/.copilot}/session-state}/$sid/events.jsonl" ;;
   chat-sessions)
     # Token counts live beside the transcript: …/GitHub.copilot-chat/transcripts/
     # <sid>.jsonl -> ../../../chatSessions/<sid>.jsonl (verified live, session 28).

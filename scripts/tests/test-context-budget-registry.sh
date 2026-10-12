@@ -708,5 +708,30 @@ out=$(noid CLAUDECODE=1 ANTIGRAVITY_CONVERSATION_ID=nested-ag "$CB" check 2>&1)
 assert_contains "D2c: CLAUDECODE + ANTIGRAVITY_CONVERSATION_ID detects antigravity" "$out" "runtime=antigravity"
 rm -rf "$HOME/.codex" "$TMP/home/.copilot"
 
+echo "F1: Copilot CLI sessionStart registers its own transcript under COPILOT_HOME (hook-side)"
+# Hooks never see COPILOT_AGENT_SESSION_ID (probes/copilot-cli.md Q1): identity
+# comes from the payload sessionId, the transcript from COPILOT_HOME.
+mkdir -p "$TMP/scripts/hooks"
+cp "$SRC_ROOT"/scripts/hooks/context-budget-* "$TMP/scripts/hooks/"
+FCH="$TMP/home/f1-cph"
+fhook() {  # $1 = sid; the CLI's sessionStart payload, run as the hook process sees it
+  printf '{"sessionId":"%s","timestamp":1791835552928,"cwd":"%s","source":"new"}' "$1" "$TMP" \
+    | env -u COPILOT_AGENT_SESSION_ID -u COPILOT_STATE_DIR -u CLAUDE_CODE_SESSION_ID \
+        COPILOT_HOME="$FCH" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 \
+        "$TMP/scripts/hooks/context-budget-copilot-hook.sh" sessionStart 2>"$TMP/f1.err"
+}
+out=$(fhook f1-fresh); rc=$?
+assert_eq "F1a: fresh session (no events.jsonl yet) registers the COPILOT_HOME path" \
+  "$(jq -r '.artifact // empty' "$SESS/copilot-cli-f1-fresh.json" 2>/dev/null)" \
+  "$FCH/session-state/f1-fresh/events.jsonl"
+assert_eq "F1b: fresh session — hook exits 0 and stays silent" "$rc:$out" "0:"
+mkdir -p "$FCH/session-state/f1-live"
+printf '{"type":"assistant.usage","data":{"inputTokens":160000}}\n' > "$FCH/session-state/f1-live/events.jsonl"
+out=$(fhook f1-live)
+assert_eq "F1c: existing transcript — registered by sessionId" \
+  "$(jq -r '.artifact // empty' "$SESS/copilot-cli-f1-live.json" 2>/dev/null)" \
+  "$FCH/session-state/f1-live/events.jsonl"
+assert_contains "F1d: the check hook measures the COPILOT_HOME transcript (STOP speaks)" "$out" "additionalContext"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
