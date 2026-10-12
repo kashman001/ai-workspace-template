@@ -820,5 +820,36 @@ assert_eq "E3a: registered under the payload's session_id only" \
   "$(cd "$SESS" && ls codex-*.json 2>/dev/null)" "codex-$ESID.json"
 rm -rf "$HOME/.codex"
 
+echo "L: antigravity runtime — PreInvocation hook registers, env id detects, PLANNER_RESPONSE measures"
+mk_ag() {  # $1=conversation id $2=app data dir; prints the transcript path
+  local d="$2/brain/$1/.system_generated/logs"
+  mkdir -p "$d"
+  { jq -cn '{step_index:1,type:"PLANNER_RESPONSE",input_tokens:1000,cache_read_tokens:500,output_tokens:9}'
+    jq -cn '{step_index:2,type:"RUN_COMMAND",content:"\"input_tokens\":999999"}'
+    jq -cn '{step_index:3,type:"PLANNER_RESPONSE",input_tokens:2282,cache_read_tokens:21783,output_tokens:1858}'
+  } > "$d/transcript_full.jsonl"
+  echo "$d/transcript_full.jsonl"
+}
+mkdir -p "$TMP/scripts/hooks"
+cp "$SRC_ROOT"/scripts/hooks/context-budget-* "$TMP/scripts/hooks/"
+agt=$(mk_ag ag-hook "$HOME/.gemini/antigravity-cli")
+out=$(jq -cn --arg tp "$agt" '{conversationId:"ag-hook",invocationNum:0,transcriptPath:$tp}' \
+  | noid WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 "$TMP/scripts/hooks/context-budget-antigravity-hook.sh" 2>/dev/null)
+assert_eq "L1a: PreInvocation writes antigravity-<id>.json at its transcript" \
+  "$(jq -r '.runtime + " " + .artifact' "$SESS/antigravity-ag-hook.json" 2>/dev/null)" "antigravity $agt"
+printf '%s' "$out" | jq -e . >/dev/null 2>&1 && ok "L1b: hook stdout is JSON (agy demands it)" \
+  || bad "L1b: hook stdout not JSON [$out]"
+agt=$(mk_ag ag-env "$HOME/.gemini/antigravity-cli")
+out=$(noid ANTIGRAVITY_CONVERSATION_ID=ag-env "$CB" register 2>&1)
+assert_contains "L2a: register with only ANTIGRAVITY_CONVERSATION_ID picks antigravity" "$out" "runtime=antigravity method=exact"
+assert_eq "L2b: and binds its own transcript" \
+  "$(jq -r .artifact "$SESS/antigravity-ag-env.json" 2>/dev/null)" "$agt"
+agt=$(mk_ag ag-ide "$TMP/home/.gemini/antigravity-ide")
+out=$(noid ANTIGRAVITY_CONVERSATION_ID=ag-ide ANTIGRAVITY_APP_DATA_DIR="$TMP/home/.gemini/antigravity-ide" "$CB" check 2>&1)
+assert_contains "L2c: ANTIGRAVITY_APP_DATA_DIR names the transcript root (IDE/app)" "$out" "artifact=$agt"
+assert_contains "L3a: measure = last PLANNER_RESPONSE input_tokens + cache_read_tokens" "$out" "method=exact tokens=24065"
+assert_contains "L3b: cache share from cache_read_tokens" "$out" "cache=90%"
+rm -rf "$HOME/.gemini" "$TMP/scripts/hooks"
+
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

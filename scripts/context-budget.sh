@@ -5,7 +5,7 @@
 #          threshold. Agents invoke this at checkpoints — they never estimate
 #          their own usage (they can't; the numbers live in the API envelope).
 # Usage:   context-budget.sh check|register|record|watch|release|close|supervised
-#            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|auto]
+#            [--runtime claude|codex|copilot-vscode|copilot-cli|gemini|opencode|antigravity|auto]
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
 #            [--parent-session <sid>] [--agent-id <id>] [--takeover]
 #            [--interval <secs>] [--quiet]
@@ -339,6 +339,28 @@ gemini_measure() {
   estimate_from_size "$f"
 }
 
+antigravity_discover() {
+  # The conversation id names its own brain/<id>/ dir; ANTIGRAVITY_APP_DATA_DIR
+  # is the CLI/IDE/app root (antigravity-cli/, -ide/, antigravity/). No id var:
+  # fail rather than guess a sibling conversation by mtime.
+  local id="${ANTIGRAVITY_CONVERSATION_ID:-}" t
+  [ -n "$id" ] || return 1
+  t="${ANTIGRAVITY_APP_DATA_DIR:-$HOME/.gemini/antigravity-cli}/brain/$id/.system_generated/logs/transcript_full.jsonl"
+  [ -f "$t" ] && echo "$t"
+}
+
+antigravity_measure() {
+  # Last PLANNER_RESPONSE: input_tokens (uncached) + cache_read_tokens = live
+  # context. jq, not grep: tool output in `content` can quote those keys.
+  local f="$1" jq_prog tokens
+  jq_prog='[.[] | select(.type == "PLANNER_RESPONSE" and .input_tokens != null)] | last
+    | if . == null then empty
+      else "\(.input_tokens + (.cache_read_tokens // 0)) \(.cache_read_tokens // 0)" end'
+  tokens=$(tail -n 2000 "$f" | jq -s -r "$jq_prog" 2>/dev/null)
+  [ -z "$tokens" ] && tokens=$(jq -s -r "$jq_prog" "$f" 2>/dev/null)
+  [ -n "$tokens" ] && echo "${tokens% *} exact ${tokens#* }" || estimate_from_size "$f"
+}
+
 opencode_discover() {
   local db="$HOME/.local/share/opencode/opencode.db"
   [ -f "$db" ] && echo "$db"
@@ -395,7 +417,8 @@ discover_for() {
   case "$1" in
     claude) claude_discover ;; codex) codex_discover ;;
     copilot-vscode) copilot_vscode_discover ;; copilot-cli) copilot_cli_discover ;;
-    gemini) gemini_discover ;; opencode) opencode_discover ;; *) return 1 ;;
+    gemini) gemini_discover ;; opencode) opencode_discover ;;
+    antigravity) antigravity_discover ;; *) return 1 ;;
   esac
 }
 
@@ -403,7 +426,8 @@ measure_for() {
   case "$1" in
     claude) claude_measure "$2" ;; codex) codex_measure "$2" ;;
     copilot-vscode) copilot_vscode_measure "$2" ;; copilot-cli) copilot_cli_measure "$2" ;;
-    gemini) gemini_measure "$2" ;; opencode) opencode_measure "$2" ;; *) return 1 ;;
+    gemini) gemini_measure "$2" ;; opencode) opencode_measure "$2" ;;
+    antigravity) antigravity_measure "$2" ;; *) return 1 ;;
   esac
 }
 
@@ -423,6 +447,7 @@ session_id_for() {
       fi ;;
     gemini)  echo "workspace"; return 0 ;;  # no per-session identity exists (see docs)
     opencode) [ -n "${OPENCODE_SESSION_ID:-}" ] && { echo "$OPENCODE_SESSION_ID"; return 0; } ;;
+    antigravity) [ -n "${ANTIGRAVITY_CONVERSATION_ID:-}" ] && { echo "$ANTIGRAVITY_CONVERSATION_ID"; return 0; } ;;
   esac
   [ -n "$af" ] || return 1
   session_id_for_artifact_only "$rt" "$af"
@@ -443,6 +468,7 @@ session_id_for_artifact_only() {
         */session-state/*/events.jsonl) basename "$(dirname "$af")" ;;
         *) b="${b%.jsonl}"; echo "${b%.json}" ;;
       esac ;;
+    antigravity)    basename "$(dirname "$(dirname "$(dirname "$af")")")" ;;  # brain/<id>/.system_generated/logs/
     *) return 1 ;;
   esac
 }

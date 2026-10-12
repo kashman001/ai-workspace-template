@@ -36,7 +36,7 @@ check_hook=$(trim "$check_hook"); end_hook=$(trim "$end_hook")
 check_ev="${check_hook%%:*}"; envelope="${check_hook#*:}"
 end_ev="${end_hook%%:*}"; action="${end_hook#*:}"
 
-silent() { [ "$envelope" = hso-json-only ] && printf '%s' '{}'; exit 0; }
+silent() { case "$envelope" in *-json-only) printf '%s' '{}' ;; esac; exit 0; }
 
 # --- jq, before any parsing ---------------------------------------------------
 command -v jq >/dev/null 2>&1 || {
@@ -166,6 +166,7 @@ case "$envelope" in
                    '{hookSpecificOutput:{hookEventName:$ev,additionalContext:$ctx}}' ;;
   hso)           jq -n --arg ctx "$msg" '{hookSpecificOutput:{additionalContext:$ctx}}' ;;
   hso-json-only) jq -nc --arg ctx "$msg" '{hookSpecificOutput:{additionalContext:$ctx}}' ;;
+  inject-json-only) jq -nc --arg m "$msg" '{injectSteps:[{ephemeralMessage:$m}]}' ;;
   ctx)           jq -n --arg ctx "$msg" '{additionalContext:$ctx}' ;;
 esac
 exit 0

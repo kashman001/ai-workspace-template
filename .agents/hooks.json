@@ -1,0 +1,11 @@
+{
+  "context-budget": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "cd .. && scripts/hooks/context-budget-antigravity-hook.sh",
+        "timeout": 30
+      }
+    ]
+  }
+}
