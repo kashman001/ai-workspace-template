@@ -569,7 +569,7 @@ free-form and never a test contract.
 | --- | --- |
 | record library (relayed by every writer) | `record_unreadable`, `schema_mismatch`, `record_unwritable`, `lock_timeout`, `precondition_invalid`, `filter_invalid`, `filter_empty`, `jq_missing` |
 | register, binding outcomes (info) | `opened`, `filled`, `refreshed`, `adopted`, `minted`, `takeover`; a kept slot is `owner_live` |
-| discovery without a runtime id var (check, register, record) | `ambiguous_artifact` (several live transcripts for this cwd; pass `--transcript`) |
+| discovery without a runtime id var (every command that resolves its own session) | `ambiguous_artifact` (several live transcripts or registered sessions for this cwd; pass `--session-id` or `--transcript`) |
 | release and close | `not_owner`, `ledger_shape`, `ledger_seq_mismatch` |
 | launcher gates, in order | `chain_closed`, `runtime_path_unsupported`, `supervised_stage_only`, `no_supervisor`, `owner_live`, `not_owner`, `worktree_unsynced`, `launcher_stale`, `launcher_unchanged`, `ledger_shape`, `ledger_seq_mismatch` (plus `schema_mismatch` and `jq_missing` first) |
 | supervisor start | `relaunch_off`, `chain_closed`, `supervisor_live`, `stage_failed` (the bootstrap launcher refused without a code), `staged_invalid` (leg spent), `plan_invalid` (legs unresolved, ambiguous) |
@@ -697,9 +697,22 @@ fine given the WARN→STOP margin.
 | --- | --- | --- | --- |
 | Claude Code | `~/.claude/projects/<cwd-slug>/$CLAUDE_CODE_SESSION_ID.jsonl` when that var is set (transcript basename = session id), else newest `.jsonl` in the slug dir (slug = cwd with `/` and `.` → `-`) | last main-chain `message.usage` sum of input + cache-read + cache-creation tokens; sidechain (sub-agent) rows excluded — they have their own windows | exact (verified 2026-07-22, this workspace) |
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` — pinned to `rollout-*-<id>.jsonl` when `$CODEX_THREAD_ID` is set (exported to every shell Codex spawns; equals the rollout UUID), else cwd-filtered newest-mtime fallback | last `last_token_usage.total_tokens` | exact (verified 2026-07-22, origin workspace); pin live-verified 2026-07-23 |
-| Copilot VS Code | **Hook route (preferred, CONFIRMED working 2026-08-11):** the agent-mode hooks derive the `chatSessions/<id>.jsonl` path from the hook payload's `transcript_path` + `session_id` (`…/GitHub.copilot-chat/transcripts/<id>.jsonl` → `../../../chatSessions/<id>.jsonl`) and pass it as `--transcript` — no env var, works from the unsandboxed hook process; `.github/hooks/` is a default `chat.hookFilesLocations` location so the hook loads and auto-registers with no settings entry. **Terminal route (fallback):** `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export it — on current builds a `debug-logs/<id>` dir whose basename is the session id), mapped to `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/<id>.jsonl` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — deterministic, so it pins the live session even when a sibling's log is newer. Falls back to newest-mtime only when the var is unset (older builds), which can race | last `"promptTokens":N` via flat `grep -o` — these files reach 4–5MB with multi-MB single-line records; jq times out | exact (verified 2026-07-23, origin workspace; chatSessions promptTokens re-confirmed live 2026-08-06 on VS Code 1.132.0) |
+| Copilot VS Code | **Hook route (preferred, CONFIRMED working 2026-08-11):** the agent-mode hooks derive the `chatSessions/<id>.jsonl` path from the hook payload's `transcript_path` + `session_id` (`…/GitHub.copilot-chat/transcripts/<id>.jsonl` → `../../../chatSessions/<id>.jsonl`) and pass it as `--transcript` — no env var, works from the unsandboxed hook process; `.github/hooks/` is a default `chat.hookFilesLocations` location so the hook loads and auto-registers with no settings entry. **Terminal route (fallback):** `$VSCODE_TARGET_SESSION_LOG` when set (Copilot terminal sessions export it — on current builds a `debug-logs/<id>` dir whose basename is the session id), mapped to `~/Library/Application Support/<app>/User/workspaceStorage/<hash>/chatSessions/<id>.jsonl` (`<app>` = Code, Code - Insiders, VSCodium; `<hash>` found by grepping the workspace path in `workspace.json`) — deterministic, so it pins the live session even when a sibling's log is newer. Falls back to newest-mtime only when the var is unset (older builds), which can race. **Builds on the Copilot CLI runtime:** the payload's `transcript_path` is `~/.copilot/session-state/<id>/events.jsonl` and is used as is; the agent shell exports `$COPILOT_AGENT_SESSION_ID` (not `$VSCODE_TARGET_SESSION_LOG`), and discovery pins `${COPILOT_HOME:-~/.copilot}/session-state/$COPILOT_AGENT_SESSION_ID/events.jsonl` | last `"promptTokens":N` (chatSessions) or `"inputTokens":N` (session-state `events.jsonl`), read the same way — flat `grep -o`, since these files reach 4–5MB with multi-MB single-line records and jq times out; both are exact | exact (verified 2026-07-23, origin workspace; chatSessions promptTokens re-confirmed live 2026-08-06 on VS Code 1.132.0; `inputTokens` fixture-verified) |
 | Copilot CLI | root `${COPILOT_HOME:-~/.copilot}`; `session-state/<id>/events.jsonl` pinned via `$COPILOT_AGENT_SESSION_ID` (CLI ≥1.0.29, exported to shell commands), else newest-mtime across `session-state/` then legacy `history-session-state/` | tries `promptTokens`/`input_tokens`/`inputTokens`, else estimate | exact (verified 2026-08-05 against a live CLI 1.0.78 session in the `ai-workspace-template` deployment — 73.0k UI match; evidence: `repos/ai-workspace-template/work/automatic-session-rollover/smoke-test-copilot.md`. No live CLI session has run in this workspace yet — the ledger has no copilot-cli records) |
 | Gemini CLI | workspace `.gemini/telemetry.log` (local OTLP export, wired in tracked `.gemini/settings.json`), else `~/.gemini/tmp/<hash>/logs.json` | last response's input tokens from the telemetry log (`input_token_count` or OTel `gen_ai.usage.input_tokens`); chat logs carry no token counts → bytes÷4. The telemetry log is shared append-only across sessions, so `register` resets it — a new session never reads the previous session's counts | exact when the telemetry log has data (**unverified** against a live session); estimate otherwise |
+| Antigravity (`agy`) | `${ANTIGRAVITY_APP_DATA_DIR:-~/.gemini/antigravity-cli}/brain/<id>/.system_generated/logs/transcript_full.jsonl`, pinned by `$ANTIGRAVITY_CONVERSATION_ID` (or the hook payload's `conversationId` + `transcriptPath`); no id var → no discovery, never a newest-mtime guess | last `PLANNER_RESPONSE` `input_tokens` + `cache_read_tokens`, via jq (tool output in `content` can quote those keys) | exact (fixture-verified; a real probe transcript measured 24,065 tokens, cache 90%; no live run yet against the committed `.agents/hooks.json`) |
+
+**Which runtime, and which pid.** `--runtime auto` checks each runtime's own id
+var first, because a runtime launched from another one's shell inherits the
+outer runtime's vars (an `agy` started from Claude Code still sees
+`CLAUDECODE`). The order is `ANTIGRAVITY_CONVERSATION_ID` >
+`COPILOT_AGENT_SESSION_ID` > `CODEX_THREAD_ID` > `CLAUDECODE` (or
+`CLAUDE_CODE_ENTRYPOINT`) > `CODEX_SANDBOX` (or `CODEX_HOME`) >
+`OPENCODE_SESSION_ID` > `VSCODE_TARGET_SESSION_LOG`, then the newest artifact.
+`register` finds the runtime's pid by walking up to a process whose name is the
+runtime name. Antigravity (process `agy`) and sandboxed Codex (the sandbox
+blocks `ps`) therefore record `pid: null`, and copilot-vscode never records one.
+Liveness never relies on the pid: the artifact's mtime decides.
 
 Non-macOS: the Copilot VS Code storage root differs (Linux `~/.config/Code/…`,
 Windows `%APPDATA%/Code/…`); BSD `stat -f` already falls back to GNU `stat -c`;
@@ -718,12 +731,12 @@ estimate. Explicit `--transcript` still overrides everything.
 
 No single mechanism covers every runtime, so four layers overlap:
 
-1. **In-band hook (all six runtimes, incl. Copilot VS Code agent mode):** each
+1. **In-band hook (all seven runtimes, incl. Copilot VS Code agent mode and Antigravity):** each
    runtime's own committed hook
    wiring pushes a WARN/STOP message into the agent's turn. Escalation-only
    (one WARN + one STOP per session), throttled to one check/minute, fails
    open — any hook error exits 0 (or emits the vendor's silent-JSON shape) so
-   it can never block real work. All six wirings ship committed — Claude
+   it can never block real work. All seven wirings ship committed — Claude
    Code's in `.claude/settings.json` (hooks + statusLine only; personal
    permissions stay in the gitignored `settings.local.json`, which
    `scripts/setup.sh` seeds from `.claude/settings.json.example`; never copy the `hooks` block
@@ -752,26 +765,59 @@ what must not drift between runtimes: the throttle (`CHECK_EVERY`, default
 60s), escalation-only emission (one WARN and one STOP per session, tracked in
 `.context-budget/hook-<runtime>-<session>.status`), the message text, and the
 turn-end exit predicate (`staged.by` is this session, under `TF_SESSION_LOOP=1`).
-Fail-open throughout: any error exits 0 (gemini: `{}`); a missing `jq` prints
+Fail-open throughout: any error exits 0 (gemini and antigravity: `{}`); a missing `jq` prints
 `refused reason=jq_missing` on stderr before anything is parsed. The per-vendor
 files beside the dispatcher are one-line shims onto it, kept so the committed
 wiring below needs no edit.
 
 | Runtime | Wiring file → shim | Check hook / envelope | Turn-end hook / action | Friction gate |
 | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`; never copy the `hooks` block there or each hook fires twice) → `context-budget-claude-hook.sh`, `context-budget-stop-hook.sh claude` | `PostToolUse`: stderr text + `exit 2` | `Stop`: SIGTERM the agent once it staged | none — `SessionStart` runs `register` and `SessionEnd` runs `release` mechanically; every command self-resolves the repo root when `$CLAUDE_PROJECT_DIR` is empty |
-| Codex | `.codex/config.toml` → `context-budget-codex-hook.sh` (`SessionStart` registers from the payload's `session_id` + `transcript_path`; `UserPromptSubmit` re-registers a missing record), `context-budget-stop-hook.sh codex` | `UserPromptSubmit`: `{hookSpecificOutput:{hookEventName,additionalContext}}` | `Stop`: SIGTERM | hash-based hook trust: the first run in a repo prompts once; editing the hook command re-prompts; CI passes `--dangerously-bypass-hook-trust`. Untrusted hooks are skipped silently (no registration, no measurement), so the agent-side `register` stays the fallback |
+| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`; never copy the `hooks` block there or each hook fires twice) → `context-budget-claude-hook.sh`, `context-budget-stop-hook.sh claude` | `PostToolUse`: stderr text + `exit 2` | `Stop`: SIGTERM the agent once it staged | none — `SessionStart` runs `register` and `SessionEnd` runs `release` mechanically; `SessionStart` needs the payload's `transcript_path` and does nothing without it; every command self-resolves the repo root when `$CLAUDE_PROJECT_DIR` is empty |
+| Codex | `.codex/config.toml` → `context-budget-codex-hook.sh` (`SessionStart` registers from the payload's `session_id` + `transcript_path`; `UserPromptSubmit` re-registers a missing record), `context-budget-stop-hook.sh codex` | `UserPromptSubmit`: `{hookSpecificOutput:{hookEventName,additionalContext}}` | `Stop`: SIGTERM | hash-based hook trust (see "Hook trust" below): an interactive run prompts once per repo; editing the hook command re-prompts; `codex exec` never prompts, so CI passes `--dangerously-bypass-hook-trust`. Untrusted hooks are skipped silently (no registration, no measurement), so the agent-side `register` stays the fallback |
 | Gemini CLI | `.gemini/settings.json` → `context-budget-gemini-hook.sh` | `BeforeAgent`: JSON-only stdout, `{}` when silent | none — chains unsupported, attended rollover only | measures the workspace `.gemini/telemetry.log`; a successor's first-turn check can read the predecessor's last entry (accepted: gemini chains are human-launched) |
 | opencode | `.opencode/opencode.json` `plugin` array → `.opencode/plugins/context-budget.js` → `context-budget-opencode-hook.sh` | `chat.message`: the plugin pushes a message part | `session.idle`: the dispatcher prints `exit`, the plugin self-kills | plugins are not auto-discovered — list it in `opencode.json`; the sqlite read has no size-estimate fallback |
-| Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh` | `sessionStart`: `{additionalContext}` | `agentStop`: SIGTERM, then `{decision:"block",reason}` at STOP | folder trust: hooks no-op unless the workspace is in `~/.copilot/config.json` `trustedFolders` (`scripts/setup.sh` seeds it; `check-dependencies.sh` warns) |
-| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` → `context-budget-copilot-vscode-hook.sh` | `SessionStart`: `{hookSpecificOutput:{additionalContext}}`; also registers | `Stop`: stderr + `exit 2` at STOP (a JSON block is ignored by VS Code); no supervisor — no process to own | `.github/hooks/` is a default hook location, trusted workspace required; `$CLAUDE_PROJECT_DIR` is unset in hook processes |
+| Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh` | `sessionStart`: `{additionalContext}`; also registers from the payload's `sessionId` | `agentStop`: SIGTERM, then `{decision:"block",reason}` at STOP | folder trust: hooks no-op unless the workspace is in `~/.copilot/config.json` `trustedFolders` (`scripts/setup.sh` seeds it; `check-dependencies.sh` warns) |
+| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` → `context-budget-copilot-vscode-hook.sh` | `SessionStart`: `{hookSpecificOutput:{additionalContext}}`; also registers | `Stop`: stderr + `exit 2` at STOP (a JSON block is ignored by VS Code); no supervisor — no process to own | `.github/hooks/` is a default hook location, trusted workspace required; `$CLAUDE_PROJECT_DIR` is unset in hook processes. On the Copilot CLI runtime this file stands down (see below) |
+| Antigravity (`agy`) | `.agents/hooks.json` → `context-budget-antigravity-hook.sh` (the command is `cd .. && scripts/hooks/…`, because agy runs a hook with cwd = the directory holding `hooks.json`) | `PreInvocation`: `{injectSteps:[{ephemeralMessage}]}`, JSON-only stdout, `{}` when silent; registers from the payload's `conversationId` + `transcriptPath` (there is no SessionStart event) | none — chains unsupported, attended rollover only | none: agy fires workspace hooks with no trust step (probed outside its `trustedWorkspaces`). It reads none of the other runtimes' hook files, only its own `.agents/hooks.json` |
+
+**One Copilot config acts per event.** Copilot (the CLI, and VS Code agent
+mode on the Copilot CLI runtime) fires `.github/hooks/context-budget.json`,
+`.github/hooks/context-budget-vscode.json` and `.claude/settings.json` for the
+same turn. The dispatcher lets only the CLI config act. A payload whose
+`transcript_path` is a Copilot `session-state/<id>/events.jsonl` is ignored by
+the `claude` row, and by the `copilot-vscode` row while
+`.github/hooks/context-budget.json` exists. So one turn writes one stamp and one
+registry record.
 
 `stop_hook_active` guards every turn-end hook so a hook-continued turn never
 sends a second SIGTERM. Support matrix (a mode is supported once its probe has
 passed on the runtime): Claude Code — attended and supervised, verified;
 codex and copilot-cli — unverified (logout shape not captured; a logout reads as
-a plain quit, and reopening is one command); gemini and copilot-vscode —
-attended only.
+a plain quit, and reopening is one command); gemini, copilot-vscode and
+antigravity (`.agents/hooks.json`, no turn-end hook) — attended only. Codex
+covers the CLI and the VS Code extension; Copilot covers the CLI and VS Code
+agent mode. Of the committed hook configs, codex `SessionStart`, copilot
+`sessionStart` and agy `PreInvocation` are fixture-tested only, with no live
+run yet.
+
+### Hook trust
+
+Codex and Copilot skip untrusted hooks **silently**: no prompt in headless
+runs, no warning, no registration, no measurement. Until trust lands, only the
+agent-side `register` and `record` measure the session. Antigravity has no trust
+step.
+
+- **Codex CLI:** trust is per hook command hash, stored in `~/.codex/config.toml`
+  (`[hooks.state."<repo>/.codex/config.toml:<event>:0:0"] trusted_hash`). An
+  interactive session prompts once; editing a hook command re-prompts.
+  `codex exec` never prompts and skips the hooks unless run with
+  `--dangerously-bypass-hook-trust`.
+- **Codex VS Code extension:** the same trust store, but the extension asks
+  only *after* the turn that fired the hooks, so the first turns of a new repo
+  run unhooked. Once granted, trust applies to chats already open; no restart.
+- **Copilot CLI and VS Code agent mode:** folder trust. The CLI loads repo hooks
+  only when the workspace is in `~/.copilot/config.json` `trustedFolders`
+  (`scripts/setup.sh` seeds it); VS Code needs the workspace trusted.
 
 **Migrating an existing workspace (pre-2026-08-29):** `.claude/settings.json`
 used to be a gitignored per-user copy of the example. Pulling the commit that
@@ -789,12 +835,29 @@ never the hook or statusLine blocks.
 pinning the exact artifact — newest-mtime discovery is ambiguous under
 concurrent sessions. The session id comes from the runtime's own env var first
 (`CLAUDE_CODE_SESSION_ID`, `CODEX_THREAD_ID`, `COPILOT_AGENT_SESSION_ID`,
-`OPENCODE_SESSION_ID`, `VSCODE_TARGET_SESSION_LOG` basename; gemini has none →
-fixed id `workspace`), else from the artifact path. `check`/`record`
+`OPENCODE_SESSION_ID`, `ANTIGRAVITY_CONVERSATION_ID`, `VSCODE_TARGET_SESSION_LOG`
+basename; gemini has none → fixed id `workspace`), else from the artifact path. `check`/`record`
 resolve-self: they read only their *own* registry record, never another
 session's, and fall back to discovery. Precedence in every command: explicit
 `--transcript` > own record > discovery. The Claude Code hook receives the
 exact transcript path on stdin, bypassing both.
+
+With no id var set, a command cannot tell which record is its own. If more than
+one registered top-level session of the runtime is live in the cwd (its
+artifact names the cwd and was written in the last 2 minutes), every
+command that resolves its own session refuses `ambiguous_artifact` and names
+`--session-id <own id>` (or `--transcript`); it never guesses the newest. A
+Claude Code agent reads its own id from the `SessionStart` line in its context:
+`register` prints `artifact=<…>/<session-id>.jsonl`, and the basename is the id.
+
+**Phantom records.** Claude Code's VS Code extension pre-spawns idle sessions
+whose `SessionStart` registers a transcript that is never written. `register`
+and `record` delete any record whose artifact is still missing 60 minutes after
+the record was last written (never their own record; the pid is not
+consulted). Only those two commands prune. Read-only `check`, `check
+--session-id`, `fleet.sh` and `attach-session.sh` still see a phantom until some
+session registers or records. A pre-spawned session first used more than an hour
+later has lost its record by then and simply registers again.
 
 When `register` can bind a work item (see "Who owns a work item") it also
 fills the record's `session` block, stamps `project` on the registry record,
@@ -830,7 +893,8 @@ data (token growth per workflow phase, hot workflows, estimate-mode accuracy):
 `cache_read_share` is the share of the measured context read from the prompt
 cache (two decimals) — the number behind "Cache the prefix, vary the tail".
 It comes from the runtime's own count: Claude `cache_read_input_tokens`, Codex
-`cached_input_tokens`, OpenCode `tokens.cache.read`. Copilot and Gemini don't
+`cached_input_tokens`, OpenCode `tokens.cache.read`, Antigravity
+`cache_read_tokens`. Copilot and Gemini don't
 expose one, so they write `null`; it is never estimated. Rows written before
 the field existed lack it. `check`/`record` show the same number as `cache=NN%`
 (`cache=-` when absent), just before `artifact=`, which stays last.
@@ -860,8 +924,9 @@ for analysis, commit a deliberate dated snapshot (as
   `GEMINI_API_KEY`, see `docs/operational-knowledge.md`); sessions outside this
   workspace still fall back to the bytes÷4 estimate. The log accumulates across sessions in the workspace,
   so under concurrent Gemini sessions the last entry may belong to the other one.
-- Auto-detection (`--runtime auto`) prefers env-var evidence (Claude/Codex) then
-  newest artifact — with several runtimes active, `register` or pass `--runtime`.
+- Auto-detection (`--runtime auto`) prefers env-var evidence (order under
+  "Per-runtime adapters") then newest artifact — with several runtimes active,
+  `register` or pass `--runtime`.
 - The hook checks at most once per minute — a single huge tool result can
   overshoot the threshold between checks.
 - Estimates (bytes÷4) drift on binary-heavy or highly-compressed transcripts.
