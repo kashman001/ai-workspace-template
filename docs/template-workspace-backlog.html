@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">0</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">135</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -140,6 +140,14 @@
   <!-- ========================= MEDIUM ========================= -->
   <h2>Medium</h2>
 
+  <div class="find medium">
+    <h3><span class="id">M51</span> Trim skill triggers: narrow <code>unslop</code>, review every model-invoked description, budget their total
+      <span class="sev medium">Medium</span><span class="status open">Open</span><span class="area">skills/, scripts/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; 56 skills; the 34 model-invoked descriptions total about 8.7 KB that every runtime weighs on every turn. <code>skills/unslop/SKILL.md</code> says &ldquo;Must always apply.&rdquo;, so it fires on almost any writing. No check bounds the total, so each vendored pack grows it silently (Rob Shocks, &ldquo;Pocock vs Pstack vs Osmani&rdquo;: more skills is not a smarter agent).</p>
+    <p><span class="k">Impact</span> &mdash; Accidental auto-triggering and a per-turn context tax that rises with every skill added.</p>
+    <p><span class="k">Fix</span> &mdash; Narrow <code>unslop</code> through the adapted-class frontmatter; review each model-invoked skill (keep / tighten / user-invoke with <code>disable-model-invocation</code>, <code>agents/openai.yaml</code>, a <code>.claude/commands/</code> shortcut); add <code>scripts/check-skill-descriptions.sh</code> with a budget and a test seen to fail first; one Tier-2 note per call.</p>
+  </div>
+
 
 
 
@@ -147,6 +155,22 @@
 
   <!-- ========================= LOW ========================= -->
   <h2>Low</h2>
+
+  <div class="find low">
+    <h3><span class="id">L82</span> A stakes-to-ceremony guide: which skills a change of a given size and risk needs
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/, CONTEXT.md</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The only ceremony guidance is one clause in <code>CONTEXT.md</code> (&ldquo;use judgement rather than full ceremony&rdquo;); <code>ask-matt</code> routes by situation, not by stakes. With 56 skills an agent either runs them all or picks by habit.</p>
+    <p><span class="k">Impact</span> &mdash; Tweaks get grilled and spec'd; risky changes skip the adversarial review and hardening passes.</p>
+    <p><span class="k">Fix</span> &mdash; A short runtime-neutral table (tweak &rarr; do it and check it; small feature &rarr; <code>grill-me</code> + <code>tdd</code>; big or fuzzy &rarr; <code>to-spec</code> + <code>plans</code>; production / security / irreversible &rarr; <code>doubt-driven-development</code> + <code>security-and-hardening</code> + review) at <code>docs/stakes-to-ceremony.md</code>, a lean pointer from <code>CONTEXT.md</code>, an adoption note for downloaders; <code>ask-matt</code> wired by patch or left pointing at the guide.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L83</span> Anti-rationalization tables for the workspace skills where agents cut corners
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The ledgers and this archive record repeated shortcuts: ledger blocks written without the header grep (session 15 corrupted two), hand-offs skipped at WARN, decisions left in chat, reconcile nodes closed on a subagent's word. The vendored Addy Osmani skills carry a &ldquo;Common Rationalizations&rdquo; table (excuse &rarr; reality) for exactly this; ours carry none.</p>
+    <p><span class="k">Impact</span> &mdash; The same mistakes recur across sessions despite being documented in prose.</p>
+    <p><span class="k">Fix</span> &mdash; Short tables in Addy's format for <code>checkpoint</code>, <code>session-rollover</code>, <code>decision-log</code>, <code>create-work-item</code> and <code>plans</code> (the reconcile verification), each row a recorded failure mode; no tables in vendored skills.</p>
+  </div>
 
 
 
@@ -309,6 +333,7 @@
       <tr><td>2026-10-09</td><td>Resolved <strong>L74</strong>: a second lost race in the session-record lock (a lock re-taken between two checks read as <code>record_unwritable</code>); deterministic test S10r&ndash;t. Scorecard now 0/127/5/0/6.</td></tr>
       <tr><td>2026-10-11</td><td>Session 24: analysed Addy Osmani's <code>agent-skills</code> and pstack against the vendored Matt Pocock set (<code>work/template-maintenance/skill-packs-analysis.md</code>): take 16 of 77 skills, skip the rest as duplicates, Cursor-bound or domain-specific. Opened <strong>M50</strong> (multi-upstream sync + drift) and <strong>L75&ndash;L81</strong> (vendoring in three waves, catalog + wiring, round-trip proof). Scorecard now 8/127/5/0/6.</td></tr>
       <tr><td>2026-10-11</td><td>Resolved <strong>M50</strong> (one sync script and drift check for three upstreams), <strong>L75&ndash;L79</strong> (16 skills vendored: 9 Addy Osmani, 7 pstack; patches for the runtime-specific lines), <strong>L80</strong> (catalog, <code>CONTEXT.md</code> pointer, docs, slash commands) and <strong>L81</strong> (sync round trip clean, audit zero blockers, 42 checks pass). Scorecard now 0/135/5/0/6.</td></tr>
+      <tr><td>2026-10-11</td><td>Session 24, second task (Rob Shocks' &ldquo;Pocock vs Pstack vs Osmani&rdquo;): opened <strong>M51</strong> (trigger trimming + description budget check), <strong>L82</strong> (stakes-to-ceremony guide) and <strong>L83</strong> (anti-rationalization tables); plan <code>work/template-maintenance/plans/01-skill-ceremony</code>. Scorecard now 3/135/5/0/6.</td></tr>
 </tbody>
   </table>
 

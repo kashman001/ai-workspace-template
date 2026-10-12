@@ -20,6 +20,13 @@ bump `TEMPLATE_VERSION` to that day.
 
 **Do NOT reload:** L72/M49/L73/L74 are done (ledger block 23).
 
+## Plan position
+
+<!-- plan:begin position -->
+Position: plan 01-skill-ceremony, open, wave 1 of 4, done 0/12, doing 4, todo 8, blocked 0, dropped 0, sessions 1.
+Frontier: none (01-ceremony-guide doing, 02-trigger-review doing, 03-budget-check doing, 04-anti-rationalization doing). Remaining: 12 of 12 — wave 1: 01-ceremony-guide doing, 02-trigger-review doing, 03-budget-check doing, 04-anti-rationalization doing, 05-reconcile-w1 todo.
+<!-- plan:end position -->
+
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`.

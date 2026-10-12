@@ -200,3 +200,10 @@ holder never refreshed.
 **Rejected:** patched vendoring; skipping it (nothing else recovers rationale when no ADR exists).
 **Blast radius:** skills/why/, catalog line.
 **Promote?:** no.
+
+## 2026-10-11 — Skill ceremony: `unslop` is narrowed in its frontmatter, not by patch
+**Chose:** change `skills/unslop/SKILL.md`'s `description:` directly. The brief asked for a `workspace.patch`.
+**Because:** `unslop` is in the *adapted* class: `scripts/sync-vendored-skills.sh` keeps the workspace frontmatter and re-copies only the body, so the frontmatter is already workspace-owned. A patch hunk against the frontmatter would be applied once and then fail the sync's `patch -N --dry-run` on the next refresh (already applied), stopping the sync.
+**Rejected:** a `workspace.patch` (breaks the second sync); moving `unslop` to the pristine class plus a patch (loses the user-/model-invoked switch the adapted class exists for).
+**Blast radius:** skills/unslop/SKILL.md frontmatter; the catalog line in skills/vendored-skills.md.
+**Promote?:** no.
