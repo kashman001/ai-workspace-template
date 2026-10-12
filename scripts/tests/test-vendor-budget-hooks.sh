@@ -515,4 +515,17 @@ out=$(env -i PATH="$NOJQ" HOME="$HOME" WORKSPACE_ROOT="$TMP" CHECK_EVERY=0 FAKE_
 assert_empty "J3a: opencode stdout silent (nothing injected)" "$out"
 assert_contains "J3b: jq_missing on stderr" "$(cat "$TMP/j.err")" "reason=jq_missing"
 
+echo "L: antigravity PreInvocation — JSON-only stdout, ephemeralMessage on escalation"
+ap="{\"conversationId\":\"fa\",\"invocationNum\":0,\"transcriptPath\":\"$TMP/f1.jsonl\"}"
+reset_state
+out=$(printf '%s' "$ap" | CHECK_EVERY=0 FAKE_STATUS=OK "$HOOKS/context-budget-antigravity-hook.sh"); rc=$?
+assert_eq "L4a: OK prints {}" "$out" "{}"
+assert_eq "L4b: exit 0" "$rc" "0"
+reset_state
+out=$(printf '%s' "$ap" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 "$HOOKS/context-budget-antigravity-hook.sh")
+assert_contains "L4c: WARN injected as an ephemeralMessage" \
+  "$(printf '%s' "$out" | jq -r '.injectSteps[0].ephemeralMessage')" "CONTEXT BUDGET WARN: this session is at 125000 tokens"
+out=$(printf '{"invocationNum":0}' | CHECK_EVERY=0 FAKE_STATUS=STOP "$HOOKS/context-budget-antigravity-hook.sh")
+assert_eq "L4d: no conversationId prints {}" "$out" "{}"
+
 echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]
