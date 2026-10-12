@@ -809,9 +809,11 @@ the session context.
 
 `check --session-id <sid>` answers about the session **named**, reading its
 artifact out of the registry record: exit code and output are that session's.
-It never guesses (an unregistered id is refused, exit 3), never writes, and is
-`check` only — `register`/`record` refuse the pin. The caller is the
-supervisor's watchdog, which asks whether the child it watches is past STOP.
+It never guesses (an unregistered id is refused, exit 3) and never writes. The
+caller is the supervisor's watchdog, which asks whether the child it watches is
+past STOP. `record --session-id <sid>` also takes the pin: it is how an agent
+shell with no id var records its own session when discovery refuses as
+ambiguous. `register`/`release`/`close` refuse it.
 
 ## Ledger
 

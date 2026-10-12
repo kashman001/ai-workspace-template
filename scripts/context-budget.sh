@@ -9,7 +9,7 @@
 #            [--transcript <path>] [--project <work-item>] [--label "<text>"]
 #            [--parent-session <sid>] [--agent-id <id>] [--takeover]
 #            [--interval <secs>] [--quiet]
-#            [--session-id <sid>]   (check only; read-only pin on a NAMED session)
+#            [--session-id <sid>]   (check/record only; pin on a NAMED session)
 #            [--check]              (close only; run the checks, write nothing)
 #          The fleet verbs (children, dispatch-*) live in scripts/fleet.sh.
 #          register/release/close write the work item's session record
@@ -73,8 +73,8 @@ LOCK_STALE="${CONTEXT_LOCK_STALE_SECS:-10800}"
 
 COMMAND="check"; RUNTIME="auto"; ARTIFACT=""; PROJECT=""; LABEL=""; INTERVAL=30; QUIET=0
 PARENT_SESSION=""; AGENT_ID=""; TAKEOVER=0; CHECK=0
-# --session-id: ask the budget question about a session that is NOT this
-# process. check only, and never a writer — see the guard below resolve_session.
+# --session-id: ask the budget question about a NAMED session. check, or
+# record (an agent shell with no id var naming its own) — see the guard below.
 PIN_SESSION_ID=""
 case "${1:-}" in
   check|register|record|watch|release|close|supervised) COMMAND="$1"; shift ;;
@@ -109,14 +109,16 @@ command -v jq >/dev/null 2>&1 || refuse jq_missing "jq is required"
 [ "$CHECK" -eq 0 ] || [ "$COMMAND" = close ] \
   || die "--check is the dry run of close only (got: $COMMAND)"
 
-# The pin names a session other than this one, so every command that WRITES is
-# refused: register/record under a pin would stamp this process's measurement
-# onto a foreign identity, which is M13 with extra steps. And two identities in
-# one invocation is ambiguous -- silently preferring either is how a read ends
-# up measuring a session nobody asked about.
+# The pin may name a session other than this one, so register/release/close are
+# refused: they would stamp this process's identity onto a foreign record, which
+# is M13 with extra steps. record is allowed (node 10): it measures the named
+# session's own artifact, so its ledger row is that session's -- the way out for
+# an agent shell with no id var that knows its id (e.g. from a hook payload). And
+# two identities in one invocation is ambiguous -- silently preferring either is
+# how a read ends up measuring a session nobody asked about.
 if [ -n "$PIN_SESSION_ID" ]; then
-  [ "$COMMAND" = check ] \
-    || die "--session-id is a read-only pin and works with check only (got: $COMMAND)"
+  [ "$COMMAND" = check ] || [ "$COMMAND" = record ] \
+    || die "--session-id is a pin for check and record only (got: $COMMAND)"
   [ -z "$ARTIFACT" ] \
     || die "--session-id and --transcript both name a session; pass one"
 fi
@@ -479,8 +481,8 @@ resolve_session() {
   # check in its own environment: that resolves to the caller, or -- when no env
   # identity matches -- to the newest artifact by mtime, which is the false-STOP
   # bug. The pin answers about the session NAMED, or refuses; it never guesses.
-  # Read-only by construction: it returns before the re-pin below, and every
-  # writing command was refused at the guard after die().
+  # Writes no record: it returns before the re-pin below; register/release/
+  # close were refused at the guard after die(), and record only touches it.
   if [ -n "$PIN_SESSION_ID" ]; then
     local rec cand
     if [ "$RUNTIME" = "auto" ]; then
@@ -547,11 +549,19 @@ resolve_session() {
     fi
   fi
   if [ -z "$ARTIFACT" ]; then
-    local drc=0
-    ARTIFACT=$(discover_for "$RUNTIME") || drc=$?
+    local drc=0 f
+    # No id var: >1 registered session of this runtime live in this cwd is the
+    # same ambiguity, whatever discovery would pick (claude's takes the newest).
+    if [ -z "$SESSION_ID" ]; then
+      for f in "$STATE_DIR/sessions/$RUNTIME"-*.json; do
+        [ -f "$f" ] && jq -r 'select(.parent_session_id == null) | .artifact // empty' "$f" 2>/dev/null
+      done | pick_unambiguous >/dev/null
+      [ $? -eq 2 ] && drc=2
+    fi
+    [ "$drc" -eq 2 ] || ARTIFACT=$(discover_for "$RUNTIME") || drc=$?
     # Discovery found several live transcripts for this cwd and no id var to
     # choose: refuse rather than measure, or pin, a sibling's context.
-    [ "$drc" -eq 2 ] && refuse ambiguous_artifact "runtime=$RUNTIME — several sessions are live in $(pwd) and this one's id var is unset; pass --transcript <own transcript>"
+    [ "$drc" -eq 2 ] && refuse ambiguous_artifact "runtime=$RUNTIME — several sessions are live in $(pwd) and this one's id var is unset; pass --session-id <own id> or --transcript <own transcript>"
     [ -n "$ARTIFACT" ] || die "no session artifact found for runtime=$RUNTIME"
     # copilot-vscode may return an authoritative-but-not-yet-flushed path at
     # session start; accept it (measures as fresh) rather than dying or, worse,

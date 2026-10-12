@@ -626,9 +626,9 @@ assert_eq "N1f: the pin writes nothing — no re-pin, no record, no ledger" "$(s
 err=$(run_as pin-asker check --session-id no-such-session 2>&1 >/dev/null); rc=$?
 assert_eq "N1g: an unregistered id is refused, not guessed around" "$rc" "3"
 assert_contains "N1h: the refusal names the id it could not find" "$err" "no-such-session"
-err=$(run_as pin-asker record --session-id pin-live 2>&1 >/dev/null); rc=$?
-assert_eq "N1i: record refuses the pin (it writes)" "$rc" "3"
-assert_contains "N1j: and says the pin is check-only" "$err" "check"
+err=$(run_as pin-asker release --session-id pin-live 2>&1 >/dev/null); rc=$?
+assert_eq "N1i: release refuses the pin (record is allowed since node 10, B2f)" "$rc" "3"
+assert_contains "N1j: and says the pin is for check and record" "$err" "check and record"
 err=$(run_as pin-asker register --session-id pin-live --quiet 2>&1 >/dev/null); rc=$?
 assert_eq "N1k: register refuses the pin" "$rc" "3"
 err=$(run_as pin-asker check --session-id pin-live \
@@ -850,6 +850,58 @@ assert_contains "L2c: ANTIGRAVITY_APP_DATA_DIR names the transcript root (IDE/ap
 assert_contains "L3a: measure = last PLANNER_RESPONSE input_tokens + cache_read_tokens" "$out" "method=exact tokens=24065"
 assert_contains "L3b: cache share from cache_read_tokens" "$out" "cache=90%"
 rm -rf "$HOME/.gemini" "$TMP/scripts/hooks"
+
+echo "B1: record with the runtime's env id updates its own record beside a sibling (node 10)"
+LG="$CB_STATE/context-ledger.jsonl"
+b_rec() {  # $1=runtime $2=sid $3=artifact; a back-dated registry record
+  jq -n --arg rt "$1" --arg sid "$2" --arg af "$3" \
+    '{runtime:$rt, session_id:$sid, artifact:$af}' > "$SESS/$1-$2.json"
+  touch -t 202601010000 "$SESS/$1-$2.json"
+}
+b_mt() { stat -f%m "$1" 2>/dev/null || stat -c%Y "$1" 2>/dev/null; }
+touch -t 202601010000 "$TMP/b-old"; OLD_MT=$(b_mt "$TMP/b-old")
+b_touched() {  # $1=label $2=own record $3=sibling record
+  [ "$(b_mt "$2")" != "$OLD_MT" ] && ok "$1: its own record is refreshed" || bad "$1: own record not refreshed"
+  assert_eq "$1: the sibling record is untouched" "$(b_mt "$3")" "$OLD_MT"
+}
+mkdir -p "$TMP/home/b1"
+for s in own sib; do
+  printf '{"last_token_usage":{"total_tokens":31%s}}\n' "$([ $s = own ] && echo 11 || echo 22)" > "$TMP/home/b1/cx-$s.jsonl"
+  b_rec codex "b1-cx-$s" "$TMP/home/b1/cx-$s.jsonl"
+  printf '{"promptTokens":41%s}\n' "$([ $s = own ] && echo 11 || echo 22)" > "$TMP/home/b1/cp-$s.jsonl"
+  b_rec copilot-cli "b1-cp-$s" "$TMP/home/b1/cp-$s.jsonl"
+  b_rec antigravity "b1-ag-$s" "$(mk_ag "b1-ag-$s" "$TMP/home/b1/ag")"
+done
+noid CODEX_THREAD_ID=b1-cx-own "$CB" record --label b1 --quiet >/dev/null 2>&1
+assert_eq "B1a codex: the ledger row is its own session" "$(tail -1 "$LG" | jq -r '.session + " " + (.tokens|tostring)')" "cx-own.jsonl 3111"
+b_touched "B1b codex" "$SESS/codex-b1-cx-own.json" "$SESS/codex-b1-cx-sib.json"
+noid COPILOT_AGENT_SESSION_ID=b1-cp-own "$CB" record --label b1 --quiet >/dev/null 2>&1
+assert_eq "B1c copilot-cli: the ledger row is its own session" "$(tail -1 "$LG" | jq -r '.session + " " + (.tokens|tostring)')" "cp-own.jsonl 4111"
+b_touched "B1d copilot-cli" "$SESS/copilot-cli-b1-cp-own.json" "$SESS/copilot-cli-b1-cp-sib.json"
+noid ANTIGRAVITY_CONVERSATION_ID=b1-ag-own ANTIGRAVITY_APP_DATA_DIR="$TMP/home/b1/none" \
+  "$CB" record --label b1 --quiet >/dev/null 2>&1
+assert_eq "B1e antigravity: record exits 0 through its registry record" "$?" "0"
+b_touched "B1f antigravity" "$SESS/antigravity-b1-ag-own.json" "$SESS/antigravity-b1-ag-sib.json"
+
+echo "B2: no id var and two live records — every command refuses and names --session-id (node 10)"
+for s in one two; do
+  jq -cn --arg c "$TMP" '{cwd:$c, message:{usage:{input_tokens:5000,cache_read_input_tokens:0,cache_creation_input_tokens:0}},isSidechain:false}' \
+    > "$PROJ_DIR/b2-$s.jsonl"
+  b_rec claude "b2-$s" "$PROJ_DIR/b2-$s.jsonl"
+done
+rows=$(wc -l < "$LG")
+for verb in record check; do
+  err=$(noid CLAUDECODE=1 "$CB" $verb --label b2 2>&1 >/dev/null); rc=$?
+  assert_eq "B2a $verb: refused (exit 4), no guess" "$rc" "4"
+  assert_contains "B2b $verb: with a reason code" "$err" "reason=ambiguous_artifact"
+  assert_contains "B2c $verb: naming --session-id" "$err" "--session-id"
+done
+assert_eq "B2d: no ledger row written" "$(wc -l < "$LG")" "$rows"
+assert_eq "B2e: neither record touched" "$(b_mt "$SESS/claude-b2-one.json") $(b_mt "$SESS/claude-b2-two.json")" "$OLD_MT $OLD_MT"
+noid CLAUDECODE=1 "$CB" record --session-id b2-two --label b2 --quiet >/dev/null 2>&1; rc=$?
+assert_eq "B2f: record --session-id <own id> is the way out (exits 0)" "$rc" "0"
+assert_eq "B2g: and writes the named session's ledger row" "$(tail -1 "$LG" | jq -r .session)" "b2-two.jsonl"
+b_touched "B2h" "$SESS/claude-b2-two.json" "$SESS/claude-b2-one.json"
 
 echo; echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]

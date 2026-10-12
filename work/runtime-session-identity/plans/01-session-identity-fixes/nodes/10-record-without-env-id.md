@@ -19,9 +19,14 @@ for `--session-id`.
 
 ## Acceptance
 
-- [ ] Suite case: `record` with the runtime's env id set and no `--session-id` updates that session's record, with a sibling record present
-- [ ] Suite case: with no id var and two live records, `record` refuses (no guess) and names `--session-id`
-- [ ] Existing suites pass
+- [x] Suite case: `record` with the runtime's env id set and no `--session-id` updates that session's record, with a sibling record present
+- [x] Suite case: with no id var and two live records, `record` refuses (no guess) and names `--session-id`
+- [x] Existing suites pass
 
 ## Log
 - s7 · started, tier standard
+- s7-b · B1a–B1f added to `scripts/tests/test-context-budget-registry.sh`: codex, copilot-cli and antigravity, each with an env id and a sibling record. Own record refreshed, own ledger row written, sibling untouched. They PASSED before any change: resolve-self already reads `<rt>-<env id>.json`. No fix is claimed for them.
+- s7-b · B2a–B2h added: claude with CLAUDECODE only, two live registered transcripts in the cwd. Seen failing first with 9 FAIL: `record` and `check` exited 0, and the guess touched `claude-b2-two.json`.
+- s7-b · fix in `scripts/context-budget.sh`. With no id var, `resolve_session` runs the runtime's non-child registry artifacts through `pick_unambiguous` before discovery. More than one live in the cwd refuses `reason=ambiguous_artifact` (every command), and the message names `--session-id <own id>`. The `--session-id` pin now admits `record`; register/release/close still refuse. N1i/N1j changed from "record refuses the pin" to "release refuses it". The pin paragraph in `docs/context-budget.md` is corrected to match.
+- s7-b · hook-message half of the Goal NOT done. Making the hook's context message carry the id changed 14 byte-for-byte fixtures in `test-vendor-budget-hooks.sh` (a payload-contract change), so it was reverted. Every probed runtime exports an env id. Left for the orchestrator to decide.
+- s7-b · verified: registry 258/0, statusline 20/0, vendor-budget-hooks 165/0, attach-session 27/0, doc-consistency 17/0.
