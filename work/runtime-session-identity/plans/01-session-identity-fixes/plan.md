@@ -24,6 +24,7 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 - s6 · For node 13 (docs): docs/context-budget.md needs the antigravity adapter row, .agents/hooks.json in the support matrix (agy fires hooks with no trust step, runs them from .agents/ — hence cd ..), the inject-json-only envelope, that the Copilot CLI config is the only Copilot config that acts, and that Claude SessionStart requires transcript_path.
 - s6 · resolve_runtime_pid matches the process name to the runtime name, so antigravity (process agy) and sandboxed codex hooks record no pid; liveness for them must not rely on pid. No live run yet of codex SessionStart, copilot sessionStart, or agy against the committed hook configs — fixture-tested only; node 11 probes are the place to confirm.
 - s7 · s7 · node 09: prune_phantoms deletes (not hides) a record whose artifact is missing >60 min after its last write, in register/record only; read-only check/--session-id don't prune, so fleet.sh/attach-session.sh see a phantom until some session registers/records. A pre-spawned session first used >1h later loses its record until it re-registers. Node 13 docs: document the 60-min phantom grace in docs/context-budget.md.
+- s8 · Follow-up, not this plan's: copilot_vscode_discover/pick_unambiguous match the cwd with grep -qF "$(pwd)", a substring test (/x/ws also matches /x/ws2), which can refuse or bind wrongly across sibling-named workspaces.
 
 ## Out of scope
 
@@ -53,7 +54,7 @@ instead of guessing. Source: `work/runtime-session-identity/findings.md` → "Ga
 | 3 | 12-reconcile-w3 | reconcile | frontier | done |
 | 4 | 13-docs | work | standard | done |
 | 4 | 14-reconcile-w4 | reconcile | frontier | done |
-| 5 | 15-review | work | standard | todo |
-| 5 | 16-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 15-review. Remaining: 2 of 17. Sessions used: 3.
+| 5 | 15-review | work | standard | done |
+| 5 | 16-reconcile-w5 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 17. Sessions used: 4.
 <!-- plan:end board -->

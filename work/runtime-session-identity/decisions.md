@@ -66,3 +66,17 @@ Node 09, commits 79c5a6a, 769f54b (space-safe loop).
 
 User call: no time now; kept as template backlog card L86 instead of blocking wave 3. Rejected:
 holding the plan open on the hitl node. The probe clone stays until L86 is run.
+
+## 2026-10-12 — Claude SessionEnd needs transcript_path, like SessionStart (node 15)
+
+Without a payload `transcript_path`, the SessionEnd hook exits and runs no `release`. Rejected:
+refusing inside `cmd_release`. Other callers (the agent, scripts) use release without
+`--transcript`, and the risk sits only in the hook payload path. Commit 0b4dd7c, hooks K1g.
+
+## 2026-10-12 — Copilot-cli discovery does not guess among current-format transcripts (node 15)
+
+With no runtime id and no cwd match in `session-state/*/events.jsonl`, discovery fails ("no
+session artifact"). Only the legacy `history-session-state/` keeps newest-mtime. Rejected:
+newest-mtime over `session-state/`, which binds another project's live session (findings.md
+gap 4). The agent shell also now honours `COPILOT_STATE_DIR`, applying the earlier note above.
+Commits 0d581ce and 0964a23, registry U1 and U2.

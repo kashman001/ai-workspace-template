@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">139</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -162,6 +162,14 @@
     <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
     <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
     <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L87</span> Discovery matches the cwd as a substring, so sibling-named workspaces collide
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>pick_unambiguous</code> and <code>copilot_vscode_discover</code> test a transcript or <code>workspace.json</code> with <code>grep -qF "$(pwd)"</code>. That is a substring test, so <code>/x/ws</code> also matches <code>/x/ws2</code>. Found by the runtime-session-identity node 15 review; the code predates that work.</p>
+    <p><span class="k">Impact</span> &mdash; In the no-id discovery fallback, a session in <code>/x/ws</code> can be refused as ambiguous, or can bind a live session from <code>/x/ws2</code>.</p>
+    <p><span class="k">Fix</span> &mdash; Match the cwd as a whole JSON string value (for example, <code>"$(pwd)"</code> with its quotes) or compare a jq-extracted field. Add a suite case with two workspaces whose names share a prefix, seen failing first.</p>
   </div>
 
 
@@ -331,6 +339,7 @@
       <tr><td>2026-10-12</td><td>Test only: <code>test-session-loop.sh</code> gains <strong>W1</strong> &mdash; the supervisor run from a worktree&rsquo;s own copy of <code>session-loop.sh</code> drives the main checkout&rsquo;s record and writes nothing into the worktree (the <code>--git-common-dir</code> resolver had no loop case from a worktree; seen red with the resolver forced to <code>SCRIPT_ROOT</code>). Replaces PR #61, whose other three worktree cases tested the <code>.next-command</code> pair and <code>--emit &lt;path&gt;</code> that Stage 4 removed. No card-count change.</td></tr>
       <tr><td>2026-10-12</td><td>Test only: <code>test-attach-session.sh</code> stubs <code>claude</code> on PATH (<code>agents --json</code> &rarr; <code>[]</code>); on a machine running a live session named <code>testproj #N</code>, T5a/T5b resolved it and exited 0 (seen red 25/2, now 27/0). Opened <strong>L85</strong> (template-only suites should skip in instances). Scorecard now 1/139/5/0/6.</td></tr>
       <tr><td>2026-10-12</td><td>Added <strong>L86</strong> (Open): Antigravity IDE/app and Codex desktop app session-identity probes deferred from runtime-session-identity node <code>11-remaining-surface-probes</code> on the user&rsquo;s call.</td></tr>
+      <tr><td>2026-10-12</td><td>Added <strong>L87</strong> (Open): cwd substring match in context-budget discovery, from the runtime-session-identity node 15 review. The same review fixed three items in <code>scripts/context-budget.sh</code> and <code>.claude/settings.json</code>, test-first (commits <code>0b4dd7c</code>, <code>0d581ce</code>, <code>0964a23</code>).</td></tr>
 </tbody>
   </table>
 
