@@ -1,7 +1,7 @@
 ---
 id: 07-antigravity-runtime
 title: Antigravity: add as a runtime (node 6)
-status: doing
+status: done
 kind: work
 wave: 2
 blocked_by: [02-reconcile-w1]
@@ -31,3 +31,4 @@ New `antigravity` adapter row with `register=hook`; a committed `.agents/hooks.j
 - s6-e · GREEN: antigravity adapter in scripts/context-budget.sh (antigravity_discover over ${ANTIGRAVITY_APP_DATA_DIR:-~/.gemini/antigravity-cli}/brain/<id>/.system_generated/logs/transcript_full.jsonl; antigravity_measure = last PLANNER_RESPONSE input_tokens + cache_read_tokens via jq; session_id_for + artifact-derived id); row `antigravity` (register=hook, pin ANTIGRAVITY_CONVERSATION_ID=sid, PreInvocation:inject-json-only) in scripts/hooks/context-budget-adapters.conf; shim scripts/hooks/context-budget-antigravity-hook.sh; .agents/hooks.json. Registry suite L1a–L3b pass (218/0); hooks suite L4a–L4d added, seen failing against the c82505f dispatcher (3 fail), now 154/0
 - s6-e · all 18 context-budget suites + check-workspace-structure, agent-entrypoints, run-checks suites pass; the real probe transcript c2d716d4 measures tokens=24065 cache=90%
 - s6-e · merged main (57ad9db; conflicts in session_id_for_artifact_only and the registry suite tail resolved by keeping both sides); registry 230/0, hooks 154/0, every context-budget suite green. On disk: adapter, row, shim, .agents/hooks.json, L1a–L4d. Not on disk: docs/context-budget.md adapter-table row (node 08), a live agy run against the committed .agents/hooks.json, and session.pid for antigravity (resolve_runtime_pid matches argv0 `agy`, not `antigravity`, so no pid is recorded)
+- s6 · done
