@@ -6,6 +6,35 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 8 (2026-10-12) (session 8: review, plan 01 closed)
+
+**Summary.** Node 15 ran `code-review` on bc1cce4...HEAD with two sub-agents. Standards: no
+hard violations. Spec: no blockers. Three suggestions were fixed test-first, each case seen
+failing before its fix. The rest are logged in the node. Reconcile 16 closed the wave, and
+plan 01 is closed (`status: closed`).
+
+**Shipped (main, not pushed).**
+- 0b4dd7c: the Claude SessionEnd hook needs `transcript_path`, like SessionStart, so a
+  payload without one releases nothing (hooks K1g/K1h).
+- 0d581ce: agent-shell Copilot discovery honours `COPILOT_STATE_DIR` (registry U1).
+- 0964a23: copilot-cli discovery no longer takes newest-mtime across `session-state/`. Only
+  the legacy dir keeps it (registry U2).
+- Backlog L87 (Open): cwd substring match in discovery, from the review.
+
+**Decisions.** `decisions.md` has two new notes: the SessionEnd guard, and no guessing among
+current-format Copilot transcripts.
+
+**State.** Plan 01 closed, 16/17 done and 1 dropped. Checks on main: registry 272/0, hooks
+167/0, statusline 20/0, attach-session 27/0, doc-consistency 17/0. `check-drift.sh` has one
+WARN that predates this session (TADR-0009 cites a retired script as history). The probe
+clone is kept for L86.
+
+**Suggested skills.** None needed to finish this item. Open follow-ups: L86 (user-run
+probes), L87 (`tdd`). Push `main` and the probe cleanup are the user's call.
+
+Learnings: the launcher's "unused test prefixes" claim was stale. Grep the suite's labels
+before you trust it.
+
 # Session Handoff — 7 (2026-10-12) (session 7: waves 3 and 4 closed)
 
 **Summary.** Wave 3 ran as three parallel worktree children (s7-a/b/c, suite prefixes A/B/Q),

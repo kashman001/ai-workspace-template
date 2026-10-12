@@ -11,43 +11,29 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Finish plan `plans/01-session-identity-fixes`: node `15-review` (review the whole plan's work
-and fix findings), then `16-reconcile-w5` closes the plan.
+Plan `plans/01-session-identity-fixes` is closed. No agent work is queued. What is left
+needs the user to decide or act.
 
 ## >>> START HERE <<<
 
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. `scripts/plan.sh status --project=runtime-session-identity` and `… frontier …` (expect `15-review`).
-3. `scripts/plan.sh start 15-review --project=runtime-session-identity`, commit.
-4. Run the `code-review` skill (`skills/code-review/SKILL.md`) on `bc1cce4..main` with
-   `work/runtime-session-identity/findings.md` → "Gaps" as the spec. Its reviewers run as
-   sub-agents — keep their output out of this context. Fix each blocker test-first (a suite
-   case seen failing first; unused suite prefixes: **C, G, M**); fix or Log each suggestion.
-   Run the item's checks (below), tick Acceptance, `done 15-review`.
-5. Reconcile `16-reconcile-w5` per `skills/plans/SKILL.md` → "Run a reconcile node". If the plan
-   then closes, end via `checkpoint` (the stop door), not another rollover.
-
-**No human in the loop:** all of the above runs unattended. Only stop for the user if a review
-finding needs a product decision — write it into the node Log and `decisions.md` and roll over
-with the question verbatim.
+2. Read the top block of `handoff.md`, then ask the user which of these to pick up:
+   - **L86** (template backlog): Antigravity IDE/app and Codex desktop probes. The user runs
+     steps 3–4 of `probes/user-checklist.md` in the probe clone, then an agent writes up the
+     probes and files any gap.
+   - **L87** (template backlog): the cwd substring match in discovery. This is a `tdd` fix
+     that an agent can run unattended once the user picks it.
+   - **Probe cleanup** (`findings.md` → "Cleanup owed"). This needs the user's go-ahead
+     after L86.
+   - **Push `main`.** This is the user's call.
+   - **Close the item.** If nothing above belongs here, archive per
+     `docs/work-directory-conventions.md`.
 
 **The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
 `test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,
-`test-doc-consistency.sh` (all green at s7 end: 269/20/165/27/17).
-
-## Read these, in order
-
-1. `plans/01-session-identity-fixes/plan.md` (notes + Replans)
-2. `plans/01-session-identity-fixes/nodes/15-review.md`, then `16-reconcile-w5.md`
-3. `decisions.md` — settled forks the review must not flag as defects
-
-## Do NOT reload
-
-- Wave 1–4 diffs one by one: done and reconciled; the review reads them as one range.
-- `probes/*`: probing is finished or deferred (backlog L86).
-- `findings.md` beyond "Gaps": the rest is evidence for settled nodes.
+`test-doc-consistency.sh` (all green at s8 end: 272/20/167/27/17).
 
 ## Constraints already decided (do not re-litigate)
 
@@ -67,6 +53,7 @@ Frontier: none. Remaining: 0 of 17.
 
 ## State snapshot
 
-- Branch `main`, clean after the rollover commit; many commits ahead of origin (not pushed).
-- Unrelated pre-existing worktrees (doc-review-skill, stage4, tir-s2) — leave them.
+- Branch `main`, clean after the session 8 checkpoint commit; many commits ahead of origin
+  (not pushed).
+- Unrelated pre-existing worktrees (doc-review-skill, stage4, tir-s2): leave them.
 - Probe clone `~/Developer/experiments/ws-identity-probe` kept for backlog L86.
