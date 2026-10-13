@@ -126,14 +126,15 @@ fi
 newest_of() { ls -t "$@" 2>/dev/null | head -1; }
 
 # The discovery fallback (no runtime id var) must never guess. Reads candidate
-# paths on stdin, newest first, and keeps those whose head names the cwd. More
-# than one written in the last 2 min means a sibling session is live and
+# paths on stdin, newest first, and keeps those whose head names the cwd as a
+# whole JSON string ("cwd":"/x/ws"; a bare substring lets /x/ws match /x/ws2).
+# More than one written in the last 2 min means a sibling session is live and
 # newest-mtime may bind it (the false-STOP bug): return 2, print nothing.
 # Else print the newest; rc 1 when none match.
 pick_unambiguous() {
   local f first="" live=0
   while IFS= read -r f; do
-    head -c 8192 "$f" 2>/dev/null | grep -qF "$(pwd)" || continue
+    head -c 8192 "$f" 2>/dev/null | grep -qF "\"$(pwd)\"" || continue
     [ -n "$first" ] || first="$f"
     [ -n "$(find "$f" -mmin -2 2>/dev/null)" ] && live=$((live+1))
   done
@@ -225,7 +226,7 @@ copilot_vscode_discover() {
     [ -d "$ws" ] || continue
     for d in "$ws"/*/; do
       [ -f "$d/workspace.json" ] || continue
-      if grep -qF "$(pwd)" "$d/workspace.json" 2>/dev/null; then
+      if grep -qF "\"file://$(pwd)\"" "$d/workspace.json" 2>/dev/null; then
         # Authoritative sid (VSCODE_TARGET_SESSION_LOG in .jsonl form): its own
         # token file, existing or not. Only with NO sid may we fall back to
         # newest-mtime — a last resort unsafe across concurrent sessions, so it

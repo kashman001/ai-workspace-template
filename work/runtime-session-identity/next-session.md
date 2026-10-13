@@ -23,8 +23,6 @@ needs the user to decide or act.
    - **L86** (template backlog): Antigravity IDE/app and Codex desktop probes. The user runs
      steps 3–4 of `probes/user-checklist.md` in the probe clone, then an agent writes up the
      probes and files any gap.
-   - **L87** (template backlog): the cwd substring match in discovery. This is a `tdd` fix
-     that an agent can run unattended once the user picks it.
    - **Probe cleanup** (`findings.md` → "Cleanup owed"). This needs the user's go-ahead
      after L86.
    - **Push `main`.** This is the user's call.
@@ -33,7 +31,7 @@ needs the user to decide or act.
 
 **The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
 `test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,
-`test-doc-consistency.sh` (all green at s8 end: 272/20/167/27/17).
+`test-doc-consistency.sh` (all green after the L87 fix: 276/20/167/27/17).
 
 ## Constraints already decided (do not re-litigate)
 

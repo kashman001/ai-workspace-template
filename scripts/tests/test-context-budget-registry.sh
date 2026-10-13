@@ -794,6 +794,28 @@ out=$(noid env -u COPILOT_HOME COPILOT_STATE_DIR="$TMP/u2-state" "$CB" check --r
 case "$out" in *"artifact=$U2T"*) bad "U2: bound a session-state transcript whose cwd is another project" ;;
   *) ok "U2: no cwd match in session-state -> not bound" ;; esac
 
+echo "U3: discovery matches the cwd as a whole value, not a prefix (/x/ws must not match /x/ws2)"
+mkdir -p "$TMP/u3/ws" "$TMP/u3/ws2"
+U3T="$TMP/u3-state/sib/events.jsonl"
+mkdir -p "$(dirname "$U3T")"; printf '{"type":"session.start","data":{"cwd":"%s"}}\n' "$TMP/u3/ws2" > "$U3T"
+out=$(cd "$TMP/u3/ws" && noid env -u COPILOT_HOME COPILOT_STATE_DIR="$TMP/u3-state" "$CB" check --runtime copilot-cli 2>&1)
+case "$out" in *"artifact=$U3T"*) bad "U3a: copilot-cli in /x/ws bound the /x/ws2 session's transcript" ;;
+  *) ok "U3a: copilot-cli in /x/ws does not bind the /x/ws2 transcript" ;; esac
+out=$(cd "$TMP/u3/ws2" && noid env -u COPILOT_HOME COPILOT_STATE_DIR="$TMP/u3-state" "$CB" check --runtime copilot-cli 2>&1)
+assert_contains "U3b: control: copilot-cli in /x/ws2 still binds its own transcript" "$out" "artifact=$U3T"
+
+echo "U4: copilot-vscode workspace.json matches the cwd as a whole folder URI"
+U4W="$HOME/Library/Application Support/Code/User/workspaceStorage/u4"
+mkdir -p "$U4W/chatSessions"
+printf '{"folder":"file://%s"}\n' "$TMP/u3/ws2" > "$U4W/workspace.json"
+printf '{"requests":[]}\n' > "$U4W/chatSessions/vs-u4.jsonl"
+out=$(cd "$TMP/u3/ws" && noid "$CB" check --runtime copilot-vscode 2>&1)
+case "$out" in *"artifact=$U4W/chatSessions/vs-u4.jsonl"*) bad "U4a: copilot-vscode in /x/ws bound the /x/ws2 workspace's chat session" ;;
+  *) ok "U4a: copilot-vscode in /x/ws does not bind the /x/ws2 workspace" ;; esac
+out=$(cd "$TMP/u3/ws2" && noid "$CB" check --runtime copilot-vscode 2>&1)
+assert_contains "U4b: control: copilot-vscode in /x/ws2 still binds its workspace's chat session" "$out" "artifact=$U4W/chatSessions/vs-u4.jsonl"
+rm -rf "$HOME/Library"
+
 echo "E1: codex registers from its hooks — id + transcript from the payload, no CODEX_* env"
 # Hook processes get no CODEX_* env (probes/codex-cli.md, codex-vscode.md): the
 # SessionStart payload alone must name the record and its artifact.

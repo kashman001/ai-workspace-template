@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L87</span> Discovery matches the cwd as a substring, so sibling-named workspaces collide
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>pick_unambiguous</code> and <code>copilot_vscode_discover</code> test a transcript or <code>workspace.json</code> with <code>grep -qF "$(pwd)"</code>. That is a substring test, so <code>/x/ws</code> also matches <code>/x/ws2</code>. Found by the runtime-session-identity node 15 review; the code predates that work.</p>
+    <p><span class="k">Impact</span> &mdash; In the no-id discovery fallback, a session in <code>/x/ws</code> can be refused as ambiguous, or can bind a live session from <code>/x/ws2</code>.</p>
+    <p><span class="k">Fix</span> &mdash; Match the cwd as a whole JSON string value (for example, <code>"$(pwd)"</code> with its quotes) or compare a jq-extracted field. Add a suite case with two workspaces whose names share a prefix, seen failing first.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-12. Both checks in <code>scripts/context-budget.sh</code> now match the cwd as a whole value: <code>pick_unambiguous</code> greps <code>"$(pwd)"</code> with its quotes, and <code>copilot_vscode_discover</code> greps <code>"file://$(pwd)"</code> in <code>workspace.json</code>. Registry suite U3 and U4 failed before the fix and pass after; U3b and U4b are the controls. A multi-root VS Code workspace (<code>.code-workspace</code> file) no longer matches by folder prefix in this fallback.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L89</span> No way to see every work item&rsquo;s plans at once
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/plan.sh</span></h3>
     <p><span class="k">Evidence</span> &mdash; <code>plan.sh status</code> reads one plan of one work item; with several items carrying plans, answering &ldquo;where does each stand?&rdquo; meant one <code>status --project X --plan Y</code> per plan, after listing <code>work/*/plans/</code> by hand.</p>
