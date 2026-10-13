@@ -6,6 +6,18 @@ next" belongs in next-session.md, NOT here.
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 26 (2026-10-12): plan.sh `plans` verb; origin refresh; pushed
+
+**Summary.** The queued mission is done. Backlog 2/142/5/0/6 (open: L85, L86). A concurrent session fixed L87 (`0ae0eb1`).
+
+**What got done (on main, pushed at `84401dd`):**
+- Merged origin: PR #65 (`482ec7b`, stray files in `nodes/` no longer break `plan.sh`). It had no backlog card, so this session filed **L88** as resolved.
+- **L89**: `scripts/plan.sh plans` prints `status` for every work item's plans, one line each; `--json` too. It resolves no project (`--project` narrows to one item). A plan that fails to load gets an error row, then exit 1. Tests T22a–i went red (9) before the verb existed. Documented in `docs/plans.md` and the usage header.
+
+**Verified:** test-plan 279/0; `run-checks.sh` 44/0/0. The push went `f0304c1..84401dd`. TEMPLATE_VERSION was already 2026-10-12, so no bump.
+
+**Decision:** a new verb instead of `status --all`, because `status` reads one plan and has no item column (commit trailer).
+
 # Session Handoff — 24 (2026-10-11): Addy Osmani + pstack vendored; stakes-matched ceremony
 
 **Summary.** Two jobs, each run by a Fable orchestrator subagent under a dispatch record (both closed). Backlog 0/138/5/0/6, empty.
