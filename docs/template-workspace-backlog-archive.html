@@ -1042,6 +1042,24 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L89</span> No way to see every work item&rsquo;s plans at once
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/plan.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>plan.sh status</code> reads one plan of one work item; with several items carrying plans, answering &ldquo;where does each stand?&rdquo; meant one <code>status --project X --plan Y</code> per plan, after listing <code>work/*/plans/</code> by hand.</p>
+    <p><span class="k">Impact</span> &mdash; Cross-item progress was invisible without a hand-rolled loop; a stuck or blocked plan in another item went unnoticed.</p>
+    <p><span class="k">Fix</span> &mdash; A <code>plans</code> verb: <code>status</code> for every plan, item first, one line each; <code>--json</code>; no project resolution (<code>--project</code> narrows); a plan that fails to load is an error row and exit 1 after the rest.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-12. <code>cmd_plans</code> in <code>scripts/plan.sh</code> (usage header too); <code>docs/plans.md</code> verb table, <code>--json</code> shape and resolution note; <code>test-plan.sh</code> T22a&ndash;i, seen red (9 failures) before the verb existed.</p>
+  </div>
+
+  <div class="find low resolved">
+    <h3><span class="id">L88</span> A child&rsquo;s report file in <code>nodes/</code> broke every <code>plan.sh</code> verb
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/plan.sh, scripts/fleet.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>fleet.sh dispatch-open --report plans/&lt;plan&gt;/nodes/&lt;id&gt;.report.md</code> put a frontmatter-less file beside the nodes, and every verb that loads nodes died on &ldquo;malformed frontmatter&rdquo;.</p>
+    <p><span class="k">Impact</span> &mdash; One misplaced report stopped <code>status</code>, <code>start</code>, <code>done</code>, <code>sync</code> &hellip; for the whole plan.</p>
+    <p><span class="k">Fix</span> &mdash; Load only files named like nodes; list other <code>.md</code> files as <code>stray</code> in <code>check</code>; a skipped file carrying an id is <code>misnamed</code> and stops every verb; <code>dispatch-open</code> defaults <code>--report</code> outside <code>nodes/</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-12, PR #65 (<code>482ec7b</code>), card added when the session pulled it. <code>test-plan</code> T21, <code>test-fleet-dispatch-records</code> L2d/L11. Behaviour change: a dotted node name (<code>06-x.v2.md</code>) is now refused.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L84</span> Template and project ADRs share one number sequence in <code>docs/adr/</code>
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/adr/, docs/template-adr/, skills/decision-log</span></h3>
     <p><span class="k">Evidence</span> &mdash; A downstream workspace (token-factory) syncing <code>d7cf6c4..ccb4ed3</code> found its own ADR-0010..0015 colliding with the template's ADR-0010..0014: both write <code>docs/adr/00NN-*.md</code> from one sequence, so every sync after either side mints an ADR is a filename and number clash.</p>

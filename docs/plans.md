@@ -86,6 +86,7 @@ held in one shell variable is refused, naming the `=` form.
 |---|---|---|
 | `new <slug>` | creates the next-numbered plan with an empty `plan.md` skeleton; refuses (exit 1) while a plan is open | `created work/<item>/plans/NN-<slug>` |
 | `status` | derived from the node files | `plan NN-<slug>  open  wave 2 of 3  done 5/9  doing 1  todo 3  blocked 0  dropped 0  sessions 2` |
+| `plans` | `status` for every plan of every work item, one line each, sorted by item then plan; resolves no project or plan, and `--project` narrows it to one item; a plan that fails to load gets an `error:` line (the refusal text) and the verb exits 1 after listing the rest | `jev-integration  02-follow-on  open    wave 1 of 2  done 2/7  blocked 0` |
 | `show <id>` | one node: the file in text, its parsed frontmatter plus `path` in `--json` | the file |
 | `frontier` | `todo` nodes whose blockers are all `done` or `dropped`, in the lowest wave that still has unfinished nodes; exits 1 with the reason when that wave has nothing ready | `06-reconcile-write     reconcile  frontier` (id, kind, resolved tier; ` (auto)` appended when the node's own tier is `auto`) |
 | `remaining` | every node that is neither `done` nor `dropped`, by wave then id | `07-spec                doing    wave 3` |
@@ -104,6 +105,7 @@ held in one shell variable is refused, naming the `=` form.
 `dropped`, of the highest wave number. "Sessions" is the count of distinct
 session numbers across every node's `sessions`. `--json` mirrors each verb:
 `status` gives `{plan, status, wave:{current,total}, counts:{todo,doing,done,blocked,dropped,total}, sessions_used}`;
+`plans` gives an array of those objects, each with `item` first, or `{item, plan, error}` for a plan that failed to load;
 `frontier` and `remaining` give an array of node objects as `show` prints them
 (every node object carries `tier_resolved` and `model`, null for the session model);
 `graph` gives `{plan, nodes:[{id,title,status,kind,tier,wave,blocked_by}], edges:[{from,to}]}`
@@ -199,7 +201,8 @@ a failing check); `2` usage or resolution failure. Refusals print `plan: <detail
 **Resolution.** The work item: `--project` → the session registry binding
 (a `.context-budget/sessions/*.json` record with a `project` whose `pid` and
 `pid_start` name an ancestor of the calling process) → `TF_SESSION_PROJECT`
-→ the `work/<item>/` the current directory is inside → refuse. The plan:
+→ the `work/<item>/` the current directory is inside → refuse (`plans` skips
+this step: it reads every item). The plan:
 `--plan` → `chain.plan` in the item's `session-state.json` → the single open
 plan → refuse when none or several are open; read verbs (`status`, `show`)
 fall back to the latest plan by number instead of refusing. A `chain.plan`

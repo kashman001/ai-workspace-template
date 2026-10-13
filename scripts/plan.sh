@@ -9,6 +9,9 @@
 #          (--project=<item> and --plan=<name> work too)
 #          new <slug>      create the next-numbered plan (refuses while one is open)
 #          status          plan, open/closed, wave n of m, counts by status, sessions used
+#          plans           every work item's plans (--project narrows to one item), one line
+#                          each: item plan open/closed wave done/total blocked; needs no
+#                          project; a plan that fails to load gets an error line, exit 1
 #          show <id>       print one node (text: the file; --json: its frontmatter + path)
 #          frontier        todo nodes whose blockers are all done/dropped, in the lowest
 #                          unfinished wave: id kind tier (exit 1 + why when empty but unfinished)
@@ -86,7 +89,7 @@ while [ $# -gt 0 ]; do
     *) if [ -z "$VERB" ]; then VERB="$1"; elif [ -z "$ARG" ]; then ARG="$1"; elif [ -z "$ARG2" ]; then ARG2="$1"; else usage; fi; shift ;;
   esac
 done
-case "$VERB" in new|status|show|frontier|remaining|graph|check|start|done|verify|block|drop|add|note|sync) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
+case "$VERB" in new|status|plans|show|frontier|remaining|graph|check|start|done|verify|block|drop|add|note|sync) ;; "") usage ;; *) die 2 "unknown verb $VERB" ;; esac
 
 # ---- project -----------------------------------------------------------------
 registry_record() {  # the project-bound session record whose pid is an ancestor of this process (its path), or 1
@@ -118,7 +121,7 @@ cwd_project() {
   local here; here="$(pwd -P)/"
   case "$here" in "$WORKSPACE_ROOT/work/"*) here="${here#"$WORKSPACE_ROOT/work/"}"; printf '%s' "${here%%/*}" ;; *) return 1 ;; esac
 }
-if [ -z "$PROJECT" ]; then
+if [ -z "$PROJECT" ] && [ "$VERB" != plans ]; then
   PROJECT="$(registry_project)" || PROJECT="${TF_SESSION_PROJECT:-}"
   [ -n "$PROJECT" ] || PROJECT="$(cwd_project)" \
     || die 2 "no work item: pass --project, or run from a registered session, TF_SESSION_PROJECT, or inside work/<item>/"
@@ -384,6 +387,27 @@ cmd_status() {
       "plan \(.plan)  \(.status)  wave \(.wave.current) of \(.wave.total)  done \(.counts.done)/\(.counts.total)  doing \(.counts.doing)  todo \(.counts.todo)  blocked \(.counts.blocked)  dropped \(.counts.dropped)  sessions \(.sessions_used)" end' -r
 }
 
+cmd_plans() {  # `status` for every plan under work/*/plans/, item first; a plan that fails to load is an error row
+  local d item one rows="" rc=0
+  for d in "$WORKSPACE_ROOT"/work/*/plans/[0-9]*/; do
+    [ -f "$d/plan.md" ] || continue
+    d="${d%/}"; item="${d%/plans/*}"; item="${item##*/}"
+    [ -z "$PROJECT" ] || [ "$item" = "$PROJECT" ] || continue
+    if one="$( (PLAN="${d##*/}"; PLAN_DIR="$d"; JSON=1; cmd_status) 2>&1)"; then
+      rows="$rows$(printf '%s' "$one" | jq -c --arg item "$item" '{item: $item} + .')"
+    else
+      rc=1; rows="$rows$(jq -nc --arg item "$item" --arg plan "${d##*/}" --arg e "${one#plan: }" '{item: $item, plan: $plan, error: $e}')"
+    fi
+  done
+  printf '%s' "$rows" | jq -s -r --argjson json "$JSON" '
+    def pad($n): . + (" " * ($n - length));
+    if $json == 1 then . else
+      ([.[].item | length] | max // 0) as $iw | ([.[].plan | length] | max // 0) as $pw
+      | .[] | "\(.item | pad($iw))  \(.plan | pad($pw))  " + (if .error then "error: \(.error)" else
+          "\(.status | pad(6))  wave \(.wave.current) of \(.wave.total)  done \(.counts.done)/\(.counts.total)  blocked \(.counts.blocked)" end) end'
+  return "$rc"
+}
+
 cmd_show() {
   [ -n "$ARG" ] || usage
   local nodes node
@@ -637,6 +661,7 @@ cmd_sync() {
 case "$VERB" in
   new)       cmd_new ;;
   status)    resolve_plan; cmd_status ;;
+  plans)     cmd_plans ;;
   show)      resolve_plan; cmd_show ;;
   frontier)  resolve_plan; cmd_frontier ;;
   remaining) resolve_plan; cmd_remaining ;;

@@ -614,5 +614,30 @@ assert_eq "T21m: check lists it as misnamed" \
 assert_eq "T21n: ... the file is untouched" "$(grep -c '^status: todo$' "$NODES/08-tickets.v2.md")" "1"
 unstray; rm -f "$SS"
 
+echo "T22: plans — every work item's plans, one line each, no project needed; a broken plan is reported, the rest still listed"
+W="$TMP/all"; mkdir -p "$W/scripts" "$W/.context-budget/sessions" "$W/work/gamma"
+cp "$SRC_ROOT/scripts/plan.sh" "$W/scripts/"
+for i in alpha beta; do mkdir -p "$W/work/$i/plans"; cp -R "$SRC_ROOT/scripts/tests/fixtures/plan-01-concept" "$W/work/$i/plans/01-concept"; done
+sedi 's/^status: open$/status: closed/' "$W/work/alpha/plans/01-concept/plan.md"
+sedi 's/^status: doing$/status: blocked/' "$W/work/alpha/plans/01-concept/nodes/07-spec.md"
+out="$("$W/scripts/plan.sh" plans)"; rc=$?
+assert_eq "T22a: one line per plan, items without plans skipped" "$rc:$out" "0:alpha  01-concept  closed  wave 3 of 3  done 6/9  blocked 1
+beta   01-concept  open    wave 3 of 3  done 6/9  blocked 0"
+assert_eq "T22b: --json carries item, plan and the status fields" \
+  "$("$W/scripts/plan.sh" plans --json | jq -c 'map([.item, .plan, .status, .wave.current, .wave.total, .counts.done, .counts.total, .counts.blocked])')" \
+  '[["alpha","01-concept","closed",3,3,6,9,1],["beta","01-concept","open",3,3,6,9,0]]'
+assert_eq "T22c: --project narrows to one item" "$("$W/scripts/plan.sh" plans --project beta | cut -c1-4)" "beta"
+mkdir -p "$W/work/delta/plans/01-broken/nodes"; printf -- '---\nplan: 01-broken\nstatus: open\n---\n' > "$W/work/delta/plans/01-broken/plan.md"
+printf 'no frontmatter\n' > "$W/work/delta/plans/01-broken/nodes/01-x.md"
+out="$("$W/scripts/plan.sh" plans 2>/dev/null)"; rc=$?
+assert_eq "T22d: a broken plan exits 1" "$rc" "1"
+assert_contains "T22e: ... with an error line naming it" "$out" "delta  01-broken   error: "
+assert_contains "T22f: ... and the other plans still listed" "$out" "beta   01-concept  open"
+assert_eq "T22g: --json gives it an error field" "$("$W/scripts/plan.sh" plans --json 2>/dev/null | jq -c 'map(select(.error) | .item)')" '["delta"]'
+rm -rf "$W/work"/*; mkdir -p "$W/work/gamma"
+out="$("$W/scripts/plan.sh" plans)"; rc=$?
+assert_eq "T22h: no plans anywhere — exit 0, no output" "$rc:$out" "0:"
+assert_eq "T22i: ... and [] in --json" "$("$W/scripts/plan.sh" plans --json | jq -c .)" "[]"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
