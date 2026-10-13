@@ -27,6 +27,15 @@ Antigravity IDE/app and Codex desktop) to all seven surfaces.
 
 **First actions:**
 
+0. **The user wants to talk first:** they want to understand Copilot in VS Code better. Open with
+   a plain-language explanation, then take their questions one at a time. Cover: VS Code agent
+   mode runs on the Copilot CLI runtime (`~/.copilot/session-state/<sid>/events.jsonl`,
+   `COPILOT_AGENT_SESSION_ID`); which hook files exist (`.github/hooks/context-budget.json` for the
+   CLI, `context-budget-vscode.json` for VS Code) and why each event fired three hook configs from
+   the CLI; and the s9 row-5 results (binding passes, hooks silent, two records per chat,
+   `method=estimate`). Evidence: `probes/copilot-vscode.md` (s4 section and "Post-fix (s9)"),
+   probe clone `~/Developer/experiments/ws-identity-probe-s9/probe-out/`. Investigate the two
+   oddities with the user, not ahead of them.
 1. `scripts/context-budget.sh register --project runtime-session-identity`
 2. Status of `probes/user-checklist.md`, rows 1–3: **PASS** (written up in `copilot-cli.md`,
    `antigravity-cli.md`, `claude-vscode.md`). All four CLIs pass (s9). Row 4 (Codex VS Code) PASS once trusted, with a GAP: the extension never prompts for hook trust;
