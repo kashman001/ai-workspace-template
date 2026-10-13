@@ -29,8 +29,8 @@ Antigravity IDE/app and Codex desktop) to all seven surfaces.
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
 2. Status of `probes/user-checklist.md`, rows 1–3: **PASS** (written up in `copilot-cli.md`,
-   `antigravity-cli.md`, `claude-vscode.md`). All four CLIs pass (s9). Remaining: **row 4**
-   (Codex VS Code, labels `codex-vscode-A/B`, accept the hook-trust re-prompt) and **row 5**
+   `antigravity-cli.md`, `claude-vscode.md`). All four CLIs pass (s9). Row 4 (Codex VS Code) PASS once trusted, with a GAP: the extension never prompts for hook trust;
+   the workaround is a one-time `codex` CLI run in the folder (`probes/codex-vscode.md`). Remaining: **row 5**
    (Copilot VS Code Agent mode, `copilot-vscode-A/B`). Walk the user through them one at a time,
    then read `~/Developer/experiments/ws-identity-probe-s9/probe-out/` (`env-<label>.log`,
    `hook-*.log`) and `.context-budget/sessions/` and record each row under "Post-fix (s9)" in

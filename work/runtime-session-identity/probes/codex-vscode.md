@@ -86,3 +86,11 @@ User row 4: two new Codex chats in the probe clone `ws-identity-probe-s9`
   a fresh copy of the workspace gets no budget warnings in Codex VS Code and no sign why.
   Workaround under test (row 4b): run `codex` once in the folder from a terminal so the CLI
   prompts for hook trust.
+- **Row 4b (workaround confirmed):** running `codex` once in the folder from a terminal showed
+  the hook-trust prompt. The user allowed all hooks, and `hooks.state` entries for
+  `session_start`, `user_prompt_submit` and `stop` appeared. On the next turn, both
+  already-open VS Code chats fired UserPromptSubmit + Stop with their own `session_id`; the CLI
+  session (`01a13648…`) fired SessionStart too. One record per session, no cross-binding.
+
+**Result: PASS once hooks are trusted. GAP: the extension never prompts for hook trust. It skips
+the hooks silently until hook trust is granted from the CLI (backlog card to file).**
