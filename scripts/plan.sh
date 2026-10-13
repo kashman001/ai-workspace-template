@@ -163,6 +163,12 @@ NODE_JQ='
   | .sessions = ((.sessions // "[]") | list | map(tonumber? // .))
   | .isolated = ((.isolated // "no") | IN("yes", "true"))
   | .check //= null | .title //= "" | .path = $path'
+is_node_file() {  # <path>: 0 when the name is a node file (<digits>...-<slug>.md, no other dot); reports and notes are not
+  case "${1##*/}" in [0-9]*.*.md|[!0-9]*) return 1 ;; esac
+}
+misnamed_node() {  # <path>: 0 when a file plan.sh skips by name still carries a node id — a node renamed by hand, not a stray
+  [ -n "$(fm_get "$1" id 2>/dev/null)" ]
+}
 node_parse() {  # <file> <default tier>: one JSON object, .problem set (never exits) when the frontmatter is bad
   local block
   block="$(fm_block "$1")" && printf '%s\n' "$block" | jq -R -s --arg path "$1" --arg default_tier "$2" "$NODE_JQ" 2>/dev/null \
@@ -217,6 +223,7 @@ load_nodes() {  # <plan dir>: a JSON array of every node, sorted by file name, e
   [ "$(printf '%s' "$env" | jq '.models | length')" -eq 0 ] || resolve_runtime   # the registry walk only when a knob exists
   for f in "$1"/nodes/*.md; do
     [ -f "$f" ] || continue
+    if ! is_node_file "$f"; then misnamed_node "$f" && die 1 "$f: carries a node id but is not named <digits>-<slug>.md"; continue; fi
     one="$(node_json "$f" "$tier")" || exit 1     # node_json already named the file
     out="$out$one"
   done
@@ -441,13 +448,18 @@ cmd_check() {
     fi
     [ -n "$plan_problem" ] || plan_problem="$(plan_tiers_check "$PLAN_DIR")"
   else tier=standard; plan_problem="malformed frontmatter"; fi
-  for f in "$PLAN_DIR"/nodes/*.md; do [ -f "$f" ] && nodes="$nodes$(node_parse "$f" "$tier")"; done
+  for f in "$PLAN_DIR"/nodes/*.md; do
+    [ -f "$f" ] || continue
+    if is_node_file "$f"; then nodes="$nodes$(node_parse "$f" "$tier")"
+    elif misnamed_node "$f"; then nodes="$nodes$(jq -n --arg path "$f" '{path: $path, rule: "misnamed", problem: "carries a node id but is not named <digits>-<slug>.md"}')"
+    else nodes="$nodes$(jq -n --arg path "$f" '{path: $path, rule: "stray", problem: "not a node file (stray; nodes are <digits>-<slug>.md) - plan.sh skips it"}')"; fi
+  done
   nodes="$(printf '%s' "$nodes" | jq -s --argjson max "$wmax" --arg pm "$pm" --arg pmp "$plan_problem" '
     def v($rule; $node; $msg): {rule: $rule, id: ($node.id // null), wave: ($node.wave // null), path: ($node.path // null), message: $msg};
     def w($rule; $wave; $msg): {rule: $rule, id: null, wave: $wave, path: null, message: $msg};
     map(select(.problem == null)) as $nodes | map(.id) as $ids
     | (if $pmp == "" then [] else [v("malformed"; {path: $pm}; $pmp)] end)
-    + map(select(.problem != null) | v("malformed"; .; .problem))
+    + map(select(.problem != null) | v(.rule // "malformed"; .; .problem))
     + [$nodes | '"$DANGLING_JQ"']
     + ($nodes | group_by(.wave) | map(.[0].wave as $wave | map(select(.kind == "reconcile")) as $r
         | (if ($r | length) != 1 then [w("reconcile-count"; $wave; "\($r | length) reconcile nodes (want exactly one)")]

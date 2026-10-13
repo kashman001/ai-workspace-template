@@ -573,5 +573,46 @@ printf 'PLAN_TIER_RESEARCH=\nPLAN_MODEL_CLAUDE_STANDARD=\n' > "$TENV"; setf 08-t
 assert_eq "T20h: an empty knob is unset (label misses, model null)" "$(mdl 08-tickets --runtime claude)" '["standard",null]'
 reset; rm -f "$SS" "$TENV"
 
+echo "T21: stray files in nodes/ — skipped by every verb, listed by check; a misnamed node stops every verb"
+printf '{"schema":1,"seq":3}\n' > "$SS"
+strays() {   # a child report, notes and a README beside the nodes; editor and Finder droppings that never match *.md
+  printf '# report\n\nno frontmatter\n' > "$NODES/07-spec.report.md"
+  printf '# notes\n' > "$NODES/notes.md"; printf '# readme\n' > "$NODES/README.md"
+  : > "$NODES/.DS_Store"; printf -- '---\nid: x\n---\n' > "$NODES/x.md~"
+}
+unstray() { rm -f "$NODES/.DS_Store" "$NODES/x.md~"; reset; }
+reset; strays
+out="$("$PLAN" status --project demo)"; rc=$?
+assert_eq "T21a: status reads past strays" "$rc:$out" "0:plan 01-concept  open  wave 3 of 3  done 6/9  doing 1  todo 2  blocked 0  dropped 0  sessions 2"
+for v in remaining graph "show 08-tickets"; do
+  "$PLAN" $v --project demo >/dev/null 2>&1; assert_eq "T21b: $v reads past strays" "$?" "0"
+done
+out="$("$PLAN" check --project demo)"; rc=$?
+assert_eq "T21c: check exits 1 on strays" "$rc" "1"
+assert_contains "T21d: ... naming the file as a stray" "$out" "07-spec.report.md: not a node file (stray"
+assert_eq "T21e: ... every .md stray, rule stray; .DS_Store and x.md~ ignored" \
+  "$("$PLAN" check --project demo --json | jq -c '[.[] | [.rule, (.path | sub(".*/"; ""))]] | sort')" \
+  '[["stray","07-spec.report.md"],["stray","README.md"],["stray","notes.md"]]'
+out="$("$PLAN" block 07-spec "waiting" --project demo 2>&1)"; rc=$?
+assert_eq "T21f: block works with strays present" "$rc:$out" "0:07-spec blocked"
+unstray; strays
+out="$("$PLAN" done 07-spec --project demo 2>&1)"; rc=$?
+assert_eq "T21g: done works with strays present" "$rc:$out" "0:07-spec done"
+out="$("$PLAN" start 08-tickets --project demo 2>&1)"; rc=$?
+assert_eq "T21h: start works with strays present" "$rc:$out" "0:08-tickets doing"
+assert_eq "T21i: ... and the strays are untouched" "$(cat "$NODES/07-spec.report.md" "$NODES/notes.md" | wc -l | tr -d ' ')" "4"
+unstray; mv "$NODES/08-tickets.md" "$NODES/08-tickets.v2.md"
+err="$("$PLAN" status --project demo 2>&1 >/dev/null)"; rc=$?
+assert_eq "T21j: a node renamed with a dot (it carries an id) stops status" "$rc" "1"
+assert_contains "T21k: ... naming the file" "$err" "08-tickets.v2.md: carries a node id"
+for v in "show 07-spec" "block 07-spec why" "done 07-spec"; do   # reset each: a verb that got through must not mask the next
+  unstray; mv "$NODES/08-tickets.md" "$NODES/08-tickets.v2.md"
+  "$PLAN" $v --project demo >/dev/null 2>&1; assert_eq "T21l: ... and $v" "$?:$(grep -c '^status: doing$' "$NODES/07-spec.md")" "1:1"
+done
+assert_eq "T21m: check lists it as misnamed" \
+  "$("$PLAN" check --project demo --json | jq -c '[.[] | select(.path != null and (.path | endswith("08-tickets.v2.md"))) | .rule]')" '["misnamed"]'
+assert_eq "T21n: ... the file is untouched" "$(grep -c '^status: todo$' "$NODES/08-tickets.v2.md")" "1"
+unstray; rm -f "$SS"
+
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" -eq 0 ]
