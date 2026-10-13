@@ -5,8 +5,12 @@
 
 ## >>> START HERE <<<
 
-**Mission.** No queued jobs, and the backlog is empty (0/138/5/0/6). Ask the
-user what's next.
+**Mission.** Add a `plan.sh` verb (e.g. `plans`, or `status --all`) that lists
+every work item's plans with progress: item, plan, open/closed, wave n of m,
+done/total, blocked count. One line per plan; support `--json`. TDD it in
+`scripts/tests/test-plan.sh`, document it in `docs/plans.md`'s verb table and the
+`plan.sh` usage header, then `scripts/run-checks.sh`, file and resolve a backlog
+card, and commit. (Requested by the user 2026-10-12. The backlog was 0/138/5/0/6 before this.)
 
 **Waiting on the user:**
 - Run `scripts/migrate-glossary.sh` on `~/Developer/experiments/NeogeoEmu`?
@@ -34,4 +38,4 @@ Frontier: none. Remaining: 0 of 12.
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`.
-2. Ask the user what to take next.
+2. Do the Mission above, then ask the user what's next.
