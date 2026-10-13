@@ -16,6 +16,11 @@ work/<item>/plans/NN-<slug>/
   nodes/NN-<slug>.md one file per node
 ```
 
+`plan.sh` reads a file in `nodes/` as a node only when its name starts with a
+digit and has no dot before `.md` (`13b-<slug>.md` is a node; `07-x.report.md`,
+`notes.md` are not). Other `.md` files are skipped and listed by `check`.
+Child reports do not belong here — they default to `work/<item>/.agent-dispatch/`.
+
 **`plan.md` frontmatter** — `plan: NN-<slug>`, `status: open | closed`,
 `replan: local | structural`, `default_tier: frontier | standard | cheap | auto`,
 optional `wave_max: <integer>` (nodes per wave before `check` complains;
@@ -140,6 +145,10 @@ apply). The rules, by `rule` slug:
   refuse (missing `---`, a non-`key: value` line, a value outside the sets
   above, a non-integer `wave_max`, a `tier_<label>:` outside
   `frontier|standard|cheap`). The node is left out of the other rules.
+- `stray` — a `.md` file in `nodes/` not named like a node (a child report,
+  notes). Every other verb skips it; `check` lists it so it gets moved out.
+- `misnamed` — a skipped file whose frontmatter carries an `id:` — a node
+  renamed by hand. Every other verb refuses the plan until it is renamed back.
 - `blocked-by` — a `blocked_by` entry naming no node in this plan (a typo, or
   a node in another plan). Other verbs refuse the plan on this; `check` lists it.
 - `reconcile-count` — a wave with zero or several `kind: reconcile` nodes.

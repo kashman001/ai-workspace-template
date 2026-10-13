@@ -136,9 +136,9 @@ is what keeps concurrent sessions from reading each other's counts.
   then run `skills/session-rollover/SKILL.md` — no ask. Never start a new work
   unit in WARN/STOP state.
 - **Dispatching a long-running subagent:** `scripts/fleet.sh
-  dispatch-open --project <p> --task <slug> --report <path>` — persist the
+  dispatch-open --project <p> --task <slug> [--report <path>]` — persist the
   dispatch record and emit the rollover contract for the child's prompt in
-  one step; `dispatch-close --status <S>` at yield (see "Dispatching
+  one step (report defaults to `work/<p>/.agent-dispatch/<slug>.report.md`); `dispatch-close --status <S>` at yield (see "Dispatching
   long-running children").
 - **What is IN the context (composition, not just size):**
   `scripts/context-inspect.sh [--phases] [transcript.jsonl]` — exact
@@ -635,7 +635,8 @@ child. So child rollover rests on three portable rules, workable in every
 runtime with no child handles at all (research §5/§8/§10/§11):
 
 - **R2 — every long-running child is dispatched under a contract.**
-  `dispatch-contract --report <path> [--brief <path>] [--gen <n>]` emits the
+  `dispatch-contract --report <path> [--brief <path>] [--gen <n>]` (the
+  report path is required here; `dispatch-open` fills a default) emits the
   block to include in the child's dispatch prompt: checkpoint by appending a
   progress block to the report file at every work-unit boundary (the report's
   mtime doubles as the child's heartbeat), cap the final return at 15 lines
@@ -656,11 +657,13 @@ runtime with no child handles at all (research §5/§8/§10/§11):
   items"). Child WARN is the parent's decision, no human ask — humans are
   only consulted at the top level (R7).
 - **R4 — the parent persists a dispatch record per task; generations are
-  fenced.** `dispatch-open --project <p> --task <slug> --report <path>
+  fenced.** `dispatch-open --project <p> --task <slug> [--report <path>]
   [--brief <path>] [--agent-type <t>] [--model <m>] [--effort <e>]
   [--agent-id <id>]` appends generation N+1 (status `open`) to
   `work/<p>/.agent-dispatch/<slug>.json` and emits the R2 contract for that
-  generation in one step — never pass `--gen` here, it is computed from the
+  generation in one step. Without `--report` it keeps the path an earlier
+  generation recorded, else uses `work/<p>/.agent-dispatch/<slug>.report.md`
+  (gitignored, beside the record) — never pass `--gen` here, it is computed from the
   record. Fencing: `dispatch-open` refuses while the previous generation is
   still open; close it first with `dispatch-close --project <p> --task
   <slug> --status <S>` (`S` = the five yield statuses, or `KILLED` — the

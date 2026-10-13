@@ -179,7 +179,9 @@ after verifying, and it alone writes state. The child gets the node and a
 Log actor (`s<n>-<letter>`, so its lines sort beside the session's `s<n>`
 lines). A child that may outlive one window is wrapped in `fleet.sh
 dispatch-open` (`docs/context-budget.md` → "Dispatching long-running
-children").
+children"): `fleet.sh dispatch-open --project <item> --task <id>` with no
+`--report` puts the report at `work/<item>/.agent-dispatch/<id>.report.md` —
+never under `nodes/`.
 
 ```
 You are working node <id> of plan <plan> in work item <item>; workspace root <root>.

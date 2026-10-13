@@ -54,8 +54,11 @@ assert_eq "L2a: no --project dies 3" "$rc" "3"
 err=$("$FLEET" dispatch-open --project testproj --report r 2>&1 >/dev/null); rc=$?
 assert_eq "L2b: no --task dies 3" "$rc" "3"
 assert_contains "L2c: error names --task" "$err" "--task"
-err=$("$FLEET" dispatch-open --project testproj --task t 2>&1 >/dev/null); rc=$?
-assert_eq "L2d: no --report dies 3" "$rc" "3"
+out=$("$FLEET" dispatch-open --project testproj --task t 2>/dev/null); rc=$?
+assert_eq "L2d: no --report opens with the default beside the record" \
+  "$rc:$(jq -r '.report' work/testproj/.agent-dispatch/t.json)" "0:work/testproj/.agent-dispatch/t.report.md"
+assert_contains "L2h: ... and the contract names it" "$out" "work/testproj/.agent-dispatch/t.report.md"
+"$FLEET" dispatch-close --project testproj --task t --status DONE >/dev/null 2>&1
 err=$("$FLEET" dispatch-open --project testproj --task t --report r --gen 2 \
   2>&1 >/dev/null); rc=$?
 assert_eq "L2e: --gen dies 3" "$rc" "3"
@@ -148,6 +151,15 @@ assert_contains "L10b: message names scripts/fleet.sh dispatch-open" "$err" "scr
   && bad "L10c: measurer wrote no record" || ok "L10c: measurer wrote no record"
 err=$("$CB" dispatch-list --project testproj 2>&1 >/dev/null); rc=$?
 assert_eq "L10d: dispatch-list through the measurer exits 3" "$rc" "3"
+
+echo "L11: a later generation without --report keeps the record's report path"
+"$FLEET" dispatch-open --project testproj --task task-f3 --report work/testproj/inbox/task-f3.md >/dev/null 2>&1
+"$FLEET" dispatch-close --project testproj --task task-f3 --status KILLED >/dev/null 2>&1
+out=$("$FLEET" dispatch-open --project testproj --task task-f3 2>/dev/null); rc=$?
+assert_eq "L11a: gen 2 opens, report path unchanged" \
+  "$rc:$(jq -r '.report' work/testproj/.agent-dispatch/task-f3.json)" "0:work/testproj/inbox/task-f3.md"
+assert_contains "L11b: ... and the contract names gen 1's file" "$out" "Report file: work/testproj/inbox/task-f3.md"
+"$FLEET" dispatch-close --project testproj --task task-f3 --status DONE >/dev/null 2>&1
 
 echo
 echo "passed=$PASS failed=$FAIL"
