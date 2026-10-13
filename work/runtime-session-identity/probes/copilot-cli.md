@@ -158,3 +158,21 @@ The concurrent case with the var **set** was not run. Q3 showed that path resolv
   `no session artifact found for runtime=claude`. The Claude hooks should no-op when they are not
   inside Claude Code.
 - Hooks never see `COPILOT_AGENT_SESSION_ID`. Identity inside a hook must come from the payload.
+
+## Post-fix (s9)
+
+Copilot CLI 1.0.96, probe clone `ws-identity-probe-s9` at 191944f. `gh copilot` runs the same
+binary: its help says it executes the Copilot CLI found on `PATH`. Two pairs of `copilot -p
+--allow-all-tools` sessions ran at once from a clean env, each running
+`./probe-env.sh copilot-cli <label>` and then `sleep 20`.
+
+- **Agent shell:** `COPILOT_AGENT_SESSION_ID` is each session's own id. `register` and `check`
+  bound its own `session-state/<sid>/events.jsonl` (`method=exact`). One `copilot-cli-<sid>.json`
+  per session, so four sessions gave four records.
+- **Hooks: not exercised.** The clone is not in `~/.copilot/config.json` `trustedFolders`, so no
+  repo hook fired (no copilot, copilot-vscode or claude hook log from these runs). Adding the
+  folder there was blocked by the agent's permission classifier, so this is on the user
+  checklist (accept the trust prompt in an interactive `copilot`).
+- Not repeated: the pre-fix stray claude/copilot-vscode records, because hooks did not fire.
+
+**Result: agent side PASS; hook side pending (user checklist).**

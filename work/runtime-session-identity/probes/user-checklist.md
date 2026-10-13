@@ -1,55 +1,47 @@
-# IDE / app probes: steps for the user
+# Post-fix probes: steps for the user (s9)
 
-These surfaces need a person: they run inside an editor, not a terminal the
-agent can drive. Each test takes about 5 minutes. The results land in files
-inside the probe clone, and the agent reads them from there.
+The question: does each surface bind and measure **its own** session, even with two sessions
+open at once in one folder? The agent already ran what it could from a terminal (see the
+"Post-fix (s9)" sections in `claude-cli.md`, `codex-cli.md`, `copilot-cli.md` and
+`antigravity-cli.md`). The rows below need a person, either for a trust prompt or for clicks
+in an editor. Each one takes about 5 minutes.
 
-## 0. One-time setup
+## Setup (already done)
 
-In a terminal, from the workspace root:
+The probe clone is `~/Developer/experiments/ws-identity-probe-s9`. It is a throwaway copy of
+the workspace with every hook wrapped so it logs what it receives into `probe-out/`. Run every
+step below **in that folder**, never in the real workspace. When anything asks whether to trust
+the folder or its hooks, answer **Yes**: hooks don't run in an untrusted folder.
 
-```bash
-work/runtime-session-identity/probes/make-ide-probe-clone.sh
-code ~/Developer/experiments/ws-identity-probe
-```
+## The same two steps in every row
 
-This makes a throwaway copy of the workspace at
-`~/Developer/experiments/ws-identity-probe`. Every hook in the copy is
-wrapped so it logs what it receives to `probe-out/`. When VS Code asks
-whether to trust the folder, answer **Yes**: hooks don't run in an untrusted
-folder.
+In **each** of the two sessions, send:
 
-## 1. Codex: VS Code extension (`openai.chatgpt`)
+> Run `./probe-env.sh <runtime> <label>` and then `scripts/context-budget.sh check`, and show me
+> the output.
 
-1. Open the Codex panel in the probe-clone window and start a **new** chat.
-2. Send: `Run ./probe-env.sh codex vscode-A in the terminal and show me the output.`
-3. Start a **second** new Codex chat in the same window, and send the same
-   message with `vscode-B` in place of `vscode-A`.
-4. Send one more short message in each chat (e.g. `ok`) so the turn hooks fire.
+Then send one more short message (`ok`) in each session, so the end-of-turn hooks fire.
 
-## 2. Copilot Chat: agent mode in VS Code
+**Pass:** each session's `artifact=` line names its own transcript (not the other session's),
+and `.context-budget/sessions/` gets exactly one record per session.
 
-1. In the same window, open Copilot Chat and switch to **Agent** mode.
-2. Send: `Run ./probe-env.sh copilot-vscode copilot-A in the terminal and show me the output.`
-3. Open a second Copilot chat and repeat it with `copilot-B`.
-4. Send `ok` in each chat.
+## Checklist
 
-## 3. Antigravity: the IDE and the app
+| # | Surface | How to open two sessions | `<runtime>` | Labels |
+|---|---|---|---|---|
+| 1 | Copilot CLI: hooks | Two terminals, `cd` into the clone, run `copilot` in each. Accept the folder-trust prompt. | `copilot-cli` | `copilot-A`, `copilot-B` |
+| 2 | Antigravity CLI: agent shell | Two terminals in the clone, run `agy` in each. Approve the shell command when asked. | `antigravity` | `agy-A`, `agy-B` |
+| 3 | Claude Code: VS Code extension | `code ~/Developer/experiments/ws-identity-probe-s9`, then open **two** Claude chats (new tab/panel each). | `claude` | `cc-vscode-A`, `cc-vscode-B` |
+| 4 | Codex: VS Code extension | Same window, open **two** new Codex chats. The hook config changed since the last probe, so Codex should ask to trust the hooks again: accept it, then send `ok` once more in each chat (trust applies after the prompting turn). | `codex` | `codex-vscode-A`, `codex-vscode-B` |
+| 5 | Copilot Chat: VS Code agent mode | Same window, open Copilot Chat in **Agent** mode, two chats. | `copilot-vscode` | `copilot-vscode-A`, `copilot-vscode-B` |
 
-Open the probe clone in the Antigravity IDE (and in the Antigravity app),
-start two agent chats, and ask each one to run
-`./probe-env.sh antigravity ag-ide-A` (then `ag-ide-B`, `ag-app-A`, and so on).
-`register` will fail, because the runtime isn't supported yet. That's
-expected: the env and process sections are what we need. Antigravity hooks
-aren't wired yet, so `hook-*.log` stays empty for it.
+Optional, if you use them (backlog L86): the Antigravity IDE/app (`antigravity`, labels
+`ag-ide-A/B`) and the Codex desktop app (`codex`, labels `codex-app-A/B`).
 
-## 4. Codex desktop app: optional
-
-There's no Codex app in `/Applications`. If you use it, install it, open the
-probe clone in it, and repeat step 1 with labels `app-A` and `app-B`.
+For row 3, also note anything odd, for example extra idle Claude processes when the folder opens.
+The last probe saw the extension pre-spawn two of them.
 
 ## When done
 
-Tell the agent "IDE probes done". It reads `probe-out/env.log` and
-`probe-out/hook-*.log` in the clone and writes `codex-vscode.md` and
-`copilot-vscode.md` (plus `gemini-ide.md` if you chose an IDE in step 3).
+Tell the agent **"probes done"** and which rows you ran. It reads `probe-out/env-<label>.log`,
+`probe-out/hook-*.log` and `.context-budget/sessions/` in the clone and writes up the results.

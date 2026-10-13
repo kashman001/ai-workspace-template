@@ -28,27 +28,16 @@ Antigravity IDE/app and Codex desktop) to all seven surfaces.
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. Rebuild the probe clone at current `main`. The old clone is at `bc1cce4`, which is pre-fix.
-   Ask the user before deleting `~/Developer/experiments/ws-identity-probe`. Otherwise pass a
-   new dest to `probes/make-ide-probe-clone.sh`. Check the script's hook wrapper list first:
-   it wraps codex/copilot/copilot-vscode/gemini/stop but not the `claude` or `antigravity`
-   hooks. Add them so all seven surfaces log their payloads.
-3. Rewrite `probes/user-checklist.md` as one post-fix checklist with a row per surface. For
-   each one: open two sessions in the clone, run `./probe-env.sh <runtime> <label>` and
-   `scripts/context-budget.sh check` in each, and send a turn. Pass means each session's
-   `artifact=` is its own transcript, and `.context-budget/sessions/` holds one record per
-   session with no cross-binding. Include the Codex hook-trust re-prompt (config changed since
-   bc1cce4) and the Claude VS Code plugin (new: probe its env id vars and hooks the way
-   `probes/codex-vscode.md` did).
-4. Run the four CLI surfaces yourself where possible, using their non-interactive modes in
-   the clone (sign-in and the Codex trust prompt may need the user). Write each result into
-   `probes/<surface>.md` under a new "Post-fix (s9)" heading.
-5. Hand the three VS Code rows to the user with the exact steps. Then read `probe-out/`
-   and write up the results.
-6. File any gap as a backlog card, or open plan 02 if there are several. Update L86.
-
-**No human in the loop:** steps 1–4 can run unattended, apart from sign-in and trust prompts.
-Step 5 needs the user's clicks: prepare and commit the checklist, then stop with it open.
+2. Session 9 ran the CLI rows (results are under "Post-fix (s9)" in `probes/claude-cli.md`,
+   `codex-cli.md`, `copilot-cli.md` and `antigravity-cli.md`). It handed rows 1–5 of
+   `probes/user-checklist.md` to the user. If the user hasn't said "probes done", ask them to
+   run the checklist and stop.
+3. Once they have: read `~/Developer/experiments/ws-identity-probe-s9/probe-out/`
+   (`env-<label>.log`, `hook-*.log`) and `.context-budget/sessions/` there. Write each row's
+   result under "Post-fix (s9)" in the matching `probes/<surface>.md` (create
+   `probes/claude-vscode.md`).
+4. File any gap as a backlog card, or open plan 02 if there are several. Update L86. Add a
+   post-fix column to `findings.md` → "Where we stand".
 
 **The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
 `test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,

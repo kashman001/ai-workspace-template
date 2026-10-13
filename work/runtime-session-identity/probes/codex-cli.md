@@ -136,3 +136,22 @@ Control q4c/q4d (same, `CODEX_THREAD_ID` left set): each registered its own thre
 - UserPromptSubmit/Stop payloads also carry the exact `session_id` + `transcript_path`. The UserPromptSubmit hook could register (or heal a missing or wrong registration) on every turn, so it doesn't depend on SessionStart.
 - Hook code must read ids from the payload only: hook processes get no `CODEX_*` env vars.
 - Hooks are **silently skipped** under `codex exec` without hook/project trust (no prompt or warning). Anything relying on hooks needs a documented trust step (interactive trust once, or `--dangerously-bypass-hook-trust` for automation), and the agent-side `register` must stay as the fallback.
+
+## Post-fix (s9)
+
+Codex CLI 0.162.1, probe clone `ws-identity-probe-s9` at 191944f. Two pairs of `codex exec
+--json -s workspace-write` sessions ran from a clean env, each running
+`./probe-env.sh codex <label>` and then `sleep 20`.
+
+- **Hooks untrusted (pair `cli-A/B`):** hooks were skipped, as before. The agent-side `register`
+  bound each session's own rollout through `CODEX_THREAD_ID`.
+- **Hooks trusted (pair `codex-A/B`, `--dangerously-bypass-hook-trust`, user-approved):**
+  SessionStart, UserPromptSubmit and Stop fired once per session, each payload carrying its own
+  `session_id` + `transcript_path`. `check` from each agent shell reported its own rollout.
+- **Registry:** one `codex-<sid>.json` per session (four sessions, four records, no
+  cross-binding).
+- `method=estimate` during the first turn (no `token_count` event yet). The same session measured
+  afterwards gives `method=exact`.
+- **Not tested here:** the interactive hook-trust prompt. That is on the user checklist.
+
+**Result: PASS.**

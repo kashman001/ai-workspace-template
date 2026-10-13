@@ -164,3 +164,22 @@ exact id and transcript, keyed on `conversationId`, using `PreInvocation` /
 - 5 probe conversations under `~/.gemini/antigravity-cli/brain/` and
   `conversations/` (ids `ed75a355`, `88f69013`, `3f54bbb1`, `1c5c2d00`, `c2d716d4`):
   delete them on the user's say-so.
+
+## Post-fix (s9)
+
+Antigravity CLI 1.3.3, probe clone `ws-identity-probe-s9` at 191944f. Two `agy -p "Reply with
+just: ok agy-A|B"` sessions ran at once from a clean env. They used no tools: the agent
+permission classifier blocked `--dangerously-skip-permissions`, and `-p` can't approve a shell
+command.
+
+- **Hooks:** `.agents/hooks.json` fired `PreInvocation` (`invocationNum: 0`) once per
+  conversation, each with its own `conversationId` + `transcriptPath`.
+- **Registry:** one `antigravity-<id>.json` per conversation pointing at its own
+  `brain/<id>/.system_generated/logs/transcript_full.jsonl` (`pid: null`). `check --runtime
+  antigravity --session-id <id>` gives `method=exact` for each.
+- **Agent shell (`./probe-env.sh antigravity`):** not run. It is on the user checklist
+  (interactive `agy`, approve the command).
+
+**Result: hook side PASS; agent side pending (user checklist).**
+
+Cleanup owed: s9 conversations `1df25ea1`, `fa6ea8ea`.
