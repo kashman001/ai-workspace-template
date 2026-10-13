@@ -98,3 +98,22 @@ User row 5: two Copilot Chat Agent-mode chats in `ws-identity-probe-s9` (session
   rather than a hook.
 
 **Result: binding PASS; hooks not firing + duplicate records → investigate in s10.**
+
+## Re-probe (s10)
+
+Two new chats, labels `copilot-vscode-C` (`d5d80a4e…`) and `-D` (`90bc99b7…`), at 12:32–12:33.
+The s9 logs were re-read too.
+
+- **Binding: PASS.** Each chat's env id and `register` bound its own `events.jsonl`; no crossover.
+- **Correction: hooks DID fire, in s9 and s10.** The s9 "hooks silent" line was a misread.
+  Per chat: CLI config `sessionStart` + `agentStop` (measured, `hook-copilot-cli-<sid>.status` = `OK`),
+  VS Code config `SessionStart` + `Stop`, Claude's `Stop` shim, and Claude's `PostToolUse`
+  hook: **four hook sets per event**, two of them Claude Code's.
+- **Duplicate records explained:** the CLI hook config writes `copilot-cli-<sid>.json`;
+  `register --runtime copilot-vscode` writes `copilot-vscode-<sid>.json`. Same artifact.
+- **New gap: `method=estimate` undercounts ~30%.** The VS Code transcript has no
+  `inputTokens` (CLI transcripts use `session.usage_record`); the exact count is
+  `prompt_tokens` in `session.usage_checkpoint` → `promptCacheBreakState`. Chat D: estimate
+  33,857 vs `prompt_tokens` 47,574.
+
+**Follow-up:** plan `02-copilot-vscode-followups` (fix the count; decide hook fan-out and duplicates).

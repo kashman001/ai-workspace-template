@@ -81,8 +81,8 @@ committed, but filter them out if the script is reused.
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 01-session-identity-fixes, closed, wave 5 of 5, done 16/17, doing 0, todo 0, blocked 0, dropped 1, sessions 4.
-Frontier: none. Remaining: 0 of 17.
+Position: plan 02-copilot-vscode-followups, open, wave 1 of 2, done 0/6, doing 0, todo 6, blocked 0, dropped 0, sessions 0.
+Frontier: 01-fix-copilot-vscode-exact-tokens, 02-investigate-hook-fanout, 03-investigate-duplicate-records. Remaining: 6 of 6 — wave 1: 01-fix-copilot-vscode-exact-tokens todo, 02-investigate-hook-fanout todo, 03-investigate-duplicate-records todo, 04-reconcile-w1 todo.
 <!-- plan:end position -->
 
 ## State snapshot
