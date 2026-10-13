@@ -71,3 +71,18 @@ leave phantom registry records.
   them. Turns before approval are unmeasured, and nothing says so.
 - `pid: null` in the sandbox means liveness can't come from the pid for Codex in VS Code.
   The registry's stale-record pruning must not depend on it.
+
+## Post-fix (s9)
+
+User row 4: two new Codex chats in the probe clone `ws-identity-probe-s9`
+(threads `01a13645-4dba…`, `01a13645-8d6e…`).
+
+- **Agent side: PASS.** Each chat has its own `CODEX_THREAD_ID`, `register` and `check` bound its
+  own rollout, one record per chat. `method=estimate` in the first turn, as with the CLI.
+- **Hook side: GAP.** No hook-trust prompt appeared and no Codex hook fired, even on a later
+  turn. `~/.codex/config.toml` has `[projects."…/ws-identity-probe-s9"] trust_level = "trusted"`
+  but no `[hooks.state."…/ws-identity-probe-s9/.codex/config.toml:…"] trusted_hash` entries. The
+  old clone has them, from an earlier prompt. The extension skips untrusted hooks silently, so
+  a fresh copy of the workspace gets no budget warnings in Codex VS Code and no sign why.
+  Workaround under test (row 4b): run `codex` once in the folder from a terminal so the CLI
+  prompts for hook trust.
