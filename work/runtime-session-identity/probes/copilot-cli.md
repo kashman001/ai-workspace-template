@@ -175,4 +175,11 @@ binary: its help says it executes the Copilot CLI found on `PATH`. Two pairs of 
   checklist (accept the trust prompt in an interactive `copilot`).
 - Not repeated: the pre-fix stray claude/copilot-vscode records, because hooks did not fire.
 
-**Result: agent side PASS; hook side pending (user checklist).**
+**User row 1 (interactive, trusted; sessions `d6716e02`, `ea38e6fe`; Homebrew `copilot` run inside a VS Code integrated terminal, so `VSCODE_*` env was present):** each agent shell
+bound its own `events.jsonl` (`method=exact`). Hooks now fired. Each event still triggers
+**three** hook configs: Copilot (`sessionId`), VS Code (`SessionStart`/`Stop`) and Claude's
+PostToolUse, and every payload carried its own session's id. The guards held: only
+`copilot-cli-<sid>.json` records were written, with no stray `copilot-vscode-*` or `claude-*`
+record (the pre-fix bug).
+
+**Result: PASS (agent side and hook side).**

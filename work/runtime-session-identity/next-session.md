@@ -28,16 +28,21 @@ Antigravity IDE/app and Codex desktop) to all seven surfaces.
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. Session 9 ran the CLI rows (results are under "Post-fix (s9)" in `probes/claude-cli.md`,
-   `codex-cli.md`, `copilot-cli.md` and `antigravity-cli.md`). It handed rows 1–5 of
-   `probes/user-checklist.md` to the user. If the user hasn't said "probes done", ask them to
-   run the checklist and stop.
-3. Once they have: read `~/Developer/experiments/ws-identity-probe-s9/probe-out/`
-   (`env-<label>.log`, `hook-*.log`) and `.context-budget/sessions/` there. Write each row's
-   result under "Post-fix (s9)" in the matching `probes/<surface>.md` (create
-   `probes/claude-vscode.md`).
+2. Status of `probes/user-checklist.md`, rows 1–3: **PASS** (written up in `copilot-cli.md`,
+   `antigravity-cli.md`, `claude-vscode.md`). All four CLIs pass (s9). Remaining: **row 4**
+   (Codex VS Code, labels `codex-vscode-A/B`, accept the hook-trust re-prompt) and **row 5**
+   (Copilot VS Code Agent mode, `copilot-vscode-A/B`). Walk the user through them one at a time,
+   then read `~/Developer/experiments/ws-identity-probe-s9/probe-out/` (`env-<label>.log`,
+   `hook-*.log`) and `.context-budget/sessions/` and record each row under "Post-fix (s9)" in
+   `probes/codex-vscode.md` / `probes/copilot-vscode.md`.
+3. Optional row: Copilot Chat with a Claude model (still Copilot runtime).
 4. File any gap as a backlog card, or open plan 02 if there are several. Update L86. Add a
    post-fix column to `findings.md` → "Where we stand".
+
+Notes: a bare `ok` in Copilot can get an empty model reply ("No response was returned"). Our
+hook still ran and succeeded, so tell the user to send `ok, thanks` instead. `probe-env.sh`'s
+env grep also captures `*_TOKEN`/CSRF values into the clone's logs. They are local and never
+committed, but filter them out if the script is reused.
 
 **The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
 `test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,

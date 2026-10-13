@@ -180,6 +180,12 @@ command.
 - **Agent shell (`./probe-env.sh antigravity`):** not run. It is on the user checklist
   (interactive `agy`, approve the command).
 
-**Result: hook side PASS; agent side pending (user checklist).**
+**User row 2 (interactive `agy`, two terminals; conversations `f25aa2ff`, `576d04fa`):** each
+agent shell has its own `ANTIGRAVITY_CONVERSATION_ID`, so `register` and `check` bound its own
+`transcript_full.jsonl` (`method=exact`). The hooks fired on every invocation (`invocationNum`
+0, 1, 2), each with its own `conversationId`. One record per conversation. `agy` auto-updated
+1.3.3 → 1.3.4 between the two sessions, with no effect.
 
-Cleanup owed: s9 conversations `1df25ea1`, `fa6ea8ea`.
+**Result: PASS (agent side and hook side).**
+
+Cleanup owed: s9 conversations `1df25ea1`, `fa6ea8ea`, `f25aa2ff`, `576d04fa`.
