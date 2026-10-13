@@ -80,3 +80,21 @@ copilot-cli adapter, firing through the CLI hook config, measures correctly.
   Claude Code's Stop shim also runs. Either drop the duplicate configs or make the
   dispatcher recognise a Copilot payload, for example by the `.copilot/session-state/` path,
   and refuse to measure it as `claude`.
+
+## Post-fix (s9)
+
+User row 5: two Copilot Chat Agent-mode chats in `ws-identity-probe-s9` (sessions `a058b12d`,
+`2413acaf`).
+
+- **Agent side: PASS on binding.** Each chat has its own `COPILOT_AGENT_SESSION_ID`, and
+  `register --runtime copilot-vscode` bound its own `~/.copilot/session-state/<sid>/events.jsonl`
+  (the pre-fix `chatSessions` bug is gone). `check` auto-detects `copilot-cli` and reports the
+  same artifact. `method=estimate` (CLI sessions measured `exact`, so look into why).
+- **Oddity 1: two records per chat** (`copilot-vscode-<sid>.json` and `copilot-cli-<sid>.json`,
+  same artifact). No cross-binding, but duplicates. Decide whether that is acceptable.
+- **Oddity 2: no hook fired** (copilot, copilot-vscode and claude hook logs empty for these
+  chats). Check whether VS Code needs the workspace hook files enabled or trusted
+  (`chat.hooks`-style setting), and whether the `copilot-cli` record came from the agent `check`
+  rather than a hook.
+
+**Result: binding PASS; hooks not firing + duplicate records → investigate in s10.**
