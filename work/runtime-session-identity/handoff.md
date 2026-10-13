@@ -15,6 +15,11 @@ Claude CLI PASS; Codex CLI PASS (agent side, and hook side with user-approved tr
 Copilot CLI agent side PASS, hooks not fired (clone not in `trustedFolders`); Antigravity hook
 side PASS, agent shell not run. Details are in each `probes/<surface>.md` under "Post-fix (s9)".
 
+**User rows (2026-10-13).** Rows 1–3 PASS (Copilot CLI hooks, agy agent shell, Claude VS Code;
+no phantoms). Row 4 Codex VS Code: PASS once trusted; GAP: no hook-trust prompt in the
+extension (workaround: a one-time CLI run). Row 5 Copilot VS Code: binding PASS; hooks silent and
+2 records per chat (to investigate). Rolled over at 141K with ROLLOVER_RELAUNCH=manual.
+
 **Blocked by the agent permission classifier (user said "you have my permission to trust", but
 these were still denied):** editing `~/.copilot/config.json` `trustedFolders`, and
 `agy --dangerously-skip-permissions`. Both moved to `probes/user-checklist.md` rows 1–2.
