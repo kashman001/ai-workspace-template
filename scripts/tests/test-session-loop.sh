@@ -96,13 +96,15 @@ bump() {  # $1 = delta, $2 = disposition, $3 = staged.by ("" = nothing staged)
     --arg d "$1" --arg me "$me" --arg disp "$2" --arg by "$3"
 }
 case "${STUB_BEHAVIOUR:-quit}" in
-  stage|stage-commit|stage-bookkeeping|stage-plan)
+  stage|stage-commit|stage-bookkeeping|stage-plan|stage-edit)
     register
     printf '# launcher (session %s, %s)\n' "$me" "$RANDOM$RANDOM" > "$W/next-session.md"
     # stage-plan keeps the launcher's position markers: what the supervisor's `plan.sh sync` writes between
     [ "$STUB_BEHAVIOUR" = stage-plan ] && printf '\n<!-- plan:begin position -->\n<!-- plan:end position -->\n' >> "$W/next-session.md"
     printf '# Session Handoff — session %s\n' "$me" > "$W/handoff.md"
     [ "$STUB_BEHAVIOUR" = stage-commit ] && printf 'work %s\n' "$me" >> "$STUB_MAIN/src.txt"
+    # stage-edit: the work is a file in the work directory, left uncommitted (a planning session)
+    [ "$STUB_BEHAVIOUR" = stage-edit ] && printf 'decision %s\n' "$me" >> "$W/decisions.md"
     case "$STUB_BEHAVIOUR" in stage-commit|stage-bookkeeping) git -C "$STUB_MAIN" add -A; git -C "$STUB_MAIN" commit -qm "session $me" ;; esac
     CLAUDE_CODE_SESSION_ID="sid-$me" "$STUB_MAIN/scripts/launch-next-session.sh" testproj --emit --skip-freshness \
       >"$STUB_DIR/launcher-$me.log" 2>&1 || { echo "stub: launcher rc=$? $(cat "$STUB_DIR/launcher-$me.log")" >&2; exit 9; }
@@ -267,6 +269,16 @@ reset; touch "$W/.interactive"; export STUB_BEHAVIOUR=stage-bookkeeping   # the 
 assert_eq "B7e: no stall verdict in interactive mode" "$(broken)" ""
 assert_eq "B7f: the pause with no tty ends the chain, exit 0" "$RC" "0"
 assert_eq "B7g: leaving at the pause is not a close"  "$(rec '.chain.closed')" "null"
+reset; export STUB_BEHAVIOUR=stage-edit
+"$SL" testproj --max-sessions 3 --min-lifetime 0 --stall-limit 2 >"$TMP/out" 2>&1 </dev/null; RC=$?; OUT="$(cat "$TMP/out")"
+assert_eq "B7h: an uncommitted edit in the work directory is progress — chain runs to cap" "$(verdicts)" "staged seq=8 staged seq=9 staged seq=10 cap seq=11"
+reset; export STUB_BEHAVIOUR=stage   # rewrites launcher and ledger, commits nothing
+"$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 2 >"$TMP/out" 2>&1 </dev/null; RC=$?; OUT="$(cat "$TMP/out")"
+assert_eq "B7i: uncommitted bookkeeping alone is still a stall" "$(broken)" "stall"
+reset; seed sid-7 interactive; export STUB_BEHAVIOUR=stage-bookkeeping   # #8 runs interactive, stages a hands-off #9
+"$SL" testproj --max-sessions 5 --min-lifetime 0 --stall-limit 1 >"$TMP/out" 2>&1 </dev/null; RC=$?; OUT="$(cat "$TMP/out")"
+assert_eq "B7j: a session is judged by the mode it ran in — interactive #8 is not counted" "$(verdicts)" "staged seq=8 staged seq=9"
+assert_eq "B7k: the hands-off #9 is"  "$(broken)" "stall"
 
 # ---------------------------------------------------------------------------
 echo "R1/R2: a start refuses an unreadable or foreign-schema record"
