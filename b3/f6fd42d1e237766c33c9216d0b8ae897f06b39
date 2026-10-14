@@ -1,0 +1,25 @@
+docs/context-budget.md
+  s_21dad952f1a7f7::t_be82148e26fb2a 477-481,499
+scripts/session-loop.sh
+  s_21dad952f1a7f7::t_be82148e26fb2a 293-306,308,358,363,445-450,453
+docs/superpowers/specs/2026-08-21-session-loop-design.md
+  s_21dad952f1a7f7::t_be82148e26fb2a 652-655
+scripts/tests/test-session-loop.sh
+  s_21dad952f1a7f7::t_be82148e26fb2a 99,106-107,272-281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b3f6fd42d1e237766c33c9216d0b8ae897f06b39",
+  "prompts": {},
+  "sessions": {
+    "s_21dad952f1a7f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c9ecadeb-eedb-4125-9df1-1c870cb05519",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kashif Siddiqui <kashman001@users.noreply.github.com>"
+    }
+  }
+}
