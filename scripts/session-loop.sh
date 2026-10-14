@@ -290,9 +290,22 @@ child_logged_out() {   # $1 = transcript
              and ([.message.content[]?.text // ""] | any(startswith("Not logged in")))' >/dev/null 2>&1
 }
 # Progress = a commit touching something outside the three markdown files a
-# rollover always rewrites (README, launcher, ledger and its archive).
-session_made_progress() {  # $1 = HEAD before the session
+# rollover always rewrites (README, launcher, ledger and its archive), or an
+# uncommitted change to the work directory outside those files: a planning
+# session's output (decisions, plan nodes, proposals) often waits for the
+# user's word to be committed, and is still the work.
+work_fingerprint() {  # hash of work/$PROJECT's files, bookkeeping and ignored files excluded
+  local d="work/$PROJECT"
+  ( cd "$ROOT" 2>/dev/null || exit 0
+    paths="$(git ls-files -co --exclude-standard -- "$d" 2>/dev/null | sort -u \
+      | grep -v -x -F -e "$d/README.md" -e "$d/next-session.md" -e "$d/handoff.md" -e "$d/handoff-archive.md" \
+      | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)"
+    [ -n "$paths" ] || { echo none; exit 0; }
+    printf '%s\n' "$paths" | git hash-object --stdin-paths | paste -d' ' - <(printf '%s\n' "$paths") | git hash-object --stdin )
+}
+session_made_progress() {  # $1 = HEAD before the session, $2/$3 = work fingerprint before/after
   local after f
+  [ "$2" = "$3" ] || return 0
   after="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)" || return 0
   [ "$1" = "$after" ] && return 1
   while IFS= read -r f; do
@@ -342,10 +355,12 @@ while :; do
   say "starting session #$seq ($USED of $MAX_SESSIONS)"
   started_at="$(date +%s)"; started_iso="$(date -u +%FT%TZ)"
   head_before="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo none)"
+  ran_mode="$mode"; work_before="$(work_fingerprint)"
   [ "$ALARM" -gt 0 ] && alarm_start "$seq"
 
   eval "$CMD"
   rc=$?
+  work_after="$(work_fingerprint)"   # before the supervisor's own plan sync writes
   reap_alarm
   say "session #$seq ended rc=$rc"
 
@@ -427,12 +442,15 @@ while :; do
     exit 0
   fi
 
-  # Hands-off only: in interactive mode the human at the keyboard is the stall detector.
-  if [ "$STALL_LIMIT" -gt 0 ] && [ "$mode" = "handsoff" ] && [ "$head_before" != "none" ]; then
-    if session_made_progress "$head_before"; then stalled=0
+  # Hands-off only: in interactive mode the human at the keyboard is the stall
+  # detector. A session is judged by the mode it RAN in ($ran_mode), not the
+  # mode it staged for its successor; one a human sat with clears the count.
+  if [ "$ran_mode" = "interactive" ]; then stalled=0
+  elif [ "$STALL_LIMIT" -gt 0 ] && [ "$mode" = "handsoff" ] && [ "$head_before" != "none" ]; then
+    if session_made_progress "$head_before" "$work_before" "$work_after"; then stalled=0
     else
       stalled=$((stalled + 1))
-      say "session #$seq committed nothing outside README, the launcher and the ledger ($stalled of $STALL_LIMIT)"
+      say "session #$seq changed nothing outside README, the launcher and the ledger — committed or not ($stalled of $STALL_LIMIT)"
       [ "$stalled" -lt "$STALL_LIMIT" ] \
         || broken stall "seq=$seq limit=$STALL_LIMIT — $STALL_LIMIT consecutive sessions made no progress; the chain is running its own bookkeeping, not the work"
     fi
