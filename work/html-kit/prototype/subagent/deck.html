@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Budget Pitch</title>
+<link rel="stylesheet" href="../kit/kit.css">
+<script src="../kit/kit.js" defer></script>
+</head>
+<body class="deck">
+<main>
+  <section class="slide">
+    <p class="eyebrow">Proposal for the team</p>
+    <h1>Measure the context budget, don't guess it</h1>
+    <p class="lede">Agent sessions degrade quietly past 150K tokens. We can catch that from disk and hand off on purpose.</p>
+  </section>
+
+  <section class="slide">
+    <p class="eyebrow">The numbers</p>
+    <h2>Two lines, one rule</h2>
+    <div class="stats">
+      <div class="stat"><b>120K</b><p>WARN: finish the unit, ask about rolling over</p></div>
+      <div class="stat"><b>150K</b><p>STOP: finish the atomic step, roll over with no ask</p></div>
+      <div class="stat"><b>~200K</b><p>Claude Code auto-compact; STOP must sit below it</p></div>
+      <div class="stat"><b>±25%</b><p>error of the fallback estimate, absorbed by the 30K margin</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="eyebrow">Why it works</p>
+    <h2>Three ideas carry it</h2>
+    <ol class="points">
+      <li><b>The model can't see its own usage.</b> The number comes from the runtime's session file on disk.</li>
+      <li><b>WARN asks, STOP goes.</b> Humans decide early; the system acts once quality is at risk.</li>
+      <li><b>The dying session writes the handoff.</b> Only it holds the state that must reach disk.</li>
+      <li><b>Three commands are the whole daily loop.</b> Register, record, roll over.</li>
+    </ol>
+  </section>
+
+  <section class="slide">
+    <p class="eyebrow">Cost to the team</p>
+    <h2>Almost nothing to adopt</h2>
+    <div class="grid">
+      <div class="card ok">
+        <h3>Automatic</h3>
+        <p>Registration runs from a hook in Claude Code and Copilot VS Code.</p>
+      </div>
+      <div class="card info">
+        <h3>One habit</h3>
+        <p>Run <code>record</code> at each work-unit boundary and obey the exit code.</p>
+      </div>
+      <div class="card warn">
+        <h3>One knob</h3>
+        <p><code>ROLLOVER_RELAUNCH</code>: off, manual (default) or auto.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="statement">
+      <p>Stop guessing.</p>
+      <p>Measure from disk.</p>
+      <p>Roll over on purpose.</p>
+    </div>
+  </section>
+
+  <section class="slide backup">
+    <p class="eyebrow">Backup</p>
+    <h2>Known gaps by runtime</h2>
+    <table>
+      <thead>
+        <tr><th>Runtime</th><th>Fidelity</th><th>Caveat</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Claude Code</td><td><span class="tag ok">exact</span></td><td>None</td></tr>
+        <tr><td>Codex</td><td><span class="tag ok">exact</span></td><td>None</td></tr>
+        <tr><td>Copilot VS Code</td><td><span class="tag warn">exact, lags</span></td><td>Read 34% while truly at 155%; trust the Stop hook</td></tr>
+        <tr><td>Gemini CLI</td><td><span class="tag">unverified</span></td><td>Shared telemetry log; one session per workspace</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Source: docs/context-budget.md, Per-runtime adapters.</p>
+  </section>
+</main>
+</body>
+</html>

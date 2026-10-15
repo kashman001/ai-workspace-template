@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Budget</title>
+<link rel="stylesheet" href="../kit/kit.css">
+<script src="../kit/kit.js" defer></script>
+</head>
+<body class="doc">
+<main>
+  <p class="eyebrow">Workspace docs · condensed</p>
+  <h1>Context budget</h1>
+  <p class="lede">Models get worse past about 150K tokens of context, whatever the advertised window. The workspace measures each session's real usage from disk, warns before that line, and hands work to a fresh session on purpose instead of letting automatic compaction decide.</p>
+
+  <section>
+    <h2>Why measure from disk</h2>
+    <p>Token usage lives in the API response envelope, which the model never sees. Agents guess their own usage badly, and optimistically. So the number always comes from the runtime's session file on disk; the agent only <em>asks</em> for a measurement at checkpoints.</p>
+    <p class="callout"><b>The agent is never the source of the number.</b> It invokes the measurer and acts on the exit code.</p>
+  </section>
+
+  <section>
+    <h2>Thresholds</h2>
+    <p>Absolute token counts, not a percentage of the window: a 936K window does not move the point where quality drops. One pair applies to every session and role.</p>
+    <table>
+      <thead>
+        <tr><th>Level</th><th>Tokens</th><th>Exit code</th><th>Response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>OK</td><td>below 120,000</td><td>0</td><td>Keep working</td></tr>
+        <tr><td>WARN</td><td>120,000</td><td>1</td><td>Finish the unit, then ask the user whether to roll over</td></tr>
+        <tr><td>STOP</td><td>150,000</td><td>2</td><td>Finish only the current atomic step, then roll over — no ask</td></tr>
+        <tr><td>Error</td><td>—</td><td>3</td><td>Measurement failed; fix the setup</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Keep STOP below the runtime's own auto-compact trigger (150K is under Claude Code's ~200K), or compaction fires before the deliberate rollover gets a chance.</p>
+  </section>
+
+  <section>
+    <h2>The daily loop</h2>
+    <p>For one developer running one session at a time, three things are the whole system.</p>
+    <div class="grid">
+      <div class="card info">
+        <h3>Register <small>session start</small></h3>
+        <p>Pins this session's file so concurrent sessions never read each other's counts. Automatic via hook in Claude Code and Copilot VS Code.</p>
+        <p class="meta">context-budget.sh register</p>
+      </div>
+      <div class="card ok">
+        <h3>Record <small>every work-unit boundary</small></h3>
+        <p>Measures, appends a ledger line, and returns OK, WARN or STOP as the exit code.</p>
+        <p class="meta">context-budget.sh record --label "…"</p>
+      </div>
+      <div class="card warn">
+        <h3>Roll over <small>on WARN or STOP</small></h3>
+        <p>The dying session writes its handoff and launcher, then starts the successor with a fixed bootstrap prompt.</p>
+        <p class="meta">skills/session-rollover/SKILL.md</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>WARN asks, STOP goes</h2>
+    <figure>
+      <pre class="mermaid">
+flowchart TD
+  R[record at unit boundary] --> E{exit code}
+  E -- 0 OK --> W[keep working]
+  W --> R
+  E -- 1 WARN --> F[finish current unit]
+  F --> A{user: roll over now?}
+  A -- yes --> RO[session-rollover]
+  A -- no --> WA[write-ahead mode]
+  WA --> R
+  E -- 2 STOP --> S[finish atomic step]
+  S --> RO
+  RO --> N[fresh session]
+      </pre>
+      <figcaption>At WARN the agent asks (unless relaunch is set to auto); declining arms write-ahead mode. At STOP it rolls over with no ask.</figcaption>
+    </figure>
+    <ol class="points">
+      <li><b>The dying session conducts its own rollover.</b> Only it holds the conversation-only state that must reach disk.</li>
+      <li><b>Write-ahead mode</b> covers the ~30K grace window: settled points go to decision notes, open threads to the launcher, so the STOP rollover is cheap.</li>
+      <li><b>Mid-discussion, the atomic step is the current exchange.</b> Answer first, then roll over, carrying the live question into the launcher.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Relaunch modes</h2>
+    <table>
+      <thead>
+        <tr><th>ROLLOVER_RELAUNCH</th><th>What happens at rollover</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>off</td><td>Print the bootstrap prompt only; the supervisor refuses to run this item unattended</td></tr>
+        <tr><td>manual</td><td>Default. WARN asks the user, then runs the launcher</td></tr>
+        <tr><td>auto</td><td>No ask: the agent runs the launcher itself and the successor starts attached</td></tr>
+      </tbody>
+    </table>
+    <p class="note">A committed per-work-item <code>context-budget.env</code> may override the relaunch knobs; thresholds stay workspace-global.</p>
+  </section>
+
+  <section>
+    <h2>Runtime fidelity</h2>
+    <p>Each runtime gets one adapter that reads its session file. When parsing fails, the fallback is a bytes÷4 estimate, never “unsupported” — ±25% is fine given the WARN→STOP margin.</p>
+    <ul>
+      <li>Claude Code <span class="tag ok">exact</span></li>
+      <li>Codex <span class="tag ok">exact</span></li>
+      <li>Copilot VS Code <span class="tag warn">exact, can lag</span></li>
+      <li>Copilot CLI <span class="tag ok">exact</span></li>
+      <li>Gemini CLI <span class="tag">unverified</span></li>
+    </ul>
+    <p class="callout"><b>Copilot VS Code can under-report badly.</b> Its token file flushes on its own cadence; one session read 34% while truly at 155%. Trust the Stop hook, and roll over at wave-scale boundaries regardless of the reported figure.</p>
+  </section>
+</main>
+</body>
+</html>

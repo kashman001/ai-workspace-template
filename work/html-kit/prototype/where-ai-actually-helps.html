@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where AI Actually Helps</title>
+<link rel="stylesheet" href="kit/kit.css">
+<script src="kit/kit.js" defer></script>
+</head>
+<body class="deck">
+<main>
+
+<section class="slide">
+  <p class="eyebrow">Field map · software lifecycle × AI</p>
+  <h1>Where AI Actually Helps</h1>
+  <p class="lede">Everyone is adding AI to how they build software.
+  The best research says that alone makes delivery <em>worse</em>.
+  This is a map of where AI genuinely earns its place — with the
+  evidence behind every claim.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">The paradox</p>
+  <h2>More AI, worse delivery?</h2>
+  <div class="stats">
+    <div class="stat"><b>&minus;1.5%</b><p>delivery throughput, per 25% increase in AI adoption</p></div>
+    <div class="stat"><b>&minus;7.2%</b><p>delivery stability, per the same increase</p></div>
+  </div>
+  <p class="note"><a href="https://dora.dev/research/2024/dora-report/">DORA 2024</a> —
+  the largest annual study of software delivery (survey-based, correlational;
+  program home: <a href="https://dora.dev">dora.dev</a>). Its
+  <a href="https://dora.dev/dora-report-2025/">2025 follow-up</a>, with 90% of ~5,000
+  respondents using AI, lands on the explanation: <strong>AI is an amplifier</strong>
+  of existing organizational strengths and dysfunctions.</p>
+  <p class="lede">So where does AI actually earn its place — and what has to
+  be true for it to pay off? That's this map.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">If you take away three things</p>
+  <h2>The whole map in three claims</h2>
+  <ol class="points">
+    <li><p><b>AI can lead where a machine can check the output</b> —
+      code, tests, contracts, triage. Where the artifact carries judgment or
+      authority — priorities, go/no-go, sign-off — AI drafts and a human decides.</p></li>
+    <li><p><b>Only two techniques have published production results,</b>
+      and both are ways of auto-writing tests behind objective pass/fail filters.
+      Every other AI claim rests on practice patterns or judgment.</p></li>
+    <li><p><b>AI amplifies what you already are.</b>
+      It raises change volume and speed, so your human checkpoints carry more
+      load — fix the system before you accelerate it.</p></li>
+  </ol>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">The map</p>
+  <h2>The lifecycle is a loop — and discovery never stops</h2>
+  <figure>
+    <pre class="mermaid">
+flowchart LR
+  O[Operate] --> M[Maintain] --> P[Plan] --> B[Build] --> V[Verify] --> R[Release] --> O
+  O -. signal .-> D([Discover])
+  D -. new work .-> P
+    </pre>
+    <figcaption>The steady state of a live product: operate → maintain → plan →
+    build → verify → release, around again. Discovery moves to the middle, fed
+    continuously by telemetry, experiments, and user research. Design folds into
+    build at this altitude; the full eight-stage graph, with every feedback edge,
+    is in the backup slides.</figcaption>
+  </figure>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">The rubric</p>
+  <h2>Not all &ldquo;AI helps&rdquo; is equal</h2>
+  <p class="lede">Every AI claim on the map carries one of four evidence tiers —
+  and each tier implies an adoption stance.</p>
+  <table>
+    <thead><tr><th>Tier</th><th>Means</th><th>Stance</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag ok">[measured]</span></td><td>Published deployment results from a named engineering org</td><td>Adopt where the pattern matches</td></tr>
+      <tr><td><span class="tag info">[established]</span></td><td>Widely practiced pattern; tooling claims vary</td><td>Pilot before standardizing</td></tr>
+      <tr><td><span class="tag warn">[heuristic]</span></td><td>Usable, with known failure modes</td><td>Pilot with a human override</td></tr>
+      <tr><td><span class="tag bad">[hype]</span></td><td>Vendor-claimed; no independent evidence</td><td>Avoid until evidence appears</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>Scope honesty:</strong> the testing and QA tiers come from
+  published research; product and operations tiers apply the same rubric by
+  author judgment.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">The dividing line</p>
+  <h2>One rule decides who leads</h2>
+  <p class="callout"><b>If a machine can check the output, AI can lead.
+  If the artifact carries judgment or authority, AI drafts — a human decides.</b></p>
+  <div class="grid">
+    <div class="card accent">
+      <h3>AI can lead <small>output a machine can check</small></h3>
+      <ul>
+        <li>Code with tests, gated by objective pass/fail filters</li>
+        <li>API contracts &amp; breaking-change checks</li>
+        <li>Test-coverage diffs against the acceptance criteria</li>
+        <li>Bug triage &amp; ready-to-work briefs</li>
+        <li>Release notes, changelogs, doc regeneration</li>
+        <li>Decision records — captured as a by-product of the work</li>
+      </ul>
+    </div>
+    <div class="card ink">
+      <h3>Humans hold the pen <small>artifacts that encode judgment or authority</small></h3>
+      <ul>
+        <li>Priorities &amp; roadmaps</li>
+        <li>Go / no-go and release sign-off</li>
+        <li>User-acceptance verdicts</li>
+        <li>Rollback criteria — when to pull a release back</li>
+        <li>Reliability targets — how much failure is acceptable</li>
+        <li>Gate policy — which checks can block a change from shipping</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">The strongest evidence</p>
+  <h2>The only measured wins, with numbers</h2>
+  <div class="grid">
+    <div class="card ok">
+      <h3>Gated test generation <span class="tag ok">[measured]</span></h3>
+      <p>Every AI-written test must build, pass repeatedly, and measurably
+      increase coverage — the share of code the tests actually exercise —
+      before a human ever sees it.</p>
+      <p class="meta">Meta, FSE 2024 · 73% of surfaced tests accepted by engineers;
+      25% of generated tests raised coverage</p>
+    </div>
+    <div class="card ok">
+      <h3>AI-boosted fuzzing <span class="tag ok">[measured]</span></h3>
+      <p>Fuzzing bombards code with generated inputs to shake out crashes and
+      security holes. LLM-written fuzz targets reached code human effort
+      never covered.</p>
+      <p class="meta">Google OSS-Fuzz · ~30% coverage gains across 300+ projects;
+      26 new vulnerabilities by late 2024, incl. a 20-year-old OpenSSL flaw</p>
+    </div>
+  </div>
+  <p class="callout"><b>The tag travels with the technique, not the stage.</b>
+  Reuse the gated pattern elsewhere — a regression test with every bug fix —
+  and the evidence comes with it. Everything else on the map is
+  <span class="tag info">[established]</span> or below.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">Where the pitch outruns the proof</p>
+  <h2>Two pitches to resist</h2>
+  <div class="grid">
+    <div class="card bad">
+      <h3>Self-healing tests <span class="tag bad">[hype]</span></h3>
+      <p>UI tests that auto-repair themselves when the app changes. The risk:
+      silently accepting the very behavior changes your tests existed to catch.
+      No independent evidence of efficacy.</p>
+    </div>
+    <div class="card bad">
+      <h3>Autonomous test agents <span class="tag bad">[hype]</span></h3>
+      <p>&ldquo;Point it at your app; it designs and runs the tests.&rdquo;
+      Full autonomy over what gets tested — with no published deployment
+      evidence behind it.</p>
+    </div>
+  </div>
+  <p class="callout"><b>The filter is the rubric:</b> these are the two loudest
+  vendor pitches in the space — ask for independent, published deployment
+  evidence. Both categories have none, which is exactly what the
+  <span class="tag bad">[hype]</span> tag means.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">Resolving the paradox</p>
+  <h2>Why more AI can mean worse delivery</h2>
+  <ol class="points">
+    <li><p><b>AI trades writing time for review time.</b>
+      Generated changes still need human verification — and on some tasks
+      the trade is net-negative.</p></li>
+    <li><p><b>The bottleneck moves to the humans.</b>
+      As change volume rises, the constraint becomes review capacity and
+      the test pipeline — not how fast code gets written.</p></li>
+  </ol>
+  <p class="lede">Neither is an argument for less AI. They're an argument
+  about where the next investment goes.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">Resolving the paradox</p>
+  <h2>Invest in the seams, not just the stages</h2>
+  <p class="lede">The seams between stages carry the extra load — they're
+  where AI-driven volume lands first:</p>
+  <div class="grid small">
+    <div class="card"><h3>Intake</h3><p>How user signal becomes
+      requirements, instead of evaporating.</p></div>
+    <div class="card"><h3>Gates</h3><p>Which checks can block a change
+      from shipping — and who decides.</p></div>
+    <div class="card"><h3>Review</h3><p>The human checkpoint AI volume
+      hits first; its latency sets your pace.</p></div>
+    <div class="card"><h3>Feedback routing</h3><p>Production learnings
+      finding their way back to discovery.</p></div>
+  </div>
+  <p class="callout"><b>One internal audit bears this out:</b> checking our own
+  AI-agent-driven workspace against this map, both high-severity gaps were
+  seams — feedback intake and gate policy — not stages.</p>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">What to do with this</p>
+  <h2>The asks</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Leadership — three decisions <small>what this deck is asking you to approve</small></h3>
+      <ul>
+        <li>Make the evidence tier the approval bar for AI tooling —
+          <span class="tag bad">[hype]</span> doesn't get budget</li>
+        <li>Fund one seam alongside codegen seats: review capacity and
+          gate policy first</li>
+        <li>Approve a gated test-generation pilot; judge it on acceptance
+          rate and coverage, the way Meta did</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Engineers — three operating rules <small>how to apply the map day to day</small></h3>
+      <ul>
+        <li>Adopt the measured patterns; pilot established ones before
+          standardizing on them</li>
+        <li>Keep a human override on anything
+          <span class="tag warn">[heuristic]</span></li>
+        <li>Ask vendors for independent evidence before trusting
+          &ldquo;self-healing&rdquo; or &ldquo;autonomous&rdquo; pitches</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">Three sentences to keep</p>
+  <div class="statement">
+    <p>Ask for the evidence tier.</p>
+    <p>If a machine can check it, AI can lead.</p>
+    <p>Fix the system before you accelerate it.</p>
+  </div>
+</section>
+
+<section class="slide backup">
+  <p class="eyebrow">Backup</p>
+  <h2>Strongest AI assist, stage by stage</h2>
+  <table>
+    <thead><tr><th>Stage</th><th>Strongest AI assist</th><th>Tier</th></tr></thead>
+    <tbody>
+      <tr><td>Discover</td><td>Synthesizing research corpora; drafting specs and acceptance scenarios</td><td><span class="tag info">[established]</span></td></tr>
+      <tr><td>Plan</td><td>Decomposing specs into tickets with dependency edges</td><td><span class="tag info">[established]</span></td></tr>
+      <tr><td>Design</td><td>Decision records drafted at the moment of deciding — near-free capture</td><td><span class="tag info">[established]</span></td></tr>
+      <tr><td>Build</td><td>Agentic coding; gated unit-test generation; AI-boosted fuzzing</td><td><span class="tag ok">[measured]</span></td></tr>
+      <tr><td>Verify</td><td>Evidence gathering; coverage diffs against acceptance criteria</td><td><span class="tag info">[established]</span></td></tr>
+      <tr><td>Release</td><td>Release notes and changelogs from commits — the most automatable artifact</td><td><span class="tag info">[established]</span></td></tr>
+      <tr><td>Operate</td><td>Telemetry analysis and anomaly triage; postmortem timelines from logs</td><td><span class="tag info">[established]</span></td></tr>
+      <tr><td>Maintain</td><td>Ticket triage, dedup, and agent-ready briefs</td><td><span class="tag info">[established]</span></td></tr>
+    </tbody>
+  </table>
+  <p class="note">Build's [measured] tier reflects its gated test-generation and
+  fuzzing techniques; agentic coding itself is [established].</p>
+</section>
+
+<section class="slide backup">
+  <p class="eyebrow">Backup</p>
+  <h2>The full graph: eight stages, feedback included</h2>
+  <figure>
+    <pre class="mermaid">
+flowchart LR
+  Di[Discover] --> Pl[Plan] --> De[Design] --> Bu[Build] --> Ve[Verify] --> Re[Release] --> Op[Operate] --> Ma[Maintain]
+  Di -. acceptance criteria become the release test .-> Ve
+  Ve -- failures --> Bu
+  Op -- rollback --> Re
+  Ma -- triaged work re-enters planning --> Pl
+  Op -- telemetry, experiments &amp; user signal --> Di
+    </pre>
+    <figcaption>Solid arrows are flow; the dotted arc is a correspondence — criteria
+    written at discovery are what verification executes, so a stale criterion silently
+    invalidates the release test. The feedback edges are where a product lives
+    after v1: a map without them describes only greenfield.</figcaption>
+  </figure>
+</section>
+
+</main>
+</body>
+</html>
