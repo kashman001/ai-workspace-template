@@ -11,28 +11,24 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-You were reached by `/clear` (probe **run 1**; record seq 5, the runbook's "#6"). Record the run,
-then roll over with `--clear` again for probe **run 2**. The human follows
-`s14-runbook.md` §2–3. Not under `session-loop.sh`.
+You were reached by `/clear` (probe **run 2**; record seq 6). Record the run,
+then do S15 for the combined result and close the item. Not under
+`session-loop.sh`. Run 1 was **FAIL** (`probes.md`).
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project clear-session-loop` (skip if
    the SessionStart hook already bound this item). If `TF_SESSION_LOOP=1` is
    set, stop and tell the user to restart with plain `claude` (runbook §0).
-2. Create `work/clear-session-loop/probes.md` with a table
-   `run | date | claude version (claude --version) | turn started without typing? (PASS/FAIL) | first tool call | evidence`
-   and record **run 1**. PASS if your first turn began with no user message;
-   FAIL if the user's first message says so (quote it as evidence).
-3. Roll over with `--clear` (not `--emit`): write the ledger block (keep only
-   the two newest blocks in `handoff.md`; archive the rest, newest on top),
-   replace this launcher for the next session (START HERE: record **run 2**, then do
-   S15 per spec §4 for the combined result and close the item — README
-   success criteria, `work/README.md` row), commit, run
-   `scripts/launch-next-session.sh clear-session-loop --clear`, and tell the
-   user to follow runbook §3.
-   If it refuses `chain_closed`, clear `.chain.closed` with jq as the previous
-   session did (backlog L91) and log it.
+2. Add **run 2** to the table in `work/clear-session-loop/probes.md`. PASS if
+   your first turn began with no user message; FAIL if the user's first
+   message says so (quote it as evidence).
+3. Do S15 per `spec.md` §4 for the combined result (run 1 FAIL + run 2):
+   both FAIL (or mixed) → document "press `/clear`, then type `go`"; both
+   PASS would be "verified" — not possible now that run 1 failed.
+4. Close the item: tick README success criteria, update the
+   `work/README.md` row, write the ledger block, then `checkpoint` (stop
+   door, not a rollover). Commit locally; do not push.
 
 ## Constraints already decided (do not re-litigate)
 
@@ -44,5 +40,5 @@ then roll over with `--clear` again for probe **run 2**. The human follows
 ## Read these first, in order
 
 1. `work/clear-session-loop/handoff.md` (top block)
-2. `work/clear-session-loop/s14-runbook.md`
-3. `work/clear-session-loop/spec.md` §4 (S14/S15) — only when doing S15
+2. `work/clear-session-loop/probes.md`
+3. `work/clear-session-loop/spec.md` §4 (S14/S15)
