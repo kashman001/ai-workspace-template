@@ -11,34 +11,27 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-You were reached by `/clear` (probe **run 2**; record seq 6). Record the run,
-then do S15 for the combined result and close the item. Not under
-`session-loop.sh`. Run 1 was **FAIL** (`probes.md`).
+**This item is finished** (README → Status). There is no next step here. Do
+not start a session on it unless the user reopens it.
 
-## First actions
+## If reopened
 
-1. `scripts/context-budget.sh register --project clear-session-loop` (skip if
-   the SessionStart hook already bound this item). If `TF_SESSION_LOOP=1` is
-   set, stop and tell the user to restart with plain `claude` (runbook §0).
-2. Add **run 2** to the table in `work/clear-session-loop/probes.md`. PASS if
-   your first turn began with no user message; FAIL if the user's first
-   message says so (quote it as evidence).
-3. Do S15 per `spec.md` §4 for the combined result (run 1 FAIL + run 2):
-   both FAIL (or mixed) → document "press `/clear`, then type `go`"; both
-   PASS would be "verified" — not possible now that run 1 failed.
-4. Close the item: tick README success criteria, update the
-   `work/README.md` row, write the ledger block, then `checkpoint` (stop
-   door, not a rollover). Commit locally; do not push.
+- The one open follow-up is backlog card **L91** (reopen a closed chain
+  without starting the supervisor) in `docs/template-workspace-backlog.html`.
+  It is template work, not this item's scope; take it in its own work item or
+  as a direct fix.
+- A future claude version may start a cleared session on its own. To check,
+  repeat the probe in `s14-runbook.md` and add rows to `probes.md`; two PASS
+  runs would reverse S15 (`spec.md` §4).
 
 ## Constraints already decided (do not re-litigate)
 
-- Scope: S13 (done), S14/S15 only; S4 retired (`decisions.md`).
+- `/clear` rollover = press `/clear`, then type `go` (2 of 2 probes FAIL,
+  claude 2.1.300). The bootstrap prompt text does not change (TADR-0003).
 - Non-Claude runtimes keep the fresh-process path.
-- Markdown is the source of truth; HTML twins are reading copies.
 - Pushing `main` is the user's call; commit locally only.
 
 ## Read these first, in order
 
-1. `work/clear-session-loop/handoff.md` (top block)
-2. `work/clear-session-loop/probes.md`
-3. `work/clear-session-loop/spec.md` §4 (S14/S15)
+1. `work/clear-session-loop/README.md` (Status)
+2. `work/clear-session-loop/handoff.md` (top block)

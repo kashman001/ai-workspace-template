@@ -450,7 +450,7 @@ if [ -n "$EMIT" ]; then
 fi
 
 if [ "$CLEAR" -eq 1 ]; then
-  note "the prompt above travels in launch.pending — NOW PRESS /clear and type nothing; the successor registers itself against this process."
+  note "the prompt above travels in launch.pending — NOW PRESS /clear, then type go (a cleared session does not start on its own); the successor registers itself against this process."
   exit 0
 fi
 

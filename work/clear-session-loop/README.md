@@ -15,6 +15,14 @@ loop — including unattended — across Claude Code, Codex, Copilot, Gemini CLI
 the VS Code chat agents, and how subagents behave across it. If the research says
 it is worth doing, it ends with a spec that feeds `/plan`.
 
+## Status
+
+**Finished (2026-10-15, s6).** Criteria 1–5 met: research and spec written with
+HTML twins, spec reviewed and cut to S4/S13/S14/S15. S13 shipped (backlog L90),
+S4 retired (`decisions.md`), S14 probed twice — both FAIL (`probes.md`) — so
+S15 took the FAIL branch: press `/clear`, then type `go` (backlog L92). Open
+follow-up: backlog L91 (reopen a closed chain without a supervisor).
+
 ## Success criteria
 
 1. `research.md` exists: covers the video, `/clear` semantics and hooks in Claude

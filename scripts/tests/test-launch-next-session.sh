@@ -338,7 +338,7 @@ assert_eq "L1e: pending.prompt is the prompt"  "$(rec .launch.pending.prompt)" "
 assert_eq "L1f: session null"                  "$(rec .session)" "null"
 assert_eq "L1g: staged null"                   "$(rec .staged)" "null"
 assert_eq "L1h: predecessor rolled_over"       "$(rec .launch.predecessor.disposition)" "rolled_over"
-assert_contains "L1i: tells the human to clear" "$out" "/clear"
+assert_contains "L1i: tells the human to clear, then type go" "$out" "PRESS /clear, then type go"
 [ ! -f "$MAIN/work/testproj/.pending-clear-seed" ] && ok "L1j: no seed file" || bad "L1j: seed file written"
 out=$(run_lns ROLLOVER_RELAUNCH=off CLAUDE_CODE_SESSION_ID=sid-me "$LNS" testproj --clear 2>&1); rc=$?
 assert_refused "L2 (a second --clear: the slot is open, I am not its owner)" "$rc" "$out" not_owner

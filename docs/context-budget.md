@@ -368,6 +368,9 @@ past), `session` empties, and:
   `launch.pending` with this process's pid and start time; the human presses
   `/clear`, the `SessionStart` hook's `register` matches the pid, binds the new
   session id to the open launch, and prints the prompt into the cleared context.
+  The human then types `go`: the prompt arrives as context only, and the
+  cleared session starts no turn until a message is typed (probed 2026-10-15,
+  claude 2.1.300).
   Choose `--clear` when the successor needs the same MCP server set (it keeps
   the login and the connected servers); choose a fresh process when it needs a
   different fragment or runtime.

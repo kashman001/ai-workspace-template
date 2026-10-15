@@ -1051,6 +1051,15 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L92</span> The <code>--clear</code> rollover told the human to type nothing, but a cleared session sits idle
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh, docs</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>launch-next-session.sh --clear</code> printed &ldquo;NOW PRESS /clear and type nothing&rdquo;, and the session-rollover skill, <code>docs/context-budget.md</code> and TADR-0009 said the same. Two attended probes on claude 2.1.300 (<code>work/clear-session-loop/probes.md</code>): the <code>SessionStart(clear)</code> hook bound the new session and seeded the prompt as context, but no turn started in 60 s until the user typed.</p>
+    <p><span class="k">Impact</span> &mdash; A human following the instruction waits on a session that never starts; the rollover stalls.</p>
+    <p><span class="k">Fix</span> &mdash; Say the keystroke is two: press <code>/clear</code>, then type <code>go</code>. Bootstrap prompt text unchanged (TADR-0003).</p>
+    <p><span class="fix">Fixed:</span> 2026-10-15. Launcher line in <code>scripts/launch-next-session.sh</code>; <code>test-launch-next-session.sh</code> L1i now expects &ldquo;PRESS /clear, then type go&rdquo; (seen red before the fix, 188/188 after); <code>skills/session-rollover/SKILL.md</code>, <code>docs/context-budget.md</code> clear bullet, and a TADR-0009 amendment. Spec <code>work/clear-session-loop/spec.md</code> S14/S15.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L90</span> Auto-compaction silently ate a session past its budget
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/hooks, context-budget.env</span></h3>
     <p><span class="k">Evidence</span> &mdash; When a Claude Code session ran past its context limit, the runtime auto-compacted it; nothing in the context-budget machinery could stop that and force a deliberate rollover instead (<code>work/clear-session-loop/spec.md</code> S13).</p>

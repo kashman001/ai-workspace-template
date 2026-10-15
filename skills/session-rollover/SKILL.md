@@ -248,8 +248,9 @@ signal only arrives when you run `record` — in an extended discussion, run
    press `/clear`. **An agent cannot press `/clear`** — say so to the user; that
    keystroke is the one manual step. On `/clear` the `SessionStart` hook's
    `register` matches the pid, binds the new session id to the open launch, and
-   prints the prompt into the cleared context: the human presses `/clear` and
-   types nothing. Keeps the login and the connected MCP servers. Refused
+   prints the prompt into the cleared context: the human presses `/clear`, then
+   types `go` — a cleared session does not start a turn on its own (probed
+   2026-10-15, claude 2.1.300). Keeps the login and the connected MCP servers. Refused
    `runtime_path_unsupported` off claude or when your registration recorded no
    pid.
 

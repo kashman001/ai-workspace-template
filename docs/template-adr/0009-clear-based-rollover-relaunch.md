@@ -17,6 +17,14 @@
 > resets with no further work. Measurement caveat: the old transcript is frozen
 > at the clear instant, so a `record` in the cleared session reads near zero
 > until its first response lands.
+
+> **Amendment (2026-10-15).** The keystroke is two, not one: press `/clear`,
+> then type `go`. The `SessionStart(clear)` hook does seed the prompt, but as
+> added context only — the cleared session starts no turn until a message is
+> typed. Two attended probes on claude 2.1.300 both sat idle for 60 s
+> (`work/clear-session-loop/probes.md`). The launcher's human-facing line says
+> so; the bootstrap prompt text is unchanged (TADR-0003).
+
 - **Supersedes:** nothing. **Extends:** TADR-0003 (automate rollover relaunch).
 - **Related:** TADR-0004 (multi-session model), TADR-0005 (session roles and
   child registry), TADR-0007 (session-number single source).
