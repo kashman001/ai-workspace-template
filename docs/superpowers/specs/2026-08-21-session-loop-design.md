@@ -649,7 +649,10 @@ never committed); the answers are folded into the tables above.
 | 3 | opencode plugin can kill its host? | **Yes — verified end-to-end** |
 | 4 | Claude/Codex VS Code `code chat -m <id>` mode? | **No** (Claude), almost certainly no (Codex) |
 
-**5. Stall-detection signal — ANSWERED 2026-08-25.** Commits are the primary
+**5. Stall-detection signal — ANSWERED 2026-08-25** *(amended 2026-10-14: an
+uncommitted content change under `work/<proj>/`, outside the bookkeeping set,
+also counts — planning sessions whose output waits for the user's word to be
+committed read as stalls otherwise; see `docs/context-budget.md`).* Commits are the primary
 signal, **counting only commits that touch something outside the rollover
 bookkeeping set**. Ticket-state transitions are a second signal for efforts that
 run under `work/<proj>/issues/`. Files-touched never counts as progress on its

@@ -484,8 +484,11 @@ not record the child as rolled over; by: staged by someone else; lifetime: a
 rollover faster than `--min-lifetime` is not work), `no_own_measurement` (the
 child never registered against the item after it started), `record_unreadable`
 / `schema_mismatch` (the record broke mid-chain), `stall` (`--stall-limit`
-consecutive hands-off sessions whose commits touched only `README.md`,
-`next-session.md`, `handoff.md` and `handoff-archive.md`), `plan_invalid` with
+consecutive hands-off sessions that changed nothing but `README.md`,
+`next-session.md`, `handoff.md` and `handoff-archive.md` — a commit elsewhere
+counts, and so does an uncommitted content change to any other non-ignored file
+under `work/<proj>/`; a session is judged by the mode it ran in, and an
+interactive one clears the count), `plan_invalid` with
 a leg (sync: the bound plan could not be re-rendered; check: it has lint
 violations — repair the plan, then restart).
 
@@ -503,7 +506,7 @@ overrides per work item, the same precedence `ROLLOVER_RELAUNCH` uses.
 | --- | --- | --- |
 | `SESSION_LOOP_MAX_SESSIONS` | 10 | chain cap |
 | `SESSION_LOOP_MIN_LIFETIME` | 60 | a first-turn spurious STOP (`staged_invalid` leg lifetime) |
-| `SESSION_LOOP_STALL_LIMIT` | 3 | a chain committing only bookkeeping (`stall`); off in interactive mode |
+| `SESSION_LOOP_STALL_LIMIT` | 3 | a chain changing only bookkeeping (`stall`); off in interactive mode |
 | `SESSION_LOOP_ALARM` | 900 | seconds between liveness checks on a running child; a tick pages only when the transcript has gone silent |
 | `SESSION_LOOP_ALARM_MAX` | 3600 | ceiling on the alarm interval, which doubles after each silent page |
 | `SESSION_LOOP_KILL_AFTER` | 14400 | seconds of transcript silence after which the child is killed (0 = off) |
