@@ -11,7 +11,7 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## >>> START HERE <<<
 
-You are session #6, reached by `/clear` (probe **run 1**). Record the run,
+You were reached by `/clear` (probe **run 1**; record seq 5, the runbook's "#6"). Record the run,
 then roll over with `--clear` again for probe **run 2**. The human follows
 `s14-runbook.md` §2–3. Not under `session-loop.sh`.
 
@@ -26,13 +26,13 @@ then roll over with `--clear` again for probe **run 2**. The human follows
    FAIL if the user's first message says so (quote it as evidence).
 3. Roll over with `--clear` (not `--emit`): write the ledger block (keep only
    the two newest blocks in `handoff.md`; archive the rest, newest on top),
-   replace this launcher for session #7 (START HERE: record **run 2**, then do
+   replace this launcher for the next session (START HERE: record **run 2**, then do
    S15 per spec §4 for the combined result and close the item — README
    success criteria, `work/README.md` row), commit, run
    `scripts/launch-next-session.sh clear-session-loop --clear`, and tell the
    user to follow runbook §3.
-   If it refuses `chain_closed`, clear `.chain.closed` with jq as session #5
-   did (backlog L91) and log it.
+   If it refuses `chain_closed`, clear `.chain.closed` with jq as the previous
+   session did (backlog L91) and log it.
 
 ## Constraints already decided (do not re-litigate)
 

@@ -6,7 +6,9 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 5 (2026-10-15): bookkeeping; chain reopened by hand; probe run 1 launched
+# Session Handoff addendum — 4 (2026-10-15): hand-started continuation; chain reopened by hand; probe run 1 launched
+
+**Numbering.** The user started this as "session #5", but #4 staged no successor, so `register` adopted seq 4 (owner dead, number kept). Hence an addendum to #4; the `/clear` successor is seq 5.
 
 **Summary.** Started by hand with plain `claude` (no `session-loop.sh`), per `s14-runbook.md`. Added backlog card L90 to the archive (S13 shipped, S4 retired; Resolved 142→143) and listed `s14-runbook.md` and `probes.md` in README "Files". Then rolled over with `--clear` for probe run 1.
 
