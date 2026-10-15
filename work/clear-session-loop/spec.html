@@ -236,444 +236,135 @@ Effort-level spec for work/clear-session-loop/ — distinct from root SPEC.md
 -->
 
 <h1
-id="spec--clear-session-loop-harden-the-attended-clear-rollover-a--headless-spike-b">Spec
-— clear-session-loop: harden the attended <code>/clear</code> rollover
-(A) + headless spike (B)</h1>
-<p>Status: draft <!-- draft | in-review | approved --> Approved-by: —
-<!-- who signed off; set when Status: approved --> Date: 2026-10-15
+id="spec--clear-session-loop-three-small-fixes-to-the-attended-clear-path">Spec
+— clear-session-loop: three small fixes to the attended
+<code>/clear</code> path</h1>
+<p>Status: in-review <!-- draft | in-review | approved --> Approved-by:
+— <!-- who signed off; set when Status: approved --> Date: 2026-10-15
 Spec-of-record: —</p>
 <p>Inputs: <code>work/clear-session-loop/research.md</code> (verdict
-PARTIAL; §7 A and B are in scope, §7 C is a non-goal, §7 D is out of
-scope) and <code>work/clear-session-loop/decisions.md</code> (2026-10-15
-note). Where the research's "Verification" section corrects an earlier
-claim, the correction is what this spec uses. Every repo claim below
-cites <code>file:line</code> as read on 2026-10-15; anything not read in
-the repo or in primary vendor docs is marked
-<strong>(unverified)</strong>.</p>
+PARTIAL) and <code>work/clear-session-loop/decisions.md</code>. The
+first draft covered all of research §7 A plus the Spike B; on review the
+user cut it to the three items below (<code>decisions.md</code>, second
+2026-10-15 note). Every repo claim cites <code>file:line</code> as read
+on 2026-10-15; anything not read in the repo or in primary vendor docs
+is marked <strong>(unverified)</strong>.</p>
 <h2 id="1-design-overview">1. Design overview</h2>
-<p>Today a Claude Code session rolls over in one of three shapes
-(<code>docs/context-budget.md:353-366</code>): a fresh process, a
-supervised <code>--emit</code> (the <code>Stop</code> hook SIGTERMs the
-session and <code>session-loop.sh</code> runs the staged command), or an
-attended <code>--clear</code> (the launcher writes the bootstrap prompt
-plus this process's pid and start time into <code>launch.pending</code>,
-<code>scripts/launch-next-session.sh:282-285,430-435</code>; the human
-presses <code>/clear</code>; the <code>SessionStart</code> hook's
-<code>register</code> matches the pid, binds the new session id to the
-open launch and prints the prompt into the cleared context,
-<code>scripts/context-budget.sh:788-795,847-850,865-877</code>).</p>
-<p>The <code>--clear</code> path works but is thinly specified: nobody
-has shown that the cleared session starts working without a typed
-message; the <code>SessionEnd</code> <code>release</code> hook runs
-inside a vendor time budget nobody measured; a session can
-<code>--clear</code> with subagents still running; the turn-end hook
-kills on <code>staged.by</code> alone; and the supervisor cannot account
-for a <code>/clear</code> that happened inside a child it is waiting
-on.</p>
-<p>This effort does five small things to the attended Claude path and
-runs one spike. It does <strong>not</strong> change how sessions are
-started on any other runtime and does <strong>not</strong> build an
-unattended <code>/clear</code> chain.</p>
+<p>A Claude Code session can already roll over in place:
+<code>launch-next-session.sh --clear</code> writes the bootstrap prompt
+plus this process's pid into <code>launch.pending</code>
+(<code>scripts/launch-next-session.sh:282-285,430-435</code>), the human
+presses <code>/clear</code>, and the <code>SessionStart</code> hook's
+<code>register</code> matches the pid, binds the new session id and
+prints the prompt into the cleared context
+(<code>scripts/context-budget.sh:788-795,847-850,865-877</code>).</p>
+<p>The research found no case for building more on <code>/clear</code>
+(no sanctioned trigger but a keypress; the gains are startup time only;
+portability is weakest there). It did find three cheap fixes that
+protect the setup we already have:</p>
 <ol type="1">
-<li><strong>Settle the "types nothing" question</strong> by probe, then
-make the skill, the launcher's instruction line and TADR-0009 say what
-is true (§8).</li>
-<li><strong>Pin the hook contracts</strong> —
-<code>SessionStart source=clear</code> output, <code>SessionEnd</code>
-time budget, turn-end owner check (§3).</li>
-<li><strong>Add the drain gate</strong> — <code>--clear</code> refuses
-while a dispatch generation is open (§5), and the skill tells the
-session what to do with background shells.</li>
-<li><strong>Let the interactive supervisor count in-process
-<code>/clear</code> hops</strong> as valid successors by reading one new
-counter from the record when the child finally exits — no polling, no
-pty, no event-driven rewrite (§6).</li>
-<li><strong>Optional <code>PreCompact</code> auto-block</strong>, opt-in
-(§7).</li>
-<li><strong>Spike B</strong>: one time-boxed headless run answering six
-yes/no questions about <code>claude -p</code> + <code>/clear</code>; it
-changes nothing in the loop (§9).</li>
+<li><strong>Owner check in the turn-end hook</strong> before it kills
+anything (§2).</li>
+<li><strong>Optional <code>PreCompact</code> hook</strong> that blocks
+auto-compaction while a work item is bound, off by default (§3).</li>
+<li><strong>Test the "types nothing" claim</strong> once and make the
+docs match (§4).</li>
 </ol>
-<h2 id="2-per-runtime-behaviour-and-fallback">2. Per-runtime behaviour
-and fallback</h2>
-<table>
-<thead>
-<tr>
-<th>Runtime</th>
-<th>Rollover shape after this effort</th>
-<th>Source</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Claude Code CLI (attended)</td>
-<td><code>--clear</code> (same process) <strong>or</strong> a fresh
-process; the session chooses by the MCP/runtime rule at
-<code>docs/context-budget.md:364-366</code></td>
-<td>this spec</td>
-</tr>
-<tr>
-<td>Claude Code CLI (supervised,
-<code>launch.mode=interactive</code>)</td>
-<td><code>--clear</code> allowed inside the child (§6)
-<strong>or</strong> <code>--emit</code></td>
-<td>this spec, S8</td>
-</tr>
-<tr>
-<td>Claude Code CLI (supervised, <code>launch.mode=handsoff</code>)</td>
-<td><code>--emit</code> only; <code>--clear</code> refused
-<code>supervised_stage_only</code></td>
-<td><code>scripts/launch-next-session.sh:195-197</code> (unchanged)</td>
-</tr>
-<tr>
-<td>Claude Code VS Code extension</td>
-<td>not designed here; the CLI <code>--clear</code> path may work in the
-panel <strong>(unverified)</strong></td>
-<td>research §5</td>
-</tr>
-<tr>
-<td>Codex, Copilot CLI, Gemini, Antigravity, OpenCode, Copilot VS
-Code</td>
-<td><strong>fresh process only.</strong> <code>--clear</code> keeps
-refusing <code>runtime_path_unsupported</code></td>
-<td><code>scripts/launch-next-session.sh:184-186</code>; test
-V2/L-series</td>
-</tr>
-</tbody>
-</table>
-<p>Fallback on Claude when any clear-only gate refuses (no pid recorded,
-open dispatch, supervisor in hands-off mode): the session runs the same
-launcher without <code>--clear</code> (fresh process) or with
-<code>--emit</code> (supervised). No new fallback path is
-introduced.</p>
+<p>Nothing changes on any runtime other than Claude Code, and nothing
+changes in <code>session-loop.sh</code> or the record schema.</p>
 <h2 id="requirements">Requirements</h2>
 <!-- Stable IDs — never renumber; strike through retired items. Tickets
      reference these as `Spec: S3`; verification docs as `Covers: S1, S3`. -->
 
-<h3 id="3-hook-contracts">3. Hook contracts</h3>
+<p>Retired on review (2026-10-15, see Non-goals): <del>S1 pin the clear
+binding</del>, <del>S2 <code>sessionTitle</code></del>, <del>S3
+<code>SessionEnd</code> timeout</del>, <del>S5
+<code>chain.clears</code></del>, <del>S6 supervised clear mode</del>,
+<del>S7 <code>dispatch_open</code> gate</del>, <del>S8
+<code>--clear</code> under a supervisor</del>, <del>S9 background-shell
+rule</del>, <del>S10–S12 supervisor verdicts</del>, <del>S16–S17 Spike
+B</del>.</p>
+<h3 id="2-turn-end-owner-check">2. Turn-end owner check</h3>
 <ul>
-<li><strong>S1 — <code>SessionStart source=clear</code> binds the
-successor (unchanged, now pinned).</strong> On a
-<code>SessionStart</code> payload whose pid walk
-(<code>scripts/context-budget.sh:683-702</code>) resolves to the
-pid/<code>pid_start</code> held in <code>launch.pending</code>
-(<code>scripts/context-budget.sh:788-795</code>), <code>register</code>
-binds the new session id with action <code>adopted</code>
-(<code>:847-850</code>), nulls <code>launch.pending</code>, keeps
-<code>seq</code> (<code>:867-871</code>) and prints the pending prompt
-once on stdout (<code>:877</code>). A payload whose <code>source</code>
-is <code>clear</code> but whose pid does not match any pending launch
-binds nothing and prints nothing. Test: payload fixture with and without
-a matching pending block; assert record fields and stdout, not
-prose.</li>
-<li><strong>S2 — <code>sessionTitle</code> on the clear binding, behind
-a probe.</strong> The hooks page lists <code>sessionTitle</code> among
-<code>SessionStart</code> outputs (research §2.2, verified against <a
-href="https://code.claude.com/docs/en/hooks">https://code.claude.com/docs/en/hooks</a>);
-whether it renames an <em>interactive</em> session after
-<code>/clear</code> is <strong>(unverified)</strong>. Probe A2 (§8)
-decides. If it applies: for the <code>pending</code> binding on runtime
-<code>claude</code> only, <code>register</code> prints the JSON form
-<code>{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"&lt;prompt&gt;","sessionTitle":"&lt;project&gt; #&lt;seq&gt;"}}</code>
-instead of the bare prompt, so the title matches what the spawn path
-sets with <code>--name "&lt;p&gt; #&lt;n&gt;"</code>
-(<code>scripts/launch-next-session.sh:397</code>). Every other runtime
-and every non-pending binding keeps plain stdout. If it does not apply:
-no change; TADR-0009's cosmetic consequence (<code>:130-132</code>)
-stays and the probe result is recorded there. Test: stdout shape per
-runtime and binding kind.</li>
-<li><strong>S3 — <code>SessionEnd</code> stays inside the vendor
-budget.</strong> <code>SessionEnd</code> hooks share a 1.5 s budget; a
-per-hook <code>timeout</code> raises it (≤ 60 s) and
-<code>CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS</code> overrides it
-(research §2.2 and Verification, hooks page + changelog 2.1.74/2.1.268).
-Our <code>release</code> runs there with no <code>timeout</code> set
-(<code>.claude/settings.json</code> → <code>SessionEnd</code>).
-Requirement: (a) measure <code>release</code> wall-clock on this machine
-ten times under <code>time</code>; (b) set <code>"timeout": 5</code> on
-the <code>SessionEnd</code> hook entry regardless, so a slow disk never
-truncates the owner's <code>ended</code> stamp; (c) document that a
-truncated <code>release</code> is harmless: <code>register</code> on the
-new id adopts a same-pid owner whether or not <code>ended</code> was
-written (<code>:847-850</code>), and a late <code>release</code> from
-the old id is a no-op for a non-owner
-(<code>scripts/context-budget.sh:1058</code>) because the
-compare-and-set keys on <code>session.session_id</code>
-(<code>:1052-1054</code>). Test: fixture asserting the settings entry
-carries <code>timeout</code>; the ordering claim is covered by the
-existing no-op path (assert <code>release</code> with a stale sid
-returns 1 and writes nothing).</li>
 <li><strong>S4 — the turn-end hook checks the current owner before any
 SIGTERM.</strong> Today <code>budget_hook_should_exit</code> fires on
 <code>.staged != null and .staged.by == $sid</code>
 (<code>scripts/hooks/context-budget-hook-lib.sh:124-134</code>) and
-<code>budget_hook_exit</code> then <code>kill -TERM $PPID</code>
+<code>budget_hook_exit</code> then runs <code>kill -TERM $PPID</code>
 (<code>:141</code>). Requirement: the predicate becomes
 <code>.staged != null and .staged.by == $sid and .session.session_id == $sid</code>.
-Why: after a <code>/clear</code> the live process carries a new session
-id while any surviving background child (changelog 2.1.72, research
-§2.1) still fires with the old one
-(<code>scripts/hooks/context-budget-hook.sh:111-113</code> routes those
-to a <code>-sidechain</code> key for <em>measurement</em> but the
-<code>end</code> branch at <code>:81-91</code> runs before that
-routing). The research did not reproduce a kill from this path; the
-check is cheap insurance and also makes the §6 design safe (a
-<code>--clear</code> under supervision never writes <code>staged</code>,
-so nothing to kill). Test: record with <code>staged.by == sid</code> but
+Why: after a <code>/clear</code> the live process has a new session id,
+while a surviving background child (changelog 2.1.72, research §2.1)
+still fires hooks with the old one.
+<code>scripts/hooks/context-budget-hook.sh:111-113</code> routes those
+to a <code>-sidechain</code> key for measurement, but the
+<code>end</code> branch at <code>:81-91</code> runs before that routing.
+The research did not reproduce a kill from this path; the check is cheap
+insurance. Test: record with <code>staged.by == sid</code> and
 <code>session.session_id != sid</code> → no signal; both equal → signal
-(existing behaviour).</li>
+(today's behaviour).</li>
 </ul>
-<h3 id="4-launch-record--session-state">4. Launch record / session
-state</h3>
-<p>Current shape:
-<code>work/clear-session-loop/session-state.json</code> (schema 1;
-blocks <code>chain</code>, <code>seq</code>, <code>launch</code>,
-<code>session</code>, <code>staged</code>; field list at
-<code>docs/context-budget.md:283-289</code>).</p>
-<ul>
-<li><strong>S5 — one new counter, <code>chain.clears</code>.</strong>
-Integer, default absent (read as 0). Written only by
-<code>register</code> on a <code>pending</code> binding
-(<code>via=pending</code>,
-<code>scripts/context-budget.sh:788-795</code>) <strong>while
-<code>chain.supervisor</code> is non-null</strong>: in the same
-compare-and-set write that fills <code>session</code>
-(<code>:865-871</code>), add <code>.chain.clears += 1</code> and
-<code>.chain.used += 1</code>. Rationale: the supervisor charges the cap
-on consume today (<code>scripts/session-loop.sh:338</code>) but is not
-awake during an in-process hop, so the measurer charges it. Attended
-(unsupervised) clears touch neither counter — nothing is capping them.
-No other block changes; <code>launch.pending</code> keeps
-<code>{pid, pid_start, prompt}</code>
-(<code>scripts/launch-next-session.sh:430-435</code>);
-<code>staged</code> is untouched by a clear (test L1g,
-<code>scripts/tests/test-launch-next-session.sh:339</code>).</li>
-<li><strong>S6 — <code>launch.mode</code> on a supervised clear is
-<code>interactive</code>.</strong> When <code>--clear</code> runs under
-a live supervisor (allowed only in interactive mode, S8), the bump
-writes <code>launch.mode = "interactive"</code> and
-<code>launch.by = "session"</code>; the successor is in the same process
-at the same keyboard, so no other mode is possible. Schema number stays
-1 — additive fields only; <code>test-doc-consistency.sh</code> pins the
-record table at <code>docs/context-budget.md:283-289</code>, which gains
-the <code>clears</code> entry.</li>
-</ul>
-<h3 id="5-drain-before---clear">5. Drain before
-<code>--clear</code></h3>
-<ul>
-<li><strong>S7 — <code>--clear</code> refuses while a dispatch
-generation is open.</strong> Gate name <code>dispatch_open</code>; exit
-<strong>4</strong> via <code>refuse</code>
-(<code>scripts/launch-next-session.sh:64</code>), message
-<code>refused reason=dispatch_open project=&lt;p&gt; open=&lt;task&gt;[,&lt;task&gt;] — checkpoint or close every open generation (scripts/fleet.sh dispatch-list --project &lt;p&gt;), then re-run</code>.
-Why exit 4 and not 3: the launcher's contract is
-<code>0 ok / 3 usage / 4 refused</code> (<code>:26-27</code>); a usage
-error (<code>die</code>, <code>:63</code>) means the command line is
-wrong, a refusal means a gate found the workspace not ready and names a
-remedy — this is the latter, like <code>launcher_unchanged</code>.
-Detection reuses <code>fleet.sh dispatch-list --project &lt;p&gt;</code>
-semantics: exit 1 iff any record's last generation has
-<code>status: "open"</code> (<code>scripts/fleet.sh:288-302</code>). The
-gate runs for <code>--clear</code> only (a fresh process or
-<code>--emit</code> orphans children just the same, but that is today's
-documented behaviour and widening it is out of scope), sits in the
-<code>--clear</code> block right after the no-pid check
-(<code>scripts/launch-next-session.sh:282-285</code>) and before
-<code>worktree_unsynced</code>, and runs under <code>--check</code> and
-<code>--dry-run</code> too, writing nothing. It is added to the gate
-table (<code>docs/context-budget.md:331-344</code>) and the pinned
-reason list (<code>:574</code>).</li>
-<li><strong>S8 — <code>--clear</code> under a live supervisor.</strong>
-Today refused <code>supervised_stage_only</code> whenever
-<code>supervised</code> returns live
-(<code>scripts/launch-next-session.sh:195-197</code>). Requirement: when
-a supervisor is live <strong>and</strong> the record's
-<code>launch.mode</code> is <code>interactive</code>,
-<code>--clear</code> proceeds (writes <code>launch.pending</code>, S6);
-in <code>handsoff</code> mode it keeps refusing
-<code>supervised_stage_only</code> with the remedy text extended: "…or,
-in an interactive chain, <code>--clear</code>". A plain launch under a
-supervisor keeps refusing in both modes (test V1).</li>
-<li><strong>S9 — background shells are the session's job, not a
-gate's.</strong> Nothing in the record tracks
-<code>run_in_background</code> shells, and they survive
-<code>/clear</code> (changelog 2.1.72). The skill's step 5 "State
-snapshot — … running processes"
-(<code>skills/session-rollover/SKILL.md:157</code>) gains one sentence:
-before <code>--clear</code>, every background shell is either listed in
-the launcher with its purpose or killed. No code.</li>
-</ul>
-<h3 id="6-interactive-supervisor-accepts-clear-hops">6. Interactive
-supervisor accepts <code>/clear</code> hops</h3>
-<p>The supervisor runs the child in the foreground and reads the verdict
-after it exits (<code>scripts/session-loop.sh:345-392</code>). A
-<code>/clear</code> inside the child does not exit it, so the research's
-wording "the press-Enter pause becomes press <code>/clear</code>" (§7 A)
-cannot be literal: at the pause (<code>:440-445</code>) the child is
-already gone. What the supervisor <em>can</em> do is accept that the
-child advanced the number more than once while it waited.</p>
-<ul>
-<li><strong>S10 — verdict arithmetic uses
-<code>chain.clears</code>.</strong> Let <code>k</code> =
-<code>chain.clears</code> after minus before the child ran (0 today).
-The verdict legs change as follows, nothing else:
-<ul>
-<li>quit legs (<code>:355-372</code>): condition
-<code>seq_after == seq + k</code> and <code>staged == null</code>; the
-<code>no_own_measurement</code> check compares <code>session.seq</code>
-to <code>seq + k</code>.</li>
-<li>staged leg (<code>:377-392</code>):
-<code>seq_after == seq + k + 1</code>;
-<code>launch.predecessor.seq == seq_after - 1</code> (the last hop's
-session) instead of <code>== seq</code>; <code>staged.by</code> must
-still equal <code>launch.predecessor.session_id</code>; lifetime,
-<code>registered_at ≥ started_iso</code> and mode checks unchanged.</li>
-<li>any other delta stays <code>staged_invalid leg=seq</code>.</li>
-<li>the <code>staged</code> verdict line gains
-<code>clears=&lt;k&gt;</code> so the chain log shows the hop count.</li>
-</ul></li>
-<li><strong>S11 — cap and stall.</strong> <code>chain.used</code>
-already includes the hops (S5), so the existing
-<code>USED -lt MAX_SESSIONS</code> check at the next consume
-(<code>:334</code>) enforces the cap one child late; document that a
-child may overshoot the cap by its own in-process hops. The stall guard
-is off in interactive mode (<code>:430-431</code>), so no change.
-<code>plan.sh sync</code>/<code>check</code> between children
-(<code>:393-428</code>, sync at <code>:401</code>) still run at child
-exit only; the cleared session runs its own plan steps per the skill
-(<code>docs/context-budget.md:438-441</code> note).</li>
-<li><strong>S12 — the pause text.</strong> Unchanged; it is correct (the
-child has exited).</li>
-</ul>
-<h3 id="7-optional-precompact-auto-block">7. Optional
+<h3 id="3-optional-precompact-auto-block">3. Optional
 <code>PreCompact</code> auto-block</h3>
 <ul>
 <li><strong>S13 — opt-in auto-compaction block.</strong> A new
 <code>PreCompact</code> hook entry in <code>.claude/settings.json</code>
-with matcher <code>auto</code>, shim
-<code>scripts/hooks/context-budget-precompact-hook.sh</code>, that exits
-2 (blocks, per the hooks page exit-code table — research Verification)
+with matcher <code>auto</code> and shim
+<code>scripts/hooks/context-budget-precompact-hook.sh</code>. It exits 2
+(blocks, per the hooks page exit-code table — research Verification)
 <strong>only</strong> when <code>CONTEXT_BLOCK_AUTOCOMPACT=1</code> is
 set in <code>context-budget.env</code> (or the work item's copy)
 <strong>and</strong> this session owns a work item
 (<code>resolve_own_project</code> succeeds). <code>manual</code> is
-never matched. Default off, because a blocked compaction on a session
-that ignored STOP is a hard wall at the model's window, not a rollover.
+never matched. Off by default: on a session that ignored STOP, a blocked
+compaction is a hard wall at the model's window, not a rollover.
 Fail-open on every error (no jq, no record, no env). Test: fixture
 payloads <code>trigger: auto|manual</code> × env on/off ×
 owner/non-owner → exit code only.</li>
 </ul>
-<h3 id="8-the-types-nothing-question">8. The "types nothing"
+<h3 id="4-the-types-nothing-question">4. The "types nothing"
 question</h3>
-<p>Claim under test: after <code>/clear</code>, the cleared TUI session
-acts on the seeded hook context without a typed message
+<p>Claim under test: after <code>/clear</code>, the cleared session acts
+on the seeded hook context without a typed message
 (<code>skills/session-rollover/SKILL.md:251-252</code>: "the human
 presses <code>/clear</code> and types nothing"; TADR-0009
 <code>docs/template-adr/0009-clear-based-rollover-relaunch.md:61</code>:
 "the human types nothing beyond the keystroke"). The docs describe
-<code>SessionStart</code> stdout only as added context;
+<code>SessionStart</code> stdout only as added context, and
 <code>initialUserMessage</code> is <code>-p</code>-only (research
 Verification). The stage-2 probe typed a message after
 <code>/clear</code>
 (<code>work/template-improvement-review/evaluation/stage2-probes.md:51</code>),
 so it does not settle it. <strong>Unverified today.</strong></p>
 <ul>
-<li><strong>S14 — Probe A1 (attended).</strong> In a real session owning
-a work item, at a genuine rollover: run <code>--clear</code>, press
+<li><strong>S14 — Probe A1 (attended).</strong> In a real session that
+owns a work item, at a genuine rollover: run <code>--clear</code>, press
 <code>/clear</code>, type nothing, wait 60 s. Record in
-<code>work/clear-session-loop/probes.md</code> (format in §9): claude
-version, whether an assistant turn started, and whether its first tool
-call read <code>work/&lt;p&gt;/next-session.md</code>. Run twice (two
-sessions) before declaring.</li>
+<code>work/clear-session-loop/probes.md</code>: claude version, date,
+whether an assistant turn started, and whether its first tool call read
+<code>work/&lt;p&gt;/next-session.md</code>. Run it in two sessions
+before declaring. The same sessions may note, for free, whether
+CLAUDE.md is re-read and whether "allow for this session" permissions
+carry over (research §2.1, both <strong>(unverified)</strong>).</li>
 <li><strong>S15 — docs follow the answer.</strong>
 <ul>
 <li>PASS → add "(verified <date>, claude <version>)" at
 <code>skills/session-rollover/SKILL.md:251-252</code>, TADR-0009
-<code>:61</code>, <code>scripts/launch-next-session.sh:453</code>
-(comment only), and <code>docs/context-budget.md:360-363</code>. No
+<code>:61</code>, and <code>docs/context-budget.md:360-363</code>. No
 code.</li>
 <li>FAIL → the launcher's human-facing line
-(<code>scripts/launch-next-session.sh:453</code>, which today says "NOW
-PRESS /clear and type nothing"; test L1i pins that it mentions
-<code>/clear</code>, <code>:341</code>) says "press <code>/clear</code>,
-then type <code>go</code>"; the skill at <code>:251-252</code> and the
-docs bullet at <code>:360-363</code> say the same; TADR-0009 gets a
-second amendment noting the keystroke is two, not one. The bootstrap
-prompt text is not changed (TADR-0003 verbatim rule,
+(<code>scripts/launch-next-session.sh:453</code>, today "NOW PRESS
+/clear and type nothing"; test L1i pins that it mentions
+<code>/clear</code>,
+<code>scripts/tests/test-launch-next-session.sh:341</code>) becomes
+"press <code>/clear</code>, then type <code>go</code>"; the skill at
+<code>:251-252</code> and the docs bullet at <code>:360-363</code> say
+the same; TADR-0009 gets an amendment noting the keystroke is two, not
+one. The bootstrap prompt text does not change (TADR-0003 verbatim rule,
 <code>docs/context-budget.md:368-371</code>).</li>
-<li>Probe A2 (<code>sessionTitle</code>, S2) runs in the same sessions:
-after the clear binding, does <code>claude agents</code>/the title bar
-show <code>&lt;p&gt; #&lt;n&gt;</code>?</li>
 </ul></li>
 </ul>
-<h3 id="9-spike-b--headless-same-process-reset">9. Spike B — headless
-same-process reset</h3>
-<ul>
-<li><strong>S16 — protocol.</strong> Time box: one session
-<strong>or</strong> two hours wall-clock, whichever comes first; the
-record is the deliverable either way.
-<ol type="1">
-<li>Scaffold a throwaway item <code>work/spike-clear/</code> (README,
-launcher, ledger block #1) so the launcher's artefact gates pass; do not
-commit it.</li>
-<li>Start
-<code>claude -p --input-format stream-json --output-format stream-json --verbose</code>
-from the workspace root so the committed hooks load.
-<strong>(unverified)</strong> that
-<code>SessionStart</code>/<code>SessionEnd</code> hooks run under
-<code>-p</code>; Q3 answers it. Add a spike-local hook logger
-(<code>SessionStart</code>, <code>SessionEnd</code>, every payload
-appended to <code>work/spike-clear/hooks.log</code>) via
-<code>--settings &lt;file&gt;</code> <strong>(unverified flag)</strong>;
-fallback is a local, uncommitted edit of
-<code>.claude/settings.json</code>.</li>
-<li>Send one user message; read <code>session_id</code> from the
-<code>system/init</code> event.</li>
-<li>From a second shell, as the owner:
-<code>CLAUDE_CODE_SESSION_ID=&lt;sid&gt; scripts/launch-next-session.sh spike-clear --clear</code>
-(the launcher resolves "me" from that variable,
-<code>scripts/context-budget.sh:444</code>; the test suite drives it the
-same way, <code>scripts/tests/test-launch-next-session.sh:57</code>).
-Expect exit 0 and <code>launch.pending</code> set; if it refuses
-<code>runtime_path_unsupported</code> (no pid), record that as Q4 FAIL
-(the pid walk at <code>:683-702</code> did not find a
-<code>claude</code> ancestor under <code>-p</code>) and continue.</li>
-<li>Send
-<code>{"type":"user","message":{"role":"user","content":"/clear"}}</code>.</li>
-<li>Send nothing for 60 s, then one more user message, then end
-stdin.</li>
-</ol></li>
-<li><strong>S17 — pass/fail record.</strong>
-<code>work/clear-session-loop/probes.md</code>, section "Spike B", one
-table row per question, columns
-<code>id | question | result (PASS/FAIL/UNOBSERVED) | evidence (stream line or hooks.log line, quoted) | claude version | date</code>:
-<ul>
-<li>Q1 a <code>conversation_reset</code> (or any reset-shaped) event
-arrives after step 5.</li>
-<li>Q2 <code>session_id</code> in hook payloads rotates between the
-<code>SessionEnd</code> and the next <code>SessionStart</code> (the §2.1
-discrepancy: SDK doc carries <code>session_id</code> +
-<code>new_conversation_id</code>).</li>
-<li>Q3 <code>SessionEnd reason=clear</code> then
-<code>SessionStart source=clear</code> fire under <code>-p</code>.</li>
-<li>Q4 <code>register</code> rebinds by pid
-(<code>register: … (adopted)</code> note in hooks.log).</li>
-<li>Q5 a <code>SessionStart</code> output
-<code>initialUserMessage</code> seeds a first turn with no user message
-(spike-local hook emitting
-<code>{"hookSpecificOutput":{"hookEventName":"SessionStart","initialUserMessage":"reply SPIKE-OK"}}</code>
-on <code>source=clear</code>): an assistant message
-<code>SPIKE-OK</code> appears before step 6's message.</li>
-<li>Q6
-<code>scripts/context-budget.sh check --session-id &lt;new sid&gt;</code>
-reads near zero right after the clear and grows after step 6. Outcome
-rule: all of Q1–Q4 PASS → a decision note proposing a separate work item
-"SDK/headless-hosted hands-off runner"; any FAIL → a decision note
-closing the headless route for now. Either way nothing in the loop
-changes from this spike.</li>
-</ul></li>
-</ul>
-<h3 id="10-failure-modes">10. Failure modes</h3>
+<h2 id="5-failure-modes">5. Failure modes</h2>
 <table>
 <thead>
 <tr>
@@ -689,28 +380,7 @@ changes from this spike.</li>
 <td>Human presses <code>/clear</code> but the cleared session sits idle
 (A1 FAIL)</td>
 <td>work stops until a message is typed</td>
-<td>S15 docs; the launcher line says to type <code>go</code></td>
-</tr>
-<tr>
-<td>F2</td>
-<td><code>SessionEnd</code> <code>release</code> truncated by the 1.5 s
-budget</td>
-<td><code>session.ended</code> missing on the old block</td>
-<td>S3: <code>register</code> adopts by pid anyway; stale
-<code>release</code> is a no-op</td>
-</tr>
-<tr>
-<td>F3</td>
-<td><code>/clear</code> with a running dispatched child</td>
-<td>child orphaned; parent cannot sweep it
-(<code>docs/context-budget.md:679-684</code>)</td>
-<td>S7 refuses <code>dispatch_open</code></td>
-</tr>
-<tr>
-<td>F4</td>
-<td><code>/clear</code> with a background shell</td>
-<td>shell keeps running unseen</td>
-<td>S9: listed or killed per the skill</td>
+<td>S15: the launcher line says to type <code>go</code></td>
 </tr>
 <tr>
 <td>F5</td>
@@ -720,233 +390,82 @@ reaches the turn-end branch</td>
 <td>S4 owner check</td>
 </tr>
 <tr>
-<td>F6</td>
-<td>Human presses <code>/clear</code> without having run
-<code>--clear</code></td>
-<td>no pending block; <code>register</code> adopts same-pid with the
-same <code>seq</code>; no prompt — a plain reset mid-session</td>
-<td>existing behaviour (<code>:847-850</code>); no change,
-documented</td>
-</tr>
-<tr>
-<td>F7</td>
-<td>Human runs <code>--clear</code> and never presses
-<code>/clear</code></td>
-<td>open launch; the next <code>register --project</code> adopts it, no
-number spent</td>
-<td>TADR-0009 amendment <code>:7-12</code>; unchanged</td>
-</tr>
-<tr>
-<td>F8</td>
-<td>Supervised interactive child clears, then quits</td>
-<td><code>seq_after == seq + k</code>, <code>staged == null</code></td>
-<td>S10 quit leg</td>
-</tr>
-<tr>
-<td>F9</td>
-<td>Supervised child clears past the cap</td>
-<td>one child overshoots</td>
-<td>S11, documented</td>
-</tr>
-<tr>
-<td>F10</td>
-<td>Record CAS fails during the clear binding (another writer)</td>
-<td>not bound; prompt not printed</td>
-<td>existing <code>scripts/context-budget.sh:878</code>; the human
-re-runs <code>register --project</code> (prints nothing: prompt lost —
-add to Open questions)</td>
-</tr>
-<tr>
 <td>F11</td>
 <td><code>PreCompact</code> block on a session that ignored STOP</td>
 <td>hard wall at the window</td>
 <td>S13 opt-in, default off</td>
 </tr>
-<tr>
-<td>F12</td>
-<td>Rewind menu re-imports the pre-clear conversation (research §1,
-§3.7)</td>
-<td>context accretion</td>
-<td>out of scope; one sentence in the skill's guardrails</td>
-</tr>
 </tbody>
 </table>
-<h3 id="11-test-strategy">11. Test strategy</h3>
-<p>Both suites exist and are self-contained: a throwaway git workspace,
-the real scripts copied in, record/exit-code/reason-code assertions
-only.</p>
+<h2 id="6-test-strategy">6. Test strategy</h2>
 <ul>
-<li><code>scripts/tests/test-launch-next-session.sh</code> (434 lines;
-<code>assert_refused</code> helper <code>:48-52</code>;
-<code>seed</code> builds the owner record with optional pid
-<code>:68-76</code>; L-series <code>:329-344</code> covers
-<code>--clear</code>). Add:
-<ul>
-<li>L3 <code>dispatch_open</code>: <code>.agent-dispatch/x.json</code>
-with last generation <code>open</code> → exit 4, reason
-<code>dispatch_open</code>, record byte-identical.</li>
-<li>L4 same with status <code>closed</code> → exit 0,
-<code>launch.pending</code> set.</li>
-<li>L5 <code>--clear</code> under a live supervisor (reuse the V-series
-<code>mk_sup</code> seeding <code>:184-190</code>) with
-<code>launch.mode=interactive</code> → exit 0, <code>launch.mode</code>
-stays <code>interactive</code>; with <code>handsoff</code> →
-<code>supervised_stage_only</code>.</li>
-<li>L6 <code>register</code> pending bind with
-<code>chain.supervisor</code> set → <code>chain.clears</code> 1,
-<code>chain.used</code> +1; without → both untouched. The pid walk needs
-the registering process to present as <code>claude</code>
-(<code>:694-696</code>); the suite's E-series binds via env, not pid
-(<code>:112-116</code>), so this case needs either a stub named
-<code>claude</code> that does not <code>exec</code> away or the E-series
-pattern extended — <strong>(unverified)</strong> which is cheaper;
-implementer's call.</li>
-<li>S4: a hook-lib unit case — record with
-<code>staged.by == sid</code>, <code>session.session_id != sid</code> →
-<code>budget_hook_should_exit</code> returns 1.</li>
-</ul></li>
-<li><code>scripts/tests/test-session-loop.sh</code> (516 lines; stub
-child at <code>:61-131</code> selected by <code>STUB_BEHAVIOUR</code>;
-<code>$TMP/bin/claude</code> wrapper <code>:43</code>; P4
-<code>:432-446</code> shows the interactive pause ends the chain with no
-tty). Add I-series:
-<ul>
-<li>I1 stub behaviour <code>clear-then-stage</code>: register, run the
-real launcher <code>--clear</code>, re-register as a new sid with
-<code>chain.clears</code> bumped (simulated binding, since the stub
-cannot <code>/clear</code>), then <code>--emit</code> and exit → verdict
-<code>staged seq=8 successor=10 clears=1</code>, <code>chain.used</code>
-2.</li>
-<li>I2 <code>clear-then-quit</code> → <code>quit_plain</code>,
-<code>chain.closed.by_seq</code> = 9.</li>
-<li>I3 seq moved by 2 with <code>chain.clears</code> unchanged →
-<code>staged_invalid leg=seq</code> (an unaccounted hop is still an
-error).</li>
-</ul></li>
-<li><code>scripts/tests/test-doc-consistency.sh</code> pins the
-reason-code list (<code>docs/context-budget.md:548-580</code>) —
-<code>dispatch_open</code> must land in both.</li>
-<li>Settings fixture: <code>.claude/settings.json</code>
-<code>SessionEnd</code> entry has <code>timeout</code>;
-<code>PreCompact</code> entry has matcher <code>auto</code> (a jq
-assertion in an existing settings test, or
-<code>test-agent-entrypoints.sh</code> if it already reads settings —
-<strong>(unverified)</strong> which test owns settings shape).</li>
-<li>Probes A1/A2 and Spike B are live runs recorded in
-<code>probes.md</code>, not tests.</li>
+<li>S4: a hook-lib unit case in the suite that already sources
+<code>context-budget-hook-lib.sh</code> — <strong>(unverified)</strong>
+which one; the implementer greps for it, or adds a case to
+<code>scripts/tests/test-launch-next-session.sh</code>. Must be seen to
+fail against today's predicate before the fix.</li>
+<li>S13: a shim test driving the four fixture combinations above, exit
+code only; plus a jq assertion that <code>.claude/settings.json</code>
+has the <code>PreCompact</code> entry with matcher <code>auto</code> (in
+whichever existing test already parses settings —
+<strong>(unverified)</strong>).</li>
+<li>S14: live runs recorded in <code>probes.md</code>, not tests. If S15
+takes the FAIL branch, update L1i's expected text.</li>
 </ul>
-<h3 id="12-docs-touched">12. Docs touched</h3>
+<h2 id="7-docs-touched">7. Docs touched</h2>
 <ul>
-<li><code>docs/context-budget.md</code>: record table
-<code>:283-289</code> (<code>chain.clears</code>); gate table
-<code>:331-344</code> (<code>dispatch_open</code>,
-<code>supervised_stage_only</code> wording); clear bullet
-<code>:360-366</code> (A1 outcome); modes paragraph
-<code>:512-516</code> (in-process hops in interactive mode);
-verbs/reason codes <code>:548-580</code>; support matrix
-<code>:796-805</code> (attended clear: verified with or without a typed
-turn); registration <code>:864-872</code> (counter bump on supervised
-clear binding).</li>
-<li><code>skills/session-rollover/SKILL.md</code>: step 5
-<code>:157</code> (background shells); step 6 code list after
-<code>:182</code> (<code>dispatch_open</code>); clear paragraph
-<code>:245-254</code> (A1 outcome, drain rule).</li>
-<li><code>docs/template-adr/0009-clear-based-rollover-relaunch.md</code>:
-second amendment block under <code>:6</code> recording A1/A2 results,
-S4, S7, S10.</li>
-<li><code>.claude/settings.json</code>: <code>SessionEnd</code>
-<code>timeout</code>; optional <code>PreCompact</code> entry.</li>
-<li><code>scripts/hooks/context-budget-adapters.conf</code>: no change
-(PreCompact is claude-only and lives in settings; say so in the file's
-header comment only if a reader would look for it there).</li>
+<li><code>scripts/hooks/context-budget-hook-lib.sh</code> (S4), new
+<code>scripts/hooks/context-budget-precompact-hook.sh</code> and
+<code>.claude/settings.json</code> (S13).</li>
+<li><code>context-budget.env</code>: commented
+<code>CONTEXT_BLOCK_AUTOCOMPACT=0</code> with a one-line note
+(S13).</li>
+<li><code>docs/context-budget.md</code>: the clear bullet
+<code>:360-366</code> (S15); a short <code>PreCompact</code> paragraph
+near the hook wiring (S13).</li>
+<li><code>skills/session-rollover/SKILL.md:251-252</code> and TADR-0009
+(S15).</li>
 <li><code>docs/template-workspace-backlog.html</code>: resolve/append
 per CONTEXT.md "Template Backlog".</li>
-<li><code>work/clear-session-loop/decisions.md</code>: the exit-code and
-counter choices (Tier 2), plus the Spike B outcome.</li>
 </ul>
 <h2 id="non-goals">Non-goals</h2>
-<p>Verbatim from research §7 C, plus scope decisions:</p>
 <ul>
-<li>pty/tmux/expect keystroke injection in <code>session-loop.sh</code>
-(works empirically, unsupported by every vendor).</li>
+<li>pty/tmux/expect keystroke injection in
+<code>session-loop.sh</code>.</li>
 <li><code>/clear</code>-based chains on Codex, Copilot, Gemini or the VS
-Code agents — they keep the fresh-process path; no <code>/clear</code>
-design for them, and no live verification of their hooks'
-<code>clear</code> sources.</li>
-<li>a supervisor rewrite to the event-driven model of research §3.3 for
-hands-off mode (polling the record, sending <code>/clear</code>).</li>
-<li>an SDK-hosted headless runner — Spike B only decides whether to
-propose one.</li>
-<li>widening the drain gate to <code>--emit</code> or plain
-launches.</li>
-<li>changing the bootstrap prompt text (TADR-0003), the record schema
-number, or the one-owner-per-item rule.</li>
-<li><strong>D (several sessions per work item)</strong> is out of scope;
-if wanted it is a separate research + spec item (record
-<code>sessions[]</code>, per-lane <code>seq</code>, node claims with CAS
-— research §6, §7 D).</li>
+Code agents — they keep the fresh-process path.</li>
+<li>An event-driven supervisor rewrite, or letting the supervisor accept
+in-process <code>/clear</code> hops (former S5, S6, S8, S10–S12).</li>
+<li>The <code>dispatch_open</code> drain gate and the background-shell
+rule (former S7, S9): the existing skill already says to checkpoint
+children before rolling over.</li>
+<li><code>sessionTitle</code> on the clear binding and the
+<code>SessionEnd</code> timeout (former S2, S3): cosmetic or already
+harmless (a stale <code>release</code> is a no-op,
+<code>scripts/context-budget.sh:1052-1058</code>).</li>
+<li>Spike B / an SDK-hosted headless runner (former S16, S17). Revisit
+only if hands-off chains move to an SDK host.</li>
+<li><strong>Several sessions per work item</strong> — a separate work
+item, <code>work/concurrent-sessions/</code>.</li>
 </ul>
-<h2 id="13-open-questions">13. Open questions</h2>
+<h2 id="8-open-questions">8. Open questions</h2>
 <ol type="1">
-<li><strong>A1 itself</strong> (§8) — the whole shape of the attended
-docs hangs on it.</li>
-<li><strong>Session-id rotation under <code>-p</code></strong> (Spike B
-Q2; research §2.1): if the id does not rotate,
-<code>hook-&lt;rt&gt;-&lt;sid&gt;.status</code> keeps the old WARN/STOP
-slot — a false STOP on the first post-clear check. Only matters if the
-headless route is pursued.</li>
-<li><strong>F10</strong>: a CAS miss on the clear binding loses the
-printed prompt; is a re-run of <code>register --project &lt;p&gt;</code>
-enough (it adopts but prints nothing, <code>:877</code> is
-pending-only)? Cheapest fix: print the prompt on <code>adopted</code>
-too when <code>launch.pending</code> was non-null at read time.</li>
-<li><strong>Is CLAUDE.md re-read on <code>/clear</code>, and do "allow
-for this session" permissions carry over?</strong> Both
-<strong>(unverified)</strong> (research §2.1); A1 sessions can observe
-both for free.</li>
-<li><strong><code>--settings &lt;file&gt;</code></strong> as the spike's
-hook-logger carrier — if the flag does not exist, the fallback is a
-local settings edit (S16 step 2).</li>
-<li><strong>Where settings-shape assertions live</strong> (§11) — pick
-the existing test that already parses
-<code>.claude/settings.json</code>, or add one.</li>
+<li><strong>A1 itself</strong> (§4) — decides which S15 branch
+lands.</li>
 </ol>
 <h2 id="verification">Verification</h2>
-<p>Drafted by a fable subagent (dispatch <code>spec</code>, gen 1,
+<p>First draft by a fable subagent (dispatch <code>spec</code>, gen 1,
 closed DONE); repo claims spot-checked by the orchestrating session on
-2026-10-15 against the files as committed at <code>3e0ac29</code>.
-Confirmed: launcher exit contract and
-<code>die</code>/<code>refuse</code> (<code>:26-27</code>,
-<code>:63-64</code>), <code>runtime_path_unsupported</code> and
-<code>supervised_stage_only</code> gates (<code>:184-186</code>,
-<code>:195-197</code>), the no-pid check (<code>:282-285</code>), the
-<code>--name</code> title (<code>:397</code>); <code>register</code>
-pending lookup, same-pid adoption and pending-only prompt print
-(<code>scripts/context-budget.sh:788-795</code>, <code>:847-850</code>,
-<code>:865-878</code>); <code>release</code> compare-and-set and
-non-owner no-op (<code>:1052-1058</code>); the hook-lib predicate and
-<code>kill -TERM $PPID</code>
-(<code>context-budget-hook-lib.sh:124-141</code>);
-<code>fleet.sh dispatch-list</code> exit-1-iff-open
-(<code>:288-302</code>); supervisor cap charge, interactive pause and
-stall-guard note (<code>session-loop.sh:334</code>, <code>:338</code>,
-<code>:430</code>, <code>:440-445</code>); skill <code>:157</code>,
-<code>:251-252</code>; TADR-0009 <code>:61</code>; the
-<code>SessionEnd</code> hook has no <code>timeout</code> and there is no
-<code>PreCompact</code> entry in <code>.claude/settings.json</code>;
-test suite sizes (434 / 516 lines); the stage-2 probe typed a message
-after <code>/clear</code> (<code>stage2-probes.md:51</code>).</p>
-<p>Corrected: the <code>launch.pending</code> write is at
-<code>launch-next-session.sh:430-435</code> (draft said
-<code>:418-419</code>); the launcher's printed instruction at
-<code>:453</code> already says "type nothing", so S15 now names that
-line in both branches.</p>
-<p>Not re-checked here: line ranges in
-<code>docs/context-budget.md</code> (§12 list) and the test-file line
-anchors in §11 — the implementer re-reads them before editing. The
-design calls in S7 (exit 4), S5/S10 (<code>chain.clears</code>), S8
-(interactive-only <code>--clear</code> under a supervisor) and S13
-(opt-in, default off) are the subagent's; they are the review's main
-questions.</p>
+2026-10-15 at <code>3e0ac29</code>. Claims kept in this version and
+confirmed then: the hook-lib predicate and <code>kill -TERM $PPID</code>
+(<code>context-budget-hook-lib.sh:124-141</code>); <code>release</code>
+compare-and-set and non-owner no-op
+(<code>context-budget.sh:1052-1058</code>); skill <code>:251-252</code>;
+TADR-0009 <code>:61</code>; the launcher's "type nothing" line
+(<code>:453</code>); no <code>PreCompact</code> entry in
+<code>.claude/settings.json</code>; the stage-2 probe typed a message
+after <code>/clear</code> (<code>stage2-probes.md:51</code>). Line
+anchors in <code>docs/context-budget.md</code> were not re-checked; the
+implementer re-reads them before editing.</p>
 </body>
 </html>

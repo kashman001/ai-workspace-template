@@ -4,3 +4,10 @@
 **Rejected:** Treat PARTIAL as no-go and stop — it would drop low-risk fixes the research found (turn-end owner check, drain-before-clear, SessionEnd budget, the "types nothing" doc question); Spec the full unattended clear chain — rests on unsupported keystroke injection.
 **Blast radius:** `work/clear-session-loop/spec.md` scope; later plan for this item.
 **Promote?:** no
+
+## 2026-10-15 — Spec cut to three small fixes on review
+**Chose:** Keep only S4 (turn-end owner check), S13 (opt-in `PreCompact` auto-block, default off) and S14/S15 (probe the "types nothing" claim and fix the docs to match). Retire S1–S3, S5–S12, S16–S17.
+**Because:** The user reviewed the research and saw little benefit beyond the existing loop. The retired items only make the attended Claude-only `/clear` path a little smoother (supervisor hop counting, drain gate, session title) or explore an SDK host nobody plans to build (Spike B). The three kept items protect the loop we already run, whether or not anyone uses `/clear`.
+**Rejected:** Keep the full A+B spec and review its six design calls (more parts to maintain for a path that only works attended on one runtime); Close the item as no-go with the fixes parked as backlog cards (the fixes are about one session, so doing them now is cheaper than carrying them).
+**Blast radius:** `work/clear-session-loop/spec.md`; later plan for this item.
+**Promote?:** no
