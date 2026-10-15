@@ -4,6 +4,26 @@ Spec: `spec.md` S14/S15. Two runs are needed. Each run is one real rollover
 that **you** started (not `session-loop.sh`), because the launcher refuses
 `--clear` under a supervisor (`supervised_stage_only`).
 
+## Quick start
+
+1. `/exit` the current session; if `session-loop.sh` pauses, **Ctrl-C**.
+2. Start session #5 without the loop:
+   ```sh
+   cd ~/Developer/experiments/ai-workspace-template
+   claude
+   ```
+3. Paste:
+   ```
+   Work item clear-session-loop - rollover session #5. Read `work/clear-session-loop/next-session.md` and continue from **First actions**.
+   ```
+4. When the launcher prints `NOW PRESS /clear`: type `/clear`, Enter, then
+   **type nothing** for 60 s. PASS = it starts on its own (first reads
+   `next-session.md`); FAIL = idle → type
+   `go — probe run 1: FAIL, idle for 60 s`.
+5. At session #6's rollover, repeat step 4 (write `probe run 2`).
+
+Details for each step follow.
+
 ## 0. Leave the supervised session (once)
 
 1. In the current session type `/exit`.
