@@ -1051,6 +1051,15 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L90</span> Auto-compaction silently ate a session past its budget
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/hooks, context-budget.env</span></h3>
+    <p><span class="k">Evidence</span> &mdash; When a Claude Code session ran past its context limit, the runtime auto-compacted it; nothing in the context-budget machinery could stop that and force a deliberate rollover instead (<code>work/clear-session-loop/spec.md</code> S13).</p>
+    <p><span class="k">Impact</span> &mdash; A summarised context replaced the pruned launcher/ledger handoff, losing state the rollover would have written to disk.</p>
+    <p><span class="k">Fix</span> &mdash; An opt-in <code>PreCompact</code> hook that blocks <em>auto</em> compaction (manual <code>/compact</code> still passes), knob <code>CONTEXT_BLOCK_AUTOCOMPACT</code>, default <code>0</code>.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-15, <code>05cf58b</code>. <code>scripts/hooks/context-budget-precompact-hook.sh</code>; knob in <code>context-budget.env</code>, documented in <code>docs/context-budget.md</code>; <code>scripts/tests/test-precompact-hook.sh</code> seen red before the hook, 11/11 after. Same spec&rsquo;s S4 (Stop-hook owner check) was retired, not shipped: <code>--emit</code> nulls <code>.session</code> in the same write as <code>.staged</code>, so the check broke six assertions in <code>test-vendor-budget-hooks.sh</code> (reasoning in <code>work/clear-session-loop/decisions.md</code>).</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L89</span> No way to see every work item&rsquo;s plans at once
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/plan.sh</span></h3>
     <p><span class="k">Evidence</span> &mdash; <code>plan.sh status</code> reads one plan of one work item; with several items carrying plans, answering &ldquo;where does each stand?&rdquo; meant one <code>status --project X --plan Y</code> per plan, after listing <code>work/*/plans/</code> by hand.</p>

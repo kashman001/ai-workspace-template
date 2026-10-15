@@ -41,3 +41,5 @@ it is worth doing, it ends with a spec that feeds `/plan`.
 - `research.md` — research findings (to be written).
 - `spec.md` — the spec, only if research recommends go (to be written).
 - `research.html`, `spec.html` — rendered reading copies of the above; regenerate after edits.
+- `s14-runbook.md` — human steps for the S14 probe (two `/clear` rollovers).
+- `probes.md` — S14 probe results, one row per run (created by session #6).

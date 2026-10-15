@@ -69,14 +69,14 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-12 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-15 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">142</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">143</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -162,6 +162,14 @@
     <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
     <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
     <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L91</span> No way to reopen a closed chain without starting the supervisor
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/launch-next-session.sh, scripts/session-loop.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; Quitting a session under <code>session-loop.sh</code> sets <code>.chain.closed</code> (<code>quit_plain</code>); <code>launch-next-session.sh</code> then refuses every launch with <code>chain_closed</code>, naming <code>session-loop.sh --reopen</code> as the fix. That reopen also starts a supervisor, and <code>--clear</code> refuses under one (<code>supervised_stage_only</code>). Hit 2026-10-15 in the clear-session-loop S14 probe; worked around by hand-writing <code>.chain.closed = null</code>.</p>
+    <p><span class="k">Impact</span> &mdash; Moving a work item from a supervised chain to a hand-started <code>--clear</code> rollover dead-ends; the only way through is an unsanctioned state edit.</p>
+    <p><span class="k">Fix</span> &mdash; A reopen that does not start the supervisor (e.g. <code>launch-next-session.sh --reopen</code>, or a <code>session-loop.sh --reopen-only</code> that exits after the write), with a test; name it in the <code>chain_closed</code> refusal.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
