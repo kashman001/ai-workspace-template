@@ -203,6 +203,13 @@ zone. Raise here as models improve. **Keep STOP below the runtime's auto-compact
 trigger** (150K < Claude Code's ~200K): if compaction fires first, the
 deliberate rollover never gets its chance.
 
+Claude Code can also enforce this: set `CONTEXT_BLOCK_AUTOCOMPACT=1` (global
+or per-item `context-budget.env`, or the environment) and the `PreCompact`
+hook (`scripts/hooks/context-budget-precompact-hook.sh`, matcher `auto`)
+blocks auto-compaction while the session owns a work item, telling it to roll
+over. Off by default — a session that ignores STOP then hits the model's
+window instead of compacting. Manual `/compact` is never blocked.
+
 One shared pair for all sessions and roles — per-role thresholds were
 considered and ruled YAGNI (2026-08-06): thresholds encode where the model
 degrades, roles differ only in the *response* to crossing. Revisit only if
@@ -775,7 +782,7 @@ wiring below needs no edit.
 
 | Runtime | Wiring file → shim | Check hook / envelope | Turn-end hook / action | Friction gate |
 | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`; never copy the `hooks` block there or each hook fires twice) → `context-budget-claude-hook.sh`, `context-budget-stop-hook.sh claude` | `PostToolUse`: stderr text + `exit 2` | `Stop`: SIGTERM the agent once it staged | none — `SessionStart` runs `register` and `SessionEnd` runs `release` mechanically; both need the payload's `transcript_path` and do nothing without it; every command self-resolves the repo root when `$CLAUDE_PROJECT_DIR` is empty |
+| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`; never copy the `hooks` block there or each hook fires twice) → `context-budget-claude-hook.sh`, `context-budget-stop-hook.sh claude` | `PostToolUse`: stderr text + `exit 2` | `Stop`: SIGTERM the agent once it staged | none — `SessionStart` runs `register` and `SessionEnd` runs `release` mechanically; opt-in `PreCompact` (`auto`) → `context-budget-precompact-hook.sh`; both need the payload's `transcript_path` and do nothing without it; every command self-resolves the repo root when `$CLAUDE_PROJECT_DIR` is empty |
 | Codex | `.codex/config.toml` → `context-budget-codex-hook.sh` (`SessionStart` registers from the payload's `session_id` + `transcript_path`; `UserPromptSubmit` re-registers a missing record), `context-budget-stop-hook.sh codex` | `UserPromptSubmit`: `{hookSpecificOutput:{hookEventName,additionalContext}}` | `Stop`: SIGTERM | hash-based hook trust (see "Hook trust" below): an interactive run prompts once per repo; editing the hook command re-prompts; `codex exec` never prompts, so CI passes `--dangerously-bypass-hook-trust`. Untrusted hooks are skipped silently (no registration, no measurement), so the agent-side `register` stays the fallback |
 | Gemini CLI | `.gemini/settings.json` → `context-budget-gemini-hook.sh` | `BeforeAgent`: JSON-only stdout, `{}` when silent | none — chains unsupported, attended rollover only | measures the workspace `.gemini/telemetry.log`; a successor's first-turn check can read the predecessor's last entry (accepted: gemini chains are human-launched) |
 | opencode | `.opencode/opencode.json` `plugin` array → `.opencode/plugins/context-budget.js` → `context-budget-opencode-hook.sh` | `chat.message`: the plugin pushes a message part | `session.idle`: the dispatcher prints `exit`, the plugin self-kills | plugins are not auto-discovered — list it in `opencode.json`; the sqlite read has no size-estimate fallback |

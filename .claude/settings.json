@@ -33,6 +33,17 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/scripts/context-budget.sh\" ] || { d=\"$PWD\"; while [ ! -f \"$d/scripts/context-budget.sh\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; }; h=\"$d/scripts/hooks/context-budget-precompact-hook.sh\"; [ -x \"$h\" ] || exit 0; exec \"$h\""
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "*",

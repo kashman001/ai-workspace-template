@@ -11,3 +11,10 @@
 **Rejected:** Keep the full A+B spec and review its six design calls (more parts to maintain for a path that only works attended on one runtime); Close the item as no-go with the fixes parked as backlog cards (the fixes are about one session, so doing them now is cheaper than carrying them).
 **Blast radius:** `work/clear-session-loop/spec.md`; later plan for this item.
 **Promote?:** no
+
+## 2026-10-15 — S4 (turn-end owner check) retired during implementation
+**Chose:** Do not add `.session.session_id == $sid` to `budget_hook_should_exit`; leave the turn-end predicate as it is.
+**Because:** `launch-next-session.sh --emit` empties `session` in the same write that creates `staged`, so the added clause is false at every supervised exit. Applying it failed six existing assertions in `test-vendor-budget-hooks.sh` (X4a–c, X5a, K1f, opencode fixture). The hazard it guarded is not real: the hook signals `$PPID`, which after `/clear` is the same process that staged the successor.
+**Rejected:** Check `.launch.predecessor.session_id == $sid` instead (guards nothing real; another clause to keep in sync with the launcher).
+**Blast radius:** `scripts/hooks/context-budget-hook-lib.sh` unchanged; spec S4 struck.
+**Promote?:** no

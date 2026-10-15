@@ -5,8 +5,8 @@ Effort-level spec for work/clear-session-loop/ — distinct from root SPEC.md
 
 # Spec — clear-session-loop: three small fixes to the attended `/clear` path
 
-Status: in-review         <!-- draft | in-review | approved -->
-Approved-by: —           <!-- who signed off; set when Status: approved -->
+Status: approved          <!-- draft | in-review | approved -->
+Approved-by: user (2026-10-15, session 4)         <!-- who signed off; set when Status: approved -->
 Date: 2026-10-15
 Spec-of-record: —
 
@@ -31,7 +31,7 @@ trigger but a keypress; the gains are startup time only; portability is
 weakest there). It did find three cheap fixes that protect the setup we
 already have:
 
-1. **Owner check in the turn-end hook** before it kills anything (§2).
+1. ~~**Owner check in the turn-end hook**~~ — retired during implementation (§2).
 2. **Optional `PreCompact` hook** that blocks auto-compaction while a work
    item is bound, off by default (§3).
 3. **Test the "types nothing" claim** once and make the docs match (§4).
@@ -52,7 +52,15 @@ verdicts~~, ~~S16–S17 Spike B~~.
 
 ### 2. Turn-end owner check
 
-- **S4 — the turn-end hook checks the current owner before any SIGTERM.**
+**Retired 2026-10-15 during implementation** (`decisions.md`): `--emit` sets
+`.session = null` in the same write that creates `staged`
+(`scripts/launch-next-session.sh:427-433`), so this predicate is false at every
+supervised exit; trying it failed X4a–c, X5a, K1f and the opencode fixture in
+`scripts/tests/test-vendor-budget-hooks.sh`. The hazard is not real either: the
+hook kills `$PPID`, which after `/clear` is the same process whose earlier
+identity staged the successor.
+
+- ~~**S4 — the turn-end hook checks the current owner before any SIGTERM.**~~
   Today `budget_hook_should_exit` fires on `.staged != null and .staged.by == $sid`
   (`scripts/hooks/context-budget-hook-lib.sh:124-134`) and `budget_hook_exit`
   then runs `kill -TERM $PPID` (`:141`). Requirement: the predicate becomes
@@ -117,7 +125,7 @@ not settle it. **Unverified today.**
 | # | Failure | Effect | Handled by |
 | --- | --- | --- | --- |
 | F1 | Human presses `/clear` but the cleared session sits idle (A1 FAIL) | work stops until a message is typed | S15: the launcher line says to type `go` |
-| F5 | Sidechain hook firing after `/clear` with the old sid reaches the turn-end branch | SIGTERM to the live process | S4 owner check |
+| F5 | Sidechain hook firing after `/clear` with the old sid reaches the turn-end branch | SIGTERM to the same process that staged — intended | no change (S4 retired) |
 | F11 | `PreCompact` block on a session that ignored STOP | hard wall at the window | S13 opt-in, default off |
 
 ## 6. Test strategy
