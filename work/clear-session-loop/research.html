@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.12.1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Clear Session Loop — Research</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      color: light-dark(#1a1a1a, #fdfdfd);
+      background-color: #fdfdfd;
+      background-color: light-dark(#fdfdfd, #1a1a1a);
+      color-scheme: light dark;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        color-scheme: light only;
+      }
+      html, body, pre, code {
+        background-color: transparent;
+      }
+      body, a, a:visited, blockquote {
+        color: black;
+      }
+      pre, code {
+        padding: 0;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a, a:visited {
+      color: inherit;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid;
+      border-color: #e6e6e6;
+      border-color: light-dark(#e6e6e6, #4c4c4c);
+      color: #606060;
+      color: light-dark(#606060, #b6b6b6);
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid currentColor;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+    }
+    th {
+      border-top: 1px solid currentColor;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <style>
+    :root{
+      --bg:#0f1222; --panel:#171a2e; --panel-2:#1d2138; --ink:#e7e9f3; --muted:#a3a8c3;
+      --line:#2b3052; --accent:#7c83ff; --accent-2:#22d3ee; --green:#34d399; --amber:#fbbf24;
+      --code:#0b0e1a; --radius:14px; --maxw:980px;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+      --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0 auto;max-width:var(--maxw);padding:0 22px 90px;
+      background:linear-gradient(180deg,#0c0f1d,#0f1222 260px);color:var(--ink);
+      font-family:var(--sans);line-height:1.65;font-size:16px}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    h1{font-size:38px;line-height:1.12;letter-spacing:-.02em;margin:48px 0 14px}
+    h1:first-of-type{margin-top:40px}
+    h2{font-size:25px;margin:46px 0 12px;letter-spacing:-.01em;scroll-margin-top:18px;
+      padding-bottom:7px;border-bottom:1px solid var(--line)}
+    h3{font-size:18px;margin:28px 0 8px}
+    h4{font-size:15px;margin:20px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    p{max-width:76ch}
+    ul,ol{padding-left:24px;max-width:76ch}
+    li{margin:5px 0}
+    strong{color:#fff}
+    pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+      overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;color:#d7dcff}
+    code{font-family:var(--mono);font-size:.92em;background:#20243f;padding:1px 6px;border-radius:6px;color:#cfd4ff}
+    pre code{background:none;padding:0;color:inherit;font-size:13.5px}
+    table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14.5px}
+    th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+    th{background:var(--panel-2);font-weight:600}
+    td code,th code{white-space:nowrap}
+    blockquote{border-left:4px solid var(--accent);background:var(--panel);
+      border-radius:0 12px 12px 0;padding:10px 18px;margin:18px 0;color:var(--ink)}
+    blockquote p{margin:6px 0}
+    hr{border:none;border-top:1px solid var(--line);margin:42px 0}
+    /* The Markdown's own "## Contents" list — render as a navigable card. */
+    #contents + ul{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+      list-style:none;padding:16px 22px;margin:14px 0 10px;column-gap:32px}
+    #contents + ul li{margin:5px 0}
+    #contents + ul a{color:var(--muted)}
+    #contents + ul a:hover{color:var(--accent)}
+    .src-banner{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;
+      padding:11px 15px;margin:26px 0 6px;line-height:1.5}
+    .src-banner a{color:var(--accent-2)}
+  </style>
+</head>
+<body>
+<h1
+id="research--can-a-clear-style-reset-drive-the-session-loop">Research —
+can a <code>/clear</code>-style reset drive the session loop?</h1>
+<p>Work item <code>clear-session-loop</code>, 2026-10-15. Drafted by a
+research subagent (fable), then verified and corrected by the
+orchestrating session — see <strong>Verification</strong> at the end;
+corrections are marked <em>[verified: …]</em> inline. Repo claims cite
+<code>path:line</code> at commit <code>5183247</code>; external claims
+cite URLs. Anything not confirmed from a primary source is marked
+<strong>unverified</strong>. Runtime behaviour was researched from docs
+and from probes already on disk, not by live-running other CLIs.</p>
+<p><strong>Verdict in one line: PARTIAL.</strong> Harden the attended
+Claude <code>--clear</code> path and run one headless spike; do not
+build an unattended <code>/clear</code> chain on the interactive CLIs;
+running several sessions in one work item at once is a separate change
+that <code>/clear</code> neither helps nor blocks (§6, §7).</p>
+<h2 id="glossary-loop-terms-used-below">Glossary (loop terms used
+below)</h2>
+<ul>
+<li><strong>Session</strong> — one agent conversation with one context
+window. In Claude Code it has a session id and a transcript file
+(<code>~/.claude/projects/&lt;cwd-slug&gt;/&lt;id&gt;.jsonl</code>,
+<code>docs/context-budget.md:701</code>).</li>
+<li><strong>Work item</strong> — a <code>work/&lt;item&gt;/</code>
+directory with a launcher, a ledger and a record.</li>
+<li><strong>Record</strong> —
+<code>work/&lt;item&gt;/session-state.json</code>: <code>seq</code>
+(session number), <code>launch</code>, <code>session</code> (the owner),
+<code>staged</code>, <code>chain</code>
+(<code>docs/context-budget.md:274-294</code>).</li>
+<li><strong>Owner</strong> — the one session the record's
+<code>session</code> block names; alive while its pid runs with the
+recorded start time (<code>docs/context-budget.md:373-379</code>).</li>
+<li><strong>Launcher</strong> — <code>next-session.md</code>,
+forward-only, REPLACED at each rollover
+(<code>docs/work-directory-conventions.md:12-27</code>).</li>
+<li><strong>Ledger</strong> — <code>handoff.md</code>, append-only,
+newest block on top; the block heading carries the session number
+(<code>docs/work-directory-conventions.md:70-73</code>).</li>
+<li><strong>Rollover</strong> — the dying session writes ledger +
+launcher, then runs the launcher script, which advances <code>seq</code>
+and either launches, stages (<code>--emit</code>) or seeds a
+<code>/clear</code> (<code>--clear</code>)
+(<code>docs/context-budget.md:317-366</code>).</li>
+<li><strong>Supervisor / chain</strong> —
+<code>scripts/session-loop.sh</code>: runs one session after another in
+the foreground, reads a verdict from the record after each child exits
+(<code>docs/context-budget.md:410-480</code>).</li>
+<li><strong>WARN / STOP</strong> — 120K / 150K tokens
+(<code>context-budget.env</code>,
+<code>docs/context-budget.md:192-200</code>). WARN asks (under
+<code>manual</code>), STOP goes.</li>
+<li><strong>Hands-off / interactive</strong> — <code>--loop-mode</code>:
+hands-off chains run without a person; interactive waits for Enter
+between sessions (<code>docs/context-budget.md:512-516</code>).</li>
+<li><strong>Dispatch record</strong> —
+<code>work/&lt;item&gt;/.agent-dispatch/&lt;task&gt;.json</code> +
+report file: how a parent tracks a long-running child across its own
+rollover (<code>docs/context-budget.md:630-684</code>).</li>
+<li><strong>Clear path (today)</strong> —
+<code>launch-next-session.sh --clear</code>: claude-only, attended;
+writes the prompt + this pid into <code>launch.pending</code>; the human
+presses <code>/clear</code>; the <code>SessionStart</code> hook's
+<code>register</code> matches the pid and prints the prompt into the
+cleared context (<code>skills/session-rollover/SKILL.md:245-254</code>,
+<code>scripts/launch-next-session.sh:279-285,422-423,452-455</code>).</li>
+</ul>
+<hr />
+<h2 id="1-the-video">1. The video</h2>
+<p><strong>Source.</strong> "Don't Use /compact Until You See This $1.22
+Test", DIY Smart Code, uploaded 2026-10-12, 11:47, <a
+href="https://www.youtube.com/watch?v=3AOhAS7vGqU">https://www.youtube.com/watch?v=3AOhAS7vGqU</a>
+(auto-captions <code>en-orig</code>; the channel's description lists its
+own sources: <code>code.claude.com/docs/en/costs</code>,
+<code>.../context-window</code>, <code>.../prompt-caching</code>,
+<code>.../checkpointing</code>). It is a practitioner's measurement
+video, not a primary source; every number below is the presenter's
+single run on a Max plan and is <strong>unverified</strong> beyond
+that.</p>
+<p><strong>What it shows.</strong></p>
+<ol type="1">
+<li>Claude Code resends the whole conversation with every request: an
+"ok" 15 minutes into a session sent 306K tokens versus 27K in a fresh
+session; the cost did not scale the same way because ~95% of the tokens
+were prompt-cache reads.</li>
+<li>A fresh session already carries ~27K tokens before the first prompt
+(tool definitions ~16K, system prompt, skills list, CLAUDE.md,
+auto-memory). MCP tools cost nothing until used.</li>
+<li><code>/compact</code> on the 306K session took 32 s and left ~5K.
+What comes back from disk: system prompt, root CLAUDE.md, auto-memory,
+up to five recent files (large ones as a path only). What is lost: rules
+given only in chat, path-scoped rules, subfolder CLAUDE.md files — they
+live in the conversation and get summarised. A planted rule survived in
+the presenter's run.</li>
+<li><code>/clear</code> costs nothing at the moment of clearing; the
+next message pays the same ~27K startup load as a brand-new session.
+<code>/clear &lt;name&gt;</code> names the old session on the way out;
+<code>/resume</code> still finds it; and — against the help-center claim
+that <code>/clear</code> cannot be undone — the rewind menu (Esc Esc)
+showed a "previous session" entry that brought 284K tokens of messages
+back, until the process quits.</li>
+<li><strong>Compact vs handoff file, same trap:</strong> from one point
+in a session carrying a planted rule and a dead end, three branches
+(plain <code>/compact</code>; write a handoff file → <code>/clear</code>
+→ fresh session reads it; <code>/compact</code> with a focus line) all
+finished the task, kept the rule and avoided the dead end. The handoff
+route cost about a quarter less ($0.37 vs $0.49), mostly because writing
+the file ($0.22) was cheaper than compacting ($0.33) — but writing the
+file was itself two requests that each resent the whole 300K
+session.</li>
+<li>A cold-cache compact (session idle 66 min) cost 3.7× the warm one
+($1.22 vs $0.33). The verdict: when you reset matters more than which
+reset; do it before stepping away.</li>
+<li>Smaller levers: "summarize from here" in the rewind menu (partial
+compaction); subagents keep noisy work out of the main window;
+<code>/btw</code> side questions stay out of history; hooks that filter
+tool output; a status line with the context percentage;
+<code>/context</code> itself costs ~1.2K per run.</li>
+<li>A CLAUDE.md edit applied mid-session on 2.1.296 (the docs say it
+waits for clear/compact/restart).</li>
+</ol>
+<p><strong>What applies here.</strong> The video's recommended technique
+— <em>write a handoff file, <code>/clear</code>, continue from the
+file</em> — is exactly this workspace's rollover (ledger + launcher on
+disk, then a fresh context that reads them; TADR-0003 rejected
+conversation-as-carrier handoffs,
+<code>docs/template-adr/0009-clear-based-rollover-relaunch.md:48-52</code>).
+Three points sharpen our design:</p>
+<ul>
+<li><strong><code>/clear</code> and a fresh process cost the same at the
+next prompt</strong> (both pay the startup load), so the case for
+<code>/clear</code> is not tokens; it is process continuity (login, MCP
+connections, speed), which is also what TADR-0009 argued
+(<code>docs/template-adr/0009-...md:30-40</code>).</li>
+<li><strong>The rollover itself is the expensive step</strong> and it is
+cheaper warm than cold. Our rule "wrap up at WARN, not STOP"
+(<code>skills/session-rollover/SKILL.md:316</code>) and "write ahead at
+every pause" (<code>:43-46</code>) are the same lesson; a chain should
+never let a session go idle past the cache TTL before rolling.</li>
+<li><strong>"Previous session" in the rewind menu is a trap for an
+unattended loop</strong>: a human could pull 284K tokens back into a
+cleared process. Not a concern hands-off (nobody presses Esc Esc), but a
+note for the attended clear path.</li>
+</ul>
+<hr />
+<h2 id="2-clear-in-claude-code">2. <code>/clear</code> in Claude
+Code</h2>
+<p><em>(Filled from the Claude Code docs helper — see the section's own
+citations. Everything not cited to code.claude.com, platform.claude.com
+or the CHANGELOG is <strong>unverified</strong>.)</em></p>
+<p><strong>What this repo already knows, from its own probe</strong>
+(<code>work/template-improvement-review/evaluation/stage2-probes.md:47-85</code>,
+<code>claude</code> 2.1.272, 2026-09-15): <code>/clear</code>
+<strong>rotates</strong> the session — a new session id and a new
+transcript file; the hooks fire <code>SessionEnd</code> with
+<code>reason: "clear"</code> on the old id and then
+<code>SessionStart</code> with <code>source: "clear"</code> on the new
+id (<code>:59-62</code>); the old JSONL is frozen at the clear instant
+(<code>:67</code>); the post-clear turn was billed as a fresh context of
+the same size (<code>:75-76</code>); the TUI's own help line reads
+"Start a new session with empty context; previous session stays on disk
+(resumable with /resume)" (<code>:55</code>). The probe also notes that
+transcripts are not written at all when
+<code>CLAUDE_CODE_CHILD_SESSION</code> is inherited (nested launches)
+unless <code>CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1</code> is set
+(<code>:83-85</code>). Our own <code>register</code> already consumes
+that rotation: the same pid with a new session id binds as
+<code>adopted</code> (<code>scripts/context-budget.sh:847-850</code>,
+<code>docs/context-budget.md:385</code>).</p>
+<p><strong>And a fact the probe itself proves about triggering:</strong>
+that probe drove <code>/clear</code> with an <code>expect</code> script
+(<code>spawn claude</code>, send <code>/clear⏎</code>,
+<code>stage2-probes.md:49-51</code>). So "an agent cannot press
+<code>/clear</code>" (<code>skills/session-rollover/SKILL.md:248</code>,
+TADR-0009 <code>:96-97</code>) is precisely true of the agent's
+<em>own</em> tool shell (no handle on its TTY) and precisely false of a
+process that owns the pty — which <code>session-loop.sh</code> is ("owns
+the terminal", <code>docs/context-budget.md:412-413</code>).</p>
+<h3 id="21-what-survives-and-what-resets">2.1 What survives and what
+resets</h3>
+<p>Sources: the commands page (<a
+href="https://code.claude.com/docs/en/commands">https://code.claude.com/docs/en/commands</a>),
+sessions page (<a
+href="https://code.claude.com/docs/en/sessions">https://code.claude.com/docs/en/sessions</a>),
+hooks page (<a
+href="https://code.claude.com/docs/en/hooks">https://code.claude.com/docs/en/hooks</a>),
+checkpointing (<a
+href="https://code.claude.com/docs/en/checkpointing">https://code.claude.com/docs/en/checkpointing</a>),
+CLI reference (<a
+href="https://code.claude.com/docs/en/cli-reference">https://code.claude.com/docs/en/cli-reference</a>),
+Agent SDK TypeScript reference (<a
+href="https://code.claude.com/docs/en/agent-sdk/typescript">https://code.claude.com/docs/en/agent-sdk/typescript</a>),
+and the raw changelog (<a
+href="https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md">https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md</a>,
+cited by version — it carries no dates).</p>
+<table>
+<thead>
+<tr>
+<th>Thing</th>
+<th>On <code>/clear</code></th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conversation / context</td>
+<td>Reset: "Start a new conversation with empty context." Aliases
+<code>/reset</code>, <code>/new</code>; <code>/clear &lt;name&gt;</code>
+names the old session.</td>
+<td>commands page, <code>/clear [name]</code> row</td>
+</tr>
+<tr>
+<td>Previous conversation</td>
+<td>Saved; <code>/resume</code> finds it; in the <em>same process</em>
+the rewind menu has a "previous session" entry (what the video
+showed).</td>
+<td>sessions page → "Manage context within a session"; checkpointing →
+"Rewind past a cleared conversation"; changelog 2.1.191</td>
+</tr>
+<tr>
+<td>OS process, pid</td>
+<td>Survive — implied by "in the same Claude Code process" (rewind
+entry); not stated as "pid". Confirmed empirically by our probe (same
+<code>expect</code>-spawned process,
+<code>stage2-probes.md:49-62</code>).</td>
+<td>sessions page</td>
+</tr>
+<tr>
+<td>MCP servers, plugins, connectors</td>
+<td>Retained. Changelog 2.1.136 fixed them "silently disappearing after
+<code>/clear</code>" (VS Code, JetBrains, SDK). Caches are cleared
+(2.1.63 skills cache, 2.1.69 session caches).</td>
+<td>changelog</td>
+</tr>
+<tr>
+<td>Background bash tasks and background agents</td>
+<td><strong>Survive.</strong> Changelog 2.1.72: "Fixed
+<code>/clear</code> killing background agent/bash tasks — only
+foreground tasks are now cleared."</td>
+<td>changelog</td>
+</tr>
+<tr>
+<td>Hooks, settings</td>
+<td>Loaded hooks keep running (SessionEnd/SessionStart fire);
+<code>CLAUDE_ENV_FILE</code> variables are re-applied after
+<code>/clear</code> (2.1.136). Whether CLAUDE.md is re-read:
+<strong>unverified</strong> (the commands page only says
+<code>/clear</code> keeps "project memory"). The video observed a
+CLAUDE.md edit applied mid-session without any reset on 2.1.296 (§1,
+unverified).</td>
+<td>changelog; commands page</td>
+</tr>
+<tr>
+<td>Session id, transcript file</td>
+<td><strong>New id, new JSONL</strong> — our probe
+(<code>stage2-probes.md:59-69</code>). The docs do not state it; the
+SDK's <code>conversation_reset</code> message says an empty transcript
+is mounted under <code>new_conversation_id</code> while
+<code>session_id</code> is still carried — see the discrepancy note
+below.</td>
+<td>probe; SDK TS reference →
+<code>SDKConversationResetMessage</code></td>
+</tr>
+<tr>
+<td><code>--name</code> / <code>/rename</code> title</td>
+<td>Kept across <code>/clear</code> (2.1.111, 2.1.243 fixes).</td>
+<td>changelog; sessions page</td>
+</tr>
+<tr>
+<td>Permissions ("allow for this session"), cwd, auto-memory</td>
+<td><strong>Unverified</strong> for <code>/clear</code>; the sessions
+page documents carry-over only for <code>/branch</code>.</td>
+<td>sessions page</td>
+</tr>
+<tr>
+<td>Cost counter, subagent spawn budget</td>
+<td>Reset (2.1.211, 2.1.212).</td>
+<td>changelog</td>
+</tr>
+<tr>
+<td><code>--continue</code> / <code>--resume</code> afterwards</td>
+<td>2.1.277 mentions "sessions continued after <code>/clear</code>
+(restart, <code>--continue</code>, <code>--resume</code>)" —
+<code>--continue</code> lands on the post-clear conversation;
+<code>--resume &lt;old id&gt;</code> reaches the pre-clear one. Inferred
+from changelog wording; <strong>unverified</strong> routing.</td>
+<td>changelog</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Discrepancy to settle on first live use:</strong> the TUI
+probe shows a <em>new <code>session_id</code></em> in the hook payloads
+after <code>/clear</code> (<code>stage2-probes.md:59-62</code>), while
+the SDK doc describes <code>conversation_reset</code> as "replaced
+without ending the session" with a <code>new_conversation_id</code> and
+the same <code>session_id</code> (SDK TS reference — <em>[verified: the
+<code>SDKConversationResetMessage</code> type carries both
+<code>session_id</code> and <code>new_conversation_id</code>;
+<code>trigger</code> may be
+<code>clear | plan_mode_exit | fresh_session | onboarding</code>]</em>).
+Either the SDK's <code>session_id</code> is the SDK's own handle and
+hooks still see a rotation, or SDK and TUI differ. Our binding logic
+tolerates both (pid match → <code>adopted</code>,
+<code>scripts/context-budget.sh:847-850</code>), but the registry and
+escalation state are keyed by session id, so a <em>non-rotating</em> id
+would keep the old WARN/STOP escalation slot
+(<code>hook-&lt;rt&gt;-&lt;sid&gt;.status</code>) and the old transcript
+path — a false STOP on the first post-clear check. Spec item: verify on
+the surface actually used.</p>
+<h3 id="22-hooks-that-fire">2.2 Hooks that fire</h3>
+<ul>
+<li><strong><code>SessionStart</code></strong> with <code>source</code>
+∈ <code>startup | resume | clear | compact | fork</code> (hooks page →
+"Matcher patterns", "SessionStart input"; <code>fork</code> since
+2.1.214). Common input fields: <code>session_id</code>,
+<code>transcript_path</code>, <code>cwd</code>,
+<code>hook_event_name</code>, <code>permission_mode</code>, plus
+<code>source</code>, optional <code>model</code>,
+<code>session_title</code>; resume/fork add <code>context_tokens</code>,
+<code>prompt_cache_likely_expired</code> and friends. Output can add
+context: <code>hookSpecificOutput.additionalContext</code>, plain stdout
+on exit 0, and also <strong><code>initialUserMessage</code></strong>,
+<code>sessionTitle</code>, <code>watchPaths</code>,
+<code>reloadSkills</code> (hooks page → "Add context for Claude";
+<code>reloadSkills</code>/<code>sessionTitle</code> since 2.1.152). No
+blocking or decision control.
+<ul>
+<li><strong><code>initialUserMessage</code> does not help the
+interactive path.</strong> <em>[verified: hooks page, SessionStart
+decision-control table — "String used as the first user message of the
+session, in non-interactive mode with the <code>-p</code> flag. It
+becomes the first turn even if you pass no prompt."]</em> It is
+documented for <code>-p</code> only, so it cannot make the TUI start
+working after <code>/clear</code>. Today the clear path prints the
+bootstrap prompt as hook stdout
+(<code>scripts/context-budget.sh:877</code>), which lands as
+<em>context</em>, not as a user turn. <strong>Open question:</strong>
+does the cleared TUI session act on that context with no typed message?
+<code>skills/session-rollover/SKILL.md:251-252</code> and TADR-0009
+(<code>docs/template-adr/0009-clear-based-rollover-relaunch.md:61</code>)
+both say "the human types nothing beyond the keystroke", but the docs
+describe hook stdout only as added context, and the stage-2 probe typed
+a message after <code>/clear</code> (<code>stage2-probes.md:51</code>),
+so it does not settle it. <strong>Unverified — check on the first real
+<code>--clear</code> use.</strong> If a turn is needed, the attended
+path is "<code>/clear</code>, then type <code>go</code>", and the docs
+should say so. <code>initialUserMessage</code> <em>does</em> matter for
+the headless spike (§7 B): in <code>-p</code> mode a SessionStart hook
+can supply the first turn.</li>
+</ul></li>
+<li><strong><code>SessionEnd</code></strong> fires on
+<code>/clear</code> with <code>reason: "clear"</code>; reasons:
+<code>clear | resume | logout | prompt_input_exit | other</code> (hooks
+page → "SessionEnd"; matches our probe <code>:60</code>).
+<strong>SessionEnd hooks share a 1.5 s budget</strong>; a longer
+per-hook <code>timeout</code> raises it (up to 60 s), and
+<code>CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS</code> overrides it
+explicitly <em>[verified: hooks page; changelog 2.1.74, 2.1.268]</em>.
+Our <code>release</code> runs there (<code>.claude/settings.json</code>
+SessionEnd) — it must stay well under 1.5 s or be made idempotent with
+<code>register</code>'s rebind, which it is (<code>release</code> is a
+no-op for a non-owner,
+<code>scripts/context-budget.sh:1058</code>).</li>
+<li><strong><code>PreCompact</code></strong> (2.1.105): matchers
+<code>manual | auto</code> (auto includes idle compaction); input
+<code>trigger</code>, <code>custom_instructions</code>; <strong>exit 2
+or <code>{"decision":"block"}</code> blocks compaction.</strong>
+<strong><code>PostCompact</code></strong> (2.1.76):
+<code>trigger</code>, <code>compact_summary</code>; no control. These
+are the only hooks with any say over a context reset, and only in the
+blocking direction. For the loop this is directly useful: a
+<code>PreCompact</code> hook that blocks <code>auto</code> while a work
+item is bound would guarantee "deliberate rollover beats
+auto-compaction" (<code>docs/context-budget.md:201-204</code> only
+relies on 150K &lt; ~200K today).</li>
+<li><strong>Nothing in any hook's output can trigger a
+<code>/clear</code> or a compaction</strong> (hooks page, full text grep
+by the helper; changelog likewise).</li>
+</ul>
+<h3 id="23-can-anything-but-a-human-keypress-trigger-it">2.3 Can
+anything but a human keypress trigger it?</h3>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Status</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Typed <code>/clear</code> in the TUI</td>
+<td>The documented way. "A command is only recognized at the start of
+your message." Model-emitted text is not a user message — an agent
+cannot clear itself by emitting <code>/clear</code>
+(<strong>unverified</strong>, but no mechanism exists for it).</td>
+<td>commands page</td>
+</tr>
+<tr>
+<td>Keybinding</td>
+<td>None. <code>chat:clearInput</code> (Ctrl+L) and
+<code>chat:clearScreen</code> (Cmd+K) preserve the conversation; the
+double-press <code>/clear</code> shortcut was removed in 2.1.238; no
+<code>clear conversation</code> action in the keybindings list.</td>
+<td><a
+href="https://code.claude.com/docs/en/keybindings">https://code.claude.com/docs/en/keybindings</a>;
+changelog</td>
+</tr>
+<tr>
+<td>Hook output / exit code</td>
+<td>None (2.2).</td>
+<td>hooks page</td>
+</tr>
+<tr>
+<td>Plugin / mod</td>
+<td><strong>Unverified</strong>: the mods surface
+(<code>prompt.change</code> hook, 2.1.296 area) concerns prompt-box text
+only; nothing documented clears the conversation.</td>
+<td>changelog</td>
+</tr>
+<tr>
+<td><strong>Agent SDK <code>query()</code> with <code>/clear</code> as
+the prompt</strong></td>
+<td><strong>Documented.</strong> "In a <code>query()</code> call, only
+<code>/clear</code> and its aliases produce this message" —
+<code>SDKConversationResetMessage</code> with
+<code>new_conversation_id</code>; the conversation is "replaced without
+ending the session" (CLI ≥ 2.1.203; new fields ≥ 2.1.281).
+<code>Query</code> methods (<code>interrupt</code>,
+<code>setModel</code>, <code>reinitialize</code>, <code>close</code>, …)
+include no clear; <code>close()</code> ends the process. The sessions
+page's "start empty" advice is "a new <code>query()</code> call without
+<code>resume</code>" — whether that reuses the subprocess is
+<strong>unverified</strong>.</td>
+<td>SDK TS reference; sessions page</td>
+</tr>
+<tr>
+<td><code>claude -p --input-format stream-json</code> with a
+<code>/clear</code> user message</td>
+<td><strong>Unverified</strong> (no control message documented on the
+streaming page; the SDK route above runs the same CLI underneath, so it
+may work). The one cheap experiment worth running.</td>
+<td><a
+href="https://code.claude.com/docs/en/agent-sdk/streaming-vs-single-mode">https://code.claude.com/docs/en/agent-sdk/streaming-vs-single-mode</a></td>
+</tr>
+<tr>
+<td><code>claude -p --continue</code> / <code>--resume</code> /
+<code>--fork-session</code> / <code>--session-id</code></td>
+<td>All start a <strong>new process</strong>;
+<code>--fork-session</code> mints a new id on resume;
+<code>-p</code>/SDK sessions are excluded from <code>--continue</code>
+unless <code>-p --continue</code>. That is today's fresh-process path,
+not a same-process reset.</td>
+<td><a
+href="https://code.claude.com/docs/en/headless">https://code.claude.com/docs/en/headless</a>;
+CLI reference</td>
+</tr>
+<tr>
+<td><code>/compact [instructions]</code>, `--autocompact &lt;auto</td>
+<td>tokens&gt;`</td>
+<td>A compaction, not a clear; TADR-0003/the skill reject compaction as
+the rollover mechanism
+(<code>skills/session-rollover/SKILL.md:340-341</code>).</td>
+</tr>
+<tr>
+<td>Keystroke injection (tmux <code>send-keys</code>,
+<code>expect</code>, <code>osascript</code>)</td>
+<td><strong>Works empirically</strong> (our own probe drove it with
+<code>expect</code>, <code>stage2-probes.md:49-51</code>) and is
+<strong>unsupported by every vendor</strong> (helper's search of all
+command/hook/headless pages for the five runtimes).</td>
+<td>probe</td>
+</tr>
+<tr>
+<td>Remote Control clients</td>
+<td><code>/clear</code> resets propagate to Remote Control clients
+(2.1.224) — a reset is <em>observable</em> remotely; whether it can be
+<em>issued</em> from a remote client is
+<strong>unverified</strong>.</td>
+<td>changelog</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Also relevant for a loop:</strong> 2.1.286 fixed
+<code>/clear</code> typed inside a background agent's transcript acting
+on the main conversation (a dialog now guards it); 2.1.84 added an
+idle-return nudge suggesting <code>/clear</code> after 75+ minutes — an
+attended session left idle will be <em>invited</em> to clear, which an
+unattended chain never sees.</p>
+<p><strong>Bottom line for §7:</strong> inside the interactive CLI, the
+only triggers are a human or a pty-owning driver. The only
+<em>documented</em> programmatic same-process reset is the Agent SDK's
+<code>/clear</code>-prompt → <code>conversation_reset</code>, which
+means the session is hosted by an SDK program (headless), not by the TUI
+the supervisor runs today.</p>
+<hr />
+<h2 id="3-our-loop-part-by-part--what-a-clear-based-rollover-changes">3.
+Our loop, part by part — what a <code>/clear</code>-based rollover
+changes</h2>
+<p>The loop today, in one line: the owner session works → WARN/STOP
+arrives in-band (<code>PostToolUse</code> hook,
+<code>scripts/hooks/context-budget-adapters.conf</code> claude row) →
+the session writes ledger + launcher → runs the launcher script →
+<strong>supervised:</strong> <code>--emit</code> stages the successor
+command, the <code>Stop</code> hook SIGTERMs the session at the turn
+boundary, the supervisor reads the verdict and <code>eval</code>s the
+staged command in the foreground
+(<code>docs/context-budget.md:449-487</code>);
+<strong>attended:</strong> <code>--clear</code> (claude, human keypress)
+or a plain launch (fresh process, any runtime)
+(<code>skills/session-rollover/SKILL.md:212-216</code>).</p>
+<p>A <code>/clear</code>-based loop would keep every artefact and gate
+and replace one thing: <em>the process boundary between sessions</em>.
+The next session is the same OS process with a new session id. Component
+by component:</p>
+<h3 id="31-scriptscontext-budgetsh--register--record--bind">3.1
+<code>scripts/context-budget.sh</code> — register / record / bind</h3>
+<ul>
+<li><strong>Already works across <code>/clear</code>.</strong>
+<code>register</code> runs from the <code>SessionStart</code> hook on
+every start, resume and clear (<code>.claude/settings.json</code>
+SessionStart; <code>docs/context-budget.md:869-872</code>).
+<code>bind_work_item</code> matches <code>launch.pending.pid</code> +
+<code>pid_start</code> against this process
+(<code>scripts/context-budget.sh:788-795</code>), binds the new session
+id to the open launch, nulls <code>launch.pending</code> and prints the
+pending prompt on stdout — which Claude Code adds to the cleared context
+(<code>:812-817,865-868,877</code>). No change needed for the binding
+itself.</li>
+<li><strong>Measurement is correct after the rotation</strong> because
+the new transcript is the new artifact (<code>register</code> writes the
+registry record from the payload's <code>transcript_path</code>,
+<code>docs/context-budget.md:834-846</code>). Caveat already on record:
+a <code>record</code> right after <code>/clear</code> reads near zero
+until the first response lands
+(<code>docs/template-adr/0009-...md:17-19</code>).</li>
+<li><strong>One change:</strong> today a <code>/clear</code> binding is
+an <em>attended</em> outcome. Under a chain, <code>register</code> would
+need to tell the supervisor "the successor is live" — it already does,
+implicitly: the record's <code>session</code> block is refilled with the
+new session id and <code>seq</code> unchanged from the bump. The
+supervisor just has to read it (3.3).</li>
+<li><strong><code>release</code> on
+<code>SessionEnd(reason=clear)</code></strong> ends the old owner's
+block before the new <code>register</code> fills it
+(<code>.claude/settings.json</code> SessionEnd;
+<code>scripts/context-budget.sh:1046-1058</code>). Ordering is what the
+stage-2 probe observed (end, then start, same timestamp,
+<code>stage2-probes.md:60-61</code>). A race here is a theoretical risk:
+<code>release</code> is a no-op for a non-owner (<code>:1058</code>), so
+if <code>register</code> ran first, the late <code>release</code> would
+not clobber it — safe either way.</li>
+</ul>
+<h3
+id="32-scriptslaunch-next-sessionsh----clear---emit-the-launch-record-the-pending-prompt">3.2
+<code>scripts/launch-next-session.sh</code> — <code>--clear</code>,
+<code>--emit</code>, the launch record, the pending prompt</h3>
+<ul>
+<li><code>--clear</code> exists and is tested
+(<code>scripts/tests/test-launch-next-session.sh:330-343</code>). It
+refuses off claude (<code>runtime_path_unsupported</code>,
+<code>scripts/launch-next-session.sh:184-186</code>), refuses when the
+owner has no pid (<code>:282-285</code>), <strong>refuses while a
+supervisor is live</strong> (<code>supervised_stage_only</code>,
+<code>:195-197</code>; test V2 <code>:192-193</code>), and cannot be
+combined with <code>--emit</code> (<code>:89</code>).</li>
+<li><strong>What changes:</strong> a supervised clear-based rollover
+needs a third shape — <em>stage a clear</em>: write
+<code>launch.pending</code> (pid, start, prompt) <strong>and</strong>
+mark <code>staged</code> so the supervisor and the <code>Stop</code>
+hook know a rollover was performed. Today <code>staged</code> carries
+<code>successor</code>, <code>command</code>, <code>by</code>
+(<code>docs/context-budget.md:287</code>); a clear-stage would carry
+<code>command: null</code> or <code>kind: clear</code>. The gate table
+(<code>docs/context-budget.md:331-344</code>) and the reason-code list
+pinned by <code>test-doc-consistency.sh</code> (<code>:548-557</code>)
+both change.</li>
+<li><strong>The bootstrap prompt stays verbatim</strong> (TADR-0003;
+<code>docs/context-budget.md:368-371</code>); it already travels in
+<code>launch.pending.prompt</code>.</li>
+<li><strong>Loss accepted by TADR-0009 stays:</strong> a
+<code>/clear</code> inherits the dying session's launch flags — model,
+permission mode, MCP fragment, <code>--name</code> — so any rollover
+that must change them still spawns
+(<code>docs/template-adr/0009-...md:66-71</code>). The session title
+also keeps the pre-rollover number (<code>:130-132</code>);
+cosmetic.</li>
+</ul>
+<h3 id="33-scriptssession-loopsh--supervisor-verdicts-chain">3.3
+<code>scripts/session-loop.sh</code> — supervisor, verdicts, chain</h3>
+<p>This is where the real change is. The supervisor's whole model is
+<em>process = session</em>: it <code>eval</code>s the staged command in
+the foreground, waits for it to exit, then reads the verdict from the
+record (<code>docs/context-budget.md:449-466</code>;
+<code>scripts/session-loop.sh:338-392</code>). The verdict
+<code>staged</code> requires: <code>seq</code> moved by exactly one,
+<code>launch.predecessor</code> names the child as
+<code>rolled_over</code>, <code>staged.by</code> is the child's session
+id, lifetime ≥ <code>--min-lifetime</code> (<code>:377-392</code>).
+<code>quit_*</code> is "child exited with nothing staged"
+(<code>:355-372</code>). The watchdog identifies the child by
+<code>session.pid</code> and ages <code>session.artifact</code>
+(<code>docs/context-budget.md:502-510</code>).</p>
+<p>Under <code>/clear</code> the child never exits between sessions,
+so:</p>
+<ul>
+<li><strong>The loop body becomes event-driven on the record, not on
+<code>wait</code>.</strong> The supervisor must poll (or
+<code>fswatch</code>) the record for the transition "<code>seq</code>
+advanced + <code>launch.pending</code> set" (rollover requested) and
+"<code>launch.pending</code> null + <code>session.session_id</code> ≠
+predecessor" (successor bound). Every verdict (<code>staged</code>,
+<code>quit_*</code>, <code>cap</code>, <code>plan_closed</code>,
+<code>stall</code>, <code>staged_invalid</code> legs) has to be
+re-expressed on those transitions.
+<code>cap</code>/<code>chain.used</code> is charged on consume today
+(<code>scripts/session-loop.sh:338</code>); it would be charged on each
+rebind.</li>
+<li><strong>The trigger belongs to the supervisor.</strong> The dying
+session cannot press <code>/clear</code> from a tool shell. The
+supervisor can, <em>if</em> it runs the child under a pty it controls
+(<code>expect</code>, <code>script</code>, or a <code>tmux</code> pane)
+and sends <code>/clear⏎</code> when it sees <code>launch.pending</code>
+— the same mechanism the stage-2 probe used. That is a new dependency
+(<code>expect</code> ships on macOS; <code>tmux</code> does not) and a
+new failure class: typing into a TUI that may be mid-render,
+mid-permission-prompt or mid-tool-call. Mitigation: only send after the
+<code>Stop</code> hook has fired for the staging turn (today that hook
+SIGTERMs; it would instead write a "turn ended" mark, 3.5).</li>
+<li><strong>Does the cleared session start working without a human
+turn?</strong> The seeded prompt arrives as <code>SessionStart</code>
+hook output in the context
+(<code>docs/context-budget.md:362-363</code>). Whether Claude Code then
+<em>runs a turn</em> on hook context alone, or waits for a user message,
+is load-bearing and is answered in §2. If it waits, the supervisor must
+also send the one-line bootstrap prompt + Enter after
+<code>/clear</code> — trivial with a pty, impossible without one. Either
+way this is the question that decides whether an unattended clear-chain
+exists at all.</li>
+<li><strong>Liveness and <code>quit</code>:</strong> a process that
+exits still ends the chain (<code>quit_plain</code>); the record's
+<code>session.ended.door</code> still distinguishes
+<code>quit_stop</code>. Unchanged.</li>
+<li><strong><code>plan.sh sync</code>/<code>check</code> between
+children</strong> (<code>docs/context-budget.md:438-441</code>) would
+run on the rollover-requested transition instead of after exit.</li>
+<li><strong>Logout classification</strong>
+(<code>child_logged_out</code>,
+<code>docs/context-budget.md:469-470</code>) becomes rarer — the whole
+motivation (TADR-0009 <code>:32-36</code>) — but the transcript-tail
+check still works on the new file.</li>
+</ul>
+<p>Net: a rewrite of the supervisor's iteration loop and verdict reader
+(about <code>scripts/session-loop.sh:300-430</code>), plus a pty-driver
+layer, with the record schema gaining a staged-clear shape. The gates
+and the handoff artefacts do not move.</p>
+<h3 id="34-scriptssession-loop-notifysh">3.4
+<code>scripts/session-loop-notify.sh</code></h3>
+<p>Unchanged: it is a message sink
+(<code>scripts/session-loop-notify.sh:1-17</code>). New page tokens
+(e.g. <code>clear_sent</code>, <code>clear_unbound</code> —
+<code>/clear</code> sent but no rebind within N seconds) would be new
+strings, nothing more.</p>
+<h3 id="35-scriptshooks--dispatcher-adapters-claude-wiring">3.5
+<code>scripts/hooks/</code> — dispatcher, adapters, Claude wiring</h3>
+<ul>
+<li>The claude row: check on <code>PostToolUse</code> (stderr + exit 2),
+turn-end <code>Stop:sigterm</code>, register by config
+(<code>scripts/hooks/context-budget-adapters.conf</code> claude row).
+<code>budget_hook_exit</code> SIGTERMs <code>$PPID</code> when
+<code>staged.by</code> is this session under
+<code>TF_SESSION_LOOP=1</code>
+(<code>scripts/hooks/context-budget-hook-lib.sh</code> →
+<code>budget_hook_exit</code>, the <code>kill -TERM "$PPID"</code>
+line).</li>
+<li><strong>What changes:</strong> for a staged <em>clear</em>, the
+<code>Stop</code> hook must <strong>not</strong> kill the process (the
+process is the successor). It would instead record "staging turn ended"
+in the record (a timestamp on <code>staged</code>) so the supervisor
+knows the TUI is idle and may send <code>/clear</code>. The adapter
+table gains an action (<code>sigterm|mark</code>), the lib a second
+predicate. Escalation state is keyed per session id
+(<code>hook-&lt;runtime&gt;-&lt;sid&gt;.status</code>,
+<code>docs/context-budget.md:767-770</code>), so the new session id gets
+a fresh WARN/STOP budget automatically — correct.</li>
+<li><code>SessionStart</code>/<code>SessionEnd</code> wiring needs no
+change (3.1). <code>stop_hook_active</code> re-entrancy guard
+(<code>docs/context-budget.md:795-796</code>) applies as today.</li>
+<li><strong>Known open hazard that a clear-chain inherits
+unchanged:</strong> the WARN push can be swallowed when a busy child
+wins the throttle race (backlog L32, resolved in the archive per
+<code>docs/template-workspace-backlog-archive.html:1689</code>; the
+finding is in <code>docs/template-workspace-backlog.html:240</code>).
+Neutral.</li>
+</ul>
+<h3 id="36-scriptsfleetsh-and-dispatch-records">3.6
+<code>scripts/fleet.sh</code> and dispatch records</h3>
+<p>See §4. The records are keyed to the parent's session id
+(<code>fleet.sh dispatch-open … --agent-id</code>,
+<code>docs/context-budget.md:659-684</code>); a <code>/clear</code>
+changes the parent's session id exactly as a fresh process does, so the
+"successor parent cannot resume the predecessor's children" rule
+(<code>:679-684</code>) holds unchanged.</p>
+<h3 id="37-launcher--ledger-write-rules">3.7 Launcher / ledger write
+rules</h3>
+<p>Unchanged. The launcher is still REPLACED and the ledger still gets
+one block per session number
+(<code>docs/work-directory-conventions.md:12-27,70-73</code>);
+<code>launcher_unchanged</code>, <code>ledger_shape</code> and
+<code>ledger_seq_mismatch</code> gates run the same
+(<code>docs/context-budget.md:342-344</code>). The <code>/clear</code>
+path's one discipline difference: the dying session must write both
+files <em>before</em> <code>--clear</code>, exactly as before
+<code>--emit</code> — already the skill's step order
+(<code>skills/session-rollover/SKILL.md:132-182</code>). The rewind-menu
+hazard (§1) is the only new way a cleared <em>attended</em> session
+could re-import history; a hands-off chain has no keyboard.</p>
+<h3 id="38-plan-frontier-scriptsplansh">3.8 Plan frontier
+(<code>scripts/plan.sh</code>)</h3>
+<p>Unchanged. <code>start</code> stamps the session number on the node
+(<code>scripts/plan.sh:520-522</code>), <code>done</code> needs
+<code>doing</code>, <code>frontier</code> derives from node files
+(<code>:420</code>); the number comes from the record's <code>seq</code>
+(<code>:313-320</code>), which the launcher advances identically for a
+clear. The supervisor's between-children
+<code>sync</code>/<code>check</code>/<code>plan_closed</code>/hitl-interactive
+logic (<code>docs/context-budget.md:431-447</code>) moves to the rebind
+transition (3.3). The split-at-rollover procedure
+(<code>skills/session-rollover/SKILL.md:99-130</code>) is identical.</p>
+<h3 id="39-hands-off-vs-interactive">3.9 Hands-off vs interactive</h3>
+<ul>
+<li><strong>Interactive</strong> (a person at the keyboard) is where
+<code>--clear</code> already lives and works
+(<code>skills/session-rollover/SKILL.md:245-254</code>). Under a
+supervisor in interactive mode, the supervisor waits for Enter between
+sessions (<code>docs/context-budget.md:512-516</code>); with a
+clear-chain, "press Enter" could become "press <code>/clear</code>" —
+but then the human is the trigger and the supervisor only watches, which
+is today's attended path with a watchdog. Cheap and safe.</li>
+<li><strong>Hands-off</strong> is the hard case: no keyboard, so the
+supervisor needs the pty driver (3.3) or a programmatic reset (§2). This
+is the whole question of the work item.</li>
+</ul>
+<h3 id="310-runtime-session-identity-findings--reused-not-redone">3.10
+Runtime-session-identity findings — reused, not redone</h3>
+<p><code>work/runtime-session-identity/findings.md</code> settles the
+per-runtime identity facts a clear-chain depends on: Codex and Copilot
+CLI export a session id to the agent shell and fire a session-start hook
+with <code>session_id</code>/<code>sessionId</code> + transcript
+(<code>:11-12</code>); Gemini CLI exports no id var — only hooks get
+<code>GEMINI_SESSION_ID</code> (<code>:11</code>); Antigravity has no
+SessionStart at all, only <code>PreInvocation</code> (<code>:12</code>);
+newest-file discovery is wrong whenever two sessions are live
+(<code>:16-18</code>); Copilot in VS Code now runs on the CLI runtime
+(<code>:27-31</code>); the Claude VS Code extension pre-spawns phantom
+sessions (<code>:33-34</code>, handled by <code>prune_phantoms</code>,
+<code>docs/context-budget.md:856-863</code>). The consequence for §5: a
+clear-equivalent on another runtime is only usable by the loop if, after
+the reset, the new session id reaches a hook or the agent shell — Codex
+and Copilot CLI yes (if their reset fires their session-start hook, §5),
+Gemini hook-only, Antigravity by its first
+<code>PreInvocation</code>.</p>
+<hr />
+<h2 id="4-subagents">4. Subagents</h2>
+<p><strong>Effect of <code>/clear</code> on running background agents,
+workflows and shells.</strong> The Claude Code facts are in §2. From
+this repo's side:</p>
+<ul>
+<li>A subagent's transcript lives under the <em>parent's</em> session
+directory
+(<code>&lt;parent-artifact-dir&gt;/&lt;parent-uuid&gt;/subagents/agent-*.jsonl</code>,
+<code>docs/context-budget.md:613-617</code>), and <code>children</code>
+sweeps by parent session id (<code>scripts/fleet.sh</code>
+<code>cmd_children</code>, <code>:136-155</code>). After
+<code>/clear</code> the parent has a new session id and a new directory,
+so a sweep from the cleared session finds <strong>none</strong> of the
+predecessor's children; they are the dead parent's, exactly as after a
+fresh process. The <code>.agent-dispatch</code> records are the recovery
+path (<code>docs/context-budget.md:679-684</code>).</li>
+<li><code>PostToolUse</code> fires for a child's tool calls keyed to the
+parent id (backlog finding,
+<code>docs/template-workspace-backlog.html:240</code>), and the
+dispatcher routes sidechain firings to a
+<code>&lt;sid&gt;-sidechain</code> key so they do not consume the
+parent's escalation slot
+(<code>scripts/hooks/context-budget-hook.sh</code>, the
+<code>+chain</code> branch; <code>adapters.conf</code> claude row
+<code>payload:.transcript_path+chain</code>). If a background child
+survives the parent's <code>/clear</code> (§2 says whether it does), its
+firings would carry the <em>old</em> parent id with a transcript under
+the old directory — the hook would keep measuring a dead session's slot
+and could still SIGTERM <code>$PPID</code>, which is the live process.
+<strong>The <code>Stop</code>/turn-end hook must check the record's
+current owner id, not just <code>staged.by</code></strong>, before any
+kill — a concrete spec item.</li>
+<li>The research's R-rules already forbid resume-across-rollover and
+demand records (<code>docs/context-budget.md:651-684</code>); the
+skill's step 3 "verify sub-agent-claimed outputs exist on disk"
+(<code>skills/session-rollover/SKILL.md:93-97</code>) and the
+<code>dispatch-list</code> drain check (<code>:673-676</code>) apply
+unchanged. <strong>Rule for a clear-chain:</strong> drain or checkpoint
+every open dispatch generation <em>before</em> <code>--clear</code>,
+because a child that is still running when the parent clears is orphaned
+the moment the parent id changes — neither worse nor better than a
+process exit, but faster, so easier to forget.</li>
+</ul>
+<p><strong>Can children use a clear-style reset themselves?</strong> No,
+and they do not need to. A child is a sidechain inside the parent's
+process; it has no TTY, no <code>/clear</code>, no hooks of its own (D1
+applies twice over, <code>docs/context-budget.md:632-633</code>). Child
+rollover is by design "successor dispatch" — the parent checkpoints the
+child via the report file and dispatches <code>--gen N+1</code> fresh
+(R3, <code>:651-658</code>), and <code>ROLLOVER_NEEDED</code> is only
+ever a response (<code>:646-648</code>). A <code>/clear</code> in the
+parent is orthogonal to that: it is the <em>parent's</em> rollover.
+Neutral.</p>
+<p><strong>Background shells.</strong>
+<code>Bash run_in_background</code> tasks belong to the process; whether
+they survive <code>/clear</code> is a §2 fact. From the loop's side they
+are invisible (nothing in the record tracks them), so the skill's step 5
+"State snapshot — running processes"
+(<code>skills/session-rollover/SKILL.md:157</code>) is the only carrier.
+A spec should say: list them in the launcher, or kill them before
+<code>--clear</code>.</p>
+<hr />
+<h2 id="5-portability-matrix">5. Portability matrix</h2>
+<p>Per runtime, from primary docs (helper survey, 2026-10-15;
+<code>developers.openai.com/codex/*</code> now redirects to
+<code>learn.chatgpt.com/docs/*</code>). "Loop-usable" means: after the
+reset, the new session id reaches a hook or the agent shell <em>and</em>
+a turn-end hook exists, so the chain can rebind and end a turn
+(<code>scripts/hooks/context-budget-adapters.conf</code>;
+<code>work/runtime-session-identity/findings.md:9-15</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Runtime</th>
+<th>Same-process clear</th>
+<th>Session-start hook (event, id field)</th>
+<th>Clear/new event exposed</th>
+<th>Programmatic trigger</th>
+<th>Headless + resume</th>
+<th>Same-process handoff for the loop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Claude Code CLI</strong></td>
+<td><code>/clear</code> (= <code>/reset</code>, <code>/new</code>)</td>
+<td><code>SessionStart</code>, <code>session_id</code> +
+<code>transcript_path</code></td>
+<td>Yes: <code>source: "clear"</code>,
+<code>SessionEnd reason: "clear"</code></td>
+<td>Only via Agent SDK <code>query()</code> <code>/clear</code> prompt
+(headless); none in the TUI</td>
+<td><code>claude -p --continue | --resume &lt;id&gt; [--fork-session]</code></td>
+<td><strong>Attended: yes (today's <code>--clear</code>).</strong>
+Unattended: only as an SDK-hosted runner, or pty injection
+(unsupported).</td>
+</tr>
+<tr>
+<td><strong>Codex CLI</strong></td>
+<td><code>/new</code> ("fresh chat in the same CLI session"),
+<code>/clear</code>, <code>/fork</code> (new id)</td>
+<td><code>SessionStart</code>, <code>session_id</code> +
+<code>transcript_path</code> (<a
+href="https://learn.chatgpt.com/docs/hooks">https://learn.chatgpt.com/docs/hooks</a>)</td>
+<td>Yes: <code>SessionStart.source</code> ∈
+<code>startup|resume|clear|compact|fork</code>;
+<code>SessionEnd.reason</code> is "always <code>other</code>" and fires
+only on archive/close/30-min idle</td>
+<td><strong>Yes, headless:</strong> app-server JSON-RPC
+<code>thread/start</code>, <code>thread/fork</code> (<a
+href="https://learn.chatgpt.com/docs/app-server">https://learn.chatgpt.com/docs/app-server</a>);
+SDK <code>startThread()</code> (<a
+href="https://learn.chatgpt.com/docs/codex-sdk">https://learn.chatgpt.com/docs/codex-sdk</a>).
+Hook output cannot start a thread.</td>
+<td><code>codex exec … | codex exec resume --last|&lt;id&gt; | codex exec fork &lt;id&gt;</code>
+(<a
+href="https://learn.chatgpt.com/docs/non-interactive-mode">https://learn.chatgpt.com/docs/non-interactive-mode</a>)</td>
+<td>Attended: plausible (hooks fire <code>clear</code>; our codex row
+registers on <code>SessionStart</code>, <code>adapters.conf</code>) —
+<strong>unverified live</strong>; hook trust must be granted first
+(<code>docs/context-budget.md:813-817</code>). Unattended: app-server
+host, same shape as the Claude SDK route. Whether <code>/new</code>
+keeps MCP/approvals: not stated.</td>
+</tr>
+<tr>
+<td><strong>Copilot CLI</strong></td>
+<td><code>/clear</code> = <code>/new</code> = <code>/reset</code>
+(<code>[PROMPT]</code>); <code>/restart</code> restores live
+sessions</td>
+<td><code>sessionStart</code>, <code>sessionId</code> (<a
+href="https://docs.github.com/en/copilot/reference/hooks-reference">https://docs.github.com/en/copilot/reference/hooks-reference</a>)</td>
+<td>Partial: <code>sessionStart.source</code> ∈
+<code>startup|resume|new</code>; <code>sessionEnd.reason</code> ∈
+<code>complete|error|abort|timeout|user_exit</code> (no
+<code>clear</code>)</td>
+<td><strong>Yes, headless:</strong> SDK
+<code>createSession({sessionId})</code>, one client holding several
+sessions (<a
+href="https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/session-persistence">https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/session-persistence</a>).
+No hook/config trigger.</td>
+<td><code>copilot -p … --resume[=id] | --continue | --session-id &lt;uuid&gt;</code>
+(<a
+href="https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference">https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference</a>)</td>
+<td>Attended: plausible (our copilot row registers on
+<code>sessionStart</code> and SIGTERMs on <code>agentStop</code>) —
+<strong>unverified live</strong>; folder trust required
+(<code>docs/context-budget.md:821-823</code>). Whether <code>/new</code>
+writes a new <code>session-state/&lt;id&gt;/</code> dir: implied,
+<strong>unverified</strong>.</td>
+</tr>
+<tr>
+<td><strong>Gemini CLI</strong></td>
+<td><code>/clear</code> ("start a new session"); <code>/compress</code>;
+<code>/chat save|resume</code> (<a
+href="https://geminicli.com/docs/reference/commands/">https://geminicli.com/docs/reference/commands/</a>)</td>
+<td><code>SessionStart</code>, <code>session_id</code> +
+<code>transcript_path</code>; env <code>GEMINI_SESSION_ID</code> in
+hooks only (<a
+href="https://geminicli.com/docs/hooks/">https://geminicli.com/docs/hooks/</a>)</td>
+<td>Yes: <code>SessionStart.source</code> ∈
+<code>startup|resume|clear</code>; <code>SessionEnd.reason</code> ∈
+<code>exit|clear|logout|prompt_input_exit|other</code></td>
+<td><strong>None documented</strong>; no in-process SDK</td>
+<td><code>gemini -p … -r latest|&lt;n&gt;|&lt;uuid&gt;</code>
+(<code>-p</code> + <code>-r</code> together
+<strong>unverified</strong>)</td>
+<td><strong>No for the loop today:</strong> our gemini row has
+<code>register=agent</code>, no turn-end hook, chains unsupported
+(<code>docs/context-budget.md:780,798-800</code>); the shared telemetry
+log is not rotated by a reset (§6 item 10). Also superseded by
+Antigravity for this workspace (<code>findings.md:66</code>); the docs
+banner says the free tier moved to Antigravity CLI on 2026-06-18.</td>
+</tr>
+<tr>
+<td><strong>Antigravity CLI</strong> (<code>agy</code>)</td>
+<td>not surveyed by the helper — <strong>unverified</strong></td>
+<td><code>PreInvocation</code> only (no SessionStart),
+<code>conversationId</code> + <code>transcriptPath</code>
+(<code>findings.md:12</code>)</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>Attended only (no turn-end hook,
+<code>docs/context-budget.md:784</code>).</td>
+</tr>
+<tr>
+<td><strong>OpenCode</strong></td>
+<td><code>/new</code> (= <code>/clear</code>), <code>ctrl+x n</code> (<a
+href="https://opencode.ai/docs/tui/">https://opencode.ai/docs/tui/</a>)</td>
+<td><strong>unverified</strong> (not researched)</td>
+<td><strong>unverified</strong></td>
+<td><code>opencode serve</code> + <code>--attach</code> (<a
+href="https://opencode.ai/docs/cli/">https://opencode.ai/docs/cli/</a>)</td>
+<td><code>opencode run -c | -s &lt;id&gt; [--fork]</code></td>
+<td>Our row: <code>session.idle:decide</code> turn-end via plugin,
+<code>register=agent</code>; a reset would need the plugin to
+re-register. <strong>Unverified.</strong></td>
+</tr>
+<tr>
+<td><strong>VS Code — Copilot Chat</strong></td>
+<td><code>/clear</code> ("start a new chat and archive the current
+one"), <code>/fork</code>; <strong>New Chat</strong> ⌘N =
+<code>workbench.action.chat.newChat</code> (<a
+href="https://code.visualstudio.com/docs/agents/reference/ai-features-cheat-sheet">https://code.visualstudio.com/docs/agents/reference/ai-features-cheat-sheet</a>)</td>
+<td>Copilot harness: same SDK hooks as Copilot CLI (B); Local harness:
+<code>SessionStart</code> with <code>source</code> "currently always
+<code>new</code>", <code>session_id</code>, <code>transcript_path</code>
+("not stable") (<a
+href="https://code.visualstudio.com/docs/agents/reference/hooks-reference">https://code.visualstudio.com/docs/agents/reference/hooks-reference</a>)</td>
+<td>No distinct clear event; <strong>no <code>SessionEnd</code></strong>
+in the Local harness</td>
+<td>Command id only; <code>code</code> CLI has no
+<code>--command</code>; <code>vscode://agents/new</code> opens but does
+not submit (<a
+href="https://code.visualstudio.com/docs/configure/command-line">https://code.visualstudio.com/docs/configure/command-line</a>).
+<code>workbench.action.chat.clearHistory</code>
+<strong>unverified</strong>.</td>
+<td><code>code chat "&lt;prompt&gt;"</code> only</td>
+<td><strong>No.</strong> No process to own, no turn-end, no external
+trigger. Today already <code>--emit</code> is refused on copilot-vscode
+("detached by nature", <code>docs/context-budget.md:335</code>).</td>
+</tr>
+<tr>
+<td><strong>VS Code — Claude Code extension</strong></td>
+<td><code>/clear</code> (subset of slash commands); <strong>New
+Conversation</strong> ⌘N (opt-in
+<code>enableNewConversationShortcut</code>) (<a
+href="https://code.claude.com/docs/en/vs-code">https://code.claude.com/docs/en/vs-code</a>)</td>
+<td>Shares <code>~/.claude/settings.json</code> hooks with the CLI:
+<code>SessionStart source: clear</code>,
+<code>SessionEnd reason: clear</code></td>
+<td>Yes (same as CLI)</td>
+<td>Deep link
+<code>vscode://anthropic.claude-code/open?prompt=…&amp;session=&lt;id&gt;</code>
+(no session → fresh conversation); no hook-driven reset</td>
+<td><code>claude -p --resume &lt;id&gt;</code> (shared transcripts)</td>
+<td>Attended: the CLI's <code>--clear</code> path should work in the
+panel (<strong>unverified live</strong>; note the phantom pre-spawned
+sessions, <code>findings.md:33-34</code>). Unattended: no.</td>
+</tr>
+<tr>
+<td><strong>VS Code — Codex extension</strong></td>
+<td><code>chatgpt.newChat</code> ⌘N (<strong>partially
+unverified</strong>: the IDE commands page redirected)</td>
+<td>Same trust store as the CLI; hooks apply after the first turn
+(<code>docs/context-budget.md:818-820</code>)</td>
+<td>as Codex CLI</td>
+<td>none external</td>
+<td>n/a</td>
+<td>Attended at best; <strong>unverified</strong>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reading the table.</strong></p>
+<ol type="1">
+<li><strong>Every CLI runtime has a same-process reset and a
+session-start hook that sees it</strong> (Claude, Codex, Gemini:
+<code>source: clear</code>; Copilot: <code>source: new</code>). So an
+<em>attended</em> clear path is portable in principle to Codex and
+Copilot CLI with the hook-side registration this repo already ships
+(<code>adapters.conf</code> codex/copilot rows) — the pending-pid match
+in <code>bind_work_item</code> is runtime-agnostic
+(<code>scripts/context-budget.sh:788-795</code>), but
+<code>register</code> must know the pid (sandboxed Codex records
+<code>pid: null</code>, <code>findings.md:23</code>,
+<code>docs/context-budget.md:715-717</code>) — Codex would need another
+same-process key (e.g. the predecessor's thread id in the launch block,
+matched against <code>SessionStart</code>'s <code>source: clear</code>
+firing in the same process).</li>
+<li><strong>No CLI runtime lets anything but a human or a pty driver
+issue the reset in the interactive TUI.</strong> The programmatic routes
+(Claude Agent SDK, Codex app-server/SDK, Copilot SDK) all mean
+<em>hosting the session in a program</em>, i.e. an SDK-based runner
+replacing <code>claude</code>/<code>codex</code>/<code>copilot</code> as
+the supervisor's child. Gemini has none; VS Code agents have none
+reachable from outside.</li>
+<li><strong>A fresh process is the only mechanism all runtimes
+share</strong>, and the one the loop already supports for five of them
+(<code>scripts/launch-next-session.sh:396-403</code>).</li>
+<li><strong>tmux/expect injection is supported nowhere</strong> (helper
+search across all five runtimes' docs).</li>
+</ol>
+<hr />
+<h2
+id="6-current-limitations--and-what-a-clear-approach-does-to-each">6.
+Current limitations — and what a <code>/clear</code> approach does to
+each</h2>
+<p><strong>Sources inventoried.</strong> Open backlog cards: only two
+remain open — L85 (template-only suites fail in every instance,
+<code>docs/template-workspace-backlog.html:152</code>) and L86
+(Antigravity IDE/app and Codex desktop app identity not yet probed,
+<code>:160</code>); the formerly open M16, L32, L33, M39 are in the
+archive
+(<code>docs/template-workspace-backlog-archive.html:780,1689,1705,925</code>).
+<code>docs/context-budget.md</code> → "Known limitations"
+(<code>:911-935</code>) and the refusal/"not supported" paths
+(<code>:331-344,566-580,724-731,797-804</code>).
+<code>work/runtime-session-identity/findings.md</code>.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Limitation today</th>
+<th>Where</th>
+<th><code>/clear</code> approach: removes / eases / worsens /
+neutral</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>One owner per work item</strong>: <code>owner_live</code>
+refusal; launcher/ledger assume a single writer; <code>--takeover</code>
+is the only override</td>
+<td><code>docs/context-budget.md:373-390</code>,
+<code>docs/work-directory-conventions.md:33-43</code>,
+<code>scripts/launch-next-session.sh:262-266</code></td>
+<td><strong>Neutral.</strong> A <code>/clear</code> binding is
+<code>adopted</code> by the same pid
+(<code>scripts/context-budget.sh:847-850</code>) — one owner, new id.
+Concurrency is an independent change (below).</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>One supervisor per item</strong>
+(<code>supervisor_live</code>), one child at a time, chain cap 10</td>
+<td><code>docs/context-budget.md:421-427,492-494</code></td>
+<td>Neutral; a clear-chain is still one process per item.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Chains are Claude Code only (verified)</strong>;
+codex/copilot-cli unverified; gemini, copilot-vscode, antigravity
+attended-only (no turn-end hook)</td>
+<td><code>docs/context-budget.md:796-804</code></td>
+<td><strong>Worsens portability</strong> unless each runtime has a
+programmatic reset <em>and</em> a session-start hook (§5). A fresh
+process is the only mechanism every CLI runtime shares.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong><code>--clear</code> is attended-only</strong> ("an agent
+cannot press <code>/clear</code>")</td>
+<td><code>skills/session-rollover/SKILL.md:248</code>,
+<code>docs/template-adr/0009-...md:96-97</code></td>
+<td><strong>This is the limitation under study.</strong> Removed only if
+§2 finds a sanctioned trigger or §3.3's pty driver is accepted.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>A fresh process re-authenticates and re-connects
+MCP</strong> — the two observed spawn-path failures
+(<code>Not logged in</code> parked on OAuth; MCP startup race
+mis-diagnosed three sessions running)</td>
+<td><code>docs/template-adr/0009-...md:30-40</code>; <code>logout</code>
+verdict <code>docs/context-budget.md:469-470</code></td>
+<td><strong>Removes</strong> for the ordinary rollover (same person,
+runtime, cwd). This is the strongest argument for the work.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>A rollover cannot change model / MCP fragment / permission
+mode</strong> on the clear path</td>
+<td><code>docs/template-adr/0009-...md:66-71</code></td>
+<td>Inherent to <code>/clear</code>; the spawn path stays for those
+cases (TADR-0009's selection rule). Neutral if both paths coexist.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>A wedged CLI or MCP state is not fixed by
+<code>/clear</code></strong></td>
+<td><code>docs/template-adr/0009-...md:91-93</code></td>
+<td>Worsens slightly for a hands-off chain: today every session is a
+fresh process, so a wedge heals at the next rollover; a clear-chain
+needs a "spawn instead" escape (e.g. after N failed rebinds).</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Hook check at most once per minute</strong>; a huge tool
+result can overshoot STOP between checks</td>
+<td><code>docs/context-budget.md:933-934</code></td>
+<td>Neutral.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>WARN push swallowed by a busy child</strong> winning the
+throttle race</td>
+<td><code>docs/template-workspace-backlog.html:240</code> (L32
+archived)</td>
+<td>Neutral (same hook path).</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Gemini: shared workspace telemetry log is
+single-session</strong>; a successor's first check may read the
+predecessor's last entry</td>
+<td><code>docs/context-budget.md:724-731,780</code></td>
+<td>Neutral for Claude; for a Gemini clear-equivalent the log is
+<em>not</em> rotated by a reset, so it would worsen (the counts carry
+over).</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>Auto-detect prefers env evidence then newest
+artifact</strong>; with several runtimes active, pass
+<code>--runtime</code></td>
+<td><code>docs/context-budget.md:930-932</code></td>
+<td>Neutral.</td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>Newest-file discovery is wrong with two live
+sessions</strong>; <code>ambiguous_artifact</code> refuses instead</td>
+<td><code>findings.md:16-18</code>,
+<code>docs/context-budget.md:848-852</code></td>
+<td>Neutral for Claude (<code>CLAUDE_CODE_SESSION_ID</code> is exported,
+<code>probes/claude-cli.md:8-12</code>). Important for item 1
+below.</td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>Phantom records</strong> from the Claude VS Code
+extension</td>
+<td><code>findings.md:33-34</code>,
+<code>docs/context-budget.md:856-863</code></td>
+<td>Neutral.</td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong><code>register</code> after a stop-door <code>close</code>
+re-binds the closed number (M39)</strong></td>
+<td>archive <code>:925</code></td>
+<td>Neutral.</td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>Measurement right after <code>/clear</code> reads near
+zero</strong> until the first response</td>
+<td><code>docs/template-adr/0009-...md:17-19</code></td>
+<td>Specific to <code>/clear</code>; the watchdog's <code>blocked</code>
+page (past STOP, nothing staged) would never misfire from it, but
+<code>min-lifetime</code>-style guards must not read a zero as "no own
+measurement". Mild.</td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>Transcripts are not written under an inherited
+<code>CLAUDE_CODE_CHILD_SESSION</code></strong> (nested launches)</td>
+<td><code>stage2-probes.md:83-85</code></td>
+<td>Neutral; same for both paths.</td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>Supervisor edits take effect one invocation
+late</strong></td>
+<td><code>docs/context-budget.md:518-522</code></td>
+<td>Worsens: a clear-chain supervisor lives for the whole chain
+<em>and</em> the process lives for the whole chain, so a fix to either
+lands only after a full restart.</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Antigravity IDE/app, Codex desktop app identity unprobed (L86)</td>
+<td><code>docs/template-workspace-backlog.html:160</code></td>
+<td>Neutral.</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="the-headline-question-can-several-sessions-be-active-in-one-work-item-at-once">The
+headline question: can several sessions be active in one work item at
+once?</h3>
+<p><strong>Today: no, by design.</strong> One owner per item
+(<code>docs/context-budget.md:373-390</code>); the launcher/ledger
+REPLACE/APPEND semantics "assume a single writer"
+(<code>docs/work-directory-conventions.md:33-43</code>); the record has
+one <code>session</code> block and one <code>seq</code>
+(<code>docs/context-budget.md:282-289</code>); the supervisor runs one
+child (<code>:449-455</code>). A second session that registers against a
+live owner is <em>measured but not owning</em>
+(<code>register: reason=owner_live</code>,
+<code>scripts/context-budget.sh:851-852</code>) and the launcher refuses
+<code>owner_live</code>/<code>not_owner</code>. The sanctioned shape for
+parallel work inside one item is <strong>subagents under the one
+owner</strong> — a plan node's <code>parallel</code> field counts
+subagents in flight inside the node (<code>docs/plans.md:64</code>),
+<code>isolated: yes</code> gives a child its own worktree and branch
+(<code>:68</code>), and the dispatch records make the fleet survive the
+owner's rollover (<code>docs/context-budget.md:659-684</code>). Sibling
+<em>work items</em> run concurrently without conflict (TADR-0004's
+model: session-keyed registry, per-item records,
+<code>docs/template-adr/0004-...md:25-32</code>).</p>
+<p><strong>What true multi-session-per-item would need</strong>
+(independent of <code>/clear</code>):</p>
+<ol type="1">
+<li><strong>Record: <code>session</code> becomes
+<code>sessions[]</code></strong> with a lane or role per entry, and
+<code>seq</code> becomes per-lane (or a lane-qualified number like
+<code>12.b</code>) — the ledger heading parser and the
+<code>ledger_seq_mismatch</code> gate
+(<code>docs/work-directory-conventions.md:85-110</code>) both key on one
+number. Every writer goes through <code>session_record_update</code> CAS
+under a directory lock (<code>docs/context-budget.md:278-280</code>),
+which is already safe for concurrent writers; the schema is not.</li>
+<li><strong>Ledger: per-session blocks already exist</strong> (one block
+per number); concurrent sessions would need a merge-safe append — two
+sessions prepending at the top at once is a textual race under git, not
+a lock problem. Per-lane ledgers (<code>handoff.&lt;lane&gt;.md</code>)
+or one block per node are the obvious shapes.</li>
+<li><strong>Launcher ownership: the launcher is one front.</strong> Two
+active sessions have two fronts. Either per-lane launchers, or the plan
+becomes the launcher (the
+<code>&lt;!-- plan:begin position --&gt;</code> block is already
+machine-written, <code>skills/session-rollover/SKILL.md:158-160</code>)
+and each session's "front" is its claimed node.</li>
+<li><strong>Plan-node claims with locking.</strong>
+<code>plan.sh start</code> writes <code>status: doing</code> + the
+session number into the node file (<code>scripts/plan.sh:520-522</code>)
+with no CAS; two sessions can <code>start</code> the same frontier node.
+A claim needs a compare-and-set on the node's <code>status</code>, the
+same lock the record uses. The frontier verb already lists every ready
+node (<code>:420</code>), so the <em>scheduling</em> half exists.</li>
+<li><strong>Supervisor: one child per lane</strong>, or one supervisor
+per lane with <code>supervisor_live</code> keyed per lane; verdicts and
+the stall guard per lane.</li>
+<li><strong>Identity under concurrency</strong> is already solved for
+Claude, Codex and Copilot CLI when their id var is set
+(<code>findings.md:16-17</code>) and refused as ambiguous otherwise —
+this is the one piece that is done.</li>
+</ol>
+<p><strong>Does <code>/clear</code> change any of it?</strong> No. Items
+1–5 are about <em>how many owners a record admits</em>, not <em>how a
+session is reset</em>. A clear-chain is strictly one-process-one-owner.
+If anything, concurrency argues <em>against</em> same-process resets:
+with N lanes you want N processes you can kill, spawn and supervise
+independently. The fair summary for the user: multiple active sessions
+per work item is a separate, larger change (record schema +
+ledger/launcher shape + node claims + per-lane supervision), and the
+existing answer for parallelism — isolated subagents on parallel
+frontier nodes under one owner — covers most of what people want from it
+without touching ownership.</p>
+<hr />
+<h2 id="7-verdict">7. Verdict</h2>
+<p><strong>Verdict: PARTIAL.</strong> Go for a narrow, attended-first
+slice; no-go for an unattended <code>/clear</code>-driven chain on the
+interactive CLIs; the concurrency question is an independent work
+item.</p>
+<h3 id="why-not-a-full-go">Why not a full go</h3>
+<ol type="1">
+<li><strong>There is no sanctioned trigger inside the TUI.</strong>
+Hooks cannot clear (§2.2), there is no keybinding (§2.3), and the
+vendors document nothing for driving the TUI from outside (§5). The one
+thing that works — pty injection — is what our own probe used and what
+no vendor supports. Building the template's unattended loop on typing
+into a TUI is a maintenance liability of exactly the kind the adapter
+table was created to contain
+(<code>docs/context-budget.md:692-697</code>): every TUI redraw,
+permission dialog, trust prompt or idle nudge (2.1.84) is a new way to
+type <code>/clear</code> into the wrong place.</li>
+<li><strong>The documented programmatic resets are all "host the session
+yourself"</strong> (Claude Agent SDK <code>/clear</code> →
+<code>conversation_reset</code>; Codex app-server
+<code>thread/start</code>; Copilot SDK <code>createSession</code>). That
+is a different product from <code>session-loop.sh</code> — an SDK runner
+per runtime, no TUI, a new identity story (the SDK's
+<code>session_id</code> vs the hook's, §2.1 discrepancy), and nothing
+for Gemini or the VS Code agents. It may be the right long-term shape
+for hands-off chains (the supervisor already "never talks to a model"
+and would gain full control of turns), but it is not "make
+<code>/clear</code> drive the loop"; it is "replace the child".</li>
+<li><strong>The gains are real but bounded.</strong> Same-process
+continuity removes the two observed spawn-path failures (re-auth, MCP
+startup race; §6 item 5) and the startup wall-clock, not tokens (§1: the
+next prompt pays the same ~27K either way). The spawn path is already
+verified and portable; the <code>logout</code> verdict already catches
+the auth failure (<code>docs/context-budget.md:469-470</code>).</li>
+<li><strong>Portability, a hard constraint of this work item, is where
+<code>/clear</code> is weakest</strong> (§5: unattended = none of the
+five; attended = Claude verified, Codex/Copilot plausible-unverified,
+Gemini/VS Code no).</li>
+</ol>
+<h3 id="what-is-worth-doing-the-go-half">What is worth doing (the "go"
+half)</h3>
+<p><strong>A. Harden the attended clear path (Claude Code;
+small).</strong> Cost: ~1 session; risk: low.</p>
+<ul>
+<li>Settle whether the cleared TUI session starts a turn on the seeded
+context alone (§2.2 open question). If not, correct the skill and
+TADR-0009 ("<code>/clear</code>, then type <code>go</code>").
+<code>initialUserMessage</code> cannot do it in the TUI (<code>-p</code>
+only, verified). Set <code>sessionTitle</code> =
+<code>&lt;item&gt; #&lt;n&gt;</code> on the clear binding if the field
+takes effect interactively (the docs say "SessionStart also accepts …
+<code>sessionTitle</code>"; interactive effect
+<strong>unverified</strong>). That would fix TADR-0009's cosmetic "old
+title" consequence.</li>
+<li><code>SessionEnd</code> budget: keep <code>release</code> under the
+shared 1.5 s budget, or give the SessionEnd hook its own
+<code>timeout</code> in <code>.claude/settings.json</code> (raises the
+budget, verified). Confirm that <code>release</code> then
+<code>register</code> ordering is race-free (§3.1).</li>
+<li>Drain rule: <code>dispatch-list</code> must be clean (or every open
+generation checkpointed) before <code>--clear</code>; background shells
+listed or killed (§4).</li>
+<li>Turn-end hook: check the record's <em>current</em> owner id before
+any SIGTERM, since background agents and their hook firings survive
+<code>/clear</code> (§4).</li>
+<li>Optional: a <code>PreCompact</code> hook that blocks
+<code>auto</code> compaction while a work item is bound (§2.2) —
+independent of <code>/clear</code> but the cheapest protection the docs
+offer for "rollover beats compaction".</li>
+<li>Let the interactive supervisor accept a <code>/clear</code>
+rollover: in <code>--loop-mode interactive</code> the "press Enter"
+pause becomes "press <code>/clear</code> (or Enter for a fresh
+process)", with the supervisor watching the record for the rebind
+instead of waiting for the exit (§3.3, interactive branch only). This
+gives the attended chain continuity without any injection.</li>
+</ul>
+<p><strong>B. A time-boxed spike, not a build (Claude only): headless
+same-process reset.</strong> Cost: ≤ 1 session; risk: none to the loop.
+Run
+<code>claude -p --input-format stream-json --output-format stream-json</code>
+with the committed hooks, send a <code>/clear</code> user message, and
+record: does <code>conversation_reset</code> arrive, does a SessionStart
+<code>initialUserMessage</code> seed the post-clear first turn (it is
+documented for <code>-p</code>), do
+<code>SessionEnd(clear)</code>/<code>SessionStart(clear)</code> fire,
+does <code>session_id</code> rotate (the §2.1 discrepancy), does
+<code>register</code> rebind by pid, is the first post-clear check near
+zero. The result decides whether an SDK-hosted hands-off runner is a
+future work item; nothing in the loop changes until then.</p>
+<p><strong>C. Explicitly not doing:</strong> pty/tmux/expect injection
+in <code>session-loop.sh</code>; <code>/clear</code>-based chains on
+Codex/Copilot/Gemini/VS Code; a supervisor rewrite to the event-driven
+model of §3.3 for hands-off mode.</p>
+<p><strong>D. Concurrency (several active sessions per work
+item)</strong> is independent of all of the above (§6). If the user
+wants it, it is its own research+spec: record schema
+(<code>sessions[]</code>, per-lane <code>seq</code>), ledger/launcher
+per lane or per node, node claims with CAS, per-lane supervision. The
+cheap interim answer is already in the design: parallel frontier nodes
+as isolated subagents under one owner.</p>
+<h3 id="what-a-spec-for-a-b-should-cover">What a spec for A (+B) should
+cover</h3>
+<p>Per <code>docs/agents/issue-tracker.md</code> → "Spec conventions"
+(not read here; the orchestrator should fit the shape): goal and
+non-goals (C above, verbatim); the <code>SessionStart</code> output
+contract (<code>initialUserMessage</code>, <code>sessionTitle</code>)
+and its fallback when the field is absent (older CLI); the
+<code>SessionEnd</code> timing budget; the turn-end owner check; the
+drain rule and its refusal code (<code>children_open</code>?) at
+<code>--clear</code>; the interactive-supervisor watch mode (record
+transitions, new page tokens
+<code>clear_sent</code>/<code>clear_unbound</code>, verdict mapping);
+test cases (fixtures for <code>SessionStart source=clear</code> payloads
+with and without rotation; <code>test-launch-next-session.sh</code>
+L-series extended; <code>test-session-loop.sh</code> interactive-clear
+case); the spike protocol for B and its pass/fail record; docs touched
+(<code>docs/context-budget.md</code> launcher table and support matrix,
+<code>skills/session-rollover/SKILL.md:245-254</code>, TADR-0009
+amendment); open questions (the §2.1 id discrepancy; CLAUDE.md re-read;
+permissions carry-over).</p>
+<hr />
+<h2 id="key-claims-as-handed-to-the-orchestrator">Key claims (as handed
+to the orchestrator)</h2>
+<p>Load-bearing claims the orchestrator should spot-check (repo claims
+by reading the lines; external ones by opening the URL):</p>
+<ol type="1">
+<li><code>/clear</code> rotates session id and transcript, with
+<code>SessionEnd(reason=clear)</code> then
+<code>SessionStart(source=clear)</code> —
+<code>work/template-improvement-review/evaluation/stage2-probes.md:47-85</code>
+(repo probe, <code>claude</code> 2.1.272).</li>
+<li>That probe drove <code>/clear</code> with <code>expect</code>, i.e.
+a pty owner can press it — <code>stage2-probes.md:49-51</code>.</li>
+<li>"An agent cannot press <code>/clear</code>" is the stated blocker —
+<code>skills/session-rollover/SKILL.md:248</code>; TADR-0009 "no tool or
+hook can issue <code>/clear</code>" —
+<code>docs/template-adr/0009-clear-based-rollover-relaunch.md:96-97</code>.</li>
+<li>The clear path binds by pid + start time and prints the pending
+prompt as hook stdout —
+<code>scripts/context-budget.sh:788-795,812-817,865-868,877</code>; the
+launcher writes <code>launch.pending</code> and refuses under a live
+supervisor —
+<code>scripts/launch-next-session.sh:195-197,279-285,422-423</code>.</li>
+<li>The supervisor's verdicts require the child to <em>exit</em> and the
+<code>Stop</code> hook SIGTERMs the child when <code>staged.by</code> is
+its id — <code>docs/context-budget.md:457-487</code>;
+<code>scripts/hooks/context-budget-hook-lib.sh:137-142</code>
+(<code>kill -TERM "$PPID"</code>).</li>
+<li><code>SessionStart</code> output supports
+<code>initialUserMessage</code> (and <code>sessionTitle</code>,
+<code>reloadSkills</code>, <code>watchPaths</code>) — hooks page.
+<strong>Verified: <code>initialUserMessage</code> is documented for
+<code>-p</code> mode only.</strong></li>
+<li>SessionEnd hooks share a 1.5 s budget; per-hook <code>timeout</code>
+raises it (≤ 60 s); <code>CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS</code>
+overrides — hooks page; changelog 2.1.74, 2.1.268.</li>
+<li>Background bash tasks and background agents survive
+<code>/clear</code> — changelog 2.1.72; MCP servers/plugins retained —
+changelog 2.1.136 (<a
+href="https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md">https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md</a>).</li>
+<li>No hook output or keybinding can trigger <code>/clear</code>;
+<code>PreCompact</code> can <em>block</em> compaction (exit 2 /
+<code>decision: block</code>) — hooks page "PreCompact"; <a
+href="https://code.claude.com/docs/en/keybindings">https://code.claude.com/docs/en/keybindings</a>
+(no clear-conversation action; double-press shortcut removed
+2.1.238).</li>
+<li>Agent SDK: a <code>/clear</code> prompt in <code>query()</code>
+yields <code>SDKConversationResetMessage</code> with
+<code>new_conversation_id</code>, "replaced without ending the session"
+(CLI ≥ 2.1.203) — <a
+href="https://code.claude.com/docs/en/agent-sdk/typescript">https://code.claude.com/docs/en/agent-sdk/typescript</a>.
+The stream-json CLI equivalent is <strong>unverified</strong>.</li>
+<li>Codex: <code>/new</code> is a fresh chat in the same CLI session;
+hooks fire <code>SessionStart source: clear</code>; app-server
+<code>thread/start</code> is a documented in-process new thread — <a
+href="https://learn.chatgpt.com/docs/cli/slash-commands">https://learn.chatgpt.com/docs/cli/slash-commands</a>,
+<a
+href="https://learn.chatgpt.com/docs/hooks">https://learn.chatgpt.com/docs/hooks</a>,
+<a
+href="https://learn.chatgpt.com/docs/app-server">https://learn.chatgpt.com/docs/app-server</a>.</li>
+<li>Copilot CLI:
+<code>/clear</code>=<code>/new</code>=<code>/reset</code>;
+<code>sessionStart.source ∈ startup|resume|new</code>;
+<code>sessionEnd.reason</code> has no <code>clear</code> — <a
+href="https://docs.github.com/en/copilot/reference/hooks-reference">https://docs.github.com/en/copilot/reference/hooks-reference</a>,
+<a
+href="https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference">https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference</a>.</li>
+<li>Gemini CLI: <code>/clear</code> fires
+<code>SessionEnd reason: clear</code> +
+<code>SessionStart source: clear</code>; no programmatic trigger — <a
+href="https://geminicli.com/docs/hooks/">https://geminicli.com/docs/hooks/</a>,
+<a
+href="https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md">https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md</a>.</li>
+<li>VS Code Copilot Chat Local harness: <code>SessionStart.source</code>
+is always <code>new</code>, no <code>SessionEnd</code>;
+<code>code</code> CLI has no <code>--command</code> — <a
+href="https://code.visualstudio.com/docs/agents/reference/hooks-reference">https://code.visualstudio.com/docs/agents/reference/hooks-reference</a>,
+<a
+href="https://code.visualstudio.com/docs/configure/command-line">https://code.visualstudio.com/docs/configure/command-line</a>.</li>
+<li>Only two backlog cards are open (L85, L86) —
+<code>docs/template-workspace-backlog.html:152,160</code>; one owner per
+item and single-writer launcher/ledger —
+<code>docs/context-budget.md:373-390</code>,
+<code>docs/work-directory-conventions.md:33-43</code>;
+<code>plan.sh start</code> writes <code>doing</code> with no
+compare-and-set — <code>scripts/plan.sh:520-522</code>.</li>
+</ol>
+<hr />
+<h2 id="verification">Verification</h2>
+<p>The orchestrating session checked these claims against the repo and
+primary sources on 2026-10-15. It did not live-run any runtime.</p>
+<p><strong>Repo claims — read at the cited lines:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/clear</code> rotates the session id;
+<code>SessionEnd(clear)</code> then <code>SessionStart(clear)</code> on
+the new id; probe driven by <code>expect</code></td>
+<td>Confirmed —
+<code>work/template-improvement-review/evaluation/stage2-probes.md:47-62</code></td>
+</tr>
+<tr>
+<td>Skill states "An agent cannot press <code>/clear</code>"</td>
+<td>Confirmed — <code>skills/session-rollover/SKILL.md:248</code></td>
+</tr>
+<tr>
+<td>TADR-0009 "no tool or hook can issue <code>/clear</code>"</td>
+<td>Confirmed, <strong>citation corrected</strong> from
+<code>:86-88</code> to <code>:96-97</code></td>
+</tr>
+<tr>
+<td>Clear path binds a pending launch by pid + start time; same pid +
+new id → <code>adopted</code>; prompt printed on stdout</td>
+<td>Confirmed — <code>scripts/context-budget.sh:790-795</code>,
+<code>:847-850</code>, <code>:877</code></td>
+</tr>
+<tr>
+<td><code>--clear</code> refused off claude; launches refused under a
+live supervisor unless <code>--emit</code></td>
+<td>Confirmed — <code>scripts/launch-next-session.sh:184-186</code>,
+<code>:195-197</code></td>
+</tr>
+<tr>
+<td>Turn-end hook SIGTERMs <code>$PPID</code></td>
+<td>Confirmed —
+<code>scripts/hooks/context-budget-hook-lib.sh:141</code></td>
+</tr>
+<tr>
+<td><code>release</code> is a no-op for a non-owner</td>
+<td>Confirmed — <code>scripts/context-budget.sh</code>
+<code>release</code> (<code>reason=not_owner</code>, returns 1, writes
+nothing)</td>
+</tr>
+<tr>
+<td><code>plan.sh start</code> sets <code>doing</code> with no
+compare-and-set</td>
+<td>Confirmed — <code>fm_set "$NODE_FILE" status doing</code> with no
+lock or check (<code>scripts/plan.sh</code> ~<code>:520</code>)</td>
+</tr>
+<tr>
+<td>Only two live backlog cards (L85, L86)</td>
+<td>Confirmed — the only <code>&lt;h3&gt;&lt;span class="id"&gt;</code>
+cards in <code>docs/template-workspace-backlog.html</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>External claims — fetched and grepped:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SessionStart <code>source</code> ∈
+<code>startup|resume|clear|compact|fork</code>; SessionEnd reasons
+include <code>clear</code></td>
+<td>Confirmed — <a
+href="https://code.claude.com/docs/en/hooks">https://code.claude.com/docs/en/hooks</a></td>
+</tr>
+<tr>
+<td><code>initialUserMessage</code> makes the cleared session start
+working</td>
+<td><strong>Corrected</strong> — documented for <code>-p</code>
+(non-interactive) only; does not apply to the TUI path. §2.2 and §7 A
+rewritten</td>
+</tr>
+<tr>
+<td>SessionEnd 1.5 s timeout + env override</td>
+<td>Confirmed, sharpened: shared 1.5 s budget; per-hook
+<code>timeout</code> raises it to ≤ 60 s;
+<code>CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS</code> (changelog 2.1.74,
+2.1.268)</td>
+</tr>
+<tr>
+<td><code>PreCompact</code> can block compaction</td>
+<td>Confirmed — exit-code table "Blocks compaction";
+<code>decision: "block"</code></td>
+</tr>
+<tr>
+<td>No hook output triggers <code>/clear</code> or compaction</td>
+<td>Consistent with the hooks page (no such output field); a negative
+claim, so "not found" rather than proven</td>
+</tr>
+<tr>
+<td>Background agent/bash tasks survive <code>/clear</code></td>
+<td>Confirmed — changelog 2.1.72</td>
+</tr>
+<tr>
+<td>MCP servers/plugins/connectors survive <code>/clear</code> (VS Code,
+JetBrains, SDK fix)</td>
+<td>Confirmed — changelog 2.1.136; <code>CLAUDE_ENV_FILE</code>
+re-applied after <code>/clear</code> — same release</td>
+</tr>
+<tr>
+<td>SDK <code>/clear</code> prompt → <code>conversation_reset</code>,
+"replaced without ending the session"</td>
+<td>Confirmed — <a
+href="https://code.claude.com/docs/en/agent-sdk/typescript">https://code.claude.com/docs/en/agent-sdk/typescript</a>;
+type carries <code>session_id</code> <strong>and</strong>
+<code>new_conversation_id</code>, so the §2.1 discrepancy is real in the
+docs</td>
+</tr>
+<tr>
+<td>Copilot CLI
+<code>sessionStart.source ∈ startup|resume|new</code></td>
+<td>Confirmed — <a
+href="https://docs.github.com/en/copilot/reference/hooks-reference">https://docs.github.com/en/copilot/reference/hooks-reference</a></td>
+</tr>
+<tr>
+<td>Codex <code>SessionStart.source</code> includes <code>clear</code>;
+<code>SessionEnd.reason</code> always <code>other</code></td>
+<td>Confirmed — <a
+href="https://learn.chatgpt.com/docs/hooks">https://learn.chatgpt.com/docs/hooks</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Not checked by the orchestrator</strong> (still on the
+subagent's word, citations given): the video summary (§1); Gemini CLI,
+OpenCode, VS Code Copilot Chat and Codex-extension rows of §5; the rest
+of the changelog items in §2.3. Everything already marked
+<strong>unverified</strong> in the body stays unverified.</p>
+<p><strong>Effect on the verdict:</strong> none on PARTIAL. The
+correction removes one item from the "go" half:
+<code>initialUserMessage</code> cannot make the attended TUI path
+keystroke-only. It adds one open question: does the cleared session act
+on seeded context without a typed message? It also strengthens the
+headless spike, where <code>initialUserMessage</code> does apply.</p>
+</body>
+</html>

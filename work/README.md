@@ -25,6 +25,7 @@ excluded by rule, not by oversight.
 | [`feedback-intake`](feedback-intake/README.md) | Route production/user signal into discovery (SDLC gap G1) | Scaffolded — design work not started |
 | [`runtime-session-identity`](runtime-session-identity/README.md) | Probe and fix session-id pinning for Codex, Copilot and Antigravity (CLI + IDE) | Plan 01 closed — live verification of 7 surfaces next (s9) |
 | [`context-memory-hardening`](context-memory-hardening/README.md) | Ship the accepted context/memory-engineering recommendations (L49, L50, M43, L51, D5) | Finished — tickets 01–05 done (L49, L50, M43, L51 resolved; D5 decided as ADR-0013); follow-up L52 on the backlog |
+| [`clear-session-loop`](clear-session-loop/README.md) | Research whether `/clear` can drive the session loop across runtimes; spec it if so | Research done (verdict PARTIAL); spec of the go half next (s3) |
 | [`html-kit`](html-kit/README.md) | Prototype a shared HTML kit so agents write content-only pages | Scaffolded — prototype kit next (s2) |
 | [`deep-seek-harness-eval`](deep-seek-harness-eval/README.md) | Study DeepSeek Harness (`deepseek-ai/deepseek-harness`) for practices this template could adopt | Finished (2026-10-08, s3) — all seven recommendations accepted, filed as backlog cards M46, M47, L66–L70 |
 | [`context-memory-eval`](context-memory-eval/README.md) | Evaluate the workspace against an outside context/memory-engineering framework (@marfinxx article) | Closed — recs 1–4, 6 shipped via `context-memory-hardening`; 5 deferred (`decisions.md`) |
