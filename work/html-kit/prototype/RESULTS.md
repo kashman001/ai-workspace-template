@@ -107,3 +107,27 @@ from a CDN. `kit.css` 12,284 B, `kit.js` 4,742 B, `AUTHORING.md` 6,786 B
 - Eight-stage backup graph: matches the original (`s4-k14-light.jpg`), dark
   version `s4-k14-dark2.jpg`. The session-3 regression is gone.
 - Tier ladder: coloured rows match the original (`s4-k5-light.jpg`).
+
+## Second page: `docs/setup-guide.html` by a fresh agent (rule only, kit unseen)
+
+`prototype/setup-guide.html`: **18,428 B vs 29,079 B original (37% smaller)**;
+checks print `0`; all content kept. Screenshots: `shots/s4-setup-kit.jpg` vs
+`shots/s4-setup-orig.jpg` (full page, light).
+
+What it did with the original's 5 SVGs: 2 were real diagrams → Mermaid
+(symlink fan-in; 5-step pipeline, losing the green Build highlight); 3 were
+boxed lists drawn as SVG → a table and two card pairs (a fair call).
+
+**Findings (to fix next):**
+- **Code blocks are missing from the kit** — the biggest gap. `<pre>` renders
+  unstyled and overflows; the agent fell back to `<p>` + `<code>` + `<br>`,
+  losing alignment. A setup guide is mostly commands, so this blocks adoption.
+- **Mermaid comes out small in docs** — both Mermaid diagrams render tiny on
+  the full-width page. The agent chose Mermaid, as the rule allows for simple
+  flows, so either Mermaid needs a minimum size in docs or the rule should push
+  harder toward SVG.
+- **Table inside `<figure>` is clipped on the left** (doc figure bleed); figure
+  captions also sit offset from body text.
+- Smaller rule gaps: caption for a non-diagram (used `.note`), footer slot,
+  table of contents (used `grid small`), steps that hold code (used `<h3>`),
+  relative links from a moved page.
