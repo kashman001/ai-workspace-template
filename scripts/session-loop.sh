@@ -10,7 +10,9 @@
 #          plus `seq` before and after. It never talks to a model.
 # Usage:   session-loop.sh <project> [--runtime <rt>] [--plan <slug>]
 #            [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>]
-#            [--reset-cap] [--reopen] [--relaunch-override]
+#            [--reset-cap] [--reopen] [--reopen-only] [--relaunch-override]
+#          --reopen-only: clear a closed chain and exit without starting the
+#          supervisor (to hand-start an unsupervised rollover, e.g. --clear).
 # Exit:    0 chain ended (verdict quit_stop / quit_plain / cap / plan_closed, or
 #          the interactive pause) / 1 broken / 3 usage / 4 refused at start
 #          130/143/129 signal deaths (INT untrapped; TERM/HUP re-raised)
@@ -58,13 +60,14 @@ ROOT="$(resolve_workspace_root)"
 [ -f "$ROOT/context-budget.env" ] && . "$ROOT/context-budget.env"
 
 PROJECT=""; RUNTIME=""; PLAN_OPT=""; MAX_SESSIONS=""; MIN_LIFETIME=""; STALL_LIMIT=""
-RESET_CAP=0; REOPEN=0; RELAUNCH_OVERRIDE=0
+RESET_CAP=0; REOPEN=0; REOPEN_ONLY=0; RELAUNCH_OVERRIDE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --runtime) RUNTIME="$2"; shift 2 ;;
     --plan) PLAN_OPT="$2"; shift 2 ;;
     --reset-cap) RESET_CAP=1; shift ;;
     --reopen) REOPEN=1; shift ;;
+    --reopen-only) REOPEN_ONLY=1; shift ;;
     --relaunch-override) RELAUNCH_OVERRIDE=1; shift ;;
     --max-sessions) MAX_SESSIONS="$2"; shift 2 ;;
     --min-lifetime) MIN_LIFETIME="$2"; shift 2 ;;
@@ -73,7 +76,7 @@ while [ $# -gt 0 ]; do
     *) [ -z "$PROJECT" ] && PROJECT="$1" || { echo "unexpected argument: $1" >&2; exit 3; }; shift ;;
   esac
 done
-[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--plan <slug>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap] [--reopen] [--relaunch-override]" >&2; exit 3; }
+[ -n "$PROJECT" ] || { echo "usage: session-loop.sh <project> [--runtime <rt>] [--plan <slug>] [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] [--reset-cap] [--reopen] [--reopen-only] [--relaunch-override]" >&2; exit 3; }
 command -v jq >/dev/null 2>&1 || { echo "session-loop: refused reason=jq_missing — jq is required" >&2; exit 4; }
 
 S="$ROOT/work/$PROJECT"
@@ -143,6 +146,18 @@ if [ "$RESET_CAP" -eq 1 ]; then
   supervisor_live && refuse supervisor_live "pid=$(rq '.chain.supervisor.pid') — stop it before opening a new budget"
   rec_write true '.chain = ((.chain // {}) + {used: 0, cap: $cap})' --argjson cap "$MAX_SESSIONS" || exit 4
   say "chain budget reset ($(rq '.chain.used // 0') of $(rq '.chain.cap // "?"') had been used) — the next start opens a fresh budget of $MAX_SESSIONS"
+  exit 0
+fi
+# Reopening without a supervisor: the way back to an unsupervised rollover
+# (launch-next-session.sh refuses chain_closed, and --clear refuses under a
+# supervisor). Starts nothing, so ROLLOVER_RELAUNCH=off does not gate it.
+if [ "$REOPEN_ONLY" -eq 1 ]; then
+  if [ "$(rq '.chain.closed // null')" = null ]; then
+    say "work/$PROJECT — the chain is not closed; nothing to reopen"
+    exit 0
+  fi
+  rec_write '.chain.closed != null' '.chain.closed = null' || exit 4
+  say "reopened work/$PROJECT without starting a supervisor — session #$(rq '.chain.closed.by_seq // "?"') had ended this chain at $(rq '.chain.closed.at // "?"') reason=$(rq '.chain.closed.reason // "?"')"
   exit 0
 fi
 # The item's committed ROLLOVER_RELAUNCH=off means "do not run me unattended".

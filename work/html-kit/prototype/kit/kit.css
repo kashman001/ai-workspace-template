@@ -117,6 +117,38 @@ pre.mermaid { margin: 0; text-align: center; background: none; font-family: var(
 pre.mermaid:not([data-processed]) { color: transparent; min-height: 8em; }
 pre.mermaid svg { max-height: 52vh; }
 
+/* hand-drawn diagrams: <svg class="diagram"> — authors draw geometry, the kit colours it.
+   Shapes are outlined nodes, lines are plain strokes, text is centred. Classes:
+   .arrow (arrowhead at the end), .dash, tone .accent/.ok/.info/.warn/.bad (stroke or text colour),
+   .solid (shape filled with its tone, accent by default), text .small (mono edge label), text .inverse (on .solid). */
+svg.diagram { width: 100%; max-height: 60vh; overflow: visible; }
+.diagram :is(rect, circle, ellipse, polygon) { fill: var(--raised); stroke: var(--ink); stroke-width: 1.6; }
+.diagram :is(path, line, polyline) { fill: none; stroke: var(--ink); stroke-width: 2; }
+.diagram text { fill: var(--ink); stroke: none; font-family: var(--display); font-size: 16px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+.diagram text[class] { stroke: none; }  /* tone classes set stroke; text never takes one */
+.diagram text.small { font-family: var(--mono); font-size: 14px; font-weight: 400; }
+.diagram .arrow { marker-end: url(#kit-arrow); }
+.diagram .dash { stroke-dasharray: 4 4; }
+.diagram .accent { stroke: var(--accent); } .diagram text.accent { fill: var(--accent); }
+.diagram .ok     { stroke: var(--ok); }     .diagram text.ok     { fill: var(--ok); }
+.diagram .info   { stroke: var(--info); }   .diagram text.info   { fill: var(--info); }
+.diagram .warn   { stroke: var(--warn); }   .diagram text.warn   { fill: var(--warn); }
+.diagram .bad    { stroke: var(--bad); }    .diagram text.bad    { fill: var(--bad); }
+.diagram .solid { fill: var(--accent); stroke: none; }
+.diagram .solid.ok { fill: var(--ok); } .diagram .solid.info { fill: var(--info); }
+.diagram .solid.warn { fill: var(--warn); } .diagram .solid.bad { fill: var(--bad); }
+.diagram text.inverse { fill: var(--paper); }
+#kit-arrow path { fill: var(--ink); fill: context-stroke; stroke: none; }
+
+/* ---------- rows: a coloured ladder. <ul class="rows"><li class="ok">label · text · <b>verdict</b></li> ---------- */
+.rows { list-style: none; padding: 0; display: grid; gap: 10px; max-width: 52em; }
+.rows > li { display: grid; grid-template-columns: 9.5em 1fr auto; gap: 18px; align-items: center; background: var(--raised); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 18px; }
+.rows > li > span:not(.tag) { color: var(--muted); font-size: 0.9em; }
+.rows > li > b { font-family: var(--display); font-size: 0.85em; text-align: right; white-space: nowrap; }
+.rows > li.accent > b { color: var(--accent); } .rows > li.ok > b { color: var(--ok); } .rows > li.info > b { color: var(--info); }
+.rows > li.warn > b { color: var(--warn); } .rows > li.bad > b { color: var(--bad); }
+@media (max-width: 700px) { .rows > li { grid-template-columns: 1fr; gap: 6px; } .rows > li > b { text-align: left; } }
+
 /* ---------- doc layout ---------- */
 body.doc > main { max-width: 46em; margin: 0 auto; padding: clamp(24px, 6vh, 64px) 20px 80px; display: grid; gap: 18px; }
 body.doc > main > section { display: grid; gap: 14px; margin-top: 1.6em; }

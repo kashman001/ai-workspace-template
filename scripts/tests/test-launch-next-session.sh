@@ -160,6 +160,7 @@ echo "C: chain_closed"
 reset; jq '.chain = {supervisor:null, used:3, cap:10, closed:{at:"2026-09-18T00:00:00Z", by_seq:8, reason:"quit"}}' "$REC" > "$REC.t" && mv "$REC.t" "$REC"
 out=$(as_me --emit 2>&1); rc=$?
 assert_refused "C1 (record)" "$rc" "$out" chain_closed
+assert_contains "C1c: names the supervisor-free reopen" "$out" "session-loop.sh testproj --reopen-only"
 reset; printf '{"seq":8,"closed_at":"2026-09-13T00:00:00Z","written_by":"session-loop.sh"}\n' > "$MAIN/work/testproj/.chain-closed"
 out=$(as_me --dry-run 2>&1); rc=$?
 assert_eq "C2 (the retired .chain-closed marker is not read)" "$rc" "0"

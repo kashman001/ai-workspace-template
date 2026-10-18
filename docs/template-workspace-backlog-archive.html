@@ -1051,6 +1051,15 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L91</span> No way to reopen a closed chain without starting the supervisor
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh, scripts/session-loop.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; Quitting a session under <code>session-loop.sh</code> sets <code>.chain.closed</code> (<code>quit_plain</code>); <code>launch-next-session.sh</code> then refuses every launch with <code>chain_closed</code>, naming <code>session-loop.sh --reopen</code> as the fix. That reopen also starts a supervisor, and <code>--clear</code> refuses under one (<code>supervised_stage_only</code>). Hit 2026-10-15 in the clear-session-loop S14 probe; worked around by hand-writing <code>.chain.closed = null</code>.</p>
+    <p><span class="k">Impact</span> &mdash; Moving a work item from a supervised chain to a hand-started <code>--clear</code> rollover dead-ends; the only way through is an unsanctioned state edit.</p>
+    <p><span class="k">Fix</span> &mdash; A reopen that does not start the supervisor (e.g. <code>launch-next-session.sh --reopen</code>, or a <code>session-loop.sh --reopen-only</code> that exits after the write), with a test; name it in the <code>chain_closed</code> refusal.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-18. <code>scripts/session-loop.sh &lt;p&gt; --reopen-only</code> nulls <code>chain.closed</code> and exits 0 without starting the supervisor; it is checked before the <code>relaunch_off</code> gate, since it starts nothing, and is a no-op on an open chain. It lives in the supervisor because only the supervisor writes the record&rsquo;s <code>chain</code> block (<code>scripts/lib/session-lib.sh</code>), so a launcher <code>--reopen</code> was rejected. The launcher&rsquo;s <code>chain_closed</code> refusal now names both reopens. <code>test-session-loop.sh</code> R9a&ndash;g and <code>test-launch-next-session.sh</code> C1c failed before the change (3 + 1 failures); 160/160 and 189/189 pass after. Documented in <code>docs/context-budget.md</code> (gate table, supervisor start, troubleshooting).</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L92</span> The <code>--clear</code> rollover told the human to type nothing, but a cleared session sits idle
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/launch-next-session.sh, docs</span></h3>
     <p><span class="k">Evidence</span> &mdash; <code>launch-next-session.sh --clear</code> printed &ldquo;NOW PRESS /clear and type nothing&rdquo;, and the session-rollover skill, <code>docs/context-budget.md</code> and TADR-0009 said the same. Two attended probes on claude 2.1.300 (<code>work/clear-session-loop/probes.md</code>): the <code>SessionStart(clear)</code> hook bound the new session and seeded the prompt as context, but no turn started in 60 s until the user typed.</p>

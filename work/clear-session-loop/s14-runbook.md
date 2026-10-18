@@ -69,8 +69,8 @@ Session #7 records run 2, applies the matching S15 doc change (PASS: a
 
 - Launcher refuses `--clear` with `chain_closed`: quitting under
   `session-loop.sh` (step 0) marks the chain ended, and `--reopen` would start
-  the loop again. The session clears the flag itself (`jq '.chain.closed = null'`
-  on `session-state.json`) and logs it; nothing for you to do (backlog L91).
+  the loop again. Run `scripts/session-loop.sh clear-session-loop --reopen-only`
+  (reopens and exits; backlog L91, fixed 2026-10-18).
 - Launcher refuses `--clear` with `supervised_stage_only`: the session was
   started under `session-loop.sh`. Exit and restart it with plain `claude`.
 - Launcher refuses `runtime_path_unsupported`: no `claude` process found; the

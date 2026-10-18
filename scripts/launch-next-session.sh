@@ -130,7 +130,7 @@ owner_q() { printf '%s' "$OWNER_JSON" | jq -r "$@" 2>/dev/null; }
 # An UNSUPERVISED rollover never runs session-loop.sh, so this read cannot
 # live only there.
 if [ -n "$REC_JSON" ] && [ "$(rec_q '.chain.closed // null')" != null ]; then
-  refuse chain_closed "seq=$(rec_q '.chain.closed.by_seq // "?"') at=$(rec_q '.chain.closed.at // "?"') — the chain for work/$PROJECT was deliberately ended; reopen it explicitly: scripts/session-loop.sh $PROJECT --reopen"
+  refuse chain_closed "seq=$(rec_q '.chain.closed.by_seq // "?"') at=$(rec_q '.chain.closed.at // "?"') — the chain for work/$PROJECT was deliberately ended; reopen it explicitly: scripts/session-loop.sh $PROJECT --reopen (starts a supervised chain) or scripts/session-loop.sh $PROJECT --reopen-only (reopens and exits, for an unsupervised rollover)"
 fi
 
 # Relaunch knobs: explicit env > per-item work/$PROJECT/context-budget.env >

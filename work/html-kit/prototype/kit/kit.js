@@ -1,5 +1,6 @@
 // html-kit prototype — page behaviour. Pages never carry their own <script>.
 // - wraps every <table> in a keyboard-scrollable box
+// - adds the shared arrowhead marker for <svg class="diagram">
 // - loads Mermaid (only if the page has <pre class="mermaid">), themed to light/dark
 // - body.deck: builds progress bar + footer nav; arrow/space/PageUp/PageDown/Home/End;
 //   #N in the URL opens slide N; .slide.backup slides sit outside the main count
@@ -14,6 +15,14 @@
     t.replaceWith(w);
     w.appendChild(t);
   });
+
+  // One shared arrowhead for every <svg class="diagram">; it takes the colour of the line it ends.
+  if (document.querySelector('svg.diagram')) {
+    document.body.insertAdjacentHTML('afterbegin',
+      '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><marker id="kit-arrow" ' +
+      'viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" ' +
+      'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></svg>');
+  }
 
   if (document.querySelector('pre.mermaid')) {
     const s = document.createElement('script');

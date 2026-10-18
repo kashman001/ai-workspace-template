@@ -56,12 +56,25 @@
   <p class="eyebrow">The map</p>
   <h2>The lifecycle is a loop — and discovery never stops</h2>
   <figure>
-    <pre class="mermaid">
-flowchart LR
-  O[Operate] --> M[Maintain] --> P[Plan] --> B[Build] --> V[Verify] --> R[Release] --> O
-  O -. signal .-> D([Discover])
-  D -. new work .-> P
-    </pre>
+    <svg class="diagram" viewBox="0 0 700 400" role="img" aria-label="Six stages arranged in a ring — operate, maintain, plan, build, verify, release — with arrows running clockwise. Discovery sits in the center: signal flows in from operate, new work flows out to planning.">
+      <path class="arrow" d="M 393 71.5 A 150 150 0 0 1 451 104"/>
+      <path class="arrow" d="M 495 143 A 150 150 0 0 1 495 257"/>
+      <path class="arrow" d="M 451 296 A 150 150 0 0 1 393 328.5"/>
+      <path class="arrow" d="M 307 328.5 A 150 150 0 0 1 249 296"/>
+      <path class="arrow" d="M 205 257 A 150 150 0 0 1 205 143"/>
+      <path class="arrow" d="M 249 104 A 150 150 0 0 1 307 71.5"/>
+      <rect x="304" y="32"  width="92" height="36" rx="5"/><text x="350" y="50">Operate</text>
+      <rect x="434" y="107" width="92" height="36" rx="5"/><text x="480" y="125">Maintain</text>
+      <rect x="434" y="257" width="92" height="36" rx="5"/><text x="480" y="275">Plan</text>
+      <rect x="304" y="332" width="92" height="36" rx="5"/><text x="350" y="350">Build</text>
+      <rect x="174" y="257" width="92" height="36" rx="5"/><text x="220" y="275">Verify</text>
+      <rect x="174" y="107" width="92" height="36" rx="5"/><text x="220" y="125">Release</text>
+      <rect class="solid" x="296" y="182" width="108" height="38" rx="19"/><text class="inverse" x="350" y="201">Discover</text>
+      <path class="arrow dash accent" d="M 355 68 C 358 105, 356 145, 352 178"/>
+      <path class="arrow dash accent" d="M 396 214 C 424 226, 448 240, 462 253"/>
+      <text class="small accent" x="392" y="124">signal</text>
+      <text class="small accent" x="412" y="246">new work</text>
+    </svg>
     <figcaption>The steady state of a live product: operate → maintain → plan →
     build → verify → release, around again. Discovery moves to the middle, fed
     continuously by telemetry, experiments, and user research. Design folds into
@@ -75,15 +88,12 @@ flowchart LR
   <h2>Not all &ldquo;AI helps&rdquo; is equal</h2>
   <p class="lede">Every AI claim on the map carries one of four evidence tiers —
   and each tier implies an adoption stance.</p>
-  <table>
-    <thead><tr><th>Tier</th><th>Means</th><th>Stance</th></tr></thead>
-    <tbody>
-      <tr><td><span class="tag ok">[measured]</span></td><td>Published deployment results from a named engineering org</td><td>Adopt where the pattern matches</td></tr>
-      <tr><td><span class="tag info">[established]</span></td><td>Widely practiced pattern; tooling claims vary</td><td>Pilot before standardizing</td></tr>
-      <tr><td><span class="tag warn">[heuristic]</span></td><td>Usable, with known failure modes</td><td>Pilot with a human override</td></tr>
-      <tr><td><span class="tag bad">[hype]</span></td><td>Vendor-claimed; no independent evidence</td><td>Avoid until evidence appears</td></tr>
-    </tbody>
-  </table>
+  <ul class="rows">
+    <li class="ok"><span class="tag ok">[measured]</span> <span>Published deployment results from a named engineering org</span> <b>Adopt where the pattern matches</b></li>
+    <li class="info"><span class="tag info">[established]</span> <span>Widely practiced pattern; tooling claims vary</span> <b>Pilot before standardizing</b></li>
+    <li class="warn"><span class="tag warn">[heuristic]</span> <span>Usable, with known failure modes</span> <b>Pilot with a human override</b></li>
+    <li class="bad"><span class="tag bad">[hype]</span> <span>Vendor-claimed; no independent evidence</span> <b>Avoid until evidence appears</b></li>
+  </ul>
   <p class="note"><strong>Scope honesty:</strong> the testing and QA tiers come from
   published research; product and operations tiers apply the same rubric by
   author judgment.</p>
@@ -267,15 +277,33 @@ flowchart LR
   <p class="eyebrow">Backup</p>
   <h2>The full graph: eight stages, feedback included</h2>
   <figure>
-    <pre class="mermaid">
-flowchart LR
-  Di[Discover] --> Pl[Plan] --> De[Design] --> Bu[Build] --> Ve[Verify] --> Re[Release] --> Op[Operate] --> Ma[Maintain]
-  Di -. acceptance criteria become the release test .-> Ve
-  Ve -- failures --> Bu
-  Op -- rollback --> Re
-  Ma -- triaged work re-enters planning --> Pl
-  Op -- telemetry, experiments &amp; user signal --> Di
-    </pre>
+    <svg class="diagram" viewBox="0 0 960 345" role="img" aria-label="The eight SDLC stages in forward order, with feedback edges looping back: verification failures return to build, rollbacks return to release, triaged work returns to planning, and telemetry returns to discovery. A dotted line links discovery to verification: acceptance criteria become the release test.">
+      <path class="arrow dash" d="M 78 120 C 78 60, 510 60, 510 120"/>
+      <text class="small" x="294" y="60">acceptance criteria become the release test</text>
+      <rect x="30" y="124" width="96" height="40" rx="5"/><text x="78" y="144">Discover</text>
+      <rect x="138" y="124" width="96" height="40" rx="5"/><text x="186" y="144">Plan</text>
+      <rect x="246" y="124" width="96" height="40" rx="5"/><text x="294" y="144">Design</text>
+      <rect x="354" y="124" width="96" height="40" rx="5"/><text x="402" y="144">Build</text>
+      <rect x="462" y="124" width="96" height="40" rx="5"/><text x="510" y="144">Verify</text>
+      <rect x="570" y="124" width="96" height="40" rx="5"/><text x="618" y="144">Release</text>
+      <rect x="678" y="124" width="96" height="40" rx="5"/><text x="726" y="144">Operate</text>
+      <rect x="786" y="124" width="96" height="40" rx="5"/><text x="834" y="144">Maintain</text>
+      <line class="arrow" x1="126" y1="144" x2="137" y2="144"/>
+      <line class="arrow" x1="234" y1="144" x2="245" y2="144"/>
+      <line class="arrow" x1="342" y1="144" x2="353" y2="144"/>
+      <line class="arrow" x1="450" y1="144" x2="461" y2="144"/>
+      <line class="arrow" x1="558" y1="144" x2="569" y2="144"/>
+      <line class="arrow" x1="666" y1="144" x2="677" y2="144"/>
+      <line class="arrow" x1="774" y1="144" x2="785" y2="144"/>
+      <path class="arrow accent" d="M 496 168 C 490 200, 422 200, 410 172"/>
+      <path class="arrow accent" d="M 712 168 C 706 200, 638 200, 626 172"/>
+      <path class="arrow accent" d="M 826 172 C 790 262, 240 262, 194 172"/>
+      <path class="arrow accent" d="M 742 172 C 780 305, 120 305, 82 172"/>
+      <text class="small accent" x="453" y="212">failures</text>
+      <text class="small accent" x="669" y="212">rollback</text>
+      <text class="small accent" x="510" y="251">triaged work re-enters planning</text>
+      <text class="small accent" x="430" y="293">telemetry, experiments &amp; user signal feed discovery</text>
+    </svg>
     <figcaption>Solid arrows are flow; the dotted arc is a correspondence — criteria
     written at discovery are what verification executes, so a stale criterion silently
     invalidates the release test. The feedback edges are where a product lives

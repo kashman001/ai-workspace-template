@@ -338,7 +338,7 @@ runs the launcher. The launcher checks both files itself; a failed gate is
 | Gate | Refuses when |
 | --- | --- |
 | `schema_mismatch` | the record is unreadable or not schema 1 |
-| `chain_closed` | `chain.closed` is set — a session ended this chain on purpose; `session-loop.sh <p> --reopen` |
+| `chain_closed` | `chain.closed` is set — a session ended this chain on purpose; `session-loop.sh <p> --reopen` (starts the supervisor) or `--reopen-only` (reopens and exits, for an unsupervised rollover) |
 | `runtime_path_unsupported` | `--emit` on copilot-vscode (detached by nature); `--clear` off claude, or on an owner with no pid |
 | `supervised_stage_only` | a plain launch or `--clear` while a supervisor is live — stage with `--emit` instead |
 | `no_supervisor` | `--emit` from a session the supervisor started (`TF_SESSION_LOOP=1`) but none is live |
@@ -425,7 +425,7 @@ terminal, never talks to a model:
 ```sh
 scripts/session-loop.sh <project> [--runtime <rt>] [--plan <slug>] \
   [--max-sessions <N>] [--min-lifetime <secs>] [--stall-limit <N>] \
-  [--reset-cap] [--reopen] [--relaunch-override]
+  [--reset-cap] [--reopen] [--reopen-only] [--relaunch-override]
 ```
 
 **Start.** It reads the record once and refuses (exit 4, `session-loop: refused
@@ -433,8 +433,10 @@ reason=<code>`) on `record_unreadable`, `schema_mismatch`, `relaunch_off` (the
 item commits `ROLLOVER_RELAUNCH=off`; `--relaunch-override`), `chain_closed`
 (`--reopen` nulls the close and proceeds), `supervisor_live` (another
 supervisor's pid is alive with the recorded start time). `--reset-cap` resets
-`chain.used` and exits 0 without starting; a chain at its cap is the verdict
-`cap` before anything is staged. It then writes `chain.supervisor` (pid, start
+`chain.used` and exits 0 without starting; `--reopen-only` nulls
+`chain.closed` and exits 0 without starting (no `relaunch_off` gate), so a
+closed item can roll over unsupervised (`--clear`, a fresh process); a chain
+at its cap is the verdict `cap` before anything is staged. It then writes `chain.supervisor` (pid, start
 time) and exports `TF_SESSION_LOOP=1` and `TF_SESSION_LOOP_PROJECT=<p>`, which
 the sessions and their hooks inherit.
 
@@ -547,7 +549,7 @@ what a one-line message cannot carry.
 | a page `staged_alive` — staged a successor and still running | the turn-end hook did not end the session that staged | check the runtime's turn-end hook wiring ("Vendor hook deployments") |
 | `refused reason=not_owner` at `--emit` | this session is not the record's owner (never registered, or already rolled over) | `scripts/context-budget.sh register --project <p>`, then stage again |
 | `refused reason=no_supervisor` at `--emit` | this session was started by a supervisor (`TF_SESSION_LOOP=1`) but none is live — also the shape a sub-agent's shell sees, since it inherits the chain's env | start one (`scripts/session-loop.sh <p>`), roll over attached, or unset the four `TF_SESSION_*` variables for a hand run |
-| the supervisor refuses `chain_closed` | a session ended this chain on purpose | `--reopen` |
+| the supervisor refuses `chain_closed` | a session ended this chain on purpose | `--reopen`; `--reopen-only` to reopen without starting a supervisor |
 | the supervisor refuses `relaunch_off` | this work item says it must not be run unattended | `--relaunch-override` |
 | `broken reason=staged_invalid leg=spent` at start | the staged command was already run by hand | roll over from that session, or null `staged` by hand |
 

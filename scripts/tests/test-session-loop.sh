@@ -349,6 +349,20 @@ assert_eq "R8a: exit 4"                 "$RC" "4"
 assert_eq "R8b: reason owner_live"      "$(refused)" "owner_live"
 assert_eq "R8c: chain.supervisor cleared" "$(rec '.chain.supervisor')" "null"
 
+echo "R9: --reopen-only clears chain.closed and starts nothing (for a hand-started --clear rollover)"
+reset; export STUB_BEHAVIOUR=quit; run --max-sessions 3
+assert_eq "R9a: the quit closed the chain"      "$(rec '.chain.closed.reason')" "quit_plain"
+echo 'ROLLOVER_RELAUNCH=off' > "$W/context-budget.env"
+run --reopen-only
+assert_eq "R9b: exit 0 (even under ROLLOVER_RELAUNCH=off)" "$RC" "0"
+assert_eq "R9c: chain.closed cleared"           "$(rec '.chain.closed')" "null"
+[ -f "$TMP/env-9" ] && bad "R9d: --reopen-only started the chain" || ok "R9d: --reopen-only did not start the chain"
+assert_eq "R9e: no supervisor recorded"         "$(rec '.chain.supervisor')" "null"
+cp "$REC" "$TMP/before"; run --reopen-only
+assert_eq "R9f: an open chain is a no-op, exit 0" "$RC" "0"
+cmp -s "$REC" "$TMP/before" && ok "R9g: record untouched" || bad "R9g: a no-op reopen wrote the record"
+rm -f "$W/context-budget.env"
+
 # ---------------------------------------------------------------------------
 echo "C1/C2: --reset-cap opens a new budget; refused under a live supervisor"
 reset; jq '.chain = {supervisor: null, used: 3, cap: 3, closed: null}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"

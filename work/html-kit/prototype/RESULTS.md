@@ -66,3 +66,44 @@ authoring agent — the subagent test confirmed it wasn't needed.
 Recommendation: **2** — the text-page win is clear and the authoring rule
 works cold, but the diagram regression needs an answer before it lands in the
 template.
+
+---
+
+# Session 4 (2026-10-18) — adjust round: diagrams restored
+
+Verdict taken: **adjust** — good diagrams for human readers are a hard
+requirement (`../decisions.md`). Changes made:
+
+- **Hand-drawn SVG is now a supported path**, not banned: `<svg class="diagram">`
+  with no colour/font attributes and no `<defs>`. The kit colours shapes, lines
+  and text from its CSS variables (so dark mode works), and `kit.js` injects one
+  shared arrowhead that takes the colour of the line it ends (`context-stroke`,
+  ink fallback). Classes: `arrow`, `dash`, tones, `solid`, text `small`/`inverse`.
+- **`.rows`** component for coloured ladders (the evidence tiers).
+- **Sheet gaps fixed**: `<code>`/`<em>`/`<strong>`, `<h3>` in docs, deck subtitle
+  (`.lede`), "everything works on slides", when to use `grid small`, Mermaid vs
+  SVG choice, new grep checks.
+- Kit bug found and fixed: tone classes put a stroke on SVG text (bold, blurry
+  labels) — `text[class]` now always drops the stroke.
+
+## Size (deck, re-measured)
+
+| File | Total | Est. tokens |
+|---|---|---|
+| Original | 36,687 B | ~9,170 |
+| Kit rebuild, session 3 (Mermaid) | 13,636 B | ~3,410 |
+| Kit rebuild, session 4 (hand-drawn SVG + rows) | 17,074 B | ~4,270 |
+
+Still **53% smaller** than the original (19,613 B saved). The two diagrams cost
+~3.4 KB back, but their markup is about half the original's (4,080 B vs
+8,631 B; no colour, font or marker boilerplate), and the page no longer needs Mermaid
+from a CDN. `kit.css` 12,284 B, `kit.js` 4,742 B, `AUTHORING.md` 6,786 B
+(~1,700 est. tokens, read once per authoring agent).
+
+## Look (`shots/s4-*.jpg`)
+
+- Ring slide: matches the original layout; Discover back in the centre
+  (`s4-k4-light.jpg`), and now has a dark version (`s4-k4-dark.jpg`).
+- Eight-stage backup graph: matches the original (`s4-k14-light.jpg`), dark
+  version `s4-k14-dark2.jpg`. The session-3 regression is gone.
+- Tier ladder: coloured rows match the original (`s4-k5-light.jpg`).
