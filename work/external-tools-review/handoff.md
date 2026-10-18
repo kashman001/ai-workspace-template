@@ -6,6 +6,38 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 3 (2026-10-18)
+
+## Summary
+User added two subjects: T5 ("Claude Changed Completely" video, read for
+cross-agent carry-over) and T6 (OpenViking). Ran both as parallel subagents;
+spot-checked load-bearing claims at source (goal + sub-agents docs; `gh api`
+license/relicense commit and integration docs). Both learn-from. Synthesis
+extended to R17–R24 (themes E, F); summary.md/.html updated. User accepted
+all recommendations; dispositions filed. **Item closed — all four success
+criteria met.**
+
+## Decisions
+- `decisions.md` → "Disposition of R1–R24": R6 reword; R11/R12 rejected; R5,
+  R18 later. Cards L94 (doc pass), L95 (dispatch contract, work item when
+  started), L96 (R21 overnight risk), L97 (R5), L98 (R18); L93 now "reword,
+  do in L94". R1 → `work/concurrent-sessions/input-external-tools-review.md`.
+
+## Current state
+- Committed on `main` (not pushed). No processes. No plan.
+
+## Corrections
+- T5's "7 of 9 skill packs no better than a dummy" claim is unsourced; R17
+  rests on Anthropic's baseline guidance instead.
+- OpenViking is AGPL-3.0 since PR #1085 (2026-03-30); was Apache-2.0.
+
+## Suggested skills
+- L94: none special (doc edits). L95: `create-work-item`, then `tdd`.
+
+Learnings:
+- A video of "new Claude features" is mostly Claude-only; for an
+  agent-agnostic template, read it for methods, not features.
+
 # Session Handoff — 2 (2026-10-18)
 
 ## Summary

@@ -36,4 +36,5 @@ the subagent answer we already have. It came out of `work/clear-session-loop/`
 - `handoff.md` — session ledger (what happened). APPEND newest-on-top; archive
   to `handoff-archive.md` when it exceeds the two most recent sessions.
 - `research.md`, `research.html` — research findings and reading copy (to be written).
+- `input-external-tools-review.md` — outside input: the "workers own nothing" design (Projects), external-tools-review R1.
 - `spec.md`, `spec.html` — only if the research recommends go.

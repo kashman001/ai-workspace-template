@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">8</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">145</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -169,7 +169,47 @@
       <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/mcp-setup.md</span></h3>
     <p><span class="k">Evidence</span> &mdash; <code>docs/mcp-setup.md:60-61</code> gives &ldquo;<code>scripts/mcp/</code>&rsquo;s <code>yt-dlp</code> wrapper for transcripts&rdquo; as a CLI-first example, but <code>scripts/mcp/youtube_transcript_mcp.py</code> is a stdin JSON-RPC MCP server with no CLI mode (found by <code>work/external-tools-review/</code> T2, recommendation R6).</p>
     <p><span class="k">Impact</span> &mdash; The one in-repo example of the CLI-first rule is an MCP server, which muddies the rule for readers deciding between a CLI and a fragment.</p>
-    <p><span class="k">Fix</span> &mdash; Reword the example (trivial), or give the script a plain CLI mode so the example becomes true (small) &mdash; user&rsquo;s pick in the external-tools-review disposition.</p>
+    <p><span class="k">Fix</span> &mdash; Reword the example so it no longer calls the MCP server a CLI. (User picked <em>reword</em> over adding a CLI mode, 2026-10-18 external-tools-review disposition.) Do it in the L94 doc pass.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L94</span> Doc pass: CLI contract, research closeout, warnings, skill-earns-its-place test, layered memory
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/ + skills/research-wave/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The external-tools-review accepted 13 doc-only recommendations (<code>work/external-tools-review/synthesis.md</code>): R7&ndash;R9 (agent-facing CLI contract, &ldquo;no CLI? wrap it&rdquo;, sibling SKILL.md), R10 (research-wave closeout + search bounds), R13 (don&rsquo;t recommend <code>cli-hub</code>), R14 (Projects paragraph, incl. thread model/effort), R15 + R16 (no-captions note; OS dictation line), R17 (no-skill / same-length dummy / skill baseline test in <code>docs/stakes-to-ceremony.md</code>), R20 (don&rsquo;t switch models mid-session), R22 + R23 (name the L0/L1/L2 pattern in <code>docs/zoom-model.md</code>; missing <code>Purpose:</code> headers on 4 docs), R24 (OpenViking warning entry). Plus L93&rsquo;s reword.</p>
+    <p><span class="k">Impact</span> &mdash; Each is a few lines; left undone, the CLI-first rule stays abstract, skills are kept without evidence they help, and unsafe or non-agnostic tools go unflagged.</p>
+    <p><span class="k">Fix</span> &mdash; One session. Edit each target file named in the synthesis entry; cite the R-number in the commit. Check: links resolve, <code>scripts/check-workspace-structure.sh</code> passes, every edit traces to an R-number. Resolve L93 with this card.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L95</span> Dispatch contract: read-first list, Remember: section, WIP commits, proved DONE
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/fleet.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; Accepted R2, R3, R4, R19 (<code>work/external-tools-review/synthesis.md</code>): <code>fleet.sh dispatch-contract</code> should name the files a child reads first (Claude&rsquo;s built-in Explore/Plan subagents start without CLAUDE.md), ask for a <code>Remember:</code> section in the return, have worktree children commit WIP at each checkpoint, and require a <code>DONE</code> return to quote its check command and output. R19 also replaces the &ldquo;Done when the orchestrator says so&rdquo; example in <code>docs/plans.md</code> with a named check.</p>
+    <p><span class="k">Impact</span> &mdash; Children start without standing context, lose corrections and uncommitted work, and can report done on a model&rsquo;s say-so &mdash; Claude&rsquo;s <code>/goal</code> checker, for one, &ldquo;doesn&rsquo;t run commands or read files&rdquo;.</p>
+    <p><span class="k">Fix</span> &mdash; Scaffold a small work item (<code>/create-work-item dispatch-contract-hardening</code>) and work test-first against <code>scripts/tests/</code>; update <code>docs/context-budget.md</code> &rarr; Dispatching and <code>docs/plans.md</code>.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L96</span> Overnight chains: Claude&rsquo;s usage-limit wait may trip SESSION_LOOP_KILL_AFTER
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/session-loop.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; R21 (<code>work/external-tools-review/synthesis.md</code>, T5): Claude Code waits silently for a usage limit to reset (on by default, resets within 24h). With a non-zero <code>SESSION_LOOP_KILL_AFTER</code> the watchdog could kill such a session as silent. Unverified whether chain sessions are interactive &mdash; the auto-wait runs only there.</p>
+    <p><span class="k">Impact</span> &mdash; An unattended overnight chain could be killed mid-unit instead of resuming after the limit resets.</p>
+    <p><span class="k">Fix</span> &mdash; Check whether chain children run interactive; if so, reproduce or reason through the watchdog path, then either document the interaction or teach the watchdog to recognise the wait.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L97</span> One &ldquo;needs me&rdquo; view across hitl nodes, BLOCKED returns and open dispatches
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/plan.sh, scripts/fleet.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; R5 (<code>work/external-tools-review/synthesis.md</code>, T3), accepted as later.</p>
+    <p><span class="k">Impact</span> &mdash; Low today; grows if R1 (one owner, helpers report back) brings more parallel workers.</p>
+    <p><span class="k">Fix</span> &mdash; Revisit after <code>work/concurrent-sessions/</code> settles R1.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L98</span> Pilot the skill-earns-its-place test on 3&ndash;5 skills
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; R18 (<code>work/external-tools-review/synthesis.md</code>, T5), accepted as later. Depends on L94 (R17 writes the test down).</p>
+    <p><span class="k">Impact</span> &mdash; Without a pilot the test is untried; with one, real token cost.</p>
+    <p><span class="k">Fix</span> &mdash; Pick 3&ndash;5 skills that mostly restate default model behaviour; run the three arms in fresh headless runs; log results in a work item; script it only if it pays off.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->

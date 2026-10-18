@@ -13,3 +13,10 @@
 **Rejected:** A standalone hand-styled page — repeats the design cost the html-kit item exists to remove.
 **Blast radius:** if html-kit moves or drops the kit, `summary.html` renders unstyled (content intact).
 **Promote?:** no.
+
+## 2026-10-18 — Disposition of R1–R24
+**Chose:** Accept the synthesis as recommended (user: "I agree with your recommendations"). Defaults for the three user's-call items, confirmed by the user: R6 = reword the doc (not a CLI mode); R12 = no (so R11 drops with it); R18 = later. R5 = later. Filed: L94 (doc pass: R6–R10, R13–R17, R20, R22–R24), L95 (dispatch contract: R2–R4, R19), L96 (R21 overnight-chain risk), L97 (R5), L98 (R18); R1 = `work/concurrent-sessions/input-external-tools-review.md`.
+**Because:** Most items are a few lines each in distinct files — one doc pass beats a card per item; R2–R4 + R19 change `scripts/fleet.sh`, which every dispatched child depends on, so they get a test-first work item.
+**Rejected:** R11 + R12 (a `study-feature` skill for rebuilding outside apps' features, and its copied-vs-chosen split) — no current need to study outside apps; R11 only mattered with R12. Adding a CLI mode to `youtube_transcript_mcp.py` (R6 alt) — rewording removes the inaccuracy at near-zero cost.
+**Blast radius:** backlog L93–L98; `work/concurrent-sessions/` README Files list.
+**Promote?:** no.
