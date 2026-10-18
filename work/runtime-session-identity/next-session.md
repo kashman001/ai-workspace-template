@@ -11,72 +11,55 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Live verification on current `main` of the user's stated expectation. Each of these surfaces
-binds and measures its **own** session, including with two sessions open at once in one
-workspace:
-
-- **CLI:** Claude Code, Codex, Antigravity (`agy`), GitHub Copilot (`copilot`, and check
-  whether `gh copilot` launches the same runtime).
-- **VS Code plugins:** Claude, Codex, GitHub Copilot.
-
-The user asked for this setup in session 8. Plan 01 is closed and was fixture-tested only, and
-the Claude VS Code plugin was never probed. This widens backlog L86 (which covered only the
-Antigravity IDE/app and Codex desktop) to all seven surfaces.
+Run plan `02-copilot-vscode-followups`: close the three findings from the s10 Copilot VS Code
+re-probe. (1) Token count is a ~30%-low size estimate because `prompt_tokens` isn't read;
+(2) four hook sets fire per Copilot event, two of them Claude Code's; (3) two registry
+records per chat. Fix 1 now; investigate 2 and 3 and put options to the user.
 
 ## >>> START HERE <<<
 
 **First actions:**
 
-0. **The user wants to talk first:** they want to understand Copilot in VS Code better. Open with
-   a plain-language explanation, then take their questions one at a time. Cover: VS Code agent
-   mode runs on the Copilot CLI runtime (`~/.copilot/session-state/<sid>/events.jsonl`,
-   `COPILOT_AGENT_SESSION_ID`); which hook files exist (`.github/hooks/context-budget.json` for the
-   CLI, `context-budget-vscode.json` for VS Code) and why each event fired three hook configs from
-   the CLI; and the s9 row-5 results (binding passes, hooks silent, two records per chat,
-   `method=estimate`). Evidence: `probes/copilot-vscode.md` (s4 section and "Post-fix (s9)"),
-   probe clone `~/Developer/experiments/ws-identity-probe-s9/probe-out/`. Investigate the two
-   oddities with the user, not ahead of them.
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. Status of `probes/user-checklist.md`, rows 1–3: **PASS** (written up in `copilot-cli.md`,
-   `antigravity-cli.md`, `claude-vscode.md`). All four CLIs pass (s9). Row 4 (Codex VS Code) PASS once trusted, with a GAP: the extension never prompts for hook trust;
-   the workaround is a one-time `codex` CLI run in the folder (`probes/codex-vscode.md`). Row 5 (Copilot VS Code) done: binding PASS, but no hooks fired and there are 2 records per chat. Investigate first
-   (`probes/copilot-vscode.md` → Post-fix (s9)). Walk the user through them one at a time,
-   then read `~/Developer/experiments/ws-identity-probe-s9/probe-out/` (`env-<label>.log`,
-   `hook-*.log`) and `.context-budget/sessions/` and record each row under "Post-fix (s9)" in
-   `probes/codex-vscode.md` / `probes/copilot-vscode.md`.
-3. Optional row: Copilot Chat with a Claude model (still Copilot runtime).
-4. File any gap as a backlog card, or open plan 02 if there are several. Update L86. Add a
-   post-fix column to `findings.md` → "Where we stand".
+2. `scripts/plan.sh frontier --project runtime-session-identity` — wave 1: nodes 01, 02, 03.
+   Read each node file under `plans/02-copilot-vscode-followups/nodes/` (Goal + Acceptance).
+3. Dispatch nodes **02** and **03** as parallel read-only subagents (plans skill → "Subagent
+   prompt template", actors `s11-a`/`s11-b`). Tell them NOT to edit `decisions.md`: each
+   returns its draft Tier-2 note in its report; the main session appends both.
+4. Run node **01** in the main session, test-first (`tdd`): real transcripts in
+   `~/.copilot/session-state/{d5d80a4e…,90bc99b7…}` (VS Code) and `018beebd…` (CLI); probe
+   clone `~/Developer/experiments/ws-identity-probe-s9`. Live acceptance needs a VS Code
+   chat after the fix lands in the clone (`git -C <clone> pull`/cherry-pick) — ask the user.
+5. Reconcile node 04 (verify on disk), then node 05 is the user's: walk them through the two
+   notes **one question at a time**, plain language.
 
-Notes: a bare `ok` in Copilot can get an empty model reply ("No response was returned"). Our
-hook still ran and succeeded, so tell the user to send `ok, thanks` instead. `probe-env.sh`'s
-env grep also captures `*_TOKEN`/CSRF values into the clone's logs. They are local and never
-committed, but filter them out if the script is reused.
+**No human in the loop:** do nodes 01–04; leave 05 with both notes committed and the
+questions written here.
 
 **The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
 `test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,
-`test-doc-consistency.sh` (green at s8 end: 276/20/167/27/17).
+`test-doc-consistency.sh`.
 
 ## Read these, in order
 
 1. Top block of `handoff.md`
-2. `findings.md` → "Where we stand" (the pre-fix matrix) and "Gaps"
-3. `probes/user-checklist.md`, `probes/make-ide-probe-clone.sh`, `probes/probe-env.sh`
-4. `docs/context-budget.md` → the support matrix (hook config per runtime)
+2. `plans/02-copilot-vscode-followups/plan.md` and its nodes
+3. `probes/copilot-vscode.md` → "Re-probe (s10)" only
 
 ## Do NOT reload
 
 - Plan 01 nodes and diffs: closed and reviewed.
-- `probes/gemini-cli.md`: Gemini CLI is out of scope (superseded by Antigravity).
+- Probe rows 1–4 (Claude/Codex/Copilot/agy CLIs, Claude VS Code, Codex VS Code): PASS, written up.
+- "Hooks silent" (s9): a misread, corrected in s10.
+- `probes/gemini-cli.md`: Gemini CLI out of scope.
 
 ## Constraints already decided (do not re-litigate)
 
 - Fixes must be agent-agnostic, proven by a suite case that fails before the fix.
 - Pid-walk is out for identifying a session; liveness never relies on pid.
 - Ambiguous discovery refuses on every command; the Copilot CLI hook config owns every Copilot payload.
-- No session-id field in hook payloads; phantom grace is a fixed 60 min (`decisions.md`).
 - Never probe in the workspace itself; use a clone.
-- Pushing `main` is the user's call; the user approved pushing in s8, but ask again.
+- Pushing `main` is the user's call.
 
 ## Plan position
 
@@ -87,6 +70,8 @@ Frontier: 01-fix-copilot-vscode-exact-tokens, 02-investigate-hook-fanout, 03-inv
 
 ## State snapshot
 
-- Branch `main` = `origin/main` before this rollover commit. Unrelated worktrees
-  (doc-review-skill, stage4, tir-s2): leave them.
-- Old probe clone `~/Developer/experiments/ws-identity-probe` (at bc1cce4, pre-fix).
+- Branch `main`, last item commit = the s10 rollover commit; `main` = `origin/main` before it.
+- Other sessions have uncommitted edits in this checkout (docs/context-budget.md,
+  scripts/launch-next-session.sh, scripts/session-loop.sh + their tests, backlog html,
+  work/html-kit, work/clear-session-loop). Not ours: never stage them; commit by path.
+- Unrelated worktrees (doc-review-skill, stage4, tir-s2): leave them.
