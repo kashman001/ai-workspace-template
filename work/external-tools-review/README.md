@@ -19,6 +19,8 @@ spun out as its own work item. Precedent: `work/deep-seek-harness-eval/`.
 | T2 | CLI-Anything — generates an agent-usable CLI (+ `SKILL.md`) for any program from source or API | GitHub `HKUDS/CLI-Anything` |
 | T3 | Claude Code redesigned Projects — goal-driven coordinator chat delegating to parallel cloud threads, shared memory, library | https://claude.com/resources/articles/projects-redesigned (2026-09-17) |
 | T4 | Phonon-2 — 164MB offline speech-to-text model (Better Stack video) | https://youtu.be/eskgvQYchd0 |
+| T5 | "Claude Changed Completely" video — 15 recent Claude Code changes, read for what carries across agents (Claude, Codex, Copilot, Antigravity). Added s3 by the user | https://youtu.be/YAuWBqZ_gjs (Simon Scrapes, 2026-10-17) |
+| T6 | OpenViking — Volcengine's context database for agents (memory as a `viking://` filesystem, L0/L1/L2 tiered loading); assess integration. Added s3 by the user | GitHub `volcengine/OpenViking` |
 
 T3 overlaps `work/concurrent-sessions/` (several sessions owning one item) —
 read its README before comparing, and cross-link findings rather than
@@ -45,7 +47,7 @@ duplicating them.
 - `next-session.md` — forward launcher (what to do next). REPLACED each rollover.
 - `handoff.md` — session ledger (what happened). APPEND newest-on-top; archive
   to `handoff-archive.md` when it exceeds the two most recent sessions.
-- `research/` — one note per track (T1–T4).
+- `research/` — one note per track (T1–T6).
 - `synthesis.md` — the holistic view: recommendations R1–R16 by theme.
 - `summary.md` / `summary.html` — plain-language one-page summary (glossary first).
 - `decisions.md` — Tier-2 decision notes; rejected recommendations land here.

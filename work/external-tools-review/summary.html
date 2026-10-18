@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Four Outside Tools</title>
+<title>Outside Tools Review</title>
 <link rel="stylesheet" href="../html-kit/prototype/kit/kit.css">
 <script src="../html-kit/prototype/kit/kit.js" defer></script>
 </head>
 <body class="doc">
 <main>
   <p class="eyebrow">External tools review · one-page summary</p>
-  <h1>Four outside tools: what the template should take from them</h1>
-  <p class="lede">None of the four should be added to the template. Three have ideas worth copying, a few lines each, into things the template already has. The fourth isn&rsquo;t needed.</p>
-  <p class="note">Full reasoning: <code>synthesis.md</code> and the four notes in <code>research/</code>. Text version: <code>summary.md</code>.</p>
+  <h1>Six outside subjects: what the template should take from them</h1>
+  <p class="lede">None of the six should be added to the template. Five have ideas worth copying, a few lines each, into things the template already has. Phonon-2 isn&rsquo;t needed.</p>
+  <p class="note">Full reasoning: <code>synthesis.md</code> and the six notes in <code>research/</code> (T5 and T6 added in session 3 at your request). Text version: <code>summary.md</code>.</p>
 
   <section>
     <h2>Words used here</h2>
@@ -23,6 +23,9 @@
       <li><b>Child / worker</b> &mdash; a helper agent that a main agent sends off to do one task and report back.</li>
       <li><b>Dispatch contract</b> &mdash; the standard instruction sheet the template gives every long-running helper agent (<code>scripts/fleet.sh dispatch-contract</code>).</li>
       <li><b>CLI</b> &mdash; a command you run in a terminal. The template prefers these over heavier add-ons (&ldquo;CLI-first&rdquo;).</li>
+      <li><b>Skill</b> &mdash; a file of instructions an agent loads for one kind of task (<code>skills/&lt;name&gt;/SKILL.md</code>).</li>
+      <li><b>MCP</b> &mdash; a plug-in protocol that lets an agent call an outside service.</li>
+      <li><b>AGPL</b> &mdash; a &ldquo;copyleft&rdquo; license: copying its code into the template would put every copy of the template under the same license.</li>
       <li><b>Verdicts</b> &mdash; <em>adopt</em> (take it as is), <em>adapt</em> (take it with changes), <em>learn-from</em> (copy only ideas), <em>skip</em> (nothing to take).</li>
     </ul>
   </section>
@@ -34,6 +37,8 @@
       <li class="info"><span class="tag info">learn-from</span> <span><b>CLI-Anything</b> &mdash; generates a command-line tool for any program, for agents to use</span> <b>Copy its rules for good tools</b></li>
       <li class="info"><span class="tag info">learn-from</span> <span><b>Claude Code Projects</b> &mdash; Claude&rsquo;s cloud version of &ldquo;one boss chat, many parallel helpers&rdquo;</span> <b>Copy its helper design</b></li>
       <li class="bad"><span class="tag bad">skip</span> <span><b>Phonon-2</b> &mdash; a small offline speech-to-text model</span> <b>No need today</b></li>
+      <li class="info"><span class="tag info">learn-from</span> <span><b>&ldquo;Claude Changed Completely&rdquo; video</b> &mdash; 15 recent Claude Code changes; 10 are Claude-only</span> <b>Copy two methods</b></li>
+      <li class="info"><span class="tag info">learn-from</span> <span><b>OpenViking</b> &mdash; ByteDance&rsquo;s memory database for agents (AGPL)</span> <b>Name its layering idea</b></li>
     </ul>
   </section>
 
@@ -81,7 +86,27 @@
         </ul>
         <p class="meta">From: all four</p>
       </div>
+      <div class="card accent">
+        <h3>E. Skills that earn their place; &ldquo;done&rdquo; that is proved <small>R17&ndash;R21</small></h3>
+        <ul>
+          <li>Before keeping a skill, run a few tasks with no skill, with a same-length dummy file, and with the skill; keep it only if it wins (R17). Optionally try it on 3&ndash;5 of our skills first (R18).</li>
+          <li>&ldquo;Done&rdquo; means a check command ran and its output is shown &mdash; in plan acceptance lines and helper reports (R19).</li>
+          <li>Don&rsquo;t switch models mid-session; lower the effort instead (R20).</li>
+          <li>Check whether Claude&rsquo;s silent wait for a usage limit could trip the overnight chain&rsquo;s kill timer (R21).</li>
+        </ul>
+        <p class="meta">From: the video</p>
+      </div>
+      <div class="card ok">
+        <h3>F. Layered memory <small>R22&ndash;R24</small></h3>
+        <ul>
+          <li>Name the &ldquo;one-line summary &rarr; overview &rarr; full detail&rdquo; pattern in <code>docs/zoom-model.md</code> (R22).</li>
+          <li>Add the missing one-line <code>Purpose:</code> header to 4 docs (R23).</li>
+          <li>A short warning entry for OpenViking: AGPL, needs a server and two AI models, sends content to the cloud by default (R24).</li>
+        </ul>
+        <p class="meta">From: OpenViking</p>
+      </div>
     </div>
+    <p class="note">Two additions to earlier ideas: R2 gains a reason (Claude&rsquo;s built-in Explore and Plan helpers skip <code>CLAUDE.md</code>), and R14 gains &ldquo;check the model and effort Projects threads run on&rdquo;.</p>
   </section>
 
   <section>
@@ -90,12 +115,14 @@
       <li>Copying in REA&rsquo;s or CLI-Anything&rsquo;s own skills or code. They change too fast, are too heavy, or only work well in Claude.</li>
       <li>Building on Claude Projects. It&rsquo;s Claude-only, runs only in the cloud, and keeps its memory outside the repo.</li>
       <li>Adding a speech-to-text dependency.</li>
+      <li>Building on Claude-only features from the video (advisor, forks, routines, <code>/goal</code>), or deleting skills on the strength of its &ldquo;7 of 9 skill packs did no better than a dummy&rdquo; claim &mdash; no source for it could be found.</li>
+      <li>Integrating OpenViking. It doesn&rsquo;t work evenly across agents, keeps memory outside git, and its AGPL license would follow it into every copy.</li>
     </ul>
   </section>
 
   <section>
     <h2>What I need from you</h2>
-    <p class="callout"><b>A yes, no or later on each of R1&ndash;R16.</b> A yes becomes a backlog card or one small work item (R2&ndash;R4 belong together). A no is recorded with its reason in <code>decisions.md</code>.</p>
+    <p class="callout"><b>A yes, no or later on each of R1&ndash;R24.</b> A yes becomes a backlog card or one small work item (R2&ndash;R4, and R19, belong together). A no is recorded with its reason in <code>decisions.md</code>.</p>
   </section>
 </main>
 </body>

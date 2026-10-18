@@ -1,7 +1,7 @@
-# Four outside tools: what the template should take from them
+# Six outside subjects: what the template should take from them
 
 One-page summary. The full reasoning is in `synthesis.md` and the four notes
-in `research/`. HTML version: `summary.html`.
+in `research/`. T5 and T6 were added in session 3 at your request. HTML version: `summary.html`.
 
 ## Words used here
 
@@ -17,14 +17,19 @@ in `research/`. HTML version: `summary.html`.
   every long-running helper agent (`scripts/fleet.sh dispatch-contract`).
 - **CLI** — a command you run in a terminal. The template prefers these over
   heavier add-ons ("CLI-first").
+- **Skill** — a file of instructions an agent loads for one kind of task
+  (`skills/<name>/SKILL.md`).
+- **MCP** — a plug-in protocol that lets an agent call an outside service.
+- **AGPL** — a "copyleft" license: copying its code into the template would
+  put the template's every copy under the same license.
 - **Verdicts** — *adopt* (take it as is), *adapt* (take it with changes),
   *learn-from* (copy only ideas), *skip* (nothing to take).
 
 ## The short answer
 
-None of the four tools should be added to the template. Three of them have
-ideas worth copying, a few lines each, into things the template already has.
-The fourth isn't needed.
+None of the six should be added to the template. Five have ideas worth
+copying, a few lines each, into things the template already has. Phonon-2
+isn't needed.
 
 | Tool | What it is | Verdict |
 |---|---|---|
@@ -32,6 +37,8 @@ The fourth isn't needed.
 | CLI-Anything | Generates a command-line tool for any program, for agents to use | learn-from |
 | Claude Code Projects (redesigned) | Claude's cloud version of "one boss chat, many parallel helpers" | learn-from |
 | Phonon-2 | A small offline speech-to-text model | skip |
+| "Claude Changed Completely" video | 15 recent Claude Code changes; 10 are Claude-only | learn-from |
+| OpenViking | ByteDance's memory database for agents | learn-from |
 
 ## The ideas worth taking (most valuable first)
 
@@ -66,6 +73,27 @@ is your call.
 - a line telling non-engineers that their computer's dictation works in any
   agent chat (R16).
 
+**E. Skills that earn their place, and "done" that is proved** (from the video):
+- a simple test before keeping a skill: run a few tasks with no skill, with
+  a dummy file of the same length, and with the skill; keep it only if it
+  wins (R17), optionally tried on 3–5 of our skills first (R18);
+- "done" means a check command ran and its output is shown — written into
+  plan acceptance lines and helper reports (R19);
+- don't switch models mid-session; lower the effort instead (R20);
+- check whether Claude's silent wait for a usage limit could trip the
+  overnight chain's kill timer (R21).
+
+**F. Layered memory** (from OpenViking):
+- name the "one-line summary → overview → full detail" pattern in
+  `docs/zoom-model.md` (R22);
+- add the missing one-line `Purpose:` header to 4 docs (R23);
+- a short warning entry for OpenViking: AGPL, needs a server and two AI
+  models, sends content to the cloud by default (R24).
+
+Also two additions to earlier ideas: R2 gains a reason (Claude's built-in
+Explore and Plan helpers skip `CLAUDE.md`), and R14 gains "check the model
+and effort Projects threads run on".
+
 ## What we're deliberately not doing
 
 - Copying in REA's or CLI-Anything's own skills or code. They change too fast,
@@ -73,9 +101,14 @@ is your call.
 - Building on Claude Projects. It's Claude-only, runs only in the cloud, and
   keeps its memory outside the repo.
 - Adding a speech-to-text dependency.
+- Building on Claude-only features from the video (advisor, forks, routines,
+  `/goal`), or deleting skills on the strength of its "7 of 9 skill packs did
+  no better than a dummy" claim — no source for it could be found.
+- Integrating OpenViking. It doesn't work evenly across agents, keeps memory
+  outside git, and its AGPL license would follow it into every copy.
 
 ## What I need from you
 
-A yes, no or later on each of R1–R16. A yes becomes a backlog card or one
-small work item (R2–R4 belong together). A no is recorded with its reason in
+A yes, no or later on each of R1–R24. A yes becomes a backlog card or one
+small work item (R2–R4, and R19, belong together). A no is recorded with its reason in
 `decisions.md`.
