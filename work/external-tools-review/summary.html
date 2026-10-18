@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Four Outside Tools</title>
+<link rel="stylesheet" href="../html-kit/prototype/kit/kit.css">
+<script src="../html-kit/prototype/kit/kit.js" defer></script>
+</head>
+<body class="doc">
+<main>
+  <p class="eyebrow">External tools review · one-page summary</p>
+  <h1>Four outside tools: what the template should take from them</h1>
+  <p class="lede">None of the four should be added to the template. Three have ideas worth copying, a few lines each, into things the template already has. The fourth isn&rsquo;t needed.</p>
+  <p class="note">Full reasoning: <code>synthesis.md</code> and the four notes in <code>research/</code>. Text version: <code>summary.md</code>.</p>
+
+  <section>
+    <h2>Words used here</h2>
+    <ul>
+      <li><b>Template</b> &mdash; this repo: the starter kit of instructions, skills and scripts that people copy to run AI coding agents on their own projects.</li>
+      <li><b>Agent-agnostic</b> &mdash; works the same in every AI tool people use with the template (Claude Code, Codex, Gemini, Copilot), not just one.</li>
+      <li><b>Vendor</b> &mdash; copy someone else&rsquo;s code or instructions into the template and keep them in step with the original.</li>
+      <li><b>Child / worker</b> &mdash; a helper agent that a main agent sends off to do one task and report back.</li>
+      <li><b>Dispatch contract</b> &mdash; the standard instruction sheet the template gives every long-running helper agent (<code>scripts/fleet.sh dispatch-contract</code>).</li>
+      <li><b>CLI</b> &mdash; a command you run in a terminal. The template prefers these over heavier add-ons (&ldquo;CLI-first&rdquo;).</li>
+      <li><b>Verdicts</b> &mdash; <em>adopt</em> (take it as is), <em>adapt</em> (take it with changes), <em>learn-from</em> (copy only ideas), <em>skip</em> (nothing to take).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The verdicts</h2>
+    <ul class="rows">
+      <li class="info"><span class="tag info">learn-from</span> <span><b>Reverse Engineer Anything</b> &mdash; a large tool that lets agents study how an app works</span> <b>Copy its evidence rules</b></li>
+      <li class="info"><span class="tag info">learn-from</span> <span><b>CLI-Anything</b> &mdash; generates a command-line tool for any program, for agents to use</span> <b>Copy its rules for good tools</b></li>
+      <li class="info"><span class="tag info">learn-from</span> <span><b>Claude Code Projects</b> &mdash; Claude&rsquo;s cloud version of &ldquo;one boss chat, many parallel helpers&rdquo;</span> <b>Copy its helper design</b></li>
+      <li class="bad"><span class="tag bad">skip</span> <span><b>Phonon-2</b> &mdash; a small offline speech-to-text model</span> <b>No need today</b></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The ideas worth taking</h2>
+    <p class="note">Most valuable first. R-numbers match <code>synthesis.md</code>.</p>
+    <div class="grid">
+      <div class="card accent">
+        <h3>A. Running helpers in parallel <small>R1&ndash;R5</small></h3>
+        <p>Claude Projects runs many helpers but lets only the main chat own the work. Helpers just report back. That suggests a simpler answer to our open &ldquo;several sessions on one job&rdquo; question (R1). Three small additions to the helper instruction sheet:</p>
+        <ul>
+          <li>name the files a helper must read first (R2);</li>
+          <li>give helpers a &ldquo;Remember:&rdquo; slot for corrections that should outlive the task (R3);</li>
+          <li>have helpers save their work in progress as they go (R4).</li>
+        </ul>
+        <p class="meta">From: Claude Projects</p>
+      </div>
+      <div class="card ok">
+        <h3>B. Command-line tools for agents <small>R6&ndash;R9</small></h3>
+        <p>Write down what a good agent-facing command does: machine-readable output, clear errors, a self-check (R7). Our own <code>jev.sh</code> is the example. Also:</p>
+        <ul>
+          <li>fix one place where the docs call something a command-line tool when it isn&rsquo;t (R6);</li>
+          <li>add a &ldquo;no tool? wrap it&rdquo; rule (R8);</li>
+          <li>every such tool comes with its own skill file (R9).</li>
+        </ul>
+        <p class="meta">From: CLI-Anything</p>
+      </div>
+      <div class="card info">
+        <h3>C. Careful research <small>R10&ndash;R12</small></h3>
+        <p>In our parallel-research skill:</p>
+        <ul>
+          <li>close every question as answered, partly answered or unresolved;</li>
+          <li>say how hard you looked before reporting &ldquo;not found&rdquo; (R10).</li>
+        </ul>
+        <p>An optional skill for studying someone else&rsquo;s app feature to rebuild it (R12) is your call.</p>
+        <p class="meta">From: Reverse Engineer Anything</p>
+      </div>
+      <div class="card warn">
+        <h3>D. Warnings and notes in the docs <small>R13&ndash;R16</small></h3>
+        <ul>
+          <li>Don&rsquo;t recommend CLI-Anything&rsquo;s installer <code>cli-hub</code>, which runs shell commands from a remote list and sends usage data by default (R13).</li>
+          <li>A paragraph on using Claude Projects with the template, and its limits (R14).</li>
+          <li>A pointer to local transcription for recordings without captions (R15).</li>
+          <li>A line telling non-engineers that their computer&rsquo;s dictation works in any agent chat (R16).</li>
+        </ul>
+        <p class="meta">From: all four</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What we&rsquo;re deliberately not doing</h2>
+    <ul>
+      <li>Copying in REA&rsquo;s or CLI-Anything&rsquo;s own skills or code. They change too fast, are too heavy, or only work well in Claude.</li>
+      <li>Building on Claude Projects. It&rsquo;s Claude-only, runs only in the cloud, and keeps its memory outside the repo.</li>
+      <li>Adding a speech-to-text dependency.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What I need from you</h2>
+    <p class="callout"><b>A yes, no or later on each of R1&ndash;R16.</b> A yes becomes a backlog card or one small work item (R2&ndash;R4 belong together). A no is recorded with its reason in <code>decisions.md</code>.</p>
+  </section>
+</main>
+</body>
+</html>

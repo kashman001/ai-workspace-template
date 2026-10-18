@@ -46,4 +46,6 @@ duplicating them.
 - `handoff.md` — session ledger (what happened). APPEND newest-on-top; archive
   to `handoff-archive.md` when it exceeds the two most recent sessions.
 - `research/` — one note per track (T1–T4).
-- `synthesis.md` — the holistic view (written after all tracks land).
+- `synthesis.md` — the holistic view: recommendations R1–R16 by theme.
+- `summary.md` / `summary.html` — plain-language one-page summary (glossary first).
+- `decisions.md` — Tier-2 decision notes; rejected recommendations land here.

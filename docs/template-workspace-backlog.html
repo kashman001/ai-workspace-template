@@ -75,7 +75,7 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
     <div class="sc green"><div class="num">145</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
@@ -162,6 +162,14 @@
     <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
     <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
     <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L93</span> CLI-first rule cites the yt-dlp MCP server as a CLI
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/mcp-setup.md</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>docs/mcp-setup.md:60-61</code> gives &ldquo;<code>scripts/mcp/</code>&rsquo;s <code>yt-dlp</code> wrapper for transcripts&rdquo; as a CLI-first example, but <code>scripts/mcp/youtube_transcript_mcp.py</code> is a stdin JSON-RPC MCP server with no CLI mode (found by <code>work/external-tools-review/</code> T2, recommendation R6).</p>
+    <p><span class="k">Impact</span> &mdash; The one in-repo example of the CLI-first rule is an MCP server, which muddies the rule for readers deciding between a CLI and a fragment.</p>
+    <p><span class="k">Fix</span> &mdash; Reword the example (trivial), or give the script a plain CLI mode so the example becomes true (small) &mdash; user&rsquo;s pick in the external-tools-review disposition.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->

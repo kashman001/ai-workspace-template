@@ -9,29 +9,47 @@ Gemini, OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > `handoff.md` (the append-only ledger). Convention:
 > docs/work-directory-conventions.md.
 
-## >>> START HERE <<<
+## Mission
 
-1. Run tracks T1–T4 (README table) in parallel; each writes
-   `research/tN-<slug>.md` to the shape in README success criterion 1.
-2. Spot-check the key claims of each track note on disk / at the source.
-3. Write `synthesis.md` — recommendations by theme, ranked.
-4. Write the plain-language summary + HTML twin, then roll over with
-   `--loop-mode interactive` — dispositioning the recommendations is the
-   user's call (README success criterion 4), not the chain's.
+Close success criterion 4: the user dispositions recommendations R1–R16 in
+`synthesis.md`; accepted ones become backlog cards (or one small work item
+for R2–R4), rejected ones become notes in `decisions.md`. Then close the item.
 
-## Constraints already decided (do not re-litigate)
+## Read these, in order
 
-- One work item for all four tracks, not four (user-agreed, s1) — synthesis
-  is the deliverable; integration work spins out to its own item.
-- T3 subject is redesigned Projects (the article), not Agent Teams / Agent
-  View — those may be cited only as context.
-- Run tracks as parallel subagents (one per track; shared files stay in the
-  main session). `research-wave` is user-invoked only — don't self-start it.
-- Primary sources first (the GitHub repo itself, the article, the video
-  transcript); mark anything single-sourced as unverified.
-- Integrations must be agent-agnostic (Codex/Gemini/Copilot + downloaders).
+1. `work/external-tools-review/summary.md` (one page — what the user reads)
+2. `work/external-tools-review/synthesis.md` (R-numbers, costs, file targets)
+3. `work/external-tools-review/handoff.md` (top block only)
 
-## Read these first, in order
+The four `research/t*.md` notes only on demand, for a specific R.
 
-1. `work/external-tools-review/README.md`
-2. `work/external-tools-review/handoff.md` (top block)
+## Do NOT reload
+
+- The four tracks — done and spot-checked at source in s2; don't re-research.
+- Vendoring REA / CLI-Anything, building on Projects, adding Phonon-2 — all
+  rejected in synthesis ("Explicitly not recommended") with reasons.
+- R6 is already filed as backlog card **L93**; its disposition is just
+  "reword vs CLI mode", recorded on that card.
+
+## State snapshot
+
+- Branch `main`; s2 work committed (not pushed — push is the user's call).
+- No running processes. No plan.
+
+## First actions
+
+1. `scripts/context-budget.sh register --project external-tools-review`
+2. **Needs the user.** Open the HTML twin for them if helpful
+   (`work/external-tools-review/summary.html`) and pose, verbatim:
+   > "Here are the 16 recommendations from the external tools review
+   > (summary.md). For each of R1–R16, yes / no / later? R2–R4 would go
+   > together as one small work item; the rest become backlog cards. For R6
+   > (card L93): reword the doc, or add a CLI mode to the transcript script?"
+   Grill one question at a time if they prefer, theme by theme (A–D).
+3. **No human present:** do nothing further — the item is blocked on the user;
+   stop with the question open.
+4. On answers: file accepted ones as Open cards in
+   `docs/template-workspace-backlog.html` (next free L-ID after L93; bump the
+   Open scorecard), or scaffold one work item for R2–R4 with
+   `/create-work-item`; write each rejection to `decisions.md`; R1 = a
+   cross-link note into `work/concurrent-sessions/`. Then `checkpoint`.
