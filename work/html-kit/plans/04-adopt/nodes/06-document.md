@@ -1,11 +1,11 @@
 ---
 id: 06-document
 title: Docs index, workspace-structure, backlog card, ADR promotion
-status: todo
+status: done
 kind: work
 wave: 3
 blocked_by: [05-reconcile-w2]
-sessions: []
+sessions: [10]
 ---
 
 ## Goal
@@ -14,8 +14,11 @@ Point the docs at the kit: `docs/README.md` index, `docs/workspace-structure.md`
 
 ## Acceptance
 
-- [ ] docs index and workspace-structure mention `docs/kit/`
-- [ ] backlog card added/resolved
-- [ ] ADR written and decisions.md note marked promoted
+- [x] docs index and workspace-structure mention `docs/kit/`
+- [x] backlog card added/resolved
+- [x] ADR written and decisions.md note marked promoted
 
 ## Log
+- s10 · started, tier standard
+- s10 · docs/README.md row + workspace-structure.md tree entry (html regenerated); TADR-0015 written + indexed, 5 decision notes flipped to done (1fe41bc). Backlog: L102 resolved (archive), L103 open (build-guide-html.sh onto the kit); staged as my hunks only — another session had uncommitted backlog edits (L86/L101).
+- s10 · done

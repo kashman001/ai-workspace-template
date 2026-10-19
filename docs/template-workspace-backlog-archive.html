@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L102</span> Human-facing HTML pages each carried their own styling; no shared kit
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/kit/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; <code>work/html-kit</code> measured 30&ndash;95% of each generated page as <code>&lt;style&gt;</code>/<code>&lt;script&gt;</code>/<code>&lt;svg&gt;</code>; pages looked different and often lacked dark mode.</p>
+    <p><span class="k">Impact</span> &mdash; Every new page paid the styling cost in tokens again and drifted in look.</p>
+    <p><span class="k">Fix</span> &mdash; A shared kit; pages carry content only.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-18 (html-kit plan 04). <code>docs/kit/</code> holds <code>kit.css</code>, <code>kit.js</code>, the <code>AUTHORING.md</code>/<code>DIAGRAMS.md</code> rules, <code>check-links.sh</code>, <code>render-check.sh</code> and <code>kit-sample.html</code>; <code>docs/setup-guide.html</code> converted (aa356a0); decision recorded as <strong>TADR-0015</strong> (1fe41bc), indexed in <code>docs/README.md</code> and <code>docs/workspace-structure.md</code>. Tested cross-runtime: Codex, Gemini and Copilot CLI produce rule-clean pages from the rules alone. The generated <code>workspace-structure.html</code> follow-up is <strong>L103</strong>.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L98</span> Pilot the skill-earns-its-place test on 3&ndash;5 skills
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
     <p><span class="k">Evidence</span> &mdash; R18 (<code>work/external-tools-review/synthesis.md</code>, T5), accepted as later. Depends on L94 (R17 writes the test down).</p>

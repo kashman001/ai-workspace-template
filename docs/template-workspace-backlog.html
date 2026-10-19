@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">151</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">5</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">152</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -178,6 +178,14 @@
     <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 14 / dummy 13 / skill 14 over 3 tasks &mdash; no gain over the bare model; the gap to the dummy is within noise.</p>
     <p><span class="k">Impact</span> &mdash; Tokens spent on a catalog the model already follows unprompted, on this evidence.</p>
     <p><span class="k">Fix</span> &mdash; User decides: prune, keep, or rerun on harder prose tasks first (the pilot tasks may have been too easy to separate the arms).</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L103</span> <code>workspace-structure.html</code> generator still embeds its own stylesheet, not the HTML kit
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/build-guide-html.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; TADR-0015 moved human-facing pages onto <code>docs/kit/</code> and converted <code>docs/setup-guide.html</code>. <code>docs/workspace-structure.html</code> is generated from the markdown by <code>scripts/build-guide-html.sh</code> (pandoc), which writes a ~50-line inline <code>&lt;style&gt;</code> copied from the old setup guide. The decision &ldquo;convert at next edit&rdquo; doesn&rsquo;t fit a generated page: html-kit node 06 edited the markdown and regenerated it unchanged in style.</p>
+    <p><span class="k">Impact</span> &mdash; Two looks for the two guides; the generated page lacks the kit&rsquo;s dark mode and carries its own CSS to maintain.</p>
+    <p><span class="k">Fix</span> &mdash; Have <code>build-guide-html.sh</code> emit the kit skeleton (<code>kit/kit.css</code> + <code>kit/kit.js</code>, <code>body.doc</code>) and drop its inline style; check pandoc&rsquo;s output only uses kit-listed elements (tables, code, headings, lists); run <code>docs/kit/check-links.sh</code> on the result.</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
