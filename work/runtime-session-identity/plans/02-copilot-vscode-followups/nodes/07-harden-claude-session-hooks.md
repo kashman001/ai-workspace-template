@@ -1,11 +1,11 @@
 ---
 id: 07-harden-claude-session-hooks
 title: Claude SessionStart/End hooks refuse Copilot payloads; PostToolUse suite case; doc fix
-status: todo
+status: done
 kind: work
 wave: 3
 blocked_by: []
-sessions: []
+sessions: [12]
 ---
 
 ## Goal
@@ -21,10 +21,14 @@ payload writes no stamp and no record. (3) `docs/context-budget.md` Copilot VS C
 
 ## Acceptance
 
-- [ ] New suite case: Claude `SessionStart` command with a Copilot session-state `transcript_path` writes no `claude-*` record — seen red before the fix
-- [ ] Same for `SessionEnd` (no `release` of a claude record) — seen red before the fix
-- [ ] Claude `PostToolUse` + Copilot payload case added (green before: guard exists); a real Claude transcript still registers/records
-- [ ] `docs/context-budget.md` `CLAUDE_PROJECT_DIR` sentence corrected
-- [ ] Suites green: vendor hooks, registry, precompact, doc-consistency
+- [x] New suite case: Claude `SessionStart` command with a Copilot session-state `transcript_path` writes no `claude-*` record — seen red before the fix
+- [x] Same for `SessionEnd` (no `release` of a claude record) — seen red before the fix
+- [x] Claude `PostToolUse` + Copilot payload case added (green before: guard exists); a real Claude transcript still registers/records
+- [x] `docs/context-budget.md` `CLAUDE_PROJECT_DIR` sentence corrected
+- [x] Suites green: vendor hooks, registry, precompact, doc-consistency
 
 ## Log
+- s12 · started, tier standard
+
+- s12 · tests `scripts/tests/test-vendor-budget-hooks.sh` K1i (SessionStart + Copilot session-state `transcript_path`, red: `register --runtime claude --transcript …/session-state/cp-k1/events.jsonl`), K1j (SessionEnd, red: `release --runtime claude …`), K1k/K1l (Claude PostToolUse + Copilot payload: no measure, no stamp; green before — dispatcher guard). Fix: the two inline commands in `.claude/settings.json` filter the path in their `jq` (`select(test("/session-state/[^/]+/events\\.jsonl$") | not)`, the dispatcher's pattern); controls K1e/K1h still register/release. Doc: `docs/context-budget.md` Claude row (skip) + Copilot VS Code row (`CLAUDE_PROJECT_DIR` claim corrected). Suites: vendor hooks 171/0, registry 279/0, precompact 11/0, doc-consistency 17/0.
+- s12 · done

@@ -61,8 +61,8 @@ user's: two decisions and one live VS Code check. Then node 06 turns the answers
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 02-copilot-vscode-followups, open, wave 3 of 4, done 6/12, doing 0, todo 6, blocked 0, dropped 0, sessions 2.
-Frontier: 07-harden-claude-session-hooks, 08-canonical-copilot-registry-name. Remaining: 6 of 12 — wave 3: 07-harden-claude-session-hooks todo, 08-canonical-copilot-registry-name todo, 09-reconcile-w3 todo.
+Position: plan 02-copilot-vscode-followups, open, wave 3 of 4, done 7/12, doing 0, todo 5, blocked 0, dropped 0, sessions 2.
+Frontier: 08-canonical-copilot-registry-name. Remaining: 5 of 12 — wave 3: 08-canonical-copilot-registry-name todo, 09-reconcile-w3 todo.
 <!-- plan:end position -->
 
 ## State snapshot

@@ -581,6 +581,23 @@ kreset
 kagent "$(jq -cn --arg t "$KT/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,reason:"exit"}')" \
   bash -c "$(jq -r '.hooks.SessionEnd[0].hooks[0].command' "$KT/.claude/settings.json")"
 assert_contains "K1h: control: Claude's own SessionEnd still releases" "$(cat "$KT/calls.log" 2>/dev/null)" "release --runtime claude --transcript $KT/claude-own.jsonl"
+# A Copilot that one day sends transcript_path on SessionStart/SessionEnd must
+# still not register or release as claude: the session-state path is the gate.
+kreset
+kagent "$(jq -cn --arg s "$ksid" --arg t "$ktx" '{hook_event_name:"SessionStart",session_id:$s,cwd:"/x",transcript_path:$t,source:"new"}')" \
+  bash -c "$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K1i: claude SessionStart refuses a Copilot session-state transcript_path (no register)" \
+  "$(grep register "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg s "$ksid" --arg t "$ktx" '{hook_event_name:"SessionEnd",session_id:$s,cwd:"/x",transcript_path:$t,reason:"exit"}')" \
+  bash -c "$(jq -r '.hooks.SessionEnd[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K1j: claude SessionEnd refuses a Copilot session-state transcript_path (no release)" \
+  "$(grep release "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg s "$ksid" --arg t "$ktx" '{hook_event_name:"PostToolUse",session_id:$s,cwd:"/x",transcript_path:$t,tool_name:"bash"}')" \
+  bash -c "$(jq -r '.hooks.PostToolUse[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K1k: claude PostToolUse on a Copilot payload measures nothing" "$(cat "$KT/calls.log" 2>/dev/null || true)"
+assert_empty "K1l: and writes no claude stamp" "$(ls "$KT/.context-budget" | grep '^hook-claude-' || true)"
 
 kreset
 kagent "$kastop"  "$KT/scripts/hooks/context-budget-copilot-hook.sh" agentStop
