@@ -6,6 +6,24 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 10 (2026-10-18): plan 04-adopt closed — kit in docs/kit/, TADR-0015
+
+**Summary.** Nodes 04–07 done; plan `04-adopt` closed 7/7. Kit, rules and both
+scripts `git mv`'d to `docs/kit/` (flat); `docs/setup-guide.html` converted
+(content word-identical to the old page); 48 render-check shots viewed via
+contact sheets, all pass; 8 prototype pages re-pointed at `docs/kit/` (`aa356a0`).
+TADR-0015 written, docs index + structure map updated (`1fe41bc`). Backlog: L102
+resolved, L103 filed (`build-guide-html.sh` onto the kit). The html-kit work item
+has no open plan.
+
+**Decisions.** `decisions.md` → "Kit files flat in docs/kit/; shots go to the temp dir".
+
+**Open.** L103 only (backlog card, not this item's plan).
+
+Learnings:
+- Another session had uncommitted edits in the backlog HTML files. Stage only your own hunks: apply your edit to `git show HEAD:<f>`, `git hash-object -w`, `git update-index --cacheinfo`, and apply the same edit to the working file.
+- BSD `sed` basic regex has no `\|`; use `sed -E` with `(a|b)`.
+
 # Session Handoff — 9 (2026-10-18): plan 04-adopt opened, wave 1 done (rule fixes + Copilot test)
 
 **Summary.** Opened plan `plans/04-adopt` (7 nodes, 3 waves). Wave 1 closed:

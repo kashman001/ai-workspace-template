@@ -1,6 +1,6 @@
 ---
 plan: 04-adopt
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---
@@ -25,9 +25,9 @@ Converting `workspace-structure.html` (waits for its next edit) and the two back
 | 1 | 01-copilot-test | work | standard | done |
 | 1 | 02-rule-fixes | work | standard | done |
 | 1 | 03-reconcile-w1 | reconcile | frontier | done |
-| 2 | 04-move-and-convert | work | standard | todo |
-| 2 | 05-reconcile-w2 | reconcile | frontier | todo |
-| 3 | 06-document | work | standard | todo |
-| 3 | 07-reconcile-w3 | reconcile | frontier | todo |
-Frontier: 04-move-and-convert. Remaining: 4 of 7. Sessions used: 1.
+| 2 | 04-move-and-convert | work | standard | done |
+| 2 | 05-reconcile-w2 | reconcile | frontier | done |
+| 3 | 06-document | work | standard | done |
+| 3 | 07-reconcile-w3 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 7. Sessions used: 2.
 <!-- plan:end board -->
