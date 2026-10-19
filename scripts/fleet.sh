@@ -193,6 +193,11 @@ cmd_dispatch_contract() {
   echo "You are generation $GEN on this task."
   [ -n "$BRIEF_FILE" ] && echo "Brief: $BRIEF_FILE"
   echo "Report file: $REPORT_FILE"
+  cat <<'EOF'
+- Read these first: CONTEXT.md, GLOSSARY.md, and the work item's README.md,
+  next-session.md and decisions.md (when present). Built-in Explore/Plan
+  subagents start without CLAUDE.md, so do not assume it was loaded for you.
+EOF
   if [ "$GEN" -ge 2 ]; then
     cat <<'EOF'
 - Read the report file before starting: earlier generations' progress and
@@ -203,8 +208,15 @@ EOF
   echo "  (what finished, what is next, open items), labeled [gen $GEN]. This"
   echo "  doubles as your heartbeat."
   cat <<'EOF'
+- If you work in a git worktree, commit work in progress at each checkpoint;
+  uncommitted work is lost if the session dies.
 - Keep your final return message to at most 15 lines; detail belongs in the
   report file, not the return.
+- If you were corrected in a way that should outlive this task, end the
+  return with a "Remember:" section listing it; the parent routes it to
+  decisions.md or docs/operational-knowledge.md.
+- A DONE return must quote the check command and its output; without them
+  the parent treats the return as unproven.
 - The first line of your return must be one of:
   DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED
 - ROLLOVER_NEEDED means: context spent, task incomplete, report current as
