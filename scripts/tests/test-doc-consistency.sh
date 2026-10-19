@@ -80,9 +80,12 @@ compare verbs "$DOC_VERBS" "$SCRIPT_VERBS"
 compare codes "$DOC_CODES" "$SCRIPT_CODES"
 
 PLANS_DOCS="CONTEXT.md docs/plans.md skills/plans/SKILL.md .claude/commands/plan.md"
+PLANS_ROOTS='docs|skills|scripts|\.claude'
+if [ -d "$SRC_ROOT/work/plans" ]; then PLANS_ROOTS="$PLANS_ROOTS|work/plans"
+else echo "  skip: work/plans/ pins (template-only, absent here)"; fi
 for f in $PLANS_DOCS; do
   [ -f "$SRC_ROOT/$f" ] && ok "paths: $f exists" || { bad "paths: $f missing"; continue; }
-  missing="$(grep -oE '`(docs|skills|scripts|\.claude|work/plans)/[^`]*`' "$SRC_ROOT/$f" | tr -d '`' \
+  missing="$(grep -oE "\`($PLANS_ROOTS)/[^\`]*\`" "$SRC_ROOT/$f" | tr -d '`' \
     | grep -vE '[<*…|]' | sed 's: .*$::; s:/$::' | sort -u \
     | while IFS= read -r p; do [ -e "$SRC_ROOT/$p" ] || printf '%s ' "$p"; done)"
   [ -z "$missing" ] && ok "paths: every path $f names exists" || bad "paths: named in $f, not on disk: $missing"

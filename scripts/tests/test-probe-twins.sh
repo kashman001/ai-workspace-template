@@ -20,6 +20,7 @@ set -u
 unset TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT TF_SESSION_PROJECT TF_SESSION_SEQ   # never inherit a live chain's env
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PROBES="$SRC_ROOT/work/template-improvement-review/evaluation/probes"
+[ -d "$PROBES" ] || { echo "SKIP: template-only probes absent (work/template-improvement-review/evaluation/probes)"; exit 77; }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 MAIN="$TMP/main"
 mkdir -p "$MAIN/scripts/lib" "$MAIN/scripts/hooks" "$MAIN/work/testproj" "$MAIN/.claude" "$MAIN/.context-budget/sessions" "$TMP/home"

@@ -8,6 +8,7 @@
 #          committed state is tested — commit before running.
 set -u
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+[ -f "$SRC_ROOT/docs/template-usage.md" ] || { echo "SKIP: template-only docs/template-usage.md absent"; exit 77; }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 # setup.sh writes per-machine state under $HOME (~/.copilot trust seed) —
 # sandbox HOME for every setup.sh run so the test never touches the real one.
