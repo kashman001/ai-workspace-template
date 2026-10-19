@@ -5,42 +5,45 @@
 
 ## Mission
 
-Close plan `01-open-cards` (`work/backlog-sweep/plans/01-open-cards/`): nodes 12 then 13.
+Close plan `01-open-cards` (node 13), then carry out the user's L99/L100 decisions.
 
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-open-cards, open, wave 5 of 5, done 11/13, doing 0, todo 2, blocked 0, dropped 0, sessions 2.
-Frontier: 12-l86-probe-writeup. Remaining: 2 of 13 — wave 5: 12-l86-probe-writeup todo, 13-reconcile-w5 todo.
+Position: plan 01-open-cards, open, wave 5 of 5, done 12/13, doing 0, todo 1, blocked 0, dropped 0, sessions 3.
+Frontier: 13-reconcile-w5. Remaining: 1 of 13 — wave 5: 13-reconcile-w5 todo.
 <!-- plan:end position -->
 
 ## Read these, in order
 
 1. `work/backlog-sweep/handoff.md` — top block only
-2. `work/backlog-sweep/plans/01-open-cards/nodes/10-l86-user-probes.md` — Log (the probe evidence)
-3. `nodes/12-l86-probe-writeup.md`, `nodes/13-reconcile-w5.md`
-4. One existing probe note for the Q1–Q4 format: `work/runtime-session-identity/probes/codex-vscode.md`
-5. `skills/plans/SKILL.md` → "Run a reconcile node" (for 13)
+2. `work/backlog-sweep/decisions.md` — last two entries (hook allowlist; L99/L100)
+3. `nodes/13-reconcile-w5.md`; `skills/plans/SKILL.md` → "Run a reconcile node"
 
 ## Constraints already decided (do not re-litigate)
 
-- Probes are done and passed; read the clone's logs only to quote evidence, never re-run probes.
-- Codex desktop = Codex inside ChatGPT.app (`decisions.md`); write it up as `probes/codex-app.md`.
-- Only reconcile 13 writes `docs/template-workspace-backlog*.html`, re-reading both right before writing.
-- Other sessions share this checkout: stage only your own paths; never push. L99/L100 are the user's call.
+- The Claude-hook allowlist is shipped (`cc1173e`); don't redesign it.
+- L99: prune `code-simplification`. L100: re-test `unslop` first (user's call, s5).
+- Only node 13 writes `docs/template-workspace-backlog*.html`; re-read both right before writing.
+- Other sessions share this checkout: stage only your own paths (the staged `docs/kit/`
+  renames are html-kit's); never push.
 
 ## Do NOT reload
 
-- Node 08 review (done, 0 blockers); L85/L95/L96/L98 (archived); `pilot/runs/`.
+- Probe logs and clone (written up in `work/runtime-session-identity/probes/`); node 08 review.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project backlog-sweep`
-2. Node 12: `plan.sh start 12-l86-probe-writeup --session 5 --project=backlog-sweep`; write
-   `work/runtime-session-identity/probes/antigravity-ide.md` and `probes/codex-app.md` (Q1–Q4)
-   from node 10's Log; name the gap: Codex Desktop runs the `.claude/settings.json` Stop hook
-   (`context-budget-stop-hook.sh claude`, Codex payload) — wrote nothing, but a cross-runtime leak.
-   Also note L86's "steps 3–4" mislabel (surfaces are the checklist's Optional line). `plan.sh done`.
-3. Node 13: archive L86 with a `Fixed:` line, file the Stop-hook leak as a new card, close the
-   plan and mark the item closed in `work/README.md`; `scripts/run-checks.sh`; sync; commit.
-4. End with `checkpoint` (item closed).
+2. Node 13 (`plan.sh start 13-reconcile-w5 --session 6 --project=backlog-sweep`): archive L86
+   with a `Fixed:` line (probe notes + `cc1173e` allowlist fix); file a new card for the
+   Antigravity IDE shell `register` gap (`probes/antigravity-ide.md` → Gaps). Add one line
+   on the allowlist to `docs/context-budget.md` (hooks section) and an "amended by" pointer
+   on the Copilot decision in `work/runtime-session-identity/decisions.md`. `plan.sh verify`,
+   close the plan, mark the item closed in `work/README.md`; `scripts/run-checks.sh`; commit.
+3. L99: remove `skills/code-simplification/` and its entries in `skills/vendored-skills.md`
+   (and any sync/vendor manifest that lists it); archive L99 with `Fixed:`; run-checks; commit.
+4. L100: rerun `work/backlog-sweep/pilot/run.sh` for `unslop` only on 2–3 harder, longer
+   prose tasks, 2–3 samples each (last run ~$0.88 for 36 runs). Prune if it ties again;
+   otherwise keep and archive L100 with the result.
+5. End with `checkpoint` (item closed).

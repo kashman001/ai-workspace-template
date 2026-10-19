@@ -36,7 +36,7 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 3 | 09-reconcile-w3 | reconcile | frontier | done |
 | 4 | 10-l86-user-probes | hitl | frontier | done |
 | 4 | 11-reconcile-w4 | reconcile | frontier | done |
-| 5 | 12-l86-probe-writeup | work | standard | todo |
+| 5 | 12-l86-probe-writeup | work | standard | done |
 | 5 | 13-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 12-l86-probe-writeup. Remaining: 2 of 13. Sessions used: 2.
+Frontier: 13-reconcile-w5. Remaining: 1 of 13. Sessions used: 3.
 <!-- plan:end board -->

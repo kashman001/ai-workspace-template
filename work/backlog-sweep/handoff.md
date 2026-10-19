@@ -6,6 +6,32 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 5 (2026-10-18)
+
+**Summary.** Node 12 done: wrote `work/runtime-session-identity/probes/antigravity-ide.md`
+and `probes/codex-app.md` (both PASS). Found that Codex Desktop runs `.claude/settings.json`
+hooks and, under the session loop, the claude Stop shim would SIGTERM a Codex session as
+claude. On the user's ask, replaced the per-runtime guards with one allowlist
+(`budget_hook_is_claude_transcript` in `scripts/hooks/context-budget-hook-lib.sh`; new
+`scripts/hooks/context-budget-claude-session-hook.sh`; settings.json holds no logic) —
+`cc1173e`, tests K3a–f, run-checks 45/45. Node 12 `524f27b`. User decided L99/L100.
+Rolled over at WARN (149K).
+
+**Decisions.** `decisions.md`: hook allowlist over denylist; L99 prune
+`code-simplification`; L100 re-test `unslop` on harder prose before deciding.
+
+**State.** Plan open, frontier `13-reconcile-w5`. Main ahead of origin (push is the user's
+call). Staged `work/html-kit/…` → `docs/kit/` renames belong to another session — don't
+commit them.
+
+**Learnings:**
+- BSD `sed` has no `\|` alternation in BRE; one silent no-op cost a test round. Use
+  separate `-e` expressions.
+- The Antigravity IDE shell has no `ANTIGRAVITY_APP_DATA_DIR`, so `antigravity_discover`
+  (`scripts/context-budget.sh:358`) misses `~/.gemini/antigravity-ide/` — card to file at 13.
+
+**Suggested skills:** `plans` (reconcile 13), `checkpoint`.
+
 # Session Handoff — 4 (2026-10-18)
 
 **Summary.** Node 08 code-review (Standards + Spec, two opus children) over
@@ -34,27 +60,3 @@ payload). Main ahead of origin (push is the user's call).
 
 **Suggested skills:** `plans` (reconcile 13), `decision-log`.
 
-# Session Handoff — 3 (2026-10-18)
-
-**Summary.** Ran waves 1–2 of plan `01-open-cards`. Wave 1 in four parallel
-children (haiku/sonnet, three in worktrees): L85, L95, L96 fixed, merged,
-verified, cards archived (`987b118`). Wave 2: L98 pilot run (36/45 runs,
-~$0.88), L98 archived, prune candidates filed as L99 (`code-simplification`)
-and L100 (`unslop`) for the user (`f106a8a`). Rolled over at WARN (122K).
-(No session-2 block exists; seq jumped 1→3.)
-
-**Decisions.** `decisions.md`: L96 documented not coded (no verified
-transcript signal during the usage-limit wait); L85 doc-consistency keeps
-running in instances (card's wording over node box 2).
-
-**State.** Plan open, wave 3 of 5, done 7/13; frontier `08-review`. Main is
-ahead of origin (push is the user's call). Uncommitted files under
-`work/runtime-session-identity/` and `work/html-kit/` belong to other sessions.
-
-**Learnings:**
-- `plan.sh verify` exports `WORKSPACE_ROOT`; the hooks honour it, so a test
-  that builds a sandbox workspace must unset it (fixed in `test-probe-twins.sh`).
-- All three worktree children found their branch not cut from the base commit
-  and reset onto it — keep the merge-base check in the dispatch prompt.
-
-**Suggested skills:** `code-review` (node 08), `plans` (reconcile), `session-rollover`.
