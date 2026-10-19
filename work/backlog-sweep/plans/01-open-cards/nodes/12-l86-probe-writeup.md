@@ -1,12 +1,12 @@
 ---
 id: 12-l86-probe-writeup
 title: L86 — write probes/antigravity-ide.md and codex-app.md; file gaps
-status: todo
+status: done
 kind: work
 wave: 5
 blocked_by: [11-reconcile-w4]
 tier: standard
-sessions: []
+sessions: [5]
 ---
 
 ## Goal
@@ -17,3 +17,5 @@ Card: L86. From the user's probe output, write `work/runtime-session-identity/pr
 - [ ] each gap named, for the reconcile node to file
 
 ## Log
+- s5 · started, tier standard
+- s5 · done

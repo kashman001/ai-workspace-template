@@ -55,11 +55,13 @@ crossed over.
 
 ## Gaps
 
-- **Claude Stop hook runs under Codex Desktop** (above). Today the claude branch finds no
-  claude session and does nothing; if it ever matched, a Codex turn could write Claude
-  budget state. Fix direction: the stop shim should check the payload/env matches the
-  runtime on argv (for example, ignore `claude` when `CODEX_INTERNAL_ORIGINATOR_OVERRIDE` is
-  set or the `transcript_path` is under `~/.codex/`).
+- **Claude hooks run under Codex Desktop** (above). Worse than the probe showed: under the
+  session loop, the claude Stop shim would SIGTERM a Codex session as `claude`, and
+  SessionStart/End would register/release it as claude (tests K3a–e). **Fixed in `cc1173e`
+  (backlog-sweep s5):** the Claude hooks now act only on a Claude Code transcript
+  (`budget_hook_is_claude_transcript`, `<config>/projects/<slug>/*.jsonl`). This allowlist
+  replaces the per-runtime Copilot guards, so the next runtime that reads
+  `.claude/settings.json` is refused by default.
 - Untrusted hooks would be skipped silently, as in VS Code (`codex-vscode.md`). Not
   re-tested here; hooks were already trusted.
 
