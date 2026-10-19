@@ -2,6 +2,8 @@
 # Purpose: run BY THE AGENT inside an IDE/app session (in the probe clone) to
 #          record what session identity it can see. Appends to probe-out/env-<label>.log.
 # Usage:   ./probe-env.sh <runtime: claude|antigravity|codex|copilot-cli|copilot-vscode> <label>
+#          On the Copilot CLI runtime (VS Code agent mode included), copilot-vscode
+#          registers as copilot-cli: expect one copilot-cli-<sid>.json record (plan 02 node 08).
 rt="${1:?runtime}"; label="${2:-unlabelled}"
 cd "$(dirname "$0")"; mkdir -p probe-out
 {

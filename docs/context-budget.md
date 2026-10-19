@@ -830,6 +830,14 @@ the `claude` row, and by the `copilot-vscode` row while
 `.github/hooks/context-budget.json` exists. So one turn writes one stamp and one
 registry record.
 
+**One registry name per Copilot session.** The name is canonicalised: a
+`--runtime copilot-vscode` resolution on the Copilot CLI runtime
+(`COPILOT_AGENT_SESSION_ID` set, or an artifact under
+`session-state/<id>/events.jsonl`) files as `copilot-cli-<id>`, the record the
+CLI hook config auto-registers. A twin record would own the work item under the
+other name and refuse the same chat's next `register` as `owner_live`. VS Code's
+Local harness (a workspaceStorage `chatSessions` artifact) stays `copilot-vscode`.
+
 `stop_hook_active` guards every turn-end hook so a hook-continued turn never
 sends a second SIGTERM. Support matrix (a mode is supported once its probe has
 passed on the runtime): Claude Code — attended and supervised, verified;

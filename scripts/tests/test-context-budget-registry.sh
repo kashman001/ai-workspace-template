@@ -745,8 +745,8 @@ vshook() {  # $1=event, payload on stdin
 H1T="$HOME/.copilot/session-state/vs-h1/events.jsonl"
 mkdir -p "$(dirname "$H1T")"; printf '{"type":"session.start"}\n' > "$H1T"
 jq -nc --arg t "$H1T" '{session_id:"vs-h1",transcript_path:$t,stop_reason:"end_turn"}' | vshook Stop
-assert_eq "H1a: Stop payload registers the existing events.jsonl" \
-  "$(jq -r .artifact "$SESS/copilot-vscode-vs-h1.json" 2>/dev/null)" "$H1T"
+assert_eq "H1a: Stop payload registers the existing events.jsonl, as copilot-cli" \
+  "$(jq -r .artifact "$SESS/copilot-cli-vs-h1.json" 2>/dev/null)" "$H1T"
 [ ! -e "$SESS/copilot-vscode-events.json" ] && ok "H1b: no record keyed on the transcript basename" \
   || bad "H1b: a copilot-vscode-events record was written"
 [ -f "$TMP/.context-budget/hook-copilot-vscode-vs-h1.status" ] && ok "H1c: the hook measured it (not silent)" \
@@ -756,18 +756,31 @@ mkdir -p "$WSH/GitHub.copilot-chat/transcripts" "$WSH/chatSessions"
 touch "$WSH/GitHub.copilot-chat/transcripts/vs-h1d.jsonl"
 printf '{"promptTokens":10}\n' > "$WSH/chatSessions/vs-h1d.jsonl"
 jq -nc --arg t "$WSH/GitHub.copilot-chat/transcripts/vs-h1d.jsonl" '{session_id:"vs-h1d",transcript_path:$t}' | vshook Stop
-assert_eq "H1d: an old workspaceStorage transcript still derives chatSessions/<sid>.jsonl" \
+assert_eq "H1d: an old workspaceStorage transcript still derives chatSessions/<sid>.jsonl, as copilot-vscode" \
   "$(jq -r .artifact "$SESS/copilot-vscode-vs-h1d.json" 2>/dev/null)" "$WSH/chatSessions/vs-h1d.jsonl"
 rm -rf "$HOME/Library"
 
-echo "H2: agent register --runtime copilot-vscode with only COPILOT_AGENT_SESSION_ID binds its events.jsonl"
+echo "H2: agent register --runtime copilot-vscode with only COPILOT_AGENT_SESSION_ID binds its events.jsonl, as copilot-cli"
 H2T="$HOME/.copilot/session-state/vs-h2/events.jsonl"
 mkdir -p "$(dirname "$H2T")"; printf '{"type":"session.start"}\n' > "$H2T"
 noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-h2 AI_AGENT=github_copilot_vscode_agent \
   "$CB" register --runtime copilot-vscode --quiet >/dev/null 2>&1; rc=$?
 assert_eq "H2a: register succeeds" "$rc" "0"
-assert_eq "H2b: the record is keyed on the env id and binds session-state/<sid>/events.jsonl" \
-  "$(jq -r .artifact "$SESS/copilot-vscode-vs-h2.json" 2>/dev/null)" "$H2T"
+assert_eq "H2b: the record is copilot-cli-<env id> and binds session-state/<sid>/events.jsonl" \
+  "$(jq -r .artifact "$SESS/copilot-cli-vs-h2.json" 2>/dev/null)" "$H2T"
+[ ! -e "$SESS/copilot-vscode-vs-h2.json" ] && ok "H2c: no copilot-vscode twin" || bad "H2c: a copilot-vscode-vs-h2 twin was written"
+
+echo "H4: one registry name per Copilot session — copilot-vscode then the auto register keep one record (plan 02 node 08)"
+H4T="$HOME/.copilot/session-state/vs-h4/events.jsonl"
+mkdir -p "$(dirname "$H4T")"; printf '{"type":"session.start"}\n' > "$H4T"
+jq -n '{schema:1, seq:6, launch:{pending:null}, session:null}' > "$REC"
+noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-h4 AI_AGENT=github_copilot_vscode_agent \
+  "$CB" register --runtime copilot-vscode --project testproj --quiet >/dev/null 2>&1
+err=$(noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-h4 AI_AGENT=github_copilot_vscode_agent \
+  "$CB" register --project testproj 2>&1 >/dev/null)
+assert_absent "H4a: the same chat's auto register is not refused as a live sibling" "$err" "owner_live"
+assert_eq "H4b: one record, copilot-cli-<sid>" "$(cd "$SESS" && ls -- *-vs-h4.json 2>/dev/null)" "copilot-cli-vs-h4.json"
+assert_eq "H4c: the work item is owned under copilot-cli" "$(rec .session.runtime)" "copilot-cli"
 
 echo "H3: Copilot CLI run inside a VS Code terminal resolves as copilot-cli on its own session"
 # A Copilot-chat-opened terminal may leak VSCODE_TARGET_SESSION_LOG into a CLI
@@ -897,8 +910,8 @@ mkdir -p "$(dirname "$Q1T")"
   printf '{"type":"assistant.usage","data":{"inputTokens":52345}}\n'; } > "$Q1T"
 noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-q1 \
   "$CB" register --runtime copilot-vscode --quiet >/dev/null 2>&1
-assert_eq "Q1a: the record binds the session-state transcript" \
-  "$(jq -r .artifact "$SESS/copilot-vscode-vs-q1.json" 2>/dev/null)" "$Q1T"
+assert_eq "Q1a: the record (copilot-cli) binds the session-state transcript" \
+  "$(jq -r .artifact "$SESS/copilot-cli-vs-q1.json" 2>/dev/null)" "$Q1T"
 out=$(noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-q1 "$CB" check --runtime copilot-vscode 2>&1)
 assert_contains "Q1b: check reports the last inputTokens exactly" "$out" "method=exact tokens=52345"
 rm -rf "$HOME/.copilot"

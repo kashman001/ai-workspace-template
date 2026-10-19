@@ -577,6 +577,14 @@ resolve_session() {
     [ -f "$ARTIFACT" ] || [ "$RUNTIME" = copilot-vscode ] \
       || die "no session artifact found for runtime=$RUNTIME"
   fi
+  # One registry name per Copilot session (decisions.md, node 03): on the
+  # Copilot CLI runtime, VS Code agent mode included, the CLI hook config
+  # auto-registers copilot-cli-<sid>; a copilot-vscode twin of the same
+  # session-state transcript would own the work item and refuse it owner_live.
+  if [ "$RUNTIME" = copilot-vscode ] && { [ -n "${COPILOT_AGENT_SESSION_ID:-}" ] \
+     || case "$ARTIFACT" in */session-state/*/events.jsonl) true ;; *) false ;; esac; }; then
+    RUNTIME=copilot-cli
+  fi
   [ -n "$SESSION_ID" ] || SESSION_ID="$(session_id_for "$RUNTIME" "$ARTIFACT")" || SESSION_ID="unknown"
 }
 
