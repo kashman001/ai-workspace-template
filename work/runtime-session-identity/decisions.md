@@ -117,6 +117,10 @@ Side gap seen: `--runtime copilot-vscode` with no id var dies "no session artifa
 runtime — its discovery only looks in workspaceStorage `chatSessions`. Evidence: node 03 Log;
 sandbox `scratchpad/n03/sandbox.sh` (session-local, not kept).
 
+Amended s14 (plan 02 node 11): the guard keys on the session-state artifact path only, not
+"or with `COPILOT_AGENT_SESSION_ID` set". A leaked var re-filed a VS Code Local `chatSessions`
+transcript as copilot-cli (registry H5). Discovery already maps the var to that path.
+
 ## 2026-10-18 — Keep all Copilot hook files; the dispatcher stays the one gate (node 02) — decided by the user, s12 (plan 02 node 05): option A + both hardenings
 
 Four hook sets run per Copilot event, on both the terminal CLI (interactive, trusted folder) and

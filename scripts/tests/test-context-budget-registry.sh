@@ -782,6 +782,15 @@ assert_absent "H4a: the same chat's auto register is not refused as a live sibli
 assert_eq "H4b: one record, copilot-cli-<sid>" "$(cd "$SESS" && ls -- *-vs-h4.json 2>/dev/null)" "copilot-cli-vs-h4.json"
 assert_eq "H4c: the work item is owned under copilot-cli" "$(rec .session.runtime)" "copilot-cli"
 
+echo "H5: a leaked COPILOT_AGENT_SESSION_ID does not re-file a VS Code chatSessions transcript as copilot-cli"
+# Env vars leak into nested launches (decisions.md, node 02); only the
+# session-state path marks a Copilot CLI runtime chat.
+H5T="$TMP/ws/h5hash/chatSessions/vs-h5.jsonl"
+mkdir -p "$(dirname "$H5T")"; printf '{"kind":0}\n' > "$H5T"
+out=$(noid env -u COPILOT_HOME COPILOT_AGENT_SESSION_ID=vs-h4 \
+  "$CB" check --runtime copilot-vscode --transcript "$H5T" 2>&1)
+assert_contains "H5: stays copilot-vscode" "$out" "runtime=copilot-vscode"
+
 echo "H3: Copilot CLI run inside a VS Code terminal resolves as copilot-cli on its own session"
 # A Copilot-chat-opened terminal may leak VSCODE_TARGET_SESSION_LOG into a CLI
 # launched from it; COPILOT_AGENT_SESSION_ID must win (detect_runtime order, s5).

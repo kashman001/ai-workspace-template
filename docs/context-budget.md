@@ -818,7 +818,7 @@ wiring below needs no edit.
 | Gemini CLI | `.gemini/settings.json` → `context-budget-gemini-hook.sh` | `BeforeAgent`: JSON-only stdout, `{}` when silent | none — chains unsupported, attended rollover only | measures the workspace `.gemini/telemetry.log`; a successor's first-turn check can read the predecessor's last entry (accepted: gemini chains are human-launched) |
 | opencode | `.opencode/opencode.json` `plugin` array → `.opencode/plugins/context-budget.js` → `context-budget-opencode-hook.sh` | `chat.message`: the plugin pushes a message part | `session.idle`: the dispatcher prints `exit`, the plugin self-kills | plugins are not auto-discovered — list it in `opencode.json`; the sqlite read has no size-estimate fallback |
 | Copilot CLI | `.github/hooks/context-budget.json` → `context-budget-copilot-hook.sh` | `sessionStart`: `{additionalContext}`; also registers from the payload's `sessionId` | `agentStop`: SIGTERM, then `{decision:"block",reason}` at STOP | folder trust: hooks no-op unless the workspace is in `~/.copilot/config.json` `trustedFolders` (`scripts/setup.sh` seeds it; `check-dependencies.sh` warns) |
-| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` → `context-budget-copilot-vscode-hook.sh` | `SessionStart`: `{hookSpecificOutput:{additionalContext}}`; also registers | `Stop`: stderr + `exit 2` at STOP (a JSON block is ignored by VS Code); no supervisor — no process to own | `.github/hooks/` is a default hook location, trusted workspace required; the wrapper resolves the repo root itself, needing no `$CLAUDE_PROJECT_DIR` (Copilot CLI ≥1.0.12 does set it for hooks on the CLI runtime). On the Copilot CLI runtime this file stands down (see below) |
+| Copilot VS Code (agent mode) | `.github/hooks/context-budget-vscode.json` → `context-budget-copilot-vscode-hook.sh` | `SessionStart`: `{hookSpecificOutput:{additionalContext}}`; also registers | `Stop`: stderr + `exit 2` at STOP (a JSON block is ignored by VS Code); no supervisor — no process to own | `.github/hooks/` is a default hook location, trusted workspace required; the wrapper resolves the repo root itself, needing no `$CLAUDE_PROJECT_DIR` (Copilot CLI ≥1.0.12 does set it for hooks on the CLI runtime, per its changelog). On the Copilot CLI runtime this file stands down (see below) |
 | Antigravity (`agy`) | `.agents/hooks.json` → `context-budget-antigravity-hook.sh` (the command is `cd .. && scripts/hooks/…`, because agy runs a hook with cwd = the directory holding `hooks.json`) | `PreInvocation`: `{injectSteps:[{ephemeralMessage}]}`, JSON-only stdout, `{}` when silent; registers from the payload's `conversationId` + `transcriptPath` (there is no SessionStart event) | none — chains unsupported, attended rollover only | none: agy fires workspace hooks with no trust step (probed outside its `trustedWorkspaces`). It reads none of the other runtimes' hook files, only its own `.agents/hooks.json` |
 
 **One Copilot config acts per event.** Copilot (the CLI, and VS Code agent
@@ -831,12 +831,13 @@ the `claude` row, and by the `copilot-vscode` row while
 registry record.
 
 **One registry name per Copilot session.** The name is canonicalised: a
-`--runtime copilot-vscode` resolution on the Copilot CLI runtime
-(`COPILOT_AGENT_SESSION_ID` set, or an artifact under
-`session-state/<id>/events.jsonl`) files as `copilot-cli-<id>`, the record the
+`--runtime copilot-vscode` resolution whose artifact is under
+`session-state/<id>/events.jsonl` (the Copilot CLI runtime) files as
+`copilot-cli-<id>`, the record the
 CLI hook config auto-registers. A twin record would own the work item under the
 other name and refuse the same chat's next `register` as `owner_live`. VS Code's
-Local harness (a workspaceStorage `chatSessions` artifact) stays `copilot-vscode`.
+Local harness (a workspaceStorage `chatSessions` artifact) stays `copilot-vscode`,
+even with a leaked `COPILOT_AGENT_SESSION_ID` in its environment.
 
 `stop_hook_active` guards every turn-end hook so a hook-continued turn never
 sends a second SIGTERM. Support matrix (a mode is supported once its probe has
