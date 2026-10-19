@@ -7,61 +7,69 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > at each rollover. Past-tense provenance lives in `handoff.md`.
 > Convention: docs/work-directory-conventions.md.
 
-## >>> START HERE — ask the user this, verbatim <<<
+## Mission
 
-> The kit experiment is done (details: `work/html-kit/prototype/RESULTS.md`,
-> screenshots in `prototype/shots/`). The rebuilt deck is 63% smaller
-> (13.6 KB vs 36.7 KB). Text slides look almost the same, dark mode comes free,
-> and a fresh agent wrote valid pages from the rule alone. The cost is diagrams:
-> Mermaid can't keep the ring layout, and the eight-stage backup graph comes out
-> small and tangled. Which way?
->
-> 1. **Adopt** — move the kit and the rule into the template now, fix the small
->    gaps in the rule, and accept Mermaid for diagrams (a page that truly needs a
->    spatial diagram may keep one hand-drawn SVG as an exception).
-> 2. **Adjust, then re-measure** *(recommended)* — add an allowed escape hatch
->    for one hand-drawn diagram per figure, a coloured "rows" component for
->    ladders like the evidence tiers, fix the rule gaps, then re-run on a second
->    page (e.g. `docs/setup-guide.html`) before deciding.
-> 3. **Drop** — keep writing freeform HTML; the size saving isn't worth the
->    diagram loss.
-
-Ask one question at a time; spell out options in plain terms.
+Close the gaps the session-4 adjust round found, so the kit can get a final
+adopt/drop verdict. The user asked for: **make a plan, run the work with
+parallel subagents where possible, then come back to the question.** Hard
+requirements (`decisions.md`): good diagrams for human readers, and every
+diagram accepted only after it is seen rendered in HTML — desktop 1280 and
+phone 390 wide, light and dark, labels readable, nothing clipped or
+overlapping, sized in proportion to the page.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project html-kit`
-2. Pose the question above. **No human present:** do nothing else — the
-   material is committed; stop with the question open.
-3. On an answer: record it with the `decision-log` skill
-   (`work/html-kit/decisions.md`), then
-   - Adopt → ask where it lands (`docs/kit/`? a skill?) before moving files;
-     fix the gaps listed in RESULTS.md "Fresh-agent test".
-   - Adjust → do the listed changes in `prototype/`, rebuild, re-measure, update
-     RESULTS.md, ask again.
-   - Drop → note it in README.md and close the item (`work/README.md` row).
+2. Create the plan with the `plans` skill (`skills/plans/SKILL.md`; Claude Code
+   `/plan`). Suggested shape — refine, don't re-litigate:
+   - **Wave 1 (parallel):**
+     (a) kit owner — code blocks (`<pre><code>`, wrap/scroll), Mermaid minimum
+     readable size on doc pages, figure layout (table in `<figure>` clipped;
+     captions offset from the text column). **Only this node edits
+     `kit/kit.css`/`kit.js`** — one owner avoids edit clashes.
+     (b) render-check script in `prototype/` — screenshots every
+     `figure`/diagram of a page at 1280 and 390, light and dark, using headless
+     Chrome (flags: `handoff.md` s3 Learnings; `sips` for resizing).
+     (c) AUTHORING.md draft — the small gaps (non-diagram caption, footer, TOC,
+     steps holding code, links from moved pages), a render-check step in the
+     checklist, steering toward hand-drawn SVG when readability is at stake.
+   - **Wave 2 (parallel):** fresh subagent rebuilds `docs/setup-guide.html` from
+     AUTHORING.md alone (kit unseen); re-render the deck
+     `where-ai-actually-helps.html` through the render check.
+   - **Reconcile:** main session looks at every diagram screenshot itself,
+     updates RESULTS.md (sizes in bytes, tokens = bytes/4 labelled estimate).
+3. Execute the plan (`superpowers:dispatching-parallel-agents`; verify
+   subagent outputs on disk — summaries are hints).
+4. Pose the verdict question, one question, plain terms: **adopt** (then ask
+   where it lands: `docs/kit/`? a skill?) or **drop**.
 
-## Constraints already decided (do not re-litigate)
-
-- HTML stays the source of truth for human-facing pages; the
-  Markdown-plus-renderer route is kept only for long prose docs.
-- Agent-agnostic: plain CSS/JS files plus a doc, no runtime-specific skill.
-- Throwaway until a verdict: everything stays in `work/html-kit/prototype/`.
-- Sizes in bytes; token figures are estimates (bytes / 4), labelled as such.
-
-## Do NOT reload
-
-- The original deck source (`work/sdlc-ai-mapping/slides/…`) — measured; numbers
-  are in RESULTS.md.
-- `kit/kit.css` / `kit/kit.js` — only open them if the verdict needs a change.
-
-## State snapshot
-
-- Branch `main`; session 3's work committed. Uncommitted `work/README.md` and
-  `work/clear-session-loop/` belong to another item — leave them.
-- Headless-Chrome screenshot flags: see `handoff.md` top block, Learnings.
+**No human present:** do steps 1–3, commit, then stop with step 4's question
+open.
 
 ## Read these first, in order
 
-1. `work/html-kit/prototype/RESULTS.md`
-2. `work/html-kit/handoff.md` (top block)
+1. `work/html-kit/decisions.md`
+2. `work/html-kit/prototype/RESULTS.md` — the "Session 4" section
+3. `work/html-kit/prototype/AUTHORING.md`
+
+## Do NOT reload
+
+- The original deck source under `work/sdlc-ai-mapping/slides/` — its diagrams
+  are already ported to kit SVG; numbers are in RESULTS.md.
+- The session-3 Mermaid-vs-original comparison — superseded by session 4.
+
+## Constraints already decided (do not re-litigate)
+
+- HTML stays the source of truth for human-facing pages; Markdown-plus-renderer
+  only for long prose docs.
+- Agent-agnostic: plain CSS/JS files plus a doc, no runtime-specific skill.
+- Throwaway until a verdict: everything stays in `work/html-kit/prototype/`.
+- Hand-drawn SVG is allowed, kit-coloured (no `fill=`/`stroke=`/`font-*=`/`<defs>`).
+
+## State snapshot
+
+- Branch `main`, ahead of origin (push is the user's call). html-kit work is all
+  committed. Uncommitted `docs/`, `scripts/`, `skills/`, and
+  `work/runtime-session-identity/` changes belong to other sessions — leave them,
+  and stage only `work/html-kit/` paths when committing (a concurrent session
+  has swept files into its commit before).

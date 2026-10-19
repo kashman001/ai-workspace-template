@@ -6,6 +6,36 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-10-18): adjust round, diagrams restored, second page tested
+
+**Summary.** User verdict: **adjust** — good diagrams for human readers are a hard
+requirement, and they must be checked rendered in HTML (both in `decisions.md`).
+Kit now supports hand-drawn `<svg class="diagram">` (kit-coloured, dark-safe,
+shared arrowhead) and a `.rows` ladder; AUTHORING.md gaps from s3 fixed. Deck
+diagrams restored to the original layouts. A fresh subagent rebuilt
+`docs/setup-guide.html` from the rule alone and exposed three gaps. Rolled over at
+WARN on the user's request: next session makes a plan and runs fixes with parallel
+subagents, then returns to the adopt/drop question.
+
+**What shipped (`prototype/`):** kit.css (+diagram SVG classes, `.rows`, text-stroke
+fix), kit.js (arrow marker), AUTHORING.md (6,786 B), deck rebuilt 17,074 B (53% <
+original), `setup-guide.html` (18,428 B, 37% <), `shots/s4-*.jpg`, RESULTS.md
+"Session 4" section (numbers + findings).
+
+**Open findings (RESULTS.md, "Second page"):** no code-block styling (blocks
+adoption); Mermaid renders tiny on doc pages; table inside `<figure>` clipped,
+captions offset; small rule gaps (non-diagram caption, footer, TOC, steps with code).
+
+**Git note:** most s4 files landed in another session's commit `2f8ec22`
+(session-loop L91) — a concurrent session committed while this one worked. Own
+commits: `8592c24`, `dc4f94e`. main is ahead of origin; push is the user's call.
+
+Learnings:
+- Pillow isn't installed; use `sips` (macOS) to resize/convert screenshots.
+- Tone classes on SVG need `text[class]{stroke:none}` or labels go bold.
+
+**Suggested skills next:** `plans` (create the plan), `dispatching-parallel-agents`.
+
 # Session Handoff — 3 (2026-10-15): kit built, measured, verdict pending
 
 **Summary.** Built the prototype kit and ran the experiment end to end; all
@@ -38,13 +68,3 @@ Learnings:
   mid-fade.
 
 **Suggested skills next:** none for the verdict; `plans` or `to-tickets` if adopt.
-
-# Session Handoff — 2026-10-15 (session 2: wired for session-loop)
-
-Same conversation as session 1; the record numbered it 2 because it registered
-after the s1 block existed (register opens at ledger top + 1). Added the
-`work/README.md` row and a per-item `context-budget.env` (`ROLLOVER_RELAUNCH=auto`,
-same precedent as jev-integration) so `scripts/session-loop.sh html-kit` can chain
-sessions. No kit code written yet; the launcher's START HERE is unchanged in
-substance. Staged the successor (s3) for the supervisor, hands-off.
-
