@@ -11,50 +11,53 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Plan `02-copilot-vscode-followups`, wave 2. The token fix shipped (3928a86). Now node 05 is the
-user's: two decisions and one live VS Code check. Then node 06 turns the answers into a replan.
+Plan `02-copilot-vscode-followups`, wave 3. Node 07 shipped (34c76b4). Build node 08 test-first:
+one registry name per Copilot session (copilot-cli), then reconcile wave 3 (node 09) and stage the
+user's live re-probe (node 10).
 
 ## >>> START HERE <<<
 
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. Read the two `PROPOSED` notes at the bottom of `decisions.md` (nodes 02 and 03), then node
-   `plans/02-copilot-vscode-followups/nodes/05-approve-decisions.md`.
-3. Walk the user through node 05 **one question at a time, plain language, options spelled out**
-   (no jargon; explain "hook" / "registry record" in a sentence). Ask, in this order:
-   - **Q1 (hook files).** "Copilot runs four sets of our budget hooks on each event, two of them
-     meant for Claude Code. Only the right one acts; the other three already stand down. Keep it
-     that way and add two small safety checks (recommended), delete the VS Code hook file, make
-     the Claude hooks refuse by environment variable, or ask users to switch hooks off?"
-   - **Q2 (duplicate records).** "A Copilot chat can end up with two bookkeeping records, but only
-     when an agent passes `--runtime copilot-vscode` by hand. It can stop that chat from taking
-     over its own work item. Always file it under one name, copilot-cli (recommended), just
-     document the trap, look records up by session id everywhere, or file under copilot-vscode?"
-   - **Q3 (live check).** Ask the user to open a new Copilot chat in VS Code in
-     `~/Developer/experiments/ws-identity-probe-s9` (it has the fix, d93e71a) and have the agent
-     run `scripts/context-budget.sh check`. Expect `method=exact`.
-4. Record the answers in node 05's Log, tick its boxes, `scripts/plan.sh done 05-approve-decisions
-   --by human`; flip the chosen notes from PROPOSED to decided. Then node 06: replan wave 3 with
-   the delivery nodes (test-first, each fix with a suite case seen red).
+2. `scripts/plan.sh start 08-canonical-copilot-registry-name --project=runtime-session-identity`,
+   read that node (Goal + Acceptance) and the decided node-03 note in `decisions.md`
+   ("One registry name per Copilot session").
+3. TDD: add the registry case first (`scripts/tests/test-context-budget-registry.sh`, near H2 ~:763):
+   `register --runtime copilot-vscode` on a session-state `events.jsonl`, then the auto copilot-cli
+   register → one `copilot-cli-<sid>.json` record, no `owner_live`. See it red. Then the one guard in
+   `scripts/context-budget.sh` (the runtime resolution), update H2 and `probes/probe-env.sh`, keep a
+   chatSessions-artifact case filing as `copilot-vscode`, note it in `docs/context-budget.md`.
+4. Suites: registry, vendor hooks, statusline, attach-session, doc-consistency. Commit by path.
+5. Node 09 reconcile: verify 07 + 08 on disk; cherry-pick both code commits into the probe clone
+   `~/Developer/experiments/ws-identity-probe-s9` (`git rm` conflicting `work/` files, `--continue`).
+6. Node 10 is the user's (hitl): two new VS Code Copilot chats in the probe clone; each agent runs
+   `register --runtime copilot-vscode` by hand, then `check` on turn 2; user pastes the raw `runtime=`
+   lines. Expect one `copilot-cli-*` record per chat, `method=exact`. Answer:
+   `plan.sh done 10-live-reprobe-vscode --by human`. Node 11 (review) can run alongside.
+
+**No human in the loop:** do steps 1–5 unattended; stop at node 10 with its instructions in the
+launcher. Also open for the user, not urgent: turn 1 of a Copilot VS Code chat is always an estimate
+(~30% low) — document it or accept (`plan.md` → "Not yet specified").
 
 ## Read these, in order
 
 1. Top block of `handoff.md`
-2. The two PROPOSED notes in `decisions.md`
-3. `plans/02-copilot-vscode-followups/nodes/05-approve-decisions.md`
+2. Node `plans/02-copilot-vscode-followups/nodes/08-canonical-copilot-registry-name.md`
+3. The node-03 note in `decisions.md` (line ~84)
 
 ## Do NOT reload
 
-- Nodes 01–04 and their diffs: verified and committed; their Logs hold the evidence.
+- Nodes 01–07 and their diffs: verified and committed; their Logs hold the evidence.
 - Probe write-ups (`probes/*.md`): the notes cite what they need.
-- Subagent sandbox `scratchpad/n03/sandbox.sh`: session-local, gone.
+- The s12 live chat `bec02542-…`: evidence is in node 05's Log.
 
 ## Constraints already decided (do not re-litigate)
 
 - Fixes must be agent-agnostic, proven by a suite case that fails before the fix.
+- Hook fan-out: keep all four hook files; the dispatcher's session-state path test is the gate.
+- Registry: one name per Copilot session on the CLI runtime, copilot-cli.
 - Pid-walk is out for identifying a session; liveness never relies on pid.
-- Ambiguous discovery refuses on every command; the Copilot CLI hook config owns every Copilot payload.
 - Never probe in the workspace itself; use a clone.
 - Pushing `main` is the user's call.
 
@@ -67,6 +70,7 @@ Frontier: 08-canonical-copilot-registry-name. Remaining: 5 of 12 — wave 3: 08-
 
 ## State snapshot
 
-- Branch `main`, item commits 3928a86, c54c478, 4bc3579 + the s11 rollover commit; not pushed.
-- Probe clone at d93e71a (fix cherry-picked); its probe hook wrappers are uncommitted on purpose.
-- Other sessions commit in this checkout concurrently: commit by path, never stage their files.
+- Branch `main`, s12 commits d308262, 34c76b4 + the s12 rollover commit; not pushed.
+- Probe clone at d93e71a (lacks 34c76b4); its probe hook wrappers are uncommitted on purpose.
+- Other sessions commit in this checkout concurrently: commit by path (zsh: use an array), never
+  stage their files.

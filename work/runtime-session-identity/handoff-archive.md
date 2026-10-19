@@ -1,3 +1,30 @@
+# Session Handoff — 10 (2026-10-18) (session 10: Copilot VS Code re-probe; plan 02 opened)
+
+**Summary.** Explained Copilot-in-VS-Code to the user, then re-read the s9 row-5 logs and ran
+a fresh two-chat re-probe (labels `copilot-vscode-C`/`-D`). Binding PASS again. The s9
+"hooks silent" finding was a misread: hooks fired in s9 and s10, four hook sets per Copilot
+event (CLI config, VS Code config, Claude `Stop` and `PostToolUse`). Duplicate records
+explained (CLI hook writes `copilot-cli-*`, agent `register` writes `copilot-vscode-*`). New
+gap: VS Code transcripts carry `prompt_tokens`, not `inputTokens`, so measurement falls back
+to a ~30%-low estimate. Write-up: `probes/copilot-vscode.md` → "Re-probe (s10)".
+
+**Shipped.** 816a7d9 — probe write-up + plan `02-copilot-vscode-followups` (6 nodes, 0 done,
+`replan: structural`). Not pushed (pushing main is the user's call).
+
+**Decisions.** Fix the undercount directly; hook fan-out and duplicate records go through a
+user decision (hitl node 05) before any build (commit trailer of 816a7d9).
+
+**State.** User said "roll over, then start wave 1". Other sessions have uncommitted edits in
+the shared checkout (docs/context-budget.md, launch-next-session.sh, session-loop.sh, their
+tests, backlog html, work/html-kit, work/clear-session-loop): not ours, untouched.
+
+**Suggested skills.** `tdd` for node 01; subagents (read-only) for nodes 02 and 03.
+
+Learnings:
+- Before writing "hooks did not fire", grep each hook log for the session id; s9 misread
+  non-empty logs as empty.
+
+
 
 # Session Handoff — 9 (2026-10-12) (session 9: CLI surfaces probed live; VS Code rows handed to the user)
 

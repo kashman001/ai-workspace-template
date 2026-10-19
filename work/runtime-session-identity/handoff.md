@@ -6,6 +6,31 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 12 (2026-10-18) (session 12: node 05 decided, waves 3–4 planned, node 07 shipped)
+
+**Summary.** Walked the user through node 05 one question at a time. Q1 hook fan-out: option A +
+both hardenings (user asked for an explanation first). Q2 duplicate records: (b), one name,
+copilot-cli. Q3 live VS Code check in the probe clone: turn 1 `method=estimate tokens=29783`
+(no `prompt_tokens` yet — the first `session.usage_checkpoint` is written at turn end), turn 2
+`method=exact tokens=42654`; PASS from turn 2. Node 06 replanned waves 3–4 (nodes 07–12). Node 07
+done test-first: Claude `SessionStart`/`SessionEnd` inline commands skip Copilot session-state
+transcripts (K1i/K1j seen red), K1k/K1l cover Claude `PostToolUse`, doc rows corrected.
+
+**Shipped.** d308262 (decisions, node 05/06, replan), 34c76b4 (node 07 fix). Not pushed.
+
+**Decisions.** Both node-05 notes flipped to decided in `decisions.md`. Turn-1 estimate gap parked as
+a `plan.md` "Not yet specified" note — the user has not picked (document vs accept).
+
+**State.** Plan 02: 7/12 done, frontier = node 08. Rolled over at ~119K as a pre-flight before 08.
+
+**Suggested skills.** `tdd` for node 08.
+
+Learnings:
+- A Copilot agent's summary of `check` drops `method=`; read the raw `runtime=` line from the chat's
+  `events.jsonl` (`grep -o 'runtime=… method=…'`) instead of trusting the wording.
+- Commit-by-path in zsh: `F="a b"; git add $F` is one path (no word splitting) — use an array.
+
+
 # Session Handoff — 11 (2026-10-18) (session 11: plan 02 wave 1 — exact Copilot count, two notes proposed)
 
 **Summary.** Ran plan 02 wave 1. Node 01 in the main session, test-first: `copilot_cli_measure`
@@ -32,30 +57,3 @@ Learnings:
 - Cherry-picking a work-item commit into the probe clone conflicts on `work/` files the clone
   lacks; `git rm` them and `--continue` — only the code needs to land.
 - A grep over Copilot `events.jsonl` must ignore `*Metrics` rollups; they are cumulative.
-
-
-# Session Handoff — 10 (2026-10-18) (session 10: Copilot VS Code re-probe; plan 02 opened)
-
-**Summary.** Explained Copilot-in-VS-Code to the user, then re-read the s9 row-5 logs and ran
-a fresh two-chat re-probe (labels `copilot-vscode-C`/`-D`). Binding PASS again. The s9
-"hooks silent" finding was a misread: hooks fired in s9 and s10, four hook sets per Copilot
-event (CLI config, VS Code config, Claude `Stop` and `PostToolUse`). Duplicate records
-explained (CLI hook writes `copilot-cli-*`, agent `register` writes `copilot-vscode-*`). New
-gap: VS Code transcripts carry `prompt_tokens`, not `inputTokens`, so measurement falls back
-to a ~30%-low estimate. Write-up: `probes/copilot-vscode.md` → "Re-probe (s10)".
-
-**Shipped.** 816a7d9 — probe write-up + plan `02-copilot-vscode-followups` (6 nodes, 0 done,
-`replan: structural`). Not pushed (pushing main is the user's call).
-
-**Decisions.** Fix the undercount directly; hook fan-out and duplicate records go through a
-user decision (hitl node 05) before any build (commit trailer of 816a7d9).
-
-**State.** User said "roll over, then start wave 1". Other sessions have uncommitted edits in
-the shared checkout (docs/context-budget.md, launch-next-session.sh, session-loop.sh, their
-tests, backlog html, work/html-kit, work/clear-session-loop): not ours, untouched.
-
-**Suggested skills.** `tdd` for node 01; subagents (read-only) for nodes 02 and 03.
-
-Learnings:
-- Before writing "hooks did not fire", grep each hook log for the session id; s9 misread
-  non-empty logs as empty.
