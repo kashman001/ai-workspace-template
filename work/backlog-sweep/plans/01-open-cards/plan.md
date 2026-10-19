@@ -24,10 +24,10 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-l85-skip-template-only-suites | work | cheap | todo |
-| 1 | 02-l95-dispatch-contract | work | standard | todo |
-| 1 | 03-l96-usage-limit-watchdog | work | standard | todo |
-| 1 | 04-l98-pilot-design | work | standard | todo |
+| 1 | 01-l85-skip-template-only-suites | work | cheap | doing |
+| 1 | 02-l95-dispatch-contract | work | standard | doing |
+| 1 | 03-l96-usage-limit-watchdog | work | standard | doing |
+| 1 | 04-l98-pilot-design | work | standard | doing |
 | 1 | 05-reconcile-w1 | reconcile | frontier | todo |
 | 2 | 06-l98-pilot-run | work | standard | todo |
 | 2 | 07-reconcile-w2 | reconcile | frontier | todo |
@@ -37,5 +37,5 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 4 | 11-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 12-l86-probe-writeup | work | standard | todo |
 | 5 | 13-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 01-l85-skip-template-only-suites, 02-l95-dispatch-contract, 03-l96-usage-limit-watchdog, 04-l98-pilot-design. Remaining: 13 of 13. Sessions used: 0.
+Frontier: none (01-l85-skip-template-only-suites doing, 02-l95-dispatch-contract doing, 03-l96-usage-limit-watchdog doing, 04-l98-pilot-design doing). Remaining: 13 of 13. Sessions used: 1.
 <!-- plan:end board -->

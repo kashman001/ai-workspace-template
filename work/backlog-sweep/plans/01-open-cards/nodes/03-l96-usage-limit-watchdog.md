@@ -1,13 +1,13 @@
 ---
 id: 03-l96-usage-limit-watchdog
 title: L96 — can the usage-limit wait trip SESSION_LOOP_KILL_AFTER?
-status: todo
+status: doing
 kind: work
 wave: 1
 blocked_by: []
 tier: standard
 check: test -s l96-findings.md && bash "$WORKSPACE_ROOT/scripts/tests/test-session-loop.sh" >/dev/null 2>&1
-sessions: []
+sessions: [3]
 isolated: yes
 ---
 
@@ -21,3 +21,4 @@ Synthesis R21. Read how `scripts/session-loop.sh` / `scripts/launch-next-session
 - [ ] `test-session-loop.sh` passes (node check)
 
 ## Log
+- s3 · started, tier standard

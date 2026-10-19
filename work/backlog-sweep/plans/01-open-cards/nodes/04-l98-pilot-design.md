@@ -1,13 +1,13 @@
 ---
 id: 04-l98-pilot-design
 title: L98 — design the skill-earns-its-place pilot (skills, tasks, runner, cap)
-status: todo
+status: doing
 kind: work
 wave: 1
 blocked_by: []
 tier: standard
 check: test -s pilot/design.md && test -x pilot/run.sh
-sessions: []
+sessions: [3]
 ---
 
 ## Goal
@@ -19,3 +19,4 @@ The test is in `docs/stakes-to-ceremony.md` → "Make a skill earn its place". I
 - [ ] `run.sh` executable; one smoke run saved under `pilot/runs/`
 
 ## Log
+- s3 · started, tier standard

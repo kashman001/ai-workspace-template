@@ -1,13 +1,13 @@
 ---
 id: 02-l95-dispatch-contract
 title: L95 — dispatch contract: read-first, Remember:, WIP commits, proved DONE
-status: todo
+status: doing
 kind: work
 wave: 1
 blocked_by: []
 tier: standard
 check: bash "$WORKSPACE_ROOT/scripts/tests/test-fleet-dispatch-contract.sh" >/dev/null 2>&1
-sessions: []
+sessions: [3]
 isolated: yes
 ---
 
@@ -21,3 +21,4 @@ Synthesis entries R2, R3, R4, R19 in `work/external-tools-review/synthesis.md` (
 - [ ] both docs updated; `scripts/check-workspace-structure.sh` passes
 
 ## Log
+- s3 · started, tier standard

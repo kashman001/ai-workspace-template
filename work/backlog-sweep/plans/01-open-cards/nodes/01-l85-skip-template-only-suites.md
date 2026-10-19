@@ -1,14 +1,14 @@
 ---
 id: 01-l85-skip-template-only-suites
 title: L85 — template-only suites exit 77 when their file is absent
-status: todo
+status: doing
 kind: work
 wave: 1
 blocked_by: []
 tier: cheap
 loop: 2
 check: for t in test-probe-twins test-template-version test-template-instantiation test-doc-consistency; do bash "$WORKSPACE_ROOT/scripts/tests/$t.sh" >/dev/null 2>&1 || exit 1; done
-sessions: []
+sessions: [3]
 isolated: yes
 ---
 
@@ -22,3 +22,4 @@ Each of `scripts/tests/test-probe-twins.sh`, `test-template-version.sh` (V2a/V3a
 - [ ] all four pass in the template (node check)
 
 ## Log
+- s3 · started, tier cheap
