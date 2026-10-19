@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # render-check.sh — screenshot every figure on a kit page, isolated, at two widths and two themes.
 #
-# Usage: prototype/render-check.sh <page.html> [out-dir]
-#   out-dir defaults to prototype/shots/check/<page-stem>/
+# Usage: docs/kit/render-check.sh <page.html> [out-dir]
+#   out-dir defaults to ${TMPDIR:-/tmp}/render-check/<page-stem>/ (shots are not committed)
 #
 # Targets, in document order: each <figure>, plus each <svg class="diagram"> and
 # <pre class="mermaid"> that is not inside a figure. For each target it writes
@@ -50,8 +50,7 @@ fi
 page=${1:?usage: render-check.sh <page.html> [out-dir]}
 page=$(cd "$(dirname "$page")" && pwd)/$(basename "$page")
 stem=$(basename "$page" .html)
-here=$(cd "$(dirname "$0")" && pwd)
-out=${2:-$here/shots/check/$stem}
+out=${2:-${TMPDIR:-/tmp}/render-check/$stem}
 mkdir -p "$out"; out=$(cd "$out" && pwd)
 dir=$(dirname "$page")
 list=$(mktemp)

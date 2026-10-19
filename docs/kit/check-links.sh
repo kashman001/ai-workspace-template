@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # check-links.sh — verify every relative href/src on kit pages points at something that exists.
 #
-# Usage: prototype/check-links.sh <page.html>...
+# Usage: docs/kit/check-links.sh <page.html>...
 #
 # For each page, every relative href= / src= value (kit.css, kit.js, sibling pages,
 # images, ../ links) must resolve, relative to the page's directory, to an existing

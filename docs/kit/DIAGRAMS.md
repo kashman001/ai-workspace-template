@@ -74,7 +74,7 @@ themes it for light and dark. Escape `<`, `>` and `&` inside diagram text.
 
 ## Render check
 
-Run `render-check.sh page.html` (it sits next to the `kit/` folder; four shots
+Run `docs/kit/render-check.sh page.html` (four shots
 per figure: 1280 and 390 wide, light and dark) and open every shot. Each must
 show labels readable at real size, nothing clipped or overlapping, and the
 figure sized in proportion to the page. Fix and re-run until all pass; passing

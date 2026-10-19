@@ -1,6 +1,6 @@
 # Writing a page on the HTML kit
 
-You write content. The kit (`kit/kit.css`, `kit/kit.js`) does all design and
+You write content. The kit (`docs/kit/kit.css`, `docs/kit/kit.js`) does all design and
 behaviour. You never need to open the kit files.
 
 ## Hard rules
@@ -35,7 +35,8 @@ behaviour. You never need to open the kit files.
 </html>
 ```
 
-Adjust the `kit/` path so it points at the kit folder from where the page lives.
+The skeleton's `kit/` path is right for a page in `docs/`; elsewhere, point it
+at `docs/kit/` from where the page lives (e.g. `../docs/kit/` from `work/`).
 
 **Doc** (`body.doc`): a scrolling page. Inside `<main>`: an `<h1>`, an optional
 `.lede`, then one `<section>` per topic, each starting with an `<h2>`.
@@ -156,9 +157,9 @@ rebuilt a page in another folder, re-point every relative `href` and the
 - `grep '<svg' page.html | grep -vc 'class="diagram"'` prints `0`.
 - The only `<script>` is the kit line in `<head>`.
 - Every class you used appears on this sheet or in `DIAGRAMS.md`.
-- `check-links.sh page.html` (next to `kit/`) passes: the kit path and every
+- `docs/kit/check-links.sh page.html` passes: the kit path and every
   relative `href`/`src` resolve.
-- Page has any figure: run `render-check.sh page.html` and open every shot
+- Page has any figure: run `docs/kit/render-check.sh page.html` and open every shot
   (`DIAGRAMS.md` → "Render check"). Passing the greps says nothing about how a
   figure looks.
 - Can't run `render-check.sh` where you are (a sandbox with no Chrome, no
