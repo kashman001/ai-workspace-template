@@ -80,3 +80,39 @@ session artifact"). Only the legacy `history-session-state/` keeps newest-mtime.
 newest-mtime over `session-state/`, which binds another project's live session (findings.md
 gap 4). The agent shell also now honours `COPILOT_STATE_DIR`, applying the earlier note above.
 Commits 0d581ce and 0964a23, registry U1 and U2.
+
+## 2026-10-18 — One registry name per Copilot session: copilot-cli (node 03) — PROPOSED, awaiting the user (plan 02 node 05)
+
+On the Copilot CLI runtime (VS Code agent mode included), every Copilot chat gets a
+`copilot-cli-<sid>.json` record from the CLI hook config (`scripts/hooks/context-budget-hook.sh`
+auto-register, ~:139). A second record, `copilot-vscode-<sid>.json` with the same `events.jsonl`,
+appears only when an agent runs `register --runtime copilot-vscode` by hand (the probe's
+`probe-env.sh`, registry test H2). The VS Code hook config writes nothing: its `SessionStart` has no
+`transcript_path`, and its `Stop` stands down while the CLI config is installed (hook ~:60-66).
+Auto-detection already says copilot-cli when `COPILOT_AGENT_SESSION_ID` is set (`detect_runtime`).
+Measured in a sandbox: the twin does not affect the ambiguity refusal (the glob is runtime-prefixed),
+pruning (the twins go together), auto `check` or the Claude-only status line. It does split
+work-item ownership: an item bound under `copilot-vscode-<sid>` refuses the same chat's later auto
+`register` with `owner_live`. And `record` keeps only its own twin fresh. Only the env var
+`AI_AGENT=github_copilot_vscode_agent` tells VS Code from terminal Copilot; payloads are the same on
+both surfaces, and `TERM_PROGRAM` / `__CFBundleIdentifier` are not reliable.
+
+Options: (a) accept it and document "don't pass `--runtime copilot-vscode` on the CLI runtime";
+(b) canonicalise: a copilot-vscode resolution whose artifact is `*/session-state/<sid>/events.jsonl`
+(or with `COPILOT_AGENT_SESSION_ID` set) becomes copilot-cli, so every path keys one record; keep the
+surface, if ever needed, as an optional `surface` field from `AI_AGENT`; (c) dedupe by session id
+across runtimes; (d) make copilot-vscode the canonical name via `AI_AGENT`.
+
+Recommendation: (b). One guard in one place, removes the ownership split at its source, and matches
+the earlier note that the Copilot CLI hook config owns every Copilot payload. Update `probe-env.sh`
+and test H2 to expect `copilot-cli-<sid>`. Depends on node 02: if Copilot events move to the VS Code
+hook config, the canonical name flips, but the rule stays: one name, the owning hook row's `measure_as`.
+
+Rejected: (a) leaves a trap a documented flag walks into, and its refusal looks like a live sibling.
+(c) every reader keys `$RUNTIME-$SID`, so dedupe touches all of them to fix what one name prevents.
+(d) contradicts the ownership decision, needs `AI_AGENT` (absent from hook payloads, undocumented by
+the vendor), and would rename the CLI row's hook stamps too.
+
+Side gap seen: `--runtime copilot-vscode` with no id var dies "no session artifact" (rc 3) on the CLI
+runtime — its discovery only looks in workspaceStorage `chatSessions`. Evidence: node 03 Log;
+sandbox `scratchpad/n03/sandbox.sh` (session-local, not kept).
