@@ -906,6 +906,25 @@ Q2C="$TMP/home/q2-chat.jsonl"
 printf '{"promptTokens":7000}\n{"promptTokens":7777}\n' > "$Q2C"
 out=$(noid "$CB" check --runtime copilot-vscode --transcript "$Q2C" 2>&1)
 assert_contains "Q2a: a chatSessions promptTokens transcript stays exact" "$out" "method=exact tokens=7777"
+echo "Q3: Copilot VS Code events.jsonl carries only prompt_tokens in usage_checkpoint (plan 02 node 01)"
+Q3T="$TMP/home/q3-events.jsonl"
+cp_line() {  # $1=prompt_tokens — shape of a real session.usage_checkpoint line
+  printf '{"type":"session.usage_checkpoint","data":{"promptCacheBreakState":[{"conversation":"main","models":{"m":{"prompt_tokens":%s,"frontier_tokens":%s,"tool_tokens":37312}}}]}}\n' "$1" "$(($1 - 3))"
+}
+{ printf '{"type":"session.start"}\n'; cp_line 45140; cp_line 47574; } > "$Q3T"
+out=$(noid "$CB" check --runtime copilot-vscode --transcript "$Q3T" 2>&1)
+assert_contains "Q3a: the last checkpoint's prompt_tokens is the exact count" "$out" "method=exact tokens=47574"
+{ cp_line 34944; printf '{"type":"session.usage_record","data":{"usage":{"inputTokens":36001}}}\n'; } > "$Q3T"
+out=$(noid "$CB" check --runtime copilot-cli --transcript "$Q3T" 2>&1)
+assert_contains "Q3b: a CLI usage_record after a checkpoint still wins" "$out" "method=exact tokens=36001"
+# CLI checkpoint and shutdown lines also carry session-cumulative inputTokens
+# under *Metrics (real 018beebd…: 102610 = the sum of three calls).
+metrics='"accountingSnapshot":{"modelMetrics":{"m":{"usage":{"inputTokens":102610}}}},"providerModelMetrics":[{"metrics":{"usage":{"inputTokens":102610}}}]'
+{ printf '{"type":"session.usage_record","data":{"usage":{"inputTokens":34944}}}\n'
+  cp_line 34944 | sed "s/}]}}\$/}],$metrics}}/"
+  printf '{"type":"session.shutdown","data":{%s}}\n' "$metrics"; } > "$Q3T"
+out=$(noid "$CB" check --runtime copilot-cli --transcript "$Q3T" 2>&1)
+assert_contains "Q3c: cumulative *Metrics totals are not read as the live count" "$out" "method=exact tokens=34944"
 
 echo "A: phantom records (node 8c) — artifact never written past the grace period"
 # The Claude Code VS Code extension pre-spawns idle sessions whose SessionStart

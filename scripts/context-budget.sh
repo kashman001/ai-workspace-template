@@ -314,13 +314,19 @@ copilot_vscode_measure() {
   # report empty context, never fail or bind a sibling's transcript.
   [ -f "$f" ] || { echo "0 fresh"; return 0; }
   # chatSessions carry promptTokens; a session-state events.jsonl (the agent's
-  # transcript since node 05) carries inputTokens — the CLI measure reads both.
+  # transcript since node 05) carries inputTokens, or in VS Code only the
+  # usage_checkpoint's prompt_tokens — the CLI measure reads all three.
   copilot_cli_measure "$f"
 }
 
 copilot_cli_measure() {
   local f="$1" tokens
-  tokens=$(grep -o '"\(promptTokens\|input_tokens\|inputTokens\)":[0-9]*' "$f" 2>/dev/null \
+  # prompt_tokens (session.usage_checkpoint) equals the last call's inputTokens
+  # in CLI transcripts; the last match in file order is the newest event.
+  # Checkpoint and shutdown lines end in session-cumulative inputTokens under
+  # *Metrics keys (after prompt_tokens), so each line is cut at the first one.
+  tokens=$(sed 's/"[A-Za-z]*Metrics":.*//' "$f" 2>/dev/null \
+    | grep -o '"\(promptTokens\|input_tokens\|inputTokens\|prompt_tokens\)":[0-9]*' \
     | tail -1 | grep -o '[0-9]*$')
   [ -n "$tokens" ] && echo "$tokens exact" || estimate_from_size "$f"
 }
