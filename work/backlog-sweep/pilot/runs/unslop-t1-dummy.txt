@@ -1,0 +1,1 @@
+FastQueue is a job queue for developers who are tired of babysitting their background tasks. It handles scheduling, retries, and monitoring, so you can spend your time on the work the jobs actually do. It's meant to be simple to set up and easy to reason about, whether you're running a handful of jobs or thousands. Here's how to get started.

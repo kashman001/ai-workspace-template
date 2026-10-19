@@ -533,6 +533,14 @@ written for the interval; kills at `SESSION_LOOP_KILL_AFTER`). A child seen
 writing again resets the interval. Silence pages fire in hands-off mode only;
 in interactive mode the human at the keyboard is the stall detector.
 
+**A usage-limit wait looks like silence.** Chain children are interactive
+(`claude --name … "<prompt>"`, no `-p`), so Claude Code's auto-wait for a
+usage-limit reset can run in them; if it writes nothing to the transcript, a
+wait longer than `SESSION_LOOP_KILL_AFTER` (default 4h) is killed as `silent`,
+in either mode. Unverified: whether the wait writes to the transcript. For an
+overnight chain on a plan near its limit, raise `SESSION_LOOP_KILL_AFTER` (or
+set 0) in the work item's `context-budget.env`. Backlog L96.
+
 **Modes.** The dying session chooses `--loop-mode interactive|handsoff` at
 `--emit` (recorded as `launch.mode`); a human `touch work/<p>/.hands-off` or
 `.interactive` overrides it, and the launcher refuses if both exist.
@@ -666,7 +674,13 @@ runtime with no child handles at all (research §5/§8/§10/§11):
   mtime doubles as the child's heartbeat), cap the final return at 15 lines
   with detail in the report, first return line from
   `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT | ROLLOVER_NEEDED`,
-  and — on a checkpoint request — flush and yield rather than push on.
+  and — on a checkpoint request — flush and yield rather than push on. It
+  also names the files to read first (`CONTEXT.md`, `GLOSSARY.md`, the work
+  item's `README.md`/`next-session.md`/`decisions.md`; built-in Explore/Plan
+  subagents start without `CLAUDE.md`), tells worktree children to commit work
+  in progress at each checkpoint, asks for a `Remember:` section in the return
+  (the parent routes it to `decisions.md` or `docs/operational-knowledge.md`),
+  and requires a `DONE` return to quote its check command and output.
   `ROLLOVER_NEEDED` is only ever a *response* (to a checkpoint request, or to
   a WARN/STOP line pushed by the child's own runtime hooks), never the
   child's self-assessment. The subcommand is stateless, runtime-agnostic,

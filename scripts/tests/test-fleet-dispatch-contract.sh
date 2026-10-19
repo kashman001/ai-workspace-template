@@ -74,5 +74,14 @@ echo "K7: usage header lists dispatch-contract"
 hdr=$(head -15 "$FLEET")
 assert_contains "K7a: dispatch-contract in usage" "$hdr" "dispatch-contract"
 
+echo "K8: read-first list, Remember:, WIP commits, proved DONE (L95: R2/R3/R4/R19)"
+out=$("$FLEET" dispatch-contract --report "$REPORT" 2>/dev/null)
+assert_contains "K8a: read-first names CONTEXT.md" "$out" "CONTEXT.md"
+assert_contains "K8b: read-first names launcher" "$out" "next-session.md"
+assert_contains "K8c: built-in subagents start without CLAUDE.md" "$out" "without CLAUDE.md"
+assert_contains "K8d: Remember: section in return" "$out" "Remember:"
+assert_contains "K8e: worktree children commit WIP" "$out" "commit work in progress"
+assert_contains "K8f: DONE quotes check command and output" "$out" "quote the check command"
+
 echo "results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
