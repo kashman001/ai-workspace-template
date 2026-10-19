@@ -88,7 +88,6 @@ addyosmani_PRISTINE=(
   ci-cd-and-automation
   deprecation-and-migration
   performance-optimization
-  code-simplification
   doubt-driven-development
   constraint-driven-development
 )

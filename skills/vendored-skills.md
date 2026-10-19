@@ -13,9 +13,9 @@ workspace — no per-user clone or symlink setup required, and every runtime
   compatibility.
 - **Addy Osmani lifecycle set** —
   [github.com/addyosmani/agent-skills](https://github.com/addyosmani/agent-skills).
-  Nine skills for the lifecycle areas the core set lacks (security,
+  Eight skills for the lifecycle areas the core set lacks (security,
   observability, launch, CI/CD, deprecation, performance, a written quality
-  bar, in-flight adversarial review, simplification).
+  bar, in-flight adversarial review).
 - **pstack** (Lauren Tan, "poteto") —
   [github.com/cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack),
   directory `pstack/`. Seven short plain-text skills: prose, benchmarks, blast
@@ -139,8 +139,13 @@ Where a skill names a pack skill we did not take, use ours:
 `code-review-and-quality` (and `/review`) → `code-review`,
 `debugging-and-error-recovery` → `diagnosing-bugs`,
 `source-driven-development` → `research`, `incremental-implementation` →
-`implement`, `planning-and-task-breakdown` → `to-tickets`; the pack's
+`implement`, `planning-and-task-breakdown` → `to-tickets`, `code-simplification` →
+the always-on "Simplicity first" principle (with the optional
+`karpathy-examples`, or Claude Code's `simplify`); the pack's
 `/build auto` (implement a whole plan with subagents) → `implement-spec`.
+`code-simplification` was vendored until L99 pruned it: it scored below no
+skill in the skill-earns-its-place pilot (`work/backlog-sweep/pilot/results.md`).
+Don't re-add it on a refresh.
 
 - **security-and-hardening** — threat model, OWASP walk, input and auth
   handling, dependency audit, privacy; own `references/hardening-patterns.md`.
@@ -156,8 +161,6 @@ Where a skill names a pack skill we did not take, use ours:
 - **performance-optimization** — measure, find the bottleneck, fix, measure
   again; own `references/optimization-patterns.md`. One example step names
   the Chrome DevTools MCP; use whatever profiler the stack has.
-- **code-simplification** — clarity without behaviour change; the
-  runtime-neutral counterpart of Claude Code's built-in `simplify`.
 - **doubt-driven-development** *(patched)* — each non-trivial decision gets
   an adversarial, fresh-context review before it stands, with an optional
   second model through the Codex or Gemini CLI. The patch replaces the

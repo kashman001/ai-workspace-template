@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L99</span> Prune candidate: <code>code-simplification</code> scored below no-skill in the L98 pilot
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/code-simplification/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 13 / dummy 13 / skill 11 over 3 tasks; the skill lost 2 of 3, and the blinded judge flagged behaviour changes in its outputs (float rounding in t2, negative-n slicing in t3). One sample per cell.</p>
+    <p><span class="k">Impact</span> &mdash; A vendored skill that loads tokens and may nudge toward behaviour-changing rewrites, with no measured gain.</p>
+    <p><span class="k">Fix</span> &mdash; User decides: prune it from the vendored set (<code>skills/vendored-skills.md</code>), keep it, or rerun with more tasks/samples via <code>pilot/run.sh</code> first.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-18 (backlog-sweep s6, user&rsquo;s call in s5). Pruned: removed <code>skills/code-simplification/</code>, its entry in <code>scripts/sync-vendored-skills.sh</code> (so a refresh does not re-add it), and its lines in <code>skills/vendored-skills.md</code> and <code>docs/recommended-tooling.md</code> (Addy Osmani set now eight). The catalog&rsquo;s &ldquo;pack skill we did not take&rdquo; map sends the name to the always-on &ldquo;Simplicity first&rdquo; principle, <code>karpathy-examples</code> or Claude Code&rsquo;s <code>simplify</code>. The shared <code>references/definition-of-done.md</code> stays (<code>shipping-and-launch</code> links it).</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L102</span> Human-facing HTML pages each carried their own styling; no shared kit
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">docs/kit/</span></h3>
     <p><span class="k">Evidence</span> &mdash; <code>work/html-kit</code> measured 30&ndash;95% of each generated page as <code>&lt;style&gt;</code>/<code>&lt;script&gt;</code>/<code>&lt;svg&gt;</code>; pages looked different and often lacked dark mode.</p>

@@ -238,7 +238,7 @@ and note `claude-handoff` competes with this workspace's `session-rollover`/
 you want them.
 
 **Two more vendored sets, same mechanism.** The catalog
-(`skills/vendored-skills.md`) also carries nine lifecycle skills from
+(`skills/vendored-skills.md`) also carries eight lifecycle skills from
 [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills) and
 seven from Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/pstack)
 (the `pstack/` directory of `cursor/plugins`), both MIT, all plain
@@ -247,7 +247,6 @@ seven from Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/p
 | Skill | Use when |
 |---|---|
 | `security-and-hardening` / `observability-and-instrumentation` / `shipping-and-launch` / `ci-cd-and-automation` / `deprecation-and-migration` / `performance-optimization` | The lifecycle phase the core set does not cover: harden, instrument, launch, pipeline, retire, optimise |
-| `code-simplification` | Make code clearer without changing behaviour (runtime-neutral `simplify`) |
 | `doubt-driven-development` | Have a non-trivial decision cross-examined in a fresh context, optionally by a second model via the Codex or Gemini CLI |
 | `constraint-driven-development` | Write the project's quality bar into `CONSTRAINTS.md` and catch changes that lower it |
 | `unslop` / `technical-writing` | Cut AI tells from prose; write human-facing docs to a standard |
