@@ -300,7 +300,7 @@ sessions: [1]
 Join the inventory and the discussion.
 
 ## Acceptance
-- [ ] Done when the orchestrator says so.
+- [ ] `scripts/plan.sh check --project plans` exits 0 (quote the output).
 
 ## Log
 ```
