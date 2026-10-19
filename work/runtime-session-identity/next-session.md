@@ -11,47 +11,44 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Run plan `02-copilot-vscode-followups`: close the three findings from the s10 Copilot VS Code
-re-probe. (1) Token count is a ~30%-low size estimate because `prompt_tokens` isn't read;
-(2) four hook sets fire per Copilot event, two of them Claude Code's; (3) two registry
-records per chat. Fix 1 now; investigate 2 and 3 and put options to the user.
+Plan `02-copilot-vscode-followups`, wave 2. The token fix shipped (3928a86). Now node 05 is the
+user's: two decisions and one live VS Code check. Then node 06 turns the answers into a replan.
 
 ## >>> START HERE <<<
 
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. `scripts/plan.sh frontier --project runtime-session-identity` — wave 1: nodes 01, 02, 03.
-   Read each node file under `plans/02-copilot-vscode-followups/nodes/` (Goal + Acceptance).
-3. Dispatch nodes **02** and **03** as parallel read-only subagents (plans skill → "Subagent
-   prompt template", actors `s11-a`/`s11-b`). Tell them NOT to edit `decisions.md`: each
-   returns its draft Tier-2 note in its report; the main session appends both.
-4. Run node **01** in the main session, test-first (`tdd`): real transcripts in
-   `~/.copilot/session-state/{d5d80a4e…,90bc99b7…}` (VS Code) and `018beebd…` (CLI); probe
-   clone `~/Developer/experiments/ws-identity-probe-s9`. Live acceptance needs a VS Code
-   chat after the fix lands in the clone (`git -C <clone> pull`/cherry-pick) — ask the user.
-5. Reconcile node 04 (verify on disk), then node 05 is the user's: walk them through the two
-   notes **one question at a time**, plain language.
-
-**No human in the loop:** do nodes 01–04; leave 05 with both notes committed and the
-questions written here.
-
-**The item's checks:** `scripts/tests/test-context-budget-registry.sh`,
-`test-statusline-context-budget.sh`, `test-vendor-budget-hooks.sh`, `test-attach-session.sh`,
-`test-doc-consistency.sh`.
+2. Read the two `PROPOSED` notes at the bottom of `decisions.md` (nodes 02 and 03), then node
+   `plans/02-copilot-vscode-followups/nodes/05-approve-decisions.md`.
+3. Walk the user through node 05 **one question at a time, plain language, options spelled out**
+   (no jargon; explain "hook" / "registry record" in a sentence). Ask, in this order:
+   - **Q1 (hook files).** "Copilot runs four sets of our budget hooks on each event, two of them
+     meant for Claude Code. Only the right one acts; the other three already stand down. Keep it
+     that way and add two small safety checks (recommended), delete the VS Code hook file, make
+     the Claude hooks refuse by environment variable, or ask users to switch hooks off?"
+   - **Q2 (duplicate records).** "A Copilot chat can end up with two bookkeeping records, but only
+     when an agent passes `--runtime copilot-vscode` by hand. It can stop that chat from taking
+     over its own work item. Always file it under one name, copilot-cli (recommended), just
+     document the trap, look records up by session id everywhere, or file under copilot-vscode?"
+   - **Q3 (live check).** Ask the user to open a new Copilot chat in VS Code in
+     `~/Developer/experiments/ws-identity-probe-s9` (it has the fix, d93e71a) and have the agent
+     run `scripts/context-budget.sh check`. Expect `method=exact`.
+4. Record the answers in node 05's Log, tick its boxes, `scripts/plan.sh done 05-approve-decisions
+   --by human`; flip the chosen notes from PROPOSED to decided. Then node 06: replan wave 3 with
+   the delivery nodes (test-first, each fix with a suite case seen red).
 
 ## Read these, in order
 
 1. Top block of `handoff.md`
-2. `plans/02-copilot-vscode-followups/plan.md` and its nodes
-3. `probes/copilot-vscode.md` → "Re-probe (s10)" only
+2. The two PROPOSED notes in `decisions.md`
+3. `plans/02-copilot-vscode-followups/nodes/05-approve-decisions.md`
 
 ## Do NOT reload
 
-- Plan 01 nodes and diffs: closed and reviewed.
-- Probe rows 1–4 (Claude/Codex/Copilot/agy CLIs, Claude VS Code, Codex VS Code): PASS, written up.
-- "Hooks silent" (s9): a misread, corrected in s10.
-- `probes/gemini-cli.md`: Gemini CLI out of scope.
+- Nodes 01–04 and their diffs: verified and committed; their Logs hold the evidence.
+- Probe write-ups (`probes/*.md`): the notes cite what they need.
+- Subagent sandbox `scratchpad/n03/sandbox.sh`: session-local, gone.
 
 ## Constraints already decided (do not re-litigate)
 
@@ -70,8 +67,6 @@ Frontier: 05-approve-decisions. Remaining: 2 of 6 — wave 2: 05-approve-decisio
 
 ## State snapshot
 
-- Branch `main`, last item commit = the s10 rollover commit; `main` = `origin/main` before it.
-- Other sessions have uncommitted edits in this checkout (docs/context-budget.md,
-  scripts/launch-next-session.sh, scripts/session-loop.sh + their tests, backlog html,
-  work/html-kit, work/clear-session-loop). Not ours: never stage them; commit by path.
-- Unrelated worktrees (doc-review-skill, stage4, tir-s2): leave them.
+- Branch `main`, item commits 3928a86, c54c478, 4bc3579 + the s11 rollover commit; not pushed.
+- Probe clone at d93e71a (fix cherry-picked); its probe hook wrappers are uncommitted on purpose.
+- Other sessions commit in this checkout concurrently: commit by path, never stage their files.

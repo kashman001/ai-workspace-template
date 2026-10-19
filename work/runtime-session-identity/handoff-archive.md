@@ -1,4 +1,31 @@
 
+# Session Handoff — 9 (2026-10-12) (session 9: CLI surfaces probed live; VS Code rows handed to the user)
+
+**Summary.** New probe clone `~/Developer/experiments/ws-identity-probe-s9` at 191944f. The old
+pre-fix clone was left untouched. The probe now wraps the claude and antigravity hooks, runs
+`check`, and writes one log per label. Two concurrent sessions per CLI, from a clean env:
+Claude CLI PASS; Codex CLI PASS (agent side, and hook side with user-approved trust bypass);
+Copilot CLI agent side PASS, hooks not fired (clone not in `trustedFolders`); Antigravity hook
+side PASS, agent shell not run. Details are in each `probes/<surface>.md` under "Post-fix (s9)".
+
+**User rows (2026-10-13).** Rows 1–3 PASS (Copilot CLI hooks, agy agent shell, Claude VS Code;
+no phantoms). Row 4 Codex VS Code: PASS once trusted; GAP: no hook-trust prompt in the
+extension (workaround: a one-time CLI run). Row 5 Copilot VS Code: binding PASS; hooks silent and
+2 records per chat (to investigate). Rolled over at 141K with ROLLOVER_RELAUNCH=manual.
+
+**Blocked by the agent permission classifier (user said "you have my permission to trust", but
+these were still denied):** editing `~/.copilot/config.json` `trustedFolders`, and
+`agy --dangerously-skip-permissions`. Both moved to `probes/user-checklist.md` rows 1–2.
+
+**State.** `probes/user-checklist.md` was rewritten as one post-fix checklist (rows 1–5) and is
+waiting on the user. No gaps found yet, so no backlog card. L86 is not yet updated.
+doc-consistency 17/0.
+
+Learnings:
+- Reusing a probe label across runtimes made `probe-env.sh`'s `tail` show the earlier runtime's
+  lines. Use labels that are unique per runtime.
+- `codex exec` reports `method=estimate` until the first `token_count` event, then `exact`.
+
 # Session Handoff — 8 (2026-10-12) (session 8: review, plan 01 closed, L87 fixed; rolled over at STOP)
 
 **Summary.** Node 15 ran `code-review` on bc1cce4...HEAD with two sub-agents. Standards: no
