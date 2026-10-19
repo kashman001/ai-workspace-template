@@ -1,12 +1,12 @@
 ---
 id: 07-cross-runtime-test
 title: Codex + Gemini each rebuild docs/setup-guide.html from the rules alone; render-check
-status: todo
+status: blocked
 kind: work
 wave: 2
 blocked_by: [06-reconcile-1]
 check: test -f prototype/xrt/codex/setup-guide.html && test -f prototype/xrt/gemini/setup-guide.html
-sessions: []
+sessions: [8]
 ---
 
 ## Goal
@@ -18,3 +18,5 @@ Fresh, cross-runtime proof. `codex exec` and `gemini` (both on PATH) each get on
 Both pages exist; main session records what each got wrong unaided and whether it self-corrected after the render check.
 
 ## Log
+- s8 · started, tier standard
+- s8 · blocked: codex half done (2 rounds, shots viewed); gemini half blocked: Gemini CLI 0.46 free tier refused (IneligibleTierError, migrate to Antigravity); launching agy was denied by the auto-mode safety classifier - needs the user's permission

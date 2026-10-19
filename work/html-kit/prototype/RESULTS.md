@@ -288,3 +288,51 @@ o200k_base (not bytes/4).
   wide in the 390 shots (not cropped); same with the HEAD script, fine on Linux
   and on every sample figure. Cause not found.
 - Wave 2: the Codex + Gemini rebuild from the rules alone.
+
+# Session 8 — cross-runtime test (node 07; Codex half)
+
+Brief: `xrt/brief.md` (one brief, runtime name passed in the prompt). Each
+runtime reads only `AUTHORING.md`, `DIAGRAMS.md` and `docs/setup-guide.html`.
+
+## Runs
+
+- **Codex** (codex-cli 0.162.1, `exec -s workspace-write`). Round 1:
+  `xrt/codex/transcript.txt`, `summary.md`. Greps 0, links OK, but Chrome
+  aborts inside the Codex sandbox (`Abort trap: 6`), so it never saw a shot;
+  it said so honestly. The main session ran `render-check.sh` for it
+  (`xrt/codex/shots-r1/`). Round 2 (`transcript-r2.txt`): Codex opened the
+  shots, fixed, re-ran greps and links; main session re-shot (`xrt/codex/shots/`).
+- **Gemini**: not run. Gemini CLI 0.46 refuses the free tier
+  (`IneligibleTierError`, "migrate to Antigravity";
+  `xrt/gemini/transcript-gemini-cli-auth-fail.txt`). The Antigravity CLI
+  (`agy`, Gemini 4 Argon available) is installed and logged in, but launching
+  it unattended was denied by Claude Code's auto-mode safety check — needs the
+  user's go-ahead.
+
+## Codex result, per figure (all 20 shots viewed by the main session)
+
+| Figure | Round 1 (unaided) | Round 2 (after seeing shots) |
+|---|---|---|
+| 1 folder tree | fail — labels overlap their notes | readable; tree became a centred list, small text (~11px desktop) — weak pass |
+| 2 symlinks → CONTEXT.md | fail — "single source of truth" spills out of the box | box fixed; arrow still runs through "symlink" label — minor fail |
+| 3 pipeline | fail — two-line labels overflow boxes | pass |
+| 4 global vs local | fail — text piles up | pass — redrawn as a captioned card grid |
+| 5 global vs per-repo | fail — text piles up | pass — redrawn as a captioned card grid |
+
+Rule greps 0 and check-links OK in both rounds; no unlisted classes. o200k
+tokens: source 9,150; Claude's rebuild 5,951; Codex round 1 6,313, round 2 5,774.
+
+## What it got wrong unaided, and why
+
+Codex copied the source SVG geometry (left-edge `x`, old box sizes). The
+kit centres every `<text>`, which `DIAGRAMS.md` states in one clause
+("`<text>` is centred on its `x`,`y`"). It missed that clause, and the greps
+can't catch it — only the render check does, which it could not run. Once it
+saw the shots it fixed 4 of 5 figures in one pass.
+
+Lessons for the rules: (a) make the centring rule louder — "never copy
+coordinates from an existing SVG; text is centred, redraw"; (b) the kit has
+no left-aligned text, so a tree/list diagram has no good form — say "a folder
+tree is a `<pre>`/code block or a list, not an SVG"; (c) sandboxed runtimes
+may not be able to run Chrome — the checklist should say "if render-check
+can't run, say so and hand back for someone to run it".

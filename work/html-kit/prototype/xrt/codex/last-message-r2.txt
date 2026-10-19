@@ -1,0 +1,11 @@
+Updated [setup-guide.html](/Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype/xrt/codex/setup-guide.html) after inspecting all 20 renders.
+
+Fixed overlapping/clipped SVG text and replaced the two dense inventory diagrams with responsive kit card figures. Appended Round 2 findings to [summary.md](/Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype/xrt/codex/summary.md).
+
+Final checks passed:
+
+- Forbidden-style grep: `0`
+- SVG-class grep: `0`
+- Link check: 24 paths OK
+
+Did not rerun `render-check.sh`, as directed.

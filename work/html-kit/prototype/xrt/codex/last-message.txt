@@ -1,0 +1,8 @@
+Rebuilt the setup guide on the HTML kit:
+
+- [setup-guide.html](/Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype/xrt/codex/setup-guide.html)
+- [summary.md](/Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype/xrt/codex/summary.md)
+
+Final checks: style/SVG greps pass at `0`; link check passes for 24 paths.
+
+The required renderer aborts in Chrome’s DOM pass (`Abort trap: 6`) before creating PNGs, twice, so visual-shot review could not be completed. The summary records this blocker.
