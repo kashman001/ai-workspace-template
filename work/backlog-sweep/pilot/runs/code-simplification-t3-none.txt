@@ -1,0 +1,34 @@
+```python
+from collections import Counter as _Counter
+
+
+class Counter:
+    def __init__(self):
+        self.counts = {}
+
+    def add(self, key):
+        self.counts[key] = self.counts.get(key, 0) + 1
+
+    def top(self, n):
+        return sorted(self.counts.items(), key=lambda x: x[1], reverse=True)[:max(n, 0)]
+```
+
+Note: I replaced the if/else with `dict.get`, and the manual loop in `top` with a sorted slice (stable, so ties keep insertion order as before).
+
+(Remove the unused `from collections import Counter as _Counter` line, since I didn't end up needing it.)
+
+Here's the clean version without it:
+
+```python
+class Counter:
+    def __init__(self):
+        self.counts = {}
+
+    def add(self, key):
+        self.counts[key] = self.counts.get(key, 0) + 1
+
+    def top(self, n):
+        return sorted(self.counts.items(), key=lambda x: x[1], reverse=True)[:max(n, 0)]
+```
+
+**Note:** I replaced the if/else in `add` with `dict.get` and the manual loop in `top` with a sorted slice (using `max(n, 0)` so negative `n` still returns an empty list, as before).

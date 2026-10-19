@@ -1,0 +1,29 @@
+## Install and run
+
+`logtrim` requires Python 3.10 or newer. Install it with [pipx](https://pipx.pypa.io/):
+
+```sh
+pipx install logtrim
+```
+
+Run it on a log file:
+
+```sh
+logtrim FILE --days 7
+```
+
+This drops lines older than 7 days and edits `FILE` in place. By default, a backup of the original is kept as `FILE.bak`.
+
+### Options
+
+| Option | Effect |
+| --- | --- |
+| `--days N` | Drop lines older than `N` days. |
+| `--dry-run` | Print what would be removed without writing anything. |
+| `--no-backup` | Do not create the `FILE.bak` backup. |
+
+### Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `2` | `FILE` does not exist. |

@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L98</span> Pilot the skill-earns-its-place test on 3&ndash;5 skills
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; R18 (<code>work/external-tools-review/synthesis.md</code>, T5), accepted as later. Depends on L94 (R17 writes the test down).</p>
+    <p><span class="k">Impact</span> &mdash; Without a pilot the test is untried; with one, real token cost.</p>
+    <p><span class="k">Fix</span> &mdash; Pick 3&ndash;5 skills that mostly restate default model behaviour; run the three arms in fresh headless runs; log results in a work item; script it only if it pays off.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-18 (backlog-sweep nodes 04, 06). Pilot on <code>unslop</code>, <code>code-simplification</code>, <code>technical-writing</code>: 3 tasks each, three arms (no skill / same-length dummy / skill) as one-turn <code>claude -p</code> runs on <code>claude-sonnet-5-5</code> in an empty temp dir, scored by a blinded same-model judge against a 5-point rubric. 36 runs of the 45 cap, about $0.88. Totals (none/dummy/skill): unslop 14/13/14, code-simplification 13/13/11 (skill outputs changed behaviour twice), technical-writing 10/7/10. No skill met the keep rule; n=3 with one sample per cell, so this is a pilot signal. Prune candidates filed as L99, L100; nothing deleted. Harness and results: <code>work/backlog-sweep/pilot/</code> (<code>run.sh</code>, <code>judge.py</code>, <code>results.md</code>) &mdash; scripted already, reusable for more skills.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L85</span> Template-only suites fail in every instance instead of skipping
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/tests/</span></h3>
     <p><span class="k">Evidence</span> &mdash; In a downstream instance synced to <code>ccb4ed3</code>, <code>run-checks.sh</code> reports four suites red that read files only the template carries: <code>test-probe-twins</code> (sources <code>work/template-improvement-review/&hellip;/lib.sh</code>), <code>test-template-version</code> V2a/V3a/V3b and <code>test-template-instantiation</code> T1c (<code>docs/template-usage.md</code>), <code>test-doc-consistency</code> (<code>docs/plans.md</code> names the template&rsquo;s <code>work/plans/*</code>).</p>

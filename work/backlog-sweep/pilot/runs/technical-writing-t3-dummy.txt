@@ -1,0 +1,11 @@
+**Change cache key from user to user+org**
+
+**Problem:** The cache was keyed by user only. Two users in the same org could sometimes see each other's cached data. This happened only when the TTL hadn't expired and both users hit the same endpoint.
+
+**Fix:** The cache is now keyed by user and org.
+
+**TTL change:** I raised the TTL from 60 to 300 seconds. The new key causes more cache misses, and the longer TTL offsets that.
+
+**Deploy note:** Flush the prod cache after deploying.
+
+**Testing:** I haven't added tests yet.

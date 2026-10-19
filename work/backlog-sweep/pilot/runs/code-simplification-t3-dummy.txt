@@ -1,0 +1,14 @@
+```python
+class Counter:
+    def __init__(self):
+        self.counts = {}
+
+    def add(self, key):
+        self.counts[key] = self.counts.get(key, 0) + 1
+
+    def top(self, n):
+        items = sorted(self.counts.items(), key=lambda item: item[1], reverse=True)
+        return items[:max(n, 0)]
+```
+
+**Note:** I replaced the if/else in `add` with `dict.get`, and replaced the manual sort-and-copy loop in `top` with `sorted` plus a slice, using `max(n, 0)` so a negative `n` still returns an empty list as before.

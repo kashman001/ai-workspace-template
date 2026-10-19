@@ -1,0 +1,13 @@
+```python
+class Counter:
+    def __init__(self):
+        self.counts = {}
+
+    def add(self, key):
+        self.counts[key] = self.counts.get(key, 0) + 1
+
+    def top(self, n):
+        return sorted(self.counts.items(), key=lambda item: item[1], reverse=True)[:n]
+```
+
+**Note:** I replaced the if/else in `add` with `dict.get`, and the sort-copy-and-while-loop in `top` with a single `sorted(...)[:n]`, which keeps the same stable ordering for ties. One edge case differs: a negative `n` now returns the first items minus the last `|n|`, where the original returned `[]`. If you need that preserved, use `[:max(n, 0)]`.

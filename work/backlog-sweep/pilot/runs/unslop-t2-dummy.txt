@@ -1,0 +1,1 @@
+This PR refactors the retry logic. Backoff is now exponential (base 2, capped at 30s) instead of a fixed 5s, and I added jitter of up to 20% to avoid thundering-herd problems. Failures are handled more robustly as a result, which should make the system more reliable and give us a better base for future improvements. I added tests for the capped and jittered cases.

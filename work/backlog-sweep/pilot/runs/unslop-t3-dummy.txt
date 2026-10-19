@@ -1,0 +1,1 @@
+The migration is nearly done. Over the past two weeks the team worked through a lot of problems and moved 14 of the 15 services to the new cluster. The last one, billing-sync, is blocked on a vendor certificate renewal that we expect on Thursday. We'll keep an eye on it until then. If you have any questions, let me know.

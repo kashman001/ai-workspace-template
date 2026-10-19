@@ -1,0 +1,16 @@
+```python
+def get_active_emails(users):
+    result = []
+    for u in users:
+        if u is None or u.get("active") != True:
+            continue
+        email = u.get("email")
+        if email in (None, ""):
+            continue
+        email = email.strip().lower()
+        if email not in result:
+            result.append(email)
+    return result
+```
+
+I flattened the nested `if`s into early `continue` guards and read `u.get("email")` once, keeping the same checks (`== True`, the `None`/`""` test before stripping, and order-preserving dedupe).

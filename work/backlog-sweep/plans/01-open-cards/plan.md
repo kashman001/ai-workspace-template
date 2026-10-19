@@ -30,13 +30,13 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 1 | 03-l96-usage-limit-watchdog | work | standard | done |
 | 1 | 04-l98-pilot-design | work | standard | done |
 | 1 | 05-reconcile-w1 | reconcile | frontier | done |
-| 2 | 06-l98-pilot-run | work | standard | todo |
-| 2 | 07-reconcile-w2 | reconcile | frontier | todo |
+| 2 | 06-l98-pilot-run | work | standard | done |
+| 2 | 07-reconcile-w2 | reconcile | frontier | done |
 | 3 | 08-review | work | frontier | todo |
 | 3 | 09-reconcile-w3 | reconcile | frontier | todo |
 | 4 | 10-l86-user-probes | hitl | frontier | todo |
 | 4 | 11-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 12-l86-probe-writeup | work | standard | todo |
 | 5 | 13-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 06-l98-pilot-run. Remaining: 8 of 13. Sessions used: 1.
+Frontier: 08-review. Remaining: 6 of 13. Sessions used: 1.
 <!-- plan:end board -->

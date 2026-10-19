@@ -1,0 +1,7 @@
+The cache was keyed by user. Because of that, two users in the same org could sometimes see each other's cached data. This happened only when the TTL had not expired and both users hit the same endpoint.
+
+This PR keys the cache by user and org. The new key causes more cache misses, so I also raised the TTL from 60 to 300.
+
+Flush the prod cache after deploy.
+
+I have not added tests yet.

@@ -1,0 +1,1 @@
+FastQueue is a job queue library for developers. You define jobs in code, and FastQueue runs them, retries failures, and tracks their status.

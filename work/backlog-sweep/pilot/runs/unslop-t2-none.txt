@@ -1,0 +1,1 @@
+Refactors the retry logic. Backoff is now exponential (base 2, capped at 30s) instead of a fixed 5s, and I added jitter of up to 20% to avoid thundering-herd problems. This should make failure handling more reliable and gives us a better base for future work. Added tests for the capped and jittered cases.

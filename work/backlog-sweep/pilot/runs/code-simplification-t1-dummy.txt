@@ -1,0 +1,16 @@
+```python
+def get_active_emails(users):
+    result = []
+    for u in users:
+        if u and u.get("active") == True:
+            email = u.get("email")
+            if email:
+                email = email.strip().lower()
+                if email not in result:
+                    result.append(email)
+    return result
+```
+
+I flattened the nested `if`s into two combined conditions and replaced the repeated `u.get("email")` lookups and the `is not None and != ""` check with a single truthiness test, keeping the order-preserving dedupe.
+
+One caveat: `if u` treats an empty dict like `None` (both skipped), which is harmless here since an empty dict has no `active` key and would be skipped anyway.

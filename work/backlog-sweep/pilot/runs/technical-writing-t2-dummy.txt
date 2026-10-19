@@ -1,0 +1,14 @@
+# How to Rotate an `acme-api` Key
+
+Rotate your key every 90 days.
+
+## Steps
+
+1. **Create a new key.** Go to **Settings > API** and click **New key**.
+2. **Update your apps.** Set the environment variable `ACME_KEY` to the new key value wherever your apps read it.
+3. **Deploy.** Deploy the apps so they pick up the new key. The old key keeps working for 24 hours after the new one is created, so deploy within that window.
+4. **Delete the old key.** Once the deploy is done, go to **Settings > API** and click the trash icon next to the old key.
+
+## Warning
+
+Do not delete the old key before deploying the new one. Doing so causes 401 errors in any app still using the old key.

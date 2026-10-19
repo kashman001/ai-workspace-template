@@ -1,0 +1,11 @@
+This PR changes the cache key from user to user+org.
+
+**Bug fixed:** With the old user-only key, two users in the same org could sometimes see each other's cached data. This happened only when the TTL had not yet expired and both users hit the same endpoint.
+
+**Changes:**
+- The cache is now keyed by user+org.
+- The TTL is raised from 60 to 300, because the new key causes more cache misses.
+
+**Deployment:** The prod cache should be flushed after deploy.
+
+**Testing:** No tests have been added yet.

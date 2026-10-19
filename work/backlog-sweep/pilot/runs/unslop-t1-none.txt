@@ -1,0 +1,3 @@
+FastQueue is a job queue for developers. It lets you add background jobs, retry the ones that fail, and see what's running, without a lot of setup. It works for small side projects and for larger production systems.
+
+To get started, follow the installation steps below.

@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">150</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">4</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">151</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -165,11 +165,19 @@
   </div>
 
   <div class="find low">
-    <h3><span class="id">L98</span> Pilot the skill-earns-its-place test on 3&ndash;5 skills
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/</span></h3>
-    <p><span class="k">Evidence</span> &mdash; R18 (<code>work/external-tools-review/synthesis.md</code>, T5), accepted as later. Depends on L94 (R17 writes the test down).</p>
-    <p><span class="k">Impact</span> &mdash; Without a pilot the test is untried; with one, real token cost.</p>
-    <p><span class="k">Fix</span> &mdash; Pick 3&ndash;5 skills that mostly restate default model behaviour; run the three arms in fresh headless runs; log results in a work item; script it only if it pays off.</p>
+    <h3><span class="id">L99</span> Prune candidate: <code>code-simplification</code> scored below no-skill in the L98 pilot
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/code-simplification/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 13 / dummy 13 / skill 11 over 3 tasks; the skill lost 2 of 3, and the blinded judge flagged behaviour changes in its outputs (float rounding in t2, negative-n slicing in t3). One sample per cell.</p>
+    <p><span class="k">Impact</span> &mdash; A vendored skill that loads tokens and may nudge toward behaviour-changing rewrites, with no measured gain.</p>
+    <p><span class="k">Fix</span> &mdash; User decides: prune it from the vendored set (<code>skills/vendored-skills.md</code>), keep it, or rerun with more tasks/samples via <code>pilot/run.sh</code> first.</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L100</span> Prune candidate: <code>unslop</code> tied no-skill in the L98 pilot
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">skills/unslop/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 14 / dummy 13 / skill 14 over 3 tasks &mdash; no gain over the bare model; the gap to the dummy is within noise.</p>
+    <p><span class="k">Impact</span> &mdash; Tokens spent on a catalog the model already follows unprompted, on this evidence.</p>
+    <p><span class="k">Fix</span> &mdash; User decides: prune, keep, or rerun on harder prose tasks first (the pilot tasks may have been too easy to separate the arms).</p>
   </div>
 
   <!-- ========================= DECISIONS ========================= -->
@@ -332,6 +340,7 @@
       <tr><td>2026-10-12</td><td>Resolved <strong>L87</strong> (cwd substring match in context-budget discovery): both checks now match the cwd as a whole value; registry suite U3/U4 seen failing first. Card moved to the archive.</td></tr>
       <tr><td>2026-10-18</td><td>Resolved <strong>L94</strong> (external-tools-review doc pass, R7&ndash;R10, R13&ndash;R17, R20, R22&ndash;R24) and <strong>L93</strong> with it (yt-dlp example reworded, R6). Cards moved to the archive. Scorecard now 6/147/5/0/6.</td></tr>
       <tr><td>2026-10-18</td><td>Resolved <strong>L85</strong> (template-only suites skip in instances), <strong>L95</strong> (dispatch-contract read-first / Remember: / WIP commits / proved DONE) and <strong>L96</strong> (usage-limit wait vs the silence watchdog, documented) &mdash; backlog-sweep wave 1. Cards moved to the archive. Scorecard now 3/150/5/0/6.</td></tr>
+      <tr><td>2026-10-18</td><td>Resolved <strong>L98</strong> (skill-earns-its-place pilot: 3 skills, 36 headless runs, ~$0.88; no skill met the keep rule). Opened <strong>L99</strong> (<code>code-simplification</code>) and <strong>L100</strong> (<code>unslop</code>) as prune candidates for the user to decide. Scorecard now 4/151/5/0/6.</td></tr>
 </tbody>
   </table>
 

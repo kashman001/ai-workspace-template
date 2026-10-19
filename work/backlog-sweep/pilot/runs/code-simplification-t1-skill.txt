@@ -1,0 +1,14 @@
+```python
+def get_active_emails(users):
+    emails = {}  # dict keys act as an ordered set
+    for user in users:
+        if user is None or user.get("active") != True:
+            continue
+        email = user.get("email")
+        if email is None or email == "":
+            continue
+        emails[email.strip().lower()] = None
+    return list(emails)
+```
+
+I flattened the nested `if`s into guard clauses, gave the variables descriptive names, and replaced the O(n) `not in result` list check with an insertion-ordered dict, so duplicates are still dropped with first-seen order preserved.
