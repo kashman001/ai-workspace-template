@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wide SVG test</title>
+<link rel="stylesheet" href="kit/kit.css">
+<script src="kit/kit.js" defer></script>
+</head>
+<body class="doc">
+<main>
+<h1>Wide SVG test</h1>
+<p class="lede">A 900-wide diagram must keep readable labels on a phone and scroll inside its figure.</p>
+<figure>
+  <svg class="diagram" viewBox="0 0 900 100" role="img" aria-label="Six stages in a row: intake, triage, plan, build, verify, ship">
+    <rect x="10" y="30" width="120" height="40" rx="5"/><text x="70" y="50">Intake</text>
+    <rect x="160" y="30" width="120" height="40" rx="5"/><text x="220" y="50">Triage</text>
+    <rect x="310" y="30" width="120" height="40" rx="5"/><text x="370" y="50">Plan</text>
+    <rect x="460" y="30" width="120" height="40" rx="5"/><text x="520" y="50">Build</text>
+    <rect x="610" y="30" width="120" height="40" rx="5"/><text x="670" y="50">Verify</text>
+    <rect class="solid" x="760" y="30" width="130" height="40" rx="20"/><text class="inverse" x="825" y="50">Ship</text>
+    <line class="arrow" x1="130" y1="50" x2="159" y2="50"/><line class="arrow" x1="280" y1="50" x2="309" y2="50"/>
+    <line class="arrow" x1="430" y1="50" x2="459" y2="50"/><line class="arrow" x1="580" y1="50" x2="609" y2="50"/>
+    <line class="arrow" x1="730" y1="50" x2="759" y2="50"/>
+  </svg>
+  <figcaption>Six stages in one row; too wide for a phone, so it scrolls sideways there.</figcaption>
+</figure>
+<p>Text after the figure stays in the column.</p>
+</main>
+</body>
+</html>

@@ -8,8 +8,8 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > Convention: docs/work-directory-conventions.md.
 
 <!-- plan:begin position -->
-Position: plan 03-adoption-readiness, open, wave 1 of 2, done 0/8, doing 0, todo 8, blocked 0, dropped 0, sessions 0.
-Frontier: 01-trim-rules, 03-link-check, 04-linux-render-check. Remaining: 8 of 8 — wave 1: 01-trim-rules todo, 02-phone-scroll-svg todo, 03-link-check todo, 04-linux-render-check todo, 05-sample-page todo, 06-reconcile-1 todo.
+Position: plan 03-adoption-readiness, open, wave 2 of 2, done 6/8, doing 0, todo 2, blocked 0, dropped 0, sessions 1.
+Frontier: 07-cross-runtime-test. Remaining: 2 of 8 — wave 2: 07-cross-runtime-test todo, 08-reconcile-2 todo.
 <!-- plan:end position -->
 
 ## Mission

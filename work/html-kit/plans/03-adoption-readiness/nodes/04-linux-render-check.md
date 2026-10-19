@@ -1,12 +1,12 @@
 ---
 id: 04-linux-render-check
 title: render-check.sh finds Chrome/Chromium on Linux, clear error if missing; run once on Linux
-status: todo
+status: done
 kind: work
 wave: 1
 blocked_by: []
 check: grep -qi 'chromium' prototype/render-check.sh
-sessions: []
+sessions: [7]
 ---
 
 ## Goal
@@ -18,3 +18,5 @@ render-check.sh finds Chrome on macOS and Linux (google-chrome, google-chrome-st
 Still works on this Mac (re-shoot one figure). Linux: run once in a Linux container if docker/podman is available; otherwise record 'Linux run pending' in RESULTS — not a pass.
 
 ## Log
+- s7 · started, tier standard
+- s7 · check passed → done

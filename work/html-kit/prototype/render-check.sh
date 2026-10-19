@@ -12,8 +12,9 @@
 # How: a temp copy of the page (.rc-<stem>-fig<N>.html next to the page, so kit/
 # paths resolve; deleted on exit) marks the target and hides everything that neither holds nor sits
 # in it. A first headless-Chrome pass (--dump-dom) measures where the target sits; the
-# second pass screenshots (window grown if the target runs past it) and sips crops to the
-# target plus 24px. Each pass loads the copy in an iframe of the exact width inside a
+# second pass screenshots (window grown if the target runs past it) and crops to the
+# target plus 24px (sips on macOS, else ImageMagick magick/convert, else python3 + Pillow).
+# Each pass loads the copy in an iframe of the exact width inside a
 # wrapper page (.rc-<stem>-frame.html), because headless Chrome won't lay out a window
 # narrower than 500px: --window-size=390 alone gives a 500px layout cropped to 390. Light = --blink-settings=preferredColorScheme=1, dark =
 # preferredColorScheme=0; both with --force-prefers-reduced-motion. Mermaid comes from a CDN,
@@ -22,9 +23,30 @@
 # Limits: targets are found by regex on the source (no nested <figure>); other mermaid blocks
 # on the page are disabled in the copy; deck slides are laid out static (top-aligned, not
 # centered) so the shot fits the figure, not the viewport.
+#
+# Chrome lookup: $CHROME if set (must be executable), else the macOS Google Chrome app, else the
+# first of google-chrome, google-chrome-stable, chromium, chromium-browser on PATH. Run as root
+# (e.g. in a container), Chrome gets --no-sandbox.
 set -euo pipefail
 
-CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+mac_chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+names="google-chrome google-chrome-stable chromium chromium-browser"
+if [ -n "${CHROME:-}" ]; then
+  [ -x "$CHROME" ] || command -v "$CHROME" >/dev/null || { echo "CHROME=$CHROME is not an executable" >&2; exit 2; }
+elif [ -x "$mac_chrome" ]; then CHROME=$mac_chrome
+else
+  for c in $names; do command -v "$c" >/dev/null && { CHROME=$c; break; }; done
+  [ -n "${CHROME:-}" ] || { echo "Chrome not found: tried \$CHROME, $mac_chrome, and $names on PATH." \
+    "Install one (e.g. apt install chromium) or set CHROME=/path/to/chrome." >&2; exit 2; }
+fi
+if command -v sips >/dev/null; then crop() { sips -c "$2" "$3" --cropOffset "$4" 0 "$1" >/dev/null; }
+elif command -v magick >/dev/null; then crop() { magick "$1" -crop "${3}x${2}+0+$4" +repage "$1"; }
+elif command -v convert >/dev/null; then crop() { convert "$1" -crop "${3}x${2}+0+$4" +repage "$1"; }
+elif python3 -c 'import PIL' 2>/dev/null; then crop() { # <png> <height> <width> <y>
+  python3 -c 'import sys; from PIL import Image; f,h,w,y=sys.argv[1],*map(int,sys.argv[2:])
+Image.open(f).crop((0,y,w,y+h)).save(f)' "$@"; }
+else echo "no image cropper: need sips, ImageMagick (magick/convert), or python3 Pillow (e.g. apt install imagemagick)" >&2; exit 2
+fi
 page=${1:?usage: render-check.sh <page.html> [out-dir]}
 page=$(cd "$(dirname "$page")" && pwd)/$(basename "$page")
 stem=$(basename "$page" .html)
@@ -83,6 +105,7 @@ shot() { # <file-url> <width> <height> <scheme> [screenshot-path]
   local flags=(--headless=new --disable-gpu --hide-scrollbars --force-prefers-reduced-motion
     --allow-file-access-from-files
     --blink-settings=preferredColorScheme="$4" --window-size="$win,$3" --virtual-time-budget=15000)
+  [ "$(id -u)" = 0 ] && flags+=(--no-sandbox)
   if [ -n "${5:-}" ]; then "$CHROME" "${flags[@]}" --screenshot="$5" "file://$frame" >/dev/null 2>&1
   else "$CHROME" "${flags[@]}" --dump-dom "file://$frame" 2>/dev/null; fi
 }
@@ -100,7 +123,7 @@ while IFS=$'\t' read -r n file hash; do
       scheme=1; [ "$theme" = dark ] && scheme=0
       f="$out/$stem-fig$n-$w-$theme.png"
       shot "$url" "$w" "$h" "$scheme" "$f"
-      sips -c "$ch" "$w" --cropOffset "$y" 0 "$f" >/dev/null
+      crop "$f" "$ch" "$w" "$y"
       echo "$f"
     done
   done

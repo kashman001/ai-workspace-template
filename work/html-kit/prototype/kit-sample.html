@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit sample</title>
+<link rel="stylesheet" href="kit/kit.css">
+<script src="kit/kit.js" defer></script>
+</head>
+<body class="doc">
+<main>
+<p class="eyebrow">Regression page</p>
+<h1>Kit sample</h1>
+<p class="lede">Every element and class in <code>AUTHORING.md</code> and <code>DIAGRAMS.md</code>, once. Re-check this page whenever the kit changes.</p>
+
+<nav class="toc"><ol>
+  <li><a href="#text">Text roles</a></li>
+  <li><a href="#tags">Tags and rows</a></li>
+  <li><a href="#numbers">Points and numbers</a></li>
+  <li><a href="#cards">Cards</a></li>
+  <li><a href="#tables">Tables and code</a></li>
+  <li><a href="#diagrams">Diagrams</a></li>
+  <li><a href="#links">Links</a></li>
+</ol></nav>
+
+<section id="text">
+<h2>Text roles</h2>
+<p>Running text with <em>emphasis</em>, <strong>strong emphasis</strong> and a file name, <code>kit/kit.css</code>.</p>
+<p class="note">A small grey aside: sources and caveats go here.</p>
+<p class="callout"><b>Key sentence.</b> One line the reader must not miss, ruled on the left.</p>
+<div class="callout">
+  <h3>Before you start</h3>
+  <ul>
+    <li>Install the tools.</li>
+    <li>Log in once.</li>
+  </ul>
+</div>
+<p class="meta">source · kit-sample.html</p>
+<h3>A sub-topic</h3>
+<div class="statement"><p>Write content.</p><p>The kit does the design.</p></div>
+</section>
+
+<section id="tags">
+<h2>Tags and rows</h2>
+<p>Tags by tone: <span class="tag ok">[measured]</span> <span class="tag info">[note]</span> <span class="tag warn">[estimate]</span> <span class="tag bad">[hype]</span> <span class="tag">[plain]</span></p>
+<ul class="rows">
+  <li class="ok"><span class="tag ok">[measured]</span> <span>Numbers from a run on this machine</span> <b>Trust</b></li>
+  <li class="info"><span class="tag info">[cited]</span> <span>A source we read but did not re-run</span> <b>Check once</b></li>
+  <li class="warn"><span class="tag warn">[estimate]</span> <span>Bytes divided by four</span> <b>Re-measure</b></li>
+  <li class="bad"><span class="tag bad">[hype]</span> <span>Claims with no source</span> <b>Ignore</b></li>
+  <li class="accent"><span class="tag">[plan]</span> <span>Not done yet</span> <b>Track</b></li>
+</ul>
+</section>
+
+<section id="numbers">
+<h2>Points and numbers</h2>
+<ol class="points">
+  <li><b>Small files.</b> The page holds content only.</li>
+  <li><b>Free dark mode.</b> The kit themes every page.</li>
+</ol>
+<div class="stats">
+  <div class="stat"><b>−29%</b><p>rules read up front</p></div>
+  <div class="stat"><b>4</b><p>shots per figure</p></div>
+</div>
+</section>
+
+<section id="cards">
+<h2>Cards</h2>
+<div class="grid">
+  <div class="card accent"><h3>Accent <small>subtitle</small></h3><p>Body text of a card.</p><p class="meta">Source · figure</p></div>
+  <div class="card ink"><h3>Ink</h3><ul><li>Short item</li><li>Another</li></ul></div>
+  <div class="card"><h3>No accent</h3><p>A plain card.</p></div>
+</div>
+<div class="grid small">
+  <div class="card ok"><h3>Ok</h3><p>One sentence.</p></div>
+  <div class="card info"><h3>Info</h3><p>One sentence.</p></div>
+  <div class="card warn"><h3>Warn</h3><p>One sentence.</p></div>
+  <div class="card bad"><h3>Bad</h3><p>One sentence.</p></div>
+</div>
+<figure>
+  <div class="grid">
+    <div class="card info"><h3>Global</h3><p>Lives in your home folder.</p></div>
+    <div class="card ok"><h3>Local</h3><p>Lives in the repo.</p></div>
+  </div>
+  <figcaption>Figure 1 — A captioned card grid: two layers side by side.</figcaption>
+</figure>
+</section>
+
+<section id="tables">
+<h2>Tables and code</h2>
+<table>
+  <thead><tr><th>File</th><th>Bytes</th><th>Tokens</th></tr></thead>
+  <tbody>
+    <tr><td><code>AUTHORING.md</code></td><td>6,807</td><td>1,999</td></tr>
+    <tr><td><code>DIAGRAMS.md</code></td><td>3,439</td><td>997</td></tr>
+  </tbody>
+</table>
+<figure>
+  <table>
+    <thead><tr><th>Width</th><th>Theme</th></tr></thead>
+    <tbody><tr><td>1280</td><td>light, dark</td></tr><tr><td>390</td><td>light, dark</td></tr></tbody>
+  </table>
+  <figcaption>Figure 2 — A captioned table: the four render-check shots.</figcaption>
+</figure>
+<pre><code>git clone https://example.com/repo.git
+cd repo &amp;&amp; ./setup.sh</code></pre>
+<figure>
+  <pre><code>$ bash check-links.sh kit-sample.html
+OK kit-sample.html</code></pre>
+  <figcaption>Figure 3 — A captioned code block.</figcaption>
+</figure>
+<ol class="steps">
+  <li><h3>Install the tools</h3>
+    <pre><code>brew install jq gh</code></pre></li>
+  <li><h3>Log in</h3><p>Pick HTTPS when asked.</p>
+    <pre><code>gh auth login</code></pre></li>
+</ol>
+<ol>
+  <li>A plain one-line step.</li>
+  <li>Another.</li>
+</ol>
+</section>
+
+<section id="diagrams">
+<h2>Diagrams</h2>
+<figure>
+  <svg class="diagram" viewBox="0 0 520 120" role="img" aria-label="Plan leads to build leads to ship; a dashed rework arc returns from build to plan">
+    <rect x="20"  y="40" width="120" height="40" rx="5"/><text x="80"  y="60">Plan</text>
+    <rect x="200" y="40" width="120" height="40" rx="5"/><text x="260" y="60">Build</text>
+    <rect class="solid" x="380" y="40" width="120" height="40" rx="20"/><text class="inverse" x="440" y="60">Ship</text>
+    <line class="arrow" x1="140" y1="60" x2="199" y2="60"/>
+    <line class="arrow" x1="320" y1="60" x2="379" y2="60"/>
+    <path class="arrow dash accent" d="M 260 80 C 260 115, 80 115, 80 81"/>
+    <text class="small accent" x="170" y="93">rework</text>
+  </svg>
+  <figcaption>Figure 4 — A hand-drawn diagram: shapes, arrows, a dashed accent arc, a solid end state.</figcaption>
+</figure>
+<figure>
+  <svg class="diagram" viewBox="0 0 560 150" role="img" aria-label="Four verdict tones: ok, info, warn and bad, each a box with a solid marker">
+    <circle class="ok" cx="40" cy="40" r="16"/><text class="ok" x="130" y="40">ok</text>
+    <ellipse class="info" cx="40" cy="110" rx="24" ry="16"/><text class="info" x="130" y="110">info</text>
+    <polygon class="warn" points="300,24 324,56 276,56"/><text class="warn" x="400" y="40">warn</text>
+    <rect class="solid bad" x="276" y="94" width="48" height="32" rx="4"/><text class="inverse" x="300" y="110">!</text><text class="bad" x="400" y="110">bad</text>
+    <polyline class="dash" points="200,20 200,130"/>
+    <rect class="solid ok" x="470" y="24" width="70" height="32" rx="16"/><text class="inverse" x="505" y="40">go</text>
+    <rect class="solid info" x="470" y="94" width="70" height="32" rx="16"/><text class="small inverse" x="505" y="110">wait</text>
+  </svg>
+  <figcaption>Figure 5 — Every shape type and tone, outlined and solid.</figcaption>
+</figure>
+<figure>
+  <svg class="diagram" viewBox="0 0 900 100" role="img" aria-label="Six stages in a row: intake, triage, plan, build, verify, ship">
+    <rect x="10" y="30" width="120" height="40" rx="5"/><text x="70" y="50">Intake</text>
+    <rect x="160" y="30" width="120" height="40" rx="5"/><text x="220" y="50">Triage</text>
+    <rect x="310" y="30" width="120" height="40" rx="5"/><text x="370" y="50">Plan</text>
+    <rect x="460" y="30" width="120" height="40" rx="5"/><text x="520" y="50">Build</text>
+    <rect x="610" y="30" width="120" height="40" rx="5"/><text x="670" y="50">Verify</text>
+    <rect class="solid" x="760" y="30" width="130" height="40" rx="20"/><text class="inverse" x="825" y="50">Ship</text>
+    <line class="arrow" x1="130" y1="50" x2="159" y2="50"/><line class="arrow" x1="280" y1="50" x2="309" y2="50"/>
+    <line class="arrow" x1="430" y1="50" x2="459" y2="50"/><line class="arrow" x1="580" y1="50" x2="609" y2="50"/>
+    <line class="arrow warn" x1="730" y1="50" x2="759" y2="50"/>
+  </svg>
+  <figcaption>Figure 6 — A 900-wide diagram; on a phone it scrolls sideways.</figcaption>
+</figure>
+<figure>
+  <pre class="mermaid">
+flowchart LR
+  A[Plan] --> B[Build] --> C[Verify]
+  C -. failures .-> B
+  </pre>
+  <figcaption>Figure 7 — A short Mermaid chain.</figcaption>
+</figure>
+</section>
+
+<section id="links">
+<h2>Links</h2>
+<p>A plain <a href="AUTHORING.md">link to the rules</a>, with “quotes” and an en dash – as characters.</p>
+<ul>
+  <li><a href="AUTHORING.md">AUTHORING.md</a> — the core rules</li>
+  <li><a href="DIAGRAMS.md">DIAGRAMS.md</a> — read when a page has a diagram</li>
+  <li><a href="setup-guide.html">Setup guide</a> — a real page on the kit</li>
+</ul>
+</section>
+</main>
+<footer><p>html-kit prototype · regression page · <a href="RESULTS.md">RESULTS.md</a></p></footer>
+</body>
+</html>

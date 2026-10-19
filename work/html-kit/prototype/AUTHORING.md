@@ -139,75 +139,25 @@ lede; give each `<section>` an `id`.
 <section id="install"><h2>Install</h2>…</section>
 ```
 
-**Diagram** — Mermaid inside a figure:
-```html
-<figure>
-  <pre class="mermaid">
-flowchart LR
-  A[Plan] --> B[Build] --> C[Verify]
-  C -. failures .-> B
-  </pre>
-  <figcaption>What the diagram shows, in one or two sentences.</figcaption>
-</figure>
-```
-Keep labels short. Don't set colours or styles in the Mermaid source; the kit
-themes it for light and dark. Escape `<`, `>` and `&` inside diagram text.
-
-**Choosing:** default to hand-drawn SVG. Mermaid only for a short chain or
-sequence (about five boxes or fewer, few branches) that the render check shows
-readable at both widths; Mermaid lays itself out and often renders tiny on a
-wide doc page. Draw SVG whenever the layout carries the meaning (a ring, a
-centre, a timeline, feedback arcs), and switch to SVG the moment a Mermaid
-diagram renders small or tangled. Good diagrams beat small files.
-
-**Hand-drawn diagram** — you place the shapes; the kit colours them, in light and dark.
-```html
-<figure>
-  <svg class="diagram" viewBox="0 0 520 120" role="img" aria-label="Full description of the diagram">
-    <rect x="20"  y="40" width="120" height="40" rx="5"/><text x="80"  y="60">Plan</text>
-    <rect x="200" y="40" width="120" height="40" rx="5"/><text x="260" y="60">Build</text>
-    <rect class="solid" x="380" y="40" width="120" height="40" rx="20"/><text class="inverse" x="440" y="60">Ship</text>
-    <line class="arrow" x1="140" y1="60" x2="199" y2="60"/>
-    <line class="arrow" x1="320" y1="60" x2="379" y2="60"/>
-    <path class="arrow dash accent" d="M 260 80 C 260 115, 80 115, 80 81"/>
-    <text class="small accent" x="170" y="108">rework</text>
-  </svg>
-  <figcaption>What the diagram shows.</figcaption>
-</figure>
-```
-- Shapes (`rect`, `circle`, `ellipse`, `polygon`) are outlined boxes; lines
-  (`line`, `path`, `polyline`) are plain strokes. `<text>` is centred on its
-  `x`,`y`, both across and up-down, so put it at the middle of its box.
-- Classes: `arrow` (arrowhead at the line's end; it takes the line's colour),
-  `dash`, a tone (`accent`, `ok`, `info`, `warn`, `bad`) to colour a line, shape
-  or text, `solid` (shape filled with its tone; accent if none), and on text,
-  `small` (monospace edge label) and `inverse` (text on a `solid` shape).
-- On a doc page the kit sizes the diagram from its `viewBox` width: on a wide
-  screen text lands at body size, on a phone the diagram fills the column
-  (about 340px), so text shrinks by 340 ÷ viewBox width. Keep the `viewBox`
-  about 520–600 wide (stack or wrap the layout to fit) and crop it to the
-  drawing, with no empty margins. Default text is 16 units, `small` is 14;
-  size boxes for that. Leave about 10 units of clearance between labels and lines.
-  A layout that can't fit 600 wide stays readable only on desktop: say so in
-  the caption, or split it into smaller diagrams.
-- Always give `role="img"` and an `aria-label` that says what the picture says.
+**Diagram** — a hand-drawn `<svg class="diagram">` or a `<pre class="mermaid">`,
+inside a `<figure>` with a `<figcaption>`. Page has a diagram: read
+`DIAGRAMS.md` first (choosing, drawing, sizing, the render check).
 
 **Links** — plain `<a href>`. Quotes and dashes as characters or entities.
 A list of links (further reading, related pages) is a plain `<ul>`, one link per
 `<li>` with a few words on what it covers; not a `.note` with `·` between links.
 Relative links resolve from where the page *now* lives: if you moved or
 rebuilt a page in another folder, re-point every relative `href` and the
-`kit/` path (e.g. `../README.md` from `docs/`), then click one to confirm.
+`kit/` path (e.g. `../README.md` from `docs/`); `check-links.sh` confirms.
 
 ## Check before handing back
 
 - `grep -cE '<style|style=|fill=|stroke=|font-[a-z]+=|<defs' page.html` prints `0`.
 - `grep '<svg' page.html | grep -vc 'class="diagram"'` prints `0`.
 - The only `<script>` is the kit line in `<head>`.
-- Every class you used appears on this sheet.
-- Page has any figure: run `render-check.sh page.html` (it sits next to the
-  `kit/` folder; four shots per
-  figure: 1280 and 390 wide, light and dark) and open every shot. Each must
-  show labels readable at real size, nothing clipped or overlapping, and the
-  figure sized in proportion to the page. Fix and re-run until all pass;
-  passing the greps says nothing about how a diagram looks.
+- Every class you used appears on this sheet or in `DIAGRAMS.md`.
+- `check-links.sh page.html` (next to `kit/`) passes: the kit path and every
+  relative `href`/`src` resolve.
+- Page has any figure: run `render-check.sh page.html` and open every shot
+  (`DIAGRAMS.md` → "Render check"). Passing the greps says nothing about how a
+  figure looks.

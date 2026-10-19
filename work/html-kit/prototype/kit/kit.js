@@ -27,6 +27,7 @@
     document.querySelectorAll('svg.diagram').forEach((svg) => {
       const w = svg.viewBox.baseVal && svg.viewBox.baseVal.width;
       if (w) svg.style.setProperty('--vbw', w);
+      svg.toggleAttribute('data-wide', w > 600);
     });
   }
 

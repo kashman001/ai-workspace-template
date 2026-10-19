@@ -165,6 +165,8 @@ body.doc .grid, body.doc .table-wrap, body.doc figure > pre.mermaid { margin-inl
 /* a doc diagram is sized so its 16-unit labels land at body text size: narrower than the column on
    wide screens, bleeding past it only when the viewBox is wide, full width on phones (kit.js sets --vbw) */
 body.doc figure > svg.diagram { --w: min(100vw - 40px, var(--vbw, 600) * 0.0625em); width: var(--w); max-width: none; margin-inline: calc((100% - var(--w)) / 2); }
+/* on a phone a viewBox wider than 600 keeps 16-unit labels at 12px and scrolls sideways in its figure */
+@media (max-width: 700px) { body.doc figure:has(> svg.diagram[data-wide]) { overflow-x: auto; } body.doc figure > svg.diagram[data-wide] { min-width: calc(var(--vbw) * 0.75px); margin-inline: 0; } }
 /* contents: <nav class="toc"><ol><li><a href="#id">…</a></li></ol></nav> */
 nav.toc { border-top: 1px solid var(--rule); padding-top: 14px; }
 nav.toc > ol { display: block; columns: 2 14em; column-gap: 32px; padding-left: 2.2em; list-style: decimal-leading-zero; font-family: var(--display); }

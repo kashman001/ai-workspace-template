@@ -233,3 +233,58 @@ so the render check does not shoot it; it is a plain kit `<ul>`.
 
 The verdict: adopt or drop the kit, and if adopt, `docs/kit/` (plain files)
 or a workspace skill.
+
+# Session 7 — adoption readiness, wave 1
+
+Plan `plans/03-adoption-readiness`, wave 1. Tokens measured with tiktoken
+o200k_base (not bytes/4).
+
+## What changed
+
+- **Rules split** — `AUTHORING.md` keeps skeleton, hard rules, text roles,
+  components, checklist; choosing, drawing, Mermaid and the render check moved
+  to `DIAGRAMS.md`, read only when a page has a diagram. No class or rule lost
+  (every backticked token and class of the old file is in one of the two).
+- **Wide SVG on phones** — on a doc page, `kit.js` marks a diagram whose viewBox
+  is wider than 600 (`data-wide`); below 700px `kit.css` gives it
+  `min-width: vbw × 0.75px` (16-unit labels at 12px) and the figure scrolls
+  sideways. Probe at 390: page `scrollWidth` 390 (no page scroll), figure 350
+  showing a 675px diagram.
+- **`check-links.sh`** — kit path and every relative `href`/`src` must resolve.
+  Passes on both pages and the sample; seen to fail (exit 1, 20 broken) on a
+  copy moved one folder down. Wired into the AUTHORING checklist.
+- **`render-check.sh` portable** — finds Chrome via `$CHROME`, the macOS app,
+  then `google-chrome`, `google-chrome-stable`, `chromium`, `chromium-browser`;
+  crops with `sips`, ImageMagick or Pillow; `--no-sandbox` as root; exit 2 with
+  an install hint when Chrome or a cropper is missing. Ran on this Mac and in a
+  Debian bookworm container (Pillow and ImageMagick paths, 20 shots each).
+  Mermaid's CDN path was not exercised on Linux (setup guide has none).
+- **`kit-sample.html`** — the regression page: every class in both rule files
+  except deck-only `deck`, `slide`, `backup`. Rule greps print 0, links pass.
+
+## Tokens (o200k)
+
+| File | Before | Now |
+|---|---|---|
+| `AUTHORING.md` (read for every page) | 2,812 | 1,999 (−29%) |
+| `AUTHORING.md` + `DIAGRAMS.md` (page with a figure) | 2,812 | 3,010 (+7%) |
+| `kit.css` / `kit.js` (never read by the author) | — | 5,059 / 1,472 |
+| `kit-sample.html` | — | 2,997 |
+
+## Look (`shots/s7/sample/`, `shots/s7/wide/`, viewed by the main session)
+
+| Figure | 1280 | 390 | Verdict |
+|---|---|---|---|
+| 1 captioned card grid | fine | stacks | pass |
+| 2 captioned table, 3 captioned code | fine | fine | pass |
+| 4 hand-drawn example | `rework` label sat on the arc; moved to y=93 in `DIAGRAMS.md` and sample, re-shot | clear | pass after fix |
+| 5 every shape and tone | fine, light + dark | fine | pass |
+| 6 900-wide SVG | full width | labels 12px, cut at the edge, scrolls | pass |
+| 7 short Mermaid | labels small (~11px) | readable | as the "Choosing" rule predicts; kept as the warning case |
+
+## Open
+
+- On this Mac, `render-check.sh` leaves setup-guide figures 1 and 4 at 500px
+  wide in the 390 shots (not cropped); same with the HEAD script, fine on Linux
+  and on every sample figure. Cause not found.
+- Wave 2: the Codex + Gemini rebuild from the rules alone.
