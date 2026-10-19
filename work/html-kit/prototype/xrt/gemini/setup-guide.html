@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Workspace Template — Setup Guide</title>
+<link rel="stylesheet" href="../../kit/kit.css">
+<script src="../../kit/kit.js" defer></script>
+</head>
+<body class="doc">
+<main>
+  <p class="eyebrow">AI Workspace Template</p>
+  <h1>Set up your project workspace</h1>
+  <p class="lede">A reusable, agent-aware development workspace — one shared context for Claude&nbsp;Code, Codex, OpenCode, and Gemini. This guide takes you from a fresh clone to a working project, whether you're a human or an AI agent.</p>
+  <p>
+    <span class="tag">Claude Code</span>
+    <span class="tag">Codex</span>
+    <span class="tag">OpenCode</span>
+    <span class="tag">Gemini</span>
+    <span class="tag info">graphify MCP (core)</span>
+    <span class="tag ok">gh CLI (required)</span>
+    <span class="tag warn">MCP fragments: YouTube (opt-in)</span>
+  </p>
+
+  <nav class="toc">
+    <ol>
+      <li><a href="#what">What you get</a></li>
+      <li><a href="#model">The mental model</a></li>
+      <li><a href="#quickstart">Quick start</a></li>
+      <li><a href="#global">Global vs. workspace-local setup</a></li>
+      <li><a href="#tracked">What's tracked vs. gitignored</a></li>
+      <li><a href="#toolchain">Recommended toolchain</a></li>
+      <li><a href="#agents">For AI agents</a></li>
+    </ol>
+  </nav>
+
+  <section id="what">
+    <h2>What you get</h2>
+    <p>The template is a coordination layer — not product code. It gives every agent and human a single known place to find context, conventions, and active work. Everything project-specific is a <code>&lt;…&gt;</code> placeholder or a stub with a header comment, so you fill in, you don't reverse-engineer.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 600 552" role="img" aria-label="Workspace directory structure: CONTEXT.md and symlinks CLAUDE.md, AGENTS.md, GEMINI.md; README.md and SPEC.md; docs/ and repo-context/; skills/, work/, prompt-library/; repos/, references/, scripts/; .env.example, .mcp.json.example, and per-runtime config directories">
+        <rect class="accent" x="4" y="4" width="592" height="544" rx="8"/>
+        <text class="accent" x="300" y="28">&lt;workspace&gt;/</text>
+
+        <rect x="18" y="44" width="248" height="32" rx="5"/>
+        <text x="142" y="60">CONTEXT.md</text>
+        <text class="small" x="430" y="60">master context (front door)</text>
+
+        <rect x="18" y="84" width="248" height="48" rx="5"/>
+        <text class="small" x="142" y="99">CLAUDE.md · AGENTS.md</text>
+        <text class="small" x="142" y="117">GEMINI.md</text>
+        <text class="small" x="430" y="108">symlinks to CONTEXT.md</text>
+
+        <rect x="18" y="140" width="248" height="32" rx="5"/>
+        <text x="142" y="156">README.md · SPEC.md</text>
+        <text class="small" x="430" y="156">human pitch · product intent</text>
+
+        <rect class="info" x="18" y="184" width="248" height="32" rx="5"/>
+        <text class="info" x="142" y="200">docs/ · repo-context/</text>
+        <text class="small" x="430" y="200">workspace + per-repo docs</text>
+
+        <rect class="info" x="18" y="224" width="248" height="32" rx="5"/>
+        <text class="info" x="142" y="240">skills/</text>
+        <text class="small" x="430" y="240">reusable agent workflows</text>
+
+        <rect class="info" x="18" y="264" width="248" height="32" rx="5"/>
+        <text class="info" x="142" y="280">work/</text>
+        <text class="small" x="430" y="280">active state (survives compaction)</text>
+
+        <rect class="info" x="18" y="304" width="248" height="32" rx="5"/>
+        <text class="info" x="142" y="320">prompt-library/</text>
+        <text class="small" x="430" y="320">repeatable prompt contracts</text>
+
+        <rect class="warn" x="18" y="348" width="248" height="32" rx="5"/>
+        <text class="warn" x="142" y="364">repos/ · references/</text>
+        <text class="small" x="430" y="364">cloned repos (gitignored)</text>
+
+        <rect class="ok" x="18" y="388" width="248" height="32" rx="5"/>
+        <text class="ok" x="142" y="404">scripts/</text>
+        <text class="small" x="430" y="404">setup + validation scripts</text>
+
+        <rect x="18" y="432" width="248" height="48" rx="5"/>
+        <text class="small" x="142" y="447">.env.example</text>
+        <text class="small" x="142" y="465">.mcp.json.example</text>
+        <text class="small" x="430" y="456">copy to local (gitignored)</text>
+
+        <rect x="18" y="488" width="248" height="48" rx="5"/>
+        <text class="small" x="142" y="503">.claude/ · .gemini/</text>
+        <text class="small" x="142" y="521">.opencode/ · opencode.json</text>
+        <text class="small" x="430" y="512">per-runtime config</text>
+      </svg>
+      <figcaption>Figure 1 — Top-level layout. Full detail in <a href="../../../../../docs/workspace-structure.md">docs/workspace-structure.md</a>.</figcaption>
+    </figure>
+  </section>
+
+  <section id="model">
+    <h2>The mental model</h2>
+    <p>One file is the front door. The three agent entrypoints are <strong>symlinks</strong> to it, so every runtime reads the exact same context — edit once, all agents see it.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 540 196" role="img" aria-label="Agent entrypoint symlinks CLAUDE.md, AGENTS.md, and GEMINI.md all point to CONTEXT.md as the single source of truth">
+        <rect x="6" y="8" width="160" height="44" rx="5"/><text x="86" y="30">CLAUDE.md</text>
+        <rect x="6" y="76" width="160" height="44" rx="5"/><text x="86" y="98">AGENTS.md</text>
+        <rect x="6" y="144" width="160" height="44" rx="5"/><text x="86" y="166">GEMINI.md</text>
+
+        <rect class="solid info" x="328" y="64" width="206" height="68" rx="8"/>
+        <text class="inverse" x="431" y="88">CONTEXT.md</text>
+        <text class="small inverse" x="431" y="110">single source of truth</text>
+
+        <line class="arrow accent" x1="166" y1="30" x2="327" y2="86"/>
+        <line class="arrow accent" x1="166" y1="98" x2="327" y2="98"/>
+        <line class="arrow accent" x1="166" y1="166" x2="327" y2="110"/>
+        <text class="small accent" x="265" y="32">symlink</text>
+      </svg>
+      <figcaption>Figure 2 — Claude Code, Codex (<code>AGENTS.md</code>), and Gemini all resolve to one file.</figcaption>
+    </figure>
+  </section>
+
+  <section id="quickstart">
+    <h2>Quick start</h2>
+    <p>Five steps from clone to a working workspace. Steps 1–3 are mechanical; step 4 is where you make it <em>your</em> project.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 560 164" role="img" aria-label="Setup flow in five steps: 01 Clone and re-init, 02 Bootstrap, 03 Wire agents, 04 Fill placeholders, 05 Build">
+        <rect x="8" y="8" width="160" height="52" rx="6"/>
+        <text class="small info" x="88" y="26">01</text>
+        <text x="88" y="44">Clone &amp; re-init</text>
+
+        <rect x="202" y="8" width="150" height="52" rx="6"/>
+        <text class="small info" x="277" y="26">02</text>
+        <text x="277" y="44">Bootstrap</text>
+
+        <rect x="386" y="8" width="166" height="52" rx="6"/>
+        <text class="small info" x="469" y="26">03</text>
+        <text x="469" y="44">Wire agents</text>
+
+        <rect x="100" y="104" width="174" height="52" rx="6"/>
+        <text class="small info" x="187" y="122">04</text>
+        <text x="187" y="140">Fill placeholders</text>
+
+        <rect class="solid ok" x="314" y="104" width="150" height="52" rx="6"/>
+        <text class="small inverse" x="389" y="122">05</text>
+        <text class="inverse" x="389" y="140">Build</text>
+
+        <line class="arrow accent" x1="168" y1="34" x2="201" y2="34"/>
+        <line class="arrow accent" x1="352" y1="34" x2="385" y2="34"/>
+        <path class="arrow accent" d="M 469 60 C 469 86, 187 76, 187 102"/>
+        <line class="arrow ok" x1="274" y1="130" x2="313" y2="130"/>
+      </svg>
+      <figcaption>Figure 3 — The setup pipeline.</figcaption>
+    </figure>
+
+    <ol class="steps">
+      <li>
+        <h3>Create your workspace from the template</h3>
+        <p>On GitHub, click <strong>“Use this template”</strong>, or clone and reset git history:</p>
+        <pre><code>git clone https://github.com/&lt;you&gt;/ai-workspace-template.git &lt;project&gt;-workspace
+cd &lt;project&gt;-workspace
+rm -rf .git &amp;&amp; git init</code></pre>
+      </li>
+      <li>
+        <h3>Bootstrap the local files</h3>
+        <p>Run the setup script — it runs a dependency preflight, then creates <code>.env</code>, the agent symlinks, <code>repos/README.md</code>, and the per-user config copies (idempotent). Add <code>--clone-repos</code> for a multi-repo workspace. Missing tools? Follow <a href="../../../../../docs/runbooks/dependencies.md">runbooks/dependencies.md</a>.</p>
+        <pre><code>./scripts/setup.sh                 # creates .env, symlinks, repos/README.md
+./scripts/check-workspace-structure.sh   # verify symlinks resolve, dirs present</code></pre>
+      </li>
+      <li>
+        <h3>Wire up agents &amp; MCP</h3>
+        <p>Copy the per-user config templates (all gitignored), then authenticate. Run the check, then follow <a href="../../../../../docs/runbooks/authentication.md">runbooks/authentication.md</a> for anything missing; per-runtime MCP detail is in <a href="../../../../../docs/mcp-setup.md"><code>docs/mcp-setup.md</code></a>. The YouTube transcript MCP server is workspace-local and credential-free; install <code>yt-dlp</code> if you use it.</p>
+        <pre><code>cp -n .env.example .env
+cp -n .mcp.json.example .mcp.json
+cp -n .claude/settings.json.example .claude/settings.local.json
+./scripts/check-service-access.sh                  # reports gaps + fix commands
+gh auth login                                      # if not already authenticated</code></pre>
+      </li>
+      <li>
+        <h3>Make it your project</h3>
+        <p>Replace every <code>&lt;…&gt;</code> placeholder and resolve the <code>TODO</code> / “Fill in” comments — start with <code>CONTEXT.md</code> (it loads into every agent session). Find what's left:</p>
+        <pre><code>grep -rIn --exclude-dir=.git -e '&lt;[a-z-]\+&gt;' -e 'TODO' -e 'Fill in:' .</code></pre>
+        <ul>
+          <li><strong>CONTEXT.md</strong> — name, purpose, single- vs multi-repo model</li>
+          <li><strong>docs/repos-registry.md</strong> — one entry per product repo</li>
+          <li><strong>docs/service-access.md</strong> — your GitHub username; add a section per service</li>
+          <li><strong>SPEC.md</strong> — product intent (or delete for a pure coordination layer)</li>
+          <li><strong>work/</strong> — prune the maintainer's shipped work history (<code>git rm -r work/*/</code>); it's a worked example, not machinery — see <a href="../../../../../docs/template-usage.md">template-usage.md</a> §5</li>
+        </ul>
+      </li>
+      <li>
+        <h3>Start building</h3>
+        <p>Decide on the optional bits: <strong>graphify</strong> is the core MCP server (wired by default; it also adds <code>.gemini/settings.json</code> / <code>.opencode/plugins/graphify.js</code>). <strong>YouTube transcript</strong> MCP is an opt-in fragment under <code>mcp-fragments/</code>, loaded per session — see <a href="../../../../../docs/mcp-setup.md"><code>docs/mcp-setup.md</code></a>; GitHub goes through the required <code>gh</code> CLI (no MCP server). Delete what you don't use. Add reusable workflows under <code>skills/</code> and list them in <code>CONTEXT.md</code>. The template ships four: <code>checkpoint</code> (session wrap-up), <code>onboard-repo</code> (bring a repo in), <code>rlm</code> (query huge contexts), and <code>decision-log</code> — capture the <em>why</em> behind a decision (<code>/decision</code>) as an ephemeral note in <code>work/&lt;proj&gt;/decisions.md</code>, promoted to a committed ADR under <code>docs/adr/</code> for lasting-weight calls. See the <strong>Decision Records</strong> section of <code>CONTEXT.md</code>. <strong>Checks:</strong> <code>scripts/run-checks.sh</code> runs every workspace check; on GitHub, <code>.github/workflows/checks.yml</code> runs it on each push (delete the file to opt out), and <code>git config core.hooksPath scripts/git-hooks</code> opts you in to a pre-commit run of the fast set.</p>
+      </li>
+    </ol>
+
+    <p>Deeper reference:</p>
+    <ul>
+      <li><a href="../../../../../docs/template-usage.md">docs/template-usage.md</a> — adapting and pruning the template</li>
+      <li><a href="../../../../../docs/workspace-setup.md">docs/workspace-setup.md</a> — global and workspace-local setup tables</li>
+      <li><a href="../../../../../docs/workspace-structure.md">docs/workspace-structure.md</a> — directory map and bootstrap spec</li>
+    </ul>
+  </section>
+
+  <section id="global">
+    <h2>Global vs. workspace-local setup</h2>
+    <p>Setup splits into two layers. Do the <span class="tag warn">GLOBAL</span> layer once per machine; the <span class="tag info">LOCAL</span> layer once per clone. The local layer depends on the global one (the MCP token and the <code>gh</code> login).</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 600 390" role="img" aria-label="Global machine config (agent CLIs on PATH, gh CLI login, Codex and Gemini MCP registration, OS keychain) feeds workspace-local files (.env, .mcp.json, .claude/settings.local.json, setup.sh, check-service-access.sh, CONTEXT.md + symlinks)">
+        <rect class="warn" x="4" y="6" width="268" height="378" rx="8"/>
+        <text class="warn" x="138" y="28">GLOBAL — once per machine</text>
+        <text class="small" x="138" y="48">~/ home · OS keychain</text>
+        <text class="small" x="138" y="64">never in git</text>
+
+        <text x="138" y="96">agent CLIs on PATH</text>
+        <text class="small" x="138" y="114">claude · codex</text>
+        <text class="small" x="138" y="130">opencode · gemini</text>
+
+        <text x="138" y="162">gh CLI login (required)</text>
+        <text class="small" x="138" y="180">GitHub ops · gh auth status</text>
+
+        <text x="138" y="216">~/.codex/config.toml</text>
+        <text class="small" x="138" y="234">Codex MCP registration</text>
+        <text class="small" x="138" y="250">(optional)</text>
+
+        <text x="138" y="282">~/.gemini/settings.json</text>
+        <text class="small" x="138" y="300">Gemini MCP registration</text>
+        <text class="small" x="138" y="316">(optional)</text>
+
+        <text x="138" y="352">OS keychain</text>
+
+        <rect class="info" x="328" y="6" width="268" height="378" rx="8"/>
+        <text class="info" x="462" y="28">LOCAL — once per clone</text>
+        <text class="small" x="462" y="48">inside the repo</text>
+        <text class="small" x="462" y="64">copy the .example files</text>
+
+        <text x="462" y="96">.env.example → .env</text>
+        <text class="small" x="462" y="114">non-secret identifiers only</text>
+
+        <text x="462" y="148">.mcp.json.example → .mcp.json</text>
+        <text class="small" x="462" y="166">Claude Code project MCP</text>
+
+        <text x="462" y="200">.claude/settings.json.example</text>
+        <text class="small" x="462" y="218">→ settings.local.json</text>
+        <text class="small" x="462" y="234">(permissions)</text>
+
+        <text x="462" y="268">./scripts/setup.sh</text>
+        <text class="small" x="462" y="286">symlinks · repos/README.md</text>
+        <text class="small" x="462" y="302">+ repo clones</text>
+
+        <text x="462" y="336">check-service-access.sh</text>
+        <text class="small" x="462" y="354">+ CONTEXT.md &amp; symlinks</text>
+
+        <line class="arrow accent" x1="272" y1="195" x2="327" y2="195"/>
+        <text class="small accent" x="300" y="179">feeds</text>
+      </svg>
+      <figcaption>Figure 4 — Two setup layers. Authoritative tables: <a href="../../../../../docs/workspace-setup.md">docs/workspace-setup.md</a>.</figcaption>
+    </figure>
+  </section>
+
+  <section id="tracked">
+    <h2>What's tracked vs. gitignored</h2>
+    <p>Nothing secret ever enters git. Credentials stay in the keychain; the repo holds only templates and non-secret identifiers. Full table in <a href="../../../../../docs/workspace-structure.md"><code>docs/workspace-structure.md</code></a> → “Gitignored vs. Checked In”.</p>
+
+    <table>
+      <thead>
+        <tr><th>Path</th><th>In git?</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>CONTEXT.md</code> + CLAUDE/AGENTS/GEMINI symlinks</td><td><span class="tag ok">Yes</span></td><td>Agent entrypoints</td></tr>
+        <tr><td><code>docs/ skills/ work/ prompt-library/ scripts/</code></td><td><span class="tag ok">Yes</span></td><td>Shared docs, skills, state, tooling</td></tr>
+        <tr><td><code>opencode.json .opencode/ .gemini/settings.json .claude/settings.json</code></td><td><span class="tag ok">Yes</span></td><td>Shared per-runtime config + hook wiring</td></tr>
+        <tr><td><code>*.example</code> (env, mcp, claude settings)</td><td><span class="tag ok">Yes</span></td><td>Templates to copy locally</td></tr>
+        <tr><td><code>repos/README.md references/README.md</code></td><td><span class="tag ok">Yes</span></td><td>Registries (repos/README is a symlink)</td></tr>
+        <tr><td><code>.env .mcp.json .claude/settings.local.json</code></td><td><span class="tag warn">No</span></td><td>User-specific / may hold paths</td></tr>
+        <tr><td><code>repos/* references/*</code> (except READMEs)</td><td><span class="tag warn">No</span></td><td>Separate cloned repos</td></tr>
+        <tr><td><code>.service-access.local.json</code></td><td><span class="tag warn">No</span></td><td>Machine credential cache</td></tr>
+        <tr><td><code>graphify-out/ temp/ tmp/ .DS_Store</code></td><td><span class="tag warn">No</span></td><td>Locally regenerated / scratch</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="toolchain">
+    <h2>Recommended toolchain</h2>
+    <p>Optional external tools this workflow assumes. They're <strong>global / per-user</strong> — installed once per machine, never committed to the repo — except for two that also need a <strong>per-repo</strong> step. Full setup in <a href="../../../../../docs/recommended-tooling.md">docs/recommended-tooling.md</a>.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 600 390" role="img" aria-label="Global tools installed once per machine (Status line, superpowers + plugins, Matt Pocock skills, Karpathy principles, graphify CLI) versus per-repo setup steps (Matt Pocock config and graphify graph)">
+        <rect class="warn" x="4" y="6" width="304" height="378" rx="8"/>
+        <text class="warn" x="156" y="28">GLOBAL — once per machine</text>
+
+        <text x="156" y="62">Status line</text>
+        <text class="small" x="156" y="80">ccstatusline · ~/.config</text>
+        <text class="small" x="156" y="96">+ ~/.claude/settings.json</text>
+
+        <text x="156" y="130">superpowers + plugins</text>
+        <text class="small" x="156" y="148">claude plugin install</text>
+        <text class="small" x="156" y="164">…@claude-plugins-official</text>
+
+        <text x="156" y="198">Matt Pocock skills</text>
+        <text class="small" x="156" y="216">tdd · diagnosing-bugs · triage</text>
+        <text class="small" x="156" y="232">to-tickets · … (agent-context)</text>
+
+        <text x="156" y="266">Karpathy principles</text>
+        <text class="small" x="156" y="284">4 principles in CONTEXT.md</text>
+        <text class="small" x="156" y="300">+ karpathy-examples</text>
+
+        <text x="156" y="334">graphify CLI + yt-dlp</text>
+        <text class="small" x="156" y="352">uv tool install "graphifyy[mcp]"</text>
+        <text class="small" x="156" y="368">+ yt-dlp for YouTube MCP</text>
+
+        <rect class="info" x="324" y="6" width="272" height="378" rx="8"/>
+        <text class="info" x="460" y="28">PER-REPO step</text>
+
+        <text x="460" y="72">Matt Pocock config</text>
+        <text class="small" x="460" y="92">setup-matt-pocock-skills</text>
+        <text class="small" x="460" y="110">→ ## Agent skills block</text>
+        <text class="small" x="460" y="128">+ docs/agents/*.md</text>
+
+        <text x="460" y="176">graphify graph</text>
+        <text class="small" x="460" y="196">/graphify</text>
+        <text class="small" x="460" y="214">(build graphify-out/)</text>
+        <text class="small" x="460" y="238">graphify update . (refresh)</text>
+        <text class="small" x="460" y="272">template already ships</text>
+        <text class="small" x="460" y="290">Gemini hook</text>
+        <text class="small" x="460" y="308">+ OpenCode plugin</text>
+      </svg>
+      <figcaption>Figure 5 — Global install vs. per-repo setup. Detail in <a href="../../../../../docs/recommended-tooling.md">docs/recommended-tooling.md</a>.</figcaption>
+    </figure>
+
+    <p>Quick reference:</p>
+    <pre><code># status line
+npm install -g ccstatusline           # install once; wire statusLine in ~/.claude/settings.json
+
+# plugins (official marketplace is built in)
+claude plugin install superpowers@claude-plugins-official
+
+# graphify
+uv tool install "graphifyy[mcp]"
+/graphify                             # build the graph for THIS repo → graphify-out/
+graphify update .                     # refresh after code changes
+
+# YouTube transcript MCP
+yt-dlp --version                      # install via brew / apt / winget if missing
+scripts/mcp/youtube-transcript.sh     # workspace-local stdio server
+
+# skill repos — managed via agent-context (clone, then link with agent-context-sync)
+git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
+git clone https://github.com/ForrestChang/andrej-karpathy-skills.git ~/Developer/references/karpathy-claude-md
+agent-context-sync                    # links new skills into ~/.config/agent-context/skills
+
+# Matt Pocock per-repo config (before to-tickets / triage / to-spec)
+# run the setup-matt-pocock-skills skill in the repo</code></pre>
+  </section>
+
+  <section id="agents">
+    <h2>For AI agents</h2>
+    <div class="callout">
+      <h3>If you are an AI agent setting this up</h3>
+      <ul>
+        <li><strong>Read <code>CONTEXT.md</code> first</strong> — it's the front door and loads the project's conventions and the “Agent Coding Principles” / “Agent Context Discipline” rules.</li>
+        <li><strong>Treat <code>docs/workspace-structure.md</code> as the spec.</strong> Its <em>“Agent Bootstrap Instructions”</em> section is a step-by-step procedure for scaffolding or extending a workspace — files to create, stub-header format, and post-scaffold verification checks.</li>
+        <li><strong>Confirm preconditions before creating files</strong> — workspace name, repo list, editors/runtimes, and external services. Don't invent repo names or clone URLs.</li>
+        <li><strong>Persist intermediate state to <code>work/&lt;project&gt;/</code></strong> so it survives context compaction — not to conversation memory.</li>
+        <li><strong>Disk is the source of truth.</strong> Re-read files before asserting facts; verify symlinks resolve and scripts are executable after scaffolding.</li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <h3>Verify before you call it done</h3>
+      <pre><code>gh auth status                                    # global: GitHub auth
+claude mcp list                                   # local:  core MCP (graphify) visible
+scripts/mcp/youtube-transcript.sh                 # local:  starts YouTube MCP (opt-in fragment)
+./scripts/check-workspace-structure.sh            # local:  symlinks + dirs OK</code></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>ai-workspace-template · setup guide · generated for human + agent onboarding · Source docs: <a href="../../../../../docs/workspace-structure.md">workspace-structure.md</a> · <a href="../../../../../docs/workspace-setup.md">workspace-setup.md</a> · <a href="../../../../../docs/template-usage.md">template-usage.md</a> · <a href="../../../../../docs/recommended-tooling.md">recommended-tooling.md</a> · <a href="../../../../../docs/mcp-setup.md">mcp-setup.md</a> · <a href="../../../../../docs/service-access.md">service-access.md</a> · <a href="../../../../../docs/runbooks/README.md">runbooks/</a> · Template maintainers: <a href="../../../../../docs/template-workspace-backlog.html">template-workspace-backlog.html</a> (review findings + how to keep them updated)</p>
+</footer>
+</body>
+</html>

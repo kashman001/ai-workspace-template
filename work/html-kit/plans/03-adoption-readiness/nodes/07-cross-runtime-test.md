@@ -1,7 +1,7 @@
 ---
 id: 07-cross-runtime-test
 title: Codex + Gemini each rebuild docs/setup-guide.html from the rules alone; render-check
-status: blocked
+status: done
 kind: work
 wave: 2
 blocked_by: [06-reconcile-1]
@@ -20,3 +20,5 @@ Both pages exist; main session records what each got wrong unaided and whether i
 ## Log
 - s8 · started, tier standard
 - s8 · blocked: codex half done (2 rounds, shots viewed); gemini half blocked: Gemini CLI 0.46 free tier refused (IneligibleTierError, migrate to Antigravity); launching agy was denied by the auto-mode safety classifier - needs the user's permission
+- s8 · started, tier standard
+- s8 · check passed → done

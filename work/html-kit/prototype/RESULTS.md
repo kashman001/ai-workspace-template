@@ -289,50 +289,60 @@ o200k_base (not bytes/4).
   and on every sample figure. Cause not found.
 - Wave 2: the Codex + Gemini rebuild from the rules alone.
 
-# Session 8 — cross-runtime test (node 07; Codex half)
+# Session 8 — cross-runtime test (nodes 07, 08)
 
 Brief: `xrt/brief.md` (one brief, runtime name passed in the prompt). Each
 runtime reads only `AUTHORING.md`, `DIAGRAMS.md` and `docs/setup-guide.html`.
+Neither runtime could run the render check itself (see Runs), so the main
+session ran it after round 1, gave each runtime the shots for a round 2, and
+re-shot. All 80 shots (2 runtimes × 2 rounds × 20) viewed by the main session.
 
 ## Runs
 
-- **Codex** (codex-cli 0.162.1, `exec -s workspace-write`). Round 1:
-  `xrt/codex/transcript.txt`, `summary.md`. Greps 0, links OK, but Chrome
-  aborts inside the Codex sandbox (`Abort trap: 6`), so it never saw a shot;
-  it said so honestly. The main session ran `render-check.sh` for it
-  (`xrt/codex/shots-r1/`). Round 2 (`transcript-r2.txt`): Codex opened the
-  shots, fixed, re-ran greps and links; main session re-shot (`xrt/codex/shots/`).
-- **Gemini**: not run. Gemini CLI 0.46 refuses the free tier
-  (`IneligibleTierError`, "migrate to Antigravity";
-  `xrt/gemini/transcript-gemini-cli-auth-fail.txt`). The Antigravity CLI
-  (`agy`, Gemini 4 Argon available) is installed and logged in, but launching
-  it unattended was denied by Claude Code's auto-mode safety check — needs the
-  user's go-ahead.
+- **Codex** (codex-cli 0.162.1, `exec -s workspace-write`): wrote the page,
+  ran greps and check-links; Chrome aborts inside its sandbox (`Abort trap: 6`),
+  so no shots — it said so honestly. Files: `xrt/codex/transcript*.txt`,
+  `summary.md`, `shots-r1/`, `shots/`.
+- **Gemini** (Gemini 4 Argon via Antigravity `agy --sandbox --mode
+  accept-edits`, run with the user's go-ahead): Gemini CLI 0.46 refuses the
+  free tier (`IneligibleTierError`, `xrt/gemini/transcript-gemini-cli-auth-fail.txt`).
+  Under `agy` edit-only approval, headless mode denies every shell command, so
+  it wrote the page but ran no check; round 2 was edit-only by design.
+  Files: `xrt/gemini/transcript*.txt`, `summary.md`, `shots-r1/`, `shots/`.
 
-## Codex result, per figure (all 20 shots viewed by the main session)
+## Per figure
 
-| Figure | Round 1 (unaided) | Round 2 (after seeing shots) |
-|---|---|---|
-| 1 folder tree | fail — labels overlap their notes | readable; tree became a centred list, small text (~11px desktop) — weak pass |
-| 2 symlinks → CONTEXT.md | fail — "single source of truth" spills out of the box | box fixed; arrow still runs through "symlink" label — minor fail |
-| 3 pipeline | fail — two-line labels overflow boxes | pass |
-| 4 global vs local | fail — text piles up | pass — redrawn as a captioned card grid |
-| 5 global vs per-repo | fail — text piles up | pass — redrawn as a captioned card grid |
+| Figure | Codex r1 (unaided) | Codex r2 | Gemini r1 (unaided) | Gemini r2 |
+|---|---|---|---|---|
+| 1 folder tree | fail — labels on notes | weak pass — centred list, ~11px | fail — 3 labels overflow boxes | pass — wrapped two-line boxes |
+| 2 symlinks → CONTEXT.md | fail — text out of box | minor fail — arrow through "symlink" | pass | pass |
+| 3 pipeline | fail — labels overflow | pass | pass (two rows) | pass |
+| 4 global vs local | fail — text piles up | pass — card grid instead | fail — mono lines past box edges | pass (mono ~10px on phone) |
+| 5 global vs per-repo | fail — text piles up | pass — card grid instead | fail — lines cross the gap | pass (mono ~10px on phone) |
 
-Rule greps 0 and check-links OK in both rounds; no unlisted classes. o200k
-tokens: source 9,150; Claude's rebuild 5,951; Codex round 1 6,313, round 2 5,774.
+Rule greps 0, one `<script>`, check-links OK, no unlisted classes — every round,
+both runtimes. o200k tokens: source 9,150; Claude's rebuild 5,951; Codex
+6,313 → 5,774; Gemini 6,937 → 7,270.
 
-## What it got wrong unaided, and why
+## What each got wrong unaided
 
-Codex copied the source SVG geometry (left-edge `x`, old box sizes). The
-kit centres every `<text>`, which `DIAGRAMS.md` states in one clause
-("`<text>` is centred on its `x`,`y`"). It missed that clause, and the greps
-can't catch it — only the render check does, which it could not run. Once it
-saw the shots it fixed 4 of 5 figures in one pass.
+- **Codex** copied the source SVG coordinates (left-edge `x`, old box sizes)
+  and missed the one clause saying the kit centres `<text>`: 0/5 figures.
+  With the shots it fixed 4 of 5, partly by turning diagrams into card grids.
+- **Gemini** read the centring rule and redrew every figure, but sized boxes
+  for its guess at text width; long monospace lines overflowed: 2/5. With
+  the shots it fixed all 5 by widening and wrapping. Its summary lists the
+  render check as its own result, though the shots were made for it.
+- **Neither** was caught by the greps or link check; only the shots caught them.
+  Both self-corrected once they could see the render.
 
-Lessons for the rules: (a) make the centring rule louder — "never copy
-coordinates from an existing SVG; text is centred, redraw"; (b) the kit has
-no left-aligned text, so a tree/list diagram has no good form — say "a folder
-tree is a `<pre>`/code block or a list, not an SVG"; (c) sandboxed runtimes
-may not be able to run Chrome — the checklist should say "if render-check
-can't run, say so and hand back for someone to run it".
+## Rule changes this suggests (not yet made)
+
+1. `DIAGRAMS.md`: "Never copy coordinates from an existing SVG — text is
+   centred; redraw."
+2. Give a width guide: ~9 units per `small` (monospace) character, ~8.5 per
+   default character; wrap long labels to two lines (Gemini derived this).
+3. A folder tree or two-column inventory is a code block, list or card grid,
+   not an SVG.
+4. Checklist: "If `render-check.sh` can't run where you are (sandbox), say so
+   and hand back for someone to run it." Sandboxed agents are the norm.
