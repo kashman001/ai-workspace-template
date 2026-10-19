@@ -27,6 +27,7 @@ aborts inside its sandbox, so it can't render-check; it handed back honestly.
 
 Learnings:
 - macOS has no `timeout`; zsh doesn't word-split `$VAR` flags — pass `--project x` literally.
+- A child `copilot -p` run from this repo registers via its hooks and takes ownership of the bound item (`owner_live` at rollover); `register --takeover` after it exits. Launch children with the TF_SESSION_* vars unset.
 - Kit decision is template machinery → promote as a TADR in `docs/template-adr/` (next 0015), not `docs/adr/`.
 
 # Session Handoff — 8 (2026-10-18): plan 03 done, cross-runtime proven; user chose ADOPT
