@@ -63,8 +63,8 @@ not urgent: turn 1 of a Copilot VS Code chat is always an estimate (~30% low). D
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 02-copilot-vscode-followups, open, wave 4 of 4, done 10/12, doing 0, todo 2, blocked 0, dropped 0, sessions 4.
-Frontier: 10-live-reprobe-vscode. Remaining: 2 of 12 — wave 4: 10-live-reprobe-vscode todo, 12-reconcile-w4 todo.
+Position: plan 02-copilot-vscode-followups, open, wave 4 of 4, done 11/12, doing 0, todo 1, blocked 0, dropped 0, sessions 4.
+Frontier: 12-reconcile-w4. Remaining: 1 of 12 — wave 4: 12-reconcile-w4 todo.
 <!-- plan:end position -->
 
 ## State snapshot
