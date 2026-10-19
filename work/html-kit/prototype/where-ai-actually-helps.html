@@ -56,7 +56,7 @@
   <p class="eyebrow">The map</p>
   <h2>The lifecycle is a loop — and discovery never stops</h2>
   <figure>
-    <svg class="diagram" viewBox="0 0 700 400" role="img" aria-label="Six stages arranged in a ring — operate, maintain, plan, build, verify, release — with arrows running clockwise. Discovery sits in the center: signal flows in from operate, new work flows out to planning.">
+    <svg class="diagram" viewBox="160 20 380 360" role="img" aria-label="Six stages arranged in a ring — operate, maintain, plan, build, verify, release — with arrows running clockwise. Discovery sits in the center: signal flows in from operate, new work flows out to planning.">
       <path class="arrow" d="M 393 71.5 A 150 150 0 0 1 451 104"/>
       <path class="arrow" d="M 495 143 A 150 150 0 0 1 495 257"/>
       <path class="arrow" d="M 451 296 A 150 150 0 0 1 393 328.5"/>
@@ -73,7 +73,7 @@
       <path class="arrow dash accent" d="M 355 68 C 358 105, 356 145, 352 178"/>
       <path class="arrow dash accent" d="M 396 214 C 424 226, 448 240, 462 253"/>
       <text class="small accent" x="392" y="124">signal</text>
-      <text class="small accent" x="412" y="246">new work</text>
+      <text class="small accent" x="392" y="252">new work</text>
     </svg>
     <figcaption>The steady state of a live product: operate → maintain → plan →
     build → verify → release, around again. Discovery moves to the middle, fed
@@ -277,7 +277,7 @@
   <p class="eyebrow">Backup</p>
   <h2>The full graph: eight stages, feedback included</h2>
   <figure>
-    <svg class="diagram" viewBox="0 0 960 345" role="img" aria-label="The eight SDLC stages in forward order, with feedback edges looping back: verification failures return to build, rollbacks return to release, triaged work returns to planning, and telemetry returns to discovery. A dotted line links discovery to verification: acceptance criteria become the release test.">
+    <svg class="diagram" viewBox="20 40 880 300" role="img" aria-label="The eight SDLC stages in forward order, with feedback edges looping back: verification failures return to build, rollbacks return to release, triaged work returns to planning, and telemetry returns to discovery. A dotted line links discovery to verification: acceptance criteria become the release test.">
       <path class="arrow dash" d="M 78 120 C 78 60, 510 60, 510 120"/>
       <text class="small" x="294" y="60">acceptance criteria become the release test</text>
       <rect x="30" y="124" width="96" height="40" rx="5"/><text x="78" y="144">Discover</text>
@@ -298,11 +298,11 @@
       <path class="arrow accent" d="M 496 168 C 490 200, 422 200, 410 172"/>
       <path class="arrow accent" d="M 712 168 C 706 200, 638 200, 626 172"/>
       <path class="arrow accent" d="M 826 172 C 790 262, 240 262, 194 172"/>
-      <path class="arrow accent" d="M 742 172 C 780 305, 120 305, 82 172"/>
+      <path class="arrow accent" d="M 742 172 C 780 340, 120 340, 82 172"/>
       <text class="small accent" x="453" y="212">failures</text>
       <text class="small accent" x="669" y="212">rollback</text>
-      <text class="small accent" x="510" y="251">triaged work re-enters planning</text>
-      <text class="small accent" x="430" y="293">telemetry, experiments &amp; user signal feed discovery</text>
+      <text class="small accent" x="490" y="259">triaged work re-enters planning</text>
+      <text class="small accent" x="430" y="320">telemetry, experiments &amp; user signal feed discovery</text>
     </svg>
     <figcaption>Solid arrows are flow; the dotted arc is a correspondence — criteria
     written at discovery are what verification executes, so a stale criterion silently

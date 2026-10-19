@@ -179,9 +179,13 @@ diagram renders small or tangled. Good diagrams beat small files.
   `dash`, a tone (`accent`, `ok`, `info`, `warn`, `bad`) to colour a line, shape
   or text, `solid` (shape filled with its tone; accent if none), and on text,
   `small` (monospace edge label) and `inverse` (text on a `solid` shape).
-- Pick a `viewBox` around 700–960 wide; the kit scales it to fit. Default text
-  is 16 units, `small` is 14; size boxes for that. Leave about 10 units of
-  clearance between labels and lines.
+- The kit scales the `viewBox` to the column, which is about 340px on a phone,
+  so text shrinks by 340 ÷ viewBox width. On a doc page keep the `viewBox`
+  about 520–600 wide (stack or wrap the layout to fit) and crop it to the
+  drawing, with no empty margins. Default text is 16 units, `small` is 14;
+  size boxes for that. Leave about 10 units of clearance between labels and lines.
+  A layout that can't fit 600 wide stays readable only on desktop: say so in
+  the caption, or split it into smaller diagrams.
 - Always give `role="img"` and an `aria-label` that says what the picture says.
 
 **Links** — plain `<a href>`. Quotes and dashes as characters or entities.

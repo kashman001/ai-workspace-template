@@ -1,6 +1,6 @@
 ---
 plan: 01-kit-gap-fixes
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---
@@ -35,8 +35,8 @@ those screenshots (`decisions.md`, 2026-10-18).
 | 1 | 02a-render-check-true-390 | work | standard | done |
 | 1 | 03-authoring-draft | work | standard | done |
 | 1 | 04-reconcile-w1 | reconcile | frontier | done |
-| 2 | 05-setup-guide-rebuild | work | standard | todo |
-| 2 | 06-deck-rerender | work | standard | todo |
-| 2 | 07-reconcile-w2 | reconcile | frontier | todo |
-Frontier: 05-setup-guide-rebuild, 06-deck-rerender. Remaining: 3 of 8. Sessions used: 1.
+| 2 | 05-setup-guide-rebuild | work | standard | done |
+| 2 | 06-deck-rerender | work | standard | done |
+| 2 | 07-reconcile-w2 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 8. Sessions used: 1.
 <!-- plan:end board -->

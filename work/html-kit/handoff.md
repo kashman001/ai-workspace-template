@@ -6,6 +6,26 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 5 (2026-10-18): gaps closed, every diagram render-checked; verdict question open
+
+**Summary.** Made plan `plans/01-kit-gap-fixes` (2 waves, 8 nodes, closed) and ran
+it with parallel subagents. Kit: code blocks, doc Mermaid min size, figure
+layout, steps/toc/footer. New `prototype/render-check.sh` (4 shots per figure).
+AUTHORING.md gaps closed, render check in the checklist, SVG default, viewBox
+520–600. A fresh agent rebuilt the setup guide from the rule alone and fixed its
+own diagrams after the render check. The deck ring was re-cropped. All shots
+viewed by the main session: every diagram passes except deck backup graph at 390
+(slide-format limit). Numbers: RESULTS.md "Session 5". Stopped at context WARN
+with the adopt/drop question posed to the user.
+
+**Learnings:**
+- Headless Chrome won't lay out narrower than 500px; `--window-size=390` gives a
+  cropped 500 layout. Use an iframe of the exact width (render-check.sh does).
+- An SVG scaled to the column can't be sized right for both 1280 and 390;
+  the rule now favours phone, so desktop labels are large.
+
+**Suggested skills next:** none for the verdict; on adopt, `to-tickets` or `plans`.
+
 # Session Handoff — 4 (2026-10-18): adjust round, diagrams restored, second page tested
 
 **Summary.** User verdict: **adjust** — good diagrams for human readers are a hard

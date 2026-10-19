@@ -131,3 +131,59 @@ boxed lists drawn as SVG → a table and two card pairs (a fair call).
 - Smaller rule gaps: caption for a non-diagram (used `.note`), footer slot,
   table of contents (used `grid small`), steps that hold code (used `<h3>`),
   relative links from a moved page.
+
+# Session 5 — gaps closed, every diagram render-checked
+
+Plan `plans/01-kit-gap-fixes` (2 waves, parallel subagents). Tokens = bytes/4,
+an estimate.
+
+## What changed
+
+- **Kit** (sole owner, one subagent): `<pre><code>` styled, scrolls inside its
+  box (no page scroll at a real 390); doc-page Mermaid kept at ≥14px labels
+  (scrolls if wide); table-in-figure no longer clipped, captions on the text
+  column; new `ol.steps`, `nav.toc`, `body.doc > footer`.
+- **`render-check.sh <page> [out]`** — isolates each figure, 4 shots
+  (1280/390 × light/dark). Phone width goes through an iframe because headless
+  Chrome won't lay out narrower than 500px (first version's "390" was fake).
+- **AUTHORING.md** — code blocks, steps, contents, footer, captions on
+  tables/code, moved-page links, render check in the checklist, SVG is the
+  default diagram, viewBox ~520–600 wide and cropped (was 700–960).
+
+## Size
+
+| File | Session 4 | Session 5 | Est. tokens |
+|---|---|---|---|
+| `kit.css` | 12,284 B | 14,468 B | ~3,620 |
+| `kit.js` | 4,742 B | 5,204 B | ~1,300 |
+| `AUTHORING.md` (read per authoring agent) | 6,786 B | 9,071 B | ~2,270 |
+| `render-check.sh` | — | 5,846 B | ~1,460 |
+| Deck (original 36,687 B) | 17,074 B | 17,079 B (53% smaller) | ~4,270 |
+| Setup guide (original 29,079 B) | 18,428 B | 19,667 B (32% smaller) | ~4,920 |
+
+The setup guide grew 1.2 KB over session 4 because its fake code lines became
+real code blocks and two Mermaid diagrams became hand-drawn SVG.
+
+## Look — every diagram viewed by the main session (`shots/s5/`)
+
+| Figure | 1280 light/dark | 390 light/dark | Verdict |
+|---|---|---|---|
+| Setup 1 — layout table in a figure | ✓ | ✓ wraps cleanly | pass |
+| Setup 2 — symlinks → CONTEXT.md (SVG, vertical) | ✓ labels large (~25px) | ✓ | pass |
+| Setup 3 — setup pipeline (SVG, two rows; Mermaid was cut off at 390) | ✓ labels large | ✓ | pass |
+| Setup 4 — global vs local (cards in a figure; 900-wide SVG unreadable at 390) | ✓ | ✓ stacks | pass |
+| Setup 5 — toolchain (cards) | ✓ | ✓ stacks | pass |
+| Deck 1 — six-stage ring (viewBox cropped, label moved) | ✓ | ✓ ~14px | pass |
+| Deck 2 — eight-stage backup graph (label overlaps fixed) | ✓ | ✗ ~5px text | pass on desktop; phone is a format limit (1280×800 slide, backup slide) |
+
+## Findings
+
+- The rule worked: a fresh agent rebuilt the guide from AUTHORING.md alone,
+  ran the render check, saw Mermaid cut off and 900-wide SVG unreadable at
+  390, and fixed both on its own. Without the render check it would have
+  shipped both.
+- One SVG can't be right at both widths: text at 1280 is ~2.5× its 390 size.
+  The rule now favours phone (520–600 wide), so desktop labels come out big.
+  A kit fix (cap SVG width on desktop) would balance it; not done.
+- Rule gaps still open: a captioned card grid in a figure, a heading-plus-list
+  callout box, a list of links (used `.note`).
