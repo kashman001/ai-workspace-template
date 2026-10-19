@@ -15,7 +15,7 @@ event, two of them Claude Code's; (3) two registry records per chat. Fix 1 now; 
 3 with the user, then deliver and re-probe live.
 
 ## Not yet specified
-- s12 · Copilot VS Code turn 1 is always method=estimate (~30% low, s12: 29,783 vs 42,654): prompt_tokens first appears in the session.usage_checkpoint written at turn end. Options: document it in docs/context-budget.md, or accept. Not a node until the user picks.
+- s12 · Copilot VS Code turn 1 is always method=estimate (~30% low, s12: 29,783 vs 42,654): prompt_tokens first appears in the session.usage_checkpoint written at turn end. Options: document it in docs/context-budget.md, or accept. Not a node until the user picks. → s14: user picked "document"; docs/context-budget.md Copilot CLI row (gap is ~10K fixed, not a percentage: turn 1's own checkpoint was 42,785).
 
 
 ## Out of scope

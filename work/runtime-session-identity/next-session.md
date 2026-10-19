@@ -11,22 +11,16 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Plans 01 and 02 are both closed. No agent work is queued. Two calls are left, both the user's:
-
-1. **Turn-1 estimate gap.** In a Copilot VS Code chat, turn 1 is always `method=estimate`, about 22–30%
-   low (s12: 29,783 vs 42,654; s14: 33,151 vs 42,785). `prompt_tokens` first appears at turn end.
-   Options: document it in `docs/context-budget.md` (Copilot VS Code row), or accept it as is.
-   Recorded in plan 02's `plan.md` → "Not yet specified".
-2. **Push `main`.** Never push from a session; report how far ahead `main` is.
+Plans 01 and 02 are closed, and the user's turn-1 call was made ("document"; done in s14). Nothing is
+left but closing the work item.
 
 ## >>> START HERE <<<
 
 **First actions:**
 
 1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. Ask the user about item 1 above, if they have not answered yet. If they pick "document": add one
-   sentence to the Copilot VS Code row, run `scripts/tests/test-doc-consistency.sh`, and commit by path.
-3. With nothing left open, close the work item: run `checkpoint` (or tell the user it is ready to archive).
+2. Run `checkpoint` to close the work item (or tell the user it is ready to archive). Pushing `main`
+   is the user's call.
 
 ## Read these, in order
 
