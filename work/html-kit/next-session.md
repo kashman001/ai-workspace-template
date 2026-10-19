@@ -14,29 +14,41 @@ Frontier: none. Remaining: 0 of 8.
 
 ## Mission
 
-Get the user's final verdict on the HTML kit and act on it. The gap-fix plan is
-done; numbers and per-diagram verdicts are in `prototype/RESULTS.md` →
-"Session 5".
+Fix the open items session 5 found, then put the verdict question to the user
+again. The user said: **roll over, make the fixes, then get back to the
+question.** Items (from `prototype/RESULTS.md` → "Session 5" → Findings):
+
+1. **SVG too large on desktop** — a diagram sized for phones (viewBox 520–600)
+   renders labels ~25px at 1280. Kit fix: cap `svg.diagram` width on wide
+   screens so its text lands near body size (e.g. max-width ≈ viewBox width ×
+   ~1.1px, or a fixed cap), keeping it full-width on phones.
+2. **Three rule gaps** in AUTHORING.md (+ kit CSS if needed): a captioned card
+   grid inside a `<figure>`; a callout box with a heading and a list; a list of
+   links (the setup guide used `.note`).
+3. Optional, if cheap: deck backup eight-stage graph is unreadable at 390 —
+   a slide-format limit; only act if a simple caption or kit change helps.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project html-kit`
-2. If the user has not answered yet, ask one question, plain terms:
-   **adopt** or **drop**? If adopt, a second question: where does it land —
-   `docs/kit/` (CSS/JS + AUTHORING.md + render-check.sh) or a workspace skill?
-3. On **adopt**: record the verdict (`decision-log` skill, Tier 2, and promote
-   the "SVG allowed but themed" + "render check" notes if asked), then plan the
-   move with `to-tickets` or `plans`. Open items to carry: cap SVG width on
-   desktop (labels come out large at 1280), and the three rule gaps in
-   RESULTS.md "Findings".
-   On **drop**: record the verdict and close the work item (`checkpoint`).
+2. Small plan (`plans` skill, `/plan`): wave 1 — one kit owner (kit.css/kit.js +
+   AUTHORING.md for items 1–2; one owner avoids edit clashes); wave 2 — re-run
+   `prototype/render-check.sh` on `prototype/setup-guide.html` and
+   `prototype/where-ai-actually-helps.html` and update the two pages for the
+   new classes; reconcile: the main session views every shot itself (contact
+   sheets save context: an HTML page of `<img>`s shot by headless Chrome) and
+   adds a "Session 6" section to RESULTS.md (bytes, tokens = bytes/4 estimate).
+3. Then ask the user, one question, plain terms: **adopt** the kit or **drop**
+   it? If adopt: does it land in `docs/kit/` (plain files) or as a workspace
+   skill?
 
-**No human present:** stop with the question open; do not pick for the user.
+**No human present:** do steps 1–2, commit, stop with step 3's question open.
 
 ## Read these first, in order
 
 1. `work/html-kit/decisions.md`
 2. `work/html-kit/prototype/RESULTS.md` — "Session 5" only
+3. `work/html-kit/prototype/AUTHORING.md`
 
 ## Constraints already decided (do not re-litigate)
 
