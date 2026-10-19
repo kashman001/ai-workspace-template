@@ -8,6 +8,7 @@
 #          work/session-management-followups (M42). Offline.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"; cd "$ROOT"
+[ -f docs/template-usage.md ] || { echo "SKIP: template-only docs/template-usage.md absent"; exit 77; }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 PASS=0; FAIL=0
 ok()   { PASS=$((PASS+1)); echo "  ok: $1"; }
