@@ -81,7 +81,7 @@ newest-mtime over `session-state/`, which binds another project's live session (
 gap 4). The agent shell also now honours `COPILOT_STATE_DIR`, applying the earlier note above.
 Commits 0d581ce and 0964a23, registry U1 and U2.
 
-## 2026-10-18 — One registry name per Copilot session: copilot-cli (node 03) — PROPOSED, awaiting the user (plan 02 node 05)
+## 2026-10-18 — One registry name per Copilot session: copilot-cli (node 03) — decided by the user, s12 (plan 02 node 05): option (b)
 
 On the Copilot CLI runtime (VS Code agent mode included), every Copilot chat gets a
 `copilot-cli-<sid>.json` record from the CLI hook config (`scripts/hooks/context-budget-hook.sh`
@@ -117,7 +117,7 @@ Side gap seen: `--runtime copilot-vscode` with no id var dies "no session artifa
 runtime — its discovery only looks in workspaceStorage `chatSessions`. Evidence: node 03 Log;
 sandbox `scratchpad/n03/sandbox.sh` (session-local, not kept).
 
-## 2026-10-18 — Keep all Copilot hook files; the dispatcher stays the one gate (node 02) — PROPOSED, awaiting the user (plan 02 node 05)
+## 2026-10-18 — Keep all Copilot hook files; the dispatcher stays the one gate (node 02) — decided by the user, s12 (plan 02 node 05): option A + both hardenings
 
 Four hook sets run per Copilot event, on both the terminal CLI (interactive, trusted folder) and
 VS Code chats on the Copilot CLI agent host: `.github/hooks/context-budget.json`,
