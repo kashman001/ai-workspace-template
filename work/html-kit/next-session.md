@@ -17,6 +17,11 @@ diagram accepted only after it is seen rendered in HTML — desktop 1280 and
 phone 390 wide, light and dark, labels readable, nothing clipped or
 overlapping, sized in proportion to the page.
 
+<!-- plan:begin position -->
+Position: plan 01-kit-gap-fixes, open, wave 1 of 2, done 0/7, doing 0, todo 7, blocked 0, dropped 0, sessions 0.
+Frontier: 01-kit-fixes, 02-render-check-script, 03-authoring-draft. Remaining: 7 of 7 — wave 1: 01-kit-fixes todo, 02-render-check-script todo, 03-authoring-draft todo, 04-reconcile-w1 todo.
+<!-- plan:end position -->
+
 ## First actions
 
 1. `scripts/context-budget.sh register --project html-kit`
