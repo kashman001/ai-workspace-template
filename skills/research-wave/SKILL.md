@@ -81,7 +81,9 @@ can read, and the subject list is fixed.
 3. **Fill `references/pass-brief.md`** per subject — same brief, different
    placeholders — and add each subject's specific risks: the standing
    claims it might contradict, the known landmines, where its
-   documentation actually lives.
+   documentation actually lives. Require every "not found" to state the
+   bound of the search behind it — which sources, which queries — so a
+   reader can tell "absent" from "not looked for".
 4. **Launch all of them in one message.** Reading a return between
    launches serializes exactly what should overlap.
 
@@ -165,8 +167,14 @@ Defects that no per-subject check can see:
 Include subjects researched **before** this wave in all four sweeps —
 they were never checked to this standard.
 
-**Done when:** the sweeps have run across every subject, old and new, and
-the synthesis draws on the corrected records.
+Then, **before synthesizing, close every question** the wave set out to
+answer: mark each *answered*, *partly answered*, or *unresolved*, with the
+search bound behind any gap. An unresolved question stays visible in the
+synthesis instead of quietly dropping out of it.
+
+**Done when:** the sweeps have run across every subject, old and new, every
+question is closed as answered, partly answered, or unresolved, and the
+synthesis draws on the corrected records.
 
 ---
 

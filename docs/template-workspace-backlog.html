@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">8</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">145</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">6</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">147</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -162,22 +162,6 @@
     <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
     <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
     <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L93</span> CLI-first rule cites the yt-dlp MCP server as a CLI
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/mcp-setup.md</span></h3>
-    <p><span class="k">Evidence</span> &mdash; <code>docs/mcp-setup.md:60-61</code> gives &ldquo;<code>scripts/mcp/</code>&rsquo;s <code>yt-dlp</code> wrapper for transcripts&rdquo; as a CLI-first example, but <code>scripts/mcp/youtube_transcript_mcp.py</code> is a stdin JSON-RPC MCP server with no CLI mode (found by <code>work/external-tools-review/</code> T2, recommendation R6).</p>
-    <p><span class="k">Impact</span> &mdash; The one in-repo example of the CLI-first rule is an MCP server, which muddies the rule for readers deciding between a CLI and a fragment.</p>
-    <p><span class="k">Fix</span> &mdash; Reword the example so it no longer calls the MCP server a CLI. (User picked <em>reword</em> over adding a CLI mode, 2026-10-18 external-tools-review disposition.) Do it in the L94 doc pass.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L94</span> Doc pass: CLI contract, research closeout, warnings, skill-earns-its-place test, layered memory
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">docs/ + skills/research-wave/</span></h3>
-    <p><span class="k">Evidence</span> &mdash; The external-tools-review accepted 13 doc-only recommendations (<code>work/external-tools-review/synthesis.md</code>): R7&ndash;R9 (agent-facing CLI contract, &ldquo;no CLI? wrap it&rdquo;, sibling SKILL.md), R10 (research-wave closeout + search bounds), R13 (don&rsquo;t recommend <code>cli-hub</code>), R14 (Projects paragraph, incl. thread model/effort), R15 + R16 (no-captions note; OS dictation line), R17 (no-skill / same-length dummy / skill baseline test in <code>docs/stakes-to-ceremony.md</code>), R20 (don&rsquo;t switch models mid-session), R22 + R23 (name the L0/L1/L2 pattern in <code>docs/zoom-model.md</code>; missing <code>Purpose:</code> headers on 4 docs), R24 (OpenViking warning entry). Plus L93&rsquo;s reword.</p>
-    <p><span class="k">Impact</span> &mdash; Each is a few lines; left undone, the CLI-first rule stays abstract, skills are kept without evidence they help, and unsafe or non-agnostic tools go unflagged.</p>
-    <p><span class="k">Fix</span> &mdash; One session. Edit each target file named in the synthesis entry; cite the R-number in the commit. Check: links resolve, <code>scripts/check-workspace-structure.sh</code> passes, every edit traces to an R-number. Resolve L93 with this card.</p>
   </div>
 
   <div class="find low">
@@ -370,6 +354,7 @@
       <tr><td>2026-10-12</td><td>Added <strong>L87</strong> (Open): cwd substring match in context-budget discovery, from the runtime-session-identity node 15 review. The same review fixed three items in <code>scripts/context-budget.sh</code> and <code>.claude/settings.json</code>, test-first (commits <code>0b4dd7c</code>, <code>0d581ce</code>, <code>0964a23</code>).</td></tr>
       <tr><td>2026-10-12</td><td>Resolved <strong>L88</strong> (PR #65, pulled from origin without a card: stray files in <code>nodes/</code> no longer break <code>plan.sh</code>) and <strong>L89</strong> (<code>plan.sh plans</code> lists every work item&rsquo;s plans, one line each, <code>--json</code>). Scorecard now 3/141/5/0/6.</td></tr>
       <tr><td>2026-10-12</td><td>Resolved <strong>L87</strong> (cwd substring match in context-budget discovery): both checks now match the cwd as a whole value; registry suite U3/U4 seen failing first. Card moved to the archive.</td></tr>
+      <tr><td>2026-10-18</td><td>Resolved <strong>L94</strong> (external-tools-review doc pass, R7&ndash;R10, R13&ndash;R17, R20, R22&ndash;R24) and <strong>L93</strong> with it (yt-dlp example reworded, R6). Cards moved to the archive. Scorecard now 6/147/5/0/6.</td></tr>
 </tbody>
   </table>
 

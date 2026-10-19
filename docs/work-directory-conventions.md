@@ -1,3 +1,8 @@
+<!--
+File: docs/work-directory-conventions.md
+Purpose: The standard files in a `work/<project>/` directory and the write discipline that keeps them useful across sessions.
+-->
+
 # Work Directory Conventions
 
 Every project under `work/<project-name>/` is developer-scoped and made of plain

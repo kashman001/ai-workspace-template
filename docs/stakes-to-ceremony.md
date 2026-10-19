@@ -1,3 +1,8 @@
+<!--
+File: docs/stakes-to-ceremony.md
+Purpose: How much process a change deserves — maps a change's size and risk to the skills it should run.
+-->
+
 # Stakes to ceremony — how much process a change deserves
 
 Not every change needs every skill. Size the change first, then run only the
@@ -47,3 +52,9 @@ For downloaders of this template: do not turn everything on at once.
   every turn, whether or not it fires. `scripts/check-skill-descriptions.sh`
   bounds the total; stay under it, and make a rarely used skill user-invoked
   rather than carrying its description everywhere.
+- **Make a skill earn its place.** Models now do much of what step-by-step
+  skills spell out, so measure before keeping one. Pick 3 tasks the skill
+  claims to help with and run each three ways, in fresh headless sessions:
+  no skill, a dummy file of the same length, and the skill. Keep the skill
+  only if it beats both; if it ties the dummy, its length did the work, not
+  its content. Decide one skill at a time, never wholesale.

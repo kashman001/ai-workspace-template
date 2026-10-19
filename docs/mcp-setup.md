@@ -58,8 +58,13 @@ needing a capability finds it in the fragment table
     `run:` line the launcher prints and add
     `--mcp-config mcp-fragments/<name>.json` (`mcp-fragments/README.md`).
 - **CLI-first:** capabilities ride CLIs wherever one exists — `gh` for GitHub
-  (the only GitHub path), `scripts/mcp/`'s `yt-dlp` wrapper for transcripts.
-  A fragment is only for structured MCP tools a CLI can't match.
+  (the only GitHub path). A fragment is only for structured MCP tools a CLI
+  can't match. (The YouTube transcript server is a stdio MCP server with no
+  CLI mode, which is why it ships as a fragment.)
+- **No CLI? Wrap it.** When a capability exists only as an MCP server or an
+  API, write a small `scripts/` CLI around it — following the agent-facing
+  CLI contract in `docs/workspace-structure.md` → "Authoring a Team
+  Capability" — before adding an MCP fragment.
 
 > **Migrating an existing setup?** If your `.mcp.json` predates the split,
 > remove its `github` and `youtube-transcript` entries (github was removed
@@ -82,6 +87,10 @@ It does not use workspace credentials. It shells out to `yt-dlp` to retrieve
 public metadata and captions when YouTube makes them available. It is
 best-effort: videos without captions, blocked videos, age or region
 restrictions, and YouTube rate limits can prevent transcript access.
+
+No captions? Download the audio and run a local speech-to-text CLI on it by
+hand (whisper.cpp is one; any local transcriber works). The workspace ships
+no scripted fallback; add one when a work item needs it.
 
 Manual smoke test:
 

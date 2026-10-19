@@ -1,3 +1,8 @@
+<!--
+File: docs/context-budget.md
+Purpose: How the workspace measures each session's context from disk, warns, and rolls work over to a fresh session.
+-->
+
 # Context Budget — Measurement, Warning, and Rollover
 
 LLM performance degrades past ~150K context tokens (the "dumb zone") regardless
@@ -180,6 +185,10 @@ re-bills them for every session. The rule that keeps the prefix stable:
   read after the prefix, on demand.
 - **Hooks that inject text print byte-stable output**, or print it only where
   the context already varies.
+- **Don't switch models mid-session; lower the effort instead.** The cache
+  belongs to one model, so a switch re-reads the whole conversation uncached.
+  A child on a different model starts fresh anyway (`fleet.sh dispatch-open
+  --model`).
 
 Audit (backlog L49): of the six runtimes, only Claude Code's `SessionStart`
 hook puts per-session text into context — `register`'s status line, which

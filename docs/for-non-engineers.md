@@ -43,6 +43,8 @@ setup is the one part that isn't self-serve.
 ## Contributing — specs, new efforts, decisions
 
 You can do all of this conversationally; the agent handles files and git.
+Typing is optional: your computer's built-in dictation works in any agent
+chat box.
 
 - **Write what should be built:** the root `SPEC.md` template ("what it does,
   for whom, the problem it solves") is deliberately jargon-free — it's your

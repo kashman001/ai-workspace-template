@@ -1,3 +1,8 @@
+<!--
+File: docs/workspace-structure.md
+Purpose: The authoritative map of how this workspace is organized — directories, entrypoints, and conventions.
+-->
+
 # Dev-AI Workspace Structure (Generic Template)
 
 This document describes a reusable pattern for organizing a **multi-repo
@@ -394,6 +399,26 @@ container by what executes it:
 - **Human-only steps** (dashboards, interactive logins) → a runbook in
   `docs/runbooks/`, listed in its `README.md` index with its paired check
   script if one exists.
+
+A `scripts/` CLI that **agents** call follows the agent-facing CLI contract
+(`scripts/jev.sh` is the worked example):
+
+- **Machine-readable output** — JSON on stdout (a `--json` flag, or JSON
+  only, as jev does); human text and errors on stderr.
+- **Documented exit codes** — each non-zero code means one thing, listed in
+  the header comment and `--help`.
+- **A `--check` preflight** — reports whether the CLI can run here (binary,
+  key, service) without doing the work.
+- **Loud errors** — one stderr line naming what failed and what to do; never
+  a silent empty success.
+- **Introspection** — `--help` (and a list verb, if it has several) tells an
+  agent what it can do without reading the source.
+- **Verify the output, not the exit code** — its test asserts on what it
+  printed, and agents using it check the result they got.
+
+It also ships a sibling `skills/<name>/SKILL.md` saying when to reach for it
+and what to do on each exit code (`skills/jev/` is the pattern), wired like
+any other skill below.
 
 A new **skill** takes two mechanical wiring steps, or agents won't find it:
 

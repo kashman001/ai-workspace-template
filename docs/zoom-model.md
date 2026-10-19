@@ -48,6 +48,15 @@ structure; the rules below hold between whatever levels exist.
   (they change slowly). Z2 goes stale fastest — prefer generating it on
   demand (graphify query/explain, `repo-navigator` agent) over maintaining
   prose. Z3 is never documented, only read.
+- **Three levels of detail per document.** The same layering repeats
+  inside each level: a one-line abstract, then an overview, then the full
+  text. An agent reads the cheapest layer that answers its question and
+  goes deeper only when it must. The template's one-liners already exist:
+  each doc's `Purpose:` header, each skill's `description`, each line of
+  `docs/README.md` and the repos registry, each work item's line in
+  `work/README.md`. Overviews are a work item's `README.md` and launcher, a
+  doc's opening paragraph; full detail is the body and the ledger. Keep
+  every one-liner to one sentence so it stays cheap to scan.
 - **The failure modes the model prevents:** *all levels open at once*
   (context accretion — loading three repos' full context docs to answer a
   Z0 question) and *wrong level open* (answering a Z2 design question from

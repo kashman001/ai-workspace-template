@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc 3.12" />
+  <meta name="generator" content="pandoc 3.12.1" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Dev-AI Workspace Structure — ai-workspace-template
 guide</title>
@@ -294,7 +294,7 @@ guide</title>
       padding:11px 15px;margin:26px 0 6px;line-height:1.5}
     .src-banner a{color:var(--accent-2)}
   </style>
-  <!-- source-md-sha1: 593280131cc046577a9ac0dd7ccaa1b2e8186e61 -->
+  <!-- source-md-sha1: 874d55a30053dc8e060a1e6b3a5d6fe072672e23 -->
 </head>
 <body>
 <div class="src-banner">
@@ -303,6 +303,11 @@ guide</title>
   · <a href="https://github.com/kashman001/ai-workspace-template/blob/main/docs/workspace-structure.md">Markdown source</a>
   · <a href="setup-guide.html">Setup guide</a>
 </div>
+<!--
+File: docs/workspace-structure.md
+Purpose: The authoritative map of how this workspace is organized — directories, entrypoints, and conventions.
+-->
+
 <h1 id="dev-ai-workspace-structure-generic-template">Dev-AI Workspace
 Structure (Generic Template)</h1>
 <p>This document describes a reusable pattern for organizing a
@@ -780,6 +785,30 @@ a runbook in <code>docs/runbooks/</code>, listed in its
 <code>README.md</code> index with its paired check script if one
 exists.</li>
 </ul>
+<p>A <code>scripts/</code> CLI that <strong>agents</strong> call follows
+the agent-facing CLI contract (<code>scripts/jev.sh</code> is the worked
+example):</p>
+<ul>
+<li><strong>Machine-readable output</strong> — JSON on stdout (a
+<code>--json</code> flag, or JSON only, as jev does); human text and
+errors on stderr.</li>
+<li><strong>Documented exit codes</strong> — each non-zero code means
+one thing, listed in the header comment and <code>--help</code>.</li>
+<li><strong>A <code>--check</code> preflight</strong> — reports whether
+the CLI can run here (binary, key, service) without doing the work.</li>
+<li><strong>Loud errors</strong> — one stderr line naming what failed
+and what to do; never a silent empty success.</li>
+<li><strong>Introspection</strong> — <code>--help</code> (and a list
+verb, if it has several) tells an agent what it can do without reading
+the source.</li>
+<li><strong>Verify the output, not the exit code</strong> — its test
+asserts on what it printed, and agents using it check the result they
+got.</li>
+</ul>
+<p>It also ships a sibling <code>skills/&lt;name&gt;/SKILL.md</code>
+saying when to reach for it and what to do on each exit code
+(<code>skills/jev/</code> is the pattern), wired like any other skill
+below.</p>
 <p>A new <strong>skill</strong> takes two mechanical wiring steps, or
 agents won't find it:</p>
 <ol type="1">

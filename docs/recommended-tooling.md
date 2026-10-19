@@ -426,6 +426,39 @@ the product repo's working tree (its tracked `.gitignore` stays untouched).
 
 ---
 
+## 6. Claude Projects (optional, Claude-only)
+
+Claude Code's Projects can run work in this workspace as threads, but it is an
+optional layer for Claude users, not part of the workflow. Threads load
+`CLAUDE.md` (so `CONTEXT.md`), skills and `.claude/agents`; hooks — and with
+them the context-budget measurement — apply only in single-repo projects;
+plugins are not loaded. Project memory lives in Project settings, outside git,
+so it can drift from the repo's files: keep durable state in `work/` as usual.
+Every thread is a full session, so check the model and effort threads run on,
+and trim the connectors routines carry (all are included by default).
+
+---
+
+## Considered and not recommended
+
+Tools reviewed for this template and left out, with the reason, so the next
+person doesn't re-adopt them unknowingly (review:
+`work/external-tools-review/synthesis.md`).
+
+- **`cli-hub`** (CLI-Anything's installer, `cli-anything-hub`) — fetches a
+  live remote registry and runs each entry's `install_cmd` with
+  `shell=True`; some entries are `curl … | bash`. It also sends PostHog
+  analytics by default (opt out with `CLI_HUB_NO_ANALYTICS=1`). Install CLIs
+  from their own pinned sources instead.
+- **OpenViking** (layered agent memory) — AGPL-3.0 since 2026-03-30
+  (Apache-2.0 before), which would follow it into every copy of the template.
+  It needs a server plus an embedding model and a vision model, runs in the
+  cloud by default, keeps memory outside git, and its auto-capture sends tool
+  output verbatim. The template gets the same layering from plain files
+  (`docs/zoom-model.md` → "Properties that make the stack work").
+
+---
+
 ## Where this fits
 
 - These are the **global** layer of `docs/workspace-setup.md` → "Global —

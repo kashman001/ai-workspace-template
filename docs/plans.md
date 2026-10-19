@@ -1,3 +1,8 @@
+<!--
+File: docs/plans.md
+Purpose: Reference for plans — the node-file format and the `scripts/plan.sh` verbs that read and write them.
+-->
+
 # Plans — node-file format and `plan.sh`
 
 A **plan** is a dependency graph of work for one work item, kept as one
