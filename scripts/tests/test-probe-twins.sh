@@ -17,7 +17,7 @@
 #          for the session that already staged, owner_live for a stranger).
 #          Every case pins exit codes, reason/verdict codes and record fields.
 set -u
-unset TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT TF_SESSION_PROJECT TF_SESSION_SEQ   # never inherit a live chain's env
+unset TF_SESSION_LOOP TF_SESSION_LOOP_PROJECT TF_SESSION_PROJECT TF_SESSION_SEQ WORKSPACE_ROOT   # never inherit a live chain's env (or plan.sh verify's root)
 SRC_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PROBES="$SRC_ROOT/work/template-improvement-review/evaluation/probes"
 [ -d "$PROBES" ] || { echo "SKIP: template-only probes absent (work/template-improvement-review/evaluation/probes)"; exit 77; }
