@@ -17,8 +17,8 @@ tasks, two samples each; 37/37/52 of 60, so kept (`8a4e7eb`, ~$1.24). Item close
 **Decisions.** `decisions.md`: L100 keep `unslop`. User, s6: unslop's tasks should be coding-work
 prose (PR, README, code comment, design doc), plus the email and announcement.
 
-**State.** Item closed; nothing staged. Main ahead of origin (push is the user's call).
-Open template cards L97, L101, L103 are outside this item.
+**State.** Plan closed; pushed to origin (`6832cce`, user asked). Then the user asked to roll
+over and fix L101 in this item — next session does it (launcher). L97, L103 stay open.
 
 **Learnings:**
 - A concurrent session (html-kit) wrote the backlog between my read and my commit; its edits
@@ -27,7 +27,7 @@ Open template cards L97, L101, L103 are outside this item.
 - Skill pilots on short, obvious inputs hit a ceiling (every arm passes); use longer inputs with
   the structural tells the skill targets.
 
-**Suggested skills:** none — item closed.
+**Suggested skills:** `tdd` (L101: fixture test red first).
 
 # Session Handoff — 5 (2026-10-18)
 
@@ -54,32 +54,4 @@ commit them.
   (`scripts/context-budget.sh:358`) misses `~/.gemini/antigravity-ide/` — card to file at 13.
 
 **Suggested skills:** `plans` (reconcile 13), `checkpoint`.
-
-# Session Handoff — 4 (2026-10-18)
-
-**Summary.** Node 08 code-review (Standards + Spec, two opus children) over
-`4b65f8c...HEAD` scoped to this plan's paths — 0 blockers; fixed the L96 "(default 4h)"
-wording in `docs/context-budget.md` and promoted the `plan.sh verify` / `WORKSPACE_ROOT`
-gotcha to `docs/operational-knowledge.md`; rest logged in `nodes/08-review.md`. Reconciled
-wave 3 (`40634a6`). Then guided the user through the L86 probes in the clone
-`~/Developer/experiments/ws-identity-probe-s9`: Antigravity IDE and Codex inside
-ChatGPT.app both **pass** (own transcript per chat, one record each, hooks per chat).
-Node 10 done `--by human`, wave 4 reconciled (11). Rolled over at WARN (122K).
-
-**Decisions.** `decisions.md`: Codex desktop probe ran on Codex in ChatGPT.app — the
-standalone `codex-app` cask is discontinued upstream.
-
-**State.** Plan open, wave 5; frontier `12-l86-probe-writeup`, then `13-reconcile-w5`.
-Raw evidence for node 12 is in `nodes/10-l86-user-probes.md` Log (IDs, timestamps, log
-paths in the clone). New gap to file at 13: Codex Desktop also runs the
-`.claude/settings.json` Stop hook (`context-budget-stop-hook.sh claude` with a Codex
-payload). Main ahead of origin (push is the user's call).
-
-**Learnings:**
-- Scope a review's diff to the plan's own paths when other sessions committed on shared
-  files in the range; name the foreign commits for the reviewers.
-- The checklist's "steps 3–4" label in L86/node 10 was wrong (rows 3–4 are the VS Code
-  extensions); the L86 surfaces are the checklist's "Optional" line.
-
-**Suggested skills:** `plans` (reconcile 13), `decision-log`.
 
