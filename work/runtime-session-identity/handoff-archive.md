@@ -1,3 +1,30 @@
+# Session Handoff — 11 (2026-10-18) (session 11: plan 02 wave 1 — exact Copilot count, two notes proposed)
+
+**Summary.** Ran plan 02 wave 1. Node 01 in the main session, test-first: `copilot_cli_measure`
+now reads `prompt_tokens` (Copilot VS Code writes only that), and cuts each line at its first
+`"…Metrics":` key — Copilot CLI checkpoint/shutdown lines carry session-cumulative `inputTokens`
+there, so the CLI had been overcounting mid-session (real 018beebd: 102,610 vs live 34,944).
+Nodes 02 and 03 ran as read-only subagents (s11-a, s11-b); I verified their key claims on disk
+and appended both notes to `decisions.md`, marked PROPOSED. Reconcile 04 done.
+
+**Shipped.** 3928a86 (fix + Q3a–c + `docs/context-budget.md` Copilot rows), c54c478, 4bc3579.
+Probe clone `~/Developer/experiments/ws-identity-probe-s9` has the fix as d93e71a. Not pushed.
+
+**Decisions.** `prompt_tokens` over `frontier_tokens` (3928a86 trailer). Node 01's live VS Code
+check moved to hitl node 05 rather than ticked unproven (4bc3579 trailer). Notes for node 02
+(keep all hook files; harden Claude SessionStart/End inline commands) and node 03 (one registry
+name, copilot-cli) are proposals only.
+
+**State.** Plan 02: 4/6 done, frontier = node 05 (the user's). User chose to roll over at WARN
+(139K) so a fresh session walks them through node 05.
+
+**Suggested skills.** `grill-one-question-at-a-time` style for node 05 (memory); `tdd` for wave-2 delivery.
+
+Learnings:
+- Cherry-picking a work-item commit into the probe clone conflicts on `work/` files the clone
+  lacks; `git rm` them and `--continue` — only the code needs to land.
+- A grep over Copilot `events.jsonl` must ignore `*Metrics` rollups; they are cumulative.
+
 # Session Handoff — 10 (2026-10-18) (session 10: Copilot VS Code re-probe; plan 02 opened)
 
 **Summary.** Explained Copilot-in-VS-Code to the user, then re-read the s9 row-5 logs and ran
