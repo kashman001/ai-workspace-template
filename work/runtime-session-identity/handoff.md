@@ -6,7 +6,7 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
-# Session Handoff — 14 (2026-10-18) (session 14: node 11 review done; node 10 still with the user)
+# Session Handoff — 14 (2026-10-18) (session 14: node 11 review, node 10 passed, node 12 closed plan 02)
 
 **Summary.** Node 11: ran code-review (standards and spec sub-agents in parallel) on the plan-02 commits
 3928a86, 34c76b4 and 6c5ae3a. There were no hard standards violations. F1: the node-08 guard also
@@ -20,9 +20,14 @@ All five suites pass.
 **Decisions.** The node-03 note was amended. The guard no longer fires on the env var alone; this
 follows from the node-02 note ("env vars leak into nested launches").
 
-**State.** Plan 02: 10/12 done. Node 10 (hitl) is still todo; node 12 waits on it.
+**Later in s14.** The user ran node 10 in the probe clone and it passed: two chats, one
+`copilot-cli-<sid>` record each, turn 2 `method=exact` (8194288). Node 12 verified 10 and 11 on disk
+and found no replan; plan 02 is closed. A backlog changelog row covers plan 02's four fixes.
 
-**Suggested skills.** `plan` (reconcile) for node 12.
+**State.** Plans 01 and 02 are closed. Open, the user's: the turn-1 estimate gap (document or accept),
+and pushing `main`.
+
+**Suggested skills.** `checkpoint` to close the work item.
 
 Learnings:
 - Plan-02 code commits in `816a7d9^..HEAD` are interleaved with other items' commits (05cf58b

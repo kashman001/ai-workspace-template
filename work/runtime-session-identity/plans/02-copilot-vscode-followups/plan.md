@@ -1,6 +1,6 @@
 ---
 plan: 02-copilot-vscode-followups
-status: open
+status: closed
 replan: structural
 default_tier: standard
 ---
@@ -40,6 +40,6 @@ Other surfaces' rows (already PASS); Antigravity IDE/app and Codex desktop (back
 | 3 | 09-reconcile-w3 | reconcile | frontier | done |
 | 4 | 10-live-reprobe-vscode | hitl | frontier | done |
 | 4 | 11-review-plan-02 | work | standard | done |
-| 4 | 12-reconcile-w4 | reconcile | frontier | todo |
-Frontier: 12-reconcile-w4. Remaining: 1 of 12. Sessions used: 4.
+| 4 | 12-reconcile-w4 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 12. Sessions used: 4.
 <!-- plan:end board -->
