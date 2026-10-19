@@ -26,7 +26,7 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 |---|---|---|---|---|
 | 1 | 01-l85-skip-template-only-suites | work | cheap | doing |
 | 1 | 02-l95-dispatch-contract | work | standard | done |
-| 1 | 03-l96-usage-limit-watchdog | work | standard | doing |
+| 1 | 03-l96-usage-limit-watchdog | work | standard | done |
 | 1 | 04-l98-pilot-design | work | standard | done |
 | 1 | 05-reconcile-w1 | reconcile | frontier | todo |
 | 2 | 06-l98-pilot-run | work | standard | todo |
@@ -37,5 +37,5 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 4 | 11-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 12-l86-probe-writeup | work | standard | todo |
 | 5 | 13-reconcile-w5 | reconcile | frontier | todo |
-Frontier: none (01-l85-skip-template-only-suites doing, 03-l96-usage-limit-watchdog doing). Remaining: 11 of 13. Sessions used: 1.
+Frontier: none (01-l85-skip-template-only-suites doing). Remaining: 10 of 13. Sessions used: 1.
 <!-- plan:end board -->

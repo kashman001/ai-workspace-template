@@ -1,7 +1,7 @@
 ---
 id: 03-l96-usage-limit-watchdog
 title: L96 — can the usage-limit wait trip SESSION_LOOP_KILL_AFTER?
-status: doing
+status: done
 kind: work
 wave: 1
 blocked_by: []
@@ -23,3 +23,4 @@ Synthesis R21. Read how `scripts/session-loop.sh` / `scripts/launch-next-session
 ## Log
 - s3 · started, tier standard
 - s3-c · L96 answered: children interactive, watchdog can kill a waiting session (transcript-write during wait unverified); doc paragraph added in docs/context-budget.md, findings at work/backlog-sweep/l96-findings.md; no code fix, suite 160/0. Not on disk: backlog card move (reconcile).
+- s3 · check passed → done
