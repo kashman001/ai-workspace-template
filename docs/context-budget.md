@@ -533,6 +533,14 @@ written for the interval; kills at `SESSION_LOOP_KILL_AFTER`). A child seen
 writing again resets the interval. Silence pages fire in hands-off mode only;
 in interactive mode the human at the keyboard is the stall detector.
 
+**A usage-limit wait looks like silence.** Chain children are interactive
+(`claude --name … "<prompt>"`, no `-p`), so Claude Code's auto-wait for a
+usage-limit reset can run in them; if it writes nothing to the transcript, a
+wait longer than `SESSION_LOOP_KILL_AFTER` (default 4h) is killed as `silent`,
+in either mode. Unverified: whether the wait writes to the transcript. For an
+overnight chain on a plan near its limit, raise `SESSION_LOOP_KILL_AFTER` (or
+set 0) in the work item's `context-budget.env`. Backlog L96.
+
 **Modes.** The dying session chooses `--loop-mode interactive|handsoff` at
 `--emit` (recorded as `launch.mode`); a human `touch work/<p>/.hands-off` or
 `.interactive` overrides it, and the launcher refuses if both exist.
