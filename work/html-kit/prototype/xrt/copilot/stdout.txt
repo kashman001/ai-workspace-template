@@ -1,0 +1,89 @@
+● Read brief.md (sandbox policy)
+  │ work/html-kit/prototype/xrt/brief.md
+  └ 55 lines read
+
+● Read AUTHORING.md (sandbox policy)
+  │ work/html-kit/prototype/AUTHORING.md
+  └ 166 lines read
+
+● Read DIAGRAMS.md (sandbox policy)
+  │ work/html-kit/prototype/DIAGRAMS.md
+  └ 81 lines read
+
+● cd /Users/kashif/Developer/experiments/ai-workspace-template; wc -c docs/setup-guide.html (sandbo…
+  │ cd /Users/kashif/Developer/experiments/ai-workspace-template; wc -c docs/setup-guide.html
+  └ 1 line…
+
+● Read setup-guide.html (sandbox policy)
+  │ docs/setup-guide.html
+  └ L1:200 (200 lines read)
+
+● Read setup-guide.html (sandbox policy)
+  │ docs/setup-guide.html
+  └ L200:520 (271 lines read)
+
+● Create setup-guide.html +86 (sandbox policy)
+  └ work/html-kit/prototype/xrt/copilot/setup-guide.html
+
+● cd /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype; grep -cE
+  '<style|style=|fill=|stroke=|font-[a-z]+=|<defs' xrt/copilot/setup-guide.html; grep '<svg'
+  xrt/copilot/setup-guide.html | grep -vc 'class="diagram"'; ./check-links.sh
+  xrt/copilot/setup-guide.html; ./render-check.sh xrt/copilot/setup-guide.html xrt/copilot/shots 2>&
+  | tail -15; ls xrt/copilot/shots
+  │ cd /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype; grep -cE
+  │ '<style|style=|fill=|stroke=|font-[a-z]+=|<defs' xrt/copilot/setup-guide.html; grep '<svg'
+  │ xrt/copilot/setup-guide.html | grep -vc 'class="diagram"'; ./check-links.sh
+  │ xrt/copilot/setup-guide.html; ./render-check.sh xrt/copilot/setup-guide.html xrt/copilot/shots
+  │ 2>&1 | tail -15; ls xrt/copilot/shots
+  └ 4 lines…
+
+● cd /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype;
+  ./render-check.sh xrt/copilot/setup-guide.html xrt/copilot/shots; echo rc=$?; ls xrt/copilot/shots
+  sed -n 85,105p render-check.sh
+  │ cd /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype;
+  │ ./render-check.sh xrt/copilot/setup-guide.html xrt/copilot/shots; echo rc=$?; ls
+  │ xrt/copilot/shots; sed -n 85,105p render-check.sh
+  └ 23 lines…
+
+● cd /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype; grep -n (sa…
+  'CHROME' render-check.sh | head; sed -n 105,115p render-check.sh
+  │ cd /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype; grep -n
+  │ 'CHROME' render-check.sh | head; sed -n 105,115p render-check.sh
+  └ 20 lines…
+
+✗ "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu (sand…
+  --dump-dom about:blank 2>&1 | tail -5
+  │ "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu
+  │ --dump-dom about:blank 2>&1 | tail -5
+  └ Permission denied because no interactive user response was available. Retry in an interactive
+    session so the user can approve it, or try an alternative that does not require this permission.
+  Approval check
+    └ ✗ Denied, no one to approve
+
+Chrome is blocked here, so no shots. Writing the summary.
+
+● Create summary.md +35 (sandbox policy)
+  └ work/html-kit/prototype/xrt/copilot/summary.md
+
+I rebuilt the setup guide on the kit, but check 4 (the render check) did not run, so I haven't seen how any figure looks. The page isn't done until someone who can run Chrome runs `render-check.sh` and views the shots.
+
+- **Check results:**
+  - Check 1 (forbidden-pattern grep) printed 0.
+  - Check 2 (non-diagram SVG grep) printed 0.
+  - Check 3 (`check-links.sh`) passed: 24 links checked.
+  - Check 4 failed: headless Chrome aborted, and the sandbox then refused to launch it directly. No PNGs were written.
+- **Figures at risk:** Figures 2 and 3 are hand-drawn SVGs sized by the width rules, not by eye.
+- **Figure changes:** Following the diagram rules, Figure 1 (folder layout) became a code block, and Figures 4 and 5 (two-column global/local lists) became card grids. Figure 4's "feeds" arrow is now a short line on each card.
+- **Other choices:** The page uses no elements or classes beyond the rule sheet. The other judgement calls (tag tones, Figure 3 wrapped into two rows, the link lists I gave short descriptions) are in `summary.md`.
+
+Files are in `work/html-kit/prototype/xrt/copilot/`:
+- `setup-guide.html`
+- `summary.md`
+
+Session exported to: /Users/kashif/Developer/experiments/ai-workspace-template/work/html-kit/prototype/xrt/copilot/transcript.md
+
+
+Changes    +360 -0
+AI Credits 34.38 (1m 23s)
+Tokens     ↑ 534.8k (467.9k cached, 66.8k written) • ↓ 13.0k (1.9k reasoning)
+Resume     copilot --resume=eb1b397c-0e3c-466f-9091-6e6757d9ff36

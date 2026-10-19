@@ -1,7 +1,7 @@
 ---
 id: 01-copilot-test
 title: Copilot CLI rebuilds setup guide from the rules (cross-runtime test)
-status: doing
+status: done
 kind: work
 wave: 1
 blocked_by: []
@@ -15,9 +15,12 @@ Run the session-8 cross-runtime test on Copilot CLI: same brief `prototype/xrt/b
 
 ## Acceptance
 
-- [ ] `prototype/xrt/copilot/setup-guide.html` exists (or node blocked with the denial recorded)
-- [ ] every shot viewed by the main session, both rounds
-- [ ] Copilot column / section added to `prototype/RESULTS.md`
+- [x] `prototype/xrt/copilot/setup-guide.html` exists (or node blocked with the denial recorded)
+- [x] every shot viewed by the main session, both rounds
+- [x] Copilot column / section added to `prototype/RESULTS.md`
 
 ## Log
 - s9 · started, tier standard
+- s9 · launched sandboxed with scoped --allow-tool (no --allow-all); auto mode allowed it
+- s9 · r1 4/5 unaided, r2 5/5; 40 shots viewed via contact sheets; RESULTS.md "Session 9" written; files prototype/xrt/copilot/
+- s9 · check passed → done

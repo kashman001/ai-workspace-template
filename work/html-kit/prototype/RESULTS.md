@@ -336,7 +336,7 @@ both runtimes. o200k tokens: source 9,150; Claude's rebuild 5,951; Codex
 - **Neither** was caught by the greps or link check; only the shots caught them.
   Both self-corrected once they could see the render.
 
-## Rule changes this suggests (not yet made)
+## Rule changes this suggests (made in session 9, plan 04 node 02)
 
 1. `DIAGRAMS.md`: "Never copy coordinates from an existing SVG — text is
    centred; redraw."
@@ -346,3 +346,41 @@ both runtimes. o200k tokens: source 9,150; Claude's rebuild 5,951; Codex
    not an SVG.
 4. Checklist: "If `render-check.sh` can't run where you are (sandbox), say so
    and hand back for someone to run it." Sandboxed agents are the norm.
+
+# Session 9 — Copilot CLI (plan 04 node 01)
+
+Same brief and prompt shape as Session 8, `RT=copilot`, but on the **fixed**
+rules (the four changes above were made first, so this run tests the rules
+that ship; not a like-for-like comparison with Codex/Gemini round 1).
+
+## Run
+
+GitHub Copilot CLI 1.0.96, `copilot -p … --sandbox --no-ask-user` with scoped
+`--allow-tool` (write, grep, ls, cat, cd, the two check scripts) and
+`--deny-tool 'shell(git:*)'` — no `--allow-all`. Claude Code auto mode
+allowed the launch. Chrome aborted inside the sandbox (`Abort trap: 6`), so
+Copilot ran no render check and said so plainly, as the new checklist line
+asks. The main session ran render-check after each round and viewed all 40
+shots (contact sheets). Files: `xrt/copilot/` (`transcript*.md`,
+`stdout*.txt`, `summary.md`, `shots-r1/`, `shots/`). Cost: 34.4 + 21.0
+Copilot AI credits, ~2.5 min total.
+
+## Per figure
+
+| Figure | Copilot r1 (unaided) | Copilot r2 |
+|---|---|---|
+| 1 folder tree | minor fail — code block (rule 3), comment column clipped at 1280 | pass — column moved in; scrolls inside its block on phone |
+| 2 symlinks → CONTEXT.md | pass | pass |
+| 3 pipeline | pass (3 + 2 rows; small but legible on phone) | pass |
+| 4 global vs local | pass — card grid (rule 3) | pass |
+| 5 global vs per-repo | pass — card grid (rule 3) | pass |
+
+Greps 0, check-links OK (24) both rounds. o200k tokens (final): 5719.
+
+## Reading
+
+- 4/5 unaided against Codex 0/5 and Gemini 2/5 on the old rules. Rule 3
+  (not every picture is an SVG) removed the three figures the others failed
+  on most; rule 4 (say so and hand back) was followed word for word.
+- Its round-2 summary marks its own fix as "unverified by shot", which is
+  the honesty the rules want (Gemini had claimed the render check as its own).
