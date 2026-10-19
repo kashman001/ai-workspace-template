@@ -8,27 +8,31 @@ Convention: docs/work-directory-conventions.md.
 
 # Session Handoff — 4 (2026-10-18)
 
-**Summary.** Ran node 08: code-review (Standards + Spec, two opus children) over
-`4b65f8c...HEAD` scoped to this plan's paths — 0 blockers either axis. Fixed two
-suggestions: `docs/context-budget.md` L96 "(default 4h)" wording (script default is 0)
-and promoted the `plan.sh verify` / `WORKSPACE_ROOT` gotcha to
-`docs/operational-knowledge.md`; the rest logged in `nodes/08-review.md`. Reconciled
-wave 3 (09). `run-checks.sh` 45/0/0. Stopped at hitl node 10 (L86 user probes) —
-checkpoint, no relaunch.
+**Summary.** Node 08 code-review (Standards + Spec, two opus children) over
+`4b65f8c...HEAD` scoped to this plan's paths — 0 blockers; fixed the L96 "(default 4h)"
+wording in `docs/context-budget.md` and promoted the `plan.sh verify` / `WORKSPACE_ROOT`
+gotcha to `docs/operational-knowledge.md`; rest logged in `nodes/08-review.md`. Reconciled
+wave 3 (`40634a6`). Then guided the user through the L86 probes in the clone
+`~/Developer/experiments/ws-identity-probe-s9`: Antigravity IDE and Codex inside
+ChatGPT.app both **pass** (own transcript per chat, one record each, hooks per chat).
+Node 10 done `--by human`, wave 4 reconciled (11). Rolled over at WARN (122K).
 
-**Decisions.** None new (logged-not-fixed suggestions are low-stakes judgement calls).
+**Decisions.** `decisions.md`: Codex desktop probe ran on Codex in ChatGPT.app — the
+standalone `codex-app` cask is discontinued upstream.
 
-**State.** Plan open, wave 4 of 5, done 9/13; frontier `10-l86-user-probes` (hitl) —
-the question for the user is in `next-session.md`. Main ahead of origin (push is the
-user's call). Uncommitted `work/runtime-session-identity/` and `work/html-kit/` files
-belong to other sessions.
+**State.** Plan open, wave 5; frontier `12-l86-probe-writeup`, then `13-reconcile-w5`.
+Raw evidence for node 12 is in `nodes/10-l86-user-probes.md` Log (IDs, timestamps, log
+paths in the clone). New gap to file at 13: Codex Desktop also runs the
+`.claude/settings.json` Stop hook (`context-budget-stop-hook.sh claude` with a Codex
+payload). Main ahead of origin (push is the user's call).
 
 **Learnings:**
-- The review range includes other sessions' commits on shared files
-  (`docs/context-budget.md`); scope reviewer diffs to the plan's paths and name the
-  foreign commits to ignore.
+- Scope a review's diff to the plan's own paths when other sessions committed on shared
+  files in the range; name the foreign commits for the reviewers.
+- The checklist's "steps 3–4" label in L86/node 10 was wrong (rows 3–4 are the VS Code
+  extensions); the L86 surfaces are the checklist's "Optional" line.
 
-**Suggested skills:** `plans` (reconcile 11/13), `checkpoint`.
+**Suggested skills:** `plans` (reconcile 13), `decision-log`.
 
 # Session Handoff — 3 (2026-10-18)
 

@@ -43,3 +43,10 @@ Tier-2 decision notes (`skills/decision-log/SKILL.md`), newest last.
 - **Decision:** in an instance, `test-doc-consistency.sh` drops only the `work/plans/` pins and exits 0; the other three suites exit 77.
 - **Why:** the card's fix says to skip only the template-work pins for that suite; node 01's Acceptance box 2 ("each exits 77") over-read it.
 - **Rejected:** skipping the whole suite — it would hide instance-valid doc checks.
+
+## 2026-10-18 — L86 Codex desktop probe runs on Codex inside ChatGPT.app
+
+The standalone Codex desktop app (`codex-app` cask) is discontinued upstream; brew names
+`chatgpt` as its replacement. The probe ran Codex inside ChatGPT.app ("Codex Desktop",
+local folder) instead. Rejected: installing the deprecated cask — it probes a surface
+on its way out. Node 12 writes `probes/codex-app.md` from this run.
