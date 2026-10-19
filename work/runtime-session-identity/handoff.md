@@ -6,6 +6,28 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 14 (2026-10-18) (session 14: node 11 review done; node 10 still with the user)
+
+**Summary.** Node 11: ran code-review (standards and spec sub-agents in parallel) on the plan-02 commits
+3928a86, 34c76b4 and 6c5ae3a. There were no hard standards violations. F1: the node-08 guard also
+fired on a leaked `COPILOT_AGENT_SESSION_ID`, so a VS Code Local chatSessions transcript was re-filed
+as copilot-cli. Registry H5 was seen red, then green; the guard is now keyed on the session-state path
+only. F7: the doc row's CLI ≥1.0.12 claim now cites its source. F2–F6 accepted with reasons (node 11 Log).
+All five suites pass.
+
+**Shipped.** f87afb0 (node 11 fix and Log, decision-note amendment), plus the s14 rollover commit. Not pushed.
+
+**Decisions.** The node-03 note was amended. The guard no longer fires on the env var alone; this
+follows from the node-02 note ("env vars leak into nested launches").
+
+**State.** Plan 02: 10/12 done. Node 10 (hitl) is still todo; node 12 waits on it.
+
+**Suggested skills.** `plan` (reconcile) for node 12.
+
+Learnings:
+- Plan-02 code commits in `816a7d9^..HEAD` are interleaved with other items' commits (05cf58b
+  PreCompact touches the same files). Scope a review by commit, not by range plus paths.
+
 # Session Handoff — 13 (2026-10-18) (session 13: node 08 shipped, wave 3 reconciled, probe clone staged)
 
 **Summary.** Node 08 done test-first. New registry case H4 (register `--runtime copilot-vscode`, then

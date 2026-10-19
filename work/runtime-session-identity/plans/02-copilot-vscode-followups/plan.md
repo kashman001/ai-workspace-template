@@ -39,7 +39,7 @@ Other surfaces' rows (already PASS); Antigravity IDE/app and Codex desktop (back
 | 3 | 08-canonical-copilot-registry-name | work | standard | done |
 | 3 | 09-reconcile-w3 | reconcile | frontier | done |
 | 4 | 10-live-reprobe-vscode | hitl | frontier | todo |
-| 4 | 11-review-plan-02 | work | standard | todo |
+| 4 | 11-review-plan-02 | work | standard | done |
 | 4 | 12-reconcile-w4 | reconcile | frontier | todo |
-Frontier: 10-live-reprobe-vscode, 11-review-plan-02. Remaining: 3 of 12. Sessions used: 3.
+Frontier: 10-live-reprobe-vscode. Remaining: 2 of 12. Sessions used: 4.
 <!-- plan:end board -->
