@@ -53,6 +53,10 @@ a:hover { text-decoration-thickness: 2px; }
 code { font-family: var(--mono); font-size: 0.88em; background: var(--raised); border: 1px solid var(--rule); border-radius: 3px; padding: 0 0.3em; }
 ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
 
+/* ---------- code blocks: <pre><code>…</code></pre>; caption one with <figure> + <figcaption> ---------- */
+pre:not(.mermaid) { margin: 0; min-width: 0; overflow-x: auto; font-family: var(--mono); font-size: 0.8em; line-height: 1.55; background: var(--raised); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; tab-size: 2; }
+pre > code { font-size: inherit; background: none; border: 0; padding: 0; }
+
 /* ---------- text roles ---------- */
 .eyebrow { font-family: var(--mono); font-size: 0.68em; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
 .lede { font-size: 1.12em; max-width: 34em; }
@@ -110,12 +114,14 @@ th { font-family: var(--mono); font-size: 0.75em; letter-spacing: 0.1em; text-tr
 td:first-child { font-family: var(--display); font-weight: 600; }
 
 /* ---------- figures and diagrams ---------- */
-figure { margin: 0; display: grid; gap: 10px; }
+figure { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 figure img, figure svg { max-width: 100%; height: auto; margin: 0 auto; display: block; }
 figcaption { color: var(--muted); font-size: 0.82em; max-width: 52em; }
 pre.mermaid { margin: 0; text-align: center; background: none; font-family: var(--display); }
 pre.mermaid:not([data-processed]) { color: transparent; min-height: 8em; }
 pre.mermaid svg { max-height: 52vh; }
+body.doc pre.mermaid { overflow-x: auto; }  /* kit.js gives doc diagrams a min-width so labels stay readable */
+body.doc pre.mermaid svg { max-height: none; }
 
 /* hand-drawn diagrams: <svg class="diagram"> — authors draw geometry, the kit colours it.
    Shapes are outlined nodes, lines are plain strokes, text is centred. Classes:
@@ -150,10 +156,23 @@ svg.diagram { width: 100%; max-height: 60vh; overflow: visible; }
 @media (max-width: 700px) { .rows > li { grid-template-columns: 1fr; gap: 6px; } .rows > li > b { text-align: left; } }
 
 /* ---------- doc layout ---------- */
-body.doc > main { max-width: 46em; margin: 0 auto; padding: clamp(24px, 6vh, 64px) 20px 80px; display: grid; gap: 18px; }
-body.doc > main > section { display: grid; gap: 14px; margin-top: 1.6em; }
+body.doc > main { max-width: 46em; margin: 0 auto; padding: clamp(24px, 6vh, 64px) 20px 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+body.doc > main > section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 1.6em; }
 body.doc > main > section > h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); padding-top: 0.8em; border-top: 1px solid var(--rule); }
-body.doc .grid, body.doc .table-wrap, body.doc figure { margin-inline: min(0px, (46em - 100vw) / 2 + 20px); }
+/* wide things bleed past the text column; a figure's caption stays in it */
+body.doc .grid, body.doc .table-wrap, body.doc figure > :is(svg, pre.mermaid) { margin-inline: min(0px, (46em - 100vw) / 2 + 20px); }
+/* contents: <nav class="toc"><ol><li><a href="#id">…</a></li></ol></nav> */
+nav.toc { border-top: 1px solid var(--rule); padding-top: 14px; }
+nav.toc > ol { display: block; columns: 2 14em; column-gap: 32px; padding-left: 2.2em; list-style: decimal-leading-zero; font-family: var(--display); }
+nav.toc li { padding: 3px 0; break-inside: avoid; }
+nav.toc li::marker { font-family: var(--mono); font-size: 0.8em; color: var(--muted); }
+/* steps that hold code: <ol class="steps"><li><h3>…</h3><p>…</p><pre><code>…</code></pre></li></ol> */
+ol.steps { list-style: none; padding: 0; counter-reset: st; gap: 28px; grid-template-columns: minmax(0, 1fr); }
+ol.steps > li { counter-increment: st; position: relative; padding-left: 2.4em; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+ol.steps > li::before { content: counter(st); position: absolute; left: 0; top: 0; width: 1.6em; height: 1.6em; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--paper); font-family: var(--display); font-weight: 600; font-size: 0.85em; font-variant-numeric: tabular-nums; }
+/* page footer: <footer> right after </main> */
+body.doc > footer { max-width: 46em; margin: 0 auto; padding: 18px 20px 48px; border-top: 1px solid var(--rule); color: var(--muted); display: grid; gap: 6px; }
+body.doc > footer > * { font-size: 0.82em; }
 
 /* ---------- deck layout (kit.js adds .progress, .bar and slide state) ---------- */
 body.deck { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }

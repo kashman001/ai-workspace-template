@@ -30,6 +30,7 @@ behaviour. You never need to open the kit files.
 <main>
   …content…
 </main>
+<footer><p>Owner · last updated · source links</p></footer>   <!-- optional, doc only -->
 </body>
 </html>
 ```
@@ -105,6 +106,36 @@ Tones as for tags, plus `accent`.
 **Table** — a plain `<table>` with `<thead>`/`<tbody>`. The first column is
 bold. The kit adds the scroll box; don't wrap it.
 
+**Caption on a table or code block** — wrap it in a `<figure>`, same as a diagram:
+`<figure><table>…</table><figcaption>What it shows.</figcaption></figure>`.
+Don't fake a caption with `.note`.
+
+**Code block** — commands, file contents, output. Keep line breaks as written;
+escape `<`, `>` and `&`. Never `<p>` + `<br>` for code.
+```html
+<pre><code>git clone https://example.com/repo.git
+cd repo &amp;&amp; ./setup.sh</code></pre>
+```
+
+**Steps** — numbered steps where a step holds a code block (plain `<ol>` for
+one-line steps). Each `<li>` holds an `<h3>`, then any `<p>` and code blocks.
+```html
+<ol class="steps">
+  <li><h3>Install the tools</h3>
+    <pre><code>brew install jq gh</code></pre></li>
+  <li><h3>Log in</h3><p>Pick HTTPS when asked.</p>
+    <pre><code>gh auth login</code></pre></li>
+</ol>
+```
+
+**Contents** — a doc with five or more sections gets a list of links after the
+lede; give each `<section>` an `id`.
+```html
+<nav class="toc"><ol><li><a href="#install">Install</a></li>…</ol></nav>
+…
+<section id="install"><h2>Install</h2>…</section>
+```
+
 **Diagram** — Mermaid inside a figure:
 ```html
 <figure>
@@ -119,10 +150,12 @@ flowchart LR
 Keep labels short. Don't set colours or styles in the Mermaid source; the kit
 themes it for light and dark. Escape `<`, `>` and `&` inside diagram text.
 
-**Choosing:** Mermaid for a plain flowchart or sequence (a chain with a few
-branches). Draw SVG when the layout carries the meaning (a ring, a centre, a
-timeline, a long chain with feedback arcs) or when Mermaid comes out small or
-tangled. Good diagrams beat small files.
+**Choosing:** default to hand-drawn SVG. Mermaid only for a short chain or
+sequence (about five boxes or fewer, few branches) that the render check shows
+readable at both widths; Mermaid lays itself out and often renders tiny on a
+wide doc page. Draw SVG whenever the layout carries the meaning (a ring, a
+centre, a timeline, feedback arcs), and switch to SVG the moment a Mermaid
+diagram renders small or tangled. Good diagrams beat small files.
 
 **Hand-drawn diagram** — you place the shapes; the kit colours them, in light and dark.
 ```html
@@ -152,6 +185,9 @@ tangled. Good diagrams beat small files.
 - Always give `role="img"` and an `aria-label` that says what the picture says.
 
 **Links** — plain `<a href>`. Quotes and dashes as characters or entities.
+Relative links resolve from where the page *now* lives: if you moved or
+rebuilt a page in another folder, re-point every relative `href` and the
+`kit/` path (e.g. `../README.md` from `docs/`), then click one to confirm.
 
 ## Check before handing back
 
@@ -159,3 +195,9 @@ tangled. Good diagrams beat small files.
 - `grep '<svg' page.html | grep -vc 'class="diagram"'` prints `0`.
 - The only `<script>` is the kit line in `<head>`.
 - Every class you used appears on this sheet.
+- Page has any figure: run `render-check.sh page.html` (it sits next to the
+  `kit/` folder; four shots per
+  figure: 1280 and 390 wide, light and dark) and open every shot. Each must
+  show labels readable at real size, nothing clipped or overlapping, and the
+  figure sized in proportion to the page. Fix and re-run until all pass;
+  passing the greps says nothing about how a diagram looks.

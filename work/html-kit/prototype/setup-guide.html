@@ -88,32 +88,32 @@ flowchart LR
 
     <h3>1 · Create your workspace from the template</h3>
     <p>On GitHub, click <strong>“Use this template”</strong>, or clone and reset git history:</p>
-    <p><code>git clone https://github.com/&lt;you&gt;/ai-workspace-template.git &lt;project&gt;-workspace</code><br>
-<code>cd &lt;project&gt;-workspace</code><br>
-<code>rm -rf .git &amp;&amp; git init</code></p>
+    <pre><code>git clone https://github.com/&lt;you&gt;/ai-workspace-template.git &lt;project&gt;-workspace
+cd &lt;project&gt;-workspace
+rm -rf .git &amp;&amp; git init</code></pre>
 
     <h3>2 · Bootstrap the local files</h3>
     <p>Run the setup script — it runs a dependency preflight, then creates <code>.env</code>, the agent symlinks,
     <code>repos/README.md</code>, and the per-user config copies (idempotent). Add <code>--clone-repos</code> for
     a multi-repo workspace. Missing tools? Follow <a href="../../../docs/runbooks/dependencies.md">runbooks/dependencies.md</a>.</p>
-    <p><code>./scripts/setup.sh &nbsp;# creates .env, symlinks, repos/README.md</code><br>
-<code>./scripts/check-workspace-structure.sh &nbsp;# verify symlinks resolve, dirs present</code></p>
+    <pre><code>./scripts/setup.sh  # creates .env, symlinks, repos/README.md
+./scripts/check-workspace-structure.sh  # verify symlinks resolve, dirs present</code></pre>
 
     <h3>3 · Wire up agents &amp; MCP</h3>
     <p>Copy the per-user config templates (all gitignored), then authenticate. Run the check, then follow
     <a href="../../../docs/runbooks/authentication.md">runbooks/authentication.md</a> for anything missing; per-runtime MCP
     detail is in <code>docs/mcp-setup.md</code>. The YouTube transcript MCP server is workspace-local and
     credential-free; install <code>yt-dlp</code> if you use it.</p>
-    <p><code>cp -n .env.example .env</code><br>
-<code>cp -n .mcp.json.example .mcp.json</code><br>
-<code>cp -n .claude/settings.json.example .claude/settings.local.json</code><br>
-<code>./scripts/check-service-access.sh &nbsp;# reports gaps + fix commands</code><br>
-<code>gh auth login &nbsp;# if not already authenticated</code></p>
+    <pre><code>cp -n .env.example .env
+cp -n .mcp.json.example .mcp.json
+cp -n .claude/settings.json.example .claude/settings.local.json
+./scripts/check-service-access.sh  # reports gaps + fix commands
+gh auth login  # if not already authenticated</code></pre>
 
     <h3>4 · Make it your project</h3>
     <p>Replace every <code>&lt;…&gt;</code> placeholder and resolve the <code>TODO</code> / “Fill in” comments —
     start with <code>CONTEXT.md</code> (it loads into every agent session). Find what's left:</p>
-    <p><code>grep -rIn --exclude-dir=.git -e '&lt;[a-z-]\+&gt;' -e 'TODO' -e 'Fill in:' .</code></p>
+    <pre><code>grep -rIn --exclude-dir=.git -e '&lt;[a-z-]\+&gt;' -e 'TODO' -e 'Fill in:' .</code></pre>
     <ul>
       <li><b>CONTEXT.md</b> — name, purpose, single- vs multi-repo model</li>
       <li><b>docs/repos-registry.md</b> — one entry per product repo</li>
@@ -230,23 +230,23 @@ flowchart LR
     <p class="note">Figure 5 — Global install vs. per-repo setup. Detail in <code>docs/recommended-tooling.md</code></p>
 
     <p>Quick reference:</p>
-    <p><code># status line</code><br>
-<code>npm install -g ccstatusline &nbsp;# install once; wire statusLine in ~/.claude/settings.json</code><br>
-<code># plugins (official marketplace is built in)</code><br>
-<code>claude plugin install superpowers@claude-plugins-official</code><br>
-<code># graphify</code><br>
-<code>uv tool install "graphifyy[mcp]"</code><br>
-<code>/graphify &nbsp;# build the graph for THIS repo → graphify-out/</code><br>
-<code>graphify update . &nbsp;# refresh after code changes</code><br>
-<code># YouTube transcript MCP</code><br>
-<code>yt-dlp --version &nbsp;# install via brew / apt / winget if missing</code><br>
-<code>scripts/mcp/youtube-transcript.sh &nbsp;# workspace-local stdio server</code><br>
-<code># skill repos — managed via agent-context (clone, then link with agent-context-sync)</code><br>
-<code>git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills</code><br>
-<code>git clone https://github.com/ForrestChang/andrej-karpathy-skills.git ~/Developer/references/karpathy-claude-md</code><br>
-<code>agent-context-sync &nbsp;# links new skills into ~/.config/agent-context/skills</code><br>
-<code># Matt Pocock per-repo config (before to-tickets / triage / to-spec)</code><br>
-<code># run the setup-matt-pocock-skills skill in the repo</code></p>
+    <pre><code># status line
+npm install -g ccstatusline  # install once; wire statusLine in ~/.claude/settings.json
+# plugins (official marketplace is built in)
+claude plugin install superpowers@claude-plugins-official
+# graphify
+uv tool install "graphifyy[mcp]"
+/graphify  # build the graph for THIS repo → graphify-out/
+graphify update .  # refresh after code changes
+# YouTube transcript MCP
+yt-dlp --version  # install via brew / apt / winget if missing
+scripts/mcp/youtube-transcript.sh  # workspace-local stdio server
+# skill repos — managed via agent-context (clone, then link with agent-context-sync)
+git clone https://github.com/mattpocock/skills.git ~/Developer/references/mattpocock-skills
+git clone https://github.com/ForrestChang/andrej-karpathy-skills.git ~/Developer/references/karpathy-claude-md
+agent-context-sync  # links new skills into ~/.config/agent-context/skills
+# Matt Pocock per-repo config (before to-tickets / triage / to-spec)
+# run the setup-matt-pocock-skills skill in the repo</code></pre>
   </section>
 
   <section id="agents">
@@ -267,10 +267,10 @@ flowchart LR
     </ul>
 
     <h3>Verify before you call it done</h3>
-    <p><code>gh auth status &nbsp;# global: GitHub auth</code><br>
-<code>claude mcp list &nbsp;# local:  core MCP (graphify) visible</code><br>
-<code>scripts/mcp/youtube-transcript.sh &nbsp;# local:  starts YouTube MCP (opt-in fragment)</code><br>
-<code>./scripts/check-workspace-structure.sh &nbsp;# local:  symlinks + dirs OK</code></p>
+    <pre><code>gh auth status  # global: GitHub auth
+claude mcp list  # local:  core MCP (graphify) visible
+scripts/mcp/youtube-transcript.sh  # local:  starts YouTube MCP (opt-in fragment)
+./scripts/check-workspace-structure.sh  # local:  symlinks + dirs OK</code></pre>
 
     <p class="note">ai-workspace-template · setup guide · generated for human + agent onboarding.<br>
     Source docs: <a href="../../../docs/workspace-structure.md">workspace-structure.md</a> ·

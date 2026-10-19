@@ -1,7 +1,8 @@
 // html-kit prototype — page behaviour. Pages never carry their own <script>.
 // - wraps every <table> in a keyboard-scrollable box
 // - adds the shared arrowhead marker for <svg class="diagram">
-// - loads Mermaid (only if the page has <pre class="mermaid">), themed to light/dark
+// - loads Mermaid (only if the page has <pre class="mermaid">), themed to light/dark;
+//   on body.doc each diagram keeps a min width (readable labels) and scrolls in its box
 // - body.deck: builds progress bar + footer nav; arrow/space/PageUp/PageDown/Home/End;
 //   #N in the URL opens slide N; .slide.backup slides sit outside the main count
 (function () {
@@ -52,6 +53,12 @@
       document.body.classList.add('kit-measuring');
       window.mermaid.run({ querySelector: 'pre.mermaid' }).finally(() => {
         document.body.classList.remove('kit-measuring');
+        // Docs: never shrink a diagram below ~14px labels (16px font × 0.875); its box scrolls instead.
+        if (!document.body.classList.contains('doc')) return;
+        document.querySelectorAll('pre.mermaid svg').forEach((svg) => {
+          const w = parseFloat(svg.style.maxWidth);
+          if (w) svg.style.minWidth = Math.round(w * 0.875) + 'px';
+        });
       });
     };
     document.head.appendChild(s);

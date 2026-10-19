@@ -13,3 +13,10 @@
 **Rejected:** Grep-only checks — they missed the tiny-Mermaid problem; checking desktop light only — phone width and dark mode are where hand-placed labels clip or lose contrast.
 **Blast radius:** work/html-kit/prototype/kit/kit.css (Mermaid and diagram sizing, figure layout), AUTHORING.md (render check), RESULTS.md (screenshots per diagram).
 **Promote?:** maybe — together with the hand-drawn SVG note, if the kit is adopted.
+
+## 2026-10-18 — Render check shoots phone width through an iframe
+**Chose:** `render-check.sh` loads each isolated figure in an iframe of the exact width (390 or 1280) inside a wrapper page, and crops the shot to that width.
+**Because:** Headless Chrome on this Mac won't lay out a window narrower than 500px (a probe page reported `innerWidth` 500 at `--window-size=390`), so the first version's "390" shots were a 500px layout cropped. They reported overflow that a phone might not show.
+**Rejected:** `--window-size=390` alone — gives a false layout; Chrome DevTools-protocol device emulation — needs a driver (node/puppeteer), more than a shell script.
+**Blast radius:** work/html-kit/prototype/render-check.sh.
+**Promote?:** no — tool detail; goes with the kit if adopted.

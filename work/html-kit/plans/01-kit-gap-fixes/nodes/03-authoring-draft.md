@@ -1,7 +1,7 @@
 ---
 id: 03-authoring-draft
 title: AUTHORING.md: small gaps, render-check step, steer to SVG
-status: doing
+status: done
 kind: work
 wave: 1
 blocked_by: []
@@ -24,10 +24,14 @@ agent.
 
 ## Acceptance
 
-- [ ] every gap above has a short entry with an example
-- [ ] render-check step in the checklist
-- [ ] SVG steer sharpened
-- [ ] file size reported in the Log (bytes)
+- [x] every gap above has a short entry with an example
+- [x] render-check step in the checklist
+- [x] SVG steer sharpened
+- [x] file size reported in the Log (bytes)
 
 ## Log
 - s5 · started, tier standard
+- s5-c · added entries with examples to work/html-kit/prototype/AUTHORING.md: figure caption for table/code, code block (`<pre><code>`), steps holding code (`<ol class="steps">`), contents (`<nav class="toc">` + section ids), `<footer>` after `<main>` in the skeleton, relative links from a moved page
+- s5-c · checklist in work/html-kit/prototype/AUTHORING.md gains the render-check step (`render-check.sh page.html`, 4 shots/figure, 1280/390 light/dark, readable/unclipped/proportional); "Choosing" now defaults to hand-drawn SVG, Mermaid only for a short chain seen readable
+- s5-c · on disk: work/html-kit/prototype/AUTHORING.md at 8,661 B (was 6,786). Not on disk: class-name alignment with node 01 (placeholders `steps`, `toc`, `<footer>`, `<pre><code>` left for reconcile); render-check.sh invocation unverified against node 02's script; nothing committed
+- s5 · done

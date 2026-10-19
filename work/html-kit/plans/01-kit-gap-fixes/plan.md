@@ -30,12 +30,13 @@ those screenshots (`decisions.md`, 2026-10-18).
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-kit-fixes | work | standard | todo |
-| 1 | 02-render-check-script | work | standard | todo |
-| 1 | 03-authoring-draft | work | standard | todo |
-| 1 | 04-reconcile-w1 | reconcile | frontier | todo |
+| 1 | 01-kit-fixes | work | standard | done |
+| 1 | 02-render-check-script | work | standard | done |
+| 1 | 02a-render-check-true-390 | work | standard | done |
+| 1 | 03-authoring-draft | work | standard | done |
+| 1 | 04-reconcile-w1 | reconcile | frontier | done |
 | 2 | 05-setup-guide-rebuild | work | standard | todo |
 | 2 | 06-deck-rerender | work | standard | todo |
 | 2 | 07-reconcile-w2 | reconcile | frontier | todo |
-Frontier: 01-kit-fixes, 02-render-check-script, 03-authoring-draft. Remaining: 7 of 7. Sessions used: 0.
+Frontier: 05-setup-guide-rebuild, 06-deck-rerender. Remaining: 3 of 8. Sessions used: 1.
 <!-- plan:end board -->
