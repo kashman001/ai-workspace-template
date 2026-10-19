@@ -60,7 +60,8 @@ chmod +x "$TMP/scripts/context-budget.sh"
 
 echo "T4: claude wrapper envelope preserved"
 reset_state
-payload="{\"session_id\":\"s4\",\"transcript_path\":\"$TMP/fake-transcript\"}"
+mkdir -p "$TMP/projects/p"; : > "$TMP/projects/p/s4.jsonl"
+payload="{\"session_id\":\"s4\",\"transcript_path\":\"$TMP/projects/p/s4.jsonl\"}"
 err=$(echo "$payload" | CHECK_EVERY=0 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
       "$HOOKS/context-budget-claude-hook.sh" 2>&1 >/dev/null); rc=$?
 assert_eq "T4a: WARN exits 2" "$rc" "2"
@@ -211,9 +212,9 @@ assert_empty "T11l: missing chatSessions file silent" "$out"
 
 echo "T12: sidechain firing does not consume the parent's WARN slot (L32)"
 reset_state
-touch "$TMP/s12.jsonl" "$TMP/side-abc.jsonl"
-side="{\"session_id\":\"s12\",\"transcript_path\":\"$TMP/side-abc.jsonl\"}"
-main="{\"session_id\":\"s12\",\"transcript_path\":\"$TMP/s12.jsonl\"}"
+mkdir -p "$TMP/projects/p"; touch "$TMP/projects/p/s12.jsonl" "$TMP/projects/p/side-abc.jsonl"
+side="{\"session_id\":\"s12\",\"transcript_path\":\"$TMP/projects/p/side-abc.jsonl\"}"
+main="{\"session_id\":\"s12\",\"transcript_path\":\"$TMP/projects/p/s12.jsonl\"}"
 err=$(echo "$side" | CHECK_EVERY=9999 FAKE_STATUS=WARN FAKE_TOKENS=125000 \
       "$HOOKS/context-budget-claude-hook.sh" 2>&1 >/dev/null); rc=$?
 assert_eq "T12a: sidechain WARN exits 2 (child notified)" "$rc" "2"
@@ -328,19 +329,19 @@ assert_eq "X5c: rc 1 outside the supervisor" "$(xpred 0 sid-1)" "rc=1"
 
 echo "X6: the Stop wrapper is inert unless the supervisor set it up"
 : > "$XTMP/w.err"
-out=$(echo '{"session_id":"sid-1","stop_hook_active":false}' \
+out=$(echo '{"session_id":"sid-1","transcript_path":"/h/.claude/projects/p/sid-1.jsonl","stop_hook_active":false}' \
       | env -u TF_SESSION_LOOP WORKSPACE_ROOT="$XTMP" \
         "$HOOKS/context-budget-stop-hook.sh" claude 2>"$XTMP/w.err"); rc=$?
 assert_eq "X6a: exit 0 with TF_SESSION_LOOP unset" "$rc" "0"
 assert_empty "X6b: silent with TF_SESSION_LOOP unset" "$out$(cat "$XTMP/w.err")"
-out=$(echo '{"session_id":"sid-1","stop_hook_active":false}' \
+out=$(echo '{"session_id":"sid-1","transcript_path":"/h/.claude/projects/p/sid-1.jsonl","stop_hook_active":false}' \
       | env -u TF_SESSION_LOOP_PROJECT TF_SESSION_LOOP=1 WORKSPACE_ROOT="$XTMP" \
         "$HOOKS/context-budget-stop-hook.sh" claude 2>"$XTMP/w.err"); rc=$?
 assert_eq "X6c: exit 0 with no TF_SESSION_LOOP_PROJECT" "$rc" "0"
 assert_empty "X6d: silent with no TF_SESSION_LOOP_PROJECT" "$out$(cat "$XTMP/w.err")"
 
 echo "X7: the Stop wrapper respects stop_hook_active (no second SIGTERM)"
-out=$(echo '{"session_id":"sid-1","stop_hook_active":true}' \
+out=$(echo '{"session_id":"sid-1","transcript_path":"/h/.claude/projects/p/sid-1.jsonl","stop_hook_active":true}' \
       | env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p WORKSPACE_ROOT="$XTMP" \
         "$HOOKS/context-budget-stop-hook.sh" claude 2>&1); rc=$?
 assert_eq "X7a: exit 0 on a hook-continued turn" "$rc" "0"
@@ -420,21 +421,21 @@ fcase() {
   if cmp -s "$TMP/f.got" "$FIX/$name.txt"; then ok "F: $name"
   else bad "F: $name differs from the fixture"; diff "$FIX/$name.txt" "$TMP/f.got" >&2; fi
 }
-touch "$TMP/f1.jsonl" "$TMP/side-f1.jsonl"
+mkdir -p "$TMP/projects/p"; touch "$TMP/f1.jsonl" "$TMP/projects/p/f1.jsonl" "$TMP/projects/p/side-f1.jsonl"
 WARN="FAKE_STATUS=WARN FAKE_TOKENS=125000"; STOP="FAKE_STATUS=STOP FAKE_TOKENS=151000"; OK="FAKE_STATUS=OK"
 SUP="TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p"
 # claude: PostToolUse check hook, Stop turn-end hook
-pc="{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/f1.jsonl\"}"
+pc="{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/projects/p/f1.jsonl\"}"
 fcase claude-post-ok   "$pc" "$OK"   context-budget-claude-hook.sh
 fcase claude-post-warn "$pc" "$WARN" context-budget-claude-hook.sh
 FNORESET=1 fcase claude-post-warn-again "$pc" "$WARN" context-budget-claude-hook.sh
 FNORESET=1 fcase claude-post-warn-then-stop "$pc" "$STOP" context-budget-claude-hook.sh
 fcase claude-post-stop "$pc" "$STOP" context-budget-claude-hook.sh
-fcase claude-post-sidechain-warn "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/side-f1.jsonl\"}" "$WARN" context-budget-claude-hook.sh
-fcase claude-post-missing-transcript "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/nope.jsonl\"}" "$WARN" context-budget-claude-hook.sh
-fcase claude-stop-unsupervised '{"session_id":"f1","stop_hook_active":false}' "$WARN" context-budget-stop-hook.sh claude
-fcase claude-stop-active '{"session_id":"f1","stop_hook_active":true}' "$SUP" context-budget-stop-hook.sh claude
-fcase claude-stop-no-sentinel '{"session_id":"f1","stop_hook_active":false}' "$SUP" context-budget-stop-hook.sh claude
+fcase claude-post-sidechain-warn "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/projects/p/side-f1.jsonl\"}" "$WARN" context-budget-claude-hook.sh
+fcase claude-post-missing-transcript "{\"session_id\":\"f1\",\"transcript_path\":\"$TMP/projects/p/nope.jsonl\"}" "$WARN" context-budget-claude-hook.sh
+fcase claude-stop-unsupervised '{"session_id":"f1","transcript_path":"/h/.claude/projects/p/f1.jsonl","stop_hook_active":false}' "$WARN" context-budget-stop-hook.sh claude
+fcase claude-stop-active '{"session_id":"f1","transcript_path":"/h/.claude/projects/p/f1.jsonl","stop_hook_active":true}' "$SUP" context-budget-stop-hook.sh claude
+fcase claude-stop-no-sentinel '{"session_id":"f1","transcript_path":"/h/.claude/projects/p/f1.jsonl","stop_hook_active":false}' "$SUP" context-budget-stop-hook.sh claude
 # codex: UserPromptSubmit check hook, Stop turn-end hook
 fcase codex-ups-ok   "$pc" "$OK"   context-budget-codex-hook.sh
 fcase codex-ups-warn "$pc" "$WARN" context-budget-codex-hook.sh
@@ -563,9 +564,9 @@ kagent "$kstart" env CLAUDE_CODE_SESSION_ID=leaked-parent CLAUDECODE=1 VSCODE_TA
 assert_empty "K1d: claude SessionStart writes no record for a Copilot payload (no register call, leaked Claude env)" \
   "$(grep register "$KT/calls.log" 2>/dev/null || true)"
 kreset
-kagent "$(jq -cn --arg t "$KT/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,source:"startup"}')" \
+kagent "$(jq -cn --arg t "$KT/projects/p/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,source:"startup"}')" \
   bash -c "$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$KT/.claude/settings.json")"
-assert_contains "K1e: control: Claude's own SessionStart still registers" "$(cat "$KT/calls.log" 2>/dev/null)" "register --runtime claude --transcript $KT/claude-own.jsonl"
+assert_contains "K1e: control: Claude's own SessionStart still registers" "$(cat "$KT/calls.log" 2>/dev/null)" "register --runtime claude --transcript $KT/projects/p/claude-own.jsonl"
 jq -n '{schema:1, seq:3, staged:{successor:3, command:"true", by:"claude-own"}}' > "$KT/work/p/session-state.json"
 kreset
 kagent "$(jq -cn --arg t "$HOME/.claude/projects/x/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,stop_hook_active:false}')" \
@@ -578,9 +579,9 @@ kagent "$(jq -cn --arg s "$ksid" '{hook_event_name:"SessionEnd",session_id:$s,cw
 assert_empty "K1g: claude SessionEnd releases nothing for a payload with no transcript_path (no sibling release by discovery)" \
   "$(grep release "$KT/calls.log" 2>/dev/null || true)"
 kreset
-kagent "$(jq -cn --arg t "$KT/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,reason:"exit"}')" \
+kagent "$(jq -cn --arg t "$KT/projects/p/claude-own.jsonl" '{session_id:"claude-own",transcript_path:$t,reason:"exit"}')" \
   bash -c "$(jq -r '.hooks.SessionEnd[0].hooks[0].command' "$KT/.claude/settings.json")"
-assert_contains "K1h: control: Claude's own SessionEnd still releases" "$(cat "$KT/calls.log" 2>/dev/null)" "release --runtime claude --transcript $KT/claude-own.jsonl"
+assert_contains "K1h: control: Claude's own SessionEnd still releases" "$(cat "$KT/calls.log" 2>/dev/null)" "release --runtime claude --transcript $KT/projects/p/claude-own.jsonl"
 # A Copilot that one day sends transcript_path on SessionStart/SessionEnd must
 # still not register or release as claude: the session-state path is the gate.
 kreset
@@ -598,6 +599,38 @@ kagent "$(jq -cn --arg s "$ksid" --arg t "$ktx" '{hook_event_name:"PostToolUse",
   bash -c "$(jq -r '.hooks.PostToolUse[0].hooks[0].command' "$KT/.claude/settings.json")"
 assert_empty "K1k: claude PostToolUse on a Copilot payload measures nothing" "$(cat "$KT/calls.log" 2>/dev/null || true)"
 assert_empty "K1l: and writes no claude stamp" "$(ls "$KT/.context-budget" | grep '^hook-claude-' || true)"
+
+# Codex Desktop (Codex in ChatGPT.app) also runs .claude/settings.json hooks
+# (probes/codex-app.md). A Codex rollout transcript is refused as claude, the
+# same way as a Copilot session-state one.
+csid="01a15236-1626-76f0-ac54-11fa77dba754"
+ctx="$KT/codexhome/sessions/2026/10/18/rollout-2026-10-18T22-30-39-$csid.jsonl"
+mkdir -p "$(dirname "$ctx")"; : > "$ctx"
+jq -n --arg by "$csid" '{schema:1, seq:3, staged:{successor:3, command:"true", by:$by}}' > "$KT/work/p/session-state.json"
+kreset
+kagent "$(jq -cn --arg s "$csid" --arg t "$ctx" '{hook_event_name:"Stop",session_id:$s,turn_id:"t1",cwd:"/x",transcript_path:$t,stop_hook_active:false}')" \
+  env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p "$KT/scripts/hooks/context-budget-stop-hook.sh" claude
+case "$(cat "$KT/k.err")" in *"terminating claude session"*) bad "K3a: claude Stop shim acted on a Codex payload (SIGTERM as claude)" ;;
+  *) ok "K3a: claude Stop shim refuses a Codex payload, even supervised and staged" ;; esac
+assert_empty "K3b: no claude stamp" "$(ls "$KT/.context-budget" | grep '^hook-claude-' || true)"
+kreset
+kagent "$(jq -cn --arg s "$csid" --arg t "$ctx" '{hook_event_name:"PostToolUse",session_id:$s,turn_id:"t1",cwd:"/x",transcript_path:$t,tool_name:"shell"}')" \
+  bash -c "$(jq -r '.hooks.PostToolUse[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K3c: claude PostToolUse on a Codex payload measures nothing" "$(cat "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg s "$csid" --arg t "$ctx" '{hook_event_name:"SessionStart",session_id:$s,cwd:"/x",transcript_path:$t,source:"startup"}')" \
+  bash -c "$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K3d: claude SessionStart refuses a Codex rollout transcript_path (no register)" \
+  "$(grep register "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg s "$csid" --arg t "$ctx" '{hook_event_name:"SessionEnd",session_id:$s,cwd:"/x",transcript_path:$t,reason:"exit"}')" \
+  bash -c "$(jq -r '.hooks.SessionEnd[0].hooks[0].command' "$KT/.claude/settings.json")"
+assert_empty "K3e: claude SessionEnd refuses a Codex rollout transcript_path (no release)" \
+  "$(grep release "$KT/calls.log" 2>/dev/null || true)"
+kreset
+kagent "$(jq -cn --arg s "$csid" --arg t "$ctx" '{hook_event_name:"Stop",session_id:$s,turn_id:"t1",cwd:"/x",transcript_path:$t,stop_hook_active:false}')" \
+  env TF_SESSION_LOOP=1 TF_SESSION_LOOP_PROJECT=p "$KT/scripts/hooks/context-budget-stop-hook.sh" codex
+assert_contains "K3f: control: the codex Stop shim still acts on its own payload" "$(cat "$KT/k.err")" "terminating codex session $csid"
 
 kreset
 kagent "$kastop"  "$KT/scripts/hooks/context-budget-copilot-hook.sh" agentStop

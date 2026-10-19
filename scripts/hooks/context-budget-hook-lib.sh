@@ -30,6 +30,13 @@ WORKSPACE_ROOT="${WORKSPACE_ROOT:-$(budget_hook_resolve_root)}"
 BUDGET_STATE_DIR="$WORKSPACE_ROOT/.context-budget"
 CHECK_EVERY="${CHECK_EVERY:-60}"
 
+# Claude Code keeps every transcript, sidechains included, under
+# <config>/projects/<slug>/. Other runtimes also run .claude/settings.json
+# (Copilot CLI, Codex Desktop), so the Claude hooks act only on this shape.
+budget_hook_is_claude_transcript() {
+  case "${1:-}" in */projects/*/*.jsonl) return 0 ;; *) return 1 ;; esac
+}
+
 budget_hook_rank() { case "$1" in STOP) echo 2 ;; WARN) echo 1 ;; *) echo 0 ;; esac; }
 
 budget_hook_check() {
