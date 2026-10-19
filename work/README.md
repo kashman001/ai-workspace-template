@@ -25,6 +25,7 @@ excluded by rule, not by oversight.
 | [`feedback-intake`](feedback-intake/README.md) | Route production/user signal into discovery (SDLC gap G1) | Scaffolded — design work not started |
 | [`runtime-session-identity`](runtime-session-identity/README.md) | Probe and fix session-id pinning for Codex, Copilot and Antigravity (CLI + IDE) | Plan 01 closed — live verification of 7 surfaces next (s9) |
 | [`context-memory-hardening`](context-memory-hardening/README.md) | Ship the accepted context/memory-engineering recommendations (L49, L50, M43, L51, D5) | Finished — tickets 01–05 done (L49, L50, M43, L51 resolved; D5 decided as ADR-0013); follow-up L52 on the backlog |
+| [`backlog-sweep`](backlog-sweep/README.md) | Close the open template backlog cards an agent can close (L85, L95, L96, L98; L86 via the user) as one parallel plan | Active — plan 01-open-cards, wave 1 |
 | [`clear-session-loop`](clear-session-loop/README.md) | Research whether `/clear` can drive the session loop across runtimes; spec it if so | Finished (2026-10-15, s6) — S13 shipped (L90), S4 retired, `/clear` probe FAIL ×2 → docs say "press `/clear`, then type `go`" (L92); follow-up L91 open |
 | [`concurrent-sessions`](concurrent-sessions/README.md) | Research whether several sessions can own parts of one work item at once | Scaffolded — research not started |
 | [`html-kit`](html-kit/README.md) | Prototype a shared HTML kit so agents write content-only pages | Scaffolded — prototype kit next (s2) |
