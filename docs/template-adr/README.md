@@ -34,3 +34,4 @@ title the record `TADR-NNNN`.
 - [TADR-0012: Runtime contract — one adapter table, a probe-gated support matrix, fleet machinery isolated](0012-runtime-contract-adapter-table.md) — accepted 2026-09-21
 - [TADR-0013: No vector store, no MMR re-ranking, no numeric decay scoring](0013-no-vector-store-mmr-or-decay-scoring.md) — accepted 2026-10-07
 - [TADR-0014: Keep the project glossary in a root `GLOSSARY.md`, not in `CONTEXT.md`](0014-glossary-in-its-own-file.md) — accepted 2026-10-09
+- [TADR-0015: Write human-facing HTML pages as content on a shared kit (`docs/kit/`)](0015-html-kit-for-human-facing-pages.md) — accepted 2026-10-18

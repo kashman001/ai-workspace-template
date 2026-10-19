@@ -283,6 +283,9 @@ docs/
 ├── context-budget.md           # Context measurement, dumb-zone thresholds, rollover + relaunch
 ├── plans.md                    # Plans: node-file format, plan.sh verbs, tiers, replans
 │
+├── kit/                        # HTML kit for human-facing pages: kit.css/kit.js, AUTHORING.md + DIAGRAMS.md rules,
+│                               #   check-links.sh, render-check.sh, kit-sample.html
+│
 ├── adr/                        # This project's decision records, ADR-NNNN (Tier 3 of the decision scheme)
 ├── template-adr/               # The template machinery's decision records, TADR-NNNN (arrive with syncs)
 ├── postmortems/                # Blameless incident write-ups

@@ -17,6 +17,7 @@ why loading less is the point).
 | Get a machine ready (tools, auth) | [`runbooks/`](runbooks/README.md) — paired with `scripts/check-*.sh`; required-vs-optional table in [`recommended-tooling.md`](recommended-tooling.md) |
 | Move an older project's glossary out of `CONTEXT.md` into `GLOSSARY.md` | [`runbooks/glossary-migration.md`](runbooks/glossary-migration.md) — runs `scripts/migrate-glossary.sh` |
 | Understand the directory layout and conventions | [`workspace-structure.md`](workspace-structure.md) (rendered: [`workspace-structure.html`](workspace-structure.html)) |
+| Write a human-facing HTML page (doc or slide deck) | [`kit/AUTHORING.md`](kit/AUTHORING.md) — content-only pages on the shared kit; figures: [`kit/DIAGRAMS.md`](kit/DIAGRAMS.md) + `kit/render-check.sh`; every element: [`kit/kit-sample.html`](kit/kit-sample.html) |
 | Recreate this workspace from scratch | [`workspace-setup.md`](workspace-setup.md) |
 | Know what context to load for a task | [`zoom-model.md`](zoom-model.md) |
 | Track a multi-session effort under `work/` | [`work-directory-conventions.md`](work-directory-conventions.md) |

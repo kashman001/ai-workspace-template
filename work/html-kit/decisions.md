@@ -5,14 +5,14 @@
 **Because:** The user said good diagrams for human consumption are key. The session-3 experiment showed Mermaid loses spatial layouts (the six-stage ring) and renders dense graphs small and tangled (the eight-stage backup graph); that regression is not acceptable for human-facing pages.
 **Rejected:** Adopt as-is with Mermaid only — diagram quality loss; Drop — the 63% size saving and free dark mode on text pages are worth keeping, and the diagram problem has a fix inside the kit.
 **Blast radius:** work/html-kit/prototype/ (kit.css, AUTHORING.md, the rebuilt deck, a second rebuilt page, RESULTS.md).
-**Promote?:** maybe — if the kit is adopted into the template, the "SVG allowed but themed" rule is a lasting authoring convention.
+**Promote?:** done → folded into TADR-0015
 
 ## 2026-10-18 — Diagrams must render well in the browser, checked visually
 **Chose:** Every diagram (Mermaid or hand-drawn SVG) is accepted only after it is seen rendered in the HTML page: screenshots at desktop (1280 wide) and phone (390 wide), in light and dark; labels readable at real size (no tiny text), nothing clipped or overlapping, diagram sized in proportion to the page. The kit and AUTHORING.md must make this the default outcome, and the authoring checklist must include the render check.
 **Because:** The user asked that diagrams render well in HTML. Passing the grep checks says nothing about how a diagram looks; the setup-guide test passed every check while its Mermaid diagrams rendered tiny.
 **Rejected:** Grep-only checks — they missed the tiny-Mermaid problem; checking desktop light only — phone width and dark mode are where hand-placed labels clip or lose contrast.
 **Blast radius:** work/html-kit/prototype/kit/kit.css (Mermaid and diagram sizing, figure layout), AUTHORING.md (render check), RESULTS.md (screenshots per diagram).
-**Promote?:** maybe — together with the hand-drawn SVG note, if the kit is adopted.
+**Promote?:** done → folded into TADR-0015
 
 ## 2026-10-18 — Render check shoots phone width through an iframe
 **Chose:** `render-check.sh` loads each isolated figure in an iframe of the exact width (390 or 1280) inside a wrapper page, and crops the shot to that width.
@@ -26,16 +26,16 @@
 **Because:** Measured: pages 35–50% fewer o200k tokens; Codex and Gemini both produced rule-clean pages from the rules alone; every figure fault was caught by the render check and fixed once the author saw the shots. Converting old pages is the only cost that grows per page, so it waits for a page's next edit.
 **Rejected:** Drop — loses the token saving and cross-runtime consistency for a small kit to maintain; convert every page now — backlog pages are large, churn constantly and have their own upkeep rules.
 **Blast radius:** new `docs/kit/`; `docs/setup-guide.html`; docs index / workspace-structure mentions; template backlog card.
-**Promote?:** yes — lasting authoring convention; ADR at adoption (with the "SVG allowed but themed" and render-check notes).
+**Promote?:** done → TADR-0015
 
 ## 2026-10-18 — Rule fixes before the Copilot run
 **Chose:** Apply the four Session-8 rule fixes first, then run Copilot CLI on the fixed rules.
 **Because:** The run then tests the rules that ship and checks the fixes in one go; Copilot scored 4/5 unaided (Codex 0/5, Gemini 2/5 on the old rules).
 **Rejected:** Run Copilot on the old rules for a like-for-like comparison — it would measure rules being replaced.
-**Promote?:** no — fold into the adoption ADR as evidence.
+**Promote?:** done → folded into TADR-0015
 
 ## 2026-10-18 — Kit files flat in docs/kit/; shots go to the temp dir
 **Chose:** `kit.css`/`kit.js` sit directly in `docs/kit/` beside the rules and scripts, so a page in `docs/` links `kit/kit.css` (the skeleton as written). `render-check.sh` writes shots to `${TMPDIR:-/tmp}/render-check/<stem>/` by default. Prototype pages in the work item were re-pointed at `docs/kit/` so they still render.
 **Because:** One folder holds the whole kit; the skeleton path is right for the commonest location with no edit. Shots are evidence to view, never to commit — a repo folder default would invite committing them.
 **Rejected:** Keep a nested `docs/kit/kit/` (an extra level for nothing); default shots to `docs/kit/shots/` (gitignore churn, risk of committing PNGs); leave prototype pages unstyled (breaks the recorded evidence).
-**Promote?:** no — fold into the adoption TADR.
+**Promote?:** done → folded into TADR-0015
