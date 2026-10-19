@@ -6,6 +6,22 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 7 (2026-10-18)
+
+**Summary.** Fixed L101 (`1d6866f`): with `ANTIGRAVITY_APP_DATA_DIR` unset, `antigravity_discover`
+in `scripts/context-budget.sh` tries `antigravity-cli/`, `antigravity-ide/`, `antigravity/` for
+`brain/<id>/`, first hit wins. Registry suite L2d seen red first; suites 285/0 and 177/0,
+run-checks 45/0. Card archived; scorecard 2/156/5/0/6. Item closed again.
+
+**Decisions.** None new (the card prescribed the fix; commit carries the `Decision:` trailer).
+
+**State.** Main 2 ahead of origin plus this checkpoint commit; push is the user's call. Open
+cards: L97, L103 (not this item's).
+
+**Learnings:** none new.
+
+**Suggested skills:** none — item closed.
+
 # Session Handoff — 6 (2026-10-18)
 
 **Summary.** Node 13 reconciled wave 5 and closed plan `01-open-cards` (13/13): L86 archived,
