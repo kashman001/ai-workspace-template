@@ -50,3 +50,20 @@ The standalone Codex desktop app (`codex-app` cask) is discontinued upstream; br
 `chatgpt` as its replacement. The probe ran Codex inside ChatGPT.app ("Codex Desktop",
 local folder) instead. Rejected: installing the deprecated cask — it probes a surface
 on its way out. Node 12 writes `probes/codex-app.md` from this run.
+
+## 2026-10-18 — Claude hooks: allowlist own transcripts, not denylist foreign ones
+
+Codex Desktop runs `.claude/settings.json` hooks, as Copilot CLI does. The claude hooks now
+act only on a Claude Code transcript (`<config>/projects/<slug>/*.jsonl`,
+`budget_hook_is_claude_transcript`), and settings.json carries no logic (`cc1173e`). User's
+call, s5. Rejected: a per-runtime denylist (one more regex per leaking runtime, copied in
+three places), or a denylist table (still needs a new row after each leak).
+
+## 2026-10-18 — L99 prune `code-simplification`; L100 re-test `unslop` first
+
+User's call, s5, on the agent's suggestion. L99: remove from the vendored set. It scored
+below no-skill, and the judge flagged behaviour-changing rewrites; `karpathy-examples`,
+the always-on principles and `/simplify` cover the ground. L100: re-run the pilot on
+harder, longer writing tasks (2–3 samples per task) before deciding; remove it if it
+ties again. Rejected: keeping both (no measured gain), or pruning L100 on a tie from
+3 easy tasks.
