@@ -116,3 +116,33 @@ the vendor), and would rename the CLI row's hook stamps too.
 Side gap seen: `--runtime copilot-vscode` with no id var dies "no session artifact" (rc 3) on the CLI
 runtime — its discovery only looks in workspaceStorage `chatSessions`. Evidence: node 03 Log;
 sandbox `scratchpad/n03/sandbox.sh` (session-local, not kept).
+
+## 2026-10-18 — Keep all Copilot hook files; the dispatcher stays the one gate (node 02) — PROPOSED, awaiting the user (plan 02 node 05)
+
+Four hook sets run per Copilot event, on both the terminal CLI (interactive, trusted folder) and
+VS Code chats on the Copilot CLI agent host: `.github/hooks/context-budget.json`,
+`.github/hooks/context-budget-vscode.json`, and Claude's `Stop` and `PostToolUse` from
+`.claude/settings.json`. Copilot CLI ≥1.0.12 reads `.claude/settings.json` as a repo config source
+(CLI changelog) and sets `CLAUDE_PROJECT_DIR` for hooks. The only switches are `disableAllHooks` /
+`disabledHooks`; nothing skips only the Claude-format files. Live (s10 probe logs): only the CLI
+config acts (stamp + `copilot-cli` record). The VS Code file and Claude `Stop` exit at the
+session-state guard (`scripts/hooks/context-budget-hook.sh` ~:57-67), Claude `PostToolUse` at the
+empty transcript (~:110), Claude `SessionStart`/`SessionEnd` inline commands at the missing
+`transcript_path`. No `claude-*` stamp or record was written. VS Code's own "Local" harness
+(inferred from VS Code 1.141 source, not run live): `chat.useClaudeHooks` defaults off.
+
+Options: A. keep as is — the dispatcher guard is the one gate; B. delete
+`context-budget-vscode.json`; C. make the Claude shims refuse by env (`COPILOT_CLI` / `AI_AGENT`);
+D. ask users to set `disableAllHooks`/`disabledHooks`.
+
+Recommendation: A, plus two hardenings: (1) put the Claude `SessionStart`/`SessionEnd` inline
+commands (`.claude/settings.json` :9, :31) through the same session-state check — today they rely on
+Copilot never sending `transcript_path` there; if it ever does, `register --runtime claude` would
+write a `claude-events.json` record and bind the work item as claude; (2) a hooks-suite case for
+Claude `PostToolUse` with a Copilot payload. Also fix `docs/context-budget.md` (Copilot VS Code
+hook row says `$CLAUDE_PROJECT_DIR` is unset in hook processes; it is set on the CLI runtime).
+
+Rejected: B — the VS Code Local harness (chatSessions transcripts) still needs its row. C — env vars
+leak into nested launches (a Claude session started from a Copilot shell would be refused); the
+payload path is what hooks actually receive. D — per-user config, and it disables every other hook.
+Evidence: node 02 Log; probe clone `probe-out/hook-*.log`.

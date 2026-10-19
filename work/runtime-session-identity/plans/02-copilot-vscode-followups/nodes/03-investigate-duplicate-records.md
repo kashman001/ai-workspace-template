@@ -1,7 +1,7 @@
 ---
 id: 03-investigate-duplicate-records
 title: Investigate copilot-cli + copilot-vscode duplicate records; draft decision note
-status: doing
+status: done
 kind: work
 wave: 1
 blocked_by: []
@@ -32,3 +32,4 @@ session id). The answer may depend on node 02.
 - s11-b · VS Code vs terminal: only env `AI_AGENT=github_copilot_vscode_agent` tells them apart (in VS Code chat hook and tool shells; absent in terminal CLI even in the VS Code integrated terminal). Payload keys are the same on both surfaces; TERM_PROGRAM/VSCODE_*/__CFBundleIdentifier are not reliable
 - s11-b · on disk: this Log, Acceptance boxes 1-2 ticked, sandbox script in scratchpad. Not on disk: the Tier-2 note (draft returned to the orchestrator to append to decisions.md; box 3 left unticked on purpose). No code or other file changed
 - s11 · verified on disk (records in probe clone, no hook-copilot-vscode stamps, hook guard, detect_runtime); note appended to `decisions.md` as PROPOSED, box 3 ticked
+- s11 · done

@@ -64,8 +64,8 @@ questions written here.
 ## Plan position
 
 <!-- plan:begin position -->
-Position: plan 02-copilot-vscode-followups, open, wave 1 of 2, done 0/6, doing 0, todo 6, blocked 0, dropped 0, sessions 0.
-Frontier: 01-fix-copilot-vscode-exact-tokens, 02-investigate-hook-fanout, 03-investigate-duplicate-records. Remaining: 6 of 6 — wave 1: 01-fix-copilot-vscode-exact-tokens todo, 02-investigate-hook-fanout todo, 03-investigate-duplicate-records todo, 04-reconcile-w1 todo.
+Position: plan 02-copilot-vscode-followups, open, wave 2 of 2, done 4/6, doing 0, todo 2, blocked 0, dropped 0, sessions 1.
+Frontier: 05-approve-decisions. Remaining: 2 of 6 — wave 2: 05-approve-decisions todo, 06-reconcile-w2 todo.
 <!-- plan:end position -->
 
 ## State snapshot

@@ -1,11 +1,11 @@
 ---
 id: 02-investigate-hook-fanout
 title: Investigate the four hook sets per Copilot event; draft decision note
-status: todo
+status: done
 kind: work
 wave: 1
 blocked_by: []
-sessions: []
+sessions: [11]
 ---
 
 ## Goal
@@ -22,8 +22,14 @@ make the Claude shims refuse a Copilot payload).
 
 ## Acceptance
 
-- [ ] Behaviour of each of the four hook sets on a Copilot payload recorded, with evidence paths
-- [ ] Which hook files Copilot CLI (terminal) and Copilot VS Code each load, verified
-- [ ] Tier-2 note drafted in `decisions.md`: options, recommendation, rejected alternatives
+- [x] Behaviour of each of the four hook sets on a Copilot payload recorded, with evidence paths
+- [x] Which hook files Copilot CLI (terminal) and Copilot VS Code each load, verified
+- [x] Tier-2 note drafted in `decisions.md`: options, recommendation, rejected alternatives
 
 ## Log
+- s11 · started, tier standard
+- s11-a · four sets per Copilot event confirmed from ~/Developer/experiments/ws-identity-probe-s9/probe-out/hook-*.log + .context-budget/: CLI config acts (hook-copilot-cli-<sid>.stamp/.status=OK, copilot-cli-<sid>.json at sessionStart time); VS Code config, Claude Stop and Claude PostToolUse all exit silent at scripts/hooks/context-budget-hook.sh:62-67 / :110 (no hook-claude-*, hook-copilot-vscode-* stamps, no claude-<sid> record); Claude SessionStart/SessionEnd inline commands (.claude/settings.json:9,:31) unwrapped, inferred no-op (Copilot payloads carry no transcript_path, events.jsonl hook.start inputs)
+- s11-a · loading verified: terminal Copilot CLI 1.0.96 interactive (d6716e02, ea38e6fe) and VS Code chats on the CLI agent host (d5d80a4e, 90bc99b7; workspace.yaml client_name vscode-agent-host) both run .github/hooks/*.json (both files) + .claude/settings.json, with CLAUDE_PROJECT_DIR set; `copilot -p` in an untrusted folder (018beebd) ran none. VS Code Local harness: inferred only from VS Code 1.141 source (chat.hookFilesLocations defaults, chat.useClaudeHooks default false, camelCase->PascalCase map), no live log
+- s11-a · Tier-2 note drafted in the final report only (decisions.md untouched); Acceptance box 3 left unticked for the orchestrator. On disk: this Log + two ticked boxes. Not on disk: the decisions.md note, any code change
+- s11 · verified on disk (`.claude/settings.json` :9/:31 inline commands, CLAUDE_PROJECT_DIR in 21 stop-hook log lines, no `claude-events` record, doc claim present); note appended to `decisions.md` as PROPOSED, box 3 ticked
+- s11 · done

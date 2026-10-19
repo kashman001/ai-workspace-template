@@ -27,11 +27,11 @@ Other surfaces' rows (already PASS); Antigravity IDE/app and Codex desktop (back
 <!-- plan:begin board -->
 | Wave | Node | Kind | Tier | Status |
 |---|---|---|---|---|
-| 1 | 01-fix-copilot-vscode-exact-tokens | work | standard | todo |
-| 1 | 02-investigate-hook-fanout | work | standard | todo |
-| 1 | 03-investigate-duplicate-records | work | standard | todo |
-| 1 | 04-reconcile-w1 | reconcile | frontier | todo |
+| 1 | 01-fix-copilot-vscode-exact-tokens | work | standard | done |
+| 1 | 02-investigate-hook-fanout | work | standard | done |
+| 1 | 03-investigate-duplicate-records | work | standard | done |
+| 1 | 04-reconcile-w1 | reconcile | frontier | done |
 | 2 | 05-approve-decisions | hitl | frontier | todo |
 | 2 | 06-reconcile-w2 | reconcile | frontier | todo |
-Frontier: 01-fix-copilot-vscode-exact-tokens, 02-investigate-hook-fanout, 03-investigate-duplicate-records. Remaining: 6 of 6. Sessions used: 0.
+Frontier: 05-approve-decisions. Remaining: 2 of 6. Sessions used: 1.
 <!-- plan:end board -->
