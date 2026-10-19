@@ -27,3 +27,9 @@
 **Rejected:** Drop — loses the token saving and cross-runtime consistency for a small kit to maintain; convert every page now — backlog pages are large, churn constantly and have their own upkeep rules.
 **Blast radius:** new `docs/kit/`; `docs/setup-guide.html`; docs index / workspace-structure mentions; template backlog card.
 **Promote?:** yes — lasting authoring convention; ADR at adoption (with the "SVG allowed but themed" and render-check notes).
+
+## 2026-10-18 — Rule fixes before the Copilot run
+**Chose:** Apply the four Session-8 rule fixes first, then run Copilot CLI on the fixed rules.
+**Because:** The run then tests the rules that ship and checks the fixes in one go; Copilot scored 4/5 unaided (Codex 0/5, Gemini 2/5 on the old rules).
+**Rejected:** Run Copilot on the old rules for a like-for-like comparison — it would measure rules being replaced.
+**Promote?:** no — fold into the adoption ADR as evidence.
