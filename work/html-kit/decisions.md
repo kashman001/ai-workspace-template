@@ -33,3 +33,9 @@
 **Because:** The run then tests the rules that ship and checks the fixes in one go; Copilot scored 4/5 unaided (Codex 0/5, Gemini 2/5 on the old rules).
 **Rejected:** Run Copilot on the old rules for a like-for-like comparison — it would measure rules being replaced.
 **Promote?:** no — fold into the adoption ADR as evidence.
+
+## 2026-10-18 — Kit files flat in docs/kit/; shots go to the temp dir
+**Chose:** `kit.css`/`kit.js` sit directly in `docs/kit/` beside the rules and scripts, so a page in `docs/` links `kit/kit.css` (the skeleton as written). `render-check.sh` writes shots to `${TMPDIR:-/tmp}/render-check/<stem>/` by default. Prototype pages in the work item were re-pointed at `docs/kit/` so they still render.
+**Because:** One folder holds the whole kit; the skeleton path is right for the commonest location with no edit. Shots are evidence to view, never to commit — a repo folder default would invite committing them.
+**Rejected:** Keep a nested `docs/kit/kit/` (an extra level for nothing); default shots to `docs/kit/shots/` (gitignore churn, risk of committing PNGs); leave prototype pages unstyled (breaks the recorded evidence).
+**Promote?:** no — fold into the adoption TADR.
