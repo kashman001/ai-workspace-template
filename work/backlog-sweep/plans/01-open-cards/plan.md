@@ -12,6 +12,7 @@ default_tier: standard
 Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel subagents at the tier each node names (frontier = opus, standard = sonnet, cheap = haiku via `plan-tiers.env`); then carry L86 through the user's probe run. Success criteria: `work/backlog-sweep/README.md`.
 
 ## Not yet specified
+- s3 · wave 1: all three worktree children found their branch not containing the base commit and had to reset onto it — keep the merge-base check in the prompt
 
 ## Out of scope
 
@@ -28,7 +29,7 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 1 | 02-l95-dispatch-contract | work | standard | done |
 | 1 | 03-l96-usage-limit-watchdog | work | standard | done |
 | 1 | 04-l98-pilot-design | work | standard | done |
-| 1 | 05-reconcile-w1 | reconcile | frontier | todo |
+| 1 | 05-reconcile-w1 | reconcile | frontier | done |
 | 2 | 06-l98-pilot-run | work | standard | todo |
 | 2 | 07-reconcile-w2 | reconcile | frontier | todo |
 | 3 | 08-review | work | frontier | todo |
@@ -37,5 +38,5 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 4 | 11-reconcile-w4 | reconcile | frontier | todo |
 | 5 | 12-l86-probe-writeup | work | standard | todo |
 | 5 | 13-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 05-reconcile-w1. Remaining: 9 of 13. Sessions used: 1.
+Frontier: 06-l98-pilot-run. Remaining: 8 of 13. Sessions used: 1.
 <!-- plan:end board -->

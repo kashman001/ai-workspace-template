@@ -12,8 +12,8 @@ node's tier, then carry L86 (user-run probes) to the end.
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-open-cards, open, wave 1 of 5, done 4/13, doing 0, todo 9, blocked 0, dropped 0, sessions 1.
-Frontier: 05-reconcile-w1. Remaining: 9 of 13 — wave 1: 05-reconcile-w1 todo.
+Position: plan 01-open-cards, open, wave 2 of 5, done 5/13, doing 0, todo 8, blocked 0, dropped 0, sessions 1.
+Frontier: 06-l98-pilot-run. Remaining: 8 of 13 — wave 2: 06-l98-pilot-run todo, 07-reconcile-w2 todo.
 <!-- plan:end position -->
 
 ## Read these, in order

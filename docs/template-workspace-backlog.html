@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">6</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">147</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">150</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -149,35 +149,11 @@
   <h2>Low</h2>
 
   <div class="find low">
-    <h3><span class="id">L85</span> Template-only suites fail in every instance instead of skipping
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/tests/</span></h3>
-    <p><span class="k">Evidence</span> &mdash; In a downstream instance synced to <code>ccb4ed3</code>, <code>run-checks.sh</code> reports four suites red that read files only the template carries: <code>test-probe-twins</code> (sources <code>work/template-improvement-review/&hellip;/lib.sh</code>), <code>test-template-version</code> V2a/V3a/V3b and <code>test-template-instantiation</code> T1c (<code>docs/template-usage.md</code>), <code>test-doc-consistency</code> (<code>docs/plans.md</code> names the template&rsquo;s <code>work/plans/*</code>).</p>
-    <p><span class="k">Impact</span> &mdash; Every instance carries four permanent reds after a sync; each one has to be classified by hand, and a real regression in those suites hides among them.</p>
-    <p><span class="k">Fix</span> &mdash; Each suite exits 77 (SKIP in <code>run-checks.sh</code>) with a one-line reason when the template-only file it needs is absent; for <code>test-doc-consistency</code>, skip only the template-<code>work/</code> path pins. Verify in an instance clone: red today, SKIP after.</p>
-  </div>
-
-  <div class="find low">
     <h3><span class="id">L86</span> Antigravity IDE/app and Codex desktop app session identity not yet probed
       <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
     <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
     <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
     <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L95</span> Dispatch contract: read-first list, Remember: section, WIP commits, proved DONE
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/fleet.sh</span></h3>
-    <p><span class="k">Evidence</span> &mdash; Accepted R2, R3, R4, R19 (<code>work/external-tools-review/synthesis.md</code>): <code>fleet.sh dispatch-contract</code> should name the files a child reads first (Claude&rsquo;s built-in Explore/Plan subagents start without CLAUDE.md), ask for a <code>Remember:</code> section in the return, have worktree children commit WIP at each checkpoint, and require a <code>DONE</code> return to quote its check command and output. R19 also replaces the &ldquo;Done when the orchestrator says so&rdquo; example in <code>docs/plans.md</code> with a named check.</p>
-    <p><span class="k">Impact</span> &mdash; Children start without standing context, lose corrections and uncommitted work, and can report done on a model&rsquo;s say-so &mdash; Claude&rsquo;s <code>/goal</code> checker, for one, &ldquo;doesn&rsquo;t run commands or read files&rdquo;.</p>
-    <p><span class="k">Fix</span> &mdash; Scaffold a small work item (<code>/create-work-item dispatch-contract-hardening</code>) and work test-first against <code>scripts/tests/</code>; update <code>docs/context-budget.md</code> &rarr; Dispatching and <code>docs/plans.md</code>.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L96</span> Overnight chains: Claude&rsquo;s usage-limit wait may trip SESSION_LOOP_KILL_AFTER
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/session-loop.sh</span></h3>
-    <p><span class="k">Evidence</span> &mdash; R21 (<code>work/external-tools-review/synthesis.md</code>, T5): Claude Code waits silently for a usage limit to reset (on by default, resets within 24h). With a non-zero <code>SESSION_LOOP_KILL_AFTER</code> the watchdog could kill such a session as silent. Unverified whether chain sessions are interactive &mdash; the auto-wait runs only there.</p>
-    <p><span class="k">Impact</span> &mdash; An unattended overnight chain could be killed mid-unit instead of resuming after the limit resets.</p>
-    <p><span class="k">Fix</span> &mdash; Check whether chain children run interactive; if so, reproduce or reason through the watchdog path, then either document the interaction or teach the watchdog to recognise the wait.</p>
   </div>
 
   <div class="find low">
@@ -355,6 +331,7 @@
       <tr><td>2026-10-12</td><td>Resolved <strong>L88</strong> (PR #65, pulled from origin without a card: stray files in <code>nodes/</code> no longer break <code>plan.sh</code>) and <strong>L89</strong> (<code>plan.sh plans</code> lists every work item&rsquo;s plans, one line each, <code>--json</code>). Scorecard now 3/141/5/0/6.</td></tr>
       <tr><td>2026-10-12</td><td>Resolved <strong>L87</strong> (cwd substring match in context-budget discovery): both checks now match the cwd as a whole value; registry suite U3/U4 seen failing first. Card moved to the archive.</td></tr>
       <tr><td>2026-10-18</td><td>Resolved <strong>L94</strong> (external-tools-review doc pass, R7&ndash;R10, R13&ndash;R17, R20, R22&ndash;R24) and <strong>L93</strong> with it (yt-dlp example reworded, R6). Cards moved to the archive. Scorecard now 6/147/5/0/6.</td></tr>
+      <tr><td>2026-10-18</td><td>Resolved <strong>L85</strong> (template-only suites skip in instances), <strong>L95</strong> (dispatch-contract read-first / Remember: / WIP commits / proved DONE) and <strong>L96</strong> (usage-limit wait vs the silence watchdog, documented) &mdash; backlog-sweep wave 1. Cards moved to the archive. Scorecard now 3/150/5/0/6.</td></tr>
 </tbody>
   </table>
 
