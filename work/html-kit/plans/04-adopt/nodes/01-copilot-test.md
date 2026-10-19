@@ -1,12 +1,12 @@
 ---
 id: 01-copilot-test
 title: Copilot CLI rebuilds setup guide from the rules (cross-runtime test)
-status: todo
+status: doing
 kind: work
 wave: 1
 blocked_by: []
 check: test -f prototype/xrt/copilot/setup-guide.html
-sessions: []
+sessions: [9]
 ---
 
 ## Goal
@@ -20,3 +20,4 @@ Run the session-8 cross-runtime test on Copilot CLI: same brief `prototype/xrt/b
 - [ ] Copilot column / section added to `prototype/RESULTS.md`
 
 ## Log
+- s9 · started, tier standard

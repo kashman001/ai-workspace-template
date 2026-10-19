@@ -161,3 +161,6 @@ rebuilt a page in another folder, re-point every relative `href` and the
 - Page has any figure: run `render-check.sh page.html` and open every shot
   (`DIAGRAMS.md` → "Render check"). Passing the greps says nothing about how a
   figure looks.
+- Can't run `render-check.sh` where you are (a sandbox with no Chrome, no
+  shell)? Say so plainly in your hand-back and leave it for someone who can;
+  the page isn't done until its shots have been viewed.

@@ -13,6 +13,10 @@ SVG whenever the layout carries the meaning (a ring, a centre, a timeline,
 feedback arcs), and switch to SVG the moment a Mermaid diagram renders small or
 tangled. Good diagrams beat small files.
 
+Not every picture is a diagram. A folder tree is a code block; a two-column
+inventory (what lives where, global vs local) is a list, table or card grid.
+Draw an SVG only when position or arrows carry meaning.
+
 ## Hand-drawn diagram
 
 You place the shapes; the kit colours them, in light and dark.
@@ -33,6 +37,8 @@ You place the shapes; the kit colours them, in light and dark.
 - Shapes (`rect`, `circle`, `ellipse`, `polygon`) are outlined boxes; lines
   (`line`, `path`, `polyline`) are plain strokes. `<text>` is centred on its
   `x`,`y`, both across and up-down, so put it at the middle of its box.
+  Never copy coordinates from an existing SVG (its text may be left-aligned
+  at `x`): redraw every figure for the kit.
 - Classes: `arrow` (arrowhead at the line's end; it takes the line's colour),
   `dash`, a tone (`accent`, `ok`, `info`, `warn`, `bad`) to colour a line, shape
   or text, `solid` (shape filled with its tone; accent if none), and on text,
@@ -42,7 +48,10 @@ You place the shapes; the kit colours them, in light and dark.
   (about 340px), so text shrinks by 340 ÷ viewBox width. Keep the `viewBox`
   about 520–600 wide (stack or wrap the layout to fit) and crop it to the
   drawing, with no empty margins. Default text is 16 units, `small` is 14;
-  size boxes for that. Leave about 10 units of clearance between labels and lines.
+  size boxes for that: allow about 8.5 units per character of default text
+  and 9 per character of `small` (monospace), plus 10 each side. A label
+  that won't fit goes on two lines (two `<text>` elements 18 units apart).
+  Leave about 10 units of clearance between labels and lines.
   A layout that can't fit 600 wide keeps its labels at 12px on a phone and
   scrolls sideways inside its figure; say so in the caption, or split it into
   smaller diagrams.
