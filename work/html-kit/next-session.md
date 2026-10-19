@@ -8,32 +8,48 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > Convention: docs/work-directory-conventions.md.
 
 <!-- plan:begin position -->
-Position: plan 02-desktop-cap-and-gaps, open, wave 1 of 1, done 3/3, doing 0, todo 0, blocked 0, dropped 0, sessions 1.
-Frontier: none. Remaining: 0 of 3.
+Position: plan 03-adoption-readiness, open, wave 1 of 2, done 0/8, doing 0, todo 8, blocked 0, dropped 0, sessions 0.
+Frontier: 01-trim-rules, 03-link-check, 04-linux-render-check. Remaining: 8 of 8 — wave 1: 01-trim-rules todo, 02-phone-scroll-svg todo, 03-link-check todo, 04-linux-render-check todo, 05-sample-page todo, 06-reconcile-1 todo.
 <!-- plan:end position -->
 
 ## Mission
 
-Get the verdict on the HTML kit from the user. All fix rounds are done
-(sessions 4–6); results in `prototype/RESULTS.md` → "Session 6".
+Run plan `plans/03-adoption-readiness` to completion, then put the verdict to
+the user. The user said: **before adopting, run the plan, then make the
+decision.** The plan fixes the concerns raised at the end of session 6: rules
+doc too costly up front, moved pages break silently, render check Mac-only,
+no regression page, wide SVG unreadable on phones, and, most important,
+no proof the kit works for Codex and Gemini.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project html-kit`
-2. If the user has already answered in the session that wrote this, act on it.
-   Otherwise ask, one question, plain terms: **adopt** the kit or **drop** it?
-   If adopt: does it land in `docs/kit/` (plain files) or as a workspace skill?
-3. On adopt: record the decision (`decision-log`), then plan the move
-   (`plans` skill): kit files, AUTHORING.md, render-check.sh, the two
-   "Promote?: maybe" notes in `decisions.md` become ADR candidates.
-   On drop: record why, close the item.
+2. `scripts/plan.sh frontier --project=html-kit`, then work the nodes; each
+   node file has its Goal and Acceptance. Wave 1 nodes `01`→`02`→`05` touch the
+   kit and rules doc (one owner); `03` and `04` are separate files and can run
+   in parallel subagents. The main session views every shot itself.
+3. Node `07`: run `codex exec` and `gemini` (both on PATH) with the same
+   brief; save the brief and each output under `prototype/xrt/`.
+4. After `08-reconcile-2`, ask the user, one question, plain terms:
+   **adopt** the kit (into `docs/kit/` as plain files, my recommendation) or
+   **drop** it? Give the measured numbers (tiktoken o200k) and the cross-runtime
+   result in two or three lines.
 
-**No human present:** stop with step 2's question open.
+**No human present:** do steps 1–3 and node 08, commit, stop with step 4's
+question open.
 
 ## Read these first, in order
 
 1. `work/html-kit/decisions.md`
 2. `work/html-kit/prototype/RESULTS.md` — "Session 6" only
+3. `work/html-kit/prototype/AUTHORING.md` (node 01 rewrites it)
+
+## Do NOT reload
+
+- Bytes/4 estimates: superseded. Measure with
+  `uvx --quiet --with tiktoken python -I -` (o200k_base); HTML is ~3.4 bytes/token.
+- Claude token counts: need an API key; none on this machine. Don't hunt for one.
+- Desktop SVG sizing: done in session 6 (`--vbw`, labels at body size); don't redo it.
 
 ## Constraints already decided (do not re-litigate)
 
@@ -42,8 +58,10 @@ Get the verdict on the HTML kit from the user. All fix rounds are done
 - Agent-agnostic: plain CSS/JS files plus a doc, no runtime-specific skill.
 - Diagrams accepted only after the render check, viewed by eye.
 - Throwaway until a verdict: everything stays in `work/html-kit/prototype/`.
+- Plan-node checks run from `work/html-kit/`; write paths relative to it.
 
 ## State snapshot
 
 - Branch `main`, ahead of origin (push is the user's call). Stage only
   `work/html-kit/` paths when committing; other sessions share this checkout.
+- Plan 03 open, nothing started. Plan 02 closed.

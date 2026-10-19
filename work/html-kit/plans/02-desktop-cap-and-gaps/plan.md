@@ -1,6 +1,6 @@
 ---
 plan: 02-desktop-cap-and-gaps
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---

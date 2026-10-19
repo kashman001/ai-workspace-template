@@ -14,7 +14,12 @@ viewBox so labels land at body size on desktop (`--vbw` set by kit.js); `div.cal
 box. AUTHORING.md: captioned card grid, callout box, link lists as plain `<ul>`.
 Setup guide link line became a list; deck backup caption says phone is too small.
 Render check re-run on both pages, shots viewed: all pass. Numbers: RESULTS.md
-"Session 6". Verdict question asked of the user at session end.
+"Session 6". Verdict discussion with the user: measured real tokens with tiktoken
+(o200k: deck 10,631 → 5,043, guide 9,150 → 5,951, AUTHORING.md 2,812; ~3.4 B/tok,
+so bytes/4 under-counted ~17%; Claude tokenizer unmeasured — no API key). I
+recommended adopt into `docs/kit/` and listed fixes for the concerns; the user
+said: run that fix plan first, then decide. Made plan `03-adoption-readiness`
+(8 nodes, 2 waves, not started); closed plan 02 (`status: closed` by hand).
 
 **Learnings:**
 - A margin of `calc((100% - W) / 2)` on a grid item centres it when W is narrower
@@ -42,33 +47,3 @@ question: roll over, fix the open items first, then come back to it.
   the rule now favours phone, so desktop labels are large.
 
 **Suggested skills next:** none for the verdict; on adopt, `to-tickets` or `plans`.
-
-# Session Handoff — 4 (2026-10-18): adjust round, diagrams restored, second page tested
-
-**Summary.** User verdict: **adjust** — good diagrams for human readers are a hard
-requirement, and they must be checked rendered in HTML (both in `decisions.md`).
-Kit now supports hand-drawn `<svg class="diagram">` (kit-coloured, dark-safe,
-shared arrowhead) and a `.rows` ladder; AUTHORING.md gaps from s3 fixed. Deck
-diagrams restored to the original layouts. A fresh subagent rebuilt
-`docs/setup-guide.html` from the rule alone and exposed three gaps. Rolled over at
-WARN on the user's request: next session makes a plan and runs fixes with parallel
-subagents, then returns to the adopt/drop question.
-
-**What shipped (`prototype/`):** kit.css (+diagram SVG classes, `.rows`, text-stroke
-fix), kit.js (arrow marker), AUTHORING.md (6,786 B), deck rebuilt 17,074 B (53% <
-original), `setup-guide.html` (18,428 B, 37% <), `shots/s4-*.jpg`, RESULTS.md
-"Session 4" section (numbers + findings).
-
-**Open findings (RESULTS.md, "Second page"):** no code-block styling (blocks
-adoption); Mermaid renders tiny on doc pages; table inside `<figure>` clipped,
-captions offset; small rule gaps (non-diagram caption, footer, TOC, steps with code).
-
-**Git note:** most s4 files landed in another session's commit `2f8ec22`
-(session-loop L91) — a concurrent session committed while this one worked. Own
-commits: `8592c24`, `dc4f94e`. main is ahead of origin; push is the user's call.
-
-Learnings:
-- Pillow isn't installed; use `sips` (macOS) to resize/convert screenshots.
-- Tone classes on SVG need `text[class]{stroke:none}` or labels go bold.
-
-**Suggested skills next:** `plans` (create the plan), `dispatching-parallel-agents`.
