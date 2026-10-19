@@ -60,3 +60,4 @@ Frontier: 04-move-and-convert. Remaining: 4 of 7 — wave 2: 04-move-and-convert
 - Branch `main`, ahead of origin (push is the user's call).
 - Unrelated uncommitted files from other sessions (`.claude/settings.json`,
   `scripts/hooks/…`, backlog-sweep, runtime-session-identity) — not ours; leave them.
+- Session 9 had to `register --takeover` after the Copilot child run took ownership; if you dispatch any runtime CLI, expect the same (ledger block 9 learning).
