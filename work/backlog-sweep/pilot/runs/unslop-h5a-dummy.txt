@@ -1,0 +1,21 @@
+```python
+# Retry helper for the payment pipeline. Retries transient failures with
+# exponential backoff: the first wait is 200ms and it doubles after each
+# failed attempt. After 4 attempts the original exception is re-raised.
+#
+# Only TimeoutError and ConnectionError are retried. Anything else
+# propagates immediately.
+#
+# Only use this with operations that are safe to repeat, such as GET
+# requests or calls that carry an idempotency key.
+def with_retry(fn, *args, **kwargs):
+    delay = 0.2
+    for attempt in range(4):
+        try:
+            return fn(*args, **kwargs)
+        except (TimeoutError, ConnectionError):
+            if attempt == 3:
+                raise
+            time.sleep(delay)
+            delay *= 2
+```

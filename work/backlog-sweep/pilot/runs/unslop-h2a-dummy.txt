@@ -1,0 +1,22 @@
+Subject: Incident Summary: Checkout Disruption on October 14
+
+Hi team,
+
+Here's a summary of the incident that hit checkout earlier this week.
+
+**What happened:** On 2026-10-14, between 09:12 and 09:58 UTC (46 minutes), checkout requests were failing intermittently. About 31% of requests were affected.
+
+**Root cause:** The TLS certificate on the internal gateway `gw-internal-2` had expired, which broke trust between services. It points to a gap in how we manage certificate lifecycles.
+
+**Detection:** Our alerting caught the issue after 6 minutes. That's decent, though there's probably room to improve.
+
+**Resolution:** The on-call engineer renewed the certificate manually, and checkout went back to normal.
+
+**Next steps:**
+- Automate certificate renewal via cert-manager by November 1 (owner: Priya).
+- Add an alert that fires 14 days before any certificate expires (owner: Marcus).
+
+Let us know if you have any questions or thoughts.
+
+Best,
+The SRE Team

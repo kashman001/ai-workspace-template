@@ -67,3 +67,11 @@ the always-on principles and `/simplify` cover the ground. L100: re-run the pilo
 harder, longer writing tasks (2–3 samples per task) before deciding; remove it if it
 ties again. Rejected: keeping both (no measured gain), or pruning L100 on a tie from
 3 easy tasks.
+
+## 2026-10-18 — L100: keep `unslop`
+
+Re-test on six harder, longer tasks (two samples each) scored none/dummy/skill 37/37/52 of 60;
+the skill won or tied every cell, so it meets the keep rule. Tasks follow the user's s6 call
+that unslop is for coding work: PR, README, code comment and design-doc prose, plus the
+email and announcement. Rejected: pruning on the t1–t3 tie, whose short buzzword inputs
+every arm already fixed.

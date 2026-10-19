@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L100</span> Prune candidate: <code>unslop</code> tied no-skill in the L98 pilot
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/unslop/</span></h3>
+    <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 14 / dummy 13 / skill 14 over 3 tasks &mdash; no gain over the bare model; the gap to the dummy is within noise.</p>
+    <p><span class="k">Impact</span> &mdash; Tokens spent on a catalog the model already follows unprompted, on this evidence.</p>
+    <p><span class="k">Fix</span> &mdash; User decides: prune, keep, or rerun on harder prose tasks first (the pilot tasks may have been too easy to separate the arms).</p>
+    <p><span class="fix">Fixed:</span> 2026-10-18 (backlog-sweep s6). Kept after a re-test on harder prose: six 260&ndash;290-word tasks with structural tells (PR description, incident email, release announcement, README section, code comment block, design-doc section), two samples each, same three-arm harness and a hard-task rubric. Totals of 60 (none/dummy/skill): 37/37/52; the skill won or tied all 12 cells. Its gain is on em dashes, bold-label lists, emojis and &ldquo;-ing&rdquo; tails, which the model leaves alone unaided; plain buzzwords every arm already strips. 48 runs, about $1.24. Write-up: <code>work/backlog-sweep/pilot/results.md</code> &rarr; &ldquo;L100 re-test&rdquo;.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L99</span> Prune candidate: <code>code-simplification</code> scored below no-skill in the L98 pilot
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/code-simplification/</span></h3>
     <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 13 / dummy 13 / skill 11 over 3 tasks; the skill lost 2 of 3, and the blinded judge flagged behaviour changes in its outputs (float rounding in t2, negative-n slicing in t3). One sample per cell.</p>

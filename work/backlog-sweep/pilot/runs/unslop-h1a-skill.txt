@@ -1,0 +1,18 @@
+## Overview
+
+This PR changes invoice-sync to receive billing provider updates through webhooks instead of polling. It is the base for the real-time billing roadmap.
+
+## Changes
+
+- Daily API calls drop from roughly 12,000 to around 400.
+- The provider retries each webhook delivery up to 3 times.
+- Migration 0042 adds a `webhook_events` table, which records every incoming event.
+- The whole feature sits behind the `INVOICE_WEBHOOKS` flag, which is off by default.
+
+## Testing
+
+The change ran in staging for 5 days, and the team thinks it is ready. To roll back, turn the flag off. No redeploy is needed.
+
+## Reviewers
+
+@dana, could you look at the migration in particular? Questions are welcome.

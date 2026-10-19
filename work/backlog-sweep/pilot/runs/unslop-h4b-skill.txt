@@ -1,0 +1,19 @@
+## Getting started with Ratelimitr
+
+Ratelimitr is a lightweight rate-limiting library for Go. It protects your services without requiring heavyweight infrastructure.
+
+### Installation
+
+You need Go 1.22 or later. Run:
+
+```
+go get github.com/example/ratelimitr@v0.9.0
+```
+
+### Key features
+
+- **Algorithms.** Token bucket and sliding window are both supported, so you can pick the one that fits your traffic.
+- **Storage.** Limits can be kept in memory or in Redis (version 6 or newer). Redis lets multiple instances share limits across a distributed deployment.
+- **Performance.** Each check takes roughly 80 nanoseconds in memory.
+
+The default limit is 100 requests per minute per key. Change it with `ratelimitr.WithLimit`.

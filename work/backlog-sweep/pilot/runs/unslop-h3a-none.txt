@@ -1,0 +1,18 @@
+# Tidyctl 2.0
+
+Tidyctl 2.0 is out. Thanks to everyone who has told us tidyctl is part of their daily workflow; this release is for you.
+
+## Faster
+
+We rewrote the engine, and a full run on a 10,000-file repository now takes 15 seconds instead of 25, a 40% improvement. Because that speed is now the default, we removed the `--fast` flag.
+
+## New config format
+
+The legacy `.tidyrc` file (INI format) has been replaced by `tidy.toml`. To move over, run `tidyctl migrate-config` and it will convert your existing file automatically.
+
+## Breaking changes and deprecations
+
+- **Python support:** Python 3.9 is no longer supported. tidyctl now requires Python 3.10 or newer.
+- **Deprecation:** `tidyctl clean --all` is deprecated. It prints a warning in 2.0 and will be removed in 2.1.
+
+We can't wait to see what you build with 2.0. Happy tidying!

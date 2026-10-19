@@ -20,6 +20,13 @@ R = {
  "warnings/consequences sit next to the step they affect (t2: delete-before-deploy gives 401s; t3: flush cache; t1: exit code 2)",
  "no filler or marketing words",
  "uses only supplied facts (no invented flags, versions or URLs)"]}[skill]
+# L100 re-test: harder, longer unslop tasks h1-h3 (h1a/h1b = two samples of h1) get their own rubric.
+if skill == "unslop" and task.startswith("h"): R = [
+ "no em dashes (—) at all, and no colon used as a mid-sentence connector (colons before a list are fine)",
+ "none of: leverage, seamless(ly), robust, comprehensive, crucial, pivotal, enhance, fostering, showcase/showcasing, testament, underscore, landscape, 'serves as', 'stands as', and no 'not just X, but Y' construction",
+ "no tacked-on -ing phrases (', ensuring...', ', highlighting...', ', reflecting...', ', showcasing...'), no vague attributions ('experts agree', 'many users', 'widely believed'), no chatbot/closing filler ('let me know', 'don't hesitate', 'the future looks bright', 'happy tidying')",
+ "every fact survives (h1: polling->webhooks, ~12,000->~400 calls/day, 3 retries, migration 0042 webhook_events, INVOICE_WEBHOOKS off by default, 5 days staging, rollback by flag no redeploy, @dana for migration; h2: 2026-10-14 09:12-09:58 UTC 46 min, 31% checkout, gw-internal-2 TLS cert expired, alert after 6 min, manual renewal, cert-manager by Nov 1 Priya, 14-day expiry alert Marcus; h3: 15s vs 25s on 10k files 40%, --fast removed now default, .tidyrc INI -> tidy.toml, migrate-config, Python 3.10+ (3.9 dropped), clean --all warns in 2.0 removed in 2.1; h4: Go library, Go 1.22+, go get ...@v0.9.0, token bucket + sliding window, memory or Redis 6+, ~80ns per check in memory, default 100 req/min per key, WithLimit; h5: code unchanged, 200ms start doubling, max 4 attempts then re-raise, only for idempotent ops, only TimeoutError and ConnectionError retried; h6: single Redis node no replica, August restart logged out ~18,000 users, new sessions table in existing Postgres with 3 replicas, nightly job deletes expired rows, p99 reads ~1ms->~4ms vs 200ms page budget, rollout dual-write 2 weeks then switch reads then remove Redis)",
+ "no emojis, headings (if any) in sentence case, and no bold-label inline-header bullets ('**Label:** restated...')"]
 task_text = open(f"{here}/tasks/{skill}/{task}.md").read()
 arms = ["none", "dummy", "skill"]; random.shuffle(arms)
 labels = dict(zip("XYZ", arms))

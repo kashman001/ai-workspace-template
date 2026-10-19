@@ -32,3 +32,36 @@ Score = rubric criteria passed (of 5), one blinded judge call per task (`pilot/j
 ## Runs and spend
 
 36 headless runs of the 45 cap (27 answer incl. the reused smoke run + 9 judge); 9 unused. Measured spend about $0.88 (sum of total_cost_usd in `runs/*.json`). Count also in `runs/COUNT`.
+
+## L100 re-test: `unslop` on harder prose (s6)
+
+Six tasks of 260–290 words, each loaded with subtler tells than t1–t3 (em dashes, tacked-on
+"-ing" phrases, bold-label bullets, title-case headings, emojis, "serves as", "not just X but Y",
+vague attributions): h1 PR description, h2 incident email, h3 release announcement, and, after
+the user said unslop is for coding work, h4 README section, h5 code comment block (code must stay
+unchanged), h6 design-doc section. Two samples per task (`h1a`/`h1b` = two runs of `h1.md`),
+three arms each, same harness; judged with a hard-task rubric in `judge.py` (no em dashes or
+mid-sentence colons · AI vocabulary · -ing tails, vague attributions, closing filler · every
+fact kept · no emojis, sentence-case headings, no bold-label bullets).
+
+| Task | none | dummy | skill |
+|---|---|---|---|
+| h1a / h1b | 3 / 2 | 2 / 3 | 3 / 5 |
+| h2a / h2b | 3 / 2 | 3 / 2 | 4 / 5 |
+| h3a / h3b | 3 / 3 | 3 / 3 | 3 / 4 |
+| h4a / h4b | 4 / 3 | 3 / 3 | 4 / 4 |
+| h5a / h5b | 3 / 4 | 4 / 4 | 5 / 5 |
+| h6a / h6b | 4 / 3 | 4 / 3 | 5 / 5 |
+| **total (of 60)** | **37** | **37** | **52** |
+
+Per criterion (of 12), none/dummy/skill: dashes 7/7/12 · vocabulary 12/12/12 · -ing/filler
+4/4/8 · facts 12/12/11 · formatting 2/2/9. The skill won or tied every cell and lost none; its
+one dropped fact (h1a) was "single source of truth" reduced to "records every incoming event".
+
+**Verdict: keep `unslop`.** On short, buzzword-heavy input the model already strips the obvious
+words unaided (t1–t3 tie, and here vocabulary is 12/12 for every arm); the skill's gain is the
+structural tells (dashes, bold-label lists, emojis, -ing tails) the model leaves alone by
+default. Same caveats as above: one same-family judge pass, two samples per task.
+
+Spend: 48 more runs (36 answer + 12 judge), about $1.24 (one dummy run alone cost $0.20).
+Count now 84 in `runs/COUNT`.

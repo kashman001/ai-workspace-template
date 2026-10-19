@@ -1,0 +1,13 @@
+## Proposed Approach: Moving Session Storage to Postgres
+
+Our session store is a single Redis instance, and it has become a bottleneck. This proposal moves sessions into Postgres.
+
+**Current state:** Sessions live on one Redis node with no replica. A restart in August logged out roughly 18,000 users.
+
+**Proposal:** Store sessions in a new `sessions` table in our existing Postgres cluster, which already has three replicas. A nightly job would delete expired rows to keep the table small.
+
+**Trade-offs:** Session reads are expected to rise from about 1ms to about 4ms at p99. That should be acceptable given our 200ms page budget.
+
+**Rollout:** Roll out in phases: dual-write for two weeks, then switch reads, then remove Redis.
+
+We expect this change to improve reliability, mainly by removing the single point of failure.

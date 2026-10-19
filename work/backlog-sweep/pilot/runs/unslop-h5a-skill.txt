@@ -1,0 +1,23 @@
+```python
+# Retries a call that fails with a transient error, used in the payment
+# pipeline.
+#
+# Waits 200ms after the first failure and doubles the wait after each
+# later one. After 4 attempts it re-raises the original exception.
+#
+# Only call this with operations that are safe to repeat, such as GET
+# requests or calls that carry an idempotency key.
+#
+# Only TimeoutError and ConnectionError are retried. Any other exception
+# propagates immediately.
+def with_retry(fn, *args, **kwargs):
+    delay = 0.2
+    for attempt in range(4):
+        try:
+            return fn(*args, **kwargs)
+        except (TimeoutError, ConnectionError):
+            if attempt == 3:
+                raise
+            time.sleep(delay)
+            delay *= 2
+```
