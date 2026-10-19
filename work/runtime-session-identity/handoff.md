@@ -24,10 +24,16 @@ follows from the node-02 note ("env vars leak into nested launches").
 `copilot-cli-<sid>` record each, turn 2 `method=exact` (8194288). Node 12 verified 10 and 11 on disk
 and found no replan; plan 02 is closed. A backlog changelog row covers plan 02's four fixes.
 
-**State.** Plans 01 and 02 are closed. Open, the user's: the turn-1 estimate gap (document or accept),
-and pushing `main`.
+**State.** Work item finished. The user picked "document" for the turn-1 gap: a ~10K fixed overhead,
+noted in docs/context-budget.md (d51b780). `main` was pushed by the user's call (in sync at d51b780,
+then the checkpoint commit). The surfaces never probed stay in backlog L86.
 
-**Suggested skills.** `checkpoint` to close the work item.
+**For a person.** `scripts/check-drift.sh` flags a dead path in
+`docs/template-adr/0009-clear-based-rollover-relaunch.md` (`scripts/hooks/rollover-clear-seed.sh`).
+It is ADR history, not from this item.
+
+**Suggested skills.** None. Reopen only if a new Copilot surface or a registry regression shows up
+(`superpowers:brainstorming`, then `plan`).
 
 Learnings:
 - Plan-02 code commits in `816a7d9^..HEAD` are interleaved with other items' commits (05cf58b

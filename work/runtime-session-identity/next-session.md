@@ -11,16 +11,14 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 
 ## Mission
 
-Plans 01 and 02 are closed, and the user's turn-1 call was made ("document"; done in s14). Nothing is
-left but closing the work item.
+**Finished (s14, 2026-10-18).** Plans 01 and 02 are closed and every user call is made. No work is
+queued. Reopen only for a new Copilot surface or a registry regression; the surfaces never probed
+are backlog L86.
 
 ## >>> START HERE <<<
 
-**First actions:**
-
-1. `scripts/context-budget.sh register --project runtime-session-identity`
-2. Run `checkpoint` to close the work item (or tell the user it is ready to archive). Pushing `main`
-   is the user's call.
+**First actions:** none. If reopened, read the top block of `handoff.md`, then start with
+`superpowers:brainstorming`.
 
 ## Read these, in order
 
