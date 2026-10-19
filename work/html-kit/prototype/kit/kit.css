@@ -64,6 +64,7 @@ pre > code { font-size: inherit; background: none; border: 0; padding: 0; }
 .note strong, .note b { color: var(--ink); }
 .meta { font-family: var(--mono); font-size: 0.72em; }
 .callout { border-left: 3px solid var(--accent); padding: 6px 0 6px 18px; max-width: 46em; }
+div.callout { display: grid; gap: 8px; }  /* boxed: <div class="callout"><h3>…</h3><p>/<ul>…</div> */
 .statement { display: grid; gap: clamp(14px, 3vh, 28px); }
 .statement > p { font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 3.8vw, 2.7rem); line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
 .statement > p:nth-child(even) { color: var(--accent); }
@@ -160,7 +161,10 @@ body.doc > main { max-width: 46em; margin: 0 auto; padding: clamp(24px, 6vh, 64p
 body.doc > main > section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 1.6em; }
 body.doc > main > section > h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); padding-top: 0.8em; border-top: 1px solid var(--rule); }
 /* wide things bleed past the text column; a figure's caption stays in it */
-body.doc .grid, body.doc .table-wrap, body.doc figure > :is(svg, pre.mermaid) { margin-inline: min(0px, (46em - 100vw) / 2 + 20px); }
+body.doc .grid, body.doc .table-wrap, body.doc figure > pre.mermaid { margin-inline: min(0px, (46em - 100vw) / 2 + 20px); }
+/* a doc diagram is sized so its 16-unit labels land at body text size: narrower than the column on
+   wide screens, bleeding past it only when the viewBox is wide, full width on phones (kit.js sets --vbw) */
+body.doc figure > svg.diagram { --w: min(100vw - 40px, var(--vbw, 600) * 0.0625em); width: var(--w); max-width: none; margin-inline: calc((100% - var(--w)) / 2); }
 /* contents: <nav class="toc"><ol><li><a href="#id">…</a></li></ol></nav> */
 nav.toc { border-top: 1px solid var(--rule); padding-top: 14px; }
 nav.toc > ol { display: block; columns: 2 14em; column-gap: 32px; padding-left: 2.2em; list-style: decimal-leading-zero; font-family: var(--display); }

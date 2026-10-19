@@ -1,6 +1,6 @@
 // html-kit prototype — page behaviour. Pages never carry their own <script>.
 // - wraps every <table> in a keyboard-scrollable box
-// - adds the shared arrowhead marker for <svg class="diagram">
+// - adds the shared arrowhead marker for <svg class="diagram">; records its viewBox width (--vbw) for doc sizing
 // - loads Mermaid (only if the page has <pre class="mermaid">), themed to light/dark;
 //   on body.doc each diagram keeps a min width (readable labels) and scrolls in its box
 // - body.deck: builds progress bar + footer nav; arrow/space/PageUp/PageDown/Home/End;
@@ -23,6 +23,11 @@
       '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><marker id="kit-arrow" ' +
       'viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" ' +
       'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></svg>');
+    // Docs size each diagram from its viewBox width (kit.css: body.doc figure > svg.diagram).
+    document.querySelectorAll('svg.diagram').forEach((svg) => {
+      const w = svg.viewBox.baseVal && svg.viewBox.baseVal.width;
+      if (w) svg.style.setProperty('--vbw', w);
+    });
   }
 
   if (document.querySelector('pre.mermaid')) {

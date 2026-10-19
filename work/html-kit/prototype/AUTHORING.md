@@ -57,6 +57,7 @@ if it doesn't fit 1280×800, split it.
 | `<p class="lede">` | the opening paragraph; larger text |
 | `<p class="note">` | small grey aside, sources, caveats |
 | `<p class="callout">` | one key sentence, ruled on the left; open with `<b>` |
+| `<div class="callout">` | a ruled box with an `<h3>` then `<p>`s or a `<ul>` (key steps, warnings) |
 | `<div class="statement"><p>…</p><p>…</p></div>` | a few very large lines (closing slide); every second line is coloured |
 | `<p class="meta">` | small monospace line, e.g. a source under a card |
 | `<b>` | a bold lead-in at the start of a point |
@@ -92,6 +93,8 @@ Card accents (coloured top edge): `accent`, `ink`, `ok`, `info`, `warn`, `bad`,
 or none. Use `<div class="grid small">` for four or more short cards
 (a heading and one sentence each); three or fewer cards, or cards with
 several sentences, use the plain `grid`.
+To caption a grid (cards that are a figure, e.g. two layers side by side),
+wrap it like a table: `<figure><div class="grid">…</div><figcaption>…</figcaption></figure>`.
 
 **Rows** — a coloured ladder (tiers, levels, verdicts). Each row has exactly
 three parts: a label, a description, and a `<b>` verdict coloured by the row's tone.
@@ -179,8 +182,9 @@ diagram renders small or tangled. Good diagrams beat small files.
   `dash`, a tone (`accent`, `ok`, `info`, `warn`, `bad`) to colour a line, shape
   or text, `solid` (shape filled with its tone; accent if none), and on text,
   `small` (monospace edge label) and `inverse` (text on a `solid` shape).
-- The kit scales the `viewBox` to the column, which is about 340px on a phone,
-  so text shrinks by 340 ÷ viewBox width. On a doc page keep the `viewBox`
+- On a doc page the kit sizes the diagram from its `viewBox` width: on a wide
+  screen text lands at body size, on a phone the diagram fills the column
+  (about 340px), so text shrinks by 340 ÷ viewBox width. Keep the `viewBox`
   about 520–600 wide (stack or wrap the layout to fit) and crop it to the
   drawing, with no empty margins. Default text is 16 units, `small` is 14;
   size boxes for that. Leave about 10 units of clearance between labels and lines.
@@ -189,6 +193,8 @@ diagram renders small or tangled. Good diagrams beat small files.
 - Always give `role="img"` and an `aria-label` that says what the picture says.
 
 **Links** — plain `<a href>`. Quotes and dashes as characters or entities.
+A list of links (further reading, related pages) is a plain `<ul>`, one link per
+`<li>` with a few words on what it covers; not a `.note` with `·` between links.
 Relative links resolve from where the page *now* lives: if you moved or
 rebuilt a page in another folder, re-point every relative `href` and the
 `kit/` path (e.g. `../README.md` from `docs/`), then click one to confirm.

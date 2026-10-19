@@ -6,6 +6,23 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 6 (2026-10-18): desktop SVG cap, last rule gaps; verdict question open
+
+**Summary.** Plan `plans/02-desktop-cap-and-gaps` (1 wave, 3 nodes, done in the
+main session; no subagents, the work ran in sequence). Kit: doc SVG sized from its
+viewBox so labels land at body size on desktop (`--vbw` set by kit.js); `div.callout`
+box. AUTHORING.md: captioned card grid, callout box, link lists as plain `<ul>`.
+Setup guide link line became a list; deck backup caption says phone is too small.
+Render check re-run on both pages, shots viewed: all pass. Numbers: RESULTS.md
+"Session 6". Verdict question asked of the user at session end.
+
+**Learnings:**
+- A margin of `calc((100% - W) / 2)` on a grid item centres it when W is narrower
+  than the column and bleeds it evenly when wider — one rule for both.
+- `plan.sh` node checks run from `work/<item>/`; write paths relative to it.
+
+**Suggested skills next:** none for the verdict; on adopt, `to-tickets` or `plans`.
+
 # Session Handoff — 5 (2026-10-18): gaps closed, every diagram render-checked; verdict question open
 
 **Summary.** Made plan `plans/01-kit-gap-fixes` (2 waves, 8 nodes, closed) and ran

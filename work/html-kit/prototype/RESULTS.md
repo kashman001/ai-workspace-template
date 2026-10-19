@@ -187,3 +187,49 @@ real code blocks and two Mermaid diagrams became hand-drawn SVG.
   A kit fix (cap SVG width on desktop) would balance it; not done.
 - Rule gaps still open: a captioned card grid in a figure, a heading-plus-list
   callout box, a list of links (used `.note`).
+
+# Session 6 — desktop SVG cap, last rule gaps
+
+Plan `plans/02-desktop-cap-and-gaps` (one wave, done in the main session).
+Tokens = bytes/4, an estimate.
+
+## What changed
+
+- **Desktop SVG cap** — on a doc page `kit.js` records each diagram's viewBox
+  width (`--vbw`) and `kit.css` sizes the SVG so 16-unit labels land at body
+  text size (`width: min(100vw − 40px, vbw × 0.0625em)`, centred; a wide
+  viewBox still bleeds past the column). Phones are unchanged (full column).
+  Decks are unchanged.
+- **Rule gaps closed** in AUTHORING.md: captioned card grid
+  (`<figure><div class="grid">…<figcaption>`, already rendered fine — rule
+  only); `div.callout` box with an `<h3>` and `<p>`s or a `<ul>` (one CSS
+  line); a list of links is a plain `<ul>`, not a `.note` with `·`.
+- **Pages** — the setup guide's `.note` link line is now a list; the deck's
+  eight-stage backup caption says it is too dense for a phone.
+
+## Size
+
+| File | Session 5 | Session 6 | Est. tokens |
+|---|---|---|---|
+| `kit.css` | 14,468 B | 14,937 B | ~3,730 |
+| `kit.js` | 5,204 B | 5,535 B | ~1,380 |
+| `AUTHORING.md` | 9,071 B | 9,584 B | ~2,400 |
+| Deck | 17,079 B | 17,125 B (53% smaller than original) | ~4,280 |
+| Setup guide | 19,667 B | 19,809 B (32% smaller than original) | ~4,950 |
+
+## Look (`shots/s6/`, viewed by the main session)
+
+| Figure | 1280 | 390 | Verdict |
+|---|---|---|---|
+| Setup 2 — symlinks (SVG) | labels ~20px = body text (was ~25px), centred | unchanged | pass |
+| Setup 3 — pipeline (SVG) | same, light + dark | unchanged | pass |
+| Setup 1, 4, 5 — table, card grids | unchanged | unchanged | pass |
+| Deck 1, 2 | unchanged; backup caption added | backup still a slide-format limit, now captioned | pass |
+
+Rule greps on both pages print `0`. The new link list sits outside any figure,
+so the render check does not shoot it; it is a plain kit `<ul>`.
+
+## Open
+
+The verdict: adopt or drop the kit, and if adopt, `docs/kit/` (plain files)
+or a workspace skill.
