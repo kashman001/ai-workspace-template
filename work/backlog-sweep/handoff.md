@@ -6,6 +6,29 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 6 (2026-10-18)
+
+**Summary.** Node 13 reconciled wave 5 and closed plan `01-open-cards` (13/13): L86 archived,
+L101 filed (Antigravity IDE shell `register`), allowlist documented in `docs/context-budget.md`,
+"amended by" pointer in runtime-session-identity decisions (`87bd803`). L99: pruned
+`code-simplification` from the vendored set (`1b2c7ce`). L100: re-tested `unslop` on six harder
+tasks, two samples each; 37/37/52 of 60, so kept (`8a4e7eb`, ~$1.24). Item closed.
+
+**Decisions.** `decisions.md`: L100 keep `unslop`. User, s6: unslop's tasks should be coding-work
+prose (PR, README, code comment, design doc), plus the email and announcement.
+
+**State.** Item closed; nothing staged. Main ahead of origin (push is the user's call).
+Open template cards L97, L101, L103 are outside this item.
+
+**Learnings:**
+- A concurrent session (html-kit) wrote the backlog between my read and my commit; its edits
+  merged cleanly but a changelog row's "Scorecard now" went stale. Re-read the scorecard after
+  committing when another session is active.
+- Skill pilots on short, obvious inputs hit a ceiling (every arm passes); use longer inputs with
+  the structural tells the skill targets.
+
+**Suggested skills:** none — item closed.
+
 # Session Handoff — 5 (2026-10-18)
 
 **Summary.** Node 12 done: wrote `work/runtime-session-identity/probes/antigravity-ide.md`
