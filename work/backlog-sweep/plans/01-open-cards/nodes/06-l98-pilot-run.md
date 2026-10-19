@@ -1,14 +1,14 @@
 ---
 id: 06-l98-pilot-run
 title: L98 — run the three arms within the cap; score; recommend
-status: todo
+status: doing
 kind: work
 wave: 2
 blocked_by: [05-reconcile-w1]
 tier: standard
 parallel: 3
 check: test -s pilot/results.md
-sessions: []
+sessions: [3]
 ---
 
 ## Goal
@@ -19,3 +19,4 @@ Card: L98. Run the arms in `pilot/design.md` with `pilot/run.sh`, up to 3 in par
 - [ ] `results.md` has a table and verdict per skill (node check)
 
 ## Log
+- s3 · started, tier standard
