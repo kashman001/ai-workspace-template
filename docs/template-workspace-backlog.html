@@ -75,8 +75,8 @@
 <main class="wrap">
 
   <div class="scorecards">
-    <div class="sc"><div class="num">3</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">155</div><div class="lab">Resolved</div></div>
+    <div class="sc"><div class="num">2</div><div class="lab">Open</div></div>
+    <div class="sc green"><div class="num">156</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -154,14 +154,6 @@
     <p><span class="k">Evidence</span> &mdash; R5 (<code>work/external-tools-review/synthesis.md</code>, T3), accepted as later.</p>
     <p><span class="k">Impact</span> &mdash; Low today; grows if R1 (one owner, helpers report back) brings more parallel workers.</p>
     <p><span class="k">Fix</span> &mdash; Revisit after <code>work/concurrent-sessions/</code> settles R1.</p>
-  </div>
-
-  <div class="find low">
-    <h3><span class="id">L101</span> Manual <code>register</code> fails in the Antigravity IDE agent shell
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
-    <p><span class="k">Evidence</span> &mdash; L86 probe (<code>work/runtime-session-identity/probes/antigravity-ide.md</code>, Q3 and Gaps): the IDE agent shell has no <code>ANTIGRAVITY_APP_DATA_DIR</code>, so <code>antigravity_discover</code> in <code>scripts/context-budget.sh</code> looks only under the CLI data root and misses <code>~/.gemini/antigravity-ide/</code>; <code>register</code> from that shell errors.</p>
-    <p><span class="k">Impact</span> &mdash; Harmless while the hook registers the chat, but an agent following the &ldquo;register by hand if hooks are disabled&rdquo; rule gets an error.</p>
-    <p><span class="k">Fix</span> &mdash; When <code>ANTIGRAVITY_APP_DATA_DIR</code> is unset, try each data root (<code>antigravity-cli/</code>, <code>antigravity-ide/</code>, <code>antigravity/</code>) for <code>brain/&lt;id&gt;/</code>; the id is unique, so the first hit is not a guess. Add a fixture test seen red first.</p>
   </div>
 
   <div class="find low">
@@ -337,6 +329,7 @@
       <tr><td>2026-10-18</td><td>Resolved <strong>L86</strong> (Antigravity IDE and Codex desktop probes both pass; the Codex probe led to the Claude-hook allowlist, <code>cc1173e</code>). Opened <strong>L101</strong> (manual <code>register</code> in the Antigravity IDE shell). Card moved to the archive. Scorecard now 5/153/5/0/6 (with L102/L103 from html-kit).</td></tr>
       <tr><td>2026-10-18</td><td>Resolved <strong>L99</strong>: pruned <code>code-simplification</code> from the vendored set (user&rsquo;s call). Card moved to the archive. Scorecard now 4/154/5/0/6.</td></tr>
       <tr><td>2026-10-18</td><td>Resolved <strong>L100</strong>: kept <code>unslop</code> after a harder-prose re-test (37/37/52 of 60). Card moved to the archive. Scorecard now 3/155/5/0/6.</td></tr>
+      <tr><td>2026-10-18</td><td>Resolved <strong>L101</strong>: manual <code>register</code> in the Antigravity IDE shell now finds the transcript under any data root when <code>ANTIGRAVITY_APP_DATA_DIR</code> is unset; registry suite L2d seen red first. Card moved to the archive. Scorecard now 2/156/5/0/6.</td></tr>
 </tbody>
   </table>
 

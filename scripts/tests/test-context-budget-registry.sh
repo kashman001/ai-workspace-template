@@ -909,6 +909,10 @@ out=$(noid ANTIGRAVITY_CONVERSATION_ID=ag-ide ANTIGRAVITY_APP_DATA_DIR="$TMP/hom
 assert_contains "L2c: ANTIGRAVITY_APP_DATA_DIR names the transcript root (IDE/app)" "$out" "artifact=$agt"
 assert_contains "L3a: measure = last PLANNER_RESPONSE input_tokens + cache_read_tokens" "$out" "method=exact tokens=24065"
 assert_contains "L3b: cache share from cache_read_tokens" "$out" "cache=90%"
+agt=$(mk_ag ag-ide-noroot "$HOME/.gemini/antigravity-ide")
+out=$(noid env -u ANTIGRAVITY_APP_DATA_DIR ANTIGRAVITY_CONVERSATION_ID=ag-ide-noroot "$CB" register 2>&1)
+assert_contains "L2d: no ANTIGRAVITY_APP_DATA_DIR (IDE shell) finds brain/<id>/ under antigravity-ide/" \
+  "$out" "artifact=$agt"
 rm -rf "$HOME/.gemini" "$TMP/scripts/hooks"
 
 echo "Q1: copilot-vscode measures inputTokens on a session-state events.jsonl (node 11)"

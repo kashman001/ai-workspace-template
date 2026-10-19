@@ -351,12 +351,18 @@ gemini_measure() {
 
 antigravity_discover() {
   # The conversation id names its own brain/<id>/ dir; ANTIGRAVITY_APP_DATA_DIR
-  # is the CLI/IDE/app root (antigravity-cli/, -ide/, antigravity/). No id var:
-  # fail rather than guess a sibling conversation by mtime.
-  local id="${ANTIGRAVITY_CONVERSATION_ID:-}" t
+  # is the CLI/IDE/app root (antigravity-cli/, -ide/, antigravity/). The IDE
+  # agent shell lacks that var, so try each root; the id is unique, so the
+  # first hit is not a guess. No id var: fail rather than guess by mtime.
+  local id="${ANTIGRAVITY_CONVERSATION_ID:-}" root t
   [ -n "$id" ] || return 1
-  t="${ANTIGRAVITY_APP_DATA_DIR:-$HOME/.gemini/antigravity-cli}/brain/$id/.system_generated/logs/transcript_full.jsonl"
-  [ -f "$t" ] && echo "$t"
+  if [ -n "${ANTIGRAVITY_APP_DATA_DIR:-}" ]; then set -- "$ANTIGRAVITY_APP_DATA_DIR"
+  else set -- "$HOME/.gemini/antigravity-cli" "$HOME/.gemini/antigravity-ide" "$HOME/.gemini/antigravity"; fi
+  for root in "$@"; do
+    t="$root/brain/$id/.system_generated/logs/transcript_full.jsonl"
+    [ -f "$t" ] && { echo "$t"; return 0; }
+  done
+  return 1
 }
 
 antigravity_measure() {
