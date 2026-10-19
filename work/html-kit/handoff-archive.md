@@ -1,5 +1,27 @@
 <!-- Archived handoff blocks for html-kit, newest on top. -->
 
+# Session Handoff — 6 (2026-10-18): desktop SVG cap, last rule gaps; verdict question open
+
+**Summary.** Plan `plans/02-desktop-cap-and-gaps` (1 wave, 3 nodes, done in the
+main session; no subagents, the work ran in sequence). Kit: doc SVG sized from its
+viewBox so labels land at body size on desktop (`--vbw` set by kit.js); `div.callout`
+box. AUTHORING.md: captioned card grid, callout box, link lists as plain `<ul>`.
+Setup guide link line became a list; deck backup caption says phone is too small.
+Render check re-run on both pages, shots viewed: all pass. Numbers: RESULTS.md
+"Session 6". Verdict discussion with the user: measured real tokens with tiktoken
+(o200k: deck 10,631 → 5,043, guide 9,150 → 5,951, AUTHORING.md 2,812; ~3.4 B/tok,
+so bytes/4 under-counted ~17%; Claude tokenizer unmeasured — no API key). I
+recommended adopt into `docs/kit/` and listed fixes for the concerns; the user
+said: run that fix plan first, then decide. Made plan `03-adoption-readiness`
+(8 nodes, 2 waves, not started); closed plan 02 (`status: closed` by hand).
+
+**Learnings:**
+- A margin of `calc((100% - W) / 2)` on a grid item centres it when W is narrower
+  than the column and bleeds it evenly when wider — one rule for both.
+- `plan.sh` node checks run from `work/<item>/`; write paths relative to it.
+
+**Suggested skills next:** none for the verdict; on adopt, `to-tickets` or `plans`.
+
 # Session Handoff — 5 (2026-10-18): gaps closed, every diagram render-checked; verdict question open
 
 **Summary.** Made plan `plans/01-kit-gap-fixes` (2 waves, 8 nodes, closed) and ran

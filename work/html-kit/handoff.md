@@ -6,6 +6,33 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 8 (2026-10-18): plan 03 done, cross-runtime proven; user chose ADOPT
+
+**Summary.** Plan `plans/03-adoption-readiness` finished (8/8). Node 07: one
+brief (`prototype/xrt/brief.md`), Codex and Gemini each rebuilt the setup guide
+from the rules alone, two rounds each; the main session ran the render check for
+them and viewed all 80 shots. Codex 0/5 figures unaided → 4/5 after seeing shots;
+Gemini 2/5 → 5/5. Greps and link check clean every round; only the render check
+caught figure faults. Detail: `prototype/RESULTS.md` → "Session 8". Commits
+`2bfb81a`, `d93064a`. The user then chose **adopt** (small first step).
+
+**Decisions.** `decisions.md` → "Adopt the HTML kit, small first step" (scope,
+rejected alternatives, user reviews nothing — Claude Code reviews diagram pages).
+
+**Runtime facts found.** Codex `exec -s workspace-write`: Chrome aborts in the
+sandbox. Gemini CLI 0.46: free tier refused (`IneligibleTierError`) — use
+Antigravity `agy` (Gemini 4 Argon). `agy --mode accept-edits` headless denies
+every shell command. Launching `--dangerously-*` / unsandboxed agents is denied
+by Claude Code auto mode; sandboxed ones were allowed (agy needed the user's OK).
+
+**Open.** Copilot CLI (1.0.96, installed) untested — user asked whether the kit
+works there; VS Code agent mode can only be tested by the user.
+
+**Suggested skills.** `plans` (plan 04 for adoption), `decision-log` promote → ADR.
+
+Learnings:
+- Contact sheet for shots: HTML grid of `<img>` + headless Chrome `--screenshot`, one sheet per width; read sheet, then zoom single shots that look off.
+
 # Session Handoff — 7 (2026-10-18): plan 03 wave 1 done; cross-runtime test next
 
 **Summary.** Plan `plans/03-adoption-readiness` wave 1 closed (nodes 01–06),
@@ -35,25 +62,3 @@ on Linux not exercised. Sample omits deck-only classes by design.
 Learnings:
 - `git add work/html-kit` fails when cwd is already work/html-kit (Bash cwd
   persists across calls); stage with paths relative to cwd.
-
-# Session Handoff — 6 (2026-10-18): desktop SVG cap, last rule gaps; verdict question open
-
-**Summary.** Plan `plans/02-desktop-cap-and-gaps` (1 wave, 3 nodes, done in the
-main session; no subagents, the work ran in sequence). Kit: doc SVG sized from its
-viewBox so labels land at body size on desktop (`--vbw` set by kit.js); `div.callout`
-box. AUTHORING.md: captioned card grid, callout box, link lists as plain `<ul>`.
-Setup guide link line became a list; deck backup caption says phone is too small.
-Render check re-run on both pages, shots viewed: all pass. Numbers: RESULTS.md
-"Session 6". Verdict discussion with the user: measured real tokens with tiktoken
-(o200k: deck 10,631 → 5,043, guide 9,150 → 5,951, AUTHORING.md 2,812; ~3.4 B/tok,
-so bytes/4 under-counted ~17%; Claude tokenizer unmeasured — no API key). I
-recommended adopt into `docs/kit/` and listed fixes for the concerns; the user
-said: run that fix plan first, then decide. Made plan `03-adoption-readiness`
-(8 nodes, 2 waves, not started); closed plan 02 (`status: closed` by hand).
-
-**Learnings:**
-- A margin of `calc((100% - W) / 2)` on a grid item centres it when W is narrower
-  than the column and bleeds it evenly when wider — one rule for both.
-- `plan.sh` node checks run from `work/<item>/`; write paths relative to it.
-
-**Suggested skills next:** none for the verdict; on adopt, `to-tickets` or `plans`.

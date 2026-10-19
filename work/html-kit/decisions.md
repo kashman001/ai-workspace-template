@@ -20,3 +20,10 @@
 **Rejected:** `--window-size=390` alone — gives a false layout; Chrome DevTools-protocol device emulation — needs a driver (node/puppeteer), more than a shell script.
 **Blast radius:** work/html-kit/prototype/render-check.sh.
 **Promote?:** no — tool detail; goes with the kit if adopted.
+
+## 2026-10-18 — Adopt the HTML kit, small first step
+**Chose:** Adopt. Kit (`kit.css`, `kit.js`), `AUTHORING.md`, `DIAGRAMS.md`, `check-links.sh`, `render-check.sh` move into `docs/kit/` as plain files, with four rule fixes from the cross-runtime test first (RESULTS "Session 8"). Convert only `docs/setup-guide.html` now; every new human-facing page uses the kit; `workspace-structure.html` converts when next edited; the two backlog pages stay as they are. A page with figures is not done until someone with Chrome (Claude Code here) has run the render check and viewed the shots; an author that can't run it says so and hands back. Copilot CLI gets the same cross-runtime test first.
+**Because:** Measured: pages 35–50% fewer o200k tokens; Codex and Gemini both produced rule-clean pages from the rules alone; every figure fault was caught by the render check and fixed once the author saw the shots. Converting old pages is the only cost that grows per page, so it waits for a page's next edit.
+**Rejected:** Drop — loses the token saving and cross-runtime consistency for a small kit to maintain; convert every page now — backlog pages are large, churn constantly and have their own upkeep rules.
+**Blast radius:** new `docs/kit/`; `docs/setup-guide.html`; docs index / workspace-structure mentions; template backlog card.
+**Promote?:** yes — lasting authoring convention; ADR at adoption (with the "SVG allowed but themed" and render-check notes).

@@ -7,66 +7,66 @@ OpenCode) — all read `CONTEXT.md` via their entrypoint.
 > at each rollover. Past-tense provenance lives in `handoff.md`.
 > Convention: docs/work-directory-conventions.md.
 
-<!-- plan:begin position -->
-Position: plan 03-adoption-readiness, open, wave 2 of 2, done 6/8, doing 0, todo 2, blocked 0, dropped 0, sessions 1.
-Frontier: 07-cross-runtime-test. Remaining: 2 of 8 — wave 2: 07-cross-runtime-test todo, 08-reconcile-2 todo.
-<!-- plan:end position -->
-
 ## Mission
 
-Finish plan `plans/03-adoption-readiness` (wave 2: nodes 07, 08), then put the
-verdict to the user. The user said: **before adopting, run the plan, then make
-the decision.** Wave 1 is done; what remains is the most important proof — that
-Codex and Gemini can build a good kit page from the rules alone.
+The user chose **adopt** (`decisions.md` → "Adopt the HTML kit, small first
+step" — the scope is there; follow it exactly). Carry it out: Copilot CLI
+cross-runtime test, four rule fixes, kit into `docs/kit/`, setup guide
+converted, docs/backlog/ADR updated. Plans 01–03 are closed; no plan is open.
 
 ## First actions
 
 1. `scripts/context-budget.sh register --project html-kit`
-2. Node 07 (`scripts/plan.sh show 07-cross-runtime-test --project html-kit`):
-   write one brief at `prototype/xrt/brief.md` — rebuild `docs/setup-guide.html`
-   (repo root) into `prototype/xrt/<runtime>/setup-guide.html`, reading only
-   `prototype/AUTHORING.md` (+ `DIAGRAMS.md` when it has figures), kit path
-   `../../kit/`, then run the rule greps, `check-links.sh` and `render-check.sh`
-   (shots to `prototype/xrt/<runtime>/shots/`) and fix until they pass. Run
-   `codex exec` and `gemini` (both on PATH) with it, in the background, output
-   to `prototype/xrt/<runtime>/transcript.txt`; read only the tails.
-3. Node 08: view every cross-runtime shot yourself (contact sheet ok — see how
-   `prototype/shots/s7/sheet-a.png` was made: HTML grid + headless Chrome
-   `--screenshot`); write RESULTS "Cross-runtime" (per figure per runtime
-   pass/fail, rule violations, o200k tokens of each output, what each got wrong
-   unaided and whether it self-corrected).
-4. Ask the user, one question, plain terms: **adopt** the kit (into
-   `docs/kit/` as plain files, my recommendation) or **drop** it? Give the
-   measured numbers and the cross-runtime result in two or three lines.
+2. Make plan `04-adopt` with the `plans` skill (`skills/plans/SKILL.md`), nodes
+   roughly:
+   - **Copilot CLI test** — same brief `prototype/xrt/brief.md`, RT=`copilot`,
+     sandboxed/approval-limited like Codex was (unsandboxed or
+     `--allow-all`-style launches are denied by Claude Code auto mode — if
+     denied, stop that node and leave the question for the user). Two rounds:
+     you run `render-check.sh` and view every shot (contact sheet: see the
+     Session 8 learning in `handoff.md`), then give it the shots. Add a
+     Copilot column to RESULTS "Session 8"-style.
+   - **Four rule fixes** in `AUTHORING.md`/`DIAGRAMS.md` (list:
+     `prototype/RESULTS.md` → "Rule changes this suggests"). Re-run greps on
+     `kit-sample.html`.
+   - **Move to `docs/kit/`**: `kit/kit.css`, `kit/kit.js`, `AUTHORING.md`,
+     `DIAGRAMS.md`, `check-links.sh`, `render-check.sh`, `kit-sample.html`;
+     fix paths inside them (render-check default out-dir, sample's kit path).
+   - **Convert `docs/setup-guide.html`** from `prototype/setup-guide.html`
+     (kit path `kit/`, links re-pointed); greps, check-links, render-check,
+     view every shot.
+   - **Document**: `docs/README.md` index, `docs/workspace-structure.md`,
+     CONTEXT.md one-liner only if needed; template backlog card per CONTEXT.md
+     "Template Backlog"; promote the decision to an ADR (`decision-log`
+     promote, with the "SVG allowed but themed" + render-check notes).
+   - reconcile.
+3. Work the plan; commit per node, staging only paths you touched (other
+   sessions share this checkout).
 
-**No human present:** do steps 1–3, commit, stop with step 4's question open.
+**No human present:** do everything; if the Copilot node is blocked by a
+permission denial, mark it blocked and carry on with the rest.
 
 ## Read these first, in order
 
-1. `work/html-kit/handoff.md` — top block (session 7)
-2. `work/html-kit/prototype/RESULTS.md` — "Session 7" only
-3. `work/html-kit/decisions.md` — skim
+1. `work/html-kit/handoff.md` — top block (session 8)
+2. `work/html-kit/decisions.md` — the last entry
+3. `work/html-kit/prototype/RESULTS.md` — "Session 8" only
 
 ## Do NOT reload
 
-- Wave 1 work (rules split, wide-SVG scroll, check-links, Linux render check,
-  sample page): done and viewed; see RESULTS Session 7.
-- Bytes/4 estimates: superseded. Measure with
-  `uvx --quiet --with tiktoken python -I -` (o200k_base).
-- Claude token counts: need an API key; none on this machine.
-- Mac 500px crop on setup-guide figs 1, 4: known, unexplained; only chase it if
-  a cross-runtime shot is unreadable because of it.
+- Codex/Gemini runs: done, results in RESULTS Session 8.
+- Gemini CLI: free tier refused; Antigravity `agy` works (edit-only, no shell).
+- The adopt/drop question: settled — adopt.
+- Mac 500px crop on some 390 shots: known, harmless; ignore.
 
 ## Constraints already decided (do not re-litigate)
 
 - HTML stays the source of truth for human-facing pages.
-- Agent-agnostic: plain CSS/JS files plus a doc, no runtime-specific skill.
-- Diagrams accepted only after the render check, viewed by eye.
-- Throwaway until a verdict: everything stays in `work/html-kit/prototype/`.
-- Plan-node checks run from `work/html-kit/`.
+- Agent-agnostic: plain CSS/JS files plus docs, no runtime-specific skill.
+- Diagram pages are reviewed by Claude Code (render check + viewing shots).
+- Backlog HTML pages are NOT converted.
 
 ## State snapshot
 
-- Branch `main`, ahead of origin (push is the user's call). Stage only
-  `work/html-kit/` paths; other sessions share this checkout.
-- Plan 03: wave 1 done (6/8), frontier `07-cross-runtime-test`.
+- Branch `main`, ahead of origin (push is the user's call).
+- No plan open; prototype under `work/html-kit/prototype/` is the source to move.

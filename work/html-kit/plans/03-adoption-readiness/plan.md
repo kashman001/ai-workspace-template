@@ -1,6 +1,6 @@
 ---
 plan: 03-adoption-readiness
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---
