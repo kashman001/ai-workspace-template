@@ -1051,6 +1051,15 @@
   </div>
 
   <div class="find low resolved">
+    <h3><span class="id">L86</span> Antigravity IDE/app and Codex desktop app session identity not yet probed
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
+    <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
+    <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-18 (backlog-sweep nodes 10&ndash;13). The user ran both probes in the clone <code>~/Developer/experiments/ws-identity-probe-s9</code>; <code>work/runtime-session-identity/probes/antigravity-ide.md</code> and <code>probes/codex-app.md</code> (Codex inside ChatGPT.app &mdash; the standalone desktop app is discontinued upstream) both <strong>pass</strong>: own transcript per chat, one record each, hooks per chat. The Codex probe found that Codex Desktop runs <code>.claude/settings.json</code> hooks, so the claude Stop shim could SIGTERM a Codex session under the session loop; <code>cc1173e</code> makes every Claude hook act only on a Claude Code transcript (<code>budget_hook_is_claude_transcript</code>, an allowlist replacing the per-runtime Copilot guards; tests K3a&ndash;f). The Antigravity IDE shell <code>register</code> gap is filed as <strong>L101</strong>.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L98</span> Pilot the skill-earns-its-place test on 3&ndash;5 skills
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">skills/</span></h3>
     <p><span class="k">Evidence</span> &mdash; R18 (<code>work/external-tools-review/synthesis.md</code>, T5), accepted as later. Depends on L94 (R17 writes the test down).</p>

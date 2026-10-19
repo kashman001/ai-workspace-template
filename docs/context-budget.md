@@ -814,7 +814,7 @@ wiring below needs no edit.
 
 | Runtime | Wiring file → shim | Check hook / envelope | Turn-end hook / action | Friction gate |
 | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`; never copy the `hooks` block there or each hook fires twice) → `context-budget-claude-hook.sh`, `context-budget-stop-hook.sh claude` | `PostToolUse`: stderr text + `exit 2` | `Stop`: SIGTERM the agent once it staged | none — `SessionStart` runs `register` and `SessionEnd` runs `release` mechanically; opt-in `PreCompact` (`auto`) → `context-budget-precompact-hook.sh`; both need the payload's `transcript_path` and do nothing without it; `SessionStart`/`SessionEnd` also skip a Copilot `session-state/<sid>/events.jsonl` path (Copilot CLI reads this file too); every command self-resolves the repo root when `$CLAUDE_PROJECT_DIR` is empty |
+| Claude Code | `.claude/settings.json` (committed; hooks + statusLine only — personal permissions live in the gitignored `settings.local.json`, seeded from `.claude/settings.json.example`; never copy the `hooks` block there or each hook fires twice) → `context-budget-claude-hook.sh`, `context-budget-stop-hook.sh claude` | `PostToolUse`: stderr text + `exit 2` | `Stop`: SIGTERM the agent once it staged | none — `SessionStart` runs `register` and `SessionEnd` runs `release` mechanically; opt-in `PreCompact` (`auto`) → `context-budget-precompact-hook.sh`; both need the payload's `transcript_path` and do nothing without it; `SessionStart`/`SessionEnd` act only on a Claude Code transcript (see below; Copilot CLI and Codex Desktop read this file too); every command self-resolves the repo root when `$CLAUDE_PROJECT_DIR` is empty |
 | Codex | `.codex/config.toml` → `context-budget-codex-hook.sh` (`SessionStart` registers from the payload's `session_id` + `transcript_path`; `UserPromptSubmit` re-registers a missing record), `context-budget-stop-hook.sh codex` | `UserPromptSubmit`: `{hookSpecificOutput:{hookEventName,additionalContext}}` | `Stop`: SIGTERM | hash-based hook trust (see "Hook trust" below): an interactive run prompts once per repo; editing the hook command re-prompts; `codex exec` never prompts, so CI passes `--dangerously-bypass-hook-trust`. Untrusted hooks are skipped silently (no registration, no measurement), so the agent-side `register` stays the fallback |
 | Gemini CLI | `.gemini/settings.json` → `context-budget-gemini-hook.sh` | `BeforeAgent`: JSON-only stdout, `{}` when silent | none — chains unsupported, attended rollover only | measures the workspace `.gemini/telemetry.log`; a successor's first-turn check can read the predecessor's last entry (accepted: gemini chains are human-launched) |
 | opencode | `.opencode/opencode.json` `plugin` array → `.opencode/plugins/context-budget.js` → `context-budget-opencode-hook.sh` | `chat.message`: the plugin pushes a message part | `session.idle`: the dispatcher prints `exit`, the plugin self-kills | plugins are not auto-discovered — list it in `opencode.json`; the sqlite read has no size-estimate fallback |
@@ -830,6 +830,13 @@ same turn. The dispatcher lets only the CLI config act. A payload whose
 the `claude` row, and by the `copilot-vscode` row while
 `.github/hooks/context-budget.json` exists. So one turn writes one stamp and one
 registry record.
+
+**Claude hooks act only on Claude transcripts.** Other runtimes read
+`.claude/settings.json` too (Copilot CLI, Codex Desktop), so every Claude hook
+command first checks that the payload's `transcript_path` is
+`<config>/projects/<slug>/*.jsonl` (`budget_hook_is_claude_transcript` in
+`scripts/hooks/context-budget-hook-lib.sh`) and does nothing otherwise — an
+allowlist, so a new runtime that reads the file is refused by default.
 
 **One registry name per Copilot session.** The name is canonicalised: a
 `--runtime copilot-vscode` resolution whose artifact is under

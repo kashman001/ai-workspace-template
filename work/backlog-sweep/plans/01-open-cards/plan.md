@@ -1,6 +1,6 @@
 ---
 plan: 01-open-cards
-status: open
+status: closed
 replan: local
 default_tier: standard
 ---
@@ -37,6 +37,6 @@ Close L85, L95, L96 and L98 with verified, test-first changes, run in parallel s
 | 4 | 10-l86-user-probes | hitl | frontier | done |
 | 4 | 11-reconcile-w4 | reconcile | frontier | done |
 | 5 | 12-l86-probe-writeup | work | standard | done |
-| 5 | 13-reconcile-w5 | reconcile | frontier | todo |
-Frontier: 13-reconcile-w5. Remaining: 1 of 13. Sessions used: 3.
+| 5 | 13-reconcile-w5 | reconcile | frontier | done |
+Frontier: none. Remaining: 0 of 13. Sessions used: 4.
 <!-- plan:end board -->

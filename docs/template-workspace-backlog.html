@@ -76,7 +76,7 @@
 
   <div class="scorecards">
     <div class="sc"><div class="num">5</div><div class="lab">Open</div></div>
-    <div class="sc green"><div class="num">152</div><div class="lab">Resolved</div></div>
+    <div class="sc green"><div class="num">153</div><div class="lab">Resolved</div></div>
     <div class="sc blue"><div class="num">5</div><div class="lab">Decided</div></div>
     <div class="sc"><div class="num">0</div><div class="lab">Won't fix</div></div>
     <div class="sc green"><div class="num">6</div><div class="lab">Strengths</div></div>
@@ -149,14 +149,6 @@
   <h2>Low</h2>
 
   <div class="find low">
-    <h3><span class="id">L86</span> Antigravity IDE/app and Codex desktop app session identity not yet probed
-      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
-    <p><span class="k">Evidence</span> &mdash; The runtime-session-identity work probed Codex (CLI, VS Code), Copilot (CLI, VS Code) and the Antigravity CLI; the Antigravity IDE/app and the Codex desktop app were never run. Steps 3&ndash;4 of <code>work/runtime-session-identity/probes/user-checklist.md</code> cover them; plan node <code>11-remaining-surface-probes</code> was dropped to this card on the user&rsquo;s call (deferred until they have time).</p>
-    <p><span class="k">Impact</span> &mdash; Concurrent sessions on those two surfaces may still bind a sibling&rsquo;s transcript or fail to register; the fixes there are fixture-tested only.</p>
-    <p><span class="k">Fix</span> &mdash; The user runs checklist steps 3&ndash;4 in the probe clone; an agent writes <code>probes/antigravity-ide.md</code> (and <code>probes/codex-app.md</code>) in the Q1&ndash;Q4 format and files any new gap as a card or plan node.</p>
-  </div>
-
-  <div class="find low">
     <h3><span class="id">L97</span> One &ldquo;needs me&rdquo; view across hitl nodes, BLOCKED returns and open dispatches
       <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/plan.sh, scripts/fleet.sh</span></h3>
     <p><span class="k">Evidence</span> &mdash; R5 (<code>work/external-tools-review/synthesis.md</code>, T3), accepted as later.</p>
@@ -178,6 +170,14 @@
     <p><span class="k">Evidence</span> &mdash; L98 pilot (<code>work/backlog-sweep/pilot/results.md</code>): rubric totals none 14 / dummy 13 / skill 14 over 3 tasks &mdash; no gain over the bare model; the gap to the dummy is within noise.</p>
     <p><span class="k">Impact</span> &mdash; Tokens spent on a catalog the model already follows unprompted, on this evidence.</p>
     <p><span class="k">Fix</span> &mdash; User decides: prune, keep, or rerun on harder prose tasks first (the pilot tasks may have been too easy to separate the arms).</p>
+  </div>
+
+  <div class="find low">
+    <h3><span class="id">L101</span> Manual <code>register</code> fails in the Antigravity IDE agent shell
+      <span class="sev low">Low</span><span class="status open">Open</span><span class="area">scripts/context-budget.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; L86 probe (<code>work/runtime-session-identity/probes/antigravity-ide.md</code>, Q3 and Gaps): the IDE agent shell has no <code>ANTIGRAVITY_APP_DATA_DIR</code>, so <code>antigravity_discover</code> in <code>scripts/context-budget.sh</code> looks only under the CLI data root and misses <code>~/.gemini/antigravity-ide/</code>; <code>register</code> from that shell errors.</p>
+    <p><span class="k">Impact</span> &mdash; Harmless while the hook registers the chat, but an agent following the &ldquo;register by hand if hooks are disabled&rdquo; rule gets an error.</p>
+    <p><span class="k">Fix</span> &mdash; When <code>ANTIGRAVITY_APP_DATA_DIR</code> is unset, try each data root (<code>antigravity-cli/</code>, <code>antigravity-ide/</code>, <code>antigravity/</code>) for <code>brain/&lt;id&gt;/</code>; the id is unique, so the first hit is not a guess. Add a fixture test seen red first.</p>
   </div>
 
   <div class="find low">
@@ -350,6 +350,7 @@
       <tr><td>2026-10-18</td><td>Resolved <strong>L85</strong> (template-only suites skip in instances), <strong>L95</strong> (dispatch-contract read-first / Remember: / WIP commits / proved DONE) and <strong>L96</strong> (usage-limit wait vs the silence watchdog, documented) &mdash; backlog-sweep wave 1. Cards moved to the archive. Scorecard now 3/150/5/0/6.</td></tr>
       <tr><td>2026-10-18</td><td>Resolved <strong>L98</strong> (skill-earns-its-place pilot: 3 skills, 36 headless runs, ~$0.88; no skill met the keep rule). Opened <strong>L99</strong> (<code>code-simplification</code>) and <strong>L100</strong> (<code>unslop</code>) as prune candidates for the user to decide. Scorecard now 4/151/5/0/6.</td></tr>
       <tr><td>2026-10-18</td><td>Fix (no card; runtime-session-identity plan 02, closed): <strong>Copilot VS Code agent mode on the Copilot CLI runtime</strong> context budget. The exact count comes from the CLI checkpoint's <code>prompt_tokens</code>, and the CLI cumulative overcount is gone (<code>3928a86</code>). Claude <code>SessionStart</code>/<code>SessionEnd</code> hooks skip Copilot session-state transcripts (<code>34c76b4</code>). There is one registry name per Copilot session, copilot-cli (<code>6c5ae3a</code>), and the name is keyed on the transcript path, so a leaked env var cannot re-file a VS Code Local chat (<code>f87afb0</code>, from the plan&rsquo;s code review). Each fix has a suite case seen red first. Live re-probe in VS Code passed.</td></tr>
+      <tr><td>2026-10-18</td><td>Resolved <strong>L86</strong> (Antigravity IDE and Codex desktop probes both pass; the Codex probe led to the Claude-hook allowlist, <code>cc1173e</code>). Opened <strong>L101</strong> (manual <code>register</code> in the Antigravity IDE shell). Card moved to the archive. Scorecard now 4/152/5/0/6.</td></tr>
 </tbody>
   </table>
 

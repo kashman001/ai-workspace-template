@@ -10,8 +10,8 @@ Close plan `01-open-cards` (node 13), then carry out the user's L99/L100 decisio
 ## Position
 
 <!-- plan:begin position -->
-Position: plan 01-open-cards, open, wave 5 of 5, done 12/13, doing 0, todo 1, blocked 0, dropped 0, sessions 3.
-Frontier: 13-reconcile-w5. Remaining: 1 of 13 — wave 5: 13-reconcile-w5 todo.
+Position: plan 01-open-cards, closed, wave 5 of 5, done 13/13, doing 0, todo 0, blocked 0, dropped 0, sessions 4.
+Frontier: none. Remaining: 0 of 13.
 <!-- plan:end position -->
 
 ## Read these, in order

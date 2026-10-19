@@ -123,6 +123,10 @@ transcript as copilot-cli (registry H5). Discovery already maps the var to that 
 
 ## 2026-10-18 — Keep all Copilot hook files; the dispatcher stays the one gate (node 02) — decided by the user, s12 (plan 02 node 05): option A + both hardenings
 
+> **Amended by** `work/backlog-sweep/decisions.md` → "Claude hooks: allowlist own transcripts,
+> not denylist foreign ones" (2026-10-18, `cc1173e`): the session-state guards below are replaced
+> by one Claude-transcript allowlist; the dispatcher stays the one gate.
+
 Four hook sets run per Copilot event, on both the terminal CLI (interactive, trusted folder) and
 VS Code chats on the Copilot CLI agent host: `.github/hooks/context-budget.json`,
 `.github/hooks/context-budget-vscode.json`, and Claude's `Stop` and `PostToolUse` from
