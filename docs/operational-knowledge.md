@@ -552,6 +552,18 @@ inside it. The probe lib and the stub-twin suite `unset TF_SESSION_LOOP
 TF_SESSION_LOOP_PROJECT TF_SESSION_PROJECT TF_SESSION_SEQ` first; do the same
 in any ad-hoc run.
 
+## `plan.sh verify` exports `WORKSPACE_ROOT` — a sandbox-building suite must unset it
+
+**Last confirmed:** 2026-10-18
+
+`plan.sh verify` runs a node's `check` with `WORKSPACE_ROOT` exported (so the
+check can name repo paths), and the hooks honour an inherited `WORKSPACE_ROOT`
+over their own resolution. A suite that builds a sandbox workspace and runs
+hooks in it therefore passes from `run-checks.sh` but goes red under `plan.sh
+verify`: the hooks write to the real checkout, not the sandbox
+(`test-probe-twins.sh` T3d/T3e did). Unset `WORKSPACE_ROOT` alongside the
+`TF_SESSION_*` variables at the top of any such suite.
+
 ## Shell scripts and tests — BSD-only idioms pass on macOS and break on Linux CI
 
 **Last confirmed:** 2026-10-08

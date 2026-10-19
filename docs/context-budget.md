@@ -536,8 +536,9 @@ in interactive mode the human at the keyboard is the stall detector.
 **A usage-limit wait looks like silence.** Chain children are interactive
 (`claude --name … "<prompt>"`, no `-p`), so Claude Code's auto-wait for a
 usage-limit reset can run in them; if it writes nothing to the transcript, a
-wait longer than `SESSION_LOOP_KILL_AFTER` (default 4h) is killed as `silent`,
-in either mode. Unverified: whether the wait writes to the transcript. For an
+wait longer than `SESSION_LOOP_KILL_AFTER` (4h as shipped in
+`context-budget.env`; unset means no limit) is killed as `silent`, in either
+mode. Unverified: whether the wait writes to the transcript. For an
 overnight chain on a plan near its limit, raise `SESSION_LOOP_KILL_AFTER` (or
 set 0) in the work item's `context-budget.env`. Backlog L96.
 

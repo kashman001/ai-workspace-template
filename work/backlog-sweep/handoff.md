@@ -6,6 +6,30 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 4 (2026-10-18)
+
+**Summary.** Ran node 08: code-review (Standards + Spec, two opus children) over
+`4b65f8c...HEAD` scoped to this plan's paths — 0 blockers either axis. Fixed two
+suggestions: `docs/context-budget.md` L96 "(default 4h)" wording (script default is 0)
+and promoted the `plan.sh verify` / `WORKSPACE_ROOT` gotcha to
+`docs/operational-knowledge.md`; the rest logged in `nodes/08-review.md`. Reconciled
+wave 3 (09). `run-checks.sh` 45/0/0. Stopped at hitl node 10 (L86 user probes) —
+checkpoint, no relaunch.
+
+**Decisions.** None new (logged-not-fixed suggestions are low-stakes judgement calls).
+
+**State.** Plan open, wave 4 of 5, done 9/13; frontier `10-l86-user-probes` (hitl) —
+the question for the user is in `next-session.md`. Main ahead of origin (push is the
+user's call). Uncommitted `work/runtime-session-identity/` and `work/html-kit/` files
+belong to other sessions.
+
+**Learnings:**
+- The review range includes other sessions' commits on shared files
+  (`docs/context-budget.md`); scope reviewer diffs to the plan's paths and name the
+  foreign commits to ignore.
+
+**Suggested skills:** `plans` (reconcile 11/13), `checkpoint`.
+
 # Session Handoff — 3 (2026-10-18)
 
 **Summary.** Ran waves 1–2 of plan `01-open-cards`. Wave 1 in four parallel
@@ -30,27 +54,3 @@ ahead of origin (push is the user's call). Uncommitted files under
   and reset onto it — keep the merge-base check in the dispatch prompt.
 
 **Suggested skills:** `code-review` (node 08), `plans` (reconcile), `session-rollover`.
-
-# Session Handoff — 1 (2026-10-18)
-
-**Summary.** Finished L94 (external-tools-review doc pass, R6–R24 doc items)
-and L93, commit `b16325e`, cards archived. Then, at the user's request,
-scaffolded this item and plan `01-open-cards` (13 nodes, 5 waves) for the
-remaining open cards L85, L95, L96, L98 and L86 (hitl); L97 out of scope.
-Rolled over at context WARN (146K) to start execution in a fresh session.
-
-**Decisions.** `decisions.md`: one item/plan for all cards; L98 spend
-authorized with a 45-run cap; only reconcile nodes write the backlog files.
-
-**State.** Plan open, nothing started. `ROLLOVER_RELAUNCH=auto` for this
-item. Other sessions (html-kit, runtime-session-identity) have uncommitted
-work in this checkout — never stage their files. Main is ahead of origin;
-pushing is the user's call.
-
-**Learnings:**
-- `test-context-budget-registry.sh` failed once in `run-checks.sh` while
-  another session edited `scripts/context-budget.sh`; passed on rerun (279/0).
-- `plan.sh` refuses `"--project x"` held in one variable — use `--project=x`.
-
-**Suggested skills:** `plans` (dispatch template, reconcile), `code-review`
-(node 08), `session-rollover`.
