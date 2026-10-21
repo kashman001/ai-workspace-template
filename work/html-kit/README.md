@@ -6,9 +6,8 @@ agent-generated HTML cheap without losing what makes it worth reading?").
 **Start here:** `next-session.md` (catch-up launcher) → `handoff.md`
 (session ledger, top block).
 
-**Status (2026-10-21):** reopened for backlog card L103 (move
-`scripts/build-guide-html.sh` onto the kit). Plans 01–04 closed; the kit is
-adopted in `docs/kit/` (TADR-0015).
+**Status (2026-10-21):** closed. Plans 01–04 closed; the kit is adopted in
+`docs/kit/` (TADR-0015); L103 (guide generator onto the kit) fixed.
 
 ## What this is
 

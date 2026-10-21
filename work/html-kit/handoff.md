@@ -6,6 +6,26 @@ Read the TOP block only; older blocks are in handoff-archive.md. Forward
 Convention: docs/work-directory-conventions.md.
 -->
 
+# Session Handoff — 11 (2026-10-21): L103 fixed — guide generator on the kit; item closed
+
+**Summary.** Finished L103 (reopened in s10b, whose test + builder were committed in
+`d8734b7`). This session: the real page left five non-kit classes (pandoc section
+`level*`, code-block language) → added test case G3 "only kit classes" (seen red
+11/1), builder strips them (12/0). `docs/workspace-structure.html` regenerated:
+AUTHORING.md greps 0/0, one script, `check-links.sh` OK, hash check and
+`run-checks.sh` 46/0. Card moved to the archive (scorecard 1/157/5/0/6). Commit `9c63810`.
+
+**Decisions.** Strip pandoc's non-kit classes in the builder rather than list them in
+the kit (commit trailer; too small for `decisions.md`).
+
+**Open.** None for this item. L97 is the only open template card (not html-kit).
+
+Learnings:
+- `render-check.sh` shoots figures only; a page with none prints "No figures found". For a
+  layout look, take full-page headless Chrome shots (`--screenshot`, `--blink-settings=preferredColorScheme=1|0`).
+- Pandoc's plain `ul`/`table`/`pre`/`hr`/`blockquote` render well under `body.doc`; the
+  Markdown's Contents list stays a plain list, not `nav.toc`.
+
 # Session Handoff — 10 (2026-10-18): plan 04-adopt closed — kit in docs/kit/, TADR-0015
 
 **Summary.** Nodes 04–07 done; plan `04-adopt` closed 7/7. Kit, rules and both
