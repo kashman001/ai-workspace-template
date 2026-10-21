@@ -64,6 +64,8 @@ echo "G3: no page-level design (AUTHORING.md greps)"
 assert_eq "G3 no style/fill/stroke/font attrs" \
   "$(grep -cE '<style|style=|fill=|stroke=|font-[a-z]+=|<defs' "$W/docs/workspace-structure.html")" "0"
 assert_eq "G3 only the kit script" "$(grep -c '<script' "$W/docs/workspace-structure.html")" "1"
+assert_eq "G3 only kit classes (no pandoc level/language classes)" \
+  "$(grep -o 'class="[^"]*"' "$W/docs/workspace-structure.html" | grep -vcE '^class="(doc|note)"$')" "0"
 
 echo "G4: freshness hash kept"
 sha="$( { shasum "$W/docs/workspace-structure.md" 2>/dev/null || sha1sum "$W/docs/workspace-structure.md"; } | awk '{print $1}')"

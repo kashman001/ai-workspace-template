@@ -59,7 +59,8 @@ HTML
 
 # --section-divs gives the kit its <section>s; highlighting off keeps pandoc's
 # token CSS out. Pandoc writes style= on aligned table cells and column widths;
-# the kit styles tables itself, so those attributes are stripped.
+# the kit styles tables itself, so those attributes are stripped. Its section
+# level classes and code-block language classes are not kit classes either.
 # --syntax-highlighting arrived in pandoc 3.8; older pandoc spells it --no-highlight.
 HL="--syntax-highlighting=none"
 pandoc --help 2>/dev/null | grep -q -- '--syntax-highlighting' || HL="--no-highlight"
@@ -68,7 +69,7 @@ pandoc "$SRC" \
   --template "$TEMPLATE" \
   --section-divs \
   "$HL" \
-  | sed -E 's/ style="[^"]*"//g' > "$OUT"
+  | sed -E 's/ style="[^"]*"//g; s/ ?class="level[0-9]+"//g; s/<pre class="[^"]*">/<pre>/g' > "$OUT"
 rc=${PIPESTATUS[0]}
 
 if [ "$rc" -ne 0 ]; then
