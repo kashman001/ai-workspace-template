@@ -155,9 +155,10 @@ signal only arrives when you run `record` — in an extended discussion, run
    - **Do NOT reload** — settled side quests and dead ends, each with a one-line
      why, so the next session doesn't re-litigate them.
    - **State snapshot** — branch, uncommitted work, running processes, open items.
-   - When a plan is open, keep the `<!-- plan:begin position -->` …
-     `<!-- plan:end position -->` block — `scripts/plan.sh sync` writes into it
-     and refuses a launcher without it.
+   - When the item has a plan, keep the `<!-- plan:begin position -->` …
+     `<!-- plan:end position -->` block, even after the plan closes —
+     `scripts/plan.sh sync` writes into it, and the next plan's sync refuses
+     a launcher without it.
    - **First actions** — step 1 is always
      `scripts/context-budget.sh register --project <project>` (the successor
      started by the launcher is already bound by the env pair; an explicit

@@ -428,7 +428,9 @@ while :; do
   # frontier holding only hitl nodes hands the next session to a human.
   plan_bad=""; plan_closed=0; perr=""
   if [ -n "$PLAN" ]; then
-    perr="$(plan_sh sync 2>&1 >/dev/null)" || plan_bad=sync
+    # A closed plan is not re-rendered: the closing session's launcher may
+    # rightly have dropped its position markers.
+    [ "$(plan_status_of "$PLAN")" = closed ] || perr="$(plan_sh sync 2>&1 >/dev/null)" || plan_bad=sync
     [ -n "$plan_bad" ] || perr="$(plan_sh check 2>&1)" || plan_bad=check
     if [ -z "$plan_bad" ]; then
       if [ "$(plan_sh status --json 2>/dev/null | jq -r '.status // empty')" = closed ] \

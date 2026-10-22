@@ -1042,6 +1042,15 @@
   <h2>Low</h2>
 
   <div class="find low resolved">
+    <h3><span class="id">L104</span> Closing a plan breaks the session chain with <code>plan_invalid leg=sync</code>
+      <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/session-loop.sh</span></h3>
+    <p><span class="k">Evidence</span> &mdash; Seen downstream (mac-gaming, orta-recomp s56): the session that closed the plan rolled over with a new launcher and, following session-rollover (&ldquo;When a plan is open, keep the position block&rdquo;), left out the <code>&lt;!-- plan:begin position --&gt;</code> markers. The supervisor still had the closed plan bound, ran <code>plan.sh sync</code> before its closed-plan check, and broke: <code>session-loop: broken reason=plan_invalid leg=sync</code>.</p>
+    <p><span class="k">Impact</span> &mdash; Every hands-off chain that closes a plan ends on a &ldquo;repair the plan&rdquo; error instead of <code>plan_closed</code>, and the next plan&rsquo;s first <code>sync</code> fails on the missing markers.</p>
+    <p><span class="k">Fix</span> &mdash; Skip the supervisor&rsquo;s sync for a plan already closed; tell session-rollover to keep the markers after a plan closes.</p>
+    <p><span class="fix">Fixed:</span> 2026-10-22. <code>session-loop.sh</code> skips <code>plan.sh sync</code> when the bound plan&rsquo;s status is <code>closed</code> (check still runs); an open plan without markers still refuses (P2h). Test first: <code>test-session-loop.sh</code> P3h (closed plan, launcher with no markers &rArr; <code>plan_closed</code>), seen red, suite 161/0. <code>skills/session-rollover/SKILL.md</code> now says keep the position block even after the plan closes.</p>
+  </div>
+
+  <div class="find low resolved">
     <h3><span class="id">L103</span> <code>workspace-structure.html</code> generator still embeds its own stylesheet, not the HTML kit
       <span class="sev low">Low</span><span class="status resolved">Resolved</span><span class="area">scripts/build-guide-html.sh</span></h3>
     <p><span class="k">Evidence</span> &mdash; TADR-0015 moved human-facing pages onto <code>docs/kit/</code> and converted <code>docs/setup-guide.html</code>. <code>docs/workspace-structure.html</code> is generated from the markdown by <code>scripts/build-guide-html.sh</code> (pandoc), which writes a ~50-line inline <code>&lt;style&gt;</code> copied from the old setup guide. The decision &ldquo;convert at next edit&rdquo; doesn&rsquo;t fit a generated page: html-kit node 06 edited the markdown and regenerated it unchanged in style.</p>

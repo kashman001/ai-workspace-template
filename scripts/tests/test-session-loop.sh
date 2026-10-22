@@ -460,6 +460,9 @@ assert_eq "P3f: a restart is refused chain_closed"        "$(refused)" "chain_cl
 reset; mkplan closed done done dropped; export STUB_BEHAVIOUR=stage-plan
 run --max-sessions 2 --plan 01-demo
 assert_eq "P3g: closed but the reconcile node not done: not plan_closed" "$(verdicts)" "staged seq=8 staged seq=9 cap seq=10"
+reset; mkplan closed done done done; export STUB_BEHAVIOUR=stage   # the closing session's launcher drops the position markers
+run --max-sessions 3 --plan 01-demo
+assert_eq "P3h: a closed plan is not synced — no markers still ends plan_closed" "$(verdicts)" "staged seq=8 plan_closed seq=8"
 
 echo "P4: a frontier holding only hitl nodes makes the next launch interactive"
 reset; mkplan open done todo todo; export STUB_BEHAVIOUR=stage-plan
