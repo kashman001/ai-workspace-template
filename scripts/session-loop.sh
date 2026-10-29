@@ -193,11 +193,11 @@ for d in "$S"/plans/[0-9]*/; do
   open_plans="$open_plans${open_plans:+ }$(basename "$d")"
 done
 PLAN="${PLAN_OPT:-$(rq '.chain.plan // empty')}"
-# A chain.plan left closed by an earlier chain (s18) yields to the open plan,
-# exactly as an unset one does; an open one, or a closed one with no other
-# plan open, keeps its binding.
-[ -z "$PLAN_OPT" ] && [ -n "$PLAN" ] && [ -n "$open_plans" ] && [ "$(plan_status_of "$PLAN")" = closed ] \
-  && { say "chain.plan $PLAN is closed; rebinding to the open plan"; PLAN=""; }
+# A chain.plan left closed by an earlier chain (s18) is dropped, exactly as an
+# unset one: it yields to the open plan, or with none open binds nothing (a
+# reopened chain would otherwise end plan_closed at once). An open one keeps it.
+[ -z "$PLAN_OPT" ] && [ -n "$PLAN" ] && [ "$(plan_status_of "$PLAN")" = closed ] \
+  && { say "chain.plan $PLAN is closed; ${open_plans:+rebinding to the open plan}${open_plans:-unbinding}"; PLAN=""; }
 if [ -z "$PLAN" ]; then
   case "$open_plans" in
     "") ;;

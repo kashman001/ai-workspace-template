@@ -430,6 +430,11 @@ cp -R "$W/plans/02-demo" "$W/plans/03-demo"; sedi 's/^plan: 02-demo$/plan: 03-de
 jq '.chain = {supervisor: null, used: 0, cap: 3, closed: null, plan: "01-demo"}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"
 run --max-sessions 2
 assert_eq "P5d: two open plans besides it: plan_invalid leg=ambiguous" "$(refused)" "plan_invalid leg=ambiguous"
+reset; mkplan closed done done done
+jq '.chain = {supervisor: null, used: 0, cap: 3, closed: null, plan: "01-demo"}' "$REC" > "$REC.new" && mv "$REC.new" "$REC"
+export STUB_BEHAVIOUR=stage-plan; run --max-sessions 2
+assert_eq "P5e: no other plan open: the closed plan is unbound" "$(rec '.chain.plan')" "null"
+assert_eq "P5f: no false plan_closed"                     "$(verdicts)" "staged seq=8 staged seq=9 cap seq=10"
 
 echo "P2: plan_invalid — a failing sync or check after the child refuses the next session"
 reset; mkplan open done todo todo 'check: true'; export STUB_BEHAVIOUR=stage-plan   # hitl-check violation
