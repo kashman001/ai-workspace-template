@@ -518,6 +518,11 @@ SESSION_LOOP_ALARM=2 SESSION_LOOP_KILL_AFTER=2 \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/out" 2>&1 </dev/null; RC=$?; OUT="$(cat "$TMP/out")"
 assert_eq "A3a: a child still writing its transcript is not killed" "$(verdicts)" "quit_plain seq=8"
 [ "$(pages)" -eq 0 ] && ok "A3b: a writing child draws no page" || bad "A3b: a writing child was paged"
+reset; export STUB_BEHAVIOUR=sleep-touch STUB_SLEEP=5   # several ticks, nothing staged by the child
+SESSION_LOOP_ALARM=1 SESSION_LOOP_KILL_AFTER=0 \
+  "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/out" 2>&1 </dev/null
+assert_eq "A3c: a child that staged nothing never pages staged_alive (the consumed staged block is not re-read stale)" \
+  "$(grep -c 'page=staged_alive' "$NOTED" | tr -d ' ')" "0"
 reset; export STUB_BEHAVIOUR=sleep STUB_SLEEP=1
 t0="$(date +%s)"
 out="$(SESSION_LOOP_ALARM=20 "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 2>&1 </dev/null)"
