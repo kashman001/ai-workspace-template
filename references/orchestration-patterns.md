@@ -1,6 +1,6 @@
 <!--
 Vendored from github.com/addyosmani/agent-skills — references/orchestration-patterns.md
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep unmodified: scripts/sync-vendored-skills.sh.
 -->
 

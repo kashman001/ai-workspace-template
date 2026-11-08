@@ -5,7 +5,7 @@ description: Final editing pass that cuts AI-prose tells from human-facing text 
 
 <!--
 Vendored from github.com/cursor/plugins — pstack/skills/unslop/
-at commit 978ca6e (2026-10-10). Everything below this comment is upstream
+at commit c742dd6 (2026-10-27). Everything below this comment is upstream
 content; keep it unmodified so refreshes stay a clean re-copy.
 Refresh: scripts/sync-vendored-skills.sh (adapted class — it preserves the
 frontmatter and this comment, re-copies the upstream body + support files,

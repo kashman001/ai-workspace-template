@@ -5,7 +5,7 @@ description: Subject each non-trivial decision to a fresh-context adversarial re
 
 <!--
 Vendored from github.com/addyosmani/agent-skills — skills/doubt-driven-development/
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md) plus skills/doubt-driven-development/workspace.patch, which
 scripts/sync-vendored-skills.sh re-applies at every refresh. Change the
 patch, not this file.
@@ -89,6 +89,8 @@ A fresh-context reviewer needs the **artifact** and the **contract**, not the jo
 - Assertion: the claim plus the evidence that supposedly supports it (kept distinct from the Step 1 CLAIM block, which is the orchestrator's hypothesis under scrutiny)
 
 Strip your reasoning. If you hand over conclusions, you'll get back validation of your conclusions. The unit must be small enough that a reviewer can hold it in mind in one read — if it's a 500-line PR, decompose first.
+
+Strip reasoning, not evidence: if a caller, guard or test contradicts the claim, include it in the unit.
 
 ### Step 3: DOUBT — Invoke the fresh-context reviewer
 

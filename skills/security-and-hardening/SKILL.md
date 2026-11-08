@@ -1,11 +1,11 @@
 ---
 name: security-and-hardening
-description: Hardens code against vulnerabilities. Use when auditing an input handler for vulnerabilities, when handling user input, authentication, data storage, or external integrations, or when checking a login flow is safe against the OWASP Top Ten. Use when building any feature that accepts untrusted data, manages user sessions, or interacts with third-party services. Use when auditing dependencies for known vulnerabilities, triaging package-manager audit findings, or assessing supply-chain risk in a new package. Use when personal data or privacy compliance (GDPR, CCPA) is involved.
+description: Hardens code against vulnerabilities. Use when auditing an input handler for vulnerabilities, when handling user input, authentication, data storage, or external integrations, or when checking a login flow is safe against the OWASP Top Ten. Use when building any feature that accepts untrusted data, manages user sessions or session cookies, or interacts with third-party services. Use when auditing dependencies for known vulnerabilities, triaging package-manager audit findings, or assessing supply-chain risk in a new package. Use when personal data or privacy compliance (GDPR, CCPA) is involved.
 ---
 
 <!--
 Vendored from github.com/addyosmani/agent-skills — skills/security-and-hardening/
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->

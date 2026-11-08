@@ -5,7 +5,7 @@ description: Generate an interactive bash wizard that walks a human through step
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/wizard/
-at commit 49dd158 (2026-10-09). Upstream content (MIT — see
+at commit 4ae2317 (2026-10-31). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->

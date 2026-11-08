@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 <!--
 Vendored from github.com/cursor/plugins — pstack/skills/maintain-verification-skill/
-at commit 978ca6e (2026-10-10). Everything below this comment is upstream
+at commit c742dd6 (2026-10-27). Everything below this comment is upstream
 content plus skills/maintain-verification-skill/workspace.patch, which
 scripts/sync-vendored-skills.sh re-applies after every re-copy. Change the
 patch, not the body. Refresh: scripts/sync-vendored-skills.sh (adapted

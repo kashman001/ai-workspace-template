@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/to-spec/
-at commit 49dd158 (2026-10-09). Everything below this comment is upstream
+at commit 4ae2317 (2026-10-31). Everything below this comment is upstream
 content; keep it unmodified so refreshes stay a clean re-copy.
 Refresh: scripts/sync-vendored-skills.sh (adapted class — it preserves the
 frontmatter and this comment, re-copies the upstream body + support files,

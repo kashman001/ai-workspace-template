@@ -5,7 +5,7 @@ description: Instruments code so production behavior is visible and diagnosable.
 
 <!--
 Vendored from github.com/addyosmani/agent-skills — skills/observability-and-instrumentation/
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->

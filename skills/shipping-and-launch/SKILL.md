@@ -5,7 +5,7 @@ description: Prepares production launches. Use when preparing to deploy to produ
 
 <!--
 Vendored from github.com/addyosmani/agent-skills — skills/shipping-and-launch/
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
@@ -196,7 +196,7 @@ Client metrics:
 
 ```typescript
 // Set up error boundary with reporting
-class ErrorBoundary extends React.Component {
+class ErrorBoundary extends React.Component<React.PropsWithChildren> {
   state = { hasError: false };
 
   static getDerivedStateFromError() {

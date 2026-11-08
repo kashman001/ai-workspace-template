@@ -5,7 +5,7 @@ description: "Review the changes since a fixed point (commit, branch, tag, or me
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/code-review/
-at commit 49dd158 (2026-10-09). Upstream content (MIT — see
+at commit 4ae2317 (2026-10-31). Upstream content (MIT — see
 skills/vendored-skills.md) plus skills/code-review/workspace.patch, which
 scripts/sync-vendored-skills.sh re-applies at every refresh. Change the
 patch, not this file.
@@ -16,7 +16,7 @@ Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 - **Standards**: does the code conform to this repo's documented coding standards?
 - **Spec**: does the code faithfully implement the originating issue / spec?
 
-Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
+Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Start every sub-agent with a fresh context window.
 
 The issue tracker should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
 

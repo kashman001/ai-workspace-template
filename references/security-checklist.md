@@ -1,6 +1,6 @@
 <!--
 Vendored from github.com/addyosmani/agent-skills — references/security-checklist.md
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep unmodified: scripts/sync-vendored-skills.sh.
 -->
 
@@ -35,7 +35,7 @@ Before reaching for controls, spend five minutes thinking like an attacker:
 
 ## Pre-Commit Checks
 
-- [ ] No secrets in code (`git diff --cached | grep -i "password\|secret\|api_key\|token"`)
+- [ ] No secrets in code (`git diff --cached -i -G'password|secret|api_key|token' --name-only` — lists only the names of files whose staged diff matches, never the value itself; any output means review those files before committing)
 - [ ] `.gitignore` covers: `.env`, `.env.local`, `*.pem`, `*.key`
 - [ ] `.env.example` uses placeholder values (not real secrets)
 

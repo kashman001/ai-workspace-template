@@ -5,7 +5,7 @@ description: "Find what a change could break somewhere else before it ships, bey
 
 <!--
 Vendored from github.com/cursor/plugins — pstack/skills/blast-radius/
-at commit 978ca6e (2026-10-10). Everything below this comment is upstream
+at commit c742dd6 (2026-10-27). Everything below this comment is upstream
 content plus skills/blast-radius/workspace.patch, which
 scripts/sync-vendored-skills.sh re-applies after every re-copy. Change the
 patch, not the body. Refresh: scripts/sync-vendored-skills.sh (adapted

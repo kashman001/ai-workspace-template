@@ -5,7 +5,7 @@ description: Trace the decision history behind code into a cited, confidence-gra
 
 <!--
 Adapted from github.com/cursor/plugins — pstack/skills/why/ at commit
-978ca6e (2026-10-10), MIT © 2026 Lauren Tan (license text in
+c742dd6 (2026-10-27), MIT © 2026 Lauren Tan (license text in
 skills/vendored-skills.md). Rewritten here so it runs on any agent runtime
 (no named models, subagent tool, or Cursor paths); not covered by
 scripts/sync-vendored-skills.sh. references/epistemics.md is upstream's

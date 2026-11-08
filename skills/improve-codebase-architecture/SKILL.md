@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 <!--
 Vendored from github.com/mattpocock/skills — skills/engineering/improve-codebase-architecture/
-at commit 49dd158 (2026-10-09). Upstream content (MIT — see
+at commit 4ae2317 (2026-10-31). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
@@ -31,7 +31,7 @@ This command is _informed_ by the project's domain model and built on a shared d
 
 Read the project's domain glossary (`GLOSSARY.md`) and any ADRs in the area you're touching first.
 
-Then spawn a sub-agent to walk the codebase. Don't follow rigid heuristics; explore organically and note where you experience friction:
+Then spawn a sub-agent with a fresh context window to walk the codebase. Don't follow rigid heuristics; explore organically and note where you experience friction:
 
 - Where does understanding one concept require bouncing between many small modules?
 - Where are modules **shallow**, with an interface nearly as complex as the implementation?

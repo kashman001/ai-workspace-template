@@ -1,6 +1,6 @@
 <!--
 Vendored from github.com/cursor/plugins — pstack/skills/why/references/epistemics.md
-at commit 978ca6e (2026-10-10). Upstream content (MIT — see
+at commit c742dd6 (2026-10-27). Upstream content (MIT — see
 skills/vendored-skills.md); keep unmodified.
 -->
 

@@ -126,7 +126,7 @@ Workspace-authored skills (`checkpoint`, `session-rollover`, `create-work-item`,
 
 ## Addy Osmani lifecycle set
 
-Pinned at `1be8e34` (2026-10-10). All model-invoked (two with a tightened
+Pinned at `353ae84` (2026-11-01). All model-invoked (two with a tightened
 description through their patch, below); every skill carries a
 "Common Rationalizations" table (the excuses an agent makes to skip a step,
 each rebutted) and a "Red Flags" list. Several link to shared checklists with
@@ -183,7 +183,7 @@ duplicate the core set or are web-domain specific (`frontend-ui-engineering`,
 
 ## pstack
 
-Pinned at `978ca6e` (2026-10-10, the last commit touching `pstack/`). Upstream
+Pinned at `c742dd6` (2026-10-27, the last commit touching `pstack/`). Upstream
 marks every skill user-invoked and runs them through Cursor's model routing;
 here they are adapted (frontmatter ours, body upstream's) and four carry a
 small patch.
@@ -236,8 +236,8 @@ when uncertain"), and the skills with an equivalent here — `tdd` and `teach`
 - **jev/typesafe-ai** *(pristine)* — TypeSafe's own agent skill for its
   System One models (Jev), vendored from
   [github.com/typesafe-ai/skills](https://github.com/typesafe-ai/skills)
-  `skills/typesafe-ai/SKILL.md` at commit `65a39f3` (v0.5.7, 2026-09-12;
-  re-checked 2026-09-27) into `skills/jev/typesafe-ai/` with its `LICENSE`.
+  `skills/typesafe-ai/SKILL.md` at commit `302eea6` (v0.6.2, 2026-10-23)
+  into `skills/jev/typesafe-ai/` with its `LICENSE`.
   Not a standalone workspace skill: it is reached from the workspace's own
   `jev` skill (`skills/jev/SKILL.md`, which carries the CLI contract) for
   design guidance and live-docs pointers. Not covered by

@@ -19,12 +19,12 @@ Upstream: none filed
  
  ### Step 4: Install what each dimension needs
  
-@@ -306,7 +306,7 @@
+@@ -313,7 +313,7 @@
  - [ ] At least one constraint is external (not judged by this project's own tests)
  - [ ] Measured-only metrics record today's value and a direction
  - [ ] Exceptions have an owner and an expiry date
 -- [ ] `AGENTS.md` or `CLAUDE.md` points at the file
 +- [ ] `CONTEXT.md` points at the file
  - [ ] A trial run on the current branch produces no failures the user disagrees with
+ - [ ] Each enforced command fails on a deliberate violation and scanner error, passes a clean control, and preserves the agreed severity threshold
  
- ## See Also

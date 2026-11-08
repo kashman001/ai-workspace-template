@@ -5,7 +5,7 @@ description: Manages deprecation and migration. Use when removing old systems, A
 
 <!--
 Vendored from github.com/addyosmani/agent-skills — skills/deprecation-and-migration/
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
@@ -152,6 +152,11 @@ class LegacyTaskService implements OldTaskAPI {
     const task = this.newService.findById(String(id));
     return this.toOldFormat(task);
   }
+
+  // Translate the new shape back into what old consumers expect
+  private toOldFormat(task: Task): OldTask {
+    return { id: Number(task.id), title: task.title, done: task.status === 'done' };
+  }
 }
 ```
 
@@ -164,7 +169,7 @@ function getTaskService(userId: string): TaskService {
   if (featureFlags.isEnabled('new-task-service', { userId })) {
     return new NewTaskService();
   }
-  return new LegacyTaskService();
+  return new OldTaskService();
 }
 ```
 

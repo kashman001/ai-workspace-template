@@ -5,7 +5,7 @@ description: Automates CI/CD pipeline setup. Use when setting up or modifying bu
 
 <!--
 Vendored from github.com/addyosmani/agent-skills — skills/ci-cd-and-automation/
-at commit 1be8e34 (2026-10-10). Upstream content (MIT — see
+at commit 353ae84 (2026-11-01). Upstream content (MIT — see
 skills/vendored-skills.md); keep this directory unmodified so refreshes
 stay a clean re-copy: scripts/sync-vendored-skills.sh.
 -->
@@ -191,7 +191,7 @@ Agent fixes → pushes → CI runs again
 **Key patterns:**
 
 ```
-Lint failure → Agent runs `npm run lint --fix` and commits
+Lint failure → Agent runs `npm run lint -- --fix` and commits
 Type error  → Agent reads the error location and fixes the type
 Test failure → Agent follows debugging-and-error-recovery skill
 Build error → Agent checks config and dependencies
@@ -270,9 +270,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Rollback deployment
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          # Deploy the specified previous version
-          npx vercel rollback ${{ inputs.version }}
+          # Deploy the specified previous version. Pass the input through env,
+          # never interpolate it into the script (shell injection).
+          npx vercel rollback "$VERSION"
 ```
 
 ## Environment Management
@@ -320,7 +323,7 @@ When the pipeline exceeds 10 minutes, apply these strategies in order of impact:
 ```
 Slow CI pipeline?
 ├── Cache dependencies
-│   └── Use actions/cache or setup-node cache option for node_modules
+│   └── Use the setup-node cache option (or actions/cache) for the package manager cache, not node_modules
 ├── Run jobs in parallel
 │   └── Split lint, typecheck, test, build into separate parallel jobs
 ├── Only run what changed
