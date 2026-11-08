@@ -5,33 +5,29 @@
 
 ## >>> START HERE <<<
 
-**Mission.** None queued. Session 26 finished the `plan.sh plans` verb (L89) and
-pushed. Ask the user what's next. The open backlog cards are L85 and L86 (L87 was fixed in `0ae0eb1`).
+**Mission.** None queued. Session 27 refreshed the vendored skills from all
+four upstreams and added three pstack skills (`83adec7`, `a95b1fe`). Ask the
+user what's next. Open backlog cards: L85, L86.
 
-**Waiting on the user:**
-- Run `scripts/migrate-glossary.sh` on `~/Developer/experiments/NeogeoEmu`?
-  It refuses until that repo has a first commit. Never run it on a real
-  project without the user's go-ahead.
-- Delete `skills/code-review/workspace.patch` once mattpocock/skills#1242 lands
-  (the sync says so when the issue closes).
+**No human in the loop:** do not pick new work; run `checkpoint` and stop
+with the question open.
 
-**State:** `main` pushed at session-26 end (`84401dd`, TEMPLATE_VERSION 2026-10-12).
-On the next push after that day, bump it again.
+## Read these, in order
 
-**Optional later (not queued):** pstack `arena`/`swarm`/`hillclimb` were left out
-as Cursor-bound; revisit only as an agent-agnostic rewrite.
+1. `work/template-maintenance/handoff.md` — block 27 only.
 
-**Do NOT reload:** skill-packs and skill-ceremony work is done (ledger block 24;
-reports `skill-packs-report.md`, `skill-ceremony-report.md`).
+## Do NOT reload
 
-## Plan position
+- The skill refresh and the eight-skill evaluation: done and recorded in
+  `skill-packs-analysis.md` → "Refresh evaluation (2026-11-07)".
+- `skills/code-review/workspace.patch` "may have landed" sync note:
+  #1242 was declined upstream; keep the patch.
 
-<!-- plan:begin position -->
-Position: plan 01-skill-ceremony, closed, wave 4 of 4, done 12/12, doing 0, todo 0, blocked 0, dropped 0, sessions 1.
-Frontier: none. Remaining: 0 of 12.
-<!-- plan:end position -->
+## State snapshot
+
+- Branch `main`, clean, 2+ commits ahead of origin, not pushed (push is the user's call).
 
 ## First actions
 
-1. `scripts/context-budget.sh register --project template-maintenance`.
-2. Ask the user what's next.
+1. `scripts/context-budget.sh register --project template-maintenance`
+2. Ask the user what's next (L85, L86, or new work).
