@@ -518,6 +518,8 @@ SESSION_LOOP_ALARM=2 SESSION_LOOP_KILL_AFTER=2 \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/out" 2>&1 </dev/null; RC=$?; OUT="$(cat "$TMP/out")"
 assert_eq "A3a: a child still writing its transcript is not killed" "$(verdicts)" "quit_plain seq=8"
 [ "$(pages)" -eq 0 ] && ok "A3b: a writing child draws no page" || bad "A3b: a writing child was paged"
+grep -q 'is still running' "$W/.session-loop.log" && ok "A3d: the heartbeat reaches the log" || bad "A3d: no heartbeat in the log"
+grep -q 'is still running' "$TMP/out" && bad "A3e: the heartbeat printed over the child's terminal" || ok "A3e: the heartbeat stays off the terminal"
 reset; export STUB_BEHAVIOUR=sleep-touch STUB_SLEEP=5   # several ticks, nothing staged by the child
 SESSION_LOOP_ALARM=1 SESSION_LOOP_KILL_AFTER=0 \
   "$SL" testproj --max-sessions 1 --min-lifetime 0 --stall-limit 0 >"$TMP/out" 2>&1 </dev/null
