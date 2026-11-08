@@ -31,7 +31,7 @@
 #          record_unreadable, schema_mismatch, stall, plan_invalid
 #          leg=<sync|check>.
 #          A plan (docs/plans.md) binds at start — --plan, else chain.plan in
-#          the record unless it is closed while another plan is open, else the
+#          the record unless that plan is closed, else the
 #          single open plan — and is re-rendered, linted
 #          and read between children: closed with its terminal reconcile node
 #          done ends the chain; a hitl-only frontier makes the next session

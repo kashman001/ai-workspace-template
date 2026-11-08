@@ -69,7 +69,7 @@
   <p class="lede">An adversarial pass over the template as a reusable, public starting point — plus a tracked
   backlog of the issues it surfaced. This file is the source of truth for template-improvement work; keep it current
   (see <a href="#maintaining">Maintaining this backlog</a>).</p>
-  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-10-22 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
+  <p class="meta">Reviewed 2026-06-24 · re-reviewed 2026-06-25 · Last updated 2026-11-08 · scope: all tracked files · repo: kashman001/ai-workspace-template (public)</p>
 </div></header>
 
 <main class="wrap">
@@ -326,6 +326,7 @@
       <tr><td>2026-10-22</td><td>Resolved <strong>L104</strong>: <code>session-loop.sh</code> no longer syncs a plan that is already closed, so a closing session&rsquo;s launcher without position markers ends <code>plan_closed</code>, not <code>plan_invalid</code>; session-rollover keeps the markers after a plan closes. Loop suite P3h seen red first. Filed and resolved at once; card in the archive. Scorecard now 1/158/5/0/6.</td></tr>
       <tr><td>2026-11-07</td><td>Refreshed every vendored upstream: Matt Pocock <code>49dd158</code> &rarr; <code>4ae2317</code>, Addy Osmani <code>1be8e34</code> &rarr; <code>353ae84</code>, pstack <code>978ca6e</code> &rarr; <code>c742dd6</code>, TypeSafe <code>65a39f3</code> &rarr; <code>302eea6</code> (v0.6.2, hand re-copy). No new stable skills taken. Two patches (<code>constraint-driven-development</code>, <code>create-verification-skill</code>) regenerated against the moved upstream text, same edits. The <code>code-review</code> patch stays: <code>mattpocock/skills#1242</code> closed <em>not planned</em>, so the sync&rsquo;s &ldquo;may have landed&rdquo; note is a false alarm. <code>why</code> re-checked by hand; upstream changes are poteto-mode/Cursor-only.</td></tr>
       <tr><td>2026-11-07</td><td>Vendored three new user-invoked pstack skills at <code>c742dd6</code>: <code>create-formal-verification-skill</code> (patched: no <code>statechart</code> dependency, generated skill at <code>skills/formal-verify-&lt;area&gt;/</code>), <code>maintain-formal-verification-skill</code>, <code>sharpen</code>; slash wrappers and Codex <code>openai.yaml</code> switches. Five other new upstream skills evaluated and left (<code>skill-packs-analysis.md</code> &rarr; &ldquo;Refresh evaluation&rdquo;). Always-loaded cost: +291 bytes of slash-command descriptions; model-invoked budget unchanged (7078/7500).</td></tr>
+      <tr><td>2026-11-08</td><td>Pulled from origin without a card (PRs #67, #68): a reopened chain drops a closed <code>chain.plan</code> even when no other plan is open, so it no longer ends at once with <code>plan_closed</code> (<code>8247462</code>, P5e/P5f seen red first); the watchdog re-reads the record each tick, so a live child no longer pages <code>staged_alive</code> every interval (<code>0484174</code>, A3c seen red first). On pull, the binding rule's wording in the <code>session-loop.sh</code> header and <code>docs/context-budget.md</code> was brought in line. Loop suite 164/0. No scorecard change.</td></tr>
 </tbody>
   </table>
 
