@@ -240,7 +240,7 @@ you want them.
 **Two more vendored sets, same mechanism.** The catalog
 (`skills/vendored-skills.md`) also carries eight lifecycle skills from
 [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills) and
-seven from Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/pstack)
+ten from Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/pstack)
 (the `pstack/` directory of `cursor/plugins`), both MIT, all plain
 `SKILL.md` files any runtime reads:
 
@@ -254,6 +254,8 @@ seven from Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/p
 | `blast-radius` | "What could this break?" — prove the one safety fact by running code |
 | `why` | Recover why code is shaped as it is when no ADR answers (git, PRs, tickets, docs; confidence-graded) |
 | `create-verification-skill` / `maintain-verification-skill` | Give a repo a scripted "drive the real app" skill at `skills/verify-<app>/`, and keep it honest |
+| `create-formal-verification-skill` / `maintain-formal-verification-skill` | Formally verify the riskiest promise in a repo (TLA+ or a code-level verifier) as a project-local skill at `skills/formal-verify-<area>/`, and keep the model true to the code |
+| `sharpen` | Make a task deeper, not bigger, before you start it: rewrite the prompt the way a top professional would ask it |
 
 Refresh them with the same `scripts/sync-vendored-skills.sh` (`addyosmani`
 and `pstack` upstream keys; the script prints the clone commands). What was

@@ -196,3 +196,19 @@ the sync round trip). The guide's "Floors" section carries that advice instead.
 
 The Tier-2 notes for these choices are at the end of
 `work/template-maintenance/decisions.md`.
+
+## Refresh evaluation (2026-11-07)
+
+Eight skills new upstream since the first pass were read (not test-run)
+against the same tests: fills a gap, any runtime, cheap to keep in sync.
+Taken, all user-invoked (no description-budget cost): pstack
+`create-formal-verification-skill` and `maintain-formal-verification-skill`
+(the formal twin of the verification pair already taken; patch drops the
+`statechart` dependency) and `sharpen` (prompt deepener; nothing here
+rewrites the request). Left: pstack `statechart` (407 files, TypeScript
+plus Java/TLC download, eight fix commits in two weeks), `in-your-own-words`
+(one sentence), `ketchup-video` (needs `ketchup`, not vendored); Matt
+Pocock `chief-of-staff` (in-progress; a second long-running-work system
+with its own wiki, overlapping `work/`, plans and ledgers) and
+`software-factory` (in-progress; glossary for designing an agent factory,
+revisit if it graduates).

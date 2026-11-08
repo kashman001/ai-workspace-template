@@ -18,8 +18,9 @@ workspace — no per-user clone or symlink setup required, and every runtime
   bar, in-flight adversarial review).
 - **pstack** (Lauren Tan, "poteto") —
   [github.com/cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack),
-  directory `pstack/`. Seven short plain-text skills: prose, benchmarks, blast
-  radius, decision archaeology, a per-repo "drive the real app" harness.
+  directory `pstack/`. Ten short plain-text skills: prose, benchmarks, blast
+  radius, decision archaeology, a per-repo "drive the real app" harness, a
+  per-repo formal-verification harness, a prompt sharpener.
 
 Why these and not the rest of each pack (duplicates, Cursor-only, domain
 specific) is recorded in `work/template-maintenance/skill-packs-analysis.md`.
@@ -185,7 +186,7 @@ duplicate the core set or are web-domain specific (`frontend-ui-engineering`,
 
 Pinned at `c742dd6` (2026-10-27, the last commit touching `pstack/`). Upstream
 marks every skill user-invoked and runs them through Cursor's model routing;
-here they are adapted (frontmatter ours, body upstream's) and four carry a
+here they are adapted (frontmatter ours, body upstream's) and five carry a
 small patch.
 
 - **unslop** *(adapted)* — a numbered catalog of AI-prose tells to cut from
@@ -218,6 +219,21 @@ small patch.
   pass for that skill: source check per feature, one live pass, at most one
   PR of proven corrections. Where the runtime has no subagents, it reads the
   feature files sequentially. User-invoked.
+- **create-formal-verification-skill** *(adapted, patched, slash)* — picks
+  the code where a bug costs most and tests reach least (races, retries,
+  state machines, parsers), verifies one property with the tool that fits
+  (TLA+ by default), proves the check can fail, and leaves a project-local
+  `skills/formal-verify-<area>/` skill with a coverage record and sync
+  commit. The patch drops upstream's hand-off to pstack's `statechart`
+  skill (not vendored) in favour of reading the checker's own output, and
+  names the generated skill's path. User-invoked.
+- **maintain-formal-verification-skill** *(adapted, slash)* — the upkeep
+  pass for those skills: reads every commit that touched covered code since
+  the sync commit, updates the model from the code, and labels each check
+  in sync, updated, bug or blocked. User-invoked.
+- **sharpen** *(adapted, slash)* — makes a task deeper, not bigger: what a
+  top professional would add, the rawest material, the methods, and an
+  outside check on the result, then rewrites the prompt. User-invoked.
 
 Not vendored from this pack: `poteto-mode` (the operating mode and its 23
 playbooks: Cursor Custom Mode, named models, `/loop`, cloud workers, bundled
@@ -229,7 +245,10 @@ when uncertain"), and the skills with an equivalent here — `tdd` and `teach`
 (`handoff`), `figure-it-out` (`plans`/`wayfinder`), `interrogate`
 (`code-review`), `how` (graphify, `onboard-repo`), `architect`
 (`codebase-design`, `prototype`) — plus `arena`, `swarm`, `automate-me`,
-`make-bot-ui`, `no-comments`, `ketchup` and `typescript-best-practices`.
+`make-bot-ui`, `no-comments`, `ketchup`, `ketchup-video` (builds on
+`ketchup`), `in-your-own-words` (one sentence; just ask), `statechart` (a
+TypeScript compiler plus a Java/TLC download, churning weekly) and
+`typescript-best-practices`.
 
 ## TypeSafe agent skill (vendored beside `jev`)
 

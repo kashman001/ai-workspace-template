@@ -1,0 +1,16 @@
+Upstream: none filed
+
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -41,9 +41,9 @@
+ 
+ ## Generate the verify skill
+ 
+-Write a project-local skill with frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to tell whether a change touches the verified code, run the check, tell a real bug from a modeling error, and update the verification when a change is intended. Put the coverage record and the sync commit in the skill, and tell the next agent to move the sync commit forward only after it confirms that the verification describes the code at the new commit. Use this repo's real commands, paths, and nouns, and leave no placeholders.
++Write a project-local skill at `skills/formal-verify-<area>/SKILL.md`, with frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to tell whether a change touches the verified code, run the check, tell a real bug from a modeling error, and update the verification when a change is intended. Put the coverage record and the sync commit in the skill, and tell the next agent to move the sync commit forward only after it confirms that the verification describes the code at the new commit. Use this repo's real commands, paths, and nouns, and leave no placeholders.
+ 
+-If the check is a TLA+ model, tell the next agent to read every result with the pstack [`/statechart`](../statechart/SKILL.md) skill. It shows each invariant violation the checker finds as its shortest path in plain words. When the check passes, `/statechart` draws a chart of how the system moves between states. Refer to `/statechart` by name. Its commands, options, and file paths change between releases and machines, so copy none of them into the generated skill or its scripts.
++If the check is a TLA+ model, tell the next agent to read each result from the checker's own output: retell an invariant violation's counterexample trace as its steps in the code's words, and on a pass, say which states and steps the model covered.
+ 
+ ## Prove it before you hand off
+ 

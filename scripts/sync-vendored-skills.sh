@@ -109,6 +109,9 @@ pstack_ADAPTED=(
   blast-radius
   create-verification-skill
   maintain-verification-skill
+  sharpen
+  create-formal-verification-skill
+  maintain-formal-verification-skill
 )
 # (pstack's `why` is not synced: skills/why is a workspace rewrite.)
 
