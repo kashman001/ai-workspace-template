@@ -254,6 +254,10 @@ alarm_start() {   # $1 = session number
       [ -e "$ALARM_STOPF" ] && exit 0
       sleep "$_int" || exit 0
       [ -e "$ALARM_STOPF" ] && exit 0
+      # Reload HERE: child_probe's rec_load runs in a command substitution and
+      # never reaches this subshell, which otherwise keeps the pre-consume
+      # record (staged still set) and pages staged_alive on every tick.
+      rec_load
       _probe="$(child_probe || true)"
       _staged=""; [ "$REC_STATE" = ok ] && [ "$(rq '.staged // null')" != null ] && _staged=1
       if [ -n "$_probe" ] && [ -n "$_staged" ]; then _staged_ticks=$((_staged_ticks + 1)); else _staged_ticks=0; fi
