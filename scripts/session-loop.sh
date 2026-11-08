@@ -98,7 +98,9 @@ REC="$S/session-state.json"; LOGF="$S/.session-loop.log"
 SUP_PID=$$
 SUP_START="$(ps -o lstart= -p "$SUP_PID" 2>/dev/null | sed 's/^ *//;s/ *$//')"
 
-say()    { printf 'session-loop: %s\n' "$*" >&2; printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$LOGF"; }
+say()    { printf 'session-loop: %s\n' "$*" >&2; logonly "$*"; }
+# Log file only: routine lines that would otherwise print over the child's TUI.
+logonly() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$LOGF"; }
 # Unattended, a stopped chain is silent: every ending and every page also goes
 # through the notify hook a human can find later.
 notify() {
@@ -268,7 +270,7 @@ alarm_start() {   # $1 = session number
       elif [ -z "$_staged" ] && child_past_stop; then
         notify "page=blocked seq=$1 — session #$1 is past its context budget with no successor staged"
       elif [ "${_probe#* }" -lt "$ALARM" ]; then
-        _int="$ALARM"; say "session #$1 is still running (transcript written ${_probe#* }s ago)"
+        _int="$ALARM"; logonly "session #$1 is still running (transcript written ${_probe#* }s ago)"
       elif [ "$KILL_AFTER" -gt 0 ] && [ "${_probe#* }" -ge "$KILL_AFTER" ]; then
         notify "page=silent seq=$1 — session #$1 has written nothing for ${_probe#* }s (limit ${KILL_AFTER}s); ending it"
         kill "${_probe% *}" 2>/dev/null; exit 0
