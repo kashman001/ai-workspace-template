@@ -6,8 +6,10 @@
 ## >>> START HERE <<<
 
 **Mission.** None queued. Session 27 refreshed the vendored skills from all
-four upstreams and added three pstack skills (`83adec7`, `a95b1fe`). Ask the
-user what's next. Open backlog cards: L85, L86.
+four upstreams and added three pstack skills (`83adec7`, `a95b1fe`). Session
+28 found L85/L86 already resolved (2026-10-18); the only open card is L97,
+deferred until `work/concurrent-sessions/` settles R1. The user's next stop is
+`work/concurrent-sessions/`, not this item. Ask the user what's next.
 
 **No human in the loop:** do not pick new work; run `checkpoint` and stop
 with the question open.
@@ -30,4 +32,4 @@ with the question open.
 ## First actions
 
 1. `scripts/context-budget.sh register --project template-maintenance`
-2. Ask the user what's next (L85, L86, or new work).
+2. Ask the user what's next (L97 once R1 settles, or new work).
